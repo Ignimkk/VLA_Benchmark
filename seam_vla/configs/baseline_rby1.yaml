@@ -1,0 +1,16 @@
+# Baseline (SEAM disabled) for RB-Y1 pi05_rby1_lora — exact upstream behavior.
+seam:
+  seam_enabled: false
+  seam_lambda: 0.1
+  seam_guided_window: 20
+  seam_horizon: 50
+  seam_execution_length: 8
+  seam_num_ode_steps: 10
+  seam_guided_dimensions: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12]
+  num_valid_physical_dims: 14
+  action_dim: 32
+  seam_target_mode: repeat_last_tail
+  seam_stage: denoising
+  seam_delta_base_compensation: true
+  seam_log_corrections: false
+  seam_assert_baseline_shape: true

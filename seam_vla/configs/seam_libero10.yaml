@@ -1,0 +1,16 @@
+# SEAM (VLS enabled) — reproduction profile adapted to the local pi05_libero checkpoint.
+# The paper uses H=50, K=10, L=40, M=20; this checkpoint bakes H=10 and the rollout uses K=5,
+# so the derived overlap is L=5 and M is clamped to 5. See docs/reproduction_notes.md.
+seam:
+  seam_enabled: true
+  seam_lambda: 0.1           # paper's best-balance strength
+  seam_guided_window: 20     # requested M=20 (paper); runtime clamps to min(20, L=5)=5
+  seam_horizon: 10
+  seam_execution_length: 5
+  seam_num_ode_steps: 10
+  seam_guided_dimensions: all_physical
+  seam_target_mode: repeat_last_tail
+  seam_log_corrections: true
+  seam_assert_baseline_shape: true
+  num_valid_physical_dims: 7
+  action_dim: 32

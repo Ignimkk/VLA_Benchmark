@@ -1,0 +1,22 @@
+# Full LIBERO-10 benchmark config (paper protocol: 10 tasks x 130 episodes).
+# Runs only when explicitly authorized via --run-full-benchmark.
+seam:
+  seam_enabled: true
+  seam_lambda: 0.1
+  seam_guided_window: 20     # clamped to min(20, L=5)=5
+  seam_horizon: 10
+  seam_execution_length: 5
+  seam_num_ode_steps: 10
+  seam_guided_dimensions: all_physical
+  seam_target_mode: repeat_last_tail
+  seam_log_corrections: true
+  seam_assert_baseline_shape: true
+  num_valid_physical_dims: 7
+  action_dim: 32
+
+rollout:
+  task_suite_name: libero_10
+  task_ids: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  num_episodes: 130
+  max_steps: 520
+  seed: 7

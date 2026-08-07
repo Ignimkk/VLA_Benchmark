@@ -1,0 +1,22 @@
+# Smoke config — SEAM enabled, minimal episodes/steps for a fast single-task validation.
+seam:
+  seam_enabled: true
+  seam_lambda: 0.1
+  seam_guided_window: 20     # clamped to min(20, L=5)=5
+  seam_horizon: 10
+  seam_execution_length: 5
+  seam_num_ode_steps: 10
+  seam_guided_dimensions: all_physical
+  seam_target_mode: repeat_last_tail
+  seam_log_corrections: true
+  seam_assert_baseline_shape: true
+  num_valid_physical_dims: 7
+  action_dim: 32
+
+# Rollout knobs consumed by the experiment scripts (not part of SeamConfig).
+rollout:
+  task_suite_name: libero_10
+  task_ids: [0]
+  num_episodes: 2
+  max_steps: 120
+  seed: 7

@@ -1,0 +1,37 @@
+diff --git a/src/openpi/models/pi0.py b/src/openpi/models/pi0.py
+index ae7c459..9bc1c80 100644
+--- a/src/openpi/models/pi0.py
++++ b/src/openpi/models/pi0.py
+@@ -1,3 +1,4 @@
++from collections.abc import Callable
+ import logging
+ 
+ import einops
+@@ -221,7 +222,13 @@ class Pi0(_model.BaseModel):
+         *,
+         num_steps: int | at.Int[at.Array, ""] = 10,
+         noise: at.Float[at.Array, "b ah ad"] | None = None,
++        guidance_fn: Callable[[at.Array, at.Array], at.Array] | None = None,
+     ) -> _model.Actions:
++        # `guidance_fn` is an OPTIONAL, inference-only, post-Euler denoising hook. When provided, it is
++        # called with (candidate, t_next) after each standard Euler update and must return a corrected
++        # state of the same shape/dtype (pure/JAX-traceable — the loop runs under jax.jit). When None
++        # (the default), sampling is byte-for-byte identical to the original baseline. This is the
++        # generic extension point used by SEAM/VLS; no dependency on any specific guidance method.
+         observation = _model.preprocess_observation(None, observation, train=False)
+         # note that we use the convention more common in diffusion literature, where t=1 is noise and t=0 is the target
+         # distribution. yes, this is the opposite of the pi0 paper, and I'm sorry.
+@@ -268,7 +275,12 @@ class Pi0(_model.BaseModel):
+             assert prefix_out is None
+             v_t = self.action_out_proj(suffix_out[:, -self.action_horizon :])
+ 
+-            return x_t + dt * v_t, time + dt
++            x_next = x_t + dt * v_t
++            time_next = time + dt
++            if guidance_fn is not None:
++                # Post-Euler guidance hook (e.g. SEAM/VLS). Identity when guidance_fn is None.
++                x_next = guidance_fn(x_next, time_next)
++            return x_next, time_next
+ 
+         def cond(carry):
+             x_t, time = carry

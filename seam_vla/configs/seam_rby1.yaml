@@ -1,0 +1,21 @@
+# SEAM (VLS) profile for the RB-Y1 pi05_rby1_lora fine-tune.
+# Verified from data/policy_records: H=50, 14-dim actions (absolute output; model space = base-relative
+# delta), K=OPEN_LOOP_HORIZON=8 -> L=42. Within-run boundary jerk is 1.75x interior on real records.
+seam:
+  seam_enabled: true
+  seam_lambda: 0.1
+  seam_guided_window: 20            # M; clamped to min(20, L=42)=20
+  seam_horizon: 50                  # H (must match pi05_rby1_lora action_horizon)
+  seam_execution_length: 8          # K = OPEN_LOOP_HORIZON in pi05_infer.py
+  seam_num_ode_steps: 10            # N (pi0.5 default; verify on server)
+  # Arm joints only; exclude grippers (dims 6, 13) which are near-binary open/close.
+  seam_guided_dimensions: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12]
+  num_valid_physical_dims: 14       # dual-arm 6+1+6+1
+  action_dim: 32                    # pi0.5 padded model action dim
+  seam_target_mode: repeat_last_tail
+  seam_stage: denoising             # VLS inside the ODE
+  seam_delta_base_compensation: true  # rby1 model space is base-relative delta -> compensate
+  # False keeps normal serving to one sample/chunk. For a one-off measured sanity check, launch
+  # serve_seam_policy with --verify-first-correction (one extra baseline sample on guided chunk #1).
+  seam_log_corrections: false
+  seam_assert_baseline_shape: true

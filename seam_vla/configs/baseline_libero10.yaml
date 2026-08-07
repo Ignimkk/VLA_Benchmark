@@ -1,0 +1,15 @@
+# Baseline (SEAM disabled) — exact upstream pi0.5 behavior on LIBERO-10.
+# Derived profile for the local pi05_libero checkpoint (NOT the paper's H=50/K=10/M=20).
+seam:
+  seam_enabled: false
+  seam_lambda: 0.1
+  seam_guided_window: 5      # M; clamped to min(M, L=5)
+  seam_horizon: 10           # H (checkpoint-baked; paper is 50 but not reproducible here)
+  seam_execution_length: 5   # K = replan_steps (paper is 10)
+  seam_num_ode_steps: 10     # N
+  seam_guided_dimensions: all_physical
+  seam_target_mode: repeat_last_tail
+  seam_log_corrections: true
+  seam_assert_baseline_shape: true
+  num_valid_physical_dims: 7
+  action_dim: 32
