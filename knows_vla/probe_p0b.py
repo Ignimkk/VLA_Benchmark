@@ -26,7 +26,26 @@ PAPER_LAYER, PAPER_HEAD = 12, 3
 AGENTVIEW_KEYS = (0, 256)
 G = 16
 BETA = -1.0  # Eq. (3), stated in the paper
-ROBOT_PREFIXES = ("MountedPanda", "RethinkMount", "PandaGripper", "Panda")
+# Robot instances are never candidate objects. Matched as substrings because LIBERO names them
+# per-scene: MountedPanda0, OnTheGroundPanda0, NullMount0, RethinkMount0, PandaGripper0, ...
+ROBOT_TOKENS = ("Panda", "Mount", "Gripper", "Robot")
+
+
+def _is_robot(name: str) -> bool:
+    return any(tok in name for tok in ROBOT_TOKENS)
+
+
+def _to_instance(name: str, names: list[str]) -> str | None:
+    """Map a BDDL goal argument to the segmentation instance it belongs to.
+
+    LIBERO goals refer to *regions*, not objects: `basket_1_contain_region`,
+    `flat_stove_1_cook_region`, `white_cabinet_1_bottom_region`. Instance segmentation only knows
+    the parent object, so resolve a region to the longest instance name that prefixes it.
+    """
+    if name in names:
+        return name
+    cands = [n for n in names if name.startswith(n)]
+    return max(cands, key=len) if cands else None
 
 
 # --------------------------------------------------------------------------------------- masks
@@ -174,17 +193,25 @@ def run(episodes: list[pathlib.Path], *, window_k: int, denoise_steps: tuple[int
 def _one_episode(episode, policy, sampler, denoise_steps, agg_names, n_layers, n_heads, stride=1):
     d = np.load(episode, allow_pickle=True)
     id2name = {int(s.split(":", 1)[0]): s.split(":", 1)[1] for s in d["id2name"]}
-    obj_ids = np.array([i for i in sorted(id2name) if i != 0 and not id2name[i].startswith(ROBOT_PREFIXES)])
+    obj_ids = np.array([i for i in sorted(id2name) if i != 0 and not _is_robot(id2name[i])])
     # Shuffle candidate order. np.argsort breaks ties by lowest index, and the GT target
     # (akita_black_bowl_1, id 1) sorts first -- every near-tie would silently score as a hit.
     rng = np.random.default_rng(0)
     perm = rng.permutation(len(obj_ids))
     obj_ids = obj_ids[perm]
     names = [id2name[i] for i in obj_ids]
-    target_name = str(d["manipulated"][0])
-    target_k = names.index(target_name)
-    dest_name = str(d["destinations"][0])
-    dest_k = names.index(dest_name) if dest_name in names else target_k
+    # A task may state several goal predicates ("put BOTH the soup AND the sauce in the basket"),
+    # which the policy satisfies sequentially. We cannot tell which sub-goal is active without
+    # object poses, so score against the SET of phase-appropriate objects and report the resulting
+    # chance level honestly rather than pretending there is a single target.
+    reach_set = sorted({j for n in d["manipulated"] if (j := _to_instance(str(n), names))})
+    place_set = sorted({j for n in d["destinations"] if (j := _to_instance(str(n), names))})
+    if not reach_set:
+        raise ValueError(f"{episode.name}: no goal object resolved from {list(d['manipulated'])}")
+    if not place_set:
+        place_set = reach_set
+    reach_idx = np.array([names.index(n) for n in reach_set])
+    place_idx = np.array([names.index(n) for n in place_set])
 
     keep = np.arange(0, len(d["t"]), stride)
     n_steps = len(keep)
@@ -196,14 +223,18 @@ def _one_episode(episode, policy, sampler, denoise_steps, agg_names, n_layers, n
     grip = d["action"][keep, 6]
     closed = np.flatnonzero(grip > 0)
     grasp_t = int(closed[0]) if closed.size else n_steps
-    per_step_target = np.where(np.arange(n_steps) < grasp_t, target_k, dest_k)
+    target_sets = [set(reach_idx.tolist()) if t < grasp_t else set(place_idx.tolist())
+                   for t in range(n_steps)]
+    # Chance level is |target set| / |candidates|, averaged over steps -- it is NOT 1/N when a task
+    # has several goal objects.
+    chance = float(np.mean([len(ts) for ts in target_sets]) / len(names))
 
     print(f"episode      : {episode.name}")
     print(f"prompt       : {d['prompt']}")
-    print(f"GT target    : reach -> {target_name} | place -> {dest_name}")
+    print(f"GT target    : reach -> {reach_set} | place -> {place_set}")
     print(f"candidates   : {names}")
     print(f"steps        : {n_steps} (stride {stride}), grasp at scored step {grasp_t} "
-          f"({grasp_t} reach / {n_steps - grasp_t} place), beta = {BETA}")
+          f"({grasp_t} reach / {n_steps - grasp_t} place), chance = {chance:.3f}, beta = {BETA}")
 
     # mass[d_idx, agg, t, layer, head, obj], alpha[t, obj]
     mass = np.zeros((len(denoise_steps), len(agg_names), n_steps, n_layers, n_heads, len(obj_ids)), np.float32)
@@ -233,9 +264,8 @@ def _one_episode(episode, policy, sampler, denoise_steps, agg_names, n_layers, n
         ctrl_mass[1, t] = flat_cov @ ctrl_rng.permutation(paper_grid)
         if (t + 1) % 20 == 0:
             print(f"  ... {t + 1}/{n_steps} steps")
-    return {"mass": mass, "alpha": alpha, "ctrl_mass": ctrl_mass, "target_k": target_k,
-            "dest_k": dest_k, "grasp_t": grasp_t, "per_step_target": per_step_target,
-            "names": names, "n_steps": n_steps}
+    return {"mass": mass, "alpha": alpha, "ctrl_mass": ctrl_mass, "target_sets": target_sets,
+            "grasp_t": grasp_t, "chance": chance, "names": names, "n_steps": n_steps}
 
 def _score(per_ep, window_k, denoise_steps, agg_names, n_layers, n_heads):
     """Eq. (3): d_i = sum_K mass / sum_K alpha (beta = -1), windowed within each episode."""
@@ -255,7 +285,8 @@ def _score(per_ep, window_k, denoise_steps, agg_names, n_layers, n_heads):
                     den = np.maximum(e["alpha"][s0 : t + 1].sum(axis=0), 1e-6)
                     dens = num / den
                     order = np.argsort(-dens, axis=-1)
-                    hit = order[..., 0] == e["per_step_target"][t]
+                    top1 = order[..., 0]
+                    hit = np.isin(top1, list(e["target_sets"][t]))
                     hits += hit
                     if t < e["grasp_t"]:
                         reach_hits += hit
@@ -277,20 +308,22 @@ def _score(per_ep, window_k, denoise_steps, agg_names, n_layers, n_heads):
                 s0 = max(0, t - window_k + 1)
                 dens = e["ctrl_mass"][ci, s0 : t + 1].sum(axis=0) / np.maximum(
                     e["alpha"][s0 : t + 1].sum(axis=0), 1e-6)
-                hit += int(np.argmax(dens) == e["per_step_target"][t])
+                hit += int(int(np.argmax(dens)) in e["target_sets"][t])
         ctrl[cname] = hit / total
-    return results, (n_layers, n_heads), per_ep[0]["names"], per_ep[0]["target_k"], total, ctrl
+    # Chance is the step-weighted mean of |target set| / |candidates| across episodes, since
+    # scenes differ in object count and tasks differ in how many goal objects they name.
+    chance = float(np.average([e["chance"] for e in per_ep], weights=[e["n_steps"] for e in per_ep]))
+    return results, (n_layers, n_heads), chance, total, ctrl
 
 
-def report(results, shape, names, target_k, n_steps, ctrl):
+def report(results, shape, chance, n_steps, ctrl):
     n_layers, n_heads = shape
     print("\n" + "=" * 78)
     print("Target-hit rate by (denoise step, aggregation) — paper cell is layer 12 / head 3")
     print("=" * 78)
-    chance = 1.0 / len(names)
+    print(f"scored steps: {n_steps}")
     print(f"controls: uniform-attention={ctrl['uniform']:.3f}  "
-          f"shuffled-attention={ctrl['shuffled']:.3f}  chance={chance:.3f}  "
-          f"(target is 1 of {len(names)} candidates)")
+          f"shuffled-attention={ctrl['shuffled']:.3f}  chance={chance:.3f}")
     best_overall = None
     for (ds, an), (hits, gaps, rh, ph, nr, npl) in sorted(results.items()):
         paper = hits[PAPER_LAYER, PAPER_HEAD]
@@ -332,11 +365,11 @@ def main() -> None:
     p.add_argument("--stride", type=int, default=1,
                    help="score every Nth rollout step; steps are strongly autocorrelated")
     a = p.parse_args()
-    results, shape, names, target_k, n_steps, ctrl = run(
+    results, shape, chance, n_steps, ctrl = run(
         [pathlib.Path(x) for x in a.episodes], window_k=a.window_k,
         denoise_steps=tuple(a.denoise_steps), agg_names=tuple(a.aggs), stride=a.stride
     )
-    report(results, shape, names, target_k, n_steps, ctrl)
+    report(results, shape, chance, n_steps, ctrl)
 
 
 if __name__ == "__main__":
