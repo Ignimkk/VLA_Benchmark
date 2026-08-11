@@ -186,21 +186,23 @@ def _one_episode(episode, policy, sampler, denoise_steps, agg_names, n_layers, n
     dest_name = str(d["destinations"][0])
     dest_k = names.index(dest_name) if dest_name in names else target_k
 
+    keep = np.arange(0, len(d["t"]), stride)
+    n_steps = len(keep)
+
     # Phase boundary: the paper scores the "phase-appropriate" object -- the manipulated object
     # while reaching, the destination while placing (§3.4). The gripper command is a clean binary
     # signal for that switch: LIBERO actions carry -1 (open) / +1 (close) in the last dimension.
+    # Indexed by `keep` so grasp_t is in scored-step units, not raw rollout steps.
     grip = d["action"][keep, 6]
     closed = np.flatnonzero(grip > 0)
-    grasp_t = int(closed[0]) if closed.size else len(grip)
-    per_step_target = np.where(np.arange(len(grip)) < grasp_t, target_k, dest_k)
+    grasp_t = int(closed[0]) if closed.size else n_steps
+    per_step_target = np.where(np.arange(n_steps) < grasp_t, target_k, dest_k)
 
     print(f"episode      : {episode.name}")
     print(f"prompt       : {d['prompt']}")
     print(f"GT target    : reach -> {target_name} | place -> {dest_name}")
     print(f"candidates   : {names}")
-    keep = np.arange(0, len(d["t"]), stride)
-    n_steps = len(keep)
-    print(f"steps        : {n_steps}, grasp at t={grasp_t} "
+    print(f"steps        : {n_steps} (stride {stride}), grasp at scored step {grasp_t} "
           f"({grasp_t} reach / {n_steps - grasp_t} place), beta = {BETA}")
 
     # mass[d_idx, agg, t, layer, head, obj], alpha[t, obj]
