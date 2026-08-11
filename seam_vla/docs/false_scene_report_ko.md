@@ -173,7 +173,7 @@ tmux new -A -s gridfalse_base
 src/openpi/.venv/bin/python src/rby1_bringup/pi05_ex_infer.py \
   --model rby1 --remote localhost:8123 \
   --grid-experiment --headless --grid-record-all \
-  --grid-config src/rby1_manipulation/block_false_grid.json \
+  --grid-config src/rby1_manipulation/src/rby1_manipulation/config/grids/block_false_grid.json \
   --grid-repeats 30 \
   --grid-output-dir data/rby1_grid_eval_false_scene_baseline
 ```

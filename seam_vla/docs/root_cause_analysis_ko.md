@@ -12,7 +12,7 @@
 
 ## 0.1 학습 데이터 수집 범위
 
-`src/rby1_manipulation/scene_utils.py:30-31`:
+`src/rby1_manipulation/src/rby1_manipulation/simulation/common.py`:
 
 ```python
 RIGHT_ARM_REACH = dict(x=(0.45, 0.60), y=(-0.32, -0.15))

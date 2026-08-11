@@ -120,7 +120,7 @@ Paired 분할표: 둘 다 성공 163, baseline만 7, SEAM만 10, 둘 다 실패 
 
 실험 1에서 셀당 n=9로 결론 불가였던 x=0.625를 **n=90**으로 재측정. 기존 |y| ∈ {0.178, 0.235}에 **보간 지점 0.206을 신규 추가**.
 
-`src/rby1_manipulation/block_false_grid.json` — 6지점(±0.178, ±0.206, ±0.235) × 3색 × 30반복 = **540 trials**, SEAM 단일 조건.
+`src/rby1_manipulation/src/rby1_manipulation/config/grids/block_false_grid.json` — 6지점(±0.178, ±0.206, ±0.235) × 3색 × 30반복 = **540 trials**, SEAM 단일 조건.
 
 ### 어떻게
 

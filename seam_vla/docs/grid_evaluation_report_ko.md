@@ -197,7 +197,7 @@ SEAM의 chunk/trial이 적은 것(32.8 vs 34.8)은 에피소드가 더 빨리 �
 
 ## 8. 추가 실험 실행 절차
 
-`src/rby1_manipulation/block_false_grid.json` — x=0.625의 6개 지점(±0.178, ±0.206, ±0.235). ±0.206은 기존 그리드에 없던 보간 지점입니다.
+`src/rby1_manipulation/src/rby1_manipulation/config/grids/block_false_grid.json` — x=0.625의 6개 지점(±0.178, ±0.206, ±0.235). ±0.206은 기존 그리드에 없던 보간 지점입니다.
 
 **칸당 30회** 기준 반복 수는 색상 사용 방식에 따라 달라집니다:
 
@@ -217,7 +217,7 @@ tmux new -A -s gridfalse
 src/openpi/.venv/bin/python src/rby1_bringup/pi05_ex_infer.py \
   --model rby1 --remote localhost:8123 --seam \
   --grid-experiment --headless --grid-record-all \
-  --grid-config src/rby1_manipulation/block_false_grid.json \
+  --grid-config src/rby1_manipulation/src/rby1_manipulation/config/grids/block_false_grid.json \
   --grid-colors red --grid-repeats 30 \
   --grid-output-dir data/rby1_grid_eval_false_scene
 ```
