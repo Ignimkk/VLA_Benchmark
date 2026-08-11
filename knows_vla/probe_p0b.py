@@ -158,18 +158,20 @@ class AttnSampler:
 AGGS = {"mean": lambda a: a.mean(axis=2), "sum": lambda a: a.sum(axis=2), "last": lambda a: a[:, :, -1]}
 
 
-def run(episodes: list[pathlib.Path], *, window_k: int, denoise_steps: tuple[int, ...], agg_names: tuple[str, ...]):
+def run(episodes: list[pathlib.Path], *, window_k: int, denoise_steps: tuple[int, ...],
+        agg_names: tuple[str, ...], stride: int = 1):
     """Pool several episodes. The Eq. (3) window never straddles an episode boundary."""
     policy = _load_model()
     sampler = AttnSampler(policy._model)  # noqa: SLF001
     n_layers, n_heads = 18, 8
     per_ep = []
     for ep_path in episodes:
-        per_ep.append(_one_episode(ep_path, policy, sampler, denoise_steps, agg_names, n_layers, n_heads))
+        per_ep.append(_one_episode(ep_path, policy, sampler, denoise_steps, agg_names, n_layers,
+                                   n_heads, stride))
     return _score(per_ep, window_k, denoise_steps, agg_names, n_layers, n_heads)
 
 
-def _one_episode(episode, policy, sampler, denoise_steps, agg_names, n_layers, n_heads):
+def _one_episode(episode, policy, sampler, denoise_steps, agg_names, n_layers, n_heads, stride=1):
     d = np.load(episode, allow_pickle=True)
     id2name = {int(s.split(":", 1)[0]): s.split(":", 1)[1] for s in d["id2name"]}
     obj_ids = np.array([i for i in sorted(id2name) if i != 0 and not id2name[i].startswith(ROBOT_PREFIXES)])
@@ -181,13 +183,25 @@ def _one_episode(episode, policy, sampler, denoise_steps, agg_names, n_layers, n
     names = [id2name[i] for i in obj_ids]
     target_name = str(d["manipulated"][0])
     target_k = names.index(target_name)
+    dest_name = str(d["destinations"][0])
+    dest_k = names.index(dest_name) if dest_name in names else target_k
+
+    # Phase boundary: the paper scores the "phase-appropriate" object -- the manipulated object
+    # while reaching, the destination while placing (§3.4). The gripper command is a clean binary
+    # signal for that switch: LIBERO actions carry -1 (open) / +1 (close) in the last dimension.
+    grip = d["action"][keep, 6]
+    closed = np.flatnonzero(grip > 0)
+    grasp_t = int(closed[0]) if closed.size else len(grip)
+    per_step_target = np.where(np.arange(len(grip)) < grasp_t, target_k, dest_k)
 
     print(f"episode      : {episode.name}")
     print(f"prompt       : {d['prompt']}")
-    print(f"GT target    : {target_name}  (reach phase; destination = {d['destinations'][0]})")
+    print(f"GT target    : reach -> {target_name} | place -> {dest_name}")
     print(f"candidates   : {names}")
-    n_steps = len(d["t"])
-    print(f"steps        : {n_steps}, beta = {BETA}")
+    keep = np.arange(0, len(d["t"]), stride)
+    n_steps = len(keep)
+    print(f"steps        : {n_steps}, grasp at t={grasp_t} "
+          f"({grasp_t} reach / {n_steps - grasp_t} place), beta = {BETA}")
 
     # mass[d_idx, agg, t, layer, head, obj], alpha[t, obj]
     mass = np.zeros((len(denoise_steps), len(agg_names), n_steps, n_layers, n_heads, len(obj_ids)), np.float32)
@@ -200,10 +214,10 @@ def _one_episode(episode, policy, sampler, denoise_steps, agg_names, n_layers, n
     ctrl_mass = np.zeros((2, n_steps, len(obj_ids)), np.float32)
     ctrl_rng = np.random.default_rng(1)
 
-    for t in range(n_steps):
-        obs = _observation(policy, d["image"][t], d["wrist_image"][t], d["state"][t], str(d["prompt"]))
+    for t, src in enumerate(keep):
+        obs = _observation(policy, d["image"][src], d["wrist_image"][src], d["state"][src], str(d["prompt"]))
         grids = sampler.attention_all_steps(obs)
-        cov, area = coverage_and_area(d["seg_full"][t], obj_ids)
+        cov, area = coverage_and_area(d["seg_full"][src], obj_ids)
         alpha[t] = area
         flat_cov = cov.reshape(len(obj_ids), -1)  # [O, 256]
         for di, ds in enumerate(denoise_steps):
@@ -218,6 +232,7 @@ def _one_episode(episode, policy, sampler, denoise_steps, agg_names, n_layers, n
         if (t + 1) % 20 == 0:
             print(f"  ... {t + 1}/{n_steps} steps")
     return {"mass": mass, "alpha": alpha, "ctrl_mass": ctrl_mass, "target_k": target_k,
+            "dest_k": dest_k, "grasp_t": grasp_t, "per_step_target": per_step_target,
             "names": names, "n_steps": n_steps}
 
 def _score(per_ep, window_k, denoise_steps, agg_names, n_layers, n_heads):
@@ -227,6 +242,9 @@ def _score(per_ep, window_k, denoise_steps, agg_names, n_layers, n_heads):
     for di, ds in enumerate(denoise_steps):
         for ai, an in enumerate(agg_names):
             hits = np.zeros((n_layers, n_heads), np.float32)
+            reach_hits = np.zeros((n_layers, n_heads), np.float32)
+            place_hits = np.zeros((n_layers, n_heads), np.float32)
+            n_reach = n_place = 0
             gaps = []
             for e in per_ep:
                 for t in range(e["n_steps"]):
@@ -235,10 +253,19 @@ def _score(per_ep, window_k, denoise_steps, agg_names, n_layers, n_heads):
                     den = np.maximum(e["alpha"][s0 : t + 1].sum(axis=0), 1e-6)
                     dens = num / den
                     order = np.argsort(-dens, axis=-1)
-                    hits += order[..., 0] == e["target_k"]
+                    hit = order[..., 0] == e["per_step_target"][t]
+                    hits += hit
+                    if t < e["grasp_t"]:
+                        reach_hits += hit
+                        n_reach += 1
+                    else:
+                        place_hits += hit
+                        n_place += 1
                     top = np.take_along_axis(dens, order[..., :2], axis=-1)
                     gaps.append(top[..., 0] - top[..., 1])
-            results[(ds, an)] = (hits / total, np.stack(gaps, axis=-1))
+            results[(ds, an)] = (hits / total, np.stack(gaps, axis=-1),
+                                 reach_hits / max(n_reach, 1), place_hits / max(n_place, 1),
+                                 n_reach, n_place)
 
     ctrl = {}
     for ci, cname in enumerate(("uniform", "shuffled")):
@@ -248,7 +275,7 @@ def _score(per_ep, window_k, denoise_steps, agg_names, n_layers, n_heads):
                 s0 = max(0, t - window_k + 1)
                 dens = e["ctrl_mass"][ci, s0 : t + 1].sum(axis=0) / np.maximum(
                     e["alpha"][s0 : t + 1].sum(axis=0), 1e-6)
-                hit += int(np.argmax(dens) == e["target_k"])
+                hit += int(np.argmax(dens) == e["per_step_target"][t])
         ctrl[cname] = hit / total
     return results, (n_layers, n_heads), per_ep[0]["names"], per_ep[0]["target_k"], total, ctrl
 
@@ -263,11 +290,12 @@ def report(results, shape, names, target_k, n_steps, ctrl):
           f"shuffled-attention={ctrl['shuffled']:.3f}  chance={chance:.3f}  "
           f"(target is 1 of {len(names)} candidates)")
     best_overall = None
-    for (ds, an), (hits, gaps) in sorted(results.items()):
+    for (ds, an), (hits, gaps, rh, ph, nr, npl) in sorted(results.items()):
         paper = hits[PAPER_LAYER, PAPER_HEAD]
         bl, bh = np.unravel_index(np.argmax(hits), hits.shape)
-        print(f"\ndenoise={ds:<2} agg={an:<5}  paper(12,3)={paper:.3f}   "
-              f"best=({bl},{bh})={hits[bl, bh]:.3f}   mean={hits.mean():.3f}   chance={chance:.3f}")
+        print(f"\ndenoise={ds:<2} agg={an:<5}  paper(12,3)={paper:.3f} "
+              f"[reach {rh[PAPER_LAYER, PAPER_HEAD]:.3f} n={nr} / place {ph[PAPER_LAYER, PAPER_HEAD]:.3f} n={npl}]"
+              f"   best=({bl},{bh})={hits[bl, bh]:.3f}   mean={hits.mean():.3f}")
         if best_overall is None or hits[bl, bh] > best_overall[0]:
             best_overall = (hits[bl, bh], ds, an, int(bl), int(bh))
     print("\n" + "=" * 78)
@@ -276,7 +304,7 @@ def report(results, shape, names, target_k, n_steps, ctrl):
 
     # Full layer x head map for the paper's configuration, to compare against Figure 2.
     key = (0, "mean") if (0, "mean") in results else sorted(results)[0]
-    hits, gaps = results[key]
+    hits, gaps, rh, ph, nr, npl = results[key]
     print("\n" + "=" * 78)
     print(f"layer x head hit rate  (denoise={key[0]}, agg={key[1]})   [paper cell marked *]")
     print("=" * 78)
@@ -287,7 +315,9 @@ def report(results, shape, names, target_k, n_steps, ctrl):
         )
         print(f"  {l:2d}  {row}  {hits[l].max():5.2f}")
     g = gaps[PAPER_LAYER, PAPER_HEAD]
-    print(f"\npaper cell (12,3): hit={hits[PAPER_LAYER, PAPER_HEAD]:.3f}  "
+    print(f"\nphase split at paper cell: reach={rh[PAPER_LAYER, PAPER_HEAD]:.3f} (n={nr})  "
+          f"place={ph[PAPER_LAYER, PAPER_HEAD]:.3f} (n={npl})")
+    print(f"paper cell (12,3): hit={hits[PAPER_LAYER, PAPER_HEAD]:.3f}  "
           f"gap median={np.median(g):.3e}  gap p10={np.percentile(g, 10):.3e}  gap max={g.max():.3e}")
 
 
@@ -297,9 +327,12 @@ def main() -> None:
     p.add_argument("--window-k", type=int, default=5, help="Eq. (3) sliding window; paper value unknown")
     p.add_argument("--denoise-steps", type=int, nargs="+", default=[0, 5, 9])
     p.add_argument("--aggs", nargs="+", default=["mean", "sum", "last"])
+    p.add_argument("--stride", type=int, default=1,
+                   help="score every Nth rollout step; steps are strongly autocorrelated")
     a = p.parse_args()
     results, shape, names, target_k, n_steps, ctrl = run(
-        [pathlib.Path(x) for x in a.episodes], window_k=a.window_k, denoise_steps=tuple(a.denoise_steps), agg_names=tuple(a.aggs)
+        [pathlib.Path(x) for x in a.episodes], window_k=a.window_k,
+        denoise_steps=tuple(a.denoise_steps), agg_names=tuple(a.aggs), stride=a.stride
     )
     report(results, shape, names, target_k, n_steps, ctrl)
 
