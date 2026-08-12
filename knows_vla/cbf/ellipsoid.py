@@ -1,6 +1,6 @@
 """Separating-hyperplane CBF for ellipsoid pairs — KNOWS Eq. (5)-(11).
 
-Convention (matches papers/KNOWS/03-math.md):
+Convention (matches benchmark/knows_vla/docs/03-math.md):
     E = {c + Q^(1/2) u : ||u|| <= 1},  Q symmetric positive definite.
 so the support function along a direction n is  max_{y in E} n.y = n.c + sqrt(n' Q n).
 

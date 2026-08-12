@@ -98,7 +98,7 @@ def main() -> None:
     p.add_argument("--episodes", nargs="+",
                    default=["data/knows_p0b/libero_spatial_task0_ep0.npz",
                             "data/knows_p0b/libero_object_task0_ep0.npz"])
-    p.add_argument("--camera-params", default="data/knows_p0b/camera_params.json")
+    p.add_argument("--camera-params", default="benchmark/knows_vla/camera_params.json")
     a = p.parse_args()
 
     cams = json.loads(pathlib.Path(a.camera_params).read_text())

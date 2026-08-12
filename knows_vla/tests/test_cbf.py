@@ -1,4 +1,4 @@
-"""P1 — CBF-QP unit verification. Covers every check in papers/KNOWS/06-repro-plan.md §8.2.
+"""P1 — CBF-QP unit verification. Covers every check in benchmark/knows_vla/docs/06-repro-plan.md §8.2.
 
 No model, no simulator: pure numerics against the paper's equations.
 
@@ -68,7 +68,7 @@ def test_barrier_equals_exact_gap_for_spheres():
 def test_gamma_elimination_is_not_a_relaxation_of_collision_freeness():
     """h(n) >= 0 implies a separating offset gamma exists, so Eq. (6) still certifies separation.
 
-    This is the claim in papers/KNOWS/03-math.md that the paper's own appendix understates.
+    This is the claim in benchmark/knows_vla/docs/03-math.md that the paper's own appendix understates.
     """
     rng = np.random.default_rng(3)
     checked = 0
@@ -235,7 +235,7 @@ def test_infeasible_falls_back_to_emergency_stop():
 def test_eps_normal_relaxes_the_constraint_monotonically():
     """Larger eps must let the filter advance further -- eps trades safety for hyperplane agility.
 
-    The paper presents eps only as a smoothness bound; see papers/KNOWS/03-math.md.
+    The paper presents eps only as a smoothness bound; see benchmark/knows_vla/docs/03-math.md.
     """
     robot = Ellipsoid.sphere([0.0, 0, 0], 0.05)
     obstacles = {0: Ellipsoid.from_semi_axes([0.14, 0.02, 0.0], [0.05, 0.03, 0.04])}

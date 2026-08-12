@@ -59,7 +59,7 @@ def main() -> None:
     p.add_argument("--suites", nargs="+",
                    default=["libero_spatial", "libero_object", "libero_goal", "libero_10"])
     p.add_argument("--task-ids", type=int, nargs="+", default=[0, 1, 2, 3, 4])
-    p.add_argument("--out", default="data/knows_p0b/camera_params.json")
+    p.add_argument("--out", default="benchmark/knows_vla/camera_params.json")
     a = p.parse_args()
 
     table = {}

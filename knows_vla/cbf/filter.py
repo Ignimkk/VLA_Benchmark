@@ -28,7 +28,7 @@ from benchmark.knows_vla.cbf.ellipsoid import (
 
 @dataclasses.dataclass(frozen=True)
 class CbfParams:
-    """None of these five values appear in the paper. See papers/KNOWS/OPEN-QUESTIONS.md #1."""
+    """None of these five values appear in the paper. See benchmark/knows_vla/docs/OPEN-QUESTIONS.md #1."""
 
     gamma_h: float = 0.5  # Eq. (7) decay, (0, 1]              [ASSUMPTION]
     W: float = 1.0  # Eq. (12) rotation vs translation weight   [ASSUMPTION]
@@ -146,6 +146,6 @@ def effective_margin(n, robot: Ellipsoid, obstacle: Ellipsoid, eps: float) -> fl
 
     ``delta n`` appears in no objective term, so the QP is free to spend the whole box on making
     the constraint easier. The paper presents ``eps`` only as a smoothness bound on the hyperplane
-    estimate and never notes that it also weakens safety. See papers/KNOWS/03-math.md.
+    estimate and never notes that it also weakens safety. See benchmark/knows_vla/docs/03-math.md.
     """
     return float(eps * np.abs(grad_normal(n, robot, obstacle)).sum())

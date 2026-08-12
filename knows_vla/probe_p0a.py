@@ -1,7 +1,7 @@
 """P0a — attention extraction plumbing probe for the KNOWS reverse engineering.
 
 Validates, against the real ``pi05_libero`` checkpoint, every shape claim made in
-``papers/KNOWS/02-architecture.md`` §3.4, and checks that the ``return_probs`` hook added to
+``benchmark/knows_vla/docs/02-architecture.md`` §3.4, and checks that the ``return_probs`` hook added to
 ``openpi/models/gemma.py`` does not perturb the baseline forward pass.
 
 This probe does NOT test the paper's scientific claim (that layer 12 / head 3 localizes the
@@ -19,7 +19,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-# Values the analysis predicts; see papers/KNOWS/02-architecture.md §3.4.
+# Values the analysis predicts; see benchmark/knows_vla/docs/02-architecture.md §3.4.
 EXPECTED = {
     "n_layers": 18,          # gemma_2b depth
     "n_heads": 8,            # gemma_2b num_heads
