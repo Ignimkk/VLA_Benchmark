@@ -97,7 +97,9 @@ def mvee(points: np.ndarray, tol: float = 1e-3, max_iter: int = 10_000):
     Q_lift = np.vstack([P.T, np.ones(n)])
     u = np.full(n, 1.0 / n)
     for _ in range(max_iter):
-        X = Q_lift @ np.diag(u) @ Q_lift.T
+        # Scale columns instead of building diag(u): that matrix is n x n, so materializing it
+        # turns each iteration into an O(n^2) matmul (128 MB at n=4000) and the fit never finishes.
+        X = (Q_lift * u) @ Q_lift.T
         M = np.einsum("ij,jk,ki->i", Q_lift.T, np.linalg.inv(X), Q_lift)
         j = int(np.argmax(M))
         step = (M[j] - d - 1.0) / ((d + 1.0) * (M[j] - 1.0))
@@ -111,7 +113,7 @@ def mvee(points: np.ndarray, tol: float = 1e-3, max_iter: int = 10_000):
         u = new_u
 
     c = P.T @ u
-    A = np.linalg.inv(P.T @ np.diag(u) @ P - np.outer(c, c)) / d  # (x-c)' A (x-c) <= 1
+    A = np.linalg.inv((P.T * u) @ P - np.outer(c, c)) / d  # (x-c)' A (x-c) <= 1
     return c, np.linalg.inv(0.5 * (A + A.T))
 
 

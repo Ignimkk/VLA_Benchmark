@@ -41,6 +41,13 @@ class CbfParams:
     solver_eps_abs: float = 1e-9
     solver_eps_rel: float = 1e-9
     solver_max_iter: int = 20_000
+    # NOT in the paper. Eq. (12) bounds delta_n but never delta_c or delta_theta, so a badly
+    # violated barrier can demand an arbitrarily large correction -- measured up to 5 m against a
+    # 5 cm OSC action limit (docs/11-p2b-results.md). Setting these adds box constraints, which
+    # also makes the QP genuinely infeasible sometimes and so lets the paper's emergency-stop
+    # fallback actually fire. Leave as None to reproduce Eq. (12) literally. See OPEN-QUESTIONS #13.
+    max_delta_pos: float | None = None
+    max_delta_rot: float | None = None
 
 
 @dataclasses.dataclass
@@ -110,9 +117,23 @@ class SafetyFilter:
         # Eq. (8) per obstacle, then the box ||delta n||_inf <= eps.
         box = np.zeros((3 * m, n_var))
         box[:, 6:] = np.eye(3 * m)
-        A = sp.csc_matrix(np.vstack([A_rows, box]))
-        lower = np.concatenate([-self.p.gamma_h * h_vals, np.full(3 * m, -self.p.eps_normal)])
-        upper = np.concatenate([np.full(m, np.inf), np.full(3 * m, self.p.eps_normal)])
+        rows = [A_rows, box]
+        lower = [-self.p.gamma_h * h_vals, np.full(3 * m, -self.p.eps_normal)]
+        upper = [np.full(m, np.inf), np.full(3 * m, self.p.eps_normal)]
+
+        # Optional action limits (not in Eq. 12) -- see the CbfParams note.
+        for slice_, bound in ((slice(0, 3), self.p.max_delta_pos), (slice(3, 6), self.p.max_delta_rot)):
+            if bound is None:
+                continue
+            lim = np.zeros((3, n_var))
+            lim[:, slice_] = np.eye(3)
+            rows.append(lim)
+            lower.append(np.full(3, -abs(bound)))
+            upper.append(np.full(3, abs(bound)))
+
+        A = sp.csc_matrix(np.vstack(rows))
+        lower = np.concatenate(lower)
+        upper = np.concatenate(upper)
 
         solver = osqp.OSQP()
         solver.setup(
