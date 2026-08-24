@@ -1,0 +1,87 @@
+# Trajectory optimization for RB-Y1 with pi0.5 + SEAM + AG3S.
+#
+#   src/openpi/.venv/bin/python -m benchmark.trajopt.qp --benchmark
+#
+# Every number here is either a property of the deployment (marked) or a measurement. Nothing is a
+# preference. The measurements were taken on the RB-Y1 collision model (61 spheres, 12 optimized
+# joints) with a 53 mm near-miss; see README.md for the tables.
+
+horizon:
+  # Deployment, not choice: pi05_infer.py runs at CTRL_HZ=15 and consumes OPEN_LOOP_HORIZON=8
+  # actions from each 50-step chunk.
+  horizon: 50
+  execution_length: 8
+  control_hz: 15.0
+  # Only the leading steps are planned; the rest of the chunk is discarded by the executor before it
+  # could run. 32 keeps 24 steps of lookahead past the executed window (1.6 s at 15 Hz), which is
+  # what stops the optimizer from steering into a corner it cannot see out of.
+  #   plan_horizon    50      32      24      16
+  #   time (2 SQP)     -    22.4    20.0    15.0  ms   (all reach zero violation)
+  #   time (3 SQP)  92.8    29.3    27.4    21.4  ms
+  plan_horizon: 32
+
+cost:
+  # SEAM's chunk is the task. The optimizer's job is to change it as little as collision avoidance
+  # allows; a tracking weight that is too low yields a safe trajectory that no longer performs the
+  # task, and no collision metric would notice.
+  w_track: 1.0
+  # Second differences — jerk, the quantity SEAM exists to control.
+  w_smooth: 0.05
+  # Against the previously refined chunk. SEAM builds its next prior from the *pre*-refinement chunk
+  # (seam_policy.py), so without this the two layers pull in opposite directions every chunk and the
+  # boundary jerk SEAM removes reappears one level down.
+  w_continuity: 0.5
+  # Must dominate w_track, or the optimizer buys tracking accuracy with collision. Not larger than
+  # it needs to be: at 1e4 the QP took 175 ADMM iterations where 1e3 takes 25.
+  w_slack: 1000.0
+  track_decay: 1.0
+
+limits:
+  # From the URDF, scaled back so the tracking controller underneath keeps some headroom.
+  velocity_scale: 0.9
+  acceleration_scale: 0.9
+  position_margin: 0.02
+  enforce_velocity: true
+  enforce_acceleration: true
+
+reduction:
+  # A row whose clearance exceeds the band cannot become violated within one trust-region step, so
+  # it has no influence on the QP. Must exceed sqp.trust_radius; the config enforces that.
+  activation_band: 0.35
+  temporal_stride: 1
+  # Per step, not global: row i of the collision block always belongs to step i // rows_per_step, so
+  # the QP's sparsity is fixed and the solver keeps its factorization. Measured at 193 ms per solve
+  # when the pattern moved every iteration.
+  rows_per_step: 24
+  # Metres of extra clearance demanded of the *linearized* row so the *true* row holds. Without it an
+  # SQP converges with the tangent satisfied and 0.327 mm of real penetration left.
+  linearization_backoff: 0.005
+  enabled: true
+
+sqp:
+  # A hard cap, not a hint. One control period at 15 Hz is 66.7 ms and the loop waits during the
+  # solve, so an algorithm that runs to convergence cannot be used. Measured steady state: 28.4 ms.
+  max_iterations: 3
+  time_budget_ms: 50.0
+  trust_radius: 0.15
+  trust_radius_min: 0.01
+  trust_radius_max: 0.6
+  warm_start: true
+
+qp:
+  # Measured default. Run `--benchmark` on the target machine before changing it.
+  solver: osqp
+  # 1e-3, not 1e-5: the subproblem is a linearization of a non-convex problem, so solving the model
+  # past the model's own fidelity buys nothing — and here it is 4.6 ms against 70.7 ms. Safe because
+  # the true constraints are re-checked at full resolution afterwards.
+  eps_abs: 0.001
+  eps_rel: 0.001
+  max_iter: 4000
+  polish: false
+  adaptive_rho: true
+
+safety:
+  # 0.1 mm. Nothing upstream resolves better: the scene is voxelized at 6 mm and fused at 12 mm.
+  violation_tolerance: 0.0001
+  # A frame AG3S could not certify may still be optimized against; the result cannot be called safe.
+  require_certified_geometry: true
