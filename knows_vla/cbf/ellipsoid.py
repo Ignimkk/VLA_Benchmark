@@ -126,18 +126,33 @@ def initial_normal(robot: Ellipsoid, obstacle: Ellipsoid) -> np.ndarray:
     return d / nrm
 
 
-def optimal_normal(robot: Ellipsoid, obstacle: Ellipsoid, *, iters: int = 400) -> np.ndarray:
-    """Direction maximizing ``barrier`` — used by tests to decide true separation.
+def optimal_normal(robot: Ellipsoid, obstacle: Ellipsoid, *, iters: int = 400, init=None,
+                   tol: float = 1e-7) -> np.ndarray:
+    """Direction maximizing ``barrier`` — the tightest separating hyperplane at this pose.
 
-    h(n) is concave in n, so projected gradient ascent from the centre-to-centre direction is
-    adequate for the small cases in the test suite.
+    h(n) is concave in n, so projected gradient ascent from the centre-to-centre direction
+    converges reliably.
+
+    ``init`` warm-starts from the previous step's normal. The optimum moves only as far as the pose
+    does, so a warm start reaches it in a handful of iterations -- which is what makes it affordable
+    to drop the paper's ``delta_n`` variables and simply recompute the normal every step
+    (``CbfParams.normals='fixed'``; see docs/15-development-plan.md D2).
+
+    ``tol`` is what makes the warm start pay. Terminating only on the backtracking step decaying
+    below 1e-10 costs ~65 iterations whatever the starting point, so a warm-started call was doing
+    the same work as a cold one; stopping on the tangent gradient instead cuts a 6-link, 6-obstacle
+    joint-space step from 39 ms to a few.
     """
-    n = initial_normal(robot, obstacle)
+    n = initial_normal(robot, obstacle) if init is None else np.asarray(init, np.float64).reshape(3)
+    nrm = float(np.linalg.norm(n))
+    n = n / nrm if nrm > EPS_DENOM else initial_normal(robot, obstacle)
     step = 1.0
     best_n, best_h = n.copy(), barrier(n, robot, obstacle)
     for _ in range(iters):
         g = grad_normal(n, robot, obstacle)
         g = g - n * float(g @ n)  # project onto the unit sphere's tangent
+        if float(np.linalg.norm(g)) < tol:
+            break  # at the maximum: h is concave, so a vanishing tangent gradient is the optimum
         cand = n + step * g
         cand = cand / max(float(np.linalg.norm(cand)), EPS_DENOM)
         h = barrier(cand, robot, obstacle)
@@ -148,3 +163,64 @@ def optimal_normal(robot: Ellipsoid, obstacle: Ellipsoid, *, iters: int = 400) -
             if step < 1e-10:
                 break
     return best_n
+
+
+def optimal_normals_batch(robots, obstacles, *, inits=None, iters: int = 60,
+                          tol: float = 1e-7) -> np.ndarray:
+    """``optimal_normal`` for many pairs at once. Returns (m, 3).
+
+    Same projected-gradient ascent with the same per-pair backtracking; only the loop is moved
+    from Python into numpy. That matters because each iteration touches 3-vectors, so interpreter
+    overhead -- not arithmetic -- dominates: protecting a whole arm means (links x obstacles)
+    ascents per control step, which at ~1 ms each blows the paper's 11.4 ms budget by 6 links x 6
+    obstacles. Batched, the same work is one pass of (m, 3) operations.
+
+    Pairs that converge drop out of the active set, so a pair whose normal barely moved since the
+    last step costs one iteration, not sixty.
+    """
+    m = len(robots)
+    if m == 0:
+        return np.zeros((0, 3))
+    Cr = np.stack([e.c for e in robots])
+    Qr = np.stack([e.Q for e in robots])
+    Co = np.stack([e.c for e in obstacles])
+    Qo = np.stack([e.Q for e in obstacles])
+    D = Cr - Co
+
+    if inits is None:
+        N = D.copy()
+    else:
+        N = np.stack([D[i] if inits[i] is None else np.asarray(inits[i], np.float64)
+                      for i in range(m)])
+    nrm = np.linalg.norm(N, axis=1)
+    fallback = np.linalg.norm(D, axis=1)
+    N = np.where((nrm > EPS_DENOM)[:, None], N / np.maximum(nrm, EPS_DENOM)[:, None],
+                 np.where((fallback > EPS_DENOM)[:, None], D / np.maximum(fallback, EPS_DENOM)[:, None],
+                          np.array([1.0, 0.0, 0.0])))
+
+    def _barrier(N):
+        sr = np.sqrt(np.maximum(np.einsum("mi,mij,mj->m", N, Qr, N), 0.0))
+        so = np.sqrt(np.maximum(np.einsum("mi,mij,mj->m", N, Qo, N), 0.0))
+        return np.einsum("mi,mi->m", N, D) - sr - so, sr, so
+
+    best_h, sr, so = _barrier(N)
+    best_N = N.copy()
+    step = np.ones(m)
+    active = np.ones(m, bool)
+    for _ in range(iters):
+        G = (D - np.einsum("mij,mj->mi", Qr, N) / np.maximum(sr, EPS_DENOM)[:, None]
+             - np.einsum("mij,mj->mi", Qo, N) / np.maximum(so, EPS_DENOM)[:, None])
+        G = G - N * np.einsum("mi,mi->m", G, N)[:, None]  # project onto the tangent
+        active &= np.linalg.norm(G, axis=1) >= tol  # converged pairs drop out
+        if not active.any():
+            break
+        cand = N + step[:, None] * G
+        cn = np.linalg.norm(cand, axis=1)
+        cand = cand / np.maximum(cn, EPS_DENOM)[:, None]
+        hc, scr, sco = _barrier(cand)
+        better = active & (hc > best_h)
+        best_N[better], best_h[better] = cand[better], hc[better]
+        N[better], sr[better], so[better] = cand[better], scr[better], sco[better]
+        step[active & ~better] *= 0.7
+        active &= step > 1e-10
+    return best_N

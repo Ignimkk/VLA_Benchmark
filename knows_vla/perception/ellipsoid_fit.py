@@ -145,10 +145,22 @@ def fit_objects(
     subsample: int = 4000,
     depth_trim: tuple[float, float] | None = (2.0, 98.0),
     rng: np.random.Generator | None = None,
+    depth_is_metric: bool = False,
 ) -> dict[int, Ellipsoid]:
-    """Fit one MVEE per object id from a single (segmentation, depth) frame."""
+    """Fit one MVEE per object id from a single (segmentation, depth) frame.
+
+    ``depth_is_metric`` for sources that already give metres -- `mujoco.Renderer` does, whereas
+    robosuite hands back a normalized buffer. Converting an already-metric map produces a
+    plausible-looking scene at the wrong scale rather than an error, so it has to be explicit.
+
+    The default ``depth_trim`` is not optional in practice: silhouette pixels take the depth of
+    whatever is behind the object, which stretches the fit along the line of sight. Measured on a
+    4 cm sphere rendered by MuJoCo, its mask spans 26 cm of depth and the untrimmed fit comes out
+    as 11 x 17 x 7 cm; trimming brings it to 4.1 x 4.1 x 4.4 cm.
+    """
     rng = rng or np.random.default_rng(0)
-    depth_m = real_depth(depth_buffer, cam.znear, cam.zfar)
+    depth_m = np.asarray(depth_buffer, np.float64) if depth_is_metric else real_depth(
+        depth_buffer, cam.znear, cam.zfar)
     out: dict[int, Ellipsoid] = {}
     for oid in object_ids:
         rows, cols = np.nonzero(seg == oid)
@@ -214,3 +226,103 @@ class ObjectTracker:
 
     def current(self) -> dict[int, Ellipsoid]:
         return {k: Ellipsoid(self._c[k], self._Q[k]) for k in self._Q}
+
+
+@dataclasses.dataclass(frozen=True)
+class PerceptionMargin:
+    """Inflate a fitted ellipsoid by what a single viewpoint could not see.
+
+    An MVEE fitted to one depth frame is systematically **too small**: the camera never sees the
+    far side of the object. Measured on the transport meshes, fitting only the upward-facing half
+    shrinks the orange's vertical semi-axis from 3.1 cm to 2.0 cm and the pear's from 5.5 to 3.8.
+    Under-approximating an obstacle is the dangerous direction, so the fit must be inflated back.
+
+    The error is anisotropic -- it lies along the line of sight, not around it -- so a single scalar
+    padding would be wrong twice over: too little along the ray, too much across it, where the mask
+    boundary is the only source of error. Hence
+
+        Q <- Q + sigma_ray^2 d d' + sigma_lat^2 (I - d d')
+
+    with ``d`` the unit vector from the camera to the object centre.
+
+    Note this is a *bias* correction, not noise: the unseen half is missing every frame, so
+    averaging over frames does not remove it.
+    """
+
+    sigma_ray: float = 0.0
+    sigma_lateral: float = 0.0
+
+    def inflate(self, E: Ellipsoid, camera_pos) -> Ellipsoid:
+        d = np.asarray(E.c, np.float64) - np.asarray(camera_pos, np.float64).reshape(3)
+        nrm = float(np.linalg.norm(d))
+        if nrm < 1e-9:
+            return E
+        d = d / nrm
+        P = np.outer(d, d)
+        return Ellipsoid(E.c, E.Q + self.sigma_ray**2 * P + self.sigma_lateral**2 * (np.eye(3) - P))
+
+    def apply(self, objects: dict, camera_pos) -> dict:
+        return {k: self.inflate(v, camera_pos) for k, v in objects.items()}
+
+
+def visible_half(points: np.ndarray, camera_pos) -> np.ndarray:
+    """The points a camera at ``camera_pos`` could see, approximated by the near-facing half.
+
+    Crude on purpose: it is a calibration aid for `PerceptionMargin`, not a renderer. Comparing the
+    MVEE of this subset against the MVEE of the full mesh gives the shortfall the margin has to
+    make up.
+    """
+    P = np.asarray(points, np.float64)
+    d = P.mean(0) - np.asarray(camera_pos, np.float64).reshape(3)
+    nrm = float(np.linalg.norm(d))
+    if nrm < 1e-9:
+        return P
+    return P[(P - P.mean(0)) @ (d / nrm) <= 0.0]
+
+
+def complete_backface(E: Ellipsoid, camera_pos) -> Ellipsoid:
+    """Extend a single-view fit behind the surface the camera can see. No tuning constant.
+
+    A depth frame gives only the near face, so an MVEE fitted to it stops around the object's
+    midline: measured against the full transport meshes, a single-view fit places the far surface
+    1.7-3.1 cm too close. Under-approximating an obstacle is the dangerous direction, so this has
+    to be corrected, and it is a *bias* -- the far side is missing in every frame, so averaging
+    frames will not remove it.
+
+    The correction assumes the object is about as deep as it is wide, which is the weakest useful
+    prior for a graspable object: hold the measured near face, and set the along-ray semi-axis to
+    the observed lateral one.
+
+        rho  = mean semi-axis of Q projected onto the plane perpendicular to the ray
+        c   <- c + (rho - sqrt(d' Q d)) d
+        Q   <- Q + (rho^2 - d' Q d) d d'
+
+    Directions across the ray are untouched: those were observed.
+
+    Accuracy on the transport meshes (far-surface error, + is conservative):
+    apple +0.4 cm, orange +0.5, banana -0.5, pear -0.4; a sphere comes back to 3.19 cm from a true
+    3.00. The two negatives are the elongated objects, where depth genuinely is less than width, so
+    stack a small `PerceptionMargin(sigma_ray~0.005)` on top to keep the residual on the safe side.
+
+    An earlier version doubled the along-ray semi-axis instead, on the theory that the MVEE of a
+    hemispherical shell is half the sphere. It is not -- the fit bulges to cover the rim -- and that
+    rule over-inflated by 0.7-2.8 cm.
+
+    **Only for compact objects.** "As deep as it is wide" is exactly wrong for a plate: the crate's
+    0.9 cm side comes back 8.3 cm thick and its 0.7 cm floor 11.3 cm, refilling the interior that
+    decomposing the crate existed to open. One view cannot recover a plate's thickness -- nothing in
+    the image constrains it -- so structure like a crate or shelf should come from its model, which
+    is a known tracked asset anyway. See docs/16-filter-variants.md §4.
+    """
+    d = np.asarray(E.c, np.float64) - np.asarray(camera_pos, np.float64).reshape(3)
+    nrm = float(np.linalg.norm(d))
+    if nrm < 1e-9:
+        return E
+    d = d / nrm
+    s2 = float(d @ E.Q @ d)
+    perp = np.eye(3) - np.outer(d, d)
+    lateral = np.sqrt(np.maximum(np.linalg.eigvalsh(perp @ E.Q @ perp), 0.0))
+    rho = float(lateral[-2:].mean())  # drop the (zero) eigenvalue along d
+    if rho**2 <= s2:  # already deeper than it is wide; nothing to add
+        return E
+    return Ellipsoid(E.c + (rho - np.sqrt(s2)) * d, E.Q + (rho**2 - s2) * np.outer(d, d))

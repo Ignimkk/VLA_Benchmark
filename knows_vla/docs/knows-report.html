@@ -1,0 +1,662 @@
+<title>KNOWS, 측정된 것</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600&family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F3F5F8; --card:#FFFFFF; --ink:#111821; --ink-2:#3D4854; --muted:#6B7785;
+  --rule:#D8DEE6; --rule-2:#E9EDF2;
+  --accent:#1F5C8C; --accent-soft:#E3EDF5; --accent-line:#8FB2CC;
+  --bad:#B4432E; --bad-soft:#F7E7E3; --good:#2E7D5B; --good-soft:#E2F0EA;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0D1218; --card:#141C25; --ink:#E5EAF0; --ink-2:#B4BFCB; --muted:#8492A1;
+  --rule:#26313D; --rule-2:#1B242E;
+  --accent:#79AEDA; --accent-soft:#16283A; --accent-line:#3D6483;
+  --bad:#E48067; --bad-soft:#33201B; --good:#5FBC97; --good-soft:#162B23;
+}}
+:root[data-theme="dark"]{
+  --paper:#0D1218; --card:#141C25; --ink:#E5EAF0; --ink-2:#B4BFCB; --muted:#8492A1;
+  --rule:#26313D; --rule-2:#1B242E;
+  --accent:#79AEDA; --accent-soft:#16283A; --accent-line:#3D6483;
+  --bad:#E48067; --bad-soft:#33201B; --good:#5FBC97; --good-soft:#162B23;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans","IBM Plex Sans KR",-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:16px; line-height:1.78; word-break:keep-all; -webkit-font-smoothing:antialiased;
+}
+.wrap{display:grid; grid-template-columns:250px minmax(0,1fr); gap:56px;
+  max-width:1180px; margin:0 auto; padding:0 32px}
+@media(max-width:900px){ .wrap{grid-template-columns:1fr; gap:0; padding:0 20px} }
+
+nav{position:sticky; top:0; align-self:start; max-height:100vh; overflow-y:auto;
+  padding:40px 0; font-size:13.5px; line-height:1.5}
+@media(max-width:900px){ nav{position:static; max-height:none; border-bottom:1px solid var(--rule)} }
+nav .navtitle{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:14px}
+nav ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+nav a{display:flex; gap:10px; text-decoration:none; color:var(--ink-2); padding:6px 8px;
+  border-radius:4px}
+nav a:hover{background:var(--rule-2); color:var(--ink)}
+nav a:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+nav a .n{font-family:"IBM Plex Mono",monospace; color:var(--muted); font-size:12px}
+
+main{padding:40px 0 120px; min-width:0}
+h1{font-family:Spectral,"Gowun Batang",Georgia,serif; font-weight:700;
+  font-size:clamp(2.1rem,4.6vw,3rem); line-height:1.22; letter-spacing:-.02em;
+  margin:0 0 20px; text-wrap:balance}
+h2{font-family:Spectral,"Gowun Batang",Georgia,serif; font-weight:700; font-size:1.7rem;
+  line-height:1.35; margin:0 0 8px; text-wrap:balance}
+h3{font-size:1.05rem; font-weight:600; margin:36px 0 10px}
+h4{font-size:.95rem; font-weight:600; margin:24px 0 6px; color:var(--ink-2)}
+p{margin:0 0 17px; max-width:640px}
+a{color:var(--accent)}
+code,.mono{font-family:"IBM Plex Mono",monospace; font-size:.87em}
+code{background:var(--rule-2); padding:1px 5px; border-radius:3px}
+
+section{padding:54px 0; border-top:1px solid var(--rule)}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); margin-bottom:10px; display:block}
+.lede{font-size:1.05rem; color:var(--ink-2); max-width:620px; margin-bottom:30px}
+
+header.hero{padding:56px 0 44px}
+.thesis{font-family:Spectral,"Gowun Batang",Georgia,serif; font-size:1.22rem; line-height:1.75;
+  color:var(--ink-2); max-width:600px; margin:0 0 34px}
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:6px; overflow:hidden}
+.kpi{background:var(--card); padding:16px 18px}
+.kpi .v{font-family:"IBM Plex Mono",monospace; font-size:1.5rem; font-weight:500;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.15}
+.kpi .l{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.5}
+.kpi.is-bad .v{color:var(--bad)} .kpi.is-good .v{color:var(--good)}
+
+.tw{overflow-x:auto; margin:22px 0 8px; border:1px solid var(--rule); border-radius:6px;
+  background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:14px; line-height:1.55}
+th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--rule-2)}
+thead th{font-size:11px; letter-spacing:.08em; color:var(--muted); font-weight:500;
+  background:var(--rule-2); border-bottom:1px solid var(--rule); white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right; font-family:"IBM Plex Mono",monospace;
+  font-variant-numeric:tabular-nums; white-space:nowrap}
+tr.hi td{background:var(--accent-soft)}
+tr.hi td:first-child{font-weight:600}
+.bad{color:var(--bad); font-weight:500} .good{color:var(--good); font-weight:500}
+caption{caption-side:bottom; text-align:left; font-size:12.5px; color:var(--muted);
+  padding:11px 14px; border-top:1px solid var(--rule-2); line-height:1.65}
+
+.note{border-left:3px solid var(--accent); background:var(--accent-soft);
+  padding:15px 18px; margin:24px 0; border-radius:0 5px 5px 0}
+.note p{margin:0; max-width:600px}
+.note p + p{margin-top:11px}
+.note.warn{border-left-color:var(--bad); background:var(--bad-soft)}
+.note .tag{display:block; font-family:"IBM Plex Mono",monospace; font-size:10.5px;
+  letter-spacing:.13em; text-transform:uppercase; margin-bottom:7px; color:var(--accent)}
+.note.warn .tag{color:var(--bad)}
+
+.eq{background:var(--card); border:1px solid var(--rule); border-radius:6px;
+  padding:16px 20px; margin:20px 0; overflow-x:auto;
+  font-family:"IBM Plex Mono",monospace; font-size:13.5px; line-height:2}
+.eq .an{color:var(--muted); font-size:12px}
+
+figure{margin:28px 0; padding:0}
+figure svg{display:block; width:100%; height:auto}
+figcaption{font-size:12.5px; color:var(--muted); margin-top:11px; max-width:620px; line-height:1.7}
+.fig-card{background:var(--card); border:1px solid var(--rule); border-radius:6px; padding:20px}
+
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(268px,1fr)); gap:16px; margin:24px 0}
+.card{background:var(--card); border:1px solid var(--rule); border-radius:6px; padding:16px 18px}
+.card h4{margin:0 0 7px}
+.card p{font-size:14px; margin:0; color:var(--ink-2); line-height:1.7}
+.card .metric{font-family:"IBM Plex Mono",monospace; font-size:12.5px; margin-top:11px;
+  padding-top:11px; border-top:1px solid var(--rule-2); color:var(--muted); line-height:1.7}
+
+.pill{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:10.5px;
+  letter-spacing:.06em; padding:2px 7px; border-radius:3px; border:1px solid var(--rule);
+  color:var(--muted); white-space:nowrap}
+.pill.ok{color:var(--good); border-color:var(--good); background:var(--good-soft)}
+.pill.no{color:var(--bad); border-color:var(--bad); background:var(--bad-soft)}
+
+footer{border-top:1px solid var(--rule); padding:28px 0 60px; font-size:13px; color:var(--muted)}
+::selection{background:var(--accent); color:var(--paper)}
+@media(prefers-reduced-motion:no-preference){ nav a{transition:background .12s ease} }
+</style>
+
+<div class="wrap">
+<nav>
+  <div class="navtitle">목차</div>
+  <ol>
+    <li><a href="#s1"><span class="n">1</span><span>무엇을 푸는가</span></a></li>
+    <li><a href="#s2"><span class="n">2</span><span>방법의 동작</span></a></li>
+    <li><a href="#s3"><span class="n">3</span><span>필요한 수학</span></a></li>
+    <li><a href="#s4"><span class="n">4</span><span>우리가 만든 것</span></a></li>
+    <li><a href="#s5"><span class="n">5</span><span>무엇을 재야 하는가</span></a></li>
+    <li><a href="#s6"><span class="n">6</span><span>방법이 깨지는 곳</span></a></li>
+    <li><a href="#s7"><span class="n">7</span><span>우리가 바꾼 것</span></a></li>
+    <li><a href="#s8"><span class="n">8</span><span>RB-Y1 이식</span></a></li>
+    <li><a href="#s9"><span class="n">9</span><span>우리가 틀린 것</span></a></li>
+    <li><a href="#s10"><span class="n">10</span><span>현재 상태</span></a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <span class="eyebrow">Reverse engineering &middot; arXiv 2606.09749v1</span>
+  <h1>KNOWS, 측정된 것</h1>
+  <p class="thesis">얼어 있는 VLA 정책은 자기가 지금 무엇을 집으려는지 이미 알고 있다. 논문은
+  그 정보를 attention 헤드 하나에서 읽어내 충돌 회피 필터를 조종한다. 공개된 코드가 없어
+  논문만 보고 처음부터 구현했고, 그다음 그것이 실제로 무엇을 하는지 측정했다.</p>
+  <div class="kpis">
+    <div class="kpi"><div class="v">0.846</div><div class="l">attention 타깃 적중률<br>(우연은 0.199)</div></div>
+    <div class="kpi is-bad"><div class="v">23.0%</div><div class="l">논문 그대로의 필터가 자기 안전 조건을 어기는 스텝 비율</div></div>
+    <div class="kpi is-good"><div class="v">4.7%</div><div class="l">논문에 필요 없던 변수 하나를 제거한 뒤</div></div>
+    <div class="kpi"><div class="v">49</div><div class="l">테스트 개수(18에서). 이 문서의 모든 주장이 그중 하나</div></div>
+  </div>
+</header>
+
+<section id="s1" style="border-top:none">
+  <span class="eyebrow">1</span>
+  <h2>무엇을 푸는가</h2>
+  <p class="lede">VLA 정책은 카메라 영상과 명령을 로봇 동작으로 옮긴다. 그 사상(寫像) 어디에도
+  “집으려 하지 않는 물체와 부딪히지 않는다”는 보장은 없다.</p>
+
+  <p>뻔한 해법 &mdash; 충돌 벌점을 넣어 재학습 &mdash; 은 비싸고, 장면이 바뀔 때마다 다시 해야
+  한다. KNOWS는 더 싼 길을 제안한다. 정책은 얼린 채로 두고, 정책이 뱉은 동작이 컨트롤러에
+  도달하기 직전에 고친다.</p>
+
+  <p>안전하게 고치려면 한 가지를 알아야 한다. <em>지금 로봇이 의도적으로 손을 뻗고 있는 물체가
+  무엇인가?</em> 나머지는 전부 장애물이지만 타깃만은 피하면 안 된다. 이걸 거꾸로 알면 로봇은
+  과제 수행 자체를 거부한다.</p>
+
+  <p>논문의 주장은 그 답을 위해 별도 모델이 필요 없다는 것이다. 정책은 이미 타깃을 보고 있고,
+  그 안의 attention 헤드 하나 &mdash; &pi;0.5 언어 모델의 레이어&nbsp;12, 헤드&nbsp;3, 정면
+  카메라 &mdash; 가 매 스텝 그 타깃을 공짜로 짚어 준다.</p>
+
+  <div class="note">
+    <span class="tag">왜 재현할 가치가 있는가</span>
+    <p>주장이 성립한다면, 안전이 모든 VLA 정책 안에 <strong>이미 존재하는 신호</strong>에서 나온다는
+    뜻이다. 이는 제어 기법이 아니라 표현(representation)에 대한 강한 주장이며, 검증 가능하다.</p>
+  </div>
+</section>
+
+<section id="s2">
+  <span class="eyebrow">2</span>
+  <h2>방법의 동작</h2>
+  <p class="lede">매 제어 스텝마다 네 단계가 돈다. 논문의 기여는 두 번째뿐이고, 네 번째는 기존
+  제어 이론이다.</p>
+
+  <figure class="fig-card">
+    <svg viewBox="0 0 760 262" role="img" aria-label="네 단계 파이프라인: 정책, 타깃 식별, 지각, CBF 이차계획법">
+      <defs>
+        <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto">
+          <path d="M0,0 L7,3.2 L0,6.4 z" fill="var(--accent-line)"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Sans KR, IBM Plex Sans, sans-serif" font-size="12">
+        <rect x="8" y="16" width="200" height="70" rx="5" fill="var(--card)" stroke="var(--rule)"/>
+        <text x="22" y="40" fill="var(--ink)" font-weight="600" font-size="13">1 &nbsp;정책 &pi;0.5</text>
+        <text x="22" y="60" fill="var(--muted)" font-size="11.5">얼어 있음 &mdash; 재학습 없음</text>
+        <text x="22" y="77" fill="var(--muted)" font-size="11.5">영상 + 명령 &rarr; 동작</text>
+
+        <rect x="286" y="8" width="216" height="86" rx="5" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="300" y="32" fill="var(--accent)" font-weight="600" font-size="13">2 &nbsp;타깃 식별</text>
+        <text x="300" y="52" fill="var(--ink-2)" font-size="11.5">attention 히트맵 &times; 물체 마스크</text>
+        <text x="300" y="69" fill="var(--ink-2)" font-size="11.5">1등이 2등을 &delta; 이상 이기면 타깃</text>
+        <text x="300" y="86" fill="var(--muted)" font-size="11">← 논문의 기여</text>
+
+        <rect x="286" y="124" width="216" height="70" rx="5" fill="var(--card)" stroke="var(--rule)"/>
+        <text x="300" y="148" fill="var(--ink)" font-weight="600" font-size="13">3 &nbsp;지각</text>
+        <text x="300" y="168" fill="var(--muted)" font-size="11.5">마스크 + 깊이 &rarr; 물체마다 타원체</text>
+        <text x="300" y="185" fill="var(--muted)" font-size="11.5">타깃은 장애물에서 제외</text>
+
+        <rect x="560" y="66" width="192" height="86" rx="5" fill="var(--card)" stroke="var(--rule)"/>
+        <text x="574" y="90" fill="var(--ink)" font-weight="600" font-size="13">4 &nbsp;CBF 이차계획법</text>
+        <text x="574" y="110" fill="var(--muted)" font-size="11.5">장애물마다 제약 한 줄</text>
+        <text x="574" y="127" fill="var(--muted)" font-size="11.5">정책이 원한 동작에</text>
+        <text x="574" y="144" fill="var(--muted)" font-size="11.5">가장 가까운 안전한 동작</text>
+
+        <path d="M208 44 H278" stroke="var(--accent-line)" fill="none" marker-end="url(#ar)"/>
+        <text x="214" y="36" fill="var(--accent)" font-size="10.5" font-family="IBM Plex Mono, monospace">attention</text>
+        <path d="M208 70 V158 H278" stroke="var(--rule)" fill="none" marker-end="url(#ar)"/>
+        <path d="M502 50 H530 V106 H552" stroke="var(--rule)" fill="none" marker-end="url(#ar)"/>
+        <path d="M502 158 H530 V110" stroke="var(--rule)" fill="none"/>
+        <path d="M106 86 V218 H552" stroke="var(--rule)" fill="none" marker-end="url(#ar)"/>
+        <text x="114" y="212" fill="var(--muted)" font-size="10.5" font-family="IBM Plex Mono, monospace">명목 동작 &delta;c_nom</text>
+        <path d="M656 152 V200" stroke="var(--accent-line)" fill="none" marker-end="url(#ar)"/>
+        <text x="560" y="222" fill="var(--ink-2)" font-size="11.5">고쳐진 동작 &rarr; 컨트롤러</text>
+        <text x="8" y="250" fill="var(--muted)" font-size="11">정책은 한 번만 질의된다. attention 격자는 같은 forward pass에서 추가 비용 없이 나온다.</text>
+      </g>
+    </svg>
+    <figcaption>“모델은 이미 알고 있다”가 현금화되는 곳은 2단계다. 3·4단계는 통상적인 절차 &mdash;
+    세그멘테이션을 기하로 바꾸고, 배리어 제약이 붙은 이차계획법을 푼다.</figcaption>
+  </figure>
+
+  <h3>2단계를 한 문장으로</h3>
+  <p>물체마다 점수를 매긴다. attention 히트맵이 그 마스크 위에 얼마나 떨어지는가를, 마스크
+  크기로 정규화해서 &mdash; 큰 물체가 면적만으로 이기지 않도록. 최고점 물체가 2등을 여유 &delta;
+  이상으로 이기면 타깃이 되고, 아니면 판단을 보류하고 전부 장애물로 둔다.</p>
+  <p>정해진 타깃은 장애물 집합에서 빠진다. 무언가를 향해 손을 뻗는다는 것은 그것에 닿는다는
+  뜻이기 때문이다.</p>
+</section>
+
+<section id="s3">
+  <span class="eyebrow">3</span>
+  <h2>필요한 수학</h2>
+  <p class="lede">네 가지가 서로 쌓이는 순서로 나온다. 5&ndash;7절의 모든 이야기는 이 중 하나에
+  대한 진술이다.</p>
+
+  <h3>3.1 &nbsp;물체는 타원체다</h3>
+  <p>실시간 충돌 검사에는 단순한 형상이 필요하다. 논문은 물체 하나를 타원체 하나로 뭉갠다.
+  중심 <span class="mono">c</span>와, 반축의 제곱을 담은 모양 행렬 <span class="mono">Q</span>
+  두 개로 쓴다.</p>
+  <div class="eq">E = { c + Q<sup>1/2</sup>u &nbsp;:&nbsp; ‖u‖ &le; 1 }</div>
+  <p>이유는 바로 다음 줄에 있다. 타원체는 “이 물체가 방향 <span class="mono">n</span>으로 얼마나
+  멀리 뻗는가”가 <strong>닫힌 식</strong>으로 나온다. 이것이 방법 전체를 빠르게 만들고,
+  <strong>동시에 6절이 다룰 방식으로 틀리게 만든다.</strong></p>
+  <div class="eq">support(n) = n&middot;c + &radic;(n<sup>T</sup>Qn) <span class="an">&nbsp; &nbsp; E가 n 방향으로 뻗는 거리</span></div>
+
+  <h3>3.2 &nbsp;배리어 <span class="mono">h</span> &mdash; 사이에 끼우는 판자</h3>
+  <p>두 물체가 겹치지 않는다는 것을 숫자 하나로 어떻게 말할까. 사이에 판자를 밀어 넣어 본다.
+  판자가 들어가면 떨어져 있는 것이다. 판자의 법선 <span class="mono">n</span>을 하나 잡고 그
+  방향으로 틈을 잰다.</p>
+  <div class="eq">h(n) = n&middot;(c<sub>R</sub> &minus; c<sub>j</sub>) &minus; &radic;(n<sup>T</sup>Q<sub>R</sub>n) &minus; &radic;(n<sup>T</sup>Q<sub>j</sub>n)
+<span class="an">&nbsp; &nbsp; &nbsp; 중심 사이 거리 &nbsp; &nbsp; &minus; 로봇이 뻗은 길이 &nbsp; &minus; 장애물이 뻗은 길이</span></div>
+
+  <figure class="fig-card">
+    <svg viewBox="0 0 700 212" role="img" aria-label="두 타원 사이에 분리 평면이 놓이고, 배리어 h는 그 법선 방향으로 잰 틈이다">
+      <g font-family="IBM Plex Sans KR, IBM Plex Sans, sans-serif" font-size="12">
+        <ellipse cx="180" cy="105" rx="86" ry="52" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+        <ellipse cx="470" cy="105" rx="62" ry="72" fill="none" stroke="var(--ink-2)" stroke-width="1.6"/>
+        <circle cx="180" cy="105" r="2.6" fill="var(--accent)"/>
+        <circle cx="470" cy="105" r="2.6" fill="var(--ink-2)"/>
+        <text x="180" y="44" fill="var(--accent)" text-anchor="middle" font-size="12.5" font-weight="600">로봇</text>
+        <text x="470" y="20" fill="var(--ink-2)" text-anchor="middle" font-size="12.5" font-weight="600">장애물</text>
+        <line x1="325" y1="18" x2="325" y2="194" stroke="var(--good)" stroke-width="2" stroke-dasharray="7 5"/>
+        <text x="333" y="32" fill="var(--good)" font-size="11.5" font-weight="600">분리 평면</text>
+        <line x1="266" y1="105" x2="408" y2="105" stroke="var(--good)" stroke-width="1.4"/>
+        <line x1="266" y1="97" x2="266" y2="113" stroke="var(--good)" stroke-width="1.4"/>
+        <line x1="408" y1="97" x2="408" y2="113" stroke="var(--good)" stroke-width="1.4"/>
+        <rect x="308" y="88" width="58" height="20" rx="3" fill="var(--card)"/>
+        <text x="337" y="103" fill="var(--good)" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="500">h &gt; 0</text>
+        <line x1="470" y1="184" x2="392" y2="184" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#ar)"/>
+        <text x="478" y="188" fill="var(--muted)" font-size="11.5" font-family="IBM Plex Mono, monospace">n</text>
+        <text x="14" y="204" fill="var(--muted)" font-size="11">h는 n 방향으로 잰 틈. 음수면 두 형상이 겹쳤다는 뜻이다.</text>
+      </g>
+    </svg>
+    <figcaption>고정된 단위 <span class="mono">n</span>에 대해 <span class="mono">h(n) &ge; 0</span>이면
+    분리가 증명된다. <strong>아무 판자나 하나만 맞으면 되고 최적을 찾을 필요가 없다</strong>는 이
+    비대칭이 7절의 열쇠가 된다.</figcaption>
+  </figure>
+
+  <h3>3.3 &nbsp;CBF &mdash; 안전한가가 아니라 계속 안전할 것인가</h3>
+  <p><span class="mono">h</span>가 양수여도 빠르게 무너지고 있으면 결국 부딪힌다. 제어 배리어
+  함수는 값이 아니라 <em>변화율</em>을 제약한다.</p>
+  <div class="eq">&Delta;h &ge; &minus;&gamma;<sub>h</sub> &middot; h <span class="an">&nbsp; &nbsp; “한 스텝에 남은 여유의 &gamma;<sub>h</sub>배보다 많이 쓰지 마라”</span></div>
+  <p><span class="mono">&gamma;<sub>h</sub> = 0.5</span>면 매 스텝 여유의 절반까지 쓸 수 있다.
+  <span class="mono">h</span>가 0에 가까워질수록 허용되는 감소량도 0으로 가므로, 정확한 산술에서
+  <span class="mono">h</span>는 음수가 되지 않는다.</p>
+
+  <h3>3.4 &nbsp;QP &mdash; 가장 가까운 안전한 동작</h3>
+  <div class="eq">최소화 &nbsp; ‖&delta;c &minus; &delta;c<sub>nom</sub>‖&sup2; + W‖&delta;&theta; &minus; &delta;&theta;<sub>nom</sub>‖&sup2;
+제약 &nbsp; &nbsp; 장애물마다 CBF 한 줄</div>
+  <p>모든 배리어 제약을 만족하면서 정책이 원한 것에서 최대한 덜 벗어난다. 솔버가 밀리초 단위로
+  답을 준다.</p>
+</section>
+
+<section id="s4">
+  <span class="eyebrow">4</span>
+  <h2>우리가 만든 것</h2>
+  <p class="lede">공식 코드가 없다. 아래 전부를 논문만 보고 단계적으로 썼고, 각 단계는 다음
+  단계를 죽일 수 있도록 배치했다.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>단계</th><th>답하는 질문</th><th class="num">결과</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">P0a</td><td>attention을 꺼낼 수 있는가</td><td class="num good">가능 &mdash; 정책 출력 바이트 동일</td></tr>
+      <tr><td class="mono">P0b</td><td>그 헤드가 정말 타깃을 가리키는가</td><td class="num good">0.846 (우연 0.199)</td></tr>
+      <tr><td class="mono">P1</td><td>CBF 수학이 맞게 구현됐는가</td><td class="num good">gradient 유한차분 대조</td></tr>
+      <tr><td class="mono">P2a</td><td>카메라에서 타원체를 만들 수 있는가</td><td class="num good">역투영 검증</td></tr>
+      <tr><td class="mono">P2b</td><td>기록된 궤적에서 필터가 뭘 하는가</td><td class="num bad">구조적 결함 3개</td></tr>
+      <tr><td class="mono">P3a</td><td>켠 채로 과제가 성공하는가</td><td class="num bad">0 / 9</td></tr>
+    </tbody>
+  </table>
+  <caption>각 단계는 싸고, 다음 단계를 반증할 수 있다. P0b가 하중을 지탱한다 &mdash; 그 헤드가
+  타깃을 가리키지 않으면 나머지를 만들 이유가 없다.</caption>
+  </div>
+
+  <div class="note">
+    <span class="tag">알아 둘 만한 공학적 결정 하나</span>
+    <p>논문 부록은 attention을 복구하는 복잡한 절차를 설명한다 &mdash; forward hook, 회전 위치
+    임베딩 재적용, grouped-query 키 확장, 수동 softmax. 그런데 우리 스택(openpi)은 attention 확률을
+    어차피 메모리에 만들고 있어서, 플래그 하나로 그대로 꺼내면 된다. 수학적으로 동일하고 훨씬
+    단순하다. 그 플래그가 아무것도 바꾸지 않음을 확인했다 &mdash; 켜고 끈 두 실행의 정책 동작이
+    <strong>바이트 단위로 같다</strong>.</p>
+  </div>
+</section>
+
+<section id="s5">
+  <span class="eyebrow">5</span>
+  <h2>무엇을 재야 하는가</h2>
+  <p class="lede">떠오르는 지표는 함정이다. 아무것도 하지 않는 필터는 개입률이 0%다.</p>
+
+  <p>모든 변종은 자기 <em>선형화된</em> 제약을 만족한다 &mdash; 솔버가 강제하는 것이 그것이니까.
+  진짜 질문은 그렇게 나온 스텝이 <strong>진짜</strong> 배리어에 대해 이산 CBF 조건을 지키느냐다.</p>
+  <div class="eq">h*(after) &ge; (1 &minus; &gamma;<sub>h</sub>) &middot; h*(before) &nbsp; &nbsp; 여기서 &nbsp; h*(E) = max<sub>n</sub> h(n)</div>
+  <p>선형화된 제약을 통과하고도 이 조건을 깰 수 있다 &mdash; 로봇을 움직이는 대신
+  <strong>분리 평면을 기울여서</strong>. 그런 스텝의 비율을 <strong>CBF 위반율</strong>이라
+  부르고, 다음 두 절의 모든 주장이 이 숫자 위에 선다.</p>
+
+  <div class="note">
+    <span class="tag">측정 방법</span>
+    <p>지각은 <strong>에피소드당 한 번만</strong> 돌리고 모든 변종에 동일한 입력을 먹인다. 그래서
+    차이는 필터에만 귀속된다. 정책 서버도, 시뮬레이터도, 체크포인트도 필요 없다 &mdash; LIBERO
+    네 개 스위트에 걸친 12개 기록 에피소드, 2,157개 제어 스텝.</p>
+  </div>
+</section>
+
+<section id="s6">
+  <span class="eyebrow">6</span>
+  <h2>방법이 깨지는 곳</h2>
+  <p class="lede">구조적 결함 다섯 개. 전부 측정됐고, 전부 논문의 한계 목록에 없다. 튜닝 문제가
+  아니다 &mdash; &gamma;<sub>h</sub>나 &epsilon;을 어떻게 잡아도 하나도 고쳐지지 않는다.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>A1 &nbsp;옆 물체가 파지를 금지한다</h4>
+      <p>타깃에 손을 뻗으면 그리퍼가 <em>다른</em> 물체의 타원체 안에 들어간다. 타깃을 제외해도
+      소용없다 &mdash; 문제는 옆에 있는 접시다.</p>
+      <div class="metric">그리퍼 7.0 + 접시 8.1 = 필요 15.1 cm<br>가용 12.7 cm &rarr; 과제 0/9</div>
+    </div>
+    <div class="card">
+      <h4>A2 &nbsp;상자에 아무것도 못 넣는다</h4>
+      <p>속 빈 용기를 타원체 하나로 감싸면 내부가 메워진다. 안에 넣는 동작은 정의상 그 부피를
+      지난다.</p>
+      <div class="metric">림 위 10 cm에서도 h = &minus;4.7 cm</div>
+    </div>
+    <div class="card">
+      <h4>A3 &nbsp;쥔 물건에서 도망친다</h4>
+      <p>Eq. (4)에는 범주가 둘뿐이다 &mdash; 타깃 하나, 나머지 전부 장애물. 손에 든 물체는 어느
+      쪽도 아닌데 자동으로 그리퍼가 닿아 있는 장애물이 된다.</p>
+      <div class="metric">완벽한 타깃으로도 53.9% 스텝에서 h &lt; 0</div>
+    </div>
+    <div class="card">
+      <h4>A4 &nbsp;비상정지가 도달 불가능한 코드다</h4>
+      <p>Eq. (12)는 평면의 법선만 제한하고 동작 크기는 제한하지 않는다. QP가 비가능해지지 않으니
+      논문의 폴백이 한 번도 실행되지 않는다.</p>
+      <div class="metric">e-stop 0.0% &middot; 최대 보정 181 cm<br>컨트롤러 한계는 5 cm</div>
+    </div>
+    <div class="card">
+      <h4>A5 &nbsp;켜져 있는데 아무것도 안 한다</h4>
+      <p>논문은 분리 평면의 법선이 크기 &epsilon; 상자 안에서 움직이도록 허용한다. 그 자유도가
+      배리어가 요구하는 것보다 크게 제약을 완화해, 로봇 대신 평면만 기울여 제약을 만족시킨다.</p>
+      <div class="metric">관측: h = &minus;3.3 cm인데 개입 0.00 cm</div>
+    </div>
+    <div class="card">
+      <h4>&nbsp;결함은 아니지만 공백</h4>
+      <p>테이블과 벽은 장애물이 된 적이 없다 &mdash; 논문은 “조작 가능한 물체”만 세그멘테이션한다.
+      그리고 손끝 타원체 하나만 보호하며 팔은 모델링하지 않는다. 이는 논문 §5가 스스로 적는다.</p>
+      <div class="metric">실로봇에서는 둘 다 문제가 된다</div>
+    </div>
+  </div>
+
+  <div class="note warn">
+    <span class="tag">범위 &mdash; 인용하기 전에 읽을 것</span>
+    <p>0/9는 <em>일반</em> LIBERO에서의 결과다. 논문은 장애물을 의도적으로 배치한 변형인
+    SafeLIBERO만 보고하며, 우리가 측정한 조건의 수치는 주장한 적이 없다. 이것은
+    <strong>논문이 명시한 범위 밖의 측정이지 재현 실패가 아니며</strong>, 그렇게 제시해서는 안
+    된다.</p>
+  </div>
+</section>
+
+<section id="s7">
+  <span class="eyebrow">7</span>
+  <h2>우리가 바꾼 것</h2>
+  <p class="lede">여섯 가지. 전부 Eq. (5)&ndash;(11)을 건드리지 않는다 &mdash; 제약 집합에 무엇을
+  넣을 것인가, 행이 몇 개인가의 문제일 뿐이다.</p>
+
+  <h3>7.1 &nbsp;평면의 자유도를 없앤다 &nbsp;<span class="pill ok">가장 큰 안전 개선</span></h3>
+  <p>3.2절에서: <span class="mono">h(n) &ge; 0</span>은 <em>어떤</em> 고정 단위
+  <span class="mono">n</span>에 대해서도 분리를 증명한다. 그러므로 논문의 &delta;n은 안전을
+  사는 게 아니라 조임을 산다. 그리고 그것을 묶는 &epsilon; 상자가 바로 A5의 구멍이다. 변수를
+  없애고, 대신 매 스텝 최적 평면을 정확히 다시 계산한다.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>변종</th><th class="num">개입률</th><th class="num">최대 보정</th><th class="num">e-stop</th><th class="num">CBF 위반</th></tr></thead>
+    <tbody>
+      <tr><td>Eq. (12) 그대로</td><td class="num">59.4%</td><td class="num">15.2 cm</td><td class="num">0.0%</td><td class="num bad">23.0%</td></tr>
+      <tr><td>+ 액션 한계만</td><td class="num">59.2%</td><td class="num">11.9 cm</td><td class="num bad">3.8%</td><td class="num bad">25.2%</td></tr>
+      <tr><td>&epsilon; = 0</td><td class="num">85.4%</td><td class="num bad">78.0 cm</td><td class="num">0.0%</td><td class="num">9.8%</td></tr>
+      <tr class="hi"><td>고정 법선 + 한계 + 슬랙</td><td class="num">58.5%</td><td class="num">9.5 cm</td><td class="num">0.0%</td><td class="num good">4.8%</td></tr>
+      <tr><td>고정점 반복</td><td class="num">38.3%</td><td class="num">5.6 cm</td><td class="num">0.0%</td><td class="num bad">47.2%</td></tr>
+    </tbody>
+  </table>
+  <caption>12 에피소드, 2,157 스텝, 동일한 지각 입력. 권장 행은 논문보다 <em>덜</em> 개입하면서
+  위반은 5분의 1이다 &mdash; 게다가 미상 하이퍼파라미터가 하나 함께 사라진다.</caption>
+  </div>
+
+  <div class="note warn">
+    <span class="tag">가장 좋아 보이는 행이 기각해야 할 행이다</span>
+    <p>고정점 반복은 눈에 보이는 모든 지표에서 이긴다 &mdash; 개입 최소, 보정 최소. 그 대가를
+    장애물 쪽으로 더 깊이 내딛는 것으로 치른다. 위반 47.2%로 논문보다 나쁘다. 우리 합성 단위
+    테스트는 “개입을 줄인다”로 이것을 통과시켰다. 합성 테스트에는 그 감소가 무엇을 대가로 하는지
+    볼 안전 축이 없기 때문이다. <strong>롤아웃 측정만이 이걸 잡았다.</strong></p>
+  </div>
+
+  <h3>7.2 &nbsp;슬랙 &mdash; 정지를 판단으로 만든다</h3>
+  <p>동작 크기를 제한하면 QP가 실제로 비가능해질 수 있고, 그래야 논문의 비상정지가 도달 가능해진다.
+  그런데 그러면 로봇이 3.8%의 스텝에서 서고, 서 있는 동안 배리어는 계속 나빠진다. 배리어 행마다
+  무겁게 벌점을 준 슬랙 변수를 넣으면 QP가 항상 풀리고, 정지는 솔버의 결과가 아니라
+  <em>불가피한 위반량이 임계를 넘었다</em>는 명시적 판단이 된다.</p>
+
+  <h3>7.3 &nbsp;오목한 물체만 쪼갠다</h3>
+  <p>크레이트를 벽·바닥·손잡이로 나누면 내부가 진짜로 빈다. A2가 사라지는 지점이다.</p>
+
+  <figure class="fig-card">
+    <svg viewBox="0 0 700 252" role="img" aria-label="크레이트 단면. 타원체 하나는 내부를 메우고, 벽별로 나누면 내부가 열린다">
+      <g font-family="IBM Plex Sans KR, IBM Plex Sans, sans-serif" font-size="12">
+        <text x="14" y="18" fill="var(--bad)" font-size="12.5" font-weight="600">타원체 하나 &mdash; 논문 그대로</text>
+        <ellipse cx="160" cy="140" rx="122" ry="86" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5"/>
+        <path d="M92 82 v112 h136 v-112" fill="none" stroke="var(--ink-2)" stroke-width="9" stroke-linejoin="round"/>
+        <ellipse cx="160" cy="92" rx="46" ry="34" fill="var(--bad)" fill-opacity=".22" stroke="var(--bad)" stroke-width="1.6"/>
+        <text x="160" y="97" text-anchor="middle" font-size="11.5" fill="var(--bad)">그리퍼</text>
+        <text x="160" y="242" text-anchor="middle" fill="var(--bad)" font-family="IBM Plex Mono, monospace" font-size="12">h = &minus;11.7 cm  차단</text>
+
+        <text x="392" y="18" fill="var(--good)" font-size="12.5" font-weight="600">벽 &middot; 바닥 &middot; 손잡이 &mdash; 우리 방식</text>
+        <ellipse cx="470" cy="138" rx="9" ry="60" fill="var(--card)" stroke="var(--ink-2)" stroke-width="1.4"/>
+        <ellipse cx="606" cy="138" rx="9" ry="60" fill="var(--card)" stroke="var(--ink-2)" stroke-width="1.4"/>
+        <ellipse cx="538" cy="196" rx="86" ry="9" fill="var(--card)" stroke="var(--ink-2)" stroke-width="1.4"/>
+        <path d="M470 82 v112 h136 v-112" fill="none" stroke="var(--ink-2)" stroke-width="9" stroke-linejoin="round"/>
+        <ellipse cx="538" cy="120" rx="46" ry="34" fill="var(--accent)" fill-opacity=".2" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="538" y="125" text-anchor="middle" font-size="11.5" fill="var(--accent)">그리퍼</text>
+        <text x="538" y="242" text-anchor="middle" fill="var(--good)" font-family="IBM Plex Mono, monospace" font-size="12">h = +0.8 cm  통과</text>
+      </g>
+    </svg>
+    <figcaption>회색이 크레이트 실물의 단면이다. 감싸는 타원체도 <strong>얇은 방향은 얇게
+    유지</strong>되기 때문에 분해가 통한다. <strong>3D 와이어프레임으로는 이걸 볼 수 없다</strong>
+    &mdash; 뒷벽이 구멍을 가로질러 그려진다. 그래서 단면으로 본다.</figcaption>
+  </figure>
+
+  <p><strong>반직관적인 나머지 절반:</strong> <em>볼록한</em> 물체를 쪼개면 오히려 나빠진다.
+  로봇 손을 MuJoCo가 이미 제공하는 25개 볼록 조각으로 나눴더니 여유가 &minus;1.0에서
+  &minus;1.6 cm로 떨어졌다. 조각마다 자기 적합 여유를 따로 물고, 부모 타원체가 좁아지는 높이에서
+  밖으로 삐져나오기 때문이다. 용기와 선반은 쪼개고, 손과 과일은 그대로 둔다.</p>
+
+  <h3>7.4 &nbsp;쥔 물체를 로봇의 일부로 승격</h3>
+  <p>장애물 집합에서 빼는 데 그치지 않고 <em>붙인다</em>. 사과를 쥐고 배 옆을 지날 때 논문의
+  형식으로는 그 사과가 무방비지만, 이러면 보호된다. 감지에 특권 상태는 필요 없다 &mdash; 그리퍼
+  폐쇄 <em>그리고</em> 물체 centroid가 손끝과 함께 이동.</p>
+  <div class="tw">
+  <table>
+    <thead><tr><th>&nbsp;</th><th class="num">h &lt; 0 스텝</th><th class="num">개입률</th><th class="num">CBF 위반</th></tr></thead>
+    <tbody>
+      <tr><td>쥔 물체를 장애물로</td><td class="num">58.8%</td><td class="num">62.8%</td><td class="num">9.2%</td></tr>
+      <tr class="hi"><td>쥔 물체를 승격</td><td class="num good">36.1%</td><td class="num good">44.8%</td><td class="num good">6.1%</td></tr>
+    </tbody>
+  </table>
+  <caption>필터 자체를 바꾸는 어떤 변경보다 개선이 크다. 비용은 약 2 ms.</caption>
+  </div>
+
+  <h3>7.5 &nbsp;지지면은 반공간으로</h3>
+  <p>테이블은 타원체가 아니다 &mdash; 방 전체를 감싼 타원체는 반축이 13.9 m로 나왔다. 평면은
+  애초에 반공간<em>이므로</em> 제약이 근사가 아니라 정확하고, 행 하나면 되며, 법선이 변수가 아니라
+  데이터라 &epsilon;이 필요 없다.</p>
+
+  <h3>7.6 &nbsp;관절 공간에서 푼다 &nbsp;<span class="pill ok">논문 §5 한계 해소</span></h3>
+  <p>RB-Y1에는 손끝 명령 채널이 아예 없다 &mdash; 정책이 관절 목표를 내므로
+  <span class="mono">&delta;c</span>는 아무도 보낼 수 없는 양이다.
+  <span class="mono">&delta;c = J<sub>v</sub>&delta;q</span>를 대입하면 모든 배리어 행이
+  <span class="mono">&delta;q</span>에 대한 행이 되고, 수식은 하나도 바뀌지 않는다.</p>
+  <p>논문은 손끝만 보호하는 이유를 “our safety filter assumes control of only the end effector
+  position and pose”라고 적는다. <strong>그 가정이 이유의 전부다.</strong> 관절을 직접 명령하면
+  그 이유가 사라진다. 링크마다 타원체와 자코비안을 주면 (링크 &times; 장애물) 쌍마다 행이 하나씩
+  늘 뿐이다.</p>
+  <div class="tw">
+  <table>
+    <thead><tr><th>모델</th><th>명목 명령</th><th class="num">스텝 후 팔꿈치 여유</th></tr></thead>
+    <tbody>
+      <tr><td>손끝만 (논문)</td><td>그대로 통과</td><td class="num bad">&minus;5.7 cm &mdash; 충돌</td></tr>
+      <tr class="hi"><td>체인 전체</td><td>막음</td><td class="num good">&ge; 0</td></tr>
+    </tbody>
+  </table>
+  <caption>팔꿈치만 위협받고 손끝은 어느 것에도 9.4 cm 이내로 접근하지 않는 자세에서 측정.</caption>
+  </div>
+</section>
+
+<section id="s8">
+  <span class="eyebrow">8</span>
+  <h2>RB-Y1 이식</h2>
+  <p class="lede">새 장면에 통합 코드를 쓰기 전에, 그 기하가 애초에 이 방법을 지탱할 수 있는지
+  묻는다. LIBERO에서 비싸게 배운 것이다.</p>
+
+  <p>그리퍼를 각 파지 타깃에 놓고 나머지 모든 물체에 대한 배리어를 계산한다. 하나라도 음수면 파지
+  자세 자체가 장애물 안이고, <em>어떤</em> 파라미터로도 그 동작은 허용되지 않는다. 장면 파일을
+  직접 읽는 사전 점검 도구로 만들었다.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>국면</th><th>판정</th><th>조건</th></tr></thead>
+    <tbody>
+      <tr><td>과일 파지</td><td><span class="pill ok">통과</span></td><td>과일 중심 +3 cm에서 손을 닫을 것</td></tr>
+      <tr><td>크레이트 파지</td><td><span class="pill ok">통과</span></td><td>손잡이를 별도 파트로 적합</td></tr>
+      <tr><td>크레이트에 담기</td><td><span class="pill ok">통과</span></td><td>크레이트를 벽·바닥·손잡이로 분해</td></tr>
+      <tr><td>테이블·벽</td><td><span class="pill no">범위 밖</span></td><td>논문이 모델링하지 않음 &mdash; 7.5절이 처리</td></tr>
+    </tbody>
+  </table>
+  <caption>판정: 조건 두 개를 붙여 성립. 둘 다 튜닝할 것이 아니라 만들 것이다.</caption>
+  </div>
+
+  <div class="note">
+    <span class="tag">닫힌 질문 하나</span>
+    <p>우리는 담기 국면이 “attention이 크레이트를 지목하는지에 전적으로 달렸다”고 적고, 그것을
+    이식의 성패를 가르는 단일 실험이라고 불렀다. 크레이트를 분해하니 그 의존이 사라졌다 &mdash;
+    크레이트가 장애물로 남아 있어도 담을 수 있다. 게다가 크레이트를 통째로 제외했다면 손잡이까지
+    무방비가 됐을 텐데, 운반 경로가 실제로 그 손잡이를 h = &minus;5.0 cm로 친다.</p>
+  </div>
+
+  <h3>지각, 참값과 대조</h3>
+  <p>반지름을 아는 구를 렌더링해 전체 체인에 통과시켰다 &mdash; 세그멘테이션, 역투영, 깊이 트리밍,
+  타원체 적합, 편향 보정.</p>
+  <div class="tw">
+  <table>
+    <thead><tr><th>조건</th><th class="num">중심 오차</th><th>반축</th></tr></thead>
+    <tbody>
+      <tr><td>가림 없음</td><td class="num good">1.2 &ndash; 1.9 mm</td><td>실물보다 작아지지 않음 &mdash; 안전한 방향</td></tr>
+      <tr><td>전완이 52% 가림</td><td class="num bad">13.1 mm</td><td class="bad">참값 5.0에 대해 4.5 cm &mdash; 과소추정</td></tr>
+    </tbody>
+  </table>
+  <caption>가림은 충돌하는 방향으로 틀리게 만든다. 덮지 않고 미해결 항목으로 기록했다 &mdash;
+  논문도 이 문제를 다루지 않는다.</caption>
+  </div>
+</section>
+
+<section id="s9">
+  <span class="eyebrow">9</span>
+  <h2>우리가 틀린 것</h2>
+  <p class="lede">우리 자신의 오류 다섯 개와, 각각을 무엇이 잡았는지. 이 절이 있는 이유는 패턴이
+  매번 같기 때문이다.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>오류</th><th>그대로 뒀다면</th><th>무엇이 잡았나</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>그리퍼 타원체를 세그멘테이션 마스크로 적합</td>
+        <td>손목·전완까지 삼킨 77 cm짜리 “손”. 0/9 실패의 절반.</td>
+        <td>그 숫자를 장면의 13&ndash;18 cm 물체 간격과 나란히 읽어 본 것</td>
+      </tr>
+      <tr>
+        <td>정렬된 고유값을 x, y, z 반축으로 읽음</td>
+        <td>크레이트의 36 cm를 손잡이 <em>높이</em>로 진단. 실제로는 옆이었고, 두 판 동안 틀린 결론.</td>
+        <td>타원체를 그것이 대신하는 메시 위에 겹쳐 그린 것</td>
+      </tr>
+      <tr>
+        <td>후면 보정 규칙 “시선 방향 반축을 2배”</td>
+        <td>모든 장애물을 0.7&ndash;2.8 cm 과대 보정</td>
+        <td>정답을 아는 구에 시험해 본 것</td>
+      </tr>
+      <tr>
+        <td>같은 자세를 반복하며 지연 측정</td>
+        <td>실제로 40 ms인 구성을 3.3 ms로 보고</td>
+        <td>합성 수치가 롤아웃 수치와 6배 어긋난 것</td>
+      </tr>
+      <tr>
+        <td>합성 단위 테스트만으로 변종을 채택</td>
+        <td>위반 47.2%짜리 설정을 권장할 뻔</td>
+        <td>실제 궤적에서 조임이 아니라 안전을 측정한 것</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="tag">관통하는 하나</span>
+    <p>전부 <strong>같은 방식으로는 틀릴 수 없는 무언가</strong>와 대조해서 잡혔다. 반지름을 아는
+    구, 자기 근사 아래 겹쳐 그린 메시, 해석적 자코비안이 아니라 직접 미분한 정기구학, 합성
+    케이스가 아니라 롤아웃. 구현을 자기 자신과 대조하면 자기정합성만 증명된다.</p>
+  </div>
+</section>
+
+<section id="s10">
+  <span class="eyebrow">10</span>
+  <h2>현재 상태</h2>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>구성 요소</th><th>상태</th><th>근거</th></tr></thead>
+    <tbody>
+      <tr><td>CBF-QP 수학 Eq. (5)&ndash;(12)</td><td><span class="pill ok">완료</span></td><td>단위 테스트 42개, gradient 유한차분 대조</td></tr>
+      <tr><td>권장 필터 설정</td><td><span class="pill ok">완료</span></td><td>2,157개 기록 스텝</td></tr>
+      <tr><td>다중 파트 로봇·장애물</td><td><span class="pill ok">완료</span></td><td>오프셋 파트 회전 gradient 검증</td></tr>
+      <tr><td>쥔 물체 승격</td><td><span class="pill ok">완료</span></td><td>h &lt; 0이 22.7 포인트 감소</td></tr>
+      <tr><td>관절 공간 다리, 전신 보호</td><td><span class="pill ok">완료</span></td><td>36행 5.8 ms, 예산 11.4</td></tr>
+      <tr><td>MuJoCo 카메라·세그멘테이션·자코비안</td><td><span class="pill ok">완료</span></td><td>참값 대비 1.2&ndash;1.9 mm</td></tr>
+      <tr><td>transport 씬 성립 여부</td><td><span class="pill ok">완료</span></td><td>조건 두 개로 성립</td></tr>
+      <tr><td>새 모델의 attention 헤드 재선택</td><td><span class="pill no">대기</span></td><td>파인튜닝 체크포인트 필요</td></tr>
+      <tr><td>가림 대응</td><td><span class="pill no">미해결</span></td><td>적합을 과소추정하게 만든다</td></tr>
+    </tbody>
+  </table>
+  <caption>체크포인트 없이 정할 수 있는 것은 전부 정해졌다. 미상 하이퍼파라미터는 다섯에서
+  넷으로 줄었다.</caption>
+  </div>
+
+  <h3>하나만 말할 시간이 있다면</h3>
+  <p>논문의 핵심 주장은 살아남았다. 얼어 있는 attention 헤드 하나가 조작 타깃을 실제로 짚는다 —
+  우연 0.199에 대해 0.846. 측정과의 접촉에서 살아남지 못한 것은 그 위에 볼트로 붙은 안전
+  기계장치였고, 가장 쓸모 있었던 수정은 변수를 더하는 것이 아니라 <strong>지우는</strong>
+  것이었다. 평면의 자유도를 없애자 실제 위반이 23.0%에서 4.7%로 떨어졌고, 개입도 함께 줄었으며,
+  논문이 값을 명시하지 않는 다섯 개의 하이퍼파라미터 중 하나가 사라졌다.</p>
+</section>
+
+<footer>
+  arXiv 2606.09749v1의 재현 및 확장. 공식 구현이 존재하지 않아 전부 논문만 보고 작성했고,
+  기록된 LIBERO 롤아웃과 MuJoCo 참값으로 측정했다. 모든 수치는 테스트 스위트와
+  <span class="mono">compare_variants.py</span>로 재현된다.
+</footer>
+</main>
+</div>
