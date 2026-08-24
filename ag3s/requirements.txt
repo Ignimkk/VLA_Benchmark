@@ -1,0 +1,20 @@
+# AG3S runtime + test dependencies. Six packages, nothing else.
+#
+# Verified 2026-08-19 in a clean Python 3.11 venv: all 287 tests, both CLI entry points and the
+# IPOPT contract harness pass with the unpinned latest of each, including numpy 2.x.
+#
+# Deliberately absent, per the dependency policy: scikit-learn, open3d, pinocchio, hpp-fcl.
+# DBSCAN, Euclidean connected components, RANSAC, voxel downsampling and the KD-tree queries are
+# implemented on numpy/scipy instead. See benchmark/ag3s/README.md.
+
+numpy          # core arrays; works on both 1.26.x and 2.x
+scipy          # cKDTree, sparse csgraph, linear_sum_assignment, SVD
+casadi         # symbolic constraints + the bundled IPOPT used by test_to_contract.py
+pyyaml         # configs/*.yaml
+
+# Only needed for `python -m benchmark.ag3s.visualization`; imported lazily inside the functions so
+# core imports never touch it.
+matplotlib
+
+# Tests only.
+pytest

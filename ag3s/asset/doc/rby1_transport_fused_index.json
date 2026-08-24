@@ -1,0 +1,751 @@
+{
+  "fused": {
+    "target": {
+      "requested": {
+        "zed_left": "crate",
+        "wrist_cam_l": "pear",
+        "wrist_cam_r": "orange"
+      },
+      "grounding_status": "ok",
+      "grounded_body": "orange",
+      "purity": 1.0,
+      "points": 73,
+      "confidence": 0.6993,
+      "centroid_base": [
+        0.5565,
+        -0.3082,
+        0.8634
+      ],
+      "seed_camera": "right_wrist",
+      "supporting_cameras": [
+        "head",
+        "right_wrist"
+      ]
+    },
+    "self_filter": {
+      "head": {
+        "points_kept": 25850,
+        "robot_points_removed": 6771,
+        "robot_points_remaining": 0
+      },
+      "left_wrist": {
+        "points_kept": 17334,
+        "robot_points_removed": 0,
+        "robot_points_remaining": 0
+      },
+      "right_wrist": {
+        "points_kept": 17382,
+        "robot_points_removed": 0,
+        "robot_points_remaining": 0
+      }
+    },
+    "identity": {
+      "n_candidates": 23,
+      "n_multi_camera_candidates": 12,
+      "cameras_per_candidate": {
+        "0": 3,
+        "1": 1,
+        "2": 3,
+        "3": 1,
+        "4": 1,
+        "5": 1,
+        "6": 2,
+        "7": 1,
+        "8": 3,
+        "9": 2,
+        "10": 1,
+        "11": 1,
+        "12": 2,
+        "13": 1,
+        "14": 3,
+        "15": 2,
+        "16": 1,
+        "17": 1,
+        "18": 2,
+        "-1000": 1,
+        "-1001": 3,
+        "-1002": 2,
+        "-1003": 2
+      },
+      "candidates_per_body": {
+        "apple": [
+          9
+        ],
+        "crate": [
+          0,
+          2,
+          5,
+          8
+        ],
+        "orange": [
+          18
+        ],
+        "pear": [
+          6
+        ],
+        "table": [
+          1,
+          3,
+          4,
+          7
+        ]
+      },
+      "bodies_with_one_candidate": 3,
+      "bodies_split_by_clustering": 2
+    },
+    "link_pose_error_m": {
+      "link_head_2": 1.4000134385128149e-11,
+      "link_left_arm_6": 5.148346380917994e-07,
+      "link_right_arm_6": 5.152944033748804e-07
+    },
+    "summary": {
+      "status": "degraded",
+      "validity": "degraded",
+      "geometry_certified": false,
+      "grounding_status": "ok",
+      "phase": "approach",
+      "active_manipulators": [
+        "right"
+      ],
+      "attached": null,
+      "frame_index": 0,
+      "frame_id": "base",
+      "n_candidates": 25,
+      "candidates_by_type": {
+        "object": 12,
+        "unknown_geometry": 6,
+        "target": 1,
+        "overflow": 4,
+        "support_surface": 2
+      },
+      "n_support_surfaces": 2,
+      "has_target": true,
+      "n_constraints": 71400,
+      "n_active_slots": 23,
+      "max_candidates": 32,
+      "horizon": 20,
+      "squared_distance": true,
+      "notes": [
+        "10 point(s) beyond max_clusters=64 / unknown_min_points=3 were folded into 4 conservative aggregate(s)",
+        "points: 400201 raw -> 60566 voxel -> 60566 after self-filter",
+        "candidates: 12 object, 6 unknown, 1 target, 2 support"
+      ],
+      "profile_ms": {
+        "scene_reconstruction": 265.9554130077595,
+        "robot_self_filter": 0.0,
+        "support_surface": 6.275332008954138,
+        "attention_lifting": 0.006863003363832831,
+        "target_grounding": 27.849638994666748,
+        "collision_candidates": 39.417068008333445,
+        "primitive_fitting": 1.3300319551490247,
+        "constraint_generation": 0.32410600397270173
+      },
+      "metrics": {
+        "n_cameras": 3,
+        "cameras": [
+          "head",
+          "left_wrist",
+          "right_wrist"
+        ],
+        "missing_cameras": [],
+        "camera_skew_sec": 0.03,
+        "n_stale_state": 0,
+        "n_stale_transform": 0,
+        "n_points_per_camera": {
+          "head": 25850,
+          "left_wrist": 17334,
+          "right_wrist": 17382
+        },
+        "n_points_before_fusion": 60566,
+        "n_points_fused": 12528,
+        "n_observations": 60566,
+        "fusion_voxel_size_m": 0.012,
+        "fusion_compression": 0.20684872700855264,
+        "cameras_with_attention": [
+          "head",
+          "left_wrist",
+          "right_wrist"
+        ],
+        "n_self_filtered": 6771,
+        "n_points_raw": 400201,
+        "n_points_voxel": 60566,
+        "n_points_final": 12528,
+        "final_voxel_size_m": 0.006,
+        "n_points_self_filtered": 6771,
+        "self_filter_enabled": true,
+        "n_support_points": 9963,
+        "target_grounding_status": "ok",
+        "target_confidence": 0.6992908393572499,
+        "n_object": 12,
+        "n_unknown": 6,
+        "n_overflow": 4,
+        "n_overflow_points": 10,
+        "n_unassigned_points": 0,
+        "overflow_containment_rate": 1.0,
+        "overflow_excess_volume_ratio": 44.60093378455878,
+        "clearance_phase": "approach",
+        "clearance_active_manipulators": [
+          "right"
+        ],
+        "clearance_phase_aware": true,
+        "clearance_target_grounded": true,
+        "clearance_authorized_links": [
+          "ee_finger_r1",
+          "ee_finger_r2",
+          "ee_right"
+        ],
+        "clearance_contact_permission": false,
+        "clearance_contact_margin": 0.0,
+        "clearance_target_margin_authorized": 0.020000000000000004,
+        "clearance_target_margin_other": 0.05,
+        "clearance_full_margin": 0.05
+      }
+    },
+    "candidates": [
+      {
+        "id": -1,
+        "source_type": "support_surface",
+        "gt_body": "office",
+        "gt_purity": 0.999,
+        "points": 7263,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.0,
+          -0.0,
+          0.0028
+        ],
+        "radius_m": null,
+        "safety_margin_m": 0.01,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": -2,
+        "source_type": "support_surface",
+        "gt_body": "table",
+        "gt_purity": 0.8685,
+        "points": 2700,
+        "seen_by": [
+          "head",
+          "left_wrist",
+          "right_wrist"
+        ],
+        "centroid_base": [
+          0.004,
+          0.0001,
+          0.8253
+        ],
+        "radius_m": null,
+        "safety_margin_m": 0.01,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 0,
+        "source_type": "object",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 654,
+        "seen_by": [
+          "head",
+          "left_wrist",
+          "right_wrist"
+        ],
+        "centroid_base": [
+          0.5685,
+          -0.0032,
+          0.9045
+        ],
+        "radius_m": 0.2174,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 1,
+        "source_type": "unknown_geometry",
+        "gt_body": "table",
+        "gt_purity": 1.0,
+        "points": 612,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.4089,
+          0.2502,
+          0.5391
+        ],
+        "radius_m": 0.7018,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 2,
+        "source_type": "unknown_geometry",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 267,
+        "seen_by": [
+          "head",
+          "left_wrist",
+          "right_wrist"
+        ],
+        "centroid_base": [
+          0.4383,
+          0.0178,
+          0.9089
+        ],
+        "radius_m": 0.1762,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 3,
+        "source_type": "object",
+        "gt_body": "table",
+        "gt_purity": 1.0,
+        "points": 140,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.4107,
+          -0.3693,
+          0.6589
+        ],
+        "radius_m": 0.1176,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 4,
+        "source_type": "unknown_geometry",
+        "gt_body": "table",
+        "gt_purity": 1.0,
+        "points": 140,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.4156,
+          -0.3634,
+          0.1514
+        ],
+        "radius_m": 0.1459,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 5,
+        "source_type": "object",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 96,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.4992,
+          -0.1912,
+          0.9486
+        ],
+        "radius_m": 0.0853,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 6,
+        "source_type": "object",
+        "gt_body": "pear",
+        "gt_purity": 0.9655,
+        "points": 87,
+        "seen_by": [
+          "head",
+          "left_wrist"
+        ],
+        "centroid_base": [
+          0.5461,
+          0.307,
+          0.8713
+        ],
+        "radius_m": 0.0542,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 7,
+        "source_type": "object",
+        "gt_body": "table",
+        "gt_purity": 1.0,
+        "points": 84,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.4131,
+          -0.3673,
+          0.4247
+        ],
+        "radius_m": 0.07,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 8,
+        "source_type": "unknown_geometry",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 77,
+        "seen_by": [
+          "head",
+          "left_wrist",
+          "right_wrist"
+        ],
+        "centroid_base": [
+          0.603,
+          -0.0017,
+          0.8601
+        ],
+        "radius_m": 0.0984,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 18,
+        "source_type": "target",
+        "gt_body": "orange",
+        "gt_purity": 1.0,
+        "points": 73,
+        "seen_by": [
+          "head",
+          "right_wrist"
+        ],
+        "centroid_base": [
+          0.5565,
+          -0.3082,
+          0.8634
+        ],
+        "radius_m": 0.0359,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "approach",
+        "track_age": 0
+      },
+      {
+        "id": 9,
+        "source_type": "object",
+        "gt_body": "apple",
+        "gt_purity": 1.0,
+        "points": 72,
+        "seen_by": [
+          "head",
+          "right_wrist"
+        ],
+        "centroid_base": [
+          0.4596,
+          -0.2998,
+          0.8651
+        ],
+        "radius_m": 0.0408,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 10,
+        "source_type": "object",
+        "gt_body": "table",
+        "gt_purity": 1.0,
+        "points": 48,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.4096,
+          -0.3698,
+          0.3184
+        ],
+        "radius_m": 0.0482,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 11,
+        "source_type": "unknown_geometry",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 43,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.5137,
+          0.2002,
+          0.9676
+        ],
+        "radius_m": 0.0719,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 12,
+        "source_type": "object",
+        "gt_body": "banana",
+        "gt_purity": 1.0,
+        "points": 36,
+        "seen_by": [
+          "head",
+          "left_wrist"
+        ],
+        "centroid_base": [
+          0.4602,
+          0.3097,
+          0.8529
+        ],
+        "radius_m": 0.0342,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 13,
+        "source_type": "object",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 34,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.4657,
+          0.1908,
+          0.9155
+        ],
+        "radius_m": 0.0387,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 14,
+        "source_type": "object",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 30,
+        "seen_by": [
+          "head",
+          "left_wrist",
+          "right_wrist"
+        ],
+        "centroid_base": [
+          0.4321,
+          0.0304,
+          0.8593
+        ],
+        "radius_m": 0.0348,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 15,
+        "source_type": "object",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 29,
+        "seen_by": [
+          "head",
+          "left_wrist"
+        ],
+        "centroid_base": [
+          0.4322,
+          -0.034,
+          0.858
+        ],
+        "radius_m": 0.0345,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 16,
+        "source_type": "object",
+        "gt_body": "table",
+        "gt_purity": 1.0,
+        "points": 28,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.4174,
+          -0.3611,
+          0.5232
+        ],
+        "radius_m": 0.0344,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 17,
+        "source_type": "unknown_geometry",
+        "gt_body": "table",
+        "gt_purity": 1.0,
+        "points": 5,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.4011,
+          -0.3847,
+          0.5113
+        ],
+        "radius_m": 0.0274,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": -1001,
+        "source_type": "overflow",
+        "gt_body": "crate",
+        "gt_purity": 0.6667,
+        "points": 3,
+        "seen_by": [
+          "head",
+          "left_wrist",
+          "right_wrist"
+        ],
+        "centroid_base": [
+          0.446,
+          -0.17,
+          0.6795
+        ],
+        "radius_m": 0.378,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": -1000,
+        "source_type": "overflow",
+        "gt_body": "table",
+        "gt_purity": 1.0,
+        "points": 3,
+        "seen_by": [
+          "head"
+        ],
+        "centroid_base": [
+          0.4111,
+          -0.3844,
+          0.3991
+        ],
+        "radius_m": 0.0542,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": -1003,
+        "source_type": "overflow",
+        "gt_body": "banana",
+        "gt_purity": 1.0,
+        "points": 2,
+        "seen_by": [
+          "head",
+          "left_wrist"
+        ],
+        "centroid_base": [
+          0.4589,
+          0.3094,
+          0.8495
+        ],
+        "radius_m": 0.0356,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": -1002,
+        "source_type": "overflow",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 2,
+        "seen_by": [
+          "head",
+          "left_wrist"
+        ],
+        "centroid_base": [
+          0.4918,
+          0.1754,
+          0.8741
+        ],
+        "radius_m": 0.0485,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      }
+    ]
+  }
+}

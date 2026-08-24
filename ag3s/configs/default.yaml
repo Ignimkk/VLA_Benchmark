@@ -1,0 +1,98 @@
+# AG3S default configuration — the spec §9 values, verbatim, plus the stage knobs the spec left
+# implicit. Every field here has the same value as the dataclass default in config.py; this file
+# exists so an ablation can be written as a small diff against something readable.
+#
+# Ablation presets live alongside as ablation_*.yaml.
+
+frame_id: base
+
+attention:
+  normalization: percentile      # percentile | minmax | softmax | none
+  seed_percentile: 95
+  temperature: 1.0
+  percentile_range: [5.0, 99.0]
+  interpolation: bilinear        # bilinear | nearest
+  # layer/head are adapter hints; null lets the adapter pick its own default.
+  layer: null
+  head: null
+
+clustering:
+  method: dbscan                 # dbscan | region_growing
+  eps: 0.03
+  min_points: 20
+  use_3d_connectivity: true      # false = the "2D attention only" ablation
+  region_growing_radius: null    # null = use eps, so "method" stays a one-variable ablation
+  target_score_threshold: 0.25
+  w_attention: 0.7
+  w_geometry: 0.3
+
+pointcloud:
+  voxel_size: 0.005
+  self_filter: true
+  max_points: 60000
+  depth_min: 0.05
+  depth_max: 3.0
+  depth_scale: 1.0
+  self_filter_inflation: 0.02
+
+support_surface:
+  enabled: true
+  max_planes: 2
+  distance_threshold: 0.008
+  min_inliers: 500
+  max_iterations: 200
+  normal_reference: [0.0, 0.0, 1.0]
+  max_normal_angle_deg: 25.0
+  safety_margin: 0.01
+
+collision_candidate:
+  cluster_method: dbscan
+  preserve_unknown: true
+  eps: 0.03
+  min_points: 20
+  unknown_min_points: 3
+  max_clusters: 64
+  track_association_radius: 0.08
+  track_max_missed: 3
+
+geometry:
+  primitive: sphere              # sphere | capsule | box | ellipsoid
+  safety_margin: 0.05
+  max_candidates: 32
+
+contact:
+  phase_aware: true
+  # Surface distance permitted between an authorized link and the target once contact is allowed.
+  # Zero means "may touch" -- the constraint row stays and still forbids penetration.
+  contact_margin: 0.0
+  # ONLY these links may ever be relaxed against the target, and only when an external
+  # ContactPolicyContext names their manipulator. Forearms are deliberately absent: a forearm
+  # pressing into the object being grasped is a collision, not a grasp.
+  contact_links:
+    right: [ee_right, ee_finger_r1, ee_finger_r2]
+    left:  [ee_left,  ee_finger_l1, ee_finger_l2]
+  # These scales apply to the authorized links above and to nothing else. The torso, the forearm and
+  # the opposite arm keep the full margin in every phase, GRASP included.
+  # TRANSIT   -> the target is just another obstacle
+  # APPROACH  -> the authorized gripper may come closer
+  # PRE_GRASP -> controlled approach, still no contact
+  # GRASP     -> contact permitted, at contact_margin
+  # collision_enabled must be true everywhere: disabling deletes the constraint rows.
+  phase_rules:
+    transit:   {collision_enabled: true, contact_permission: false, margin_scale: 1.0}
+    approach:  {collision_enabled: true, contact_permission: false, margin_scale: 0.4}
+    pre_grasp: {collision_enabled: true, contact_permission: false, margin_scale: 0.1}
+    grasp:     {collision_enabled: true, contact_permission: true,  margin_scale: 0.0}
+
+constraint:
+  squared_distance: true
+  horizon: 20
+  # Slots held back to carry conservative aggregates when the scene has more constraint spheres than
+  # slots. Overflow is aggregated, never dropped.
+  reserved_overflow_slots: 2
+  # Fixed slots for a held object's primitives, reserved whether or not anything is held so that
+  # attach/detach never rebuilds the graph.
+  max_attached_primitives: 4
+
+profiling:
+  enabled: true

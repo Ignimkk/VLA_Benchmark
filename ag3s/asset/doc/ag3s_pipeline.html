@@ -1,0 +1,1404 @@
+<title>AG3S 파이프라인</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#f4f6f8; --surface:#ffffff; --sunken:#eceff3;
+  --ink:#111820; --ink-2:#39434f; --muted:#66717f;
+  --rule:#d9dfe6; --rule-soft:#e7ecf1;
+  --target:#c8371f; --target-soft:#fbeae6;
+  --geom:#2a6299;  --geom-soft:#e6eef7;
+  --ok:#2f7d54; --ok-soft:#e8f3ec; --warn:#9a6a12;
+  --display:'Archivo',system-ui,sans-serif;
+  --body:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --measure:70ch;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0d1117; --surface:#151b23; --sunken:#111720;
+    --ink:#e3eaf2; --ink-2:#b3becb; --muted:#8994a3;
+    --rule:#2a333f; --rule-soft:#212a34;
+    --target:#f0705a; --target-soft:#2e1a17;
+    --geom:#6ba3dd;  --geom-soft:#15222f;
+    --ok:#5cb98a; --ok-soft:#14251c; --warn:#d9a441;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0d1117; --surface:#151b23; --sunken:#111720;
+  --ink:#e3eaf2; --ink-2:#b3becb; --muted:#8994a3;
+  --rule:#2a333f; --rule-soft:#212a34;
+  --target:#f0705a; --target-soft:#2e1a17;
+  --geom:#6ba3dd;  --geom-soft:#15222f;
+  --ok:#5cb98a; --ok-soft:#14251c; --warn:#d9a441;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:var(--body);font-size:16px;line-height:1.68;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto;padding:0 28px}
+.col{max-width:var(--measure)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;margin:0}
+a{color:var(--geom)}
+code,.mono{font-family:var(--mono);font-size:.88em}
+:focus-visible{outline:2px solid var(--geom);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.mast{border-bottom:1px solid var(--rule);background:var(--surface)}
+.mast .wrap{padding:54px 28px 34px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:clamp(38px,6.5vw,68px);font-weight:700;letter-spacing:-.03em;line-height:.97;margin:14px 0 0}
+.thesis{max-width:64ch;margin-top:20px;font-size:18.5px;line-height:1.55;color:var(--ink-2)}
+.thesis b{color:var(--ink);font-weight:600}
+.howto{margin-top:24px;border:1px solid var(--rule);background:var(--sunken);padding:14px 18px;
+  max-width:64ch;font-size:14.5px;color:var(--ink-2)}
+.howto b{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--geom);display:block;margin-bottom:5px}
+
+.spine{margin-top:30px;border-top:1px solid var(--rule);padding-top:16px;overflow-x:auto}
+.spine-row{display:flex;gap:0;min-width:680px}
+.spine-cell{flex:1;padding:10px 16px 8px 0;border-right:1px solid var(--rule-soft)}
+.spine-cell:last-child{border-right:0}
+.spine-cell .n{font-family:var(--mono);font-size:19px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.spine-cell .l{font-size:11.5px;color:var(--muted);margin-top:1px;line-height:1.35}
+.spine-cell.t .n{color:var(--target)}
+.spine-cell.g .n{color:var(--geom)}
+
+.shell{display:block}
+@media(min-width:1100px){
+  .shell{display:grid;grid-template-columns:212px 1fr;gap:50px;align-items:start}
+  nav.toc{position:sticky;top:0;padding:50px 0;font-size:13.5px;max-height:100vh;overflow-y:auto}
+}
+nav.toc{display:none}
+@media(min-width:1100px){nav.toc{display:block}}
+nav.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+nav.toc .grp{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);padding:14px 10px 5px}
+nav.toc a{display:block;padding:5px 10px;color:var(--muted);text-decoration:none;border-left:2px solid var(--rule-soft)}
+nav.toc a:hover{color:var(--ink);border-left-color:var(--geom);background:var(--sunken)}
+main{padding:50px 0 96px;min-width:0}
+section+section{margin-top:62px}
+h2{font-size:13px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+  padding-bottom:10px;border-bottom:1px solid var(--rule);margin-bottom:24px}
+h3{font-size:21px;font-weight:600;letter-spacing:-.01em;margin:32px 0 10px}
+h4{font-size:15.5px;font-weight:600;margin:24px 0 7px}
+p{margin:0 0 15px}
+.lead{font-size:17.5px;color:var(--ink-2)}
+ul,ol.plain{padding-left:20px;margin:0 0 15px}
+li{margin-bottom:7px}
+strong{font-weight:600}
+
+.stage-head{display:grid;grid-template-columns:46px 1fr;gap:18px;align-items:start;margin-bottom:14px}
+.stage-num{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--muted);
+  border:1px solid var(--rule);width:36px;height:36px;display:grid;place-items:center;
+  font-variant-numeric:tabular-nums;margin-top:3px}
+.stage-title{font-family:var(--display);font-size:25px;font-weight:600;letter-spacing:-.015em;line-height:1.2}
+.stage-file{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:3px}
+.xform{margin:0 0 20px;border:1px solid var(--rule);background:var(--sunken);
+  padding:13px 16px;font-family:var(--mono);font-size:13.5px;overflow-x:auto;white-space:nowrap}
+.xform .arrow{color:var(--geom);padding:0 10px;font-weight:600}
+.xform .t{color:var(--target)} .xform .g{color:var(--geom)}
+
+.rule-note{border-left:3px solid var(--target);background:var(--target-soft);padding:13px 17px;font-size:15px;margin:0 0 22px}
+.key{margin:16px 0 22px;padding:12px 15px;background:var(--sunken);border-left:2px solid var(--geom);font-size:14.5px}
+.key b{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--geom);display:block;margin-bottom:3px}
+.math{font-family:var(--mono);font-size:13.5px;background:var(--surface);border:1px solid var(--rule);
+  padding:14px 17px;margin:0 0 18px;overflow-x:auto;white-space:pre;line-height:1.75}
+
+/* anticipated questions — the presentation-prep device */
+.qa{border:1px solid var(--rule);background:var(--surface);margin:0 0 12px}
+.qa .q{display:flex;gap:11px;padding:12px 16px 8px;font-weight:600;font-size:15.5px;align-items:baseline}
+.qa .q::before{content:"Q";font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  color:var(--target);border:1px solid var(--target);padding:2px 6px;flex:none}
+.qa .a{display:flex;gap:11px;padding:0 16px 13px;font-size:14.5px;color:var(--ink-2);align-items:baseline}
+.qa .a::before{content:"A";font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  color:var(--ok);border:1px solid var(--ok);padding:2px 6px;flex:none}
+.qa-head{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--target);margin:26px 0 10px}
+
+.duality{display:grid;grid-template-columns:1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);margin:6px 0 24px}
+@media(min-width:640px){.duality{grid-template-columns:1fr 1fr}}
+.half{background:var(--surface);padding:22px}
+.half .tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.half.t .tag{color:var(--target)} .half.g .tag{color:var(--geom)}
+.half .big{font-family:var(--display);font-size:22px;font-weight:600;line-height:1.25;margin:8px 0 10px;letter-spacing:-.01em}
+.half p{font-size:14.5px;color:var(--ink-2);margin:0}
+
+.tw{overflow-x:auto;margin:0 0 20px;border:1px solid var(--rule)}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--surface)}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--rule-soft);white-space:nowrap}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--sunken);font-weight:600}
+tbody tr:last-child td{border-bottom:0}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+td.strong{font-weight:600}
+td.wrap{white-space:normal;min-width:22ch}
+tr.hl td{background:var(--geom-soft)}
+tr.warn td{background:var(--target-soft)}
+tr.good td{background:var(--ok-soft)}
+.pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border:1px solid currentColor;display:inline-block}
+.pill.t{color:var(--target)} .pill.g{color:var(--geom)} .pill.m{color:var(--muted)} .pill.ok{color:var(--ok)}
+
+/* Diagrams carry the literal semantic hues as presentation attributes so the SVG stays
+   self-contained, and these rules re-bind them to the theme tokens. A presentation attribute has
+   lower priority than any author rule, so this wins in both themes without touching the markup —
+   without it the diagrams would keep the light palette on a dark ground. */
+svg [fill="#c8371f"]{fill:var(--target)}
+svg [stroke="#c8371f"]{stroke:var(--target)}
+svg [fill="#2a6299"]{fill:var(--geom)}
+svg [stroke="#2a6299"]{stroke:var(--geom)}
+
+figure{margin:22px 0 26px}
+figure svg{max-width:100%;height:auto;display:block;background:var(--surface);border:1px solid var(--rule)}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px;max-width:var(--measure)}
+
+.foot{border-top:1px solid var(--rule);margin-top:60px;padding-top:20px;font-size:13.5px;color:var(--muted)}
+.foot a{color:var(--geom)}
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="eyebrow">Attention-Guided 3D Safety Scene · 발표 준비용 학습 문서</div>
+    <h1>다섯 번의<br>모양 바꾸기</h1>
+    <p class="thesis">AG3S가 하는 일은 한 줄로 요약된다 — <b>VLA의 2D attention과 depth 한 장을,
+      궤적 최적화기가 미분할 수 있는 3D 충돌 제약으로 바꾸는 것.</b> 그 사이에서 데이터는 다섯 번
+      표현을 바꾸고, 각 변환마다 <b>무엇이 보존되어야 하는가</b>에 대한 결정이 하나씩 들어 있다.</p>
+
+    <div class="howto">
+      <b>이 문서를 읽는 법</b>
+      각 단계는 <strong>정의 → 수식과 유도 → 왜 이 선택인가 → 코드 위치 → 실측 → 예상 질문</strong>
+      순서다. 수식은 결과만 적지 않고 어디서 나왔는지까지 적었다. <strong>예상 질문</strong> 블록은
+      발표에서 실제로 물어볼 만한 것들이며, 답의 근거는 전부 재현 가능한 측정치다.
+      한 픽셀이 제약이 되기까지를 실제 숫자로 따라가는
+      <a href="#trace">완주 예시</a>부터 읽어도 좋다.
+    </div>
+
+    <div class="spine">
+      <div class="spine-row">
+        <div class="spine-cell"><div class="n">307,200</div><div class="l">depth 픽셀<br>480 × 640</div></div>
+        <div class="spine-cell"><div class="n">256,884</div><div class="l">유효 깊이<br>16.4% 탈락</div></div>
+        <div class="spine-cell"><div class="n">41,333</div><div class="l">보셀 대표점<br>5 mm · 6.21×</div></div>
+        <div class="spine-cell"><div class="n">40,057</div><div class="l">self-filter 후<br>+ attention</div></div>
+        <div class="spine-cell t"><div class="n">452</div><div class="l">target 클러스터<br>IoU 1.0000</div></div>
+        <div class="spine-cell g"><div class="n">4</div><div class="l">충돌 후보<br>+ 평면 1</div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap shell">
+<nav class="toc" aria-label="목차"><ol>
+  <li class="grp">먼저</li>
+  <li><a href="#idea">한 문장의 설계</a></li>
+  <li><a href="#notation">기호와 용어</a></li>
+  <li class="grp">주 파이프라인</li>
+  <li><a href="#s1">1 · 3D back-projection</a></li>
+  <li><a href="#s2">2 · attention 매핑</a></li>
+  <li><a href="#s3">3 · target grounding</a></li>
+  <li><a href="#s4">4 · target / obstacle</a></li>
+  <li><a href="#s5">5 · obstacle geometry</a></li>
+  <li class="grp">보조 단계</li>
+  <li><a href="#self">self-filter</a></li>
+  <li><a href="#plane">support surface</a></li>
+  <li><a href="#fuse">3-카메라 융합</a></li>
+  <li><a href="#clear">clearance 정책</a></li>
+  <li><a href="#nlp">제약 생성</a></li>
+  <li class="grp">종합</li>
+  <li><a href="#trace">한 픽셀 완주</a></li>
+  <li><a href="#order">실행 순서</a></li>
+  <li><a href="#numbers">실측 요약</a></li>
+  <li><a href="#defend">발표 시 방어선</a></li>
+</ol></nav>
+
+<main>
+
+<!-- ==================================================== THE IDEA -->
+<section id="idea">
+  <h2>먼저 · 한 문장의 설계</h2>
+  <div class="col">
+    <p class="lead">AG3S의 모든 결정은 하나의 분리에서 나온다. 이 분리를 설명하지 못하면 나머지
+      다섯 단계를 아무리 정확히 말해도 발표가 성립하지 않는다.</p>
+  </div>
+
+  <div class="duality">
+    <div class="half t">
+      <div class="tag">Attention</div>
+      <div class="big">무엇이 target인가</div>
+      <p>고-attention 점에서 seed를 뽑아 어느 물체를 향하는지 정한다. <strong>여기서 역할이 끝난다.</strong>
+        seed가 없거나 점수가 낮으면 <code>target=None</code>과 이유를 반환한다 — 지어내지 않는다.</p>
+    </div>
+    <div class="half g">
+      <div class="tag">3D Geometry</div>
+      <div class="big">무엇이 충돌할 수 있는가</div>
+      <p>재구성된 <strong>모든 점</strong>이 후보다. attention이 0인 지오메트리도 물리적으로 존재하면
+        충돌 후보이고, 분류되지 않은 점조차 <code>UNKNOWN_GEOMETRY</code>로 남는다.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p><strong>왜 이 분리가 필요한가.</strong> 같은 저장소의 <code>knows_vla</code>는 반대로 했다 —
+      attention이 "무엇이 장애물인가"까지 결정하게 했다. 그 결과가 그 패키지 자신의 문서에 측정치와
+      함께 남아 있다.</p>
+    <ul>
+      <li>세그멘테이션이 놓친 지오메트리는 <em>존재하지 않는 것</em>이 된다.</li>
+      <li>테이블 같은 support surface가 보호되지 않는다.</li>
+      <li>잡고 있는 물체가 장애물로 강등되어 <strong>barrier가 58.8%의 스텝에서 구조적으로 음수</strong>가 된다.</li>
+    </ul>
+    <p>AG3S는 그 결정권을 뒤집는다. <strong>attention 점수는 어디에서도 장애물 탐지 임계값으로
+      쓰이지 않는다.</strong></p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 720 250" role="img" aria-label="attention은 3단계에서 멈추고, 기하는 5단계까지 계속된다">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <polygon points="0,0 10,5 0,10" fill="currentColor"/>
+        </marker>
+        <marker id="arT" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <polygon points="0,0 10,5 0,10" fill="#c8371f"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">
+        <!-- attention lane -->
+        <text x="14" y="46" font-size="11" fill="#c8371f" letter-spacing="1.4">ATTENTION</text>
+        <rect x="120" y="28" width="120" height="34" fill="none" stroke="#c8371f"/>
+        <text x="180" y="49" text-anchor="middle" fill="#c8371f">A(u,v)</text>
+        <line x1="240" y1="45" x2="292" y2="45" stroke="#c8371f" marker-end="url(#arT)"/>
+        <rect x="294" y="28" width="120" height="34" fill="none" stroke="#c8371f"/>
+        <text x="354" y="49" text-anchor="middle" fill="#c8371f">seed</text>
+        <line x1="414" y1="45" x2="466" y2="45" stroke="#c8371f" marker-end="url(#arT)"/>
+        <rect x="468" y="28" width="120" height="34" fill="none" stroke="#c8371f"/>
+        <text x="528" y="49" text-anchor="middle" fill="#c8371f">target 지목</text>
+        <line x1="588" y1="45" x2="628" y2="45" stroke="#c8371f" stroke-dasharray="4 4"/>
+        <text x="634" y="49" font-size="11" fill="#c8371f">멈춤</text>
+
+        <!-- the wall -->
+        <line x1="640" y1="20" x2="640" y2="72" stroke="#c8371f" stroke-width="2"/>
+
+        <!-- geometry lane -->
+        <text x="14" y="146" font-size="11" fill="#2a6299" letter-spacing="1.4">GEOMETRY</text>
+        <rect x="120" y="128" width="120" height="34" fill="none" stroke="#2a6299"/>
+        <text x="180" y="149" text-anchor="middle" fill="#2a6299">모든 3D 점</text>
+        <line x1="240" y1="145" x2="292" y2="145" stroke="#2a6299" marker-end="url(#ar)"/>
+        <rect x="294" y="128" width="120" height="34" fill="none" stroke="#2a6299"/>
+        <text x="354" y="149" text-anchor="middle" fill="#2a6299">클러스터</text>
+        <line x1="414" y1="145" x2="466" y2="145" stroke="#2a6299" marker-end="url(#ar)"/>
+        <rect x="468" y="128" width="120" height="34" fill="none" stroke="#2a6299"/>
+        <text x="528" y="149" text-anchor="middle" fill="#2a6299">후보</text>
+        <line x1="588" y1="145" x2="640" y2="145" stroke="#2a6299" marker-end="url(#ar)"/>
+        <rect x="642" y="128" width="64" height="34" fill="none" stroke="#2a6299"/>
+        <text x="674" y="149" text-anchor="middle" fill="#2a6299">제약</text>
+
+        <!-- the one crossing -->
+        <line x1="528" y1="62" x2="528" y2="126" stroke="#c8371f" stroke-dasharray="3 3" marker-end="url(#arT)"/>
+        <text x="536" y="98" font-size="11" fill="#c8371f">점 인덱스만</text>
+
+        <text x="14" y="200" font-size="11.5" fill="currentColor" opacity=".72">3단계에서 attention이 넘기는 것은 배열이 아니라 &quot;이 점들이 target&quot;이라는 인덱스뿐이다.</text>
+        <text x="14" y="220" font-size="11.5" fill="currentColor" opacity=".72">generate_candidates()의 시그니처에 attention 인자가 없는 것이 이 벽의 코드상 실체다.</text>
+      </g>
+    </svg>
+    <figcaption>두 흐름은 3단계에서 한 번만 만나고, 넘어가는 것은 점 인덱스뿐이다. attention 배열은
+      벽을 넘지 못한다 — 그 사실을 <code>inspect.signature</code>로 검사하는 테스트가 있다.</figcaption>
+  </figure>
+</section>
+
+<!-- ==================================================== NOTATION -->
+<section id="notation">
+  <h2>먼저 · 기호와 용어</h2>
+  <div class="col">
+    <p>발표에서 말이 흔들리기 쉬운 곳들이다. 특히 <strong>후보(candidate)</strong>와
+      <strong>장애물(obstacle)</strong>은 바꿔 쓰면 안 된다.</p>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>기호 / 용어</th><th>뜻</th><th>주의</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">(u, v)</td><td>픽셀 좌표. u는 <strong>열</strong>, v는 <strong>행</strong></td><td class="wrap">K의 규약과 일치. 뒤바꾸면 조용히 틀린다</td></tr>
+      <tr><td class="mono">D</td><td>카메라 프레임 z-depth (거리 아님)</td><td class="wrap">광선 거리와 다르다 — 1단계 마지막 참고</td></tr>
+      <tr><td class="mono">K</td><td>내부 파라미터 <span class="mono">[[fx,0,cx],[0,fy,cy],[0,0,1]]</span></td><td class="wrap">fovy에서 유도 가능</td></tr>
+      <tr><td class="mono">T<sub>base←cam</sub></td><td>카메라 → 로봇 base 프레임 4×4</td><td class="wrap">방향을 반대로 쓰면 씬이 뒤집힌다</td></tr>
+      <tr><td class="mono">A</td><td>점별 attention 스칼라</td><td class="wrap">정규화본과 raw본이 <strong>따로</strong> 있다</td></tr>
+      <tr class="hl"><td class="strong">충돌 후보</td><td>로봇이 부딪힐 수 있는 모든 3D 기하</td><td class="wrap"><strong>target 포함.</strong> "장애물"이 아니다</td></tr>
+      <tr><td class="mono">SourceType</td><td>후보의 출처: TARGET · OBJECT · UNKNOWN_GEOMETRY · OVERFLOW · SUPPORT_SURFACE</td><td class="wrap">TARGET만 완화 가능</td></tr>
+      <tr><td class="mono">Phase</td><td>TRANSIT / APPROACH / PRE_GRASP / GRASP</td><td class="wrap"><strong>주입 입력.</strong> AG3S가 추론하지 않는다</td></tr>
+      <tr><td class="mono">d<sub>safe</sub></td><td>(로봇 sphere, 후보 슬롯)별 요구 여유</td><td class="wrap">후보당 스칼라가 <em>아니다</em></td></tr>
+      <tr><td class="mono">eps</td><td>클러스터링 이웃 반경 (기본 3 cm)</td><td class="wrap">운용 범위: voxel_size &lt; eps &lt; 최소 물체 간격</td></tr>
+    </tbody></table></div>
+</section>
+
+<!-- ==================================================== STAGE 1 -->
+<section id="s1">
+  <h2>주 파이프라인 · 1</h2>
+  <div class="stage-head">
+    <div class="stage-num">01</div>
+    <div>
+      <div class="stage-title">3D back-projection</div>
+      <div class="stage-file">reconstruction.py · backproject()</div>
+    </div>
+  </div>
+  <div class="xform">
+    depth<span class="mono">(H,W)</span> + K + T<sub>base←cam</sub>
+    <span class="arrow">→</span>
+    <span class="g">PointCloud</span>: points<span class="mono">(N,3)</span> + uv<span class="mono">(N,2)</span>
+  </div>
+
+  <div class="col">
+    <p class="lead">픽셀 <code>(u,v)</code>와 그 픽셀의 깊이 <code>D</code>에서 base 프레임의
+      <code>(X,Y,Z)</code>를 만든다. <strong>제약이 3D 거리이기 때문에 필요한 변환</strong>이고,
+      여러 카메라를 하나로 합치려면 공통 좌표계가 필요하기 때문에 base 프레임까지 간다.</p>
+    <h4>수식이 어디서 나오는가</h4>
+    <p>핀홀 카메라에서 3D 점 <code>(X,Y,Z)</code>가 픽셀 <code>(u,v)</code>로 투영되는 관계는
+      닮은 삼각형이다 — 초점거리 <code>f</code>만큼 떨어진 상면에서, 광축으로부터의 변위 비가
+      3D 공간의 변위 비와 같다.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 240" role="img" aria-label="핀홀 닮은 삼각형에서 X = (u-cx)D/fx가 유도된다">
+      <defs>
+        <marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <polygon points="0,0 10,5 0,10" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">
+        <!-- optical axis -->
+        <line x1="70" y1="130" x2="640" y2="130" stroke="currentColor" stroke-dasharray="5 5" opacity=".45"/>
+        <text x="600" y="124" font-size="11" opacity=".6">optical axis (Z)</text>
+        <!-- camera centre -->
+        <circle cx="70" cy="130" r="4" fill="currentColor"/>
+        <text x="42" y="152" font-size="11">C</text>
+        <!-- image plane -->
+        <line x1="190" y1="46" x2="190" y2="214" stroke="currentColor" stroke-width="1.6"/>
+        <text x="150" y="40" font-size="11">image plane</text>
+        <line x1="70" y1="130" x2="190" y2="130" stroke="currentColor" opacity=".0"/>
+        <!-- f bracket -->
+        <line x1="70" y1="200" x2="190" y2="200" stroke="currentColor" opacity=".55" marker-start="url(#ar1)" marker-end="url(#ar1)"/>
+        <text x="112" y="216" font-size="11" opacity=".8">f</text>
+        <!-- pixel on image plane -->
+        <circle cx="190" cy="86" r="3.5" fill="#c8371f"/>
+        <text x="198" y="82" font-size="11" fill="#c8371f">(u, v)</text>
+        <line x1="190" y1="130" x2="190" y2="86" stroke="#c8371f" stroke-width="1.6"/>
+        <text x="140" y="110" font-size="11" fill="#c8371f">u − c</text><text x="176" y="113" font-size="8" fill="#c8371f">x</text>
+        <!-- ray to the 3D point -->
+        <line x1="70" y1="130" x2="560" y2="50" stroke="#2a6299" stroke-width="1.6" marker-end="url(#ar1)"/>
+        <circle cx="520" cy="57" r="4" fill="#2a6299"/>
+        <text x="528" y="50" font-size="11" fill="#2a6299">P = (X, Y, Z)</text>
+        <!-- D bracket -->
+        <line x1="70" y1="176" x2="520" y2="176" stroke="#2a6299" opacity=".65" marker-start="url(#ar1)" marker-end="url(#ar1)"/>
+        <text x="288" y="192" font-size="11" fill="#2a6299">D = Z</text>
+        <!-- X drop -->
+        <line x1="520" y1="57" x2="520" y2="130" stroke="#2a6299" stroke-dasharray="3 3"/>
+        <text x="528" y="98" font-size="11" fill="#2a6299">X</text>
+        <!-- the relation -->
+        <text x="70" y="234" font-size="12.5" fill="currentColor">(u − c</text>
+        <text x="118" y="237" font-size="9">x</text>
+        <text x="124" y="234" font-size="12.5">) / f</text>
+        <text x="158" y="237" font-size="9">x</text>
+        <text x="166" y="234" font-size="12.5">  =  X / D      ⟹      X = (u − c</text>
+        <text x="404" y="237" font-size="9">x</text>
+        <text x="410" y="234" font-size="12.5">) · D / f</text>
+        <text x="470" y="237" font-size="9">x</text>
+      </g>
+    </svg>
+    <figcaption>두 삼각형(C–상면–픽셀 / C–D–P)이 닮았으므로 변의 비가 같다. 그 한 줄이 back-projection
+      전부이고, Y도 같은 논리를 세로축에 적용한 것이다.</figcaption>
+  </figure>
+
+  <div class="math">X = (u − c<sub>x</sub>) · D / f<sub>x</sub>
+Y = (v − c<sub>y</sub>) · D / f<sub>y</sub>
+Z = D
+P<sub>base</sub> = T<sub>base←cam</sub> · [X Y Z 1]<sup>T</sup></div>
+
+  <div class="col">
+    <p><strong>구현상 주의 하나.</strong> 이미지 뒤집기를 <em>하지 않는다</em>.
+      <code>knows_vla</code>는 robosuite가 관측을 미리 뒤집어 저장하고 수집 스크립트가 한 번 더
+      회전시키기 때문에 <code>flip_row</code>/<code>flip_col</code>이 필요하지만, AG3S는
+      <code>K</code>가 기술하는 방향 그대로의 depth를 받고 그런 보정은 GT로 검증 가능한 호출자 쪽에
+      남긴다. <strong>프레임 오류는 조용히 치명적이므로 추측하지 않는다는 원칙이다.</strong></p>
+    <h4>여기서 내려지는 세 가지 결정</h4>
+  </div>
+
+  <div class="key"><b>결정 1 — (u,v)는 끝까지 살아남는다</b>
+    보셀 다운샘플이 <strong>중심점이 아니라 대표점</strong>을 남긴다. 중심점에는 픽셀이 없고,
+    픽셀이 없으면 2단계에서 attention을 조회할 수 없다. 세 픽셀의 평균을 내면 조회할 대상이 사라지고,
+    최근접으로 하나 만들어 붙이면 파이프라인 맨 앞에 <em>날조된 대응관계</em>를 놓는 셈이 된다.
+    <br><br>같은 이유로 대표점은 <strong>입력 순서상 첫 점</strong>이다 —
+    <code>np.unique(..., return_index=True)</code>가 첫 등장을 돌려주므로 결과가 입력만의 결정론적
+    함수가 된다.
+  </div>
+
+  <div class="key"><b>결정 2 — 무효 깊이만 버린다</b>
+    0 · NaN · Inf · 센서 신뢰 범위 밖만 제거한다. 실측 <strong>307,200 픽셀 중 50,316개(16.4%)</strong>가
+    여기서 탈락한다. 깊이 0인 픽셀은 카메라 원점으로 역투영되어 <em>로봇 내부에 유령 장애물</em>을
+    만들기 때문이다. 그 외에는 "흥미롭지 않다"는 이유로 버리는 점이 하나도 없다.
+  </div>
+
+  <div class="key"><b>결정 3 — 서브샘플링은 결정론적</b>
+    <code>max_points</code>는 실시간 요구사항이다(640×480은 307k 점이고 하류의 모든 KD-tree가
+    초선형이다). 그러나 무작위 부분집합으로 다시 돌린 ablation은 변경이 아니라 <em>샘플러</em>를
+    측정한다. RNG도, 빌드마다 달라지는 해시도 쓰지 않는다.
+  </div>
+
+  <div class="rule-note col">
+    <strong><code>depth_max</code>는 반경이 아니라 z-depth를 자른다.</strong> 이것이 실제로 물었던
+    함정이다. fovy 90° 렌즈의 4:3 프레임에서 코너 광선은 광축에서 58° 벌어져 있어, z-depth 2.2 m 컷이
+    <strong>4.17 m 떨어진 사무실 벽</strong>을 통과시켰다. 그 벽은 반지름 1.85 m 구 하나가 되어
+    작업공간 전체를 막았다. 그래서 <code>pointcloud.range_max</code> 반경 게이트가 따로 있다.
+  </div>
+
+  <div class="qa-head">예상 질문</div>
+  <div class="qa"><div class="q">왜 depth 이미지를 그대로 쓰지 않고 point cloud로 바꾸나요?</div>
+    <div class="a">제약이 3D 거리이기 때문입니다. <code>‖p_robot(q) − p_obs‖ ≥ r</code>을 쓰려면
+      장애물이 3D 좌표여야 하고, 로봇 순기구학도 3D를 내놓습니다. 그리고 카메라가 셋이므로
+      공통 좌표계 없이는 합칠 수 없습니다.</div></div>
+  <div class="qa"><div class="q">보셀 다운샘플이 정보를 잃지 않나요? 6.21배나 줄이는데요.</div>
+    <div class="a">잃습니다. 잃는 것은 <strong>해상도이지 영역이 아닙니다.</strong> 점유된 모든 보셀이
+      대표점을 하나씩 남기므로, 표현되지 않는 영역의 크기가 보셀 크기(5 mm) 이내로 유계입니다.
+      이것이 인덱스 선택 방식과의 결정적 차이입니다 — 인덱스로 솎으면 얇은 물체가 통째로 빠질 수
+      있고 그것을 알 방법이 없습니다.</div></div>
+  <div class="qa"><div class="q">역투영이 정확하다는 것을 어떻게 확인했나요?</div>
+    <div class="a">합성 fixture가 해석적 광선 추적이므로 GT를 정확히 압니다. 반지름 4 cm 구 위의
+      픽셀 하나를 역투영한 결과가 구 중심에서 <strong>0.040000 m</strong> — 정확히 반지름만큼
+      떨어진 곳에 떨어집니다(<a href="#trace">완주 예시</a>). 테이블 평면은 z 평균 0.750000 m,
+      표준편차 0.0000 mm로 복원됩니다.</div></div>
+</section>
+
+<!-- ==================================================== STAGE 2 -->
+<section id="s2">
+  <h2>주 파이프라인 · 2</h2>
+  <div class="stage-head">
+    <div class="stage-num">02</div>
+    <div>
+      <div class="stage-title">2D attention을 3D 점에 매핑</div>
+      <div class="stage-file">attention_lifting.py · lift()</div>
+    </div>
+  </div>
+  <div class="xform">
+    <span class="t">A(u,v)</span> + <span class="g">PointCloud</span>
+    <span class="arrow">→</span>
+    <span class="t">AttentionPointCloud</span>: (X,Y,Z,A)<span class="mono">(N,4)</span>
+  </div>
+
+  <div class="col">
+    <p class="lead">1단계가 보존한 <code>(u,v)</code>로 각 점의 attention 값을 조회한다.
+      변환이라기보다 <strong>결합(join)</strong>이며, 그 결합이 가능한 유일한 이유가 1단계의 결정 1이다.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 250" role="img" aria-label="대표점은 픽셀을 갖고 있어 attention을 조회할 수 있지만 중심점은 그렇지 않다">
+      <defs>
+        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <polygon points="0,0 10,5 0,10" fill="currentColor"/>
+        </marker>
+        <marker id="ar2t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <polygon points="0,0 10,5 0,10" fill="#c8371f"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">
+        <text x="16" y="24" font-size="11" letter-spacing="1.3" opacity=".7">한 보셀 안의 점 3개</text>
+        <rect x="16" y="36" width="150" height="100" fill="none" stroke="currentColor" opacity=".5" stroke-dasharray="4 3"/>
+        <circle cx="52" cy="66" r="4" fill="#2a6299"/><text x="62" y="70" font-size="10.5">(u₁,v₁)</text>
+        <circle cx="52" cy="96" r="4" fill="currentColor" opacity=".45"/><text x="62" y="100" font-size="10.5" opacity=".6">(u₂,v₂)</text>
+        <circle cx="52" cy="120" r="4" fill="currentColor" opacity=".45"/><text x="62" y="124" font-size="10.5" opacity=".6">(u₃,v₃)</text>
+
+        <!-- representative branch -->
+        <line x1="170" y1="66" x2="236" y2="66" stroke="#2a6299" marker-end="url(#ar2)"/>
+        <text x="176" y="58" font-size="10.5" fill="#2a6299">대표점</text>
+        <rect x="238" y="48" width="164" height="36" fill="none" stroke="#2a6299"/>
+        <text x="320" y="70" text-anchor="middle" fill="#2a6299">(X,Y,Z) + (u₁,v₁)</text>
+        <line x1="402" y1="66" x2="470" y2="66" stroke="#2a6299" marker-end="url(#ar2)"/>
+        <text x="408" y="58" font-size="10.5" fill="#2a6299">조회 가능</text>
+        <rect x="472" y="48" width="120" height="36" fill="none" stroke="#2a6299"/>
+        <text x="532" y="70" text-anchor="middle" fill="#2a6299">A = 0.97</text>
+
+        <!-- centroid branch -->
+        <line x1="170" y1="116" x2="236" y2="116" stroke="currentColor" opacity=".55" marker-end="url(#ar2)"/>
+        <text x="176" y="108" font-size="10.5" opacity=".65">중심점</text>
+        <rect x="238" y="98" width="164" height="36" fill="none" stroke="currentColor" opacity=".55"/>
+        <text x="320" y="120" text-anchor="middle" opacity=".7">(X̄,Ȳ,Z̄) + ???</text>
+        <line x1="402" y1="116" x2="470" y2="116" stroke="#c8371f" stroke-dasharray="4 4" marker-end="url(#ar2t)"/>
+        <rect x="472" y="98" width="120" height="36" fill="none" stroke="#c8371f"/>
+        <text x="532" y="120" text-anchor="middle" fill="#c8371f">조회 불가</text>
+
+        <text x="16" y="176" font-size="11.5" opacity=".78">중심점은 어느 픽셀에도 속하지 않는다. 최근접 픽셀을 붙이면 그 순간</text>
+        <text x="16" y="196" font-size="11.5" opacity=".78">파이프라인 맨 앞에 &quot;날조된 대응관계&quot;가 생기고, 이후 모든 단계가 그것을 신뢰한다.</text>
+        <text x="16" y="224" font-size="11.5" fill="#2a6299">그래서 voxel_downsample은 centroid가 아니라 대표점을 남긴다.</text>
+      </g>
+    </svg>
+    <figcaption>2단계가 성립하려면 1단계가 픽셀을 버리지 않아야 한다. 두 단계가 한 결정으로 묶여 있는 지점.</figcaption>
+  </figure>
+
+  <div class="col">
+    <h4>해상도 격차 — 이것이 3단계의 존재 이유다</h4>
+    <p>π0.5의 attention은 <strong>16×16 패치 그리드</strong>다. 480×640 이미지에 올리면 패치 하나가
+      <strong>30×40 픽셀</strong>을 덮는다. 즉 attention은 물체의 경계를 알지 못한다 —
+      <strong>"저쪽 어딘가"</strong>까지만 말할 수 있다.</p>
+    <p>이것이 발표에서 가장 자주 오해받을 지점이다. attention을 임계값으로 잘라 물체를 얻으려 하면
+      패치 경계가 물체 경계가 되어 버린다. <strong>그 격차를 메우는 것이 3단계의 3D 기하 연결성이고,
+      2D-only ablation에서 IoU가 1.0000 → 0.4845로 떨어지는 것이 그 격차의 크기다.</strong></p>
+  </div>
+
+  <div class="tw"><table>
+    <thead><tr><th>정규화</th><th>정의</th><th>용도</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td>percentile <span class="pill m">기본</span></td><td class="mono">[p5, p99] 클립 후 [0,1]</td><td class="wrap">단일 hot patch가 나머지를 뭉개는 것을 방지</td></tr>
+      <tr><td>minmax</td><td class="mono">(a − min)/(max − min)</td><td class="wrap">이상치에 취약, 비교용</td></tr>
+      <tr><td>softmax</td><td class="mono">exp(a/τ) / Σ</td><td class="wrap">온도 τ로 첨예도 조절</td></tr>
+      <tr><td>none</td><td class="mono">원값 그대로</td><td class="wrap">ablation</td></tr>
+    </tbody></table></div>
+
+  <div class="col">
+    <p>네 방식 모두 <strong>순위를 보존</strong>하므로 seed 임계값과 독립적으로 고를 수 있다.</p>
+    <h4>여기서 발견한 결함 — 신호를 둘로 나눠야 했다</h4>
+    <p>정규화와 피크 찾기는 같은 신호에서 서로 <em>양립 불가능한 것</em>을 원한다.</p>
+    <ul>
+      <li>임계값은 <strong>비교 가능한 값</strong>을 원한다 → 상위 1% 클리핑이 필요하다.</li>
+      <li><code>argmax</code>는 <strong>모호하지 않은 순위</strong>를 원한다 → 그 클리핑이 동점을 만든다.</li>
+    </ul>
+  </div>
+
+  <div class="tw"><table>
+    <thead><tr><th>신호</th><th>최대값에 동점인 점</th><th>피크 ↔ target 중심 거리</th></tr></thead>
+    <tbody>
+      <tr class="warn"><td><code>attention</code> (정규화)</td><td class="n">401</td><td class="n">0.1052 m</td></tr>
+      <tr class="good"><td class="strong"><code>raw_attention</code></td><td class="n strong">1</td><td class="n strong">0.0400 m</td></tr>
+    </tbody></table></div>
+
+  <div class="col">
+    <p>퍼센타일을 옮겨서는 둘을 동시에 만족시킬 수 없다 — p100에서는 동점이 사라지지만 1000배짜리
+      이상치 하나가 실제 범위를 0.001로 눌러버린다. 그래서
+      <strong>피크는 <code>raw_attention</code>에서, 임계값은 <code>attention</code>에서</strong>
+      읽고, 어느 쪽도 타협하지 않는다.</p>
+  </div>
+
+  <div class="rule-note col">
+    <strong>불변식: <code>len(lift(cloud, …)) == len(cloud)</code>. 언제나.</strong>
+    저-attention 점은 절대 버려지지 않는다. 실측 40,057점 중 <strong>2,833점이 attention 0</strong>이고,
+    그 전부가 4단계에서 충돌 후보 자격을 유지한다. 이것이 "기하가 충돌 가능성을 정한다"의 운영적 의미다.
+  </div>
+
+  <div class="qa-head">예상 질문</div>
+  <div class="qa"><div class="q">attention이 틀리면 어떻게 되나요?</div>
+    <div class="a">target을 잘못 지목하거나 못 지목합니다. 그러나 <strong>충돌 후보는 온전합니다</strong> —
+      attention은 장애물 결정에 관여하지 않으므로, 최악의 경우 "잡을 물체를 못 찾았다"가 되지
+      "장애물을 못 봤다"가 되지 않습니다. 이 비대칭이 설계의 핵심입니다.</div></div>
+  <div class="qa"><div class="q">16×16을 480×640으로 늘리면 없는 정보를 만드는 것 아닌가요?</div>
+    <div class="a">만들지 않습니다. 보간은 패치 값을 그 패치가 덮는 픽셀들에 나눠줄 뿐입니다.
+      그래서 attention은 <strong>어느 물체인지</strong>까지만 말하고 <strong>어디까지가 그 물체인지</strong>는
+      말하지 않으며, 그 경계는 3단계의 기하가 정합니다. 해상도 격차를 메우려 하지 않고
+      <em>역할을 나눈</em> 것이 설계입니다.</div></div>
+  <div class="qa"><div class="q">왜 attention 신호를 두 벌 들고 다니나요? 메모리 낭비 아닌가요?</div>
+    <div class="a">float32 배열 하나가 늘어나는 비용(40k점 기준 160 KB)으로, 피크가 물체에서
+      <strong>10.5 cm 떨어진 곳</strong>을 가리키던 것을 4.0 cm로 고쳤습니다. 정규화된 신호에서는
+      401개 점이 최대값에 동점이라 <code>argmax</code>가 그중 아무거나 고릅니다 —
+      측정된 사례에서는 테이블 위의 점이었습니다.</div></div>
+</section>
+
+<!-- ==================================================== STAGE 3 -->
+<section id="s3">
+  <h2>주 파이프라인 · 3</h2>
+  <div class="stage-head">
+    <div class="stage-num">03</div>
+    <div>
+      <div class="stage-title">3D target grounding</div>
+      <div class="stage-file">target_grounding.py · ground_target()</div>
+    </div>
+  </div>
+  <div class="xform">
+    <span class="t">(X,Y,Z,A)</span>
+    <span class="arrow">→</span>
+    <span class="t">TargetGeometry</span> <span class="mono">또는</span> <span class="mono">None + GroundingStatus</span>
+  </div>
+
+  <div class="col">
+    <p class="lead">고-attention 점에서 seed를 뽑고, <strong>3D 기하 연결성</strong>으로 키우고,
+      점수를 매겨 하나를 고른다. 세 동작이 각각 다른 일을 한다 —
+      seed는 <em>어디를 볼지</em>, 성장은 <em>어디까지가 물체인지</em>, 점수는 <em>여러 후보 중 어느
+      것인지</em>를 정한다.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 260" role="img" aria-label="성장이 seed 집합 안이 아니라 전체 클라우드로 뻗어야 물체의 뒷면이 포함된다">
+      <defs>
+        <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <polygon points="0,0 10,5 0,10" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">
+        <text x="16" y="22" font-size="11" letter-spacing="1.3" opacity=".7">카메라에서 본 물체</text>
+        <!-- camera -->
+        <circle cx="40" cy="132" r="4" fill="currentColor"/>
+        <text x="16" y="154" font-size="10.5" opacity=".7">cam</text>
+        <line x1="46" y1="128" x2="120" y2="104" stroke="currentColor" opacity=".3"/>
+        <line x1="46" y1="136" x2="120" y2="160" stroke="currentColor" opacity=".3"/>
+
+        <!-- WRONG: seeds only -->
+        <text x="150" y="46" font-size="11" fill="#c8371f" letter-spacing="1.2">seed 집합 안에서만 성장</text>
+        <circle cx="212" cy="104" r="42" fill="none" stroke="currentColor" opacity=".35" stroke-dasharray="3 3"/>
+        <path d="M 176 84 A 42 42 0 0 0 176 124" fill="none" stroke="#c8371f" stroke-width="3.5"/>
+        <text x="248" y="90" font-size="10.5" fill="#c8371f">앞면만</text>
+        <circle cx="196" cy="104" r="3" fill="#c8371f"/>
+        <text x="204" y="124" font-size="10" fill="#c8371f">centroid</text>
+        <circle cx="212" cy="104" r="2.5" fill="currentColor" opacity=".5"/>
+        <text x="218" y="146" font-size="10" opacity=".55">진짜 중심</text>
+        <line x1="196" y1="104" x2="212" y2="104" stroke="#c8371f" stroke-width="1.4"/>
+        <text x="150" y="176" font-size="10.5" fill="#c8371f">→ centroid가 카메라 쪽으로 치우친다</text>
+
+        <!-- RIGHT: grow into the full cloud -->
+        <text x="430" y="46" font-size="11" fill="#2a6299" letter-spacing="1.2">전체 클라우드로 성장</text>
+        <circle cx="492" cy="104" r="42" fill="none" stroke="#2a6299" stroke-width="3.5"/>
+        <path d="M 456 84 A 42 42 0 0 0 456 124" fill="none" stroke="#c8371f" stroke-width="3.5"/>
+        <text x="540" y="90" font-size="10.5" fill="#2a6299">전체 표면</text>
+        <circle cx="492" cy="104" r="3" fill="#2a6299"/>
+        <text x="500" y="126" font-size="10" fill="#2a6299">centroid = 진짜 중심</text>
+        <text x="430" y="176" font-size="10.5" fill="#2a6299">→ 편향은 카메라의 것이지 AG3S의 것이 아니다</text>
+
+        <text x="16" y="212" font-size="11.5" opacity=".78">뒷면은 attention을 거의 받지 못한다. seed는 &quot;어느 물체&quot;만 지목하고,</text>
+        <text x="16" y="232" font-size="11.5" opacity=".78">&quot;어디까지&quot;는 <tspan fill="#2a6299">기하 연결성</tspan>이 정한다 — 이것이 성장이 seed 밖으로 나가야 하는 이유.</text>
+        <text x="16" y="252" font-size="11" opacity=".62">굵은 빨강 = 고-attention 영역 · 굵은 파랑 = 최종 클러스터</text>
+      </g>
+    </svg>
+    <figcaption>단일 시점에서도 관측 centroid는 진짜 중심에서 2.27 cm 앞으로 치우친다(실측). 그것은
+      카메라의 편향이며, 가시 표면 기준으로 비교하면 오차 0.51 cm다.</figcaption>
+  </figure>
+
+  <div class="math">seed  = { i : A<sub>i</sub> ≥ percentile(A, 95) }          실측 임계 0.5776 → 933 / 40,057
+grow  = seed에서 시작해 <b>전체 클라우드</b>로 3D 연결성 확장   (cKDTree, eps = 3 cm)
+label = DBSCAN(eps, min_points)  또는  region growing
+score = (w<sub>a</sub> · attention + w<sub>g</sub> · geometry) / (w<sub>a</sub> + w<sub>g</sub>)        w<sub>a</sub>=0.7  w<sub>g</sub>=0.3</div>
+
+  <div class="col">
+    <h4>점수 함수의 두 항</h4>
+    <p>attention 항은 클러스터의 평균 attention이다. 기하 항은 두 가지를 요구한다 —
+      <strong>조밀할 것</strong>, 그리고 <strong>attention 피크 근처에 있을 것</strong>.</p>
+  </div>
+
+  <div class="math">compactness    = exp( −rms_radius / compactness_scale )      scale = 0.05 m
+peak_proximity = exp( −‖centroid − peak‖ / peak_scale )      scale = 0.10 m
+
+geometry = √( compactness · peak_proximity )        <b>기하평균</b></div>
+
+  <div class="key"><b>왜 합이 아니라 기하평균인가</b>
+    합이면 <em>피크 위에 놓인 거대한 덩어리</em>가 실제로 주목받는 물체만큼 높은 점수를 받는다.
+    기하평균은 두 조건을 <strong>모두</strong> 만족할 것을 요구한다 — 하나가 0에 가까우면 곱이 죽는다.
+    두 항 모두 지수 감쇠라 (0, 1] 범위에 있고, 그래서 가중치가 해석 가능하고 임계값이 씬이 바뀌어도
+    같은 뜻을 유지한다.
+  </div>
+
+  <div class="col">
+    <h4>실측 — 채점이 실제로 작동하는 방식</h4>
+    <p>fixture는 target(구)의 attention 55%를 <strong>의도적으로 옆 박스로 흘린다</strong>.
+      그래서 후보가 둘 나오고, 아래가 그 둘의 점수 분해다. <strong>박스가 점을 두 배 많이 갖고 있는데도
+      진다</strong>는 것이 요점이다.</p>
+  </div>
+
+  <div class="tw"><table>
+    <thead><tr><th>클러스터</th><th>점</th><th>mean_att</th><th>rms_r</th><th>compact</th><th>peak_d</th><th>prox</th><th>geo</th><th>SCORE</th></tr></thead>
+    <tbody>
+      <tr class="good"><td class="strong">1 — 구 <span class="pill ok">target</span></td><td class="n">452</td><td class="n">0.9672</td><td class="n">0.0330</td><td class="n">0.5172</td><td class="n">0.0304</td><td class="n">0.7377</td><td class="n">0.6177</td><td class="n strong">0.8624</td></tr>
+      <tr class="warn"><td>0 — 박스 <span class="pill m">누출</span></td><td class="n">899</td><td class="n">0.6142</td><td class="n">0.0519</td><td class="n">0.3543</td><td class="n">0.0993</td><td class="n">0.3704</td><td class="n">0.3623</td><td class="n">0.5386</td></tr>
+    </tbody></table></div>
+
+  <div class="col">
+    <p>세 항 전부에서 진다 — attention이 낮고(0.61 vs 0.97), 덜 조밀하고(0.35 vs 0.52),
+      피크에서 멀다(9.9 cm vs 3.0 cm). <strong>어느 하나만으로 갈랐다면 위태로웠을 것이고,
+      셋을 곱해 갈랐기 때문에 여유가 있다.</strong></p>
+    <h4>3D 연결성이 실제로 사는 값</h4>
+  </div>
+
+  <div class="tw"><table>
+    <thead><tr><th>grounding</th><th>IoU</th><th>centroid 오차 (가시 표면 기준)</th></tr></thead>
+    <tbody>
+      <tr class="good"><td class="strong">3D 연결성 <span class="pill ok">기본</span></td><td class="n strong">1.0000</td><td class="n strong">0.51 cm</td></tr>
+      <tr class="warn"><td>2D attention only <span class="pill m">ablation</span></td><td class="n">0.4845</td><td class="n">5.73 cm</td></tr>
+    </tbody></table></div>
+
+  <div class="col">
+    <p>두 물체의 표면 간격 5.0 cm가 <code>eps</code> 3.0 cm보다 크므로 3D 연결성은 완전히 분리한다.
+      2D 임계값만으로는 구와 박스가 한 덩어리가 된다.</p>
+  </div>
+
+  <div class="rule-note col">
+    <strong>실패는 정상적인 출력이다.</strong> seed 소멸 · 클러스터 없음 · 점수 미달이면
+    <code>target = None</code>과 <code>GroundingStatus</code>를 반환한다:
+    <code>NO_GEOMETRY</code> · <code>NO_ATTENTION</code> · <code>NO_SEED</code> ·
+    <code>NO_CLUSTER</code> · <code>LOW_SCORE</code>.
+    <br><br>지어내기가 침묵보다 위험한 이유가 구체적이다 — 저신뢰 target을 만들어내면 phase 규칙이
+    그 물체의 여유를 줄여 <strong>제약을 능동적으로 비활성화</strong>한다. 아무것도 반환하지 않으면
+    모든 것이 보수적으로 남지만, 틀린 target을 반환하면 <em>틀린 물체의 안전 여유가 풀린다</em>.
+  </div>
+
+  <div class="qa-head">예상 질문</div>
+  <div class="qa"><div class="q">왜 DBSCAN인가요? K-means는 안 되나요?</div>
+    <div class="a">K-means는 클러스터 개수 <code>k</code>를 미리 알아야 하고 볼록·등방 클러스터를
+      가정합니다. 씬에 물체가 몇 개인지는 모르고, 크레이트 같은 물체는 볼록하지도 않습니다.
+      DBSCAN은 밀도 기반이라 개수를 스스로 정하고 임의 모양을 다루며,
+      <strong>노이즈를 명시적으로 표시</strong>합니다 — 그 노이즈가 4단계에서
+      <code>UNKNOWN_GEOMETRY</code>가 되므로 버려지지 않습니다.</div></div>
+  <div class="qa"><div class="q"><code>eps</code>는 어떻게 정하나요? 씬마다 다르지 않나요?</div>
+    <div class="a">운용 범위가 측정돼 있습니다 — <code>voxel_size &lt; eps &lt; 최소 물체 간격</code>.
+      2 cm 간격 씬에서 eps를 3.0 / 2.0 / 1.5 / 1.0 cm로 스윕하면 IoU가
+      0.3488 / 1.0000 / 1.0000 / 0.0442입니다. 너무 크면 물체가 병합되고 너무 작으면 하나가
+      쪼개집니다. <strong>Euclidean 연결성의 본질적 한계이며 버그가 아닙니다</strong> —
+      그래서 상수가 아니라 config 필드입니다.</div></div>
+  <div class="qa"><div class="q">클러스터가 여러 개면 항상 최고 점수를 고르나요?</div>
+    <div class="a">최고 점수를 고르되 <code>target_score_threshold</code>(기본 0.25)를 넘어야 합니다.
+      못 넘으면 <code>LOW_SCORE</code>로 <code>target=None</code>입니다. 실측 사례에서
+      1등 0.8624 대 2등 0.5386으로 여유가 있었지만, <strong>실제 attention에서는 이 분포가
+      달라질 것이므로 임계값을 다시 정해야 합니다</strong>.</div></div>
+  <div class="qa"><div class="q">2D-only ablation의 IoU 0.4845는 왜 그렇게 나쁜가요?</div>
+    <div class="a">attention 임계값만 쓰면 구와 박스가 하나로 묶입니다. fixture가 target의 attention
+      55%를 옆 박스로 흘리도록 <strong>의도적으로</strong> 설계됐기 때문입니다. 누출이 없는 씬이었다면
+      2D도 잘 나왔을 것이고, 그러면 그 fixture는 3D 연결성이 필요한지를 <em>측정할 수 없는</em>
+      fixture였을 겁니다.</div></div>
+</section>
+
+<!-- ==================================================== STAGE 4 -->
+<section id="s4">
+  <h2>주 파이프라인 · 4</h2>
+  <div class="stage-head">
+    <div class="stage-num">04</div>
+    <div>
+      <div class="stage-title">Target / Obstacle 구분</div>
+      <div class="stage-file">collision_candidates.py · generate_candidates()</div>
+    </div>
+  </div>
+  <div class="xform">
+    <span class="g">cloud</span> + <span class="t">target</span> + planes
+    <span class="arrow">→</span>
+    <span class="g">CollisionCandidate[]</span> <span class="mono">(target 포함)</span>
+  </div>
+
+  <div class="col">
+    <p class="lead">이 단계가 AG3S 전체의 논지다. 그리고 <strong>이름부터가 설계다</strong> —
+      "장애물"이 아니라 <strong>충돌 후보</strong>다.</p>
+    <p>"이것이 장애물인가?"는 의미론적 답을 부르고, 그것이 파이프라인이 <em>자기가 집으려는 물체를
+      부딪힐 수 없다</em>고 판단하는 경로다. 질문은 하나뿐이어야 한다 —
+      <strong>여기에 질량이 있는가.</strong></p>
+    <h4>제목이 말하는 "구분"은 실제로는 구분이 아니다</h4>
+    <p>이 단계는 target을 장애물에서 <em>빼지</em> 않는다. target에 <strong>이름표를 붙일 뿐</strong>이고,
+      그 이름표가 나중에 <a href="#clear">clearance 정책</a>에서 <em>어느 링크가 얼마나 가까이 갈 수
+      있는가</em>를 정하는 데 쓰인다. 집합에서 빼는 것과 이름표를 붙이는 것의 차이가 이 설계의 전부다.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 268" role="img" aria-label="target을 집합에서 빼는 방식과 이름표만 붙이는 방식의 차이">
+      <defs>
+        <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <polygon points="0,0 10,5 0,10" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">
+        <!-- LEFT: delete -->
+        <text x="16" y="24" font-size="11" fill="#c8371f" letter-spacing="1.2">KNOWS 방식 — 집합에서 제거</text>
+        <rect x="16" y="38" width="300" height="86" fill="none" stroke="currentColor" opacity=".45"/>
+        <text x="28" y="58" font-size="10.5" opacity=".7">충돌 후보 집합</text>
+        <circle cx="60" cy="88" r="13" fill="none" stroke="#2a6299"/><text x="52" y="112" font-size="9.5" fill="#2a6299">obj</text>
+        <circle cx="104" cy="88" r="13" fill="none" stroke="#2a6299"/><text x="96" y="112" font-size="9.5" fill="#2a6299">obj</text>
+        <circle cx="152" cy="88" r="13" fill="none" stroke="#c8371f" stroke-dasharray="3 3"/>
+        <line x1="142" y1="78" x2="162" y2="98" stroke="#c8371f" stroke-width="1.6"/>
+        <line x1="162" y1="78" x2="142" y2="98" stroke="#c8371f" stroke-width="1.6"/>
+        <text x="136" y="112" font-size="9.5" fill="#c8371f">target</text>
+        <text x="186" y="86" font-size="10.5" fill="#c8371f">GRASP에서</text>
+        <text x="186" y="100" font-size="10.5" fill="#c8371f">row 자체가 사라짐</text>
+        <text x="16" y="146" font-size="11" fill="#c8371f">→ 왼팔·전완·몸통이 관통해도 제약 없음</text>
+        <text x="16" y="164" font-size="11" fill="#c8371f">→ barrier가 58.8% 스텝에서 음수 (측정치)</text>
+
+        <!-- RIGHT: label -->
+        <text x="376" y="24" font-size="11" fill="#2a6299" letter-spacing="1.2">AG3S 방식 — 이름표만</text>
+        <rect x="376" y="38" width="308" height="86" fill="none" stroke="currentColor" opacity=".45"/>
+        <text x="388" y="58" font-size="10.5" opacity=".7">충돌 후보 집합</text>
+        <circle cx="420" cy="88" r="13" fill="none" stroke="#2a6299"/><text x="412" y="112" font-size="9.5" fill="#2a6299">obj</text>
+        <circle cx="464" cy="88" r="13" fill="none" stroke="#2a6299"/><text x="456" y="112" font-size="9.5" fill="#2a6299">obj</text>
+        <circle cx="512" cy="88" r="13" fill="none" stroke="#c8371f" stroke-width="2"/>
+        <text x="496" y="112" font-size="9.5" fill="#c8371f">TARGET</text>
+        <text x="546" y="86" font-size="10.5" fill="#2a6299">row는 남고</text>
+        <text x="546" y="100" font-size="10.5" fill="#2a6299">마진만 달라짐</text>
+        <text x="376" y="146" font-size="11" fill="#2a6299">→ 손끝만 0, 전완·몸통·반대팔은 full margin</text>
+        <text x="376" y="164" font-size="11" fill="#2a6299">→ 관통은 여전히 금지</text>
+
+        <line x1="350" y1="30" x2="350" y2="176" stroke="currentColor" opacity=".25"/>
+
+        <text x="16" y="204" font-size="11.5" opacity=".78">차이는 &quot;접촉을 어떻게 표현하는가&quot;다. 제약을 지우면 접촉이 아니라 <tspan fill="#c8371f">무제한</tspan>이 된다.</text>
+        <text x="16" y="226" font-size="11.5" opacity=".78">마진 0은 &quot;닿아도 된다&quot;이고, 제약 삭제는 &quot;어디로든 지나가도 된다&quot;이다.</text>
+        <text x="16" y="252" font-size="11.5" fill="#2a6299">‖p_r − p_c‖² ≥ (r_r + r_c + 0)²  —  마진 0에서도 이 부등식은 살아 있다.</text>
+      </g>
+    </svg>
+    <figcaption>발표에서 가장 중요한 한 장. "잡아야 하는데 왜 장애물로 두나"라는 질문에 대한 답이
+      이 그림이다.</figcaption>
+  </figure>
+
+  <div class="rule-note col">
+    <strong>이 분리는 타입 시그니처가 강제한다.</strong>
+    <code>generate_candidates()</code>의 실제 파라미터는
+    <code>cloud, phase, target, support_surfaces, support_mask, config, geometry_config,
+    contact_config, tracker, timestamp</code> —
+    <strong>attention이라는 이름의 인자가 없다.</strong> 그리고 그 사실 자체를 테스트가
+    <code>inspect.signature</code>로 검사한다. 이 함수에 attention 파라미터가 생기는 순간
+    원칙이 깨진 것이고, 문서가 아니라 <em>테스트가</em> 그것을 막는다.
+  </div>
+
+  <div class="col"><h4>다섯 가지 source type</h4></div>
+  <div class="tw"><table>
+    <thead><tr><th>source</th><th>무엇</th><th>완화 가능?</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td><span class="pill t">TARGET</span></td><td class="wrap">attention이 지목한 물체</td><td class="wrap">지명된 manipulator의 allowlist 링크에 한해</td></tr>
+      <tr><td><span class="pill g">OBJECT</span></td><td class="wrap"><code>min_points</code> 이상으로 뭉친 잔차 클러스터</td><td class="mono">아니오</td></tr>
+      <tr><td><span class="pill g">UNKNOWN_GEOMETRY</span></td><td class="wrap">물체가 되기엔 작지만 존재하는 덩어리</td><td class="mono">아니오</td></tr>
+      <tr><td><span class="pill g">OVERFLOW</span></td><td class="wrap">슬롯을 넘겨 보수적으로 집계된 것</td><td class="mono">아니오</td></tr>
+      <tr><td><span class="pill m">SUPPORT_SURFACE</span></td><td class="wrap">평면 — half-space로 정확히 표현</td><td class="mono">아니오</td></tr>
+    </tbody></table></div>
+
+  <div class="key"><b>분류되지 않은 점도 남는다</b>
+    <code>preserve_unknown</code>이 켜져 있으면 DBSCAN이 노이즈로 부른 점들을 자기들끼리 다시 묶는다.
+    밀도가 <em>충분하지</em> 않았을 뿐 여전히 작은 연결체 — 케이블, 얇은 손잡이, 부분적으로 가려진 물체 —
+    인 경우가 많고, 로봇이 부딪힐 것은 바로 그것이다.
+    <strong>실측: 40,057점 전부가 어떤 후보 또는 평면에 배정되고 미배정 0점.</strong>
+  </div>
+
+  <div class="key"><b>프레임 간 id는 유지된다</b>
+    <code>CandidateTracker</code>가 centroid 최근접으로 id를 잇는다. 탐욕적 최근접이 아니라
+    <strong>전역 할당</strong>(<code>linear_sum_assignment</code>)인 이유는 인접한 두 물체 때문이다 —
+    먼저 처리된 쪽이 공통의 최근접 track을 가져가고 다른 쪽이 새 id를 받으면, 두 물체가 프레임마다
+    정체를 맞바꾼다. TO의 warm-start가 그 id에 걸려 있다.
+  </div>
+
+  <div class="qa-head">예상 질문</div>
+  <div class="qa"><div class="q">잡아야 하는 물체를 왜 장애물로 두나요? 모순 아닌가요?</div>
+    <div class="a">잡는 것은 <strong>접촉</strong>이지 <strong>관통</strong>이 아닙니다. 그리고 접촉이
+      허용되는 것은 <em>지명된 손의 손끝</em>뿐입니다 — 전완이 컵을 밀고 들어가는 것은 grasp가 아니라
+      충돌입니다. 제약을 지우면 그 구분이 사라지고, 실제로 KNOWS에서 barrier가 58.8%의 스텝에서
+      구조적으로 음수였습니다.</div></div>
+  <div class="qa"><div class="q">모든 점을 후보로 두면 지나치게 보수적이지 않나요?</div>
+    <div class="a">보수적입니다. 그러나 <strong>과대근사는 우회를 만들고 과소근사는 충돌을 만들며,
+      둘 중 하나만 복구 가능합니다.</strong> 실제 비용도 생각만큼 크지 않습니다 —
+      40,057점이 후보 <strong>4개</strong>가 되고, 각각이 primitive 하나로 축약됩니다.</div></div>
+  <div class="qa"><div class="q">그럼 attention은 결국 무슨 쓸모가 있나요?</div>
+    <div class="a">phase 규칙이 걸릴 대상을 지정합니다. attention이 없으면 <em>어느 물체에</em>
+      접근 여유를 줄여도 되는지 알 수 없어 모든 것을 full margin으로 두어야 하고,
+      그러면 <strong>grasp가 불가능합니다</strong>. 실제로 그것이 <code>phase_aware=False</code>
+      ablation이고, 존재 이유가 그 사실을 측정하기 위해서입니다.</div></div>
+</section>
+
+<!-- ==================================================== STAGE 5 -->
+<section id="s5">
+  <h2>주 파이프라인 · 5</h2>
+  <div class="stage-head">
+    <div class="stage-num">05</div>
+    <div>
+      <div class="stage-title">Obstacle geometry 변환</div>
+      <div class="stage-file">geometry.py · fit_primitive() · to_spheres()</div>
+    </div>
+  </div>
+  <div class="xform">
+    <span class="g">클러스터 점들</span><span class="mono">(M,3)</span>
+    <span class="arrow">→</span>
+    <span class="g">Primitive</span> <span class="arrow">→</span> 제약 구<span class="mono">(k,4)</span>
+  </div>
+
+  <div class="col">
+    <p class="lead">점 무더기는 최적화기가 미분할 수 없다. 세 표현이 후보였고,
+      <strong>선택은 측정으로 결정됐다.</strong></p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 236" role="img" aria-label="같은 물체를 보셀 452개, SDF 룩업, primitive 1개로 표현했을 때의 차이">
+      <defs>
+        <marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <polygon points="0,0 10,5 0,10" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">
+        <!-- voxel -->
+        <text x="16" y="22" font-size="11" fill="#c8371f" letter-spacing="1.2">VOXEL</text>
+        <g stroke="#c8371f" fill="none" opacity=".85">
+          <rect x="52" y="52" width="11" height="11"/><rect x="63" y="52" width="11" height="11"/><rect x="74" y="52" width="11" height="11"/>
+          <rect x="41" y="63" width="11" height="11"/><rect x="52" y="63" width="11" height="11"/><rect x="63" y="63" width="11" height="11"/><rect x="74" y="63" width="11" height="11"/><rect x="85" y="63" width="11" height="11"/>
+          <rect x="41" y="74" width="11" height="11"/><rect x="52" y="74" width="11" height="11"/><rect x="63" y="74" width="11" height="11"/><rect x="74" y="74" width="11" height="11"/><rect x="85" y="74" width="11" height="11"/>
+          <rect x="41" y="85" width="11" height="11"/><rect x="52" y="85" width="11" height="11"/><rect x="63" y="85" width="11" height="11"/><rect x="74" y="85" width="11" height="11"/><rect x="85" y="85" width="11" height="11"/>
+          <rect x="52" y="96" width="11" height="11"/><rect x="63" y="96" width="11" height="11"/><rect x="74" y="96" width="11" height="11"/>
+        </g>
+        <text x="16" y="132" font-size="11" fill="#c8371f">452개 점유 셀</text>
+        <text x="16" y="150" font-size="11" fill="#c8371f">→ 제약 구 452개</text>
+        <text x="16" y="172" font-size="10.5" opacity=".7">행 수 = H × S × 452</text>
+
+        <!-- sdf -->
+        <text x="248" y="22" font-size="11" fill="#c8371f" letter-spacing="1.2">SDF / ESDF</text>
+        <g opacity=".85">
+          <circle cx="300" cy="80" r="18" fill="none" stroke="#c8371f"/>
+          <circle cx="300" cy="80" r="28" fill="none" stroke="#c8371f" opacity=".55"/>
+          <circle cx="300" cy="80" r="38" fill="none" stroke="#c8371f" opacity=".3"/>
+        </g>
+        <text x="248" y="132" font-size="11" fill="#c8371f">거리장 격자</text>
+        <text x="248" y="150" font-size="11" fill="#c8371f">→ 최적화기에 <tspan font-weight="600">룩업</tspan></text>
+        <text x="248" y="172" font-size="10.5" opacity=".7">기울기 = 유한차분</text>
+        <text x="248" y="190" font-size="10.5" opacity=".7">매 프레임 재구축</text>
+
+        <!-- primitive -->
+        <text x="480" y="22" font-size="11" fill="#2a6299" letter-spacing="1.2">PRIMITIVE</text>
+        <circle cx="536" cy="80" r="38" fill="none" stroke="#2a6299" stroke-width="2"/>
+        <circle cx="536" cy="80" r="2.5" fill="#2a6299"/>
+        <line x1="536" y1="80" x2="574" y2="80" stroke="#2a6299" stroke-dasharray="3 2"/>
+        <text x="548" y="74" font-size="10.5" fill="#2a6299">r</text>
+        <text x="480" y="132" font-size="11" fill="#2a6299">중심 + 반지름</text>
+        <text x="480" y="150" font-size="11" fill="#2a6299">→ 제약 구 <tspan font-weight="600">1개</tspan></text>
+        <text x="480" y="172" font-size="10.5" fill="#2a6299">기울기 = 심볼릭 미분</text>
+        <text x="480" y="190" font-size="10.5" fill="#2a6299">닫힌 형태</text>
+
+        <line x1="228" y1="14" x2="228" y2="200" stroke="currentColor" opacity=".2"/>
+        <line x1="460" y1="14" x2="460" y2="200" stroke="currentColor" opacity=".2"/>
+
+        <text x="16" y="222" font-size="11.5" opacity=".78">SDF를 배제한 결정적 이유는 속도가 아니라 <tspan fill="#c8371f">도함수가 아니라 룩업을 준다</tspan>는 점이다.</text>
+      </g>
+    </svg>
+    <figcaption>같은 물체(452점)의 세 표현. 왼쪽 둘은 최적화기에게 각각 452개의 행과 미분 불가능한
+      함수를 준다.</figcaption>
+  </figure>
+
+  <div class="tw"><table>
+    <thead><tr><th>표현</th><th>같은 물체(452점)의 비용</th><th>최적화기가 받는 것</th><th>판정</th></tr></thead>
+    <tbody>
+      <tr class="warn"><td><strong>Voxel</strong></td><td class="wrap">5 mm 격자에서 <strong>452개</strong> 점유 → 452 제약 구</td><td class="wrap">구-대-구 452쌍</td><td class="wrap">행 수 폭발</td></tr>
+      <tr class="warn"><td><strong>SDF / ESDF</strong></td><td class="wrap">매 프레임 재구축 + 재보간</td><td class="wrap">도함수가 아니라 <strong>룩업</strong></td><td class="wrap">심볼릭 미분 불가</td></tr>
+      <tr class="good"><td class="strong">Primitive <span class="pill ok">채택</span></td><td class="n strong">1개</td><td class="wrap">닫힌 형태 거리식</td><td class="mono">452× 절감</td></tr>
+    </tbody></table></div>
+
+  <div class="col">
+    <p><strong>ESDF를 쓰지 않는 결정적 이유는 속도가 아니다.</strong> SDF는 최적화기에게
+      <em>도함수가 아니라 룩업</em>을 준다. IPOPT나 SQP는 그런 함수를 유한차분밖에 할 수 없고,
+      600개 결정변수에 대한 유한차분은 그 자체로 실시간을 포기하는 일이다. 볼록 도형 몇 개는
+      CasADi가 <strong>심볼릭으로 미분</strong>할 수 있는 닫힌 형태를 준다.</p>
+    <p class="mono" style="font-size:13.5px;color:var(--geom)">단, cuRobo처럼 GPU에서 수천 개 궤적을
+      병렬로 평가하는 설계라면 계산 모델이 달라 SDF가 합리적이다. 이 선택은 <b>CPU + 심볼릭 미분</b>이라는
+      전제 아래의 선택이다.</p>
+    <h4>Primitive 우선순위와 실측 (target 클러스터 452점)</h4>
+  </div>
+
+  <div class="tw"><table>
+    <thead><tr><th>type</th><th>포함률</th><th>excess volume</th><th>제약 구</th><th>bounding r</th></tr></thead>
+    <tbody>
+      <tr class="good"><td class="strong">sphere <span class="pill ok">기본</span></td><td class="n">100.00%</td><td class="n">1.148</td><td class="n strong">1</td><td class="n strong">4.48 cm</td></tr>
+      <tr><td>capsule</td><td class="n">100.00%</td><td class="n">2.584</td><td class="n">3</td><td class="n">8.38 cm</td></tr>
+      <tr><td>box</td><td class="n">100.00%</td><td class="n strong">0.702</td><td class="n">1</td><td class="n">5.88 cm</td></tr>
+      <tr><td>ellipsoid</td><td class="n">100.00%</td><td class="n">1.154</td><td class="n">1</td><td class="n">8.61 cm</td></tr>
+    </tbody></table></div>
+
+  <div class="key"><b>박스가 excess volume은 가장 낮은데 왜 기본값이 sphere인가</b>
+    제약 형식이 <strong>구-대-구</strong>이기 때문이다. 박스는 결국 bounding sphere로 축약되고,
+    그때 반지름이 sphere fit보다 커진다 — <strong>5.88 cm 대 4.48 cm</strong>. 즉 박스로 맞추면
+    부피는 잘 맞지만 <em>제약이 더 보수적</em>이 된다. <code>pose</code>와 <code>dimensions</code>는
+    온전히 전달되므로 박스 거리 함수를 지원하는 TO가 나오면 그때 이득이 생긴다.
+  </div>
+
+  <div class="rule-note col">
+    <strong>포함(containment)이 tightness보다 우선한다.</strong> 모든 피팅은 한 방향으로만 틀려야 한다 —
+    과대근사는 우회를 만들고 과소근사는 충돌을 만들며, 둘 중 하나만 복구 가능하다.
+    그래서 테스트가 fitting error가 아니라 <code>contains()</code>를 검사한다.
+    네 타입 모두 <strong>100.00% 포함</strong>이 실측으로 확인된다.
+  </div>
+
+  <div class="col">
+    <h4>캡슐 → 구 체인: 여기서 잡은 과소근사 결함</h4>
+    <p>"중심 간격이 반지름 이하면 구 체인이 캡슐을 덮는다"는 주장은 <strong>거짓</strong>이었다.
+      두 구의 중심 사이 <em>중간 지점</em>에서 캡슐 표면까지의 거리를 재보면 알 수 있다.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 620 214" role="img" aria-label="인접한 두 구 사이 중간에서 캡슐 표면이 덮이지 않는 것과 그 보정">
+      <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">
+        <!-- capsule outline -->
+        <line x1="120" y1="52" x2="380" y2="52" stroke="currentColor" opacity=".55"/>
+        <line x1="120" y1="112" x2="380" y2="112" stroke="currentColor" opacity=".55"/>
+        <text x="392" y="58" font-size="10.5" opacity=".7">캡슐 표면</text>
+        <!-- axis -->
+        <line x1="100" y1="82" x2="400" y2="82" stroke="currentColor" stroke-dasharray="4 4" opacity=".4"/>
+        <!-- two spheres -->
+        <circle cx="180" cy="82" r="30" fill="none" stroke="#2a6299" stroke-width="1.6"/>
+        <circle cx="260" cy="82" r="30" fill="none" stroke="#2a6299" stroke-width="1.6"/>
+        <circle cx="180" cy="82" r="2.5" fill="#2a6299"/><circle cx="260" cy="82" r="2.5" fill="#2a6299"/>
+        <!-- spacing -->
+        <line x1="180" y1="150" x2="260" y2="150" stroke="currentColor" opacity=".55"/>
+        <line x1="180" y1="145" x2="180" y2="155" stroke="currentColor" opacity=".55"/>
+        <line x1="260" y1="145" x2="260" y2="155" stroke="currentColor" opacity=".55"/>
+        <text x="214" y="166" font-size="11" opacity=".8">s</text>
+        <!-- radius -->
+        <line x1="180" y1="82" x2="180" y2="52" stroke="#2a6299" opacity=".7"/>
+        <text x="160" y="70" font-size="10.5" fill="#2a6299">r</text>
+        <!-- the uncovered point -->
+        <circle cx="220" cy="52" r="4" fill="#c8371f"/>
+        <line x1="180" y1="82" x2="220" y2="52" stroke="#c8371f" stroke-width="1.6"/>
+        <text x="196" y="40" font-size="10.5" fill="#c8371f">√(r² + (s/2)²)</text>
+        <text x="228" y="46" font-size="10.5" fill="#c8371f">← 덮이지 않음</text>
+        <!-- derivation -->
+        <text x="100" y="192" font-size="12" fill="currentColor">중간점까지의 거리 = √(r² + (s/2)²)  &gt;  r      ⟹  s = r 에서도 반지름의 <tspan fill="#c8371f" font-weight="600">11.8%</tspan>가 노출</text>
+        <text x="100" y="210" font-size="12" fill="#2a6299">보정: 각 구의 반지름을 √(r² + (s/2)²)로 팽창하면 합집합이 캡슐을 <tspan font-weight="600">정확히 포함</tspan></text>
+      </g>
+    </svg>
+    <figcaption>같은 오류가 로봇 쪽 <code>UrdfSphereChain</code>에도 있어 캡슐 17개 전부가 과소
+      표현이었다. 양쪽 수정 후 테스트를 간격 검사에서 <strong>표면 960점 커버리지 검사</strong>로 교체했다.</figcaption>
+  </figure>
+
+  <div class="key"><b>실측 (target 캡슐)</b>
+    r = 0.0443 m, half_length = 0.0395 m → 구 3개, 간격 s = 0.0395 m.
+    순진한 반지름 0.0443 대 팽창 반지름 <strong>0.0485 (+9.5%)</strong>.
+    <code>max_spheres</code> 상한이 걸리면 간격이 더 벌어져 격차가 커진다 —
+    RB-Y1 실측에서는 간격 7.4 cm 대 반지름 2.2 cm였다.
+  </div>
+
+  <div class="qa-head">예상 질문</div>
+  <div class="qa"><div class="q">primitive는 물체 모양을 정확히 표현하지 못하는데 괜찮나요?</div>
+    <div class="a">정확도는 요구사항이 아닙니다. 요구사항은 <strong>포함</strong>입니다 —
+      primitive가 실제 물체를 완전히 감싸면 그 primitive를 피한 궤적은 물체도 피합니다.
+      대가는 불필요한 우회이고, <code>excess_volume_ratio</code>로 그 대가를 측정해 보고합니다.</div></div>
+  <div class="qa"><div class="q">요즘은 ESDF나 neural SDF를 많이 쓰지 않나요? cuRobo도 그렇고요.</div>
+    <div class="a">계산 모델이 다릅니다. cuRobo는 GPU에서 수천 개 궤적을 <strong>병렬로 평가</strong>하므로
+      룩업이 오히려 적합합니다. AG3S의 전제는 CPU에서 도는 SQP이고, 거기서 필요한 것은
+      <code>q</code>에 대한 <strong>심볼릭 도함수</strong>입니다. SDF는 그것을 주지 못합니다.
+      전제가 바뀌면 결론도 바뀐다는 점을 문서에 명시해 두었습니다.</div></div>
+  <div class="qa"><div class="q">한 물체를 primitive 하나로 줄이면 오목한 물체에서 문제가 생기지 않나요?</div>
+    <div class="a">생깁니다. 속이 빈 크레이트를 하나의 구로 감싸면 내부까지 막힙니다.
+      실제로 RB-Y1 실험에서 크레이트는 <strong>후보 4개로 쪼개졌습니다</strong> —
+      벽들이 개구부를 가로질러 Euclidean 연결이 되지 않기 때문입니다. 즉 클러스터링이 먼저 쪼개고
+      각 조각에 primitive가 붙습니다. 볼록 분해가 아니므로 완벽하지 않고, 문서에 한계로 적었습니다.</div></div>
+</section>
+
+<!-- ==================================================== SUPPORTING -->
+<section id="self">
+  <h2>보조 · robot self-filter</h2>
+  <div class="stage-head">
+    <div class="stage-num">S</div>
+    <div><div class="stage-title">로봇 자신을 씬에서 제거</div>
+      <div class="stage-file">robot_filter.py · 1단계와 3단계 사이</div></div>
+  </div>
+  <div class="col">
+    <p>팔은 대부분의 depth 프레임에서 가장 큰 물체이고 자기 자신의 장애물이 아니다. 남겨두면
+      end-effector를 완벽히 따라다니는 클러스터가 생기고, TO는 <em>로봇을 로봇으로부터 피하라</em>는
+      요구를 받는다.</p>
+    <p>주입된 <code>RobotCollisionModel</code>의 구 체인에 대한 <code>cKDTree</code> ball query다.
+      제약과 <strong>같은 FK</strong>를 쓰는 것이 핵심 — 필터가 다른 기하를 쓰면 "로봇"이라며 지운 점을
+      제약 쪽은 자유 공간으로 보게 되고, <strong>그 불일치는 무언가 부딪힐 때까지 보이지 않는다.</strong></p>
+  </div>
+  <div class="key"><b>성능 — 점당이 아니라 구당으로 뒤집기</b>
+    구마다 반지름이 달라 한 번의 ball query로 전부 답할 수 없다. 선택지는 씬 점당 파이썬 반복(~60k)
+    대 로봇 구당 반복(~200)이었고, RB-Y1 전신 194구에서 <strong>점당 257 ms 대 구당 13.5 ms</strong>,
+    출력은 동일하다.
+  </div>
+  <div class="rule-note col">
+    <strong>RB-Y1 URDF의 충돌 모델은 팔 전용이다.</strong> 몸통과 팔 링크 0–5에만 캡슐이 있고
+    base·바퀴·손목·그리퍼·머리에는 없다(자기충돌을 하지 않으니 시뮬레이터도 주지 않는다).
+    그런데 head 카메라는 그것들을 본다 — 필터가 로봇 점의 67.9%만 지웠고 남은 1,645점이
+    <strong>로봇에 붙어다니는 유령 장애물</strong>이 됐다. MuJoCo 시각 메시에서 유도한 캡슐 30개를
+    <code>extra_capsules</code>로 주입해 제거율 100%, 씬 보존 99.8%가 됐다.
+  </div>
+</section>
+
+<section id="plane">
+  <h2>보조 · support surface</h2>
+  <div class="stage-head">
+    <div class="stage-num">S</div>
+    <div><div class="stage-title">테이블은 덩어리가 아니다</div>
+      <div class="stage-file">support_surface.py · 결정론적 RANSAC</div></div>
+  </div>
+  <div class="col">
+    <p>테이블을 포함하는 primitive는 미터 단위로 커지고, 보셀화하면 수천 개의 구가 필요하며
+      그러고도 근사가 나쁘다. Half-space는 <strong>정확하고 한 행</strong>이면 된다.</p>
+  </div>
+  <div class="math">자유 공간 =  n · p ≥ d + margin        (n은 단위 법선)
+
+실측 (GT z = 0.75 정확):
+  법선 오차   4.50e−06 rad
+  오프셋 오차 8.00e−06 m
+  inlier RMS  1.64e−04 m</div>
+  <div class="col">
+    <p>RANSAC 가설(3점)을 그대로 쓰지 않고 inlier 전체로 <strong>총최소제곱 재적합</strong>하는 것이
+      이 정밀도의 원인이다.</p>
+  </div>
+  <div class="key"><b>순서가 바뀐 유일한 곳 — 그리고 그 이유</b>
+    명세는 grounding(§3.3) → 평면(§3.4) 순이지만, 파이프라인은 <strong>평면을 먼저</strong> 맞춘다.
+    평면 피팅은 target에 의존하지 않는 반면 grounding은 평면에 <em>의존한다</em> — 물체는 테이블 위에
+    서 있어 어떤 실용적인 <code>eps</code>에서도 연결성이 상판 전체로 범람한다.
+    <strong>실측: 41,745점짜리 단일 클러스터가 씬 전체를 삼켰다.</strong>
+    방법의 변경이 아니라 실행 시점의 선택이며, 발표에서 물으면 이 숫자로 답하면 된다.
+  </div>
+</section>
+
+<section id="fuse">
+  <h2>보조 · 3-카메라 융합</h2>
+  <div class="stage-head">
+    <div class="stage-num">S</div>
+    <div><div class="stage-title">세 대의 카메라, 하나의 씬</div>
+      <div class="stage-file">multiview.py · 1–2단계 이후, 3단계 이전</div></div>
+  </div>
+  <div class="col">
+    <p>카메라마다 <code>AG3S</code>를 따로 돌리면 crate가 head 뷰에서 <code>id=0</code>,
+      wrist 뷰에서는 table이 <code>id=0</code>이 된다. 개별 리포트는 셋 다 멀쩡해 보이고,
+      합치면 소비할 수 없다.</p>
+  </div>
+  <div class="math">카메라별:  reconstruct → self-filter(q(t<sub>capture</sub>)) → attention lift
+그 다음:   base frame 보셀 격자에서 융합 (12 mm)
+
+T<sub>base←cam</sub>(t) = FK(q(t<sub>capture</sub>), mount_link) · T<sub>link←cam</sub></div>
+  <div class="col">
+    <p><code>q_now</code> 하나를 세 대에 재사용하지 않는다 — 손목 카메라는 팔과 함께 움직이므로
+      그것은 클라우드를 어긋나게 하고, <em>동시에</em> self-filter를 어긋나게 해 팔 자신의 점이
+      그리퍼에 붙은 유령 장애물이 된다. <strong>두 실패 방향이 한꺼번에 일어난다.</strong></p>
+    <p>융합점은 자신을 만든 모든 observation(카메라·픽셀·타임스탬프·attention)을 CSR 블록으로
+      유지하고, 대표점은 <strong>실제 관측점</strong>이다. attention은 관측들에 대한
+      <code>max</code>로 융합한다 — 평균이 아닌 이유는 attention이 target에 대한 <em>증거</em>이기
+      때문이다. attention map이 없는 카메라는 0을 기여하는데, max 아래에서 0은 "반대"가 아니라
+      "의견 없음"이며 <strong>지오메트리는 그대로 유지된다</strong>.</p>
+  </div>
+  <div class="key"><b>실측 (RB-Y1 transport, MuJoCo)</b>
+    3대 60,566점 → <strong>12,528점</strong> 융합. 23개 후보 중
+    <strong>12개가 2대 이상의 카메라 점을 함께 보유</strong> — 뷰마다 id 공간이 따로였을 때
+    이 값은 구조적으로 0이었다. URDF FK와 MuJoCo의 링크 위치 오차는 세 마운트 링크 모두 0.0 mm.
+    <br><br><strong>단, 그 0.0 mm는 시뮬레이터이기 때문이다.</strong> 실기에서는 hand-eye
+    calibration 오차가 이 자리를 차지하며, 아직 측정된 바 없다.
+  </div>
+</section>
+
+<section id="clear">
+  <h2>보조 · clearance 정책</h2>
+  <div class="stage-head">
+    <div class="stage-num">S</div>
+    <div><div class="stage-title">어떤 접촉이 지금 허용되는가</div>
+      <div class="stage-file">clearance.py · phase × manipulator × source × link</div></div>
+  </div>
+  <div class="col">
+    <p>4단계가 target을 집합에 남겼다면, 남은 질문은 <em>얼마나 가까이 가도 되는가</em>다.
+      그리고 그 답은 <strong>후보 하나에 스칼라 하나</strong>가 아니라
+      <strong>(로봇 sphere, 후보 슬롯) 쌍마다</strong> 달라야 한다.</p>
+  </div>
+  <div class="math">margin = lookup(phase, active_manipulators, candidate_source, robot_link)
+
+TARGET이 아니면                → full margin.  어떤 phase에서도 완화 없음
+grounding 실패                → full margin
+link ∈ allowlist(manipulator) → contact_margin (기본 0) 또는 phase의 margin_scale
+그 외 (전완·몸통·반대팔·미지)   → full margin</div>
+  <div class="tw"><table>
+    <thead><tr><th>Phase</th><th>Source</th><th>Robot link</th><th>요구 여유</th></tr></thead>
+    <tbody>
+      <tr class="good"><td>GRASP</td><td><span class="pill t">TARGET</span></td><td class="wrap">ee_finger_r1 <span class="pill m">authorized</span></td><td class="n strong">0.000 m</td></tr>
+      <tr><td>GRASP</td><td><span class="pill t">TARGET</span></td><td class="wrap">link_right_arm_5 (전완)</td><td class="n">0.050 m</td></tr>
+      <tr><td>GRASP</td><td><span class="pill t">TARGET</span></td><td class="wrap">link_torso_3 (몸통)</td><td class="n">0.050 m</td></tr>
+      <tr><td>GRASP</td><td><span class="pill t">TARGET</span></td><td class="wrap">ee_finger_l1 (반대팔)</td><td class="n">0.050 m</td></tr>
+      <tr><td>PRE_GRASP</td><td><span class="pill t">TARGET</span></td><td class="wrap">ee_finger_r1 <span class="pill m">authorized</span></td><td class="n">0.005 m</td></tr>
+      <tr><td>APPROACH</td><td><span class="pill t">TARGET</span></td><td class="wrap">ee_finger_r1 <span class="pill m">authorized</span></td><td class="n">0.020 m</td></tr>
+      <tr><td>ANY</td><td><span class="pill g">OBJECT / UNKNOWN / OVERFLOW</span></td><td class="wrap">모든 링크</td><td class="n">0.050 m</td></tr>
+    </tbody></table></div>
+  <div class="rule-note col">
+    <strong>0은 "끔"이 아니다.</strong> <code>contact_margin = 0</code>에서도 row는 남아
+    <code>‖p<sub>r</sub> − p<sub>c</sub>‖² ≥ (r<sub>r</sub> + r<sub>c</sub> + 0)²</code>를 강제한다 —
+    닿는 것은 허용, 관통은 금지.
+  </div>
+  <div class="col">
+    <p><strong>active manipulator도 주입 입력이다.</strong> <code>Phase.GRASP</code>는 잡고 있다는
+      사실만 말할 뿐 어느 손인지는 말하지 않는다. "target에 가장 가까운 팔"로 추측하면 우연히
+      가까워진 팔에게 접촉 권한이 넘어간다. 알 수 없는 phase / source / link / manipulator 조합은
+      전부 full margin으로 <strong>fail closed</strong> 한다.</p>
+  </div>
+</section>
+
+<section id="nlp">
+  <h2>보조 · 제약 생성</h2>
+  <div class="stage-head">
+    <div class="stage-num">S</div>
+    <div><div class="stage-title">고정 구조 CasADi 제약</div>
+      <div class="stage-file">constraint_builder.py · to_adapter.py</div></div>
+  </div>
+  <div class="math">h(q) = ‖p<sub>robot</sub>(q) − p<sub>cand</sub>‖² − (r<sub>robot</sub> + r<sub>cand</sub> + d<sub>safe</sub>)² ≥ 0
+
+행 수 = horizon × robot_spheres × (max_candidates + max_planes)
+       = 20 × 8 × (32 + 2) = 5,440        (mock arm)
+       = 20 × 61 × (32 + 2) = 41,480      (RB-Y1 팔 체인)</div>
+  <div class="col">
+    <p><strong>왜 제곱형인가.</strong> <code>‖·‖</code>는 원점에서 미분 불가능하고, 내점법은 로봇 구를
+      후보 중심으로 곧장 통과시킨다 — 정확히 gradient가 정의되지 않는 지점이다. 제곱하면 그 점이
+      매끄러워진다.</p>
+    <p><strong>구조는 한 번만 만든다.</strong> 고정 <code>max_candidates</code> 슬롯, 고정 horizon,
+      고정 로봇 구 개수. 이후 매 프레임은 파라미터 벡터에 숫자만 쓴다. 프레임마다 NLP를 다시 지으면
+      IPOPT가 심볼릭 셋업과 Jacobian 희소성 탐지를 매번 반복하고, 변수·제약 인덱스가 같은 대상을
+      가리키지 않으므로 <strong>warm-start가 무의미해진다</strong>.</p>
+    <p>빈 슬롯은 제거가 아니라 파라미터로 끈다 — <code>active·h + (1−active)·1</code>.
+      씬이 바뀌어도 행 수와 희소성 패턴이 불변이다.</p>
+  </div>
+  <div class="key"><b>지오메트리는 조용히 사라지지 않는다</b>
+    모든 유효 지오메트리는 ① 정상 후보 ② 포함 보장 <code>OVERFLOW</code> 집합체
+    ③ <code>GEOMETRY_INCOMPLETE</code> 중 하나로 귀결한다.
+    <code>ConstraintValidity</code>는 로그 문자열이 아니라 <code>CollisionConstraintSet</code>의
+    필드다 — 빈 <code>VALID</code> 집합은 "봤고 아무것도 없다"이고 <code>INCOMPLETE</code>는
+    "무엇이 있는지 말할 수 없다"이며, 둘을 같게 보이게 하는 것이 로봇이 모델링되지 않은 벽으로
+    들어가는 방식이다.
+  </div>
+</section>
+
+<!-- ==================================================== WORKED TRACE -->
+<section id="trace">
+  <h2>종합 · 한 픽셀 완주</h2>
+  <div class="col">
+    <p class="lead">픽셀 하나가 제약이 되기까지를 <strong>실제 숫자로</strong> 따라간다.
+      여기 나오는 값은 전부 <code>tests/ag3s/fixtures.py</code>의 합성 씬에서 재현된다.</p>
+  </div>
+
+  <div class="math">카메라:  f<sub>x</sub> = f<sub>y</sub> = 600.0   c<sub>x</sub> = 320.0   c<sub>y</sub> = 240.0
+          T<sub>base←cam</sub> 원점 = (0.05, 0.00, 1.42)
+GT target:  중심 (0.62, 0.00, 0.79),  반지름 0.04 m</div>
+
+  <div class="tw"><table>
+    <thead><tr><th>단계</th><th>연산</th><th>결과</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="5"><strong>1</strong> back-projection</td><td class="mono wrap">픽셀 선택</td><td class="mono">(u, v) = (315, 251)</td></tr>
+      <tr><td class="mono wrap">D (z-depth)</td><td class="mono">0.810026 m</td></tr>
+      <tr><td class="mono wrap">X = (315 − 320.0) · 0.8100 / 600.0</td><td class="mono">−0.006750</td></tr>
+      <tr><td class="mono wrap">Y = (251 − 240.0) · 0.8100 / 600.0</td><td class="mono">+0.014850</td></tr>
+      <tr class="hl"><td class="mono wrap">P<sub>base</sub> = T · [X Y Z 1]<sup>T</sup></td><td class="mono strong">(0.5935, 0.0068, 0.8192)</td></tr>
+      <tr class="good"><td><strong>검증</strong></td><td class="mono wrap">‖P<sub>base</sub> − GT 중심‖</td><td class="mono strong">0.040000 m = 반지름</td></tr>
+      <tr><td rowspan="3"><strong>2</strong> attention</td><td class="mono wrap">16×16 격자에서 이 픽셀의 패치</td><td class="mono">(row 8, col 7)</td></tr>
+      <tr><td class="mono wrap">패치 raw 값</td><td class="mono">1.0000</td></tr>
+      <tr><td class="mono wrap">percentile [5, 99] 클립 범위</td><td class="mono">[0.0177, 0.7622]</td></tr>
+      <tr><td rowspan="2"><strong>보셀</strong></td><td class="mono wrap">5 mm 격자</td><td class="mono">256,884 → 41,333</td></tr>
+      <tr><td class="mono wrap">압축비</td><td class="mono">6.21×</td></tr>
+      <tr><td rowspan="2"><strong>3</strong> seed</td><td class="mono wrap">p95 임계값</td><td class="mono">0.5776</td></tr>
+      <tr><td class="mono wrap">seed 개수</td><td class="mono">933 / 40,057 (2.3%)</td></tr>
+      <tr class="hl"><td rowspan="2"><strong>3</strong> grounding</td><td class="mono wrap">후보 클러스터</td><td class="mono">2개 (구 452점, 박스 899점)</td></tr>
+      <tr class="hl"><td class="mono wrap">점수 0.8624 vs 0.5386</td><td class="mono strong">구 선택 · IoU 1.0000</td></tr>
+      <tr><td rowspan="2"><strong>4</strong> 후보</td><td class="mono wrap">source별 분류</td><td class="mono">object 2 · target 1 · plane 1</td></tr>
+      <tr><td class="mono wrap">미배정 점</td><td class="mono">0 / 40,057</td></tr>
+      <tr class="good"><td rowspan="2"><strong>5</strong> primitive</td><td class="mono wrap">bounding sphere 중심</td><td class="mono">(0.6057, 0.0004, 0.8076)</td></tr>
+      <tr class="good"><td class="mono wrap">r = max<sub>i</sub> ‖p<sub>i</sub> − c‖</td><td class="mono strong">0.044835 m</td></tr>
+      <tr><td><strong>8</strong> 제약</td><td class="mono wrap">4 후보 → 제약 구 3개 (평면은 half-space)</td><td class="mono">5,440 행 (H=20, 8구)</td></tr>
+    </tbody></table></div>
+
+  <div class="key"><b>이 표에서 가장 설득력 있는 한 줄</b>
+    <strong>‖P<sub>base</sub> − GT 중심‖ = 0.040000 m.</strong> 반지름 4 cm 구 위의 픽셀을 역투영했더니
+    정확히 반지름만큼 떨어진 곳에 떨어졌다. 즉 <strong>K · T · 픽셀 규약이 모두 맞다</strong>는 것이
+    한 숫자로 확인된다. 프레임 오류는 조용히 치명적이므로, 이런 종류의 확인이 없으면 나머지 측정은
+    전부 의미가 없다.
+  </div>
+</section>
+
+<!-- ==================================================== ORDER -->
+<section id="order">
+  <h2>종합 · 실행 순서</h2>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>단계</th><th>모듈</th><th>입력 → 출력</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td class="n">1</td><td class="strong">scene reconstruction</td><td class="mono">reconstruction.py</td><td class="mono wrap">depth → PointCloud + uv</td></tr>
+      <tr><td class="n">2</td><td>robot self-filter</td><td class="mono">robot_filter.py</td><td class="mono wrap">cloud → cloud − 로봇</td></tr>
+      <tr><td class="n">3</td><td>support surface</td><td class="mono">support_surface.py</td><td class="mono wrap">cloud → 평면 + inlier 마스크</td></tr>
+      <tr class="hl"><td class="n">4</td><td class="strong">attention lifting</td><td class="mono">attention_lifting.py</td><td class="mono wrap">A(u,v) → (X,Y,Z,A)</td></tr>
+      <tr class="hl"><td class="n">5</td><td class="strong">target grounding</td><td class="mono">target_grounding.py</td><td class="mono wrap">(X,Y,Z,A) → TargetGeometry | None</td></tr>
+      <tr class="hl"><td class="n">6</td><td class="strong">collision candidates</td><td class="mono">collision_candidates.py</td><td class="mono wrap">cloud + target → Candidate[]</td></tr>
+      <tr class="hl"><td class="n">7</td><td class="strong">primitive fitting</td><td class="mono">geometry.py</td><td class="mono wrap">points → Primitive</td></tr>
+      <tr><td class="n">8</td><td>constraint generation</td><td class="mono">constraint_builder.py</td><td class="mono wrap">Candidate[] → ConstraintSpec</td></tr>
+    </tbody></table></div>
+  <div class="col">
+    <p>발표에서 설명할 다섯 단계는 위의 <strong>1 · 4 · 5 · 6 · 7</strong>이고,
+      <strong>2 · 3 · 8</strong>과 융합·clearance가 그것을 보조한다.
+      <code>pipeline.py</code>는 조율만 하고 알고리즘을 담지 않으며, 각 단계는 독립적으로 단위
+      테스트된다 — <strong>이 구조 자체가 "각 단계를 따로 검증할 수 있다"는 주장의 근거</strong>다.</p>
+    <h4>단계별 latency (합성 fixture / RB-Y1 ZED, ms)</h4>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>단계</th><th>합성</th><th>RB-Y1</th></tr></thead>
+    <tbody>
+      <tr><td>1 · scene reconstruction</td><td class="n">37.98</td><td class="n">21.53</td></tr>
+      <tr><td>2 · robot self-filter</td><td class="n">11.28</td><td class="n">13.48</td></tr>
+      <tr><td>3 · support surface</td><td class="n">46.96</td><td class="n">10.28</td></tr>
+      <tr><td>4 · attention lifting</td><td class="n">5.43</td><td class="n">5.10</td></tr>
+      <tr><td>5 · target grounding</td><td class="n">35.80</td><td class="n">64.57</td></tr>
+      <tr><td>6 · collision candidates</td><td class="n">11.19</td><td class="n">17.66</td></tr>
+      <tr><td>7 · primitive fitting</td><td class="n">0.24</td><td class="n">0.51</td></tr>
+      <tr class="good"><td class="strong">8 · constraint generation</td><td class="n strong">0.06</td><td class="n strong">0.08</td></tr>
+    </tbody></table></div>
+  <div class="col">
+    <p>비용은 전적으로 <strong>지각(1–6)이 지배</strong>한다. 고정 슬롯 설계 덕분에 제약 생성은
+      사실상 무료다. 발표에서 "실시간 되나요"를 물으면 이 표가 답이다 — 병목은 최적화가 아니라
+      지각이며, self-filter는 프로파일링 후 257 ms에서 13.5 ms가 됐다.</p>
+  </div>
+</section>
+
+<!-- ==================================================== NUMBERS -->
+<section id="numbers">
+  <h2>종합 · 실측 요약</h2>
+  <div class="tw"><table>
+    <thead><tr><th>단계</th><th>측정</th><th>값</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="3">1 · back-projection</td><td class="wrap">무효 깊이 탈락</td><td class="n">50,316 / 307,200 (16.4%)</td></tr>
+      <tr><td class="wrap">보셀 다운샘플 (5 mm)</td><td class="n">256,884 → 41,333 (6.21×)</td></tr>
+      <tr class="good"><td class="wrap">역투영 정확도 (GT 구 표면)</td><td class="n strong">0.040000 m = 반지름</td></tr>
+      <tr><td rowspan="3">2 · attention 매핑</td><td class="wrap">16×16 → 점별</td><td class="n">(40,057,)</td></tr>
+      <tr class="warn"><td class="wrap">최대값 동점 (정규화 / raw)</td><td class="n">401 / 1</td></tr>
+      <tr><td class="wrap">attention 0인 채 보존된 점</td><td class="n">2,833</td></tr>
+      <tr><td rowspan="4">3 · grounding</td><td class="wrap">seed (p95, 임계 0.5776)</td><td class="n">933 (2.3%)</td></tr>
+      <tr class="good"><td class="wrap">target IoU / confidence</td><td class="n strong">1.0000 / 0.8624</td></tr>
+      <tr><td class="wrap">2등 클러스터 점수 (박스)</td><td class="n">0.5386</td></tr>
+      <tr class="warn"><td class="wrap">2D-only ablation IoU</td><td class="n">0.4845</td></tr>
+      <tr><td rowspan="2">4 · target / obstacle</td><td class="wrap"><code>generate_candidates</code>의 attention 인자</td><td class="n">없음</td></tr>
+      <tr class="good"><td class="wrap">배정된 점 / 미배정</td><td class="n strong">40,057 / 0</td></tr>
+      <tr><td rowspan="3">5 · geometry</td><td class="wrap">primitive 포함률 (4종 전부)</td><td class="n">100.00%</td></tr>
+      <tr class="good"><td class="wrap">제약 구: voxel 대 primitive</td><td class="n strong">452 → 1</td></tr>
+      <tr><td class="wrap">캡슐 구 팽창</td><td class="n">0.0443 → 0.0485 (+9.5%)</td></tr>
+      <tr><td rowspan="2">보조</td><td class="wrap">평면 피팅 (법선 / 오프셋 / rms)</td><td class="n">4.5e−6 rad / 8.0e−6 m / 1.6e−4 m</td></tr>
+      <tr><td class="wrap">3-카메라 융합</td><td class="n">60,566 → 12,528 · 다중뷰 후보 12/23</td></tr>
+    </tbody></table></div>
+</section>
+
+<!-- ==================================================== DEFENCE -->
+<section id="defend">
+  <h2>종합 · 발표 시 방어선</h2>
+  <div class="col">
+    <p class="lead">숨기면 안 되는 것들. 먼저 말하면 강점이 되고, 지적당하면 약점이 된다.</p>
+  </div>
+
+  <div class="rule-note col">
+    <strong>1. 모든 정확도 수치는 합성 fixture 기준이다.</strong> 해석적 광선 추적으로 만든 씬이라
+    depth가 정확하고 픽셀마다 GT 라벨이 붙는다 — 그래서 IoU를 <em>계산할 수 있고</em>, 역투영을
+    0.040000 m로 검증할 수 있다. 그러나 실측 캡처가 아니다.
+  </div>
+  <div class="rule-note col">
+    <strong>2. attention은 대역품이다.</strong> π0.5는 LIBERO의 224×224 agent view로 학습됐고
+    RB-Y1 프레임에 들이대면 의미 없는 숫자가 나온다. 실험은 지정한 물체 위에 가우시안 블롭을 놓는다.
+    <strong>지금까지 검증된 것은 attention <em>이후</em>의 전 단계이며 attention 자체가 아니다.</strong>
+    fine-tuning된 모델이 나왔을 때 할 일은 <code>future_vla.md</code>에 정리돼 있다.
+  </div>
+  <div class="rule-note col">
+    <strong>3. MuJoCo에서 정합 오차가 0인 것은 시뮬레이터이기 때문이다.</strong> URDF FK와 시뮬레이터가
+    정확히 같아서 0.0 mm가 나온다. 실기에서는 hand-eye calibration 오차가 그 자리를 차지하고,
+    아직 측정된 바 없다. <code>geometry.perception_uncertainty</code>가 그것을 받을 자리이며 현재 0이다.
+  </div>
+  <div class="rule-note col">
+    <strong>4. fixture가 일부 ablation 축을 변별하지 못한다.</strong> 정규화 4종·클러스터링 2종·
+    seed 임계값 4종에서 IoU가 모두 1.0000으로 같다. 3D vs 2D 비교는 변별하지만 나머지는
+    <strong>더 어려운 씬이 필요하다</strong>.
+  </div>
+  <div class="rule-note col">
+    <strong>5. 속이 빈 물체는 여러 후보로 쪼개진다.</strong> RB-Y1 실험에서 크레이트가 후보 4개가 됐다.
+    융합 문제가 아니라 클러스터링의 성질이다 — 벽들이 개구부를 가로질러 Euclidean 연결이 되지 않고,
+    과일을 분리할 만큼 작은 <code>eps</code>는 벽도 분리한다. 둘을 섞어 말하면 클러스터링 특성이
+    정합 버그처럼 보인다.
+  </div>
+
+  <div class="col">
+    <h4>거꾸로, 강하게 주장할 수 있는 것</h4>
+    <ul>
+      <li><strong>원칙이 문서가 아니라 타입과 테스트로 강제된다.</strong>
+        <code>generate_candidates</code>에 attention 인자가 없고, 그 사실을 검사하는 테스트가 있다.</li>
+      <li><strong>안전 방향의 결함 여러 건을 실제로 잡았다.</strong> 캡슐 구 체인이 11.8% 노출,
+        MVEE가 점을 다 담지 못함, self-filter가 로봇의 67.9%만 제거, <code>depth_max</code>가 4.17 m
+        벽을 통과시킴 — 전부 <em>과소근사</em> 방향이고 테스트가 잡았다.</li>
+      <li><strong>실패를 침묵시키지 않는다.</strong> <code>GroundingStatus</code> 5종,
+        <code>ConstraintValidity</code> 3종이 전부 출력 타입의 필드다.</li>
+      <li><strong>측정 후 최적화.</strong> self-filter 257 → 13.5 ms는 추측이 아니라 프로파일링 결과였다.</li>
+    </ul>
+  </div>
+
+  <div class="foot col">
+    소스 · <span class="mono">benchmark/ag3s/</span> — 20 모듈, 테스트 422개 통과.
+    설계 배경과 개발 중 발견한 결함 15건은
+    <a href="https://claude.ai/code/artifact/7eff958d-f250-48ea-a864-175ddcb571a6">구현 보고서</a>에,
+    fine-tuning된 VLA가 나왔을 때 할 일은 <span class="mono">asset/doc/future_vla.md</span>에.
+    이 문서의 모든 수치는 <span class="mono">tests/ag3s/fixtures.py</span>의 합성 씬에서 재현 가능하다.
+  </div>
+</section>
+
+</main>
+</div>

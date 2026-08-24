@@ -1,0 +1,528 @@
+{
+  "zed_left": {
+    "target": {
+      "requested": "crate",
+      "grounding_status": "ok",
+      "grounded_body": "crate",
+      "purity": 1.0,
+      "iou": 0.8195,
+      "points": 3319,
+      "confidence": 0.5048,
+      "centroid_base": [
+        0.5185,
+        -0.007,
+        0.9065
+      ]
+    },
+    "self_filter": {
+      "robot_points_before": 6657,
+      "robot_points_after": 0,
+      "robot_removed_fraction": 1.0,
+      "scene_points_before": 25964,
+      "scene_points_after": 25850,
+      "scene_kept_fraction": 0.9956
+    },
+    "summary": {
+      "status": "ok",
+      "grounding_status": "ok",
+      "phase": "approach",
+      "frame_index": 0,
+      "frame_id": "base",
+      "n_candidates": 8,
+      "candidates_by_type": {
+        "object": 4,
+        "unknown_geometry": 1,
+        "target": 1,
+        "support_surface": 2
+      },
+      "n_support_surfaces": 2,
+      "has_target": true,
+      "n_constraints": 41480,
+      "n_active_slots": 6,
+      "max_candidates": 32,
+      "horizon": 20,
+      "squared_distance": true,
+      "notes": [
+        "2 point(s) too isolated for unknown_min_points=3",
+        "points: 110397 raw -> 32621 voxel -> 25850 after self-filter",
+        "candidates: 4 object, 1 unknown, 1 target, 2 support"
+      ],
+      "profile_ms": {
+        "scene_reconstruction": 20.8613719951245,
+        "robot_self_filter": 73.19388900214108,
+        "support_surface": 83.07979399978649,
+        "attention_lifting": 4.625049994501751,
+        "target_grounding": 67.55280200013658,
+        "collision_candidates": 50.471608999941964,
+        "primitive_fitting": 0.5970970014459454,
+        "constraint_generation": 0.10308600030839443
+      }
+    },
+    "candidates": [
+      {
+        "id": -1,
+        "source_type": "support_surface",
+        "gt_body": "office",
+        "gt_purity": 0.9981,
+        "points": 12321,
+        "centroid_base": [
+          -0.0,
+          0.0,
+          0.0024
+        ],
+        "radius_m": null,
+        "safety_margin_m": 0.01,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": -2,
+        "source_type": "support_surface",
+        "gt_body": "table",
+        "gt_purity": 0.8919,
+        "points": 6669,
+        "centroid_base": [
+          0.0014,
+          0.0,
+          0.8232
+        ],
+        "radius_m": null,
+        "safety_margin_m": 0.01,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 5,
+        "source_type": "target",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 3319,
+        "centroid_base": [
+          0.5185,
+          -0.007,
+          0.9065
+        ],
+        "radius_m": 0.2321,
+        "safety_margin_m": 0.02,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "approach",
+        "track_age": 0
+      },
+      {
+        "id": 0,
+        "source_type": "object",
+        "gt_body": "table",
+        "gt_purity": 1.0,
+        "points": 2894,
+        "centroid_base": [
+          0.4085,
+          -0.0202,
+          0.5486
+        ],
+        "radius_m": 0.6737,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 1,
+        "source_type": "object",
+        "gt_body": "pear",
+        "gt_purity": 0.5993,
+        "points": 282,
+        "centroid_base": [
+          0.5067,
+          0.3066,
+          0.8633
+        ],
+        "radius_m": 0.0839,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 2,
+        "source_type": "object",
+        "gt_body": "apple",
+        "gt_purity": 1.0,
+        "points": 199,
+        "centroid_base": [
+          0.4526,
+          -0.2987,
+          0.8658
+        ],
+        "radius_m": 0.041,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 3,
+        "source_type": "object",
+        "gt_body": "orange",
+        "gt_purity": 1.0,
+        "points": 154,
+        "centroid_base": [
+          0.5501,
+          -0.3039,
+          0.8645
+        ],
+        "radius_m": 0.0356,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 4,
+        "source_type": "unknown_geometry",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 10,
+        "centroid_base": [
+          0.534,
+          0.1435,
+          0.844
+        ],
+        "radius_m": 0.0191,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      }
+    ]
+  },
+  "wrist_cam_l": {
+    "target": {
+      "requested": "pear",
+      "grounding_status": "ok",
+      "grounded_body": "pear",
+      "purity": 0.9401,
+      "iou": 0.9401,
+      "points": 267,
+      "confidence": 0.8676,
+      "centroid_base": [
+        0.5452,
+        0.3043,
+        0.8718
+      ]
+    },
+    "self_filter": {
+      "robot_points_before": 0,
+      "robot_points_after": 0,
+      "robot_removed_fraction": null,
+      "scene_points_before": 17334,
+      "scene_points_after": 17334,
+      "scene_kept_fraction": 1.0
+    },
+    "summary": {
+      "status": "ok",
+      "grounding_status": "ok",
+      "phase": "approach",
+      "frame_index": 0,
+      "frame_id": "base",
+      "n_candidates": 5,
+      "candidates_by_type": {
+        "object": 1,
+        "unknown_geometry": 1,
+        "target": 1,
+        "support_surface": 2
+      },
+      "n_support_surfaces": 2,
+      "has_target": true,
+      "n_constraints": 41480,
+      "n_active_slots": 3,
+      "max_candidates": 32,
+      "horizon": 20,
+      "squared_distance": true,
+      "notes": [
+        "points: 144825 raw -> 17334 voxel -> 17334 after self-filter",
+        "candidates: 1 object, 1 unknown, 1 target, 2 support"
+      ],
+      "profile_ms": {
+        "scene_reconstruction": 25.333162004244514,
+        "robot_self_filter": 8.4523299956345,
+        "support_surface": 12.3904619977111,
+        "attention_lifting": 5.020642995077651,
+        "target_grounding": 9.342937999463174,
+        "collision_candidates": 11.121347000880633,
+        "primitive_fitting": 0.22203000116860494,
+        "constraint_generation": 0.07962100062286481
+      }
+    },
+    "candidates": [
+      {
+        "id": -1,
+        "source_type": "support_surface",
+        "gt_body": "office",
+        "gt_purity": 1.0,
+        "points": 7821,
+        "centroid_base": [
+          -0.0,
+          0.0,
+          0.0019
+        ],
+        "radius_m": null,
+        "safety_margin_m": 0.01,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": -2,
+        "source_type": "support_surface",
+        "gt_body": "table",
+        "gt_purity": 0.8354,
+        "points": 7645,
+        "centroid_base": [
+          0.0133,
+          0.0029,
+          0.8333
+        ],
+        "radius_m": null,
+        "safety_margin_m": 0.01,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 0,
+        "source_type": "object",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 1584,
+        "centroid_base": [
+          0.5869,
+          0.0212,
+          0.8933
+        ],
+        "radius_m": 0.1954,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 2,
+        "source_type": "target",
+        "gt_body": "pear",
+        "gt_purity": 0.9401,
+        "points": 267,
+        "centroid_base": [
+          0.5452,
+          0.3043,
+          0.8718
+        ],
+        "radius_m": 0.0574,
+        "safety_margin_m": 0.02,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "approach",
+        "track_age": 0
+      },
+      {
+        "id": 1,
+        "source_type": "unknown_geometry",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 17,
+        "centroid_base": [
+          0.4384,
+          -0.0205,
+          0.8377
+        ],
+        "radius_m": 0.0569,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      }
+    ]
+  },
+  "wrist_cam_r": {
+    "target": {
+      "requested": "orange",
+      "grounding_status": "ok",
+      "grounded_body": "orange",
+      "purity": 1.0,
+      "iou": 1.0,
+      "points": 211,
+      "confidence": 0.9026,
+      "centroid_base": [
+        0.5572,
+        -0.3081,
+        0.8656
+      ]
+    },
+    "self_filter": {
+      "robot_points_before": 0,
+      "robot_points_after": 0,
+      "robot_removed_fraction": null,
+      "scene_points_before": 17382,
+      "scene_points_after": 17382,
+      "scene_kept_fraction": 1.0
+    },
+    "summary": {
+      "status": "ok",
+      "grounding_status": "ok",
+      "phase": "approach",
+      "frame_index": 0,
+      "frame_id": "base",
+      "n_candidates": 6,
+      "candidates_by_type": {
+        "object": 1,
+        "unknown_geometry": 2,
+        "target": 1,
+        "support_surface": 2
+      },
+      "n_support_surfaces": 2,
+      "has_target": true,
+      "n_constraints": 41480,
+      "n_active_slots": 4,
+      "max_candidates": 32,
+      "horizon": 20,
+      "squared_distance": true,
+      "notes": [
+        "points: 144979 raw -> 17382 voxel -> 17382 after self-filter",
+        "candidates: 1 object, 2 unknown, 1 target, 2 support"
+      ],
+      "profile_ms": {
+        "scene_reconstruction": 25.640087995270733,
+        "robot_self_filter": 8.433748000243213,
+        "support_surface": 13.435503999062348,
+        "attention_lifting": 4.99170499824686,
+        "target_grounding": 7.530716000474058,
+        "collision_candidates": 11.04609300091397,
+        "primitive_fitting": 0.250019998929929,
+        "constraint_generation": 0.08051699842326343
+      }
+    },
+    "candidates": [
+      {
+        "id": -1,
+        "source_type": "support_surface",
+        "gt_body": "office",
+        "gt_purity": 1.0,
+        "points": 7929,
+        "centroid_base": [
+          -0.0,
+          -0.0,
+          0.0017
+        ],
+        "radius_m": null,
+        "safety_margin_m": 0.01,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": -2,
+        "source_type": "support_surface",
+        "gt_body": "table",
+        "gt_purity": 0.8359,
+        "points": 7631,
+        "centroid_base": [
+          0.0132,
+          -0.0028,
+          0.8331
+        ],
+        "radius_m": null,
+        "safety_margin_m": 0.01,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 0,
+        "source_type": "object",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 1575,
+        "centroid_base": [
+          0.5867,
+          -0.0181,
+          0.8935
+        ],
+        "radius_m": 0.1973,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 3,
+        "source_type": "target",
+        "gt_body": "orange",
+        "gt_purity": 1.0,
+        "points": 211,
+        "centroid_base": [
+          0.5572,
+          -0.3081,
+          0.8656
+        ],
+        "radius_m": 0.0347,
+        "safety_margin_m": 0.02,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "approach",
+        "track_age": 0
+      },
+      {
+        "id": 1,
+        "source_type": "unknown_geometry",
+        "gt_body": "crate",
+        "gt_purity": 1.0,
+        "points": 27,
+        "centroid_base": [
+          0.4383,
+          0.0205,
+          0.8396
+        ],
+        "radius_m": 0.0574,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      },
+      {
+        "id": 2,
+        "source_type": "unknown_geometry",
+        "gt_body": "apple",
+        "gt_purity": 1.0,
+        "points": 9,
+        "centroid_base": [
+          0.4938,
+          -0.303,
+          0.8506
+        ],
+        "radius_m": 0.0106,
+        "safety_margin_m": 0.05,
+        "collision_enabled": true,
+        "contact_permission": false,
+        "phase_rule": "always_on",
+        "track_age": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,99 @@
+# AG3S on RB-Y1 with the head ZED and both wrist D435i cameras, fused into one base-frame scene.
+#
+# Reproduces `benchmark/ag3s/experiments/rby1_transport.py`. Run:
+#   MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.rby1_transport
+#
+# Every value here is a measurement or a stated trade-off, not a default that happened to work.
+
+frame_id: base
+
+pointcloud:
+  voxel_size: 0.006
+  self_filter: true
+  max_points: 60000
+  depth_min: 0.05
+  depth_max: 2.5
+  # `depth_max` bounds pinhole z-depth, not distance. These are 90-degree lenses, so at the frame
+  # corners a 2.5 m z-cut still admits points 4.2 m away — measured, and enough to pull an office
+  # wall into the workspace as a 1.85 m sphere. 1.6 m radial covers the table, the crate, all four
+  # fruits and the floor under the robot, and stops at the room.
+  range_max: 1.6
+  self_filter_inflation: 0.02
+  # Grow the voxel rather than selecting indices when max_points binds: every occupied cell keeps a
+  # representative, so the unrepresented gap stays bounded by the final voxel.
+  cap_strategy: voxel
+
+timing:
+  # Coarser than pointcloud.voxel_size on purpose. Registration error *between* cameras exceeds
+  # quantization *within* one, so a 6 mm fusion voxel leaves the same table surface as three parallel
+  # sheets a few millimetres apart.
+  fusion_voxel_size: 0.012
+  # Set these and a dropped camera becomes visible. Left empty, AG3S accepts whatever arrives, which
+  # is right for a bench test and wrong for a robot.
+  expected_cameras: [head, left_wrist, right_wrist]
+  # Roughly what three USB3 cameras on one host deliver. Exceeding any of these degrades the frame's
+  # validity; it never silently absorbs the error.
+  max_camera_skew_sec: 0.05
+  max_state_age_sec: 0.05
+  max_transform_age_sec: 0.05
+
+support_surface:
+  enabled: true
+  max_planes: 2          # the floor under the base and the table top
+  min_inliers: 800
+  distance_threshold: 0.008
+  safety_margin: 0.01
+
+clustering:
+  method: dbscan
+  eps: 0.03              # voxel_size < eps < the smallest inter-object gap
+  min_points: 25
+  use_3d_connectivity: true
+  target_score_threshold: 0.25
+
+collision_candidate:
+  cluster_method: dbscan
+  preserve_unknown: true
+  eps: 0.03
+  min_points: 25
+  unknown_min_points: 3
+  max_clusters: 64
+  # Clusters beyond max_clusters and residue below unknown_min_points are folded into this many
+  # containing primitives rather than discarded.
+  overflow_groups: 4
+
+geometry:
+  primitive: sphere
+  safety_margin: 0.05
+  max_candidates: 32
+  min_radius: 0.005
+  # One budget for depth noise, voxel quantization, registration and hand-eye error, added to the
+  # primitive radius and to nothing else. Zero here because the MuJoCo scene has none of those; on
+  # real hardware this is the field to raise, not d_safe.
+  perception_uncertainty: 0.0
+
+contact:
+  phase_aware: true
+  contact_margin: 0.0
+  # RB-Y1's URDF link names, checked against src/rby1_description/models/rby1a/urdf/model.urdf.
+  # NOTE: the URDF ships collision capsules for the torso and arm links 0-5 only, so a constraint
+  # model built from it alone has no sphere on any of these links and the policy has nothing to
+  # relax. The experiment injects fingertip capsules via `extra_capsules` for exactly this reason.
+  contact_links:
+    right: [ee_right, ee_finger_r1, ee_finger_r2]
+    left:  [ee_left,  ee_finger_l1, ee_finger_l2]
+  phase_rules:
+    transit:   {collision_enabled: true, contact_permission: false, margin_scale: 1.0}
+    approach:  {collision_enabled: true, contact_permission: false, margin_scale: 0.4}
+    pre_grasp: {collision_enabled: true, contact_permission: false, margin_scale: 0.1}
+    grasp:     {collision_enabled: true, contact_permission: true,  margin_scale: 0.0}
+
+constraint:
+  squared_distance: true
+  horizon: 20
+  reserved_overflow_slots: 2
+  max_attached_primitives: 4
+
+profiling:
+  enabled: true
+  warmup_frames: 1
