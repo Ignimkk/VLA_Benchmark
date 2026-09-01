@@ -62,10 +62,20 @@ class StepRecord:
     actions: np.ndarray  # (H, 14) the chunk it returned
     infer_ms: float
     images: dict[str, np.ndarray]  # policy key -> (224, 224, 3) uint8, HWC
+    #: Optional captured depth, only present when the rollout was recorded with `--record-depth`.
+    #: MuJoCo camera name -> (H, W) float64 metres, already converted back from the stored uint16.
+    depth: dict[str, np.ndarray] = dataclasses.field(default_factory=dict)
+    #: MuJoCo camera name -> (3, 3) intrinsics and (4, 4) camera-to-base, as captured.
+    camera_intrinsics: dict[str, np.ndarray] = dataclasses.field(default_factory=dict)
+    T_base_cam: dict[str, np.ndarray] = dataclasses.field(default_factory=dict)
 
     @property
     def index(self) -> int:
         return int(self.t_step)
+
+    @property
+    def has_depth(self) -> bool:
+        return bool(self.depth)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -110,6 +120,8 @@ class PolicyRecordWriter:
         model_xml: str,
         prompt: str,
         extra: Optional[dict[str, Any]] = None,
+        depth_cameras: Sequence[str] = (),
+        depth_hw: tuple[int, int] = (480, 640),
     ):
         import mujoco
 
@@ -127,6 +139,9 @@ class PolicyRecordWriter:
 
         self.run_dir = run_dir
         self._count = 0
+        self._depth_cameras = tuple(depth_cameras)
+        self._depth_hw = (int(depth_hw[0]), int(depth_hw[1]))
+        self._renderer = None
         joint_names = [
             mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, i) or "" for i in range(model.njnt)
         ]
@@ -139,12 +154,44 @@ class PolicyRecordWriter:
             "camera_bindings": {k: list(v) for k, v in CAMERA_BINDINGS.items()},
             "policy_image_size": 224,
             "attention_grid": ATTENTION_GRID,
+            "depth_cameras": list(self._depth_cameras),
+            "depth_hw": list(self._depth_hw),
+            "depth_encoding": "uint16 millimetres" if self._depth_cameras else None,
             **(extra or {}),
         }
         (self.run_dir / "meta.json").write_text(json.dumps(self.meta, indent=2))
         print(f"[ag3s] recording policy observations to {self.run_dir}")
 
-    def record(self, *, t_step: int, obs: dict, data, chunk: np.ndarray, infer_ms: float) -> None:
+    def _capture_depth(self, model, data, camera: str):
+        """Depth, intrinsics and extrinsics for one camera, in AG3S's conventions."""
+        import mujoco
+
+        if self._renderer is None:
+            self._renderer = mujoco.Renderer(model, self._depth_hw[0], self._depth_hw[1])
+        r = self._renderer
+        r.disable_depth_rendering()
+        r.enable_depth_rendering()
+        r.update_scene(data, camera=camera)
+        depth = np.asarray(r.render(), np.float64)
+        r.disable_depth_rendering()
+
+        cid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, camera)
+        fovy = float(model.cam_fovy[cid])
+        f = (self._depth_hw[0] / 2.0) / np.tan(np.deg2rad(fovy) / 2.0)
+        K = np.array([[f, 0.0, self._depth_hw[1] / 2.0],
+                      [0.0, f, self._depth_hw[0] / 2.0], [0.0, 0.0, 1.0]], np.float64)
+        bid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "base")
+        T_world_base = np.eye(4)
+        T_world_base[:3, :3] = data.xmat[bid].reshape(3, 3)
+        T_world_base[:3, 3] = data.xpos[bid]
+        T_world_cam = np.eye(4)
+        # MuJoCo: -z forward, +y up. OpenCV: +z forward, +y down.
+        T_world_cam[:3, :3] = data.cam_xmat[cid].reshape(3, 3) @ np.diag([1.0, -1.0, -1.0])
+        T_world_cam[:3, 3] = data.cam_xpos[cid]
+        return depth, K, np.linalg.inv(T_world_base) @ T_world_cam
+
+    def record(self, *, t_step: int, obs: dict, data, chunk: np.ndarray, infer_ms: float,
+               model=None) -> None:
         payload: dict[str, Any] = {
             "t_step": np.int64(t_step),
             "qpos": np.asarray(data.qpos, np.float64).copy(),
@@ -160,10 +207,23 @@ class PolicyRecordWriter:
             if image.ndim == 3 and image.shape[0] in (1, 3, 4) and image.shape[-1] not in (1, 3, 4):
                 image = np.transpose(image, (1, 2, 0))
             payload[f"image_{key}"] = np.ascontiguousarray(image[..., :3]).astype(np.uint8)
+        if self._depth_cameras and model is not None:
+            for camera in self._depth_cameras:
+                depth, K, T = self._capture_depth(model, data, camera)
+                # uint16 millimetres is what a real depth camera delivers, and what
+                # `PointCloudConfig.depth_scale = 0.001` exists to decode. Storing the float64
+                # renderer output instead would halve the file for no gain in realism and would
+                # quietly hide the 1 mm quantisation every real sensor has.
+                payload[f"depth_{camera}"] = np.clip(np.rint(depth * 1000.0), 0, 65535).astype(np.uint16)
+                payload[f"K_{camera}"] = K
+                payload[f"T_base_cam_{camera}"] = T
         np.savez_compressed(self.run_dir / f"step_{self._count:05d}.npz", **payload)
         self._count += 1
 
     def close(self) -> None:
+        if self._renderer is not None:
+            self._renderer.close()
+            self._renderer = None
         self.meta["n_steps"] = self._count
         (self.run_dir / "meta.json").write_text(json.dumps(self.meta, indent=2))
         print(f"[ag3s] wrote {self._count} policy observations to {self.run_dir}")
@@ -187,6 +247,7 @@ def load_run(run_dir: str | pathlib.Path, *, limit: Optional[int] = None) -> Run
     steps = []
     for file in files:
         with np.load(file) as d:
+            cams = [k[len("depth_"):] for k in d.files if k.startswith("depth_")]
             steps.append(
                 StepRecord(
                     t_step=int(d["t_step"]),
@@ -196,6 +257,9 @@ def load_run(run_dir: str | pathlib.Path, *, limit: Optional[int] = None) -> Run
                     actions=np.asarray(d["actions"], np.float32),
                     infer_ms=float(d["infer_ms"]),
                     images={k: np.asarray(d[f"image_{k}"]) for k in POLICY_CAMERA_NAMES},
+                    depth={c: np.asarray(d[f"depth_{c}"], np.float64) / 1000.0 for c in cams},
+                    camera_intrinsics={c: np.asarray(d[f"K_{c}"], np.float64) for c in cams},
+                    T_base_cam={c: np.asarray(d[f"T_base_cam_{c}"], np.float64) for c in cams},
                 )
             )
     if not steps:

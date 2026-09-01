@@ -82,6 +82,10 @@ class CameraFrame:
     body_ids: np.ndarray  # (H, W) int32 ground-truth body id, -1 where nothing was hit
     body_names: dict[int, str]
     robot_state: np.ndarray  # (20,)
+    #: (H, W) int32 ground-truth *geom* id, -1 where nothing was hit. Body ids are too coarse for
+    #: some questions -- a table is one body but five geoms, and fitting a plane to all of them
+    #: fits the legs as well as the top.
+    geom_ids: Optional[np.ndarray] = None
 
     @property
     def hw(self) -> tuple[int, int]:
@@ -236,6 +240,9 @@ class TransportScene:
         geom_ids = object_id[is_geom]
         body_ids[is_geom] = self.model.geom_bodyid[geom_ids]
 
+        geom_map = np.full(object_id.shape, -1, np.int32)
+        geom_map[is_geom] = geom_ids
+
         return CameraFrame(
             name=camera,
             depth=depth,
@@ -244,6 +251,7 @@ class TransportScene:
             body_ids=body_ids,
             body_names=dict(self._body_names),
             robot_state=self.robot_state(),
+            geom_ids=geom_map,
         )
 
     def close(self) -> None:

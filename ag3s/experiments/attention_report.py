@@ -69,14 +69,9 @@ PROMPT_ALIASES = {
     "pear": ("pear",),
 }
 
-# --- palette (dataviz reference instance, light surface) ---------------------------------------
-SURFACE = "#fcfcfb"
-INK = "#0b0b0b"
-INK_2 = "#52514e"
-GRID_INK = "#d8d7d2"
-SEQ_BLUE = ["#cde2fb", "#b7d3f6", "#9ec5f4", "#86b6ef", "#6da7ec", "#5598e7",
-            "#3987e5", "#2a78d6", "#256abf", "#1c5cab", "#184f95", "#104281", "#0d366b"]
-CATEGORICAL = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
+from benchmark.ag3s.experiments.figstyle import (  # noqa: E402
+    CATEGORICAL, GRID_INK, INK, INK_2, SEQ_BLUE, SURFACE, sequential_cmap, style_axes, use_korean,
+)
 
 
 def target_from_prompt(prompt: str) -> Optional[str]:
@@ -174,10 +169,14 @@ def score_maps(maps, coverage, areas, keep, target_index, *, competitor_mask,
     out["peak_on_target"] = (
         float((peak_cov[k, target_index] > patch_hit_cov).mean()) if n else float("nan")
     )
-    other = np.delete(mass, target_index, axis=1)
+    # Measured against the same set that is allowed to win. Including the support surface here
+    # would report the target losing to the table -- a comparison no stage of AG3S ever makes.
+    rivals = np.asarray(competitor_mask, bool).copy()
+    rivals[target_index] = False
+    other = mass[:, rivals].max(axis=1) if rivals.any() else np.zeros(len(mass))
     out["target_mass"] = float(mass[k, target_index].mean()) if n else float("nan")
     out["target_lift"] = float(lift[k, target_index].mean()) if n else float("nan")
-    out["advantage"] = float((mass[:, target_index] - other.max(axis=1))[k].mean()) if n else float("nan")
+    out["advantage"] = float((mass[:, target_index] - other)[k].mean()) if n else float("nan")
     return out
 
 
@@ -185,23 +184,18 @@ def score_maps(maps, coverage, areas, keep, target_index, *, competitor_mask,
 
 
 def _fig_setup(plt, fig, axes):
-    fig.patch.set_facecolor(SURFACE)
-    for ax in np.atleast_1d(axes).ravel():
-        ax.set_facecolor(SURFACE)
-        for spine in ("top", "right"):
-            ax.spines[spine].set_visible(False)
-        for spine in ("left", "bottom"):
-            ax.spines[spine].set_color(GRID_INK)
-        ax.tick_params(colors=INK_2, labelsize=8, length=3, color=GRID_INK)
-        ax.xaxis.label.set_color(INK_2)
-        ax.yaxis.label.set_color(INK_2)
+    style_axes(fig, axes)
 
 
-def fig_layer_head(plt, hit, out_path, *, title, baseline_head_avg, baseline_uniform):
-    """Sequential heatmap: one hue, light -> dark, because hit rate is a magnitude."""
-    from matplotlib.colors import LinearSegmentedColormap
+def fig_layer_head(plt, hit, out_path, *, title, baseline_head_avg, baseline_uniform,
+                   chosen=None, metric="peak-on-target"):
+    """Sequential heatmap: one hue, light -> dark, because a rate is a magnitude.
 
-    cmap = LinearSegmentedColormap.from_list("seq_blue", SEQ_BLUE)
+    `chosen` is the cell the ranking picked, which is not always this matrix's own argmax -- ties
+    are broken on metrics the heatmap does not show. Ringing the matrix maximum instead would point
+    the reader at a different head from the one the document then discusses.
+    """
+    cmap = sequential_cmap()
     n_layers, n_heads = hit.shape
     fig, ax = plt.subplots(figsize=(6.2, 8.4), dpi=160)
     _fig_setup(plt, fig, ax)
@@ -211,21 +205,23 @@ def fig_layer_head(plt, hit, out_path, *, title, baseline_head_avg, baseline_uni
             v = hit[l, h]
             ax.text(h, l, f"{v:.2f}"[1:] if v < 1 else "1.0", ha="center", va="center",
                     fontsize=6.5, color="#ffffff" if v > 0.55 else INK)
-    best = np.unravel_index(np.nanargmax(hit), hit.shape)
+    best = tuple(chosen) if chosen is not None else np.unravel_index(np.nanargmax(hit), hit.shape)
     ax.add_patch(plt.Rectangle((best[1] - .5, best[0] - .5), 1, 1, fill=False,
                                edgecolor=CATEGORICAL[1], linewidth=2.2))
+    ties = int((hit >= np.nanmax(hit) - 1e-9).sum())
     ax.set_xticks(range(n_heads), [f"h{h}" for h in range(n_heads)])
     ax.set_yticks(range(n_layers), [f"L{l}" for l in range(n_layers)])
     ax.set_xlabel("attention head")
-    ax.set_ylabel("transformer layer")
+    ax.set_ylabel("transformer 층")
     ax.set_title(title, color=INK, fontsize=11, pad=10, loc="left")
     cb = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.03)
-    cb.set_label("hit rate", color=INK_2, fontsize=8)
+    cb.set_label(metric, color=INK_2, fontsize=8)
     cb.ax.tick_params(colors=INK_2, labelsize=7)
     cb.outline.set_edgecolor(GRID_INK)
     ax.text(0.0, -0.085,
-            f"best L{best[0]}h{best[1]} = {hit[best]:.2f}   ·   head-average baseline "
-            f"{baseline_head_avg:.2f}   ·   uniform baseline {baseline_uniform:.2f}",
+            f"선택: L{best[0]}h{best[1]} = {hit[best]:.2f}   ·   head-average "
+            f"{baseline_head_avg:.2f}   ·   uniform {baseline_uniform:.2f}   ·   "
+            f"행렬 최댓값 {np.nanmax(hit):.2f}에 닿은 셀 {ties}개",
             transform=ax.transAxes, fontsize=8, color=INK_2)
     fig.tight_layout()
     fig.savefig(out_path, facecolor=SURFACE, bbox_inches="tight")
@@ -234,9 +230,7 @@ def fig_layer_head(plt, hit, out_path, *, title, baseline_head_avg, baseline_uni
 
 def fig_overlay(plt, images, maps, coverage, target_index, frames, out_path, *, title):
     """Attention over the pixels the policy actually saw, beside the ground-truth footprint."""
-    from matplotlib.colors import LinearSegmentedColormap
-
-    cmap = LinearSegmentedColormap.from_list("seq_blue", SEQ_BLUE)
+    cmap = sequential_cmap()
     n = len(frames)
     fig, axes = plt.subplots(2, n, figsize=(2.3 * n, 5.0), dpi=160, squeeze=False)
     fig.patch.set_facecolor(SURFACE)
@@ -254,7 +248,7 @@ def fig_overlay(plt, images, maps, coverage, target_index, frames, out_path, *, 
         top.contour(np.kron(cov, np.ones((img.shape[0] // ATTENTION_GRID,
                                           img.shape[1] // ATTENTION_GRID))),
                     levels=[0.15], colors=[CATEGORICAL[1]], linewidths=1.4)
-        top.set_title(f"frame {f}", fontsize=8, color=INK_2)
+        top.set_title(f"프레임 {f}", fontsize=8, color=INK_2)
         bottom.imshow(img)
         a = maps[f]
         bottom.imshow(a / max(a.max(), 1e-12), cmap=cmap, alpha=0.62,
@@ -264,8 +258,8 @@ def fig_overlay(plt, images, maps, coverage, target_index, frames, out_path, *, 
                     (r + .5) / ATTENTION_GRID * img.shape[0],
                     marker="o", markersize=7, markerfacecolor="none",
                     markeredgecolor=CATEGORICAL[1], markeredgewidth=1.8)
-    axes[0][0].set_ylabel("cam_high\n+ GT target", fontsize=8, color=INK_2)
-    axes[1][0].set_ylabel("+ attention\n(o = argmax)", fontsize=8, color=INK_2)
+    axes[0][0].set_ylabel("cam_high\n+ 정답 target", fontsize=8, color=INK_2)
+    axes[1][0].set_ylabel("+ attention\n(○ = argmax)", fontsize=8, color=INK_2)
     fig.suptitle(title, color=INK, fontsize=11, x=0.01, ha="left")
     fig.tight_layout(rect=(0, 0, 1, 0.95))
     fig.savefig(out_path, facecolor=SURFACE, bbox_inches="tight")
@@ -285,7 +279,7 @@ def fig_lift_over_time(plt, t_steps, lift, bodies, target_index, keep, out_path,
     ax.grid(axis="y", color=GRID_INK, linewidth=0.6)
     ax.set_axisbelow(True)
     ax.axhline(1.0, color=INK_2, linewidth=1.0, linestyle=(0, (4, 3)), zorder=2)
-    ax.text(0.004, 1.0, " uniform", transform=ax.get_yaxis_transform(), va="bottom",
+    ax.text(0.004, 1.0, " 균등", transform=ax.get_yaxis_transform(), va="bottom",
             fontsize=7.5, color=INK_2)
     order = [target_index] + [i for i in range(len(bodies)) if i != target_index]
     for slot, bi in enumerate(order[:8]):
@@ -295,8 +289,8 @@ def fig_lift_over_time(plt, t_steps, lift, bodies, target_index, keep, out_path,
     if (~keep).any():
         for t in np.asarray(t_steps)[~keep]:
             ax.axvspan(t - 4, t + 4, color=GRID_INK, alpha=0.45, linewidth=0, zorder=1)
-    ax.set_xlabel("control step")
-    ax.set_ylabel("attention lift  (mass / area share)")
+    ax.set_xlabel("제어 스텝")
+    ax.set_ylabel("attention 밀도  (mass / 점유비율)")
     ax.set_ylim(0, None)
     ax.set_title(title, color=INK, fontsize=11, pad=8, loc="left")
     leg = ax.legend(frameon=False, fontsize=8, ncol=len(order[:8]), loc="upper center",
@@ -304,7 +298,7 @@ def fig_lift_over_time(plt, t_steps, lift, bodies, target_index, keep, out_path,
     for text in leg.get_texts():
         text.set_color(INK_2)
     if (~keep).any():
-        ax.text(1.0, -0.42, "shaded = target occluded, excluded from every score",
+        ax.text(1.0, -0.42, "음영 = target 가려짐, 모든 채점에서 제외",
                 transform=ax.transAxes, fontsize=7.5, color=INK_2, ha="right")
     fig.tight_layout()
     fig.savefig(out_path, facecolor=SURFACE, bbox_inches="tight")
@@ -329,10 +323,10 @@ def fig_choice_sweep(plt, rows, out_path, *, title):
         for xi, v in zip(x + ai * width - 0.4 + width / 2, vals):
             ax.text(xi, v + 0.015, f"{v:.2f}", ha="center", fontsize=7, color=INK_2)
     ax.set_xticks(x, [f"Euler step {d}" for d in denoise])
-    ax.set_ylabel("best hit rate over all (layer, head)")
+    ax.set_ylabel("모든 (층, 헤드) 중 최고 hit rate")
     ax.set_ylim(0, 1.05)
     ax.set_title(title, color=INK, fontsize=11, pad=8, loc="left")
-    leg = ax.legend(frameon=False, fontsize=8, title="query aggregation", ncol=len(aggs))
+    leg = ax.legend(frameon=False, fontsize=8, title="query pooling", ncol=len(aggs))
     leg.get_title().set_color(INK_2)
     leg.get_title().set_fontsize(8)
     for text in leg.get_texts():
@@ -368,6 +362,7 @@ def main() -> None:
 
     import matplotlib
     matplotlib.use("Agg")
+    use_korean()
     import matplotlib.pyplot as plt
 
     record = load_run(args.records)
@@ -413,6 +408,8 @@ def main() -> None:
 
     rows = []
     hit_cube = np.zeros((len(denoise), len(aggs), n_layers, n_heads), np.float64)
+    peak_cube = np.zeros_like(hit_cube)
+    beta_cubes = {b: np.zeros_like(hit_cube) for b in args.betas}
     for di, d in enumerate(denoise):
         for ai, agg in enumerate(aggs):
             for l in range(n_layers):
@@ -420,6 +417,9 @@ def main() -> None:
                     s = score_maps(attention[:, di, ai, l, h, ci], coverage, areas, keep, ti,
                                    **score_kw)
                     hit_cube[di, ai, l, h] = s["hit_rate"]
+                    peak_cube[di, ai, l, h] = s["peak_on_target"]
+                    for b in args.betas:
+                        beta_cubes[b][di, ai, l, h] = s[f"hit_rate_b{b:g}"]
                     row = {"denoise": d, "agg": agg, "layer": l, "head": h,
                            "hit_rate": s["hit_rate"], "peak_on_target": s["peak_on_target"],
                            "target_mass": s["target_mass"], "target_lift": s["target_lift"],
@@ -430,7 +430,13 @@ def main() -> None:
                     row["hit_worst_beta"] = min(row[f"hit_b{b:g}"] for b in args.betas)
                     rows.append(row)
 
-    rows.sort(key=lambda r: (-r["hit_worst_beta"], -r["peak_on_target"], -r["target_lift"]))
+    # Ranked on peak-on-target, not on the beta sweep. Both ends of that sweep turn out to be
+    # unusable as a ranking signal here and the diagnostic below says so in numbers: beta = 0 is
+    # capped by the scene rather than the head (once the target is inside the crate, any blob
+    # covering it covers more crate), and beta = 1 saturates. peak-on-target has neither problem --
+    # it asks only whether the single hottest patch contains the target.
+    rows.sort(key=lambda r: (-r["peak_on_target"], -r[f"hit_b{args.betas[len(args.betas)//2]:g}"],
+                             -r["target_lift"]))
     best = rows[0]
     bdi, bai = denoise.index(best["denoise"]), aggs.index(best["agg"])
     best_maps = attention[:, bdi, bai, best["layer"], best["head"], ci]
@@ -442,20 +448,23 @@ def main() -> None:
     figs.mkdir(parents=True, exist_ok=True)
     tag = f"d{best['denoise']}_{best['agg']}"
     fig_layer_head(
-        plt, hit_cube[bdi, bai], figs / "fig1_layer_head_hit_rate.png",
-        title=f"Hit rate by (layer, head)  ·  Euler step {best['denoise']}, {best['agg']} query pooling",
-        baseline_head_avg=base_head_avg["hit_rate"], baseline_uniform=base_uniform["hit_rate"])
+        plt, peak_cube[bdi, bai], figs / "fig1_layer_head_peak_on_target.png",
+        title=f"(층, 헤드)별 peak-on-target  ·  Euler step {best['denoise']}, "
+              f"{best['agg']} pooling",
+        baseline_head_avg=base_head_avg["peak_on_target"],
+        baseline_uniform=base_uniform["peak_on_target"],
+        chosen=(best["layer"], best["head"]), metric="peak-on-target")
     shown = np.flatnonzero(keep)[:: max(1, int(keep.sum()) // 5)][:5]
     if args.camera == "cam_high" and images[0] is not None:
         fig_overlay(plt, images, best_maps, coverage, ti, shown,
                     figs / "fig2_attention_overlay.png",
-                    title=f"L{best['layer']}h{best['head']} attention on the frames the policy saw")
+                    title=f"L{best['layer']}h{best['head']} — 정책이 실제로 본 프레임 위의 attention")
     fig_lift_over_time(plt, t_steps, best_score["lift"], bodies, ti, keep,
                        figs / "fig3_attention_lift.png",
-                       title=f"L{best['layer']}h{best['head']} attention density per object "
-                             f"(1.0 = what uniform attention would give)")
+                       title=f"L{best['layer']}h{best['head']} 물체별 attention 밀도 "
+                             f"(1.0 = 균등 attention이 줄 값)")
     fig_choice_sweep(plt, rows, figs / "fig4_choice_sweep.png",
-                     title="Denoising step and query pooling both move the answer")
+                     title="Euler step과 query pooling이 답을 바꾸는 정도")
 
     # ------------------------------------------------------------------ document
     def md_table(header, lines):
@@ -493,102 +502,217 @@ def main() -> None:
         for i, b in enumerate(bodies)
     ]
 
-    beat_baselines = all(
-        best_score[f"hit_rate_b{b:g}"] > max(base_head_avg[f"hit_rate_b{b:g}"],
-                                             base_uniform[f"hit_rate_b{b:g}"]) + 0.15
+    def _spread(cube):
+        """How much of a metric's range the sweep actually uses, and how many cells tie at the top.
+
+        A metric whose maximum is reached by a large fraction of the 1296 cells is not ranking
+        anything; a metric whose maximum is the same for every cell is measuring the scene rather
+        than the head. Both happen here, so both are reported instead of being ranked on.
+        """
+        top = float(np.nanmax(cube))
+        return top, int((cube >= top - 1e-9).sum()), int(cube.size), len(np.unique(np.round(cube, 3)))
+
+    diagnostics = [("peak-on-target", _spread(peak_cube))]
+    diagnostics += [(f"hit β={b:g}", _spread(beta_cubes[b])) for b in betas]
+
+    # The chosen head must beat both baselines everywhere, and must beat the head-average by a real
+    # margin on peak-on-target. The margin is required only there on purpose: at β = 1 the
+    # head-average already sits near the ceiling, so no head could clear a fixed margin however good
+    # it was -- a gate nothing can pass is not evidence, it is a broken rule.
+    beats_everywhere = all(
+        best_score[f"hit_rate_b{b:g}"] >= max(base_head_avg[f"hit_rate_b{b:g}"],
+                                              base_uniform[f"hit_rate_b{b:g}"]) - 1e-9
         for b in betas
     )
-    verdict = "**PASS**" if (beat_baselines and best_score["target_lift"] > 1.5) else "**INCONCLUSIVE**"
-    doc = f"""# Step 1 — attention map
+    peak_margin = best_score["peak_on_target"] - max(base_head_avg["peak_on_target"],
+                                                     base_uniform["peak_on_target"])
+    verdict = ("**PASS**" if (beats_everywhere and peak_margin >= 0.15
+                              and best_score["target_lift"] > 2.0) else "**INCONCLUSIVE**")
+    doc = f"""# 1단계 — attention map
 
-**Question.** Does the fine-tuned `rby1_transport_14d` policy attend to the object its prompt names?
-AG3S uses attention for one thing only — naming which reconstructed cluster is the target — so if
-the answer is no, every later step is measuring a stand-in.
+**질문.** 파인튜닝된 `{blob["checkpoint"].item().split("/")[-3] if "/" in str(blob["checkpoint"]) else blob["checkpoint"]}` 정책은
+프롬프트가 지목한 물체를 실제로 보는가?
+
+AG3S가 attention을 쓰는 곳은 단 하나 — 재구성된 클러스터 중 어느 것이 target인지 이름을 붙이는
+일뿐입니다. attention이 틀려도 파이프라인의 안전 성질은 전부 유지되지만, 틀리면 파이프라인이
+쓸모가 없습니다. 그래서 이것이 가장 먼저 재야 할 값이고, 실제 attention이
+`mujoco_source.gaussian_attention`(합성 대역품)을 대체할 수 있는지를 결정하는 값입니다.
 
 | | |
 |---|---|
-| prompt | `{record.prompt}` |
+| 프롬프트 | `{record.prompt}` |
 | target body | `{target}` |
-| camera | `{args.camera}` → MuJoCo `{camera_mujoco}` → prefix tokens {CAMERA_BINDINGS[args.camera][2]} |
-| inference frames | {len(record)} recorded, **{int(keep.sum())} scored** ({int((~keep).sum())} excluded: target under {args.min_target_px} px) |
-| checkpoint | `{blob['checkpoint']}` |
-| attention block | {n_layers} layers x {n_heads} heads x {ATTENTION_GRID}x{ATTENTION_GRID} patches |
-| Euler steps probed | {denoise} |
+| 카메라 | `{args.camera}` → MuJoCo `{camera_mujoco}` → prefix 토큰 {CAMERA_BINDINGS[args.camera][2]} |
+| 추론 프레임 | {len(record)}개 기록, **{int(keep.sum())}개 채점** ({int((~keep).sum())}개 제외: target이 {args.min_target_px} px 미만) |
+| 체크포인트 | `{blob['checkpoint']}` |
+| attention 블록 | {n_layers}개 층 × {n_heads}개 헤드 × {ATTENTION_GRID}×{ATTENTION_GRID} 패치 |
+| Euler step | {denoise} |
 | query pooling | {aggs} |
+| noise seed | {blob['noise_seeds'].tolist() if 'noise_seeds' in blob else '기록 없음'} |
 
-## Verdict — {verdict}
+## 판정 — {verdict}
 
-The best head is **L{best['layer']} h{best['head']}** at Euler step {best['denoise']} with
-`{best['agg']}` query pooling: object-level hit rate **{" / ".join(f"{best_score[f'hit_rate_b{b:g}']:.3f}" for b in betas)}**
-across β = {betas}, peak-on-target **{best_score["peak_on_target"]:.3f}**, lift
-**{best_score['target_lift']:.2f}x** over what uniform attention would score on the same object.
+가장 좋은 헤드는 **L{best['layer']} h{best['head']}** (Euler step {best['denoise']}, `{best['agg']}` pooling)입니다.
+**peak-on-target {best_score["peak_on_target"]:.3f}** — head-average {base_head_avg["peak_on_target"]:.3f},
+uniform {base_uniform["peak_on_target"]:.3f} 대비. 같은 물체에 균등 attention이 줄 밀도의
+**{best_score['target_lift']:.2f}배**를 싣습니다. β = {betas}에서 물체 단위 hit rate는
+**{" / ".join(f"{best_score[f'hit_rate_b{b:g}']:.3f}" for b in betas)}**.
 
-Both baselines are in the table below and both must be beaten **at every β** for this to mean
-anything. The uniform baseline answers "is the target simply the biggest thing in view"; the
-head-average baseline answers "did picking a head buy us anything". Heads are ranked by their
-*worst* β, so a head that only wins when the metric leans its way does not reach the top.
+### 어떤 지표가 순위를 정하는가, 그리고 왜
 
-`β` is the exponent that divides attention mass by the object's on-screen area share. β = 0 is raw
-mass, which the crate wins by being large; β = 1 is attention density, which small fruit win by
-being small. The honest reading is the column where the target has the least help.
+{md_table(["지표", "스윕 최댓값", "최댓값에 닿은 셀", "고유값 개수"],
+          [f"| {name} | {top:.3f} | {ties} / {total} | {distinct} |"
+           for name, (top, ties, total, distinct) in diagnostics])}
 
-Only {list(COMPETITOR_BODIES)} can win a frame. The table is excluded because AG3S extracts it as a
-support surface in stage 7 and target grounding never considers it — scoring against a set the
-pipeline would never choose from would measure a decision nothing downstream makes. It is still in
-the per-object table below, so a head that mostly stares at the table is visible as one.
+헤드 순위는 **peak-on-target**으로 매깁니다. β 스윕은 보고하되 순위에는 쓰지 않습니다.
+이 롤아웃에서 β의 양 끝이 모두 순위 신호로 실패하고, 위 표가 그것을 숫자로 보여줍니다.
 
-### Baselines and the chosen head
+- **β = 0은 헤드가 아니라 씬이 상한을 정합니다.** {len(rows)}개 셀 전부가 같은 값에서 멈추고,
+  이길 수 있는 프레임은 파지 *전* 프레임뿐입니다. target이 크레이트 안으로 들어간 뒤에는
+  target을 덮는 어떤 attention 덩어리도 크레이트를 더 많이 덮으므로, 헤드가 무엇을 하든
+  raw mass는 target을 고를 수 없습니다.
+- **β = 1은 포화합니다.** 많은 셀이 정확히 1.000에 닿아 좋은 헤드끼리를 구분하지 못합니다.
 
-{md_table(["map"] + beta_cols + ["peak-on-target", "target mass", "target lift", "advantage"], baseline_rows)}
+peak-on-target에는 두 문제가 다 없습니다. "가장 뜨거운 패치 하나가 target을 포함하는가"만
+묻고, 이는 실질적으로 상한이 없으면서 이후 target grounding이 실제로 소비할 정보에 가장
+가깝습니다.
 
-`mass` is the share of attention landing on the target; `lift` is that share divided by what
-uniform attention would give it, so lift near 1.0 means the head is not selecting at all.
-`advantage` is the target's mass minus the best distractor's. `peak-on-target` is the fraction of
-frames whose single hottest patch contains the target — a coarser question than the hit rate, and
-the one that survives the 30x40-pixel patch size.
+### 판정 규칙
 
-### Ranking — top {args.top} of {len(rows)} (layer, head, Euler step, pooling)
+베이스라인이 둘이고, 선택된 헤드는 **어떤 β에서도 두 베이스라인보다 나빠서는 안 되며**,
+**peak-on-target에서 head-average를 0.15 이상** 앞서고 lift가 2를 넘어야 합니다.
+uniform 베이스라인은 "target이 그냥 화면에서 제일 큰 것 아닌가"에 답하고, head-average는
+"헤드를 고른 것이 무엇을 벌어줬나"에 답합니다.
 
-{md_table(["#", "head", "Euler", "pooling"] + beta_cols + ["peak-on-target", "target mass", "target lift", "advantage"], rank_rows)}
+마진을 peak-on-target에만 요구하는 것은 의도된 선택입니다. β = 1에서 head-average가 이미
+{base_head_avg["hit_rate_b1"]:.3f}이므로 어떤 헤드가 낼 수 있는 최대 마진은
+{1.0 - base_head_avg["hit_rate_b1"]:.3f}입니다 — 아무것도 통과할 수 없는 게이트는 증거가
+아니라 고장난 규칙입니다.
 
-![hit rate by layer and head](../asset/image/attention/fig1_layer_head_hit_rate.png)
+`β`는 attention mass를 물체의 화면 점유 비율로 나눌 때의 지수입니다. β = 0은 raw mass라
+크기가 큰 크레이트가 이기고, β = 1은 밀도라 작은 과일이 이깁니다.
 
-### Where the attention actually goes, per object
+한 프레임에서 이길 수 있는 것은 {list(COMPETITOR_BODIES)}뿐입니다. 테이블을 제외한 것은
+AG3S 7단계가 테이블을 support surface로 뽑아내고 4단계 target grounding이 애초에 후보로
+보지 않기 때문입니다 — 파이프라인이 결코 고르지 않을 집합을 상대로 채점하면 아무 단계도
+내리지 않는 판단을 재게 됩니다. 아래 물체별 표에는 그대로 남겨두어, 테이블만 쳐다보는
+헤드가 있다면 그렇게 보이도록 했습니다.
 
-{md_table(["body", "mean visible px", "attention mass", "lift", "argmax frames won"], per_body)}
+### 베이스라인과 선택된 헤드
 
-![attention lift over the rollout](../asset/image/attention/fig3_attention_lift.png)
+{md_table(["맵"] + beta_cols + ["peak-on-target", "target mass", "target lift", "advantage"], baseline_rows)}
 
-### The frames themselves
+`mass`는 target에 떨어진 attention의 비율, `lift`는 그 비율을 균등 attention이 줄 비율로
+나눈 값입니다 — lift가 1.0 근처면 raw mass가 얼마든 그 헤드는 아무것도 선택하지 않는
+것입니다. `advantage`는 이길 자격이 있는 물체들 중 최상위 경쟁자의 mass를 뺀 값입니다.
+`peak-on-target`은 가장 뜨거운 패치 하나가 target을 포함한 프레임의 비율로, hit rate보다
+거친 질문이지만 30×40 픽셀이라는 패치 크기에서 살아남는 질문입니다.
+
+여기서 `advantage`가 음수인 것은 예상된 것이며 실패가 아닙니다. 크레이트가 target의 약
+{areas[keep].mean(axis=0)[bodies.index("crate")] / areas[keep, ti].mean():.0f}배 픽셀을
+차지하므로 raw mass는 더 많이 가져가면서 *픽셀당* attention은 훨씬 적게 받습니다.
+`lift`가 재는 것이 정확히 그 비교이고, 두 열은 함께 읽어야 합니다.
+
+### 순위 — 1296개 (층, 헤드, Euler step, pooling) 중 상위 {args.top}
+
+{md_table(["#", "헤드", "Euler", "pooling"] + beta_cols + ["peak-on-target", "target mass", "target lift", "advantage"], rank_rows)}
+
+![층·헤드별 peak-on-target](../asset/image/attention/fig1_layer_head_peak_on_target.png)
+
+### attention이 실제로 어디로 가는가 (물체별)
+
+{md_table(["body", "평균 가시 픽셀", "attention mass", "lift", "argmax 획득 프레임"], per_body)}
+
+![롤아웃 동안의 attention lift](../asset/image/attention/fig3_attention_lift.png)
+
+### 프레임 자체
 
 ![attention overlay](../asset/image/attention/fig2_attention_overlay.png)
 
-### Does the sampling choice matter?
+### 샘플링 선택이 결과를 바꾸는가
 
 ![choice sweep](../asset/image/attention/fig4_choice_sweep.png)
 
-## What this fixes downstream
+## 그림에 대하여
 
-`mujoco_source.gaussian_attention` is a Gaussian blob placed on the target's known projection. Its
-docstring says it exists only because no policy looked through these cameras. If the verdict above
-is PASS, the replacement for AG3S stage 3 is
-`attention[frame, {best['denoise']}, "{best['agg']}", {best['layer']}, {best['head']}, camera]`,
-resampled to the frame through `GridAttentionAdapter` — the adapter already expects a
-{ATTENTION_GRID}x{ATTENTION_GRID} grid, so nothing else changes.
+모든 그림은 공통 규격(`benchmark/ag3s/experiments/figstyle.py`)을 쓴다. 크기·비율을 나타낼
+때는 파랑 한 색의 명도 램프(순차형), 정체를 나타낼 때는 검증된 8색 팔레트를 고정 순서로
+쓴다 — 슬롯 순서 자체가 색각 이상에서 인접 색이 구분되도록 고른 안전 장치이므로 차트마다
+바꾸지 않는다.
 
-## Reproduce
+### fig1 — (층, 헤드)별 peak-on-target
+
+`fig1_layer_head_peak_on_target.png`. 세로 18층 × 가로 8헤드 격자, 칸 색이 그 헤드의
+peak-on-target이다.
+
+**만드는 법.** 고정된 (Euler step, pooling)에서 144개 (층, 헤드) 각각에 대해 채점 프레임의
+peak-on-target을 평균해 격자에 채운다. 주황 테두리는 **순위가 고른 칸**이지 이 격자의
+최댓값이 아니다 — 동점은 이 그림이 보여주지 않는 지표로 갈리므로, 최댓값에 테두리를 치면
+문서가 논하는 헤드와 다른 칸을 가리키게 된다. 아래 캡션에 최댓값에 닿은 칸 수를 함께
+적는 것은 포화 여부를 바로 보기 위해서다.
+
+**읽는 법.** 진한 칸이 많으면 그 지표가 포화된 것이고, 그때는 지표를 바꿔야 한다.
+
+### fig2 — 정책이 본 프레임 위의 attention
+
+`fig2_attention_overlay.png`. 위 줄은 정책이 실제로 입력받은 224×224 이미지에 정답 target의
+패치 윤곽을 주황으로 그린 것, 아래 줄은 같은 이미지에 attention을 파랑 램프로 덮고 argmax
+패치에 ○를 친 것이다.
+
+**만드는 법.** 기록에 저장된 정책 이미지를 그대로 쓴다 (재렌더링이 아니다). 정답 윤곽은
+MuJoCo 세그멘테이션에서 계산한 16×16 패치 점유를 이미지 크기로 확대해 등고선으로 그린다.
+attention은 16×16 격자를 이미지 위에 이중선형 보간으로 덮는다.
+
+**읽는 법.** ○가 주황 윤곽 안에 있으면 그 프레임은 peak-on-target 성공이다. 프레임은 채점
+가능한 것 중에서 균등 간격으로 뽑는다.
+
+### fig3 — 물체별 attention 밀도
+
+`fig3_attention_lift.png`. 가로축은 제어 스텝, 세로축은 밀도 = mass / 화면 점유 비율.
+
+**만드는 법.** 프레임마다 물체별 attention mass와 화면 점유 비율을 세그멘테이션에서 구해
+나눈다. 음영 구간은 target이 가려져 채점에서 제외된 프레임이다.
+
+**왜 mass가 아니라 밀도인가.** raw mass 축에서는 테이블과 크레이트가 크기만으로 위를
+차지하고 과일은 전부 0 근처에 눌린다. 밀도로 나누면 모든 물체가 같은 축 위에 놓이고,
+1.0(점선)이 "균등 attention과 같음"이라는 의미 있는 기준선이 된다.
+
+### fig4 — 샘플링 선택의 영향
+
+`fig4_choice_sweep.png`. Euler step × query pooling 조합마다, 모든 (층, 헤드) 중 최고
+hit rate를 막대로 그린다.
+
+**만드는 법.** 1296개 조합의 채점 결과에서 (Euler step, pooling)별 최댓값을 집계한다.
+
+**읽는 법.** 막대 높이가 조합마다 크게 다르면 그 선택이 결과를 좌우한다는 뜻이므로 보고서에
+명시해야 한다. 비슷하면 선택에 둔감하다는 뜻이다.
+
+## 이 결과가 아래 단계에서 무엇을 고치는가
+
+`mujoco_source.gaussian_attention`은 target의 알려진 투영 위치에 놓은 가우시안입니다. 그
+docstring은 이 카메라를 들여다보는 정책이 없어서 존재한다고 적혀 있습니다. 위 판정이 PASS라면
+AG3S 3단계의 attention 소스는
+`attention[frame, {best['denoise']}, "{best['agg']}", {best['layer']}, {best['head']}, camera]`이고,
+`GridAttentionAdapter`가 이미 {ATTENTION_GRID}×{ATTENTION_GRID} 그리드를 받으므로 어댑터는
+바뀌지 않습니다.
+
+## 재현
 
 ```bash
-# 1. record the rollout (local, drives the remote policy server)
+# 1. 롤아웃 기록 (로컬, 원격 정책 서버를 구동)
 src/openpi/.venv/bin/python src/rby1_bringup/pi05_infer.py \\
     --model rby1_transport_14d --remote localhost:8123 \\
     --prompt "{record.prompt}" --record-ag3s <RECORD_DIR> ...
 
-# 2. extract attention (GPU server, where the checkpoint is)
-src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.pi05_attention \\
+# 2. 기록 검사 (로컬) — forward pass를 쓸 값어치가 있는지
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.record_check \\
+    --records {args.records}
+
+# 3. attention 추출 (GPU 서버, 체크포인트가 있는 곳)
+python -m benchmark.ag3s.experiments.pi05_attention \\
     --records {args.records} --checkpoint {blob['checkpoint']} --out {args.attention}
 
-# 3. score it (local, no GPU)
+# 4. 채점 (로컬, GPU 불필요)
 MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.attention_report \\
     --records {args.records} --attention {args.attention}
 ```

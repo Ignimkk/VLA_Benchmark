@@ -37,10 +37,9 @@ from benchmark.ag3s.experiments.policy_record import (
     replay_scene,
 )
 
-# Figures carry English labels: matplotlib's bundled fonts have no Hangul glyphs, and a chart of
-# empty boxes is worse than one in a second language.
-SURFACE, INK, INK_2, GRID_INK = "#fcfcfb", "#0b0b0b", "#52514e", "#d8d7d2"
-CATEGORICAL = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
+from benchmark.ag3s.experiments.figstyle import (  # noqa: E402
+    CATEGORICAL, GRID_INK, INK, INK_2, SURFACE, style_axes, use_korean,
+)
 
 
 def main() -> None:
@@ -58,6 +57,7 @@ def main() -> None:
 
     import matplotlib
     matplotlib.use("Agg")
+    use_korean()
     import matplotlib.pyplot as plt
     import mujoco
 
@@ -118,32 +118,24 @@ def main() -> None:
 
     fig, (a1, a2) = plt.subplots(2, 1, figsize=(9, 4.6), dpi=160, height_ratios=[1.7, 1])
     fig.patch.set_facecolor(SURFACE)
-    for ax in (a1, a2):
-        ax.set_facecolor(SURFACE)
-        for sp in ("top", "right"):
-            ax.spines[sp].set_visible(False)
-        for sp in ("left", "bottom"):
-            ax.spines[sp].set_color(GRID_INK)
-        ax.tick_params(colors=INK_2, labelsize=8, color=GRID_INK)
-        ax.xaxis.label.set_color(INK_2)
-        ax.yaxis.label.set_color(INK_2)
+    style_axes(fig, (a1, a2))
     a1.grid(axis="y", color=GRID_INK, lw=0.6)
     a1.set_axisbelow(True)
     for lo in occluded:
         a1.axvspan(lo - 4, lo + 4, color=GRID_INK, alpha=0.55, lw=0, zorder=0)
     a1.plot(t, visible[:, ti], color=CATEGORICAL[0], lw=2.2, zorder=3)
     a1.axhline(args.min_target_px, color=INK_2, lw=1.0, ls=(0, (4, 3)), zorder=2)
-    a1.text(0.004, args.min_target_px, f" scoring floor {args.min_target_px} px",
+    a1.text(0.004, args.min_target_px, f" 채점 하한 {args.min_target_px} px",
             transform=a1.get_yaxis_transform(), va="bottom", fontsize=7.5, color=INK_2)
-    a1.set_ylabel(f"{target} visible px")
+    a1.set_ylabel(f"{target} 가시 픽셀")
     a1.set_ylim(0, None)
-    a1.set_title(f"{run.path.name} — {int(keep.sum())}/{len(run)} frames scoreable "
-                 f"(shaded = {target} occluded)", color=INK, fontsize=11, loc="left", pad=8)
+    a1.set_title(f"{run.path.name} — {len(run)}프레임 중 {int(keep.sum())}개 채점 가능 "
+                 f"(음영 = {target} 가려짐)", color=INK, fontsize=11, loc="left", pad=8)
     a2.imshow(coverage.reshape(len(run), -1).T, aspect="auto", cmap="Blues",
               extent=(float(t[0]), float(t[-1]), 0, 1), interpolation="nearest")
     a2.set_yticks([])
-    a2.set_xlabel("control step")
-    a2.set_ylabel(f"{target} patch\ncoverage", fontsize=8)
+    a2.set_xlabel("제어 스텝")
+    a2.set_ylabel(f"{target}\n패치 점유", fontsize=8)
     fig.tight_layout()
     out = pathlib.Path(args.out_fig)
     out.parent.mkdir(parents=True, exist_ok=True)

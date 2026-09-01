@@ -1,0 +1,958 @@
+{
+  "target": "apple",
+  "decoy": "banana",
+  "phase": "approach",
+  "checks": {
+    "A_no_attention_param": true,
+    "B_coverage_invariant": true,
+    "C_no_body_lost": true,
+    "D_target_kept": true,
+    "E_clearance_split": true
+  },
+  "max_coverage_gap": 0,
+  "lost": [],
+  "frames": [
+    {
+      "frame": 0,
+      "n_points": 49541,
+      "n_support": 40620,
+      "실제 모델": {
+        "status": "ok",
+        "picked": "apple",
+        "n_candidates": 7,
+        "by_type": {
+          "object": 5,
+          "unknown_geometry": 1,
+          "target": 1
+        },
+        "n_covered": 8921,
+        "per_body": {
+          "crate": [
+            5550,
+            4414
+          ],
+          "apple": [
+            256,
+            256
+          ],
+          "banana": [
+            151,
+            151
+          ],
+          "orange": [
+            216,
+            216
+          ],
+          "pear": [
+            222,
+            222
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "합성 (banana 겨냥)": {
+        "status": "ok",
+        "picked": "banana",
+        "n_candidates": 7,
+        "by_type": {
+          "object": 5,
+          "unknown_geometry": 1,
+          "target": 1
+        },
+        "n_covered": 8921,
+        "per_body": {
+          "crate": [
+            5550,
+            4414
+          ],
+          "apple": [
+            256,
+            256
+          ],
+          "banana": [
+            151,
+            151
+          ],
+          "orange": [
+            216,
+            216
+          ],
+          "pear": [
+            222,
+            222
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "평탄 (정보 없음)": {
+        "status": "no_attention",
+        "picked": null,
+        "n_candidates": 7,
+        "by_type": {
+          "object": 6,
+          "unknown_geometry": 1
+        },
+        "n_covered": 8921,
+        "per_body": {
+          "crate": [
+            5550,
+            4414
+          ],
+          "apple": [
+            256,
+            256
+          ],
+          "banana": [
+            151,
+            151
+          ],
+          "orange": [
+            216,
+            216
+          ],
+          "pear": [
+            222,
+            222
+          ]
+        },
+        "n_unassigned": 0
+      }
+    },
+    {
+      "frame": 1,
+      "n_points": 52502,
+      "n_support": 43389,
+      "실제 모델": {
+        "status": "ok",
+        "picked": "apple",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "target": 1
+        },
+        "n_covered": 9113,
+        "per_body": {
+          "crate": [
+            5679,
+            4543
+          ],
+          "apple": [
+            255,
+            255
+          ],
+          "banana": [
+            155,
+            155
+          ],
+          "orange": [
+            223,
+            223
+          ],
+          "pear": [
+            220,
+            220
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "합성 (banana 겨냥)": {
+        "status": "ok",
+        "picked": "banana",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "target": 1
+        },
+        "n_covered": 9113,
+        "per_body": {
+          "crate": [
+            5679,
+            4543
+          ],
+          "apple": [
+            255,
+            255
+          ],
+          "banana": [
+            155,
+            155
+          ],
+          "orange": [
+            223,
+            223
+          ],
+          "pear": [
+            220,
+            220
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "평탄 (정보 없음)": {
+        "status": "no_attention",
+        "picked": null,
+        "n_candidates": 6,
+        "by_type": {
+          "object": 6
+        },
+        "n_covered": 9113,
+        "per_body": {
+          "crate": [
+            5679,
+            4543
+          ],
+          "apple": [
+            255,
+            255
+          ],
+          "banana": [
+            155,
+            155
+          ],
+          "orange": [
+            223,
+            223
+          ],
+          "pear": [
+            220,
+            220
+          ]
+        },
+        "n_unassigned": 0
+      }
+    },
+    {
+      "frame": 2,
+      "n_points": 36649,
+      "n_support": 30504,
+      "실제 모델": {
+        "status": "ok",
+        "picked": "apple",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 4,
+          "unknown_geometry": 1,
+          "target": 1
+        },
+        "n_covered": 6145,
+        "per_body": {
+          "crate": [
+            3494,
+            2847
+          ],
+          "apple": [
+            162,
+            162
+          ],
+          "banana": [
+            98,
+            98
+          ],
+          "orange": [
+            130,
+            130
+          ],
+          "pear": [
+            137,
+            137
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "합성 (banana 겨냥)": {
+        "status": "ok",
+        "picked": "apple",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 4,
+          "unknown_geometry": 1,
+          "target": 1
+        },
+        "n_covered": 6145,
+        "per_body": {
+          "crate": [
+            3494,
+            2847
+          ],
+          "apple": [
+            162,
+            162
+          ],
+          "banana": [
+            98,
+            98
+          ],
+          "orange": [
+            130,
+            130
+          ],
+          "pear": [
+            137,
+            137
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "평탄 (정보 없음)": {
+        "status": "no_attention",
+        "picked": null,
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "unknown_geometry": 1
+        },
+        "n_covered": 6145,
+        "per_body": {
+          "crate": [
+            3494,
+            2847
+          ],
+          "apple": [
+            162,
+            162
+          ],
+          "banana": [
+            98,
+            98
+          ],
+          "orange": [
+            130,
+            130
+          ],
+          "pear": [
+            137,
+            137
+          ]
+        },
+        "n_unassigned": 0
+      }
+    },
+    {
+      "frame": 3,
+      "n_points": 38072,
+      "n_support": 31947,
+      "실제 모델": {
+        "status": "ok",
+        "picked": "apple",
+        "n_candidates": 8,
+        "by_type": {
+          "object": 5,
+          "unknown_geometry": 1,
+          "target": 1,
+          "overflow": 1
+        },
+        "n_covered": 6125,
+        "per_body": {
+          "crate": [
+            3509,
+            2845
+          ],
+          "apple": [
+            160,
+            160
+          ],
+          "banana": [
+            96,
+            96
+          ],
+          "orange": [
+            131,
+            131
+          ],
+          "pear": [
+            126,
+            126
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "합성 (banana 겨냥)": {
+        "status": "ok",
+        "picked": "banana",
+        "n_candidates": 8,
+        "by_type": {
+          "object": 5,
+          "unknown_geometry": 1,
+          "target": 1,
+          "overflow": 1
+        },
+        "n_covered": 6125,
+        "per_body": {
+          "crate": [
+            3509,
+            2845
+          ],
+          "apple": [
+            160,
+            160
+          ],
+          "banana": [
+            96,
+            96
+          ],
+          "orange": [
+            131,
+            131
+          ],
+          "pear": [
+            126,
+            126
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "평탄 (정보 없음)": {
+        "status": "no_attention",
+        "picked": null,
+        "n_candidates": 8,
+        "by_type": {
+          "object": 6,
+          "unknown_geometry": 1,
+          "overflow": 1
+        },
+        "n_covered": 6125,
+        "per_body": {
+          "crate": [
+            3509,
+            2845
+          ],
+          "apple": [
+            160,
+            160
+          ],
+          "banana": [
+            96,
+            96
+          ],
+          "orange": [
+            131,
+            131
+          ],
+          "pear": [
+            126,
+            126
+          ]
+        },
+        "n_unassigned": 0
+      }
+    },
+    {
+      "frame": 4,
+      "n_points": 37818,
+      "n_support": 31701,
+      "실제 모델": {
+        "status": "ok",
+        "picked": "apple",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "target": 1
+        },
+        "n_covered": 6117,
+        "per_body": {
+          "crate": [
+            3518,
+            2852
+          ],
+          "apple": [
+            163,
+            163
+          ],
+          "banana": [
+            96,
+            96
+          ],
+          "orange": [
+            131,
+            131
+          ],
+          "pear": [
+            113,
+            113
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "합성 (banana 겨냥)": {
+        "status": "ok",
+        "picked": "banana",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "target": 1
+        },
+        "n_covered": 6117,
+        "per_body": {
+          "crate": [
+            3518,
+            2852
+          ],
+          "apple": [
+            163,
+            163
+          ],
+          "banana": [
+            96,
+            96
+          ],
+          "orange": [
+            131,
+            131
+          ],
+          "pear": [
+            113,
+            113
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "평탄 (정보 없음)": {
+        "status": "no_attention",
+        "picked": null,
+        "n_candidates": 6,
+        "by_type": {
+          "object": 6
+        },
+        "n_covered": 6117,
+        "per_body": {
+          "crate": [
+            3518,
+            2852
+          ],
+          "apple": [
+            163,
+            163
+          ],
+          "banana": [
+            96,
+            96
+          ],
+          "orange": [
+            131,
+            131
+          ],
+          "pear": [
+            113,
+            113
+          ]
+        },
+        "n_unassigned": 0
+      }
+    },
+    {
+      "frame": 5,
+      "n_points": 36342,
+      "n_support": 30273,
+      "실제 모델": {
+        "status": "ok",
+        "picked": "apple",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "target": 1
+        },
+        "n_covered": 6069,
+        "per_body": {
+          "crate": [
+            3492,
+            2818
+          ],
+          "apple": [
+            163,
+            163
+          ],
+          "banana": [
+            69,
+            69
+          ],
+          "orange": [
+            131,
+            131
+          ],
+          "pear": [
+            103,
+            103
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "합성 (banana 겨냥)": {
+        "status": "ok",
+        "picked": "banana",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "target": 1
+        },
+        "n_covered": 6069,
+        "per_body": {
+          "crate": [
+            3492,
+            2818
+          ],
+          "apple": [
+            163,
+            163
+          ],
+          "banana": [
+            69,
+            69
+          ],
+          "orange": [
+            131,
+            131
+          ],
+          "pear": [
+            103,
+            103
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "평탄 (정보 없음)": {
+        "status": "no_attention",
+        "picked": null,
+        "n_candidates": 6,
+        "by_type": {
+          "object": 6
+        },
+        "n_covered": 6069,
+        "per_body": {
+          "crate": [
+            3492,
+            2818
+          ],
+          "apple": [
+            163,
+            163
+          ],
+          "banana": [
+            69,
+            69
+          ],
+          "orange": [
+            131,
+            131
+          ],
+          "pear": [
+            103,
+            103
+          ]
+        },
+        "n_unassigned": 0
+      }
+    },
+    {
+      "frame": 6,
+      "n_points": 53903,
+      "n_support": 45294,
+      "실제 모델": {
+        "status": "ok",
+        "picked": "apple",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "target": 1
+        },
+        "n_covered": 8609,
+        "per_body": {
+          "crate": [
+            5522,
+            4371
+          ],
+          "apple": [
+            146,
+            146
+          ],
+          "banana": [
+            91,
+            91
+          ],
+          "orange": [
+            212,
+            212
+          ],
+          "pear": [
+            69,
+            69
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "합성 (banana 겨냥)": {
+        "status": "ok",
+        "picked": "banana",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "target": 1
+        },
+        "n_covered": 8609,
+        "per_body": {
+          "crate": [
+            5522,
+            4371
+          ],
+          "apple": [
+            146,
+            146
+          ],
+          "banana": [
+            91,
+            91
+          ],
+          "orange": [
+            212,
+            212
+          ],
+          "pear": [
+            69,
+            69
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "평탄 (정보 없음)": {
+        "status": "no_attention",
+        "picked": null,
+        "n_candidates": 6,
+        "by_type": {
+          "object": 6
+        },
+        "n_covered": 8609,
+        "per_body": {
+          "crate": [
+            5522,
+            4371
+          ],
+          "apple": [
+            146,
+            146
+          ],
+          "banana": [
+            91,
+            91
+          ],
+          "orange": [
+            212,
+            212
+          ],
+          "pear": [
+            69,
+            69
+          ]
+        },
+        "n_unassigned": 0
+      }
+    },
+    {
+      "frame": 7,
+      "n_points": 54282,
+      "n_support": 45584,
+      "실제 모델": {
+        "status": "ok",
+        "picked": "apple",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "target": 1
+        },
+        "n_covered": 8698,
+        "per_body": {
+          "crate": [
+            5536,
+            4383
+          ],
+          "apple": [
+            239,
+            239
+          ],
+          "banana": [
+            86,
+            86
+          ],
+          "orange": [
+            217,
+            217
+          ],
+          "pear": [
+            51,
+            51
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "합성 (banana 겨냥)": {
+        "status": "ok",
+        "picked": "banana",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "target": 1
+        },
+        "n_covered": 8698,
+        "per_body": {
+          "crate": [
+            5536,
+            4383
+          ],
+          "apple": [
+            239,
+            239
+          ],
+          "banana": [
+            86,
+            86
+          ],
+          "orange": [
+            217,
+            217
+          ],
+          "pear": [
+            51,
+            51
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "평탄 (정보 없음)": {
+        "status": "no_attention",
+        "picked": null,
+        "n_candidates": 6,
+        "by_type": {
+          "object": 6
+        },
+        "n_covered": 8698,
+        "per_body": {
+          "crate": [
+            5536,
+            4383
+          ],
+          "apple": [
+            239,
+            239
+          ],
+          "banana": [
+            86,
+            86
+          ],
+          "orange": [
+            217,
+            217
+          ],
+          "pear": [
+            51,
+            51
+          ]
+        },
+        "n_unassigned": 0
+      }
+    },
+    {
+      "frame": 8,
+      "n_points": 53073,
+      "n_support": 44577,
+      "실제 모델": {
+        "status": "ok",
+        "picked": "banana",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 4,
+          "unknown_geometry": 1,
+          "target": 1
+        },
+        "n_covered": 8496,
+        "per_body": {
+          "crate": [
+            5518,
+            4366
+          ],
+          "apple": [
+            20,
+            20
+          ],
+          "banana": [
+            127,
+            127
+          ],
+          "orange": [
+            218,
+            218
+          ],
+          "pear": [
+            52,
+            52
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "합성 (banana 겨냥)": {
+        "status": "ok",
+        "picked": "banana",
+        "n_candidates": 6,
+        "by_type": {
+          "object": 4,
+          "unknown_geometry": 1,
+          "target": 1
+        },
+        "n_covered": 8496,
+        "per_body": {
+          "crate": [
+            5518,
+            4366
+          ],
+          "apple": [
+            20,
+            20
+          ],
+          "banana": [
+            127,
+            127
+          ],
+          "orange": [
+            218,
+            218
+          ],
+          "pear": [
+            52,
+            52
+          ]
+        },
+        "n_unassigned": 0
+      },
+      "평탄 (정보 없음)": {
+        "status": "no_attention",
+        "picked": null,
+        "n_candidates": 6,
+        "by_type": {
+          "object": 5,
+          "unknown_geometry": 1
+        },
+        "n_covered": 8496,
+        "per_body": {
+          "crate": [
+            5518,
+            4366
+          ],
+          "apple": [
+            20,
+            20
+          ],
+          "banana": [
+            127,
+            127
+          ],
+          "orange": [
+            218,
+            218
+          ],
+          "pear": [
+            52,
+            52
+          ]
+        },
+        "n_unassigned": 0
+      }
+    }
+  ]
+}
