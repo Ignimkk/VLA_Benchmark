@@ -1,27 +1,28 @@
 # Step 1 — GPU 서버 Claude에게 보낼 프롬프트
 
-아래 블록을 그대로 복사해서 GPU 서버에서 돌고 있는 Claude에게 보내면 됩니다.
-그 전에 로컬에서 파일 2종을 서버로 보내야 합니다 (아래 "사전 전송" 참고).
+아래 "프롬프트 본문"을 그대로 복사해서 GPU 서버에서 돌고 있는 Claude에게 보내면 됩니다.
+코드는 git으로 동기화되고, 롤아웃 기록만 따로 전송하면 됩니다 (아래 "사전 준비").
 
-## 사전 전송 (로컬에서 실행)
+## 사전 준비
+
+로컬과 GPU 서버의 워크스페이스는 git으로 함께 관리되므로 **코드는 push/pull로 갑니다.**
+`benchmark/` 저장소(`github.com/Ignimkk/VLA_Benchmark`)에 probe 코드가 들어 있습니다.
+
+```bash
+# 로컬
+cd /home/mk/dev_ws/vla/pi0_TO_ws/benchmark
+git add ag3s/docs && git commit -m "docs(ag3s): step-1 runbook and server prompt"
+git push
+```
+
+**롤아웃 기록은 git으로 갈 수 없습니다.** `outputs/`는 어느 저장소에도 속하지 않는
+워크스페이스 루트 아래에 있고 (루트의 `.git`은 빈 디렉터리입니다), `.npz` 44개(3.7 MB)는
+어차피 저장소에 넣을 것이 아닙니다. 이것만 직접 전송하세요:
 
 ```bash
 cd /home/mk/dev_ws/vla/pi0_TO_ws
-
-# (1) 코드 7개 파일 — 총 ~98 KB, import 시점 의존성은 numpy뿐
-tar czf /tmp/ag3s_probe.tgz \
-  benchmark/__init__.py \
-  benchmark/ag3s/__init__.py \
-  benchmark/ag3s/config.py \
-  benchmark/ag3s/types.py \
-  benchmark/ag3s/experiments/__init__.py \
-  benchmark/ag3s/experiments/policy_record.py \
-  benchmark/ag3s/experiments/pi05_attention.py
-
-# (2) 롤아웃 기록 — pi05_infer.py --record-ag3s 로 만든 run 디렉터리
-tar czf /tmp/ag3s_records.tgz -C outputs/rby1_atomic_infer/ag3s_step1/ag3s_records run_0000
-
-scp /tmp/ag3s_probe.tgz /tmp/ag3s_records.tgz <서버>:<워크스페이스 루트>/
+tar czf /tmp/ag3s_records.tgz -C outputs/rby1_atomic_infer/ag3s_step1/ag3s_records run_0002
+scp /tmp/ag3s_records.tgz <서버>:<워크스페이스 루트>/
 ```
 
 ---
@@ -91,24 +92,51 @@ grep -n "return_probs" src/openpi/src/openpi/models/gemma.py
 보고해 주세요 — 그 커밋을 가져오는 것은 괜찮고, 기능을 새로 작성하는 것은 안 됩니다.
 
 ```bash
-# (b) 실행 중인 서버가 로드한 체크포인트
+# (b) 실행 중인 서버가 로드한 체크포인트 — 재기동에 필요하므로 커맨드라인을 파일로 남깁니다
 ps aux | grep -i "serve_policy\|serve_seam" | grep -v grep
+PID=<위에서 찾은 PID>
+tr '\0' '\n' < /proc/$PID/cmdline | tee /tmp/serve_policy_cmdline.txt
+ls -l /proc/$PID/cwd
 ```
-출력의 커맨드라인에서 `--policy.dir` / `--policy.config` 혹은 그에 해당하는 인자를 읽어
-**체크포인트 디렉터리 절대경로**와 **config 이름**을 확보하세요. 커맨드라인에서 안 보이면
-`ls -l /proc/<PID>/cwd`, `tr '\0' '\n' < /proc/<PID>/cmdline` 으로 확인하고,
-그래도 불확실하면 추측하지 말고 보고해 주세요.
+`/tmp/serve_policy_cmdline.txt`는 3-b에서 서버를 되살릴 때 씁니다 — **이 파일을 만들기 전에
+서버를 내리지 마세요.** 거기서 `--policy.dir` / `--policy.config` 혹은 그에 해당하는 인자를
+읽어 **체크포인트 절대경로**와 **config 이름**을 확보하세요. 인자가 커맨드라인에 없으면
+(환경변수나 설정 파일 경유 등) 추측하지 말고 보고해 주세요.
 
-### 2. 보내드린 파일 풀기
+### 2. 코드 동기화 + 기록 풀기
+
+probe 코드는 `benchmark/` 저장소에 커밋되어 있습니다. 워크스페이스가 git으로 함께 관리되므로
+pull 하시면 됩니다.
 
 ```bash
-tar xzf ag3s_probe.tgz          # benchmark/ag3s/... 7개 파일
-tar xzf ag3s_records.tgz -C .   # run_0000/ (추론 스텝별 .npz)
-ls run_0000 | head; cat run_0000/meta.json
+cd <워크스페이스 루트>/benchmark
+git pull
+ls -l ag3s/experiments/pi05_attention.py ag3s/experiments/policy_record.py
 ```
 
-`meta.json`의 `prompt`가 로컬에서 돌린 프롬프트(`put the pear in the basket`)와 같은지,
-`n_steps`가 0이 아닌지 확인해 주세요.
+두 파일이 없으면 pull이 안 된 것입니다 — 현재 브랜치와 `git log --oneline -3`을 보고해 주세요.
+
+롤아웃 기록은 git 밖입니다 (`outputs/`는 어느 저장소에도 속하지 않습니다). 별도로 받은
+tarball을 푸세요:
+
+```bash
+cd <워크스페이스 루트>
+tar xzf ag3s_records.tgz
+ls run_0002 | head; cat run_0002/meta.json
+```
+
+`meta.json`이 아래와 일치하는지 확인해 주세요. 다르면 다른 롤아웃입니다 — 멈추고 보고해 주세요.
+
+| 키 | 기대값 |
+|---|---|
+| `prompt` | `put the apple in the basket` |
+| `n_steps` | `44` |
+| `nq` | `66` |
+| `policy_model` | `rby1_transport_14d` |
+
+이 기록은 로컬에서 이미 검사했습니다: head 카메라에서 **apple이 44프레임 중 28프레임에서
+200 px 이상 보입니다** (t_step 72–192 구간은 파지 중 팔에 가려짐 — 정상이고 채점에서
+제외됩니다).
 
 ### 3. 서버 중단 후 attention 추출
 
@@ -119,10 +147,10 @@ nvidia-smi
 
 ```bash
 src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.pi05_attention \
-    --records run_0000 \
+    --records run_0002 \
     --checkpoint <1-(b)에서 확인한 절대경로> \
     --config pi05_rby1_lora \
-    --out attention_step1_run0000.npz
+    --out attention_step1_run0002.npz
 ```
 
 먼저 `--limit 2`를 붙여 2 프레임만 돌려서 shape 로그(`layers=18 heads=8 action_tokens=50`)를
@@ -132,7 +160,7 @@ src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.pi05_attention \
 다만 그러면 로컬 분석에서 "어떤 Euler step / query pooling이 더 나은가"를 비교할 수 없으니,
 가능하면 기본값(`--denoise-steps 0 4 9 --agg mean first last`)으로 돌려주세요.
 
-시간이 남으면 `--noise-seeds 0 1 2`로 한 번 더 돌려 별도 파일(`..._seeds012.npz`)로 저장해
+시간이 남으면 `--noise-seeds 0 1 2`로 한 번 더 돌려 별도 파일(`attention_step1_run0002_seeds012.npz`)로 저장해
 주시면 좋습니다. flow-matching 초기 노이즈는 서버의 요청별 RNG 상태를 복원할 수 없어 고정
 시드를 쓰는데, 시드를 바꿔도 순위가 그대로인지가 그 선택이 무해했는지에 대한 유일한 증거입니다.
 시간이 부족하면 생략해도 됩니다 — 기본 1개 시드로도 1단계 판정은 가능합니다.
@@ -149,9 +177,9 @@ cat /tmp/serve_policy_cmdline.txt      # 1-(b)에서 남긴 것
 ### 4. 결과 회수
 
 ```bash
-ls -lh attention_step1_run0000.npz
+ls -lh attention_step1_run0002.npz
 src/openpi/.venv/bin/python -c "
-import numpy as np; d=np.load('attention_step1_run0000.npz')
+import numpy as np; d=np.load('attention_step1_run0002.npz')
 print({k: getattr(d[k],'shape',d[k]) for k in d.files})
 print('finite:', np.isfinite(d['attention']).all(), 'range:', float(d['attention'].min()), float(d['attention'].max()))
 "
@@ -160,7 +188,7 @@ print('finite:', np.isfinite(d['attention']).all(), 'range:', float(d['attention
 `attention`은 `[frame, denoise, agg, layer, head, camera, 16, 16]` **float16**이어야 하고,
 값은 softmax 확률의 부분합이므로 `[0, 1]` 안에 있어야 합니다.
 
-**크기: 약 92 MB** (50프레임 × Euler 3 × pooling 3 × 18층 × 8헤드 × 3카메라 × 256패치).
+**크기: 약 81 MB** (44프레임 × Euler 3 × pooling 3 × 18층 × 8헤드 × 3카메라 × 256패치).
 float32였다면 184 MB인데, attention 값이 1/768 근처라 float16으로 담아도 16×16 패치 합산
 후 상대오차 0.2% 수준입니다 — 두 헤드의 순위를 뒤집을 수 있는 크기가 아닙니다. 채점은
 어차피 로컬에서 float64로 합니다.
