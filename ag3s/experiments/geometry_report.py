@@ -48,6 +48,7 @@ from benchmark.ag3s.config import (
     PointCloudConfig, SupportSurfaceConfig,
 )
 from benchmark.ag3s.collision_candidates import generate_candidates
+from benchmark.ag3s.experiments.outputs import add_tag_argument, resolve
 from benchmark.ag3s.experiments.figstyle import (
     CATEGORICAL, GRID_INK, INK, INK_2, SURFACE, style_axes, use_korean,
 )
@@ -139,6 +140,7 @@ def main() -> None:
     ap.add_argument("--phase", default="approach")
     ap.add_argument("--out-doc", default="benchmark/ag3s/docs/step-06-geometry.md")
     ap.add_argument("--out-figs", default="benchmark/ag3s/asset/image/geometry")
+    add_tag_argument(ap)
     args = ap.parse_args()
 
     import matplotlib
@@ -297,8 +299,9 @@ def main() -> None:
     ok_b = bool(true_rows) and mean_true >= 0.999
     verdict = "**PASS**" if (ok_a and ok_b and ok_c) else "**부분 통과**"
 
-    figs = pathlib.Path(args.out_figs)
-    figs.mkdir(parents=True, exist_ok=True)
+    paths = resolve(out_figs=args.out_figs, out_doc=args.out_doc,
+                    tag=args.tag).prepare()
+    figs, img = paths.figures, paths.image_prefix
 
     # fig1 — 두 포함률
     bodies = sorted({r["body"] for r in true_rows})
@@ -516,7 +519,7 @@ def main() -> None:
 
 ### A와 B는 다른 질문이다 — 그리고 그 차이가 이 단계의 전부다
 
-![두 포함률](../asset/image/geometry/fig1_containment.png)
+![두 포함률]({img}/fig1_containment.png)
 
 **A는 통과한다.** AG3S의 `containment_report`가 재는 것이고, 모든 후보가 자기 점을 100%
 담는다. 코드가 보장하려던 것은 보장된다.
@@ -541,7 +544,7 @@ def main() -> None:
 
 이 값은 **최적화기가 못 보는 살의 두께**이고, 이보다 얇은 여유거리는 실제로는 여유가 아니다.
 
-![씬에서 놓치는 부분](../asset/image/geometry/fig4_scene_miss.png)
+![씬에서 놓치는 부분]({img}/fig4_scene_miss.png)
 
 왼쪽이 기본 설정이다. 파란 점(관측한 점)은 전부 회색 구 안에 있는데, 빨간 점 — 실제 물체
 표면인데 구 밖으로 나간 부분 — 이 뒤쪽에 남는다. **A가 보는 것은 파란 점뿐이고, 빨간 점은
@@ -549,7 +552,7 @@ A의 시야에 없다.** 오른쪽은 필요한 예산을 켠 것이고, 빨간 
 
 같은 것을 **정책이 본 이미지 위에** 되돌려 그리면 이렇다.
 
-![이미지 위 겹침](../asset/image/geometry/fig6_image_overlay.png)
+![이미지 위 겹침]({img}/fig6_image_overlay.png)
 
 한 가지는 짚어 두어야 한다. **이미지 공간에서는 물체의 뒷면이 앞면과 같은 자리에 투영된다.**
 그래서 가운데 패널의 빨간 점은 사과의 실루엣 전체를 덮은 것처럼 보이지만, 실제로 도형 밖에
@@ -579,7 +582,7 @@ A의 시야에 없다.** 오른쪽은 필요한 예산을 켠 것이고, 빨간 
 perception error that makes the fitted shape smaller than the real one." 그 예산이 무엇을 위한
 것인지 말로 설명하는 대신, 0부터 올려가며 **실제 물체를 덮는 데 얼마가 필요한지** 쟀다.
 
-![예산 스윕](../asset/image/geometry/fig2_uncertainty.png)
+![예산 스윕]({img}/fig2_uncertainty.png)
 
 기본값은 `{geo0.perception_uncertainty}`다. 즉 **기본 설정에서는 이 예산이 꺼져 있고**, 위 표의
 "필요한 예산" 열이 켜야 할 값을 말한다.
@@ -626,7 +629,7 @@ perception error that makes the fitted shape smaller than the real one." 그 예
 
 ### D. 도형 종류별 — 덮는 것이 먼저, 부피는 비용
 
-![도형 종류](../asset/image/geometry/fig3_primitive_types.png)
+![도형 종류]({img}/fig3_primitive_types.png)
 
 같은 점에 네 종류를 각각 맞춰 비교했다. 왼쪽이 실제 물체를 덮는 비율, 오른쪽이 그 대가로 쓰는
 부피다. 오른쪽이 큰 것은 그 자체로 나쁘지 않다 — 우회 거리가 늘 뿐이고, 왼쪽이 작은 것은
@@ -634,7 +637,7 @@ perception error that makes the fitted shape smaller than the real one." 그 예
 
 ### 최적화기가 실제로 보는 씬
 
-![후보 도형](../asset/image/geometry/fig5_scene_candidates.png)
+![후보 도형]({img}/fig5_scene_candidates.png)
 
 원 하나가 후보 하나의 제약용 구 단면이다. 노란 점(정답 물체)이 원 안에 들어 있는지, 원이
 물체보다 큰지 작은지가 이 그림에서 바로 읽힌다. 최적화기에게 씬은 점이 아니라 **이 원들**이다.
@@ -723,8 +726,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.geome
     --records {args.records} --attention {args.attention}
 ```
 """
-    out = pathlib.Path(args.out_doc)
-    out.parent.mkdir(parents=True, exist_ok=True)
+    out = paths.document
     out.write_text(doc)
     out.with_suffix(".json").write_text(json.dumps({
         "checks": {"A_points_contained": ok_a, "B_true_object_contained": ok_b,

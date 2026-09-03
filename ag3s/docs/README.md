@@ -25,6 +25,25 @@ AG3S는 8단계 파이프라인이고, 각 단계는 앞 단계의 출력을 신
 | 6 | [step-06-geometry.md](step-06-geometry.md) | primitive 근사가 점을 포함하는가 | 포함 검사 + 실제 메시 | **부분 통과** — 관측 점 1.000 / 실제 물체 0.666 |
 | 7 | step-07-constraints.md | 제약 집합 + TO가 충돌을 없애는가 | MuJoCo 접촉 | 미착수 |
 
+## 충돌 표현 backend → [ESDF-BACKEND.md](ESDF-BACKEND.md)
+
+경계 구 하나로 표현할 수 없는 기하(중공 용기, 얇고 넓은 슬랩)에 대한 답으로 **TSDF → ESDF**
+backend 를 추가했다. primitive 를 대체하지 않고 나란히 두며, 기본값은 여전히 `primitive` 다.
+
+## 두 번째 충돌 표현 → [ESDF-BACKEND.md](ESDF-BACKEND.md)
+
+primitive 근사 대신 관측 표면을 그대로 쓰는 TSDF → ESDF backend. `collision_backend: esdf` 로
+켜고, 기본값은 `primitive` 라 기존 결과는 그대로다. 정확도는 복셀 반 칸(10 mm 복셀에서 −5.0 mm)
+이고 부호가 보수적이며, 국소 갱신은 전역과 0.0000 mm 로 일치한다 — 다만 이 씬에서는 속도 이득이
+없고 프레임당 1.8 s (10 mm) 로 실시간 예산의 27배다. 그 이유와 줄일 수 있는 세 가지가 문서에 있다.
+
+### ESDF 시각화
+
+* [esdf-image-view.md](esdf-image-view.md) — **관측 이미지 위에서** target/obstacle 분리,
+  거리장 레이마칭, 표면 앞 여유. 픽셀 단위로 무엇이 파이고 무엇이 남는지 보인다.
+* [esdf-diagnostics.md](esdf-diagnostics.md) — 단면과 항 분해. 남은 위반이 어느 표현의
+  책임인지 가른다.
+
 ## 미해결 → [OPEN-geometry-representation.md](OPEN-geometry-representation.md)
 
 6단계에서 발견한 것: **경계 구 하나로는 표현할 수 없는 기하가 두 종류 있다.** 크레이트(중공

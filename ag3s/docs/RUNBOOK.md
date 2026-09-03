@@ -24,6 +24,7 @@
 
 ```bash
 cd /mnt/dev/work/pi05_TO_hybrid/openpi
+XLA_FLAGS='--xla_gpu_enable_command_buffer=' XLA_PYTHON_CLIENT_PREALLOCATE=false
 .venv/bin/python scripts/serve_policy.py \
     --port 8123 \
     policy:checkpoint \
@@ -116,8 +117,7 @@ $PY -m benchmark.ag3s.experiments.pi05_attention --records run_0003 --limit 2 \
     --checkpoint <(a)의 경로> --config <(a)의 config> --out /tmp/attn_smoke.npz
 
 # (e) 전체
-$PY -m benchmark.ag3s.experiments.pi05_attention --records run_0003 \
-    --checkpoint <동일> --config <동일> --out /mnt/dev/work/attention_step1_run0003.npz
+XLA_FLAGS='--xla_gpu_enable_command_buffer=' XLA_PYTHON_CLIENT_PREALLOCATE=false $PY -m benchmark.ag3s.experiments.pi05_attention     --records run_0004     --checkpoint /mnt/dev/work/pi05_TO_hybrid/checkpoints/pi05_rby1_atomic_lora/rby1_atomic_basket_14d_v2_30k_20260825/29999     --config pi05_rby1_atomic_lora     --out /mnt/dev/work/attention_step1_run0004.npz
 
 # (f) 서버 재기동 — 이것까지가 작업의 일부다
 cat /tmp/serve_policy_cmdline.txt   # 그대로 재실행
@@ -166,9 +166,32 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.geome
     --records $REC --attention $ATT
 ```
 
-각 명령이 `docs/step-0N-*.md` + `.json` + 그림을 덮어쓴다. **이전 결과를 남기려면 미리 복사해
-두라** — depth 유무를 비교하는 것이 다음 실행의 목적이므로, 지금 결과를 예를 들어
-`docs/norecord-depth/` 로 옮겨 두는 편이 좋다.
+### `--tag` — 이전 결과를 덮어쓰지 않기
+
+기본값으로 돌리면 `docs/step-0N-*.md` 와 `asset/image/<단계>/` 를 덮어쓴다. **depth 유무를
+비교하는 것이 이번 실행의 목적이므로 덮어쓰면 비교 대상이 사라진다.** 모든 채점 스크립트가
+`--tag` 를 받는다:
+
+```bash
+TAG=004     # run_0004 에 맞춘 꼬리표
+for step in attention_report backprojection_report lifting_report \
+            grounding_report separation_report geometry_report; do
+  MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.$step \
+      --records $REC --attention $ATT --tag $TAG
+done
+```
+
+(2단계 `backprojection_report` 는 `--attention` 을 받지 않으므로 그 인자만 빼고 돌린다.)
+
+| | 기본 | `--tag 004` |
+|---|---|---|
+| 그림 | `asset/image/<단계>/` | `asset/image_004/<단계>/` |
+| 문서 | `docs/step-05-separation.md` | `docs/step-05-separation_004.md` |
+| 문서 안 링크 | `../asset/image/<단계>/` | `../asset/image_004/<단계>/` |
+
+링크는 하드코딩이 아니라 **문서에서 그림 폴더까지의 상대 경로로 계산**하므로
+(`experiments/outputs.py`), `--out-figs` 로 아무 데나 지정해도 문서의 이미지가 깨지지 않는다.
+`--tag` 없이 돌리면 지금까지와 **한 글자도 다르지 않은** 결과가 나온다.
 
 ## 7. 갤러리 (로컬)
 
@@ -180,10 +203,25 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.cloud
 기록에 depth가 있으면 **자동으로 그것을 쓰고**, 그림 제목에 "기록된 depth (uint16 mm)"라고
 표시된다. 없으면 재생 렌더를 쓰고 그렇게 표시된다. 재생 렌더와 대조하려면 `--replay-depth`.
 
+## 7-b. ESDF backend (선택)
+
+primitive 대신 관측 표면을 그대로 쓰는 충돌 표현. 자세한 것은
+[ESDF-BACKEND.md](ESDF-BACKEND.md).
+
+```yaml
+# AG3S 설정에 추가
+collision_backend: both        # primitive | esdf | both
+esdf:
+  voxel_size: 0.010            # 5 / 10 / 20 mm 비교 축
+```
+
+기본값은 `primitive` 이므로 위 1~7 단계 결과는 이 backend 와 무관하게 재현된다. `both` 로 돌리면
+두 표현이 한 제약 집합에 함께 들어가 행 단위로 비교할 수 있다.
+
 ## 8. 회귀
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m pytest tests/ag3s -q     # 422 passed 유지
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m pytest tests/ag3s tests/trajopt -q   # 538 passed
 ```
 
 ---

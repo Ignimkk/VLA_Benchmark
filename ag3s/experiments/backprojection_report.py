@@ -39,6 +39,7 @@ from typing import Optional, Sequence
 import numpy as np
 
 from benchmark.ag3s.config import PointCloudConfig
+from benchmark.ag3s.experiments.outputs import add_tag_argument, resolve
 from benchmark.ag3s.experiments.figstyle import (
     CATEGORICAL, GRID_INK, INK, INK_2, SURFACE, sequential_cmap, style_axes, use_korean,
 )
@@ -195,6 +196,7 @@ def main() -> None:
     ap.add_argument("--frames", type=int, default=8, help="롤아웃에서 균등 간격으로 뽑을 프레임 수")
     ap.add_argument("--out-doc", default="benchmark/ag3s/docs/step-02-backprojection.md")
     ap.add_argument("--out-figs", default="benchmark/ag3s/asset/image/backprojection")
+    add_tag_argument(ap)
     args = ap.parse_args()
 
     import matplotlib
@@ -295,8 +297,9 @@ def main() -> None:
                      default=float("nan"))
         fused_stats[name] = (len(d), float(np.percentile(d, 95)), single, cams)
 
-    figs = pathlib.Path(args.out_figs)
-    figs.mkdir(parents=True, exist_ok=True)
+    paths = resolve(out_figs=args.out_figs, out_doc=args.out_doc,
+                    tag=args.tag).prepare()
+    figs, img = paths.figures, paths.image_prefix
 
     # fig1 — 테이블 평면
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(9.2, 3.2), dpi=160)
@@ -445,7 +448,7 @@ MuJoCo geom에서 읽은 상판 윗면의 실제 높이: **{f'{top_z:.6f} m' if 
     [f"| {i} | {int(r[0])} | {int(r[5])} | {r[1]:.4f} | {r[2]:.6f} | {(r[2]-top_z)*1000 if top_z is not None else float('nan'):+.2f} | {r[3]*1000:.2f} | {r[4]*1000:.2f} |"
      for i, r in enumerate(plane)])}
 
-![테이블 평면](../asset/image/backprojection/fig1_table_plane.png)
+![테이블 평면]({img}/fig1_table_plane.png)
 
 ### C. 물체 표면 오차 — 중심이 아니라 표면과 비교한다
 
@@ -469,7 +472,7 @@ geom별 최솟값을 취한다. 속이 빈 형상이 자연히 처리되고 근�
     [f"| {n} | {c} | {surf_stats[(n, c)][0]} | {surf_stats[(n, c)][1]*1000:.2f} | {surf_stats[(n, c)][2]*1000:.2f} | {surf_stats[(n, c)][3]*1000:.2f} |"
      for n in OBJECT_BODIES for c in args.cameras if (n, c) in surf_stats])}
 
-![표면 오차](../asset/image/backprojection/fig2_surface_error.png)
+![표면 오차]({img}/fig2_surface_error.png)
 
 ### D. 카메라 간 정합 — 외부 파라미터 사슬 전체를 검사한다
 
@@ -492,7 +495,7 @@ geom별 최솟값을 취한다. 속이 빈 형상이 자연히 처리되고 근�
 
 ### 점군과 실제 위치
 
-![위에서 본 점군](../asset/image/backprojection/fig3_topdown.png)
+![위에서 본 점군]({img}/fig3_topdown.png)
 
 × 는 MuJoCo가 보고한 실제 물체 중심이다. 점들이 × 를 **둘러싸지 않고 한쪽에 몰려 있는 것이
 정상**이다 — 카메라는 앞면만 보므로 뒷면 점은 존재하지 않는다. 이것이 C에서 중심 대신 표면과
@@ -559,8 +562,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.backp
     --records {args.records}
 ```
 """
-    out = pathlib.Path(args.out_doc)
-    out.parent.mkdir(parents=True, exist_ok=True)
+    out = paths.document
     out.write_text(doc)
     out.with_suffix(".json").write_text(json.dumps({
         "reprojection_max_px": reproj_max,

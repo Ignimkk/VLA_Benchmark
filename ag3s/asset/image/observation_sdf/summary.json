@@ -1,0 +1,38 @@
+{
+  "record": "outputs/rby1_atomic_infer/ag3s_step1/ag3s_records/run_0002",
+  "frame": 0,
+  "cameras": [
+    "zed_left",
+    "wrist_cam_l",
+    "wrist_cam_r"
+  ],
+  "target": {
+    "id": 5,
+    "centroid_m": [
+      0.45171047799463176,
+      0.30587275829059096,
+      0.8685845350364146
+    ],
+    "confidence": 0.8931140478264507,
+    "n_points": 88
+  },
+  "field": {
+    "grid_shape": [
+      151,
+      180,
+      160
+    ],
+    "voxel_size_m": 0.01,
+    "truncation_m": 0.03,
+    "max_distance_m": 0.4,
+    "unknown_fraction": 0.7255353200883002,
+    "n_tsdf_zero_band": 9000,
+    "n_esdf_occupied_samples": 9000
+  },
+  "to_query": {
+    "n_robot_spheres": 194,
+    "margin_m": 0.05,
+    "n_violated": 26,
+    "minimum_h_m": -0.04020064721405068
+  }
+}

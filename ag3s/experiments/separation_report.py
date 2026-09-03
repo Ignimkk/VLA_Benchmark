@@ -47,6 +47,7 @@ from benchmark.ag3s.config import (
     AttentionConfig, ClusteringConfig, CollisionCandidateConfig, ContactConfig, GeometryConfig,
     PointCloudConfig, SupportSurfaceConfig,
 )
+from benchmark.ag3s.experiments.outputs import add_tag_argument, resolve
 from benchmark.ag3s.experiments.figstyle import (
     CATEGORICAL, GRID_INK, INK, INK_2, SURFACE, style_axes, use_korean,
 )
@@ -100,6 +101,7 @@ def main() -> None:
     ap.add_argument("--range-max", type=float, default=2.0)
     ap.add_argument("--out-doc", default="benchmark/ag3s/docs/step-05-separation.md")
     ap.add_argument("--out-figs", default="benchmark/ag3s/asset/image/separation")
+    add_tag_argument(ap)
     args = ap.parse_args()
 
     import matplotlib
@@ -239,8 +241,9 @@ def main() -> None:
 
     verdict = "**PASS**" if (ok_a and ok_b and ok_c and ok_d and ok_e) else "**FAIL**"
 
-    figs = pathlib.Path(args.out_figs)
-    figs.mkdir(parents=True, exist_ok=True)
+    paths = resolve(out_figs=args.out_figs, out_doc=args.out_doc,
+                    tag=args.tag).prepare()
+    figs, img = paths.figures, paths.image_prefix
 
     # fig1 — 세 attention 에서 물체별로 덮인 점 수
     fig, axes = plt.subplots(1, len(vnames), figsize=(4.6 * len(vnames), 3.6), dpi=160,
@@ -437,7 +440,7 @@ attention 은 `target` 인자를 통해 간접적으로 들어오고, 실제로 
 세 경우에서 **덮이는 점의 집합이 완전히 같다.** 달라지는 것은 그 점들이 어떤 유형의 후보에
 들어가는가뿐이다 — `{target}` 은 첫 줄에서 `TARGET`, 나머지 두 줄에서는 그냥 `OBJECT` 다.
 
-![씬에서 본 세 경우](../asset/image/separation/fig3_scene.png)
+![씬에서 본 세 경우]({img}/fig3_scene.png)
 
 세 패널이 **같은 씬**이다. 회색 점도, 노란 정답 점도, 초록 원(obstacle 후보)도 그대로다.
 달라지는 것은 **굵은 파란 원 하나가 어디에 있는가**뿐이고, 셋째 패널에서는 그것마저 없다 —
@@ -446,9 +449,9 @@ attention 은 `target` 인자를 통해 간접적으로 들어오고, 실제로 
 같은 것을 **정책이 본 이미지 위에** 되돌려 그리면 이렇다. 초록 원의 자리와 크기가 세 패널에서
 동일하고, 굵은 파란 원만 사과 → 바나나 → 없음으로 바뀐다.
 
-![이미지 위 후보](../asset/image/separation/fig4_image_overlay.png)
+![이미지 위 후보]({img}/fig4_image_overlay.png)
 
-![덮인 기하](../asset/image/separation/fig1_coverage.png)
+![덮인 기하]({img}/fig1_coverage.png)
 
 이것이 이 파이프라인이 존재하는 이유다. attention 이 완전히 틀려도(둘째 줄), 심지어 아무
 정보가 없어도(셋째 줄), **물리적으로 존재하는 기하는 전부 충돌 후보로 남는다.** 잘못된
@@ -476,7 +479,7 @@ False 였던 적이 있고, 그때는 target 의 제약 행이 통째로 삭제�
 
 ### E — 여유거리 분리
 
-![여유거리 행렬](../asset/image/separation/fig2_clearance.png)
+![여유거리 행렬]({img}/fig2_clearance.png)
 
 행은 로봇 링크, 열은 후보 유형, 숫자는 필요한 여유거리(mm)다. 활성 조작기는 `right`.
 읽을 것 네 가지:
@@ -560,8 +563,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.separ
     --records {args.records} --attention {args.attention}
 ```
 """
-    out = pathlib.Path(args.out_doc)
-    out.parent.mkdir(parents=True, exist_ok=True)
+    out = paths.document
     out.write_text(doc)
     out.with_suffix(".json").write_text(json.dumps({
         "target": target, "decoy": decoy, "phase": args.phase,

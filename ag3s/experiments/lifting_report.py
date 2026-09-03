@@ -43,6 +43,7 @@ import numpy as np
 
 from benchmark.ag3s.attention_lifting import GridAttentionAdapter, lift, normalize_attention
 from benchmark.ag3s.config import AttentionConfig, PointCloudConfig
+from benchmark.ag3s.experiments.outputs import add_tag_argument, resolve
 from benchmark.ag3s.experiments.figstyle import (
     CATEGORICAL, GRID_INK, INK, INK_2, SURFACE, style_axes, use_korean,
 )
@@ -84,6 +85,7 @@ def main() -> None:
                     help="target이 이보다 적게 보이는 프레임은 순위 지표에서 제외 (1단계와 동일)")
     ap.add_argument("--out-doc", default="benchmark/ag3s/docs/step-03-lifting.md")
     ap.add_argument("--out-figs", default="benchmark/ag3s/asset/image/lifting")
+    add_tag_argument(ap)
     args = ap.parse_args()
 
     import matplotlib
@@ -249,8 +251,9 @@ def main() -> None:
     ok_d = head_peak >= 0.8 and head_auc >= 0.9
     verdict = "**PASS**" if (ok_a and ok_b and ok_c and ok_d) else "**FAIL**"
 
-    figs = pathlib.Path(args.out_figs)
-    figs.mkdir(parents=True, exist_ok=True)
+    paths = resolve(out_figs=args.out_figs, out_doc=args.out_doc,
+                    tag=args.tag).prepare()
+    figs, img = paths.figures, paths.image_prefix
 
     # fig1 — 순위 지표 3종, 카메라별. 순도가 아니라 이것이 이 단계의 답이다.
     metrics = [("peak가 target 위", "peak"), ("AUC", "auc"), ("precision@N", "prec_at_n")]
@@ -426,7 +429,7 @@ seed에 불순물이 섞이는 것은 설계가 감당하도록 만들어진 일
      + f" | {np.mean(rank[c]['n_target']):.0f} |" if rank[c]["n_target"] else f"| {c} | — | — | — | — |"
      for c in cameras])}
 
-![순위 지표](../asset/image/lifting/fig1_ranking.png)
+![순위 지표]({img}/fig1_ranking.png)
 
 ### seed란 무엇이고, 왜 3단계 문서에 나오는가
 
@@ -485,7 +488,7 @@ seed 점  ──grow_region(eps)──▶  성장한 영역  ──DBSCAN──�
 "엉뚱한 물체를 골랐다"와는 다른 종류의 실패이고, 로봇 점은 자기 필터 단계에서 제거되므로
 4단계에 도달하지도 않는다 — 즉 seed만 낭비된다.
 
-![seed 점의 위치](../asset/image/lifting/fig2_seed_points.png)
+![seed 점의 위치]({img}/fig2_seed_points.png)
 
 ### E. 카메라별 attention — 융합을 켜면 안 되는 이유
 
@@ -563,8 +566,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.lifti
     --records {args.records} --attention {args.attention}
 ```
 """
-    out = pathlib.Path(args.out_doc)
-    out.parent.mkdir(parents=True, exist_ok=True)
+    out = paths.document
     out.write_text(doc)
     out.with_suffix(".json").write_text(json.dumps({
         "cell": {"layer": layer, "head": head, "denoise": denoise, "agg": agg},

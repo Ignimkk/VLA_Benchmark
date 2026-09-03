@@ -835,6 +835,15 @@ class CollisionConstraintSet:
     contact_context: ContactPolicyContext = dataclasses.field(default_factory=ContactPolicyContext)
     metrics: dict[str, Any] = dataclasses.field(default_factory=dict)
     attached: Optional["AttachedCollisionGeometry"] = None
+    #: Optional ESDF collision field, present when `collision_backend` is `esdf` or `both`.
+    #: Typed as `Any` on purpose: `benchmark.ag3s.esdf` imports scipy, and `types` must stay
+    #: importable on a machine that has only numpy — the same rule `__init__` follows.
+    #:
+    #: It sits **beside** `candidates`, never instead of them. The target/obstacle separation is a
+    #: property of the candidate list, and an ESDF cannot express "this geometry is the target" —
+    #: it only answers "how far is the nearest surface". Dropping the candidates to save memory
+    #: would delete the one thing the clearance policy reads.
+    esdf: Any = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "robot_state", np.asarray(self.robot_state, np.float64).reshape(-1))

@@ -69,6 +69,7 @@ PROMPT_ALIASES = {
     "pear": ("pear",),
 }
 
+from benchmark.ag3s.experiments.outputs import add_tag_argument, resolve
 from benchmark.ag3s.experiments.figstyle import (  # noqa: E402
     CATEGORICAL, GRID_INK, INK, INK_2, SEQ_BLUE, SURFACE, sequential_cmap, style_axes, use_korean,
 )
@@ -358,6 +359,7 @@ def main() -> None:
                     help="a body smaller than this cannot win a frame")
     ap.add_argument("--patch-hit-cov", type=float, default=0.05,
                     help="target coverage in the hottest patch that counts as peak-on-target")
+    add_tag_argument(ap)
     args = ap.parse_args()
 
     import matplotlib
@@ -444,8 +446,9 @@ def main() -> None:
     head_avg_maps = attention[:, bdi, bai, :, :, ci].mean(axis=(1, 2))
     base_head_avg = score_maps(head_avg_maps, coverage, areas, keep, ti, **score_kw)
 
-    figs = pathlib.Path(args.out_figs)
-    figs.mkdir(parents=True, exist_ok=True)
+    paths = resolve(out_figs=args.out_figs, out_doc=args.out_doc,
+                    tag=args.tag).prepare()
+    figs, img = paths.figures, paths.image_prefix
     tag = f"d{best['denoise']}_{best['agg']}"
     fig_layer_head(
         plt, peak_cube[bdi, bai], figs / "fig1_layer_head_peak_on_target.png",
@@ -617,21 +620,21 @@ AG3S 7단계가 테이블을 support surface로 뽑아내고 4단계 target grou
 
 {md_table(["#", "헤드", "Euler", "pooling"] + beta_cols + ["peak-on-target", "target mass", "target lift", "advantage"], rank_rows)}
 
-![층·헤드별 peak-on-target](../asset/image/attention/fig1_layer_head_peak_on_target.png)
+![층·헤드별 peak-on-target]({img}/fig1_layer_head_peak_on_target.png)
 
 ### attention이 실제로 어디로 가는가 (물체별)
 
 {md_table(["body", "평균 가시 픽셀", "attention mass", "lift", "argmax 획득 프레임"], per_body)}
 
-![롤아웃 동안의 attention lift](../asset/image/attention/fig3_attention_lift.png)
+![롤아웃 동안의 attention lift]({img}/fig3_attention_lift.png)
 
 ### 프레임 자체
 
-![attention overlay](../asset/image/attention/fig2_attention_overlay.png)
+![attention overlay]({img}/fig2_attention_overlay.png)
 
 ### 샘플링 선택이 결과를 바꾸는가
 
-![choice sweep](../asset/image/attention/fig4_choice_sweep.png)
+![choice sweep]({img}/fig4_choice_sweep.png)
 
 ## 그림에 대하여
 
@@ -717,8 +720,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.atten
     --records {args.records} --attention {args.attention}
 ```
 """
-    out_doc = pathlib.Path(args.out_doc)
-    out_doc.parent.mkdir(parents=True, exist_ok=True)
+    out_doc = paths.document
     out_doc.write_text(doc)
     (out_doc.with_suffix(".json")).write_text(json.dumps(
         {"target": target, "prompt": record.prompt, "camera": args.camera,
