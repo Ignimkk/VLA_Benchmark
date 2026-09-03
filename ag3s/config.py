@@ -343,6 +343,128 @@ DEFAULT_CONTACT_LINKS: dict[str, tuple[str, ...]] = {
 }
 
 
+
+@dataclasses.dataclass(frozen=True)
+class EsdfConfig:
+    """TSDF -> ESDF collision representation, the alternative to primitive fitting.
+
+    Primitive fitting reduces a candidate to one shape, which is exact enough for compact convex
+    clusters and catastrophic for two kinds of geometry: a thin wide slab gets a bounding sphere
+    that grows as `(L/t)^2`, and a hollow container gets one that fills the space the robot has to
+    enter. Measured numbers are in `docs/OPEN-geometry-representation.md`. An ESDF makes no such
+    reduction — it keeps the observed surface and answers "how far is the nearest surface" at any
+    point, which is exactly what the constraint needs.
+
+    `voxel_size` is the accuracy/latency dial and the one an ablation varies: 5 mm resolves a
+    fingertip gap, 20 mm is eight times cheaper per voxel in memory and in the distance transform.
+    10 mm is the default because it is below the smallest clearance the policy actually asks for
+    (the `pre_grasp` margin is 5 mm on authorized links and 50 mm elsewhere).
+
+    `unknown_policy` is the one genuinely contestable choice here, so it is a setting rather than a
+    hidden decision. Space no camera has seen is neither free nor occupied. Calling it free lets the
+    robot fly through what it has not looked at; calling it occupied blocks everything behind the
+    table. The default is `free` because that is **already** the primitive backend's behaviour —
+    geometry that was never observed produces no candidate — so this backend does not make the
+    situation worse. What it adds is that the unobserved fraction becomes countable, and it is
+    reported in `EsdfField.stats` so a caller can gate on it.
+    """
+
+    enabled: bool = False  # opt-in: `collision_backend: esdf` turns this on
+    voxel_size: float = 0.010  # metres; ablation axis, compare 0.005 / 0.010 / 0.020
+    truncation_voxels: float = 3.0  # TSDF truncation, in voxels
+    max_distance: float = 0.50  # metres; distances are clipped here and the local update pads by it
+    unknown_policy: str = "free"  # free | occupied
+    surface_band: float | None = None  # occupied if tsdf <= this; None means one voxel
+    #: Workspace box in the base frame. `None` derives it from the robot's reach at build time.
+    bounds_lower: tuple[float, float, float] | None = None
+    bounds_upper: tuple[float, float, float] | None = None
+    depth_min: float = 0.05
+    depth_max: float = 3.0
+    max_weight: float = 64.0
+    #: Carve the grounded target out of the collision field. `auto` follows the phase's contact
+    #: permission, which is the same rule the clearance policy uses, so the two cannot disagree.
+    exclude_target: str = "auto"  # auto | always | never
+    target_dilate_voxels: int = 0
+    #: Carve support-surface points out of the field. Default on, and it is not an optimisation.
+    #:
+    #: A support surface is already emitted as a half-space row with its own margin
+    #: (`support_surface.safety_margin`, 10 mm) because a plane converted to a half-space costs the
+    #: optimizer one linear row and describes the surface exactly. Integrating the same table into
+    #: the field as well makes the two backends *disagree about the same geometry*: the plane row
+    #: asks for 10 mm and the field asks for `esdf_margin` (50 mm) at the same surface. Measured on
+    #: the RB-Y1 scene, that put 23 robot spheres in nominal violation — the base and wheels resting
+    #: on the floor, and the fingertips near the table top — none of which the primitive path calls
+    #: a violation.
+    #:
+    #: Carving loses nothing: the surfaces are still in `CollisionConstraintSet.support_surfaces`
+    #: and still become plane rows, on either backend.
+    exclude_support_surfaces: bool = True
+    #: Build the primitive candidate set as well, even though the field is what gets consumed.
+    #:
+    #: Off by default because `collision_backend: esdf` means the optimizer reads the field, and
+    #: `scene_from_constraint_set` turns every candidate slot off. Fitting shapes to clusters and
+    #: packing a CasADi parameter vector that is then discarded cost 304 ms of a 1213 ms frame on
+    #: RB-Y1 — a quarter of the budget spent on an answer nobody reads.
+    #:
+    #: The separation of target from obstacle does not depend on it. Attention grounds the target,
+    #: `CollisionConstraintSet.target` carries it, and the field is carved accordingly; the
+    #: candidate list is one way to express that, not the thing itself. Turn this on only to log
+    #: the primitive view alongside, and note that `collision_backend: both` sets it implicitly
+    #: because that mode exists precisely to compare the two.
+    emit_candidates: bool = False
+    #: Recompute the distance transform only inside the changed region, padded by `max_distance`.
+    incremental: bool = True
+    #: Side of the cube the local update works in, in voxels. Smaller blocks recompute less but
+    #: each carries the same `max_distance` padding, so past a point the padding dominates and many
+    #: small blocks cost more than one big one. 16 is a reasonable middle; the builder falls back to
+    #: a global transform whenever the blocks would touch more than half the grid anyway.
+    block_voxels: int = 16
+    #: Above this unobserved fraction the pipeline adds a note. It does not change the field — the
+    #: point is that "most of this volume was never looked at" reaches the caller as words rather
+    #: than as an assumption buried in `unknown_policy`.
+    unknown_report_threshold: float = 0.9
+
+    UNKNOWN_POLICIES = ("free", "occupied")
+    EXCLUDE_TARGET = ("auto", "always", "never")
+
+    def validate(self) -> None:
+        if self.voxel_size <= 0.0:
+            raise AG3SConfigError(f"esdf.voxel_size must be > 0, got {self.voxel_size}")
+        if self.truncation_voxels <= 0.0:
+            raise AG3SConfigError(
+                f"esdf.truncation_voxels must be > 0, got {self.truncation_voxels}")
+        if self.max_distance <= 0.0:
+            raise AG3SConfigError(f"esdf.max_distance must be > 0, got {self.max_distance}")
+        if self.unknown_policy not in self.UNKNOWN_POLICIES:
+            raise AG3SConfigError(
+                f"esdf.unknown_policy must be one of {self.UNKNOWN_POLICIES}, "
+                f"got {self.unknown_policy!r}")
+        if self.exclude_target not in self.EXCLUDE_TARGET:
+            raise AG3SConfigError(
+                f"esdf.exclude_target must be one of {self.EXCLUDE_TARGET}, "
+                f"got {self.exclude_target!r}")
+        if (self.bounds_lower is None) != (self.bounds_upper is None):
+            raise AG3SConfigError("esdf.bounds_lower and bounds_upper must be set together")
+        if self.bounds_lower is not None:
+            lo = tuple(float(v) for v in self.bounds_lower)
+            hi = tuple(float(v) for v in self.bounds_upper)
+            if any(b <= a for a, b in zip(lo, hi)):
+                raise AG3SConfigError(f"esdf bounds must satisfy lower < upper, got {lo} -> {hi}")
+        if self.block_voxels < 1:
+            raise AG3SConfigError(f"esdf.block_voxels must be >= 1, got {self.block_voxels}")
+        if not 0.0 <= self.unknown_report_threshold <= 1.0:
+            raise AG3SConfigError(
+                f"esdf.unknown_report_threshold must be in [0, 1], "
+                f"got {self.unknown_report_threshold}")
+        if self.target_dilate_voxels < 0:
+            raise AG3SConfigError(
+                f"esdf.target_dilate_voxels must be >= 0, got {self.target_dilate_voxels}")
+
+    @property
+    def truncation(self) -> float:
+        return float(self.truncation_voxels) * float(self.voxel_size)
+
+
 @dataclasses.dataclass(frozen=True)
 class ContactConfig:
     """Phase- and link-conditioned target clearance.
@@ -489,6 +611,7 @@ _SECTIONS: dict[str, type] = {
     "support_surface": SupportSurfaceConfig,
     "collision_candidate": CollisionCandidateConfig,
     "geometry": GeometryConfig,
+    "esdf": EsdfConfig,
     "contact": ContactConfig,
     "constraint": ConstraintConfig,
     "timing": TimingConfig,
@@ -508,11 +631,19 @@ class AG3SConfig:
         default_factory=CollisionCandidateConfig
     )
     geometry: GeometryConfig = dataclasses.field(default_factory=GeometryConfig)
+    esdf: EsdfConfig = dataclasses.field(default_factory=EsdfConfig)
     contact: ContactConfig = dataclasses.field(default_factory=ContactConfig)
     constraint: ConstraintConfig = dataclasses.field(default_factory=ConstraintConfig)
     timing: TimingConfig = dataclasses.field(default_factory=TimingConfig)
     profiling: ProfilingConfig = dataclasses.field(default_factory=ProfilingConfig)
     frame_id: str = "base"
+    #: Which collision representation the pipeline emits. `primitive` is the original path and stays
+    #: the default so every existing result and test is reproduced byte for byte; `esdf` builds the
+    #: distance field instead. `both` builds both, which is what an ablation needs — the primitive
+    #: candidates and the field describe the same scene and can be compared row for row.
+    collision_backend: str = "primitive"  # primitive | esdf | both
+
+    COLLISION_BACKENDS = ("primitive", "esdf", "both")
 
     def __post_init__(self) -> None:
         self.validate()
@@ -525,6 +656,10 @@ class AG3SConfig:
         reports `DEGRADED` when that happens. Making it an error would forbid the very configuration
         a latency ablation wants.
         """
+        if self.collision_backend not in self.COLLISION_BACKENDS:
+            raise AG3SConfigError(
+                f"collision_backend must be one of {self.COLLISION_BACKENDS}, "
+                f"got {self.collision_backend!r}")
         for name in _SECTIONS:
             getattr(self, name).validate()
 
@@ -532,14 +667,17 @@ class AG3SConfig:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any] | None) -> "AG3SConfig":
         data = dict(data or {})
-        unknown = set(data) - set(_SECTIONS) - {"frame_id"}
+        extra = {"frame_id", "collision_backend"}
+        unknown = set(data) - set(_SECTIONS) - extra
         if unknown:
             raise AG3SConfigError(
-                f"unknown top-level config key(s): {sorted(unknown)}; expected {sorted(set(_SECTIONS) | {'frame_id'})}"
+                f"unknown top-level config key(s): {sorted(unknown)}; expected {sorted(set(_SECTIONS) | extra)}"
             )
         kwargs: dict[str, Any] = {}
         if "frame_id" in data:
             kwargs["frame_id"] = str(data["frame_id"])
+        if "collision_backend" in data:
+            kwargs["collision_backend"] = str(data["collision_backend"])
         for name, section_cls in _SECTIONS.items():
             if name in data:
                 kwargs[name] = _build_section(section_cls, name, data[name])

@@ -104,6 +104,8 @@ class AG3S:
         self.constraint_robot_model = constraint_robot_model or robot_model
         self.attention_adapter = attention_adapter
         self.tracker = CandidateTracker(self.config.collision_candidate)
+        #: Kept across frames so the ESDF's local update has something to be incremental against.
+        self._esdf_builder = None
         self.profiler = StageProfiler(
             enabled=self.config.profiling.enabled,
             warmup_frames=self.config.profiling.warmup_frames,
@@ -147,6 +149,7 @@ class AG3S:
         self.profiler.reset()
         self.frame_index = 0
         self._attached = None
+        self._esdf_builder = None
 
     # ------------------------------------------------------- explicit grasp state, injected
     @property
@@ -389,20 +392,32 @@ class AG3S:
             )
 
         # 6 + 7. collision candidates and primitive fitting -------------------------------
-        with profiler.stage("collision_candidates"):
-            candidates, candidate_stats = generate_candidates(
-                cloud,
-                phase=phase,
-                target=grounding.target,
-                support_surfaces=surfaces,
-                support_mask=support_mask,
-                config=cfg.collision_candidate,
-                geometry_config=cfg.geometry,
-                contact_config=cfg.contact,
-                tracker=self.tracker,
-                timestamp=ts,
+        # Skipped entirely when the field is the only thing the optimizer will read. See
+        # `EsdfConfig.emit_candidates` for why that is the default rather than an optimisation.
+        primitive_path = (cfg.collision_backend != "esdf") or cfg.esdf.emit_candidates
+        if not primitive_path:
+            candidates, candidate_stats = [], {}
+            notes.append(
+                "collision_backend=esdf: the primitive candidate set was not built; the collision "
+                "constraint comes from the ESDF and the target is named by grounding "
+                "(esdf.emit_candidates turns it back on)"
             )
-        profiler.record("primitive_fitting", candidate_stats.get("primitive_fit_ms", 0.0))
+        if primitive_path:
+              with profiler.stage("collision_candidates"):
+                candidates, candidate_stats = generate_candidates(
+                    cloud,
+                    phase=phase,
+                    target=grounding.target,
+                    support_surfaces=surfaces,
+                    support_mask=support_mask,
+                    config=cfg.collision_candidate,
+                    geometry_config=cfg.geometry,
+                    contact_config=cfg.contact,
+                    tracker=self.tracker,
+                    timestamp=ts,
+                )
+        if primitive_path:
+            profiler.record("primitive_fitting", candidate_stats.get("primitive_fit_ms", 0.0))
         if candidate_stats.get("n_overflow"):
             notes.append(
                 f"{candidate_stats['n_overflow_points']} point(s) beyond "
@@ -421,7 +436,34 @@ class AG3S:
 
         # 8. constraint generation --------------------------------------------------------
         with profiler.stage("constraint_generation"):
+            # 8b. ESDF backend ------------------------------------------------------------
+            # Built here, before the constraint set is assembled, because this is the only scope
+            # that still has the raw depth. It runs *after* candidate generation on purpose:
+            # whether the target is carved out of the field follows the same contact rule the
+            # clearance policy uses, and that rule needs the grounded target to already exist.
+            esdf_field = None
+            if cfg.collision_backend in ("esdf", "both"):
+                cameras = self._depth_cameras_from(
+                    observations, depth, camera_intrinsics, T_base_cam, robot_state)
+                with profiler.stage("esdf"):
+                    esdf_field, esdf_notes = self._build_esdf(
+                        cameras, grounding.target, phase, context,
+                        support_points=(cloud.points[support_mask]
+                                        if cfg.esdf.exclude_support_surfaces
+                                        and support_mask is not None else None))
+                notes.extend(esdf_notes)
+                if esdf_field is not None and (
+                        esdf_field.unknown_fraction >= cfg.esdf.unknown_report_threshold):
+                    notes.append(
+                        f"{esdf_field.unknown_fraction:.1%} of the ESDF volume was never observed "
+                        f"and is treated as {cfg.esdf.unknown_policy} by esdf.unknown_policy"
+                    )
+
             constraint_set = self._constraints(
+                esdf=esdf_field,
+                # Planes still live in the spec, so it is built whenever a support surface survived.
+                # In pure-field mode there is neither a candidate nor a plane to pack.
+                build_spec=primitive_path or bool(surfaces),
                 candidates=candidates,
                 surfaces=surfaces,
                 grounding=grounding,
@@ -437,6 +479,9 @@ class AG3S:
                     "n_points_voxel": recon_stats["n_voxel"],
                     "n_points_final": recon_stats["n_final"],
                     "final_voxel_size_m": recon_stats["final_voxel_size"],
+                    **({} if esdf_field is None else
+                       {"esdf": {k: v for k, v in esdf_field.stats.items()
+                                 if k != "per_camera"}}),
                     "n_points_self_filtered": filter_stats["n_removed"],
                     "self_filter_enabled": filter_stats["enabled"],
                     "n_support_points": int(support_mask.sum()),
@@ -444,11 +489,11 @@ class AG3S:
                     "target_confidence": (
                         0.0 if grounding.target is None else float(grounding.target.confidence)
                     ),
-                    "n_object": candidate_stats["n_object"],
-                    "n_unknown": candidate_stats["n_unknown"],
-                    "n_overflow": candidate_stats["n_overflow"],
-                    "n_overflow_points": candidate_stats["n_overflow_points"],
-                    "n_unassigned_points": candidate_stats["n_unassigned_points"],
+                    "n_object": candidate_stats.get("n_object", 0),
+                    "n_unknown": candidate_stats.get("n_unknown", 0),
+                    "n_overflow": candidate_stats.get("n_overflow", 0),
+                    "n_overflow_points": candidate_stats.get("n_overflow_points", 0),
+                    "n_unassigned_points": candidate_stats.get("n_unassigned_points", 0),
                     "overflow_containment_rate": candidate_stats.get(
                         "overflow_containment_rate", 1.0
                     ),
@@ -501,7 +546,7 @@ class AG3S:
 
     def _constraints(
         self, *, candidates, surfaces, grounding, robot_state, phase, timestamp, notes, context,
-        validity=ConstraintValidity.VALID, metrics=None,
+        validity=ConstraintValidity.VALID, metrics=None, esdf=None, build_spec=True,
     ):
         if self._builder is None:
             return CollisionConstraintSet(
@@ -527,6 +572,7 @@ class AG3S:
                 contact_context=context,
                 metrics=dict(metrics or {}),
                 attached=self._attached,
+                esdf=esdf,
             )
         return build_constraint_set(
             self._builder,
@@ -544,7 +590,115 @@ class AG3S:
             validity=validity,
             metrics=metrics,
             attached=self._attached,
+            esdf=esdf,
+            build_spec=build_spec,
         )
+
+    def _robot_mask_for(self, depth, K, T_base_cam, robot_state):
+        """`(H, W)` True where a depth pixel is the robot itself, or `None` when unknowable.
+
+        The point cloud is already self-filtered by `robot_filter`; the ESDF integrates raw depth
+        and so needs the same exclusion applied in image space. Without it the arm is written into
+        the obstacle field and every frame reports the robot colliding with itself — measured at
+        130 of 194 spheres in violation before this existed.
+
+        The masked rays become **unobserved**, not free. What is behind the arm this frame is not
+        something the camera saw.
+        """
+        from benchmark.ag3s.reconstruction import backproject
+        from benchmark.ag3s.robot_filter import robot_sphere_mask
+
+        model = self.robot_model
+        if model is None or robot_state is None:
+            return None
+        cfg = self.config.pointcloud
+        if not cfg.self_filter:
+            return None
+        cloud = backproject(depth, K, T_base_cam, cfg)
+        if cloud.uv is None or len(cloud) == 0:
+            return None
+        centres, radii = model.sphere_centers_numeric(np.asarray(robot_state, np.float64))
+        inside = robot_sphere_mask(cloud.points, centres, radii, cfg.self_filter_inflation)
+        mask = np.zeros(np.asarray(depth).shape, bool)
+        uv = cloud.uv[inside]
+        mask[uv[:, 1], uv[:, 0]] = True
+        return mask
+
+    def _depth_cameras_from(self, observations, depth, camera_intrinsics, T_base_cam,
+                            robot_state=None):
+        """`CameraDepth` list from whichever front end this frame used. Empty when depth is absent.
+
+        A caller that supplied a bare point cloud has no depth image, and the projective TSDF needs
+        one — it decides *free* space from what a ray passed through, which a point cloud cannot
+        say. That case returns nothing and the pipeline notes it rather than silently building a
+        field out of surface points alone, which would mark everything else unobserved.
+        """
+        from benchmark.ag3s.esdf import CameraDepth
+
+        out = []
+        if observations:
+            for obs in observations:
+                d = getattr(obs, "depth", None)
+                if d is None:
+                    continue
+                K = np.asarray(obs.camera_intrinsics, np.float64)
+                T = (np.asarray(obs.resolve_T_base_cam(), np.float64)
+                     if hasattr(obs, "resolve_T_base_cam")
+                     else np.asarray(obs.T_base_cam, np.float64))
+                d = np.asarray(d, np.float64)
+                mask = getattr(obs, "robot_mask", None)
+                if mask is None:
+                    # Each observation carries the `q` it was captured at, so the mask is built
+                    # with *that* configuration — the same rule the fused cloud follows.
+                    mask = self._robot_mask_for(d, K, T, getattr(obs, "robot_state", None))
+                out.append(CameraDepth(
+                    name=str(getattr(obs, "camera", getattr(obs, "name", "camera"))),
+                    depth=d, camera_intrinsics=K, T_base_cam=T, robot_mask=mask))
+        elif depth is not None and camera_intrinsics is not None and T_base_cam is not None:
+            d = np.asarray(depth, np.float64)
+            K = np.asarray(camera_intrinsics, np.float64)
+            T = np.asarray(T_base_cam, np.float64)
+            out.append(CameraDepth("camera", d, K, T,
+                                   robot_mask=self._robot_mask_for(d, K, T, robot_state)))
+        return out
+
+    def _build_esdf(self, depth_cameras, target, phase, context, *, support_points=None):
+        """Integrate this frame into the ESDF and return `(field, notes)`.
+
+        The builder is kept on the instance rather than rebuilt: that is the only way the local
+        update means anything, since a fresh grid has nothing to be incremental against.
+        """
+        from benchmark.ag3s.esdf import EsdfBuilder
+
+        cfg = self.config.esdf
+        if not depth_cameras:
+            return None, ["esdf backend requested but no camera depth was supplied; "
+                          "the field was not built and the primitive candidates stand alone"]
+        if self._esdf_builder is None:
+            self._esdf_builder = EsdfBuilder(cfg)
+
+        rule = self.config.contact.rule_for(phase)
+        if cfg.exclude_target == "always":
+            exclude = True
+        elif cfg.exclude_target == "never":
+            exclude = False
+        else:
+            # `auto`: follow the phase's contact permission, which is the same input
+            # `ClearancePolicy` reads. Carving the target out of the field is the field's version of
+            # relaxing its margin, and the two must be driven by one rule.
+            exclude = bool(rule.contact_permission) and target is not None
+        points = None if target is None else np.asarray(target.points, np.float64)
+        field = self._esdf_builder.update(depth_cameras, target_points=points,
+                                          exclude_target=exclude,
+                                          support_points=support_points)
+        notes = []
+        if exclude:
+            notes.append(
+                f"{field.stats['n_target_voxels_carved']} target voxel(s) were carved out of the "
+                f"collision ESDF because phase {phase} permits contact; the target remains a "
+                "collision candidate in the primitive set"
+            )
+        return field, notes
 
     @staticmethod
     def _with_camera_provenance(target, fusion, attention_cloud):
@@ -612,13 +766,21 @@ class AG3S:
 
     @staticmethod
     def _stat_notes(recon_stats, filter_stats, candidate_stats) -> list[str]:
-        return [
+        notes = [
             f"points: {recon_stats['n_raw']} raw -> {recon_stats['n_voxel']} voxel -> "
             f"{filter_stats['n_out']} after self-filter"
             + ("" if filter_stats["enabled"] else " (self-filter off)"),
-            f"candidates: {candidate_stats['n_object']} object, {candidate_stats['n_unknown']} unknown, "
-            f"{candidate_stats['n_target']} target, {candidate_stats['n_support']} support",
         ]
+        # `candidate_stats` is empty when the primitive path did not run at all. Report nothing
+        # rather than a row of zeros, which would read as "clustering found nothing" — a very
+        # different and much more alarming statement than "clustering was not asked to run".
+        if candidate_stats:
+            notes.append(
+                f"candidates: {candidate_stats['n_object']} object, "
+                f"{candidate_stats['n_unknown']} unknown, "
+                f"{candidate_stats['n_target']} target, {candidate_stats['n_support']} support"
+            )
+        return notes
 
 
 # ------------------------------------------------------------------------------------ CLI

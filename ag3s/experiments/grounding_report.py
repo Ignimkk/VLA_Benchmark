@@ -53,6 +53,7 @@ from benchmark.ag3s.attention_lifting import GridAttentionAdapter, lift
 from benchmark.ag3s.config import (
     AttentionConfig, ClusteringConfig, PointCloudConfig, SupportSurfaceConfig,
 )
+from benchmark.ag3s.experiments.outputs import add_tag_argument, resolve
 from benchmark.ag3s.experiments.figstyle import (
     CATEGORICAL, GRID_INK, INK, INK_2, SURFACE, style_axes, use_korean,
 )
@@ -68,7 +69,11 @@ from benchmark.ag3s.types import GroundingStatus
 
 
 def build_robot_model(scene):
-    """파이프라인이 자기 필터에 쓰는 것과 같은 모델."""
+    """파이프라인이 자기 필터에 쓰는 것과 같은 모델. **전신**이다.
+
+    자기 필터는 바퀴와 베이스를 반드시 포함해야 한다. 머리 카메라가 자기 몸을 내려다보므로,
+    빠뜨리면 그 점들이 클라우드에 남아 로봇에 용접된 유령 장애물로 뭉친다.
+    """
     from benchmark.ag3s.experiments.mujoco_source import HEAD_JOINTS, gap_filling_capsules
     from benchmark.ag3s.robot_models import RBY1_URDF, UrdfSphereChain, parse_urdf
 
@@ -76,6 +81,36 @@ def build_robot_model(scene):
     head = {n: float(scene.data.qpos[scene._qadr[n]]) for n in HEAD_JOINTS if n in scene._qadr}
     return UrdfSphereChain(urdf, extra_capsules=gap_filling_capsules(scene.model),
                            fixed_joint_values=head)
+
+
+#: 양팔 링크와 손끝. 제약 모델의 기본 범위다.
+ARM_LINKS = tuple(
+    [f"link_{side}_arm_{i}" for side in ("left", "right") for i in range(7)]
+    + [f"ee_finger_{s}{i}" for s in ("l", "r") for i in (1, 2)]
+)
+
+
+def build_constraint_robot_model(scene, link_filter=ARM_LINKS):
+    """제약에 쓰는 모델. 자기 필터 모델과 **일부러 다르다**.
+
+    제약 행은 최적화기가 실제로 움직일 수 있는 구에만 의미가 있다. RB-Y1 의 결정 변수는 양팔
+    12관절뿐이라, 바퀴·베이스·토르소 구는 어떤 해에서도 같은 값을 낸다. 그것을 충돌로 세면
+    고칠 수 없는 위반이 매 프레임 상수로 깔리고 — 실측으로 `wheel_l`/`wheel_r` 이 관측된
+    바닥면을 33.7 mm 파고든 채 44청크 내내 움직이지 않았다 — TO 가 실제로 고칠 수 있는 신호가
+    거기 묻힌다.
+
+    빼는 것이 위험을 지우지는 않는다. 바퀴는 여전히 바닥에 닿아 있고, 우리가 바꾼 것은 그것을
+    최적화 문제로 취급하지 않기로 한 것뿐이다. 베이스가 움직이는 순간 이 가정은 깨진다.
+
+    `link_filter=None` 을 주면 전신으로 되돌아간다.
+    """
+    from benchmark.ag3s.experiments.mujoco_source import HEAD_JOINTS, gap_filling_capsules
+    from benchmark.ag3s.robot_models import RBY1_URDF, UrdfSphereChain, parse_urdf
+
+    urdf = parse_urdf(RBY1_URDF)
+    head = {n: float(scene.data.qpos[scene._qadr[n]]) for n in HEAD_JOINTS if n in scene._qadr}
+    return UrdfSphereChain(urdf, extra_capsules=gap_filling_capsules(scene.model),
+                           fixed_joint_values=head, link_filter=link_filter)
 
 
 def majority_body(labels: np.ndarray, names: dict) -> tuple[str, float]:
@@ -103,6 +138,7 @@ def main() -> None:
                          "0이면 게이트 없음(AG3S 기본 설정)")
     ap.add_argument("--out-doc", default="benchmark/ag3s/docs/step-04-grounding.md")
     ap.add_argument("--out-figs", default="benchmark/ag3s/asset/image/grounding")
+    add_tag_argument(ap)
     args = ap.parse_args()
 
     import matplotlib
@@ -257,8 +293,9 @@ def main() -> None:
     pre_ok = graded_ok
     verdict = "**PASS**" if (ok_a and ok_b and ok_c) else "**FAIL**"
 
-    figs = pathlib.Path(args.out_figs)
-    figs.mkdir(parents=True, exist_ok=True)
+    paths = resolve(out_figs=args.out_figs, out_doc=args.out_doc,
+                    tag=args.tag).prepare()
+    figs, img = paths.figures, paths.image_prefix
 
     # fig1 — 프레임별 결과 띠
     fig, (a1, a2) = plt.subplots(2, 1, figsize=(9.4, 4.2), dpi=160, height_ratios=[1, 1.4])
@@ -468,7 +505,7 @@ base로부터 가장 멀리 간 거리가 **1.389 m**이고, head 카메라는 b
 
 ### A. 옳은 물체를 골랐는가
 
-![프레임별 결과](../asset/image/grounding/fig1_per_frame.png)
+![프레임별 결과]({img}/fig1_per_frame.png)
 
 {md(["구간", "프레임", f"{target} 선택", "crate 선택", "banana 선택", "target 없음 보고"],
     [f"| {nm} | {len(g)} | {sum(1 for r in g if r.get('picked_body') == target)} | "
@@ -510,19 +547,19 @@ base로부터 가장 멀리 간 거리가 **1.389 m**이고, head 카메라는 b
 옳은 물체를 골랐어도 클러스터가 물체의 일부만 덮으면 6단계 primitive가 물체를 **과소 근사**한다.
 과소 근사는 이 파이프라인이 금지하는 것이므로, 선택의 정오와 별개로 재야 한다.
 
-![클러스터 품질](../asset/image/grounding/fig2_cluster_quality.png)
+![클러스터 품질]({img}/fig2_cluster_quality.png)
 
 정밀도는 "클러스터 점 중 실제로 target인 비율", 재현율은 "target 점 중 클러스터에 들어온
 비율"이다. 재현율이 1.0에 못 미치는 것은 대체로 자기 필터가 제거한 점과 지지면으로 제외된
 점 때문이며, 정밀도가 낮으면 이웃 물체가 딸려 온 것이다.
 
-![선택된 클러스터](../asset/image/grounding/fig3_selected_cluster.png)
+![선택된 클러스터]({img}/fig3_selected_cluster.png)
 
 같은 결과를 **정책이 실제로 본 이미지 위에** 되돌려 그리면 이렇다. 위에서 본 그림이 정확하다면
 이 그림은 읽기 쉽다 — 파란 점이 사과 위에 앉아 있고, 주황 원이 최적화기가 보게 될 구의
 실루엣이다.
 
-![이미지 위 겹침](../asset/image/grounding/fig4_image_overlay.png)
+![이미지 위 겹침]({img}/fig4_image_overlay.png)
 
 ### C. 오선택이 없는가 — 가장 위험한 실패 방식
 
@@ -612,8 +649,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.groun
     --records {args.records} --attention {args.attention}
 ```
 """
-    out = pathlib.Path(args.out_doc)
-    out.parent.mkdir(parents=True, exist_ok=True)
+    out = paths.document
     out.write_text(doc)
     out.with_suffix(".json").write_text(json.dumps(
         {"target": target, "camera": args.camera, "cell": chosen,
