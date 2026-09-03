@@ -319,6 +319,58 @@ class QpConfig:
 
 
 @dataclasses.dataclass(frozen=True)
+class CollisionBackendConfig:
+    """Which collision representation the optimizer consumes.
+
+    `primitive` reads the sphere/plane blocks AG3S already packs into `ConstraintSpec`. `esdf` reads
+    the distance field instead, one row per (step, robot sphere):
+
+        d_esdf(p(q)) - collision_radius - safety_margin >= 0
+
+    `both` enables both, which is the point of keeping the old path: the two describe the same scene,
+    so an ablation can put them in the same QP and compare row for row rather than across runs.
+
+    `esdf_margin` is deliberately separate from AG3S's `d_safe`. The primitive path already carries a
+    per-(sphere, slot) margin from `ClearancePolicy`, and the ESDF has no slots to look it up by — a
+    field answers about a *point*. Reusing the same number would either lose the phase-dependent
+    relaxation or apply the grasp relaxation to every link at once, and the second is the mistake the
+    clearance policy exists to prevent. Until the field carries a per-voxel semantic label, this stays
+    one conservative number.
+    """
+
+    backend: str = "primitive"  # primitive | esdf | both
+    esdf_margin: float = 0.05  # metres; the conservative clearance, matching geometry.safety_margin
+    #: Consume the support-surface half-space rows. Turning this off does **not** stop AG3S from
+    #: extracting the planes — target grounding needs them as an exclusion mask or region growing
+    #: floods across the table and finds one cluster the size of the scene. It only stops the
+    #: optimizer from reading them as constraints, which is what "let the field be the whole
+    #: constraint" means: the table is then geometry in the ESDF like anything else.
+    #:
+    #: Leave it on to keep the older split, where a plane is one exact linear row at 10 mm and the
+    #: field carries only what is not a plane. The two are a real trade: a half-space is exact and
+    #: cheap but **unbounded**, so a tabletop plane forbids the entire volume beneath it — measured
+    #: at 57 of 71 robot spheres in nominal violation on RB-Y1, all of them base and wheels resting
+    #: on the floor.
+    use_support_planes: bool = True
+
+    BACKENDS = ("primitive", "esdf", "both")
+
+    def validate(self) -> None:
+        if self.backend not in self.BACKENDS:
+            raise ValueError(f"collision.backend must be one of {self.BACKENDS}, got {self.backend!r}")
+        if self.esdf_margin < 0.0:
+            raise ValueError(f"collision.esdf_margin must be >= 0, got {self.esdf_margin}")
+
+    @property
+    def wants_esdf(self) -> bool:
+        return self.backend in ("esdf", "both")
+
+    @property
+    def wants_primitive(self) -> bool:
+        return self.backend in ("primitive", "both")
+
+
+@dataclasses.dataclass(frozen=True)
 class SafetyConfig:
     """Where "best effort" stops being good enough — and what happens then.
 
@@ -352,6 +404,7 @@ _SECTIONS: dict[str, type] = {
     "sqp": SqpConfig,
     "qp": QpConfig,
     "safety": SafetyConfig,
+    "collision": CollisionBackendConfig,
 }
 
 
@@ -368,6 +421,9 @@ class TrajOptConfig:
     sqp: SqpConfig = dataclasses.field(default_factory=SqpConfig)
     qp: QpConfig = dataclasses.field(default_factory=QpConfig)
     safety: SafetyConfig = dataclasses.field(default_factory=SafetyConfig)
+    collision: CollisionBackendConfig = dataclasses.field(
+        default_factory=CollisionBackendConfig
+    )
 
     def __post_init__(self) -> None:
         self.validate()

@@ -64,6 +64,10 @@ from benchmark.trajopt.types import ChunkLayout
 
 _EPS = 1e-12
 
+#: `LinearizedRows.slot` value for an ESDF row. Distinct from every candidate slot (>= 0) and from
+#: every plane (-1 - k, k < max_support_surfaces), so a consumer can tell the three apart.
+ESDF_SLOT = -99999
+
 
 @dataclasses.dataclass(frozen=True)
 class SceneSnapshot:
@@ -84,6 +88,16 @@ class SceneSnapshot:
     plane_active: np.ndarray  # (K,) bool
     robot_radii: np.ndarray  # (S,)
     candidate_ids: np.ndarray  # (M,) owning candidate, -1 for empty
+    #: Optional ESDF backend. When present it adds one row per (step, robot sphere) —
+    #: `d_esdf(p) - r_robot - esdf_margin >= 0` — alongside whatever candidate and plane rows the
+    #: primitive backend produced. Both can be active at once, which is what an ablation needs: the
+    #: two descriptions of the same scene then sit in the same QP and can be compared row for row.
+    esdf: Any = None
+    esdf_margin: float = 0.0
+
+    @property
+    def has_esdf(self) -> bool:
+        return self.esdf is not None
 
     @property
     def n_slots(self) -> int:
@@ -98,8 +112,15 @@ class SceneSnapshot:
         return int(self.plane_normal.shape[0])
 
     @property
+    def n_esdf_rows(self) -> int:
+        """One row per robot sphere when the field is present. The ESDF answers per *point*, not
+        per slot, so there is nothing to enumerate — that is most of why it is cheaper."""
+        return self.n_spheres if self.esdf is not None else 0
+
+    @property
     def is_empty(self) -> bool:
-        return not (self.candidate_active.any() or self.plane_active.any())
+        return not (self.candidate_active.any() or self.plane_active.any()
+                    or self.esdf is not None)
 
     @classmethod
     def from_spec(cls, spec, robot_radii: np.ndarray) -> "SceneSnapshot":
@@ -294,6 +315,24 @@ class CollisionLinearizer:
         centres = (states or self.sphere_states(trajectory, q_now))[0]
         return self._clearances_from(centres, scene)
 
+    def esdf_clearance(self, trajectory: np.ndarray, q_now: np.ndarray, scene: SceneSnapshot,
+                       states=None) -> np.ndarray:
+        """``(H, S, 1)`` ESDF clearances, or an empty last axis when no field is attached."""
+        centres = (states or self.sphere_states(trajectory, q_now))[0]
+        return self._esdf_clearance(centres, scene)
+
+    def _esdf_clearance(self, centres: np.ndarray, scene: SceneSnapshot) -> np.ndarray:
+        """``(H, S)`` — ``d_esdf(p) - r_robot - margin``. Inactive (no field) is an empty array.
+
+        No slot loop and no selection over candidates: the field answers for the point directly.
+        That is why this block is `S` rows where the primitive block is `S * M`.
+        """
+        if scene.esdf is None:
+            return np.zeros((centres.shape[0], centres.shape[1], 0))
+        flat = centres.reshape(-1, 3)
+        d = np.asarray(scene.esdf.distance(flat), np.float64).reshape(centres.shape[:2])
+        return (d - scene.robot_radii[None, :] - float(scene.esdf_margin))[..., None]
+
     def _clearances_from(self, centres: np.ndarray, scene: SceneSnapshot):
         """``(candidate[H, S, M], plane[H, S, K], distance[H, S, M])`` — no ``delta`` array.
 
@@ -339,12 +378,19 @@ class CollisionLinearizer:
         This is the guarantee behind every reduction in this module. Selection decides what the QP
         optimizes; this decides what the caller is told, and it never looks at a subset.
         """
-        candidate, plane, _ = self.clearances(trajectory, q_now, scene, states)
+        states = states or self.sphere_states(trajectory, q_now)
+        candidate, plane, _ = self._clearances_from(states[0], scene)
         worst = np.inf
         if candidate.size:
             worst = min(worst, float(np.min(candidate)))
         if plane.size:
             worst = min(worst, float(np.min(plane)))
+        # The ESDF block is checked here too. The whole guarantee of the activation band is that
+        # the *reported* number comes from every row, and adding a backend without adding it here
+        # would quietly exempt it from that.
+        esdf = self._esdf_clearance(states[0], scene)
+        if esdf.size:
+            worst = min(worst, float(np.min(esdf)))
         return worst
 
     # --- selection + linearization -------------------------------------------------------
@@ -366,17 +412,21 @@ class CollisionLinearizer:
         budget = reduction.rows_per_step
         centres, jac = states or self.sphere_states(trajectory, q_now)
         candidate, plane, distance = self._clearances_from(centres, scene)
+        esdf = self._esdf_clearance(centres, scene)
 
         horizon, n_spheres = centres.shape[0], centres.shape[1]
         n_slots, n_planes = scene.n_slots, scene.n_planes
         band = reduction.activation_band if reduction.enabled else np.inf
         n_candidate = n_spheres * n_slots
+        n_plane_rows = n_spheres * n_planes
 
-        # One list per step, candidates and planes together: the budget should go to whatever is
-        # tightest, and a table the gripper is about to hit matters exactly as much as a crate.
+        # One list per step: candidates, planes and the ESDF together. The budget should go to
+        # whatever is tightest, and a table the gripper is about to hit matters exactly as much as a
+        # crate — or as much as a voxel the field says is 2 cm away.
         flat = np.concatenate(
-            [candidate.reshape(horizon, -1), plane.reshape(horizon, -1)], axis=1
-        )  # (H, S*M + S*K)
+            [candidate.reshape(horizon, -1), plane.reshape(horizon, -1),
+             esdf.reshape(horizon, -1)], axis=1
+        )  # (H, S*M + S*K + S)
         if reduction.enabled and reduction.temporal_stride > 1:
             # Steps that are not enforced get +inf everywhere, so they select nothing while keeping
             # their rows allocated — the pattern must not depend on the stride either.
@@ -415,13 +465,21 @@ class CollisionLinearizer:
         bound = tuple(int(k) for k in np.flatnonzero(eligible_per_step > take))
 
         is_candidate = picked_flat < n_candidate
+        is_esdf = picked_flat >= n_candidate + n_plane_rows
+        is_plane = (~is_candidate) & (~is_esdf)
+        plane_local = picked_flat - n_candidate
+        esdf_local = picked_flat - n_candidate - n_plane_rows
         sphere = np.where(
-            is_candidate, picked_flat // max(n_slots, 1), (picked_flat - n_candidate) // max(n_planes, 1)
+            is_candidate, picked_flat // max(n_slots, 1),
+            np.where(is_plane, plane_local // max(n_planes, 1), esdf_local),
         )
+        # `slot` identifies which thing a row is about: >= 0 a candidate slot, -1-k a plane, and
+        # ESDF rows get one sentinel because there is nothing to enumerate — the field is a single
+        # object and the row is about a *point*, not about a slot.
         slot = np.where(
             is_candidate,
             picked_flat % max(n_slots, 1),
-            -1 - ((picked_flat - n_candidate) % max(n_planes, 1)),
+            np.where(is_plane, -1 - (plane_local % max(n_planes, 1)), ESDF_SLOT),
         )
         sphere = np.where(used, sphere, 0)  # keep indices in range for the gather below
 
@@ -438,9 +496,20 @@ class CollisionLinearizer:
             # p == c exactly: no separating direction exists. Push along +x rather than emit NaN.
             unit[norm <= _EPS] = np.array([1.0, 0.0, 0.0])
             direction[sel] = unit
-        if np.any(~is_candidate & used):
-            sel = (~is_candidate) & used
+        if np.any(is_plane & used):
+            sel = is_plane & used
             direction[sel] = scene.plane_normal[-1 - slot[sel]]
+        if np.any(is_esdf & used):
+            # The ESDF's own gradient is the separating direction, and it is already unit-magnitude
+            # in free space because a distance field satisfies the eikonal equation. Normalising it
+            # anyway would hide a field that had gone wrong, so it is used as computed and only
+            # rescued where it vanishes (deep inside an obstacle, where the field is flat).
+            sel = is_esdf & used
+            grad = np.asarray(scene.esdf.gradient(centres[step_index[sel], sphere[sel]]), float)
+            norm = np.linalg.norm(grad, axis=1)
+            grad = np.where(norm[:, None] > _EPS, grad / np.maximum(norm, _EPS)[:, None],
+                            np.array([1.0, 0.0, 0.0]))
+            direction[sel] = grad
 
         gathered = jac[step_index, sphere]  # (n, 3, nq_opt)
         gradient = np.einsum("ni,nij->nj", direction, gathered)
@@ -457,6 +526,70 @@ class CollisionLinearizer:
             n_considered=considered,
             budget_bound_steps=bound,
         )
+
+
+def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
+                             config) -> Optional[SceneSnapshot]:
+    """AG3S 의 `CollisionConstraintSet` -> 이 optimizer 가 실제로 쓸 `SceneSnapshot`.
+
+    이 함수가 있는 이유는 **AG3S 가 backend 와 무관하게 candidate 를 항상 내놓기** 때문이다.
+    target/obstacle 분리는 candidate 목록의 성질이고 clearance policy 가 읽는 것도 그것이라,
+    ESDF 를 켠다고 후보가 사라지지 않는다. 무엇을 제약으로 삼을지는 **소비자의 선택**이고
+    그 선택이 여기서 일어난다.
+
+    * `primitive` — 후보 구와 평면. 필드는 붙이지 않는다.
+    * `esdf` — 필드와 평면. **후보 슬롯을 전부 비활성화한다.** 그러지 않으면 같은 기하가 두 번
+      제약되고, 그건 `both` 이지 `esdf` 가 아니다.
+    * `both` — 셋 다. 두 표현을 한 QP 에 넣어 행 단위로 비교할 때 쓴다.
+
+    평면(지지면)은 어느 backend 에서도 남는다. 평면 하나는 선형 행 하나로 정확한데 같은 표면을
+    복셀로 옮기면 수천 행이 되고 근사도 나빠지기 때문이며, ESDF 쪽은 그 표면을 필드에서 파낸다.
+    """
+    spec = constraint_set.constraints
+    backend = getattr(getattr(config, "collision", None), "backend", "primitive")
+    radii = np.asarray(robot_radii, np.float64).reshape(-1)
+    if spec is None:
+        # No `ConstraintSpec` at all. With the field that is a complete scene — an ESDF-only frame
+        # never builds the primitive parameter vector — so return a field-only snapshot rather than
+        # `None`, which the optimizer reads as "nothing to avoid".
+        field = getattr(constraint_set, "esdf", None)
+        if field is None or backend == "primitive":
+            return None
+        empty = SceneSnapshot(
+            candidate_pos=np.zeros((0, 3)), candidate_radius=np.zeros(0),
+            candidate_active=np.zeros(0, bool), d_safe=np.zeros((radii.size, 0)),
+            plane_normal=np.zeros((0, 3)), plane_offset=np.zeros(0),
+            plane_active=np.zeros(0, bool), robot_radii=radii,
+            candidate_ids=np.zeros(0, np.int64),
+            esdf=field, esdf_margin=float(config.collision.esdf_margin))
+        return empty
+    scene = SceneSnapshot.from_spec(spec, radii)
+    if backend not in ("primitive", "esdf", "both"):
+        raise ValueError(f"알 수 없는 collision backend: {backend!r}")
+
+    if backend in ("esdf", "both"):
+        field = getattr(constraint_set, "esdf", None)
+        if field is None:
+            raise ValueError(
+                f"collision.backend={backend!r} 인데 CollisionConstraintSet 에 ESDF 가 없습니다. "
+                "AG3S 쪽 `collision_backend` 를 'esdf' 또는 'both' 로 두고, depth 를 넘겼는지 "
+                "확인하세요 — point cloud 만으로는 투영 TSDF 를 만들 수 없습니다.")
+        scene = dataclasses.replace(
+            scene, esdf=field, esdf_margin=float(config.collision.esdf_margin))
+
+    if not getattr(config.collision, "use_support_planes", True):
+        # 평면도 끈다(지우지 않는다). AG3S 는 계속 평면을 뽑는다 — grounding 이 그 마스크 없이는
+        # 테이블을 타고 번지기 때문이다. 여기서 정하는 것은 **최적화기가 무엇을 제약으로 읽는가**
+        # 뿐이고, 표면 자체는 필드에 남아 있다.
+        scene = dataclasses.replace(
+            scene, plane_active=np.zeros_like(scene.plane_active))
+
+    if backend == "esdf":
+        # 후보를 지우지 않고 **끈다**. 슬롯 배치가 그대로여야 희소성 패턴이 유지되고, 그래야
+        # QP 의 인수분해를 프레임 간에 재사용할 수 있다 — 이 optimizer 의 실시간성이 거기 걸려 있다.
+        scene = dataclasses.replace(
+            scene, candidate_active=np.zeros_like(scene.candidate_active))
+    return scene
 
 
 def append_collision_rows(
