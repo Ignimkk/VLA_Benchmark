@@ -642,7 +642,10 @@ class AG3S:
                 if d is None:
                     continue
                 K = np.asarray(obs.camera_intrinsics, np.float64)
-                T = (np.asarray(obs.resolve_T_base_cam(), np.float64)
+                # `self.robot_model` 를 반드시 넘겨야 한다. 손목 카메라는 `T_base_cam` 대신
+                # `mount_link` + `T_link_cam` 으로 오고, 그 조합은 FK 없이는 풀리지 않는다.
+                # 인자를 빼면 head/wrist 관측에서 ESDF 경로 전체가 예외로 죽는다.
+                T = (np.asarray(obs.resolve_T_base_cam(self.robot_model), np.float64)
                      if hasattr(obs, "resolve_T_base_cam")
                      else np.asarray(obs.T_base_cam, np.float64))
                 d = np.asarray(d, np.float64)

@@ -146,6 +146,36 @@ class TransportScene:
         self.reset(keyframe=keyframe, settle_steps=settle_steps)
         self._renderer = None
 
+    @classmethod
+    def attach(cls, model, data, *, height: int = 480, width: int = 640) -> "TransportScene":
+        """이미 돌고 있는 시뮬레이션의 `model`/`data` 에 **붙는다**. 새로 로드하지 않는다.
+
+        `__init__` 은 XML 을 읽어 자기 `MjData` 를 만든다. 재생 실험에서는 그것이 맞지만 live
+        제어 루프에서는 치명적이다 — 로봇이 움직이는 씬과 AG3S 가 보는 씬이 갈라져, 제약이
+        설명하는 자세와 실행되는 자세가 다른 것을 아무도 눈치채지 못한다. 여기서는 같은 객체를
+        가리키므로 `reset`/`settle` 도 하지 않는다: 이 씬의 상태는 제어 루프가 소유한다.
+        """
+        import mujoco
+
+        self = cls.__new__(cls)
+        self.mujoco = mujoco
+        self.model = model
+        self.data = data
+        self.height, self.width = int(height), int(width)
+        self._joint_names = [
+            mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, i) for i in range(model.njnt)
+        ]
+        self._qadr = {
+            name: int(model.jnt_qposadr[i])
+            for i, name in enumerate(self._joint_names) if name
+        }
+        self._body_names = {
+            i: (mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_BODY, i) or f"body_{i}")
+            for i in range(model.nbody)
+        }
+        self._renderer = None
+        return self
+
     # --- posing -------------------------------------------------------------------------
     def reset(self, *, keyframe: str = "teleop", settle_steps: int = 400) -> None:
         mujoco = self.mujoco
