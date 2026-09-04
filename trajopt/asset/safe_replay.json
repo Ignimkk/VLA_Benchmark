@@ -1,0 +1,117 @@
+{
+  "records": "outputs/rby1_atomic_infer/ag3s_step1/ag3s_records/run_0002",
+  "cameras": [
+    "zed_left",
+    "wrist_cam_l",
+    "wrist_cam_r"
+  ],
+  "drop_camera": null,
+  "links": "arms",
+  "voxel": 0.02,
+  "esdf_margin": 0.05,
+  "constraint_spheres": 120,
+  "frames": [
+    {
+      "seq": 1,
+      "ag3s_status": "no_target",
+      "geometry_certified": false,
+      "trajopt_status": "violated",
+      "max_violation_mm": 0.0,
+      "safe": false,
+      "timing_ms": {
+        "infer": 0.005125999450683594,
+        "ag3s": 550.9625300001062,
+        "trajopt": 98.72741799972573,
+        "total": 649.7675199998412
+      },
+      "grippers_held": true,
+      "shape_ok": true,
+      "delta_max_rad": 0.053670525550842285
+    },
+    {
+      "seq": 2,
+      "ag3s_status": "no_target",
+      "geometry_certified": false,
+      "trajopt_status": "violated",
+      "max_violation_mm": 0.0,
+      "safe": false,
+      "timing_ms": {
+        "infer": 0.00781600010668626,
+        "ag3s": 522.1892409999782,
+        "trajopt": 53.390368000691524,
+        "total": 575.6313079991742
+      },
+      "grippers_held": true,
+      "shape_ok": true,
+      "delta_max_rad": 0.035720450803637505
+    },
+    {
+      "seq": 3,
+      "ag3s_status": "degraded",
+      "geometry_certified": false,
+      "trajopt_status": "violated",
+      "max_violation_mm": 0.0,
+      "safe": false,
+      "timing_ms": {
+        "infer": 0.008316999810631387,
+        "ag3s": 530.5867910001325,
+        "trajopt": 54.56129799949849,
+        "total": 585.2016209992144
+      },
+      "grippers_held": true,
+      "shape_ok": true,
+      "delta_max_rad": 0.09755765926092863
+    },
+    {
+      "seq": 4,
+      "ag3s_status": "degraded",
+      "geometry_certified": false,
+      "trajopt_status": "violated",
+      "max_violation_mm": 6.047388818810284,
+      "safe": false,
+      "timing_ms": {
+        "infer": 0.008971000170276966,
+        "ag3s": 531.4455830002771,
+        "trajopt": 78.81972099949053,
+        "total": 610.3199580002183
+      },
+      "grippers_held": true,
+      "shape_ok": true,
+      "delta_max_rad": 0.12574569508433342
+    },
+    {
+      "seq": 5,
+      "ag3s_status": "degraded",
+      "geometry_certified": false,
+      "trajopt_status": "violated",
+      "max_violation_mm": 6.2443259001545846,
+      "safe": false,
+      "timing_ms": {
+        "infer": 0.008973999683803413,
+        "ag3s": 531.7070460005198,
+        "trajopt": 78.18475299882266,
+        "total": 609.9425009997503
+      },
+      "grippers_held": true,
+      "shape_ok": true,
+      "delta_max_rad": 0.154886307194829
+    },
+    {
+      "seq": 6,
+      "ag3s_status": "degraded",
+      "geometry_certified": false,
+      "trajopt_status": "violated",
+      "max_violation_mm": 4.621035727619932,
+      "safe": false,
+      "timing_ms": {
+        "infer": 0.009022000085678883,
+        "ag3s": 518.4639429999152,
+        "trajopt": 57.630938999864156,
+        "total": 576.1454610001238
+      },
+      "grippers_held": true,
+      "shape_ok": true,
+      "delta_max_rad": 0.23379480838775635
+    }
+  ]
+}
