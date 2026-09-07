@@ -40,12 +40,37 @@ python -m benchmark.trajopt.serve_safe \
     --checkpoint /mnt/dev/work/.../29999 \
     --model-xml <RB-Y1 씬 XML> --port 8000
 
-# 로컬
-MUJOCO_GL=osmesa XLA_FLAGS='--xla_gpu_enable_command_buffer=' \
-src/openpi/.venv/bin/python -m src.rby1_bringup.pi05_infer \
-    --model rby1 --remote <서버:8000> --prompt "..." \
-    --safe-remote --safe-timeout 2.0 --trace outputs/live/trace
+# 터널 (컨테이너는 점프 호스트 내부망이라 직접 닿지 않는다)
+ssh -N -L 8123:localhost:8123 -J blunex@ai.amrc.kr:21151 root@172.21.121.112 -p 32542
+
+# 로컬 루프. `MUJOCO_GL=osmesa` 를 붙이지 않는다 — 아래 참고
+cd /home/mk/dev_ws/vla/pi0_TO_ws
+XLA_FLAGS='--xla_gpu_enable_command_buffer=' \
+src/openpi/.venv/bin/python src/rby1_bringup/pi05_infer.py \
+    --model rby1_transport_14d --remote localhost:8123 \
+    --prompt "put the apple in the basket" \
+    --fruit-layout-index 0 --fruit-slot-order apple banana orange pear \
+    --obstacle-profile clear --max-steps 350 --start-delay 2 --speed 1.0 --view front \
+    --safe-remote --safe-timeout 2.0 \
+    --trace outputs/live/trace \
+    --record outputs/live/third_person.mp4
 ```
+
+**렌더 백엔드는 뷰어를 띄우느냐로 갈린다.** `--headless` 가 없으면 이 루프는
+`mujoco.viewer.launch_passive` 로 대화형 뷰어를 띄우는데, `MUJOCO_GL=osmesa` 는 화면 없는
+소프트웨어 렌더러라 기본 프레임버퍼가 없다. 붙이면 시작하자마자 죽는다:
+
+```
+ERROR: Default framebuffer is not complete, error 0x0
+```
+
+뷰어 없이 돌리려면 osmesa 와 `--headless` 를 함께 준다. `--record` 가 있으므로 영상은 그대로
+나온다. 오프라인 분석 스크립트(`safe_replay`, `*_report`)는 뷰어를 띄우지 않으므로 osmesa 가
+맞고, **거기서 명령을 복사해 오면 이 오류를 만난다.**
+
+또한 `--model` 은 `rby1_transport_14d` 여야 한다. 서버의 `--model-xml` 이 그 모델의 씬
+(`model_transport.xml`)이고, 둘이 어긋나면 서버가 만든 로봇 모델이 로컬이 움직이는 로봇과
+달라진다.
 
 `--no-safe`(서버) 로 감싸기를 끄면 기존 서빙과 같다. 문제가 안전 계층에 있는지 아닌지를 플래그
 하나로 가를 수 있다.

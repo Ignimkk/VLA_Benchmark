@@ -26,6 +26,11 @@ src/openpi/.venv/bin/python -m src.rby1_bringup.pi05_infer \
 | `--record-constraints DIR` | 제약 생성 중간 산출물 |
 | `--record-constraints-esdf {none,occupancy,full}` | 거리장 저장 범위 |
 
+**`MUJOCO_GL=osmesa` 는 `--headless` 와 함께일 때만 쓴다.** 뷰어를 띄우는 실행에 붙이면
+`ERROR: Default framebuffer is not complete, error 0x0` 로 시작하자마자 죽는다 — osmesa 는
+화면 없는 소프트웨어 렌더러라 기본 프레임버퍼가 없다. 오프라인 분석 스크립트에서 명령을
+복사해 올 때 자주 만나는 오류다.
+
 `zed_right` 를 넣지 않는 이유는 `CameraID` 에 `HEAD` 가 하나뿐이라 `zed_left` 와 겹치기
 때문이다. 세 대는 머리 하나 + 손목 둘이다.
 
