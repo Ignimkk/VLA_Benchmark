@@ -381,9 +381,15 @@ class EsdfConfig:
     depth_min: float = 0.05
     depth_max: float = 3.0
     max_weight: float = 64.0
-    #: Carve the grounded target out of the collision field. `auto` follows the phase's contact
-    #: permission, which is the same rule the clearance policy uses, so the two cannot disagree.
-    exclude_target: str = "auto"  # auto | always | never
+    #: No longer read by `AG3SPipeline._build_esdf` (`docs/AG3S_REVIEW_LOG.md` Step 2, E1) — carving
+    #: the target out of the field relaxed it for **every** robot sphere, not just the ones
+    #: authorized to touch it, because the field cannot express "who is asking". The pipeline now
+    #: always leaves the target in the field and relaxes the authorized links' required margin
+    #: instead (`CollisionConstraintSet.target_link_margin`, from `ClearancePolicy`). Kept as a field
+    #: — rather than removed — only so old configs with `exclude_target: always` do not fail to
+    #: parse; `EsdfBuilder.update(exclude_target=...)` itself is still a general capability a direct
+    #: caller may use.
+    exclude_target: str = "auto"  # auto | always | never — unused by the pipeline; see above
     target_dilate_voxels: int = 0
     #: Carve support-surface points out of the field. Default on, and it is not an optimisation.
     #:

@@ -94,6 +94,14 @@ class SceneSnapshot:
     #: two descriptions of the same scene then sit in the same QP and can be compared row for row.
     esdf: Any = None
     esdf_margin: float = 0.0
+    #: `(T, 3)` base frame, AG3S's `TargetGeometry.points` — or `None` when there is no target.
+    #: `target_link_margin` is `(S,)`, AG3S's `ClearancePolicy.margin_matrix` TARGET column for this
+    #: constraint model (`CollisionConstraintSet.target_link_margin`). Together they let
+    #: `_esdf_clearance` tell "this sphere's nearest field obstacle is the target its own link is
+    #: authorized to touch" from "this sphere is near something else" without AG3S carving the
+    #: target out of the shared field for every sphere (`docs/AG3S_REVIEW_LOG.md` Step 2/3, E1).
+    target_points: Optional[np.ndarray] = None
+    target_link_margin: Optional[np.ndarray] = None
 
     @property
     def has_esdf(self) -> bool:
@@ -326,12 +334,29 @@ class CollisionLinearizer:
 
         No slot loop and no selection over candidates: the field answers for the point directly.
         That is why this block is `S` rows where the primitive block is `S * M`.
+
+        **Per-sphere target margin, not a global carve (E1).** AG3S no longer removes the target
+        from the field, so `d` already reflects the target as an obstacle for every sphere. A sphere
+        whose nearest field obstacle *is* the target — `d` agrees with the analytic distance to
+        `scene.target_points` within one voxel of discretization bias — uses
+        `scene.target_link_margin` for that sphere instead of the flat `esdf_margin`. An
+        unauthorized sphere's entry in `target_link_margin` is the full margin already (AG3S builds
+        it that way), so there is nothing else to check here: whether a link may touch the target is
+        entirely encoded in the numbers AG3S handed over.
         """
         if scene.esdf is None:
             return np.zeros((centres.shape[0], centres.shape[1], 0))
         flat = centres.reshape(-1, 3)
         d = np.asarray(scene.esdf.distance(flat), np.float64).reshape(centres.shape[:2])
-        return (d - scene.robot_radii[None, :] - float(scene.esdf_margin))[..., None]
+        margin = np.full(centres.shape[:2], float(scene.esdf_margin))
+        if (scene.target_points is not None and scene.target_link_margin is not None
+                and len(scene.target_points)):
+            from scipy.spatial import cKDTree
+            d_target = cKDTree(scene.target_points).query(flat)[0].reshape(centres.shape[:2])
+            tol = float(scene.esdf.grid.voxel_size)
+            is_target = d >= (d_target - tol)
+            margin = np.where(is_target, scene.target_link_margin[None, :], margin)
+        return (d - scene.robot_radii[None, :] - margin)[..., None]
 
     def _clearances_from(self, centres: np.ndarray, scene: SceneSnapshot):
         """``(candidate[H, S, M], plane[H, S, K], distance[H, S, M])`` — no ``delta`` array.
@@ -548,6 +573,17 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
     spec = constraint_set.constraints
     backend = getattr(getattr(config, "collision", None), "backend", "primitive")
     radii = np.asarray(robot_radii, np.float64).reshape(-1)
+    # E1: AG3S no longer carves the target out of the field, so a sphere on an authorized link needs
+    # its own relaxed margin instead — read straight off `CollisionConstraintSet`, nothing recomputed
+    # here. Both are `None` together whenever there is no grounded target this frame.
+    target = getattr(constraint_set, "target", None)
+    target_points = np.asarray(target.points, np.float64) if target is not None else None
+    target_link_margin = getattr(constraint_set, "target_link_margin", None)
+    if target_link_margin is not None and target_link_margin.shape[0] != radii.size:
+        raise ValueError(
+            f"target_link_margin has {target_link_margin.shape[0]} entries but {radii.size} robot "
+            "radii were given; the optimizer and AG3S must share one constraint model"
+        )
     if spec is None:
         # No `ConstraintSpec` at all. With the field that is a complete scene — an ESDF-only frame
         # never builds the primitive parameter vector — so return a field-only snapshot rather than
@@ -561,7 +597,8 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
             plane_normal=np.zeros((0, 3)), plane_offset=np.zeros(0),
             plane_active=np.zeros(0, bool), robot_radii=radii,
             candidate_ids=np.zeros(0, np.int64),
-            esdf=field, esdf_margin=float(config.collision.esdf_margin))
+            esdf=field, esdf_margin=float(config.collision.esdf_margin),
+            target_points=target_points, target_link_margin=target_link_margin)
         return empty
     scene = SceneSnapshot.from_spec(spec, radii)
     if backend not in ("primitive", "esdf", "both"):
@@ -575,7 +612,8 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
                 "AG3S 쪽 `collision_backend` 를 'esdf' 또는 'both' 로 두고, depth 를 넘겼는지 "
                 "확인하세요 — point cloud 만으로는 투영 TSDF 를 만들 수 없습니다.")
         scene = dataclasses.replace(
-            scene, esdf=field, esdf_margin=float(config.collision.esdf_margin))
+            scene, esdf=field, esdf_margin=float(config.collision.esdf_margin),
+            target_points=target_points, target_link_margin=target_link_margin)
 
     if not getattr(config.collision, "use_support_planes", True):
         # 평면도 끈다(지우지 않는다). AG3S 는 계속 평면을 뽑는다 — grounding 이 그 마스크 없이는

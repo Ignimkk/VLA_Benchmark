@@ -38,6 +38,7 @@ from benchmark.ag3s.types import (
     GroundingStatus,
     Phase,
     PipelineStatus,
+    SourceType,
     SupportSurface,
     TargetGeometry,
 )
@@ -169,6 +170,16 @@ def build_constraint_set(
         ConstraintValidity.DEGRADED if overflow else ConstraintValidity.VALID,
     )
 
+    # ESDF 쪽 접촉 허용 — 그 물체를 필드에서 파내는 대신(E1), 어느 구가 그 물체를 만져도 되는지를
+    # 여기서 링크별 마진으로 넘긴다. `margin_matrix`가 이미 primitive TARGET 열에서 하던 계산을
+    # 그대로 재사용한다 — 정책 로직이 두 곳에 따로 있지 않다. 권한 없는 링크는 이 배열에서도
+    # `safety_margin` 그대로이므로, "허용된 손끝만" 이라는 성질이 값 자체에 이미 들어 있다.
+    target_link_margin = None
+    if target is not None and builder.n_robot_spheres:
+        target_link_margin = builder.clearance_policy.margin_matrix(
+            builder.sphere_link_names, [SourceType.TARGET], context=ctx, target_grounded=True,
+        )[:, 0]
+
     if validity is ConstraintValidity.INCOMPLETE:
         status = PipelineStatus.GEOMETRY_INCOMPLETE
     elif not candidates and not support_surfaces and not has_field:
@@ -199,6 +210,7 @@ def build_constraint_set(
         metrics=dict(metrics or {}),
         attached=attached,
         esdf=esdf,
+        target_link_margin=target_link_margin,
     )
 
 

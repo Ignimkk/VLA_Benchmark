@@ -447,17 +447,48 @@ class AG3S:
                     observations, depth, camera_intrinsics, T_base_cam, robot_state)
                 with profiler.stage("esdf"):
                     esdf_field, esdf_notes = self._build_esdf(
-                        cameras, grounding.target, phase, context,
+                        cameras, grounding.target,
                         support_points=(cloud.points[support_mask]
                                         if cfg.esdf.exclude_support_surfaces
                                         and support_mask is not None else None))
                 notes.extend(esdf_notes)
-                if esdf_field is not None and (
-                        esdf_field.unknown_fraction >= cfg.esdf.unknown_report_threshold):
-                    notes.append(
-                        f"{esdf_field.unknown_fraction:.1%} of the ESDF volume was never observed "
-                        f"and is treated as {cfg.esdf.unknown_policy} by esdf.unknown_policy"
-                    )
+                if esdf_field is not None:
+                    # G2 (`docs/AG3S_REVIEW_LOG.md` Step 4): an unobserved field used to produce a
+                    # *note* and nothing else, so a frame whose collision field was entirely empty
+                    # still reported `validity: valid` / `geometry_certified: True` — and in
+                    # `collision_backend: esdf` the field is the only obstacle source. This is
+                    # verbatim the failure `ConstraintValidity`'s own docstring names: "an empty
+                    # VALID set means AG3S looked and there is nothing there, while INCOMPLETE means
+                    # AG3S cannot tell you what is there. Rendering the second as the first is how a
+                    # robot drives into an unmodelled wall."
+                    stats = esdf_field.stats
+                    if int(stats.get("n_free", 0)) == 0 and int(stats.get("n_occupied", 0)) == 0:
+                        # Not one voxel was observed either way: the integration produced no
+                        # information at all. A genuinely empty workspace still yields FREE voxels
+                        # along the rays that passed through it, so this only fires on failure —
+                        # wrong depth units, wrong extrinsics, a bounds box the cameras cannot see.
+                        notes.append(
+                            "the ESDF integrated no observations at all (every voxel unknown); the "
+                            "collision field is empty and cannot be certified — check the depth "
+                            "units (pointcloud.depth_scale), the extrinsics and esdf.bounds_*"
+                        )
+                        validity = ConstraintValidity.worst(
+                            validity, ConstraintValidity.INCOMPLETE)
+                    elif esdf_field.unknown_fraction >= cfg.esdf.unknown_report_threshold:
+                        notes.append(
+                            f"{esdf_field.unknown_fraction:.1%} of the ESDF volume was never "
+                            f"observed and is treated as {cfg.esdf.unknown_policy} by "
+                            "esdf.unknown_policy"
+                        )
+                        # "represented, but ... partially observed" — the enum's own words for
+                        # DEGRADED. Still usable; no longer certified.
+                        validity = ConstraintValidity.worst(
+                            validity, ConstraintValidity.DEGRADED)
+                    # G3/G4 — the two *partial* failures G2 cannot see, because a field that is
+                    # wrong is not the same as a field that is empty.
+                    cover_notes, cover_validity = self._esdf_coverage(esdf_field, robot_state)
+                    notes.extend(cover_notes)
+                    validity = ConstraintValidity.worst(validity, cover_validity)
 
             constraint_set = self._constraints(
                 esdf=esdf_field,
@@ -594,6 +625,66 @@ class AG3S:
             build_spec=build_spec,
         )
 
+    def _esdf_coverage(self, field, robot_state):
+        """`(notes, validity)` — does the field actually cover what it is asked about?
+
+        G2 catches a field that observed *nothing*. These two catch a field that is populated but
+        does not cover the question being asked, which reports as a perfectly healthy frame
+        (`docs/AG3S_REVIEW_LOG.md` Step 4).
+
+        **G3 — a camera that contributed nothing.** Measured on a healthy RB-Y1 frame every camera
+        writes 13k-150k voxels, so `n_updated == 0` is not a quiet frame, it is a broken one: wrong
+        extrinsics, a dead driver, depth entirely outside `esdf.depth_min/max`. This check only
+        became possible once E5 was fixed — before that all three cameras collapsed onto the key
+        `"camera"` and overwrote each other, so a dead camera was not merely unreported but
+        unobservable.
+
+        **G4 — a robot sphere outside the grid.** `EsdfField.distance` answers `outside_distance`
+        for any query beyond the grid, so a sphere out there reads as free space no matter what is
+        actually next to it (E4). AG3S knows the constraint model and this frame's `q`, so it can
+        say so *before* the optimizer plans, which is worth more than the query-time counter
+        `EsdfField.outside_query_fraction` that only trajopt would ever see. Measured over the whole
+        `run_0004` rollout: the `arms` constraint model (120 spheres, the default) never leaves the
+        default grid, so this does not fire on the healthy path; the whole-body model has 25 spheres
+        permanently outside — `base`, `wheel_l`, `wheel_r`, `link_torso_0`, all below the grid floor
+        — which is true, is the documented reason `--constraint-links arms` is the default, and is
+        exactly the sort of thing that should be said out loud rather than left implicit.
+        """
+        notes: list[str] = []
+        validity = ConstraintValidity.VALID
+
+        per_camera = field.stats.get("per_camera", {}) or {}
+        dead = sorted(n for n, s in per_camera.items() if int(s.get("n_updated", 0)) == 0)
+        if dead and len(dead) < len(per_camera):
+            notes.append(
+                f"camera(s) {', '.join(dead)} contributed no voxels to the ESDF this frame; the "
+                "field is built from the remaining view(s) only — check their extrinsics and depth "
+                "range"
+            )
+            validity = ConstraintValidity.worst(validity, ConstraintValidity.DEGRADED)
+
+        model = self.constraint_robot_model
+        if model is not None and robot_state is not None:
+            centres, radii = model.sphere_centers_numeric(np.asarray(robot_state, np.float64))
+            centres = np.asarray(centres, np.float64).reshape(-1, 3)
+            radii = np.asarray(radii, np.float64).reshape(-1)
+            lower, upper = field.grid.origin, field.grid.upper
+            outside = np.any(
+                (centres - radii[:, None] < lower) | (centres + radii[:, None] > upper), axis=1
+            )
+            if outside.any():
+                names = getattr(model, "sphere_link_names", None)
+                where = (f" ({', '.join(sorted(set(str(names[i]) for i in np.flatnonzero(outside))))})"
+                         if names is not None and len(names) == outside.size else "")
+                notes.append(
+                    f"{int(outside.sum())} of {outside.size} constraint sphere(s) lie outside the "
+                    f"ESDF grid{where}; the field answers "
+                    f"{field.outside_distance:+.2f} m for them regardless of what is there, so they "
+                    "are not constrained by it — widen esdf.bounds_lower/upper or exclude those links"
+                )
+                validity = ConstraintValidity.worst(validity, ConstraintValidity.DEGRADED)
+        return notes, validity
+
     def _robot_mask_for(self, depth, K, T_base_cam, robot_state):
         """`(H, W)` True where a depth pixel is the robot itself, or `None` when unknowable.
 
@@ -632,9 +723,20 @@ class AG3S:
         one — it decides *free* space from what a ray passed through, which a point cloud cannot
         say. That case returns nothing and the pipeline notes it rather than silently building a
         field out of surface points alone, which would mark everything else unobserved.
+
+        **`pointcloud.depth_scale` is applied here** (G1, `docs/AG3S_REVIEW_LOG.md` Step 4). The
+        depth image's units are a property of the *input*, not of whoever consumes it, so both
+        consumers must decode them the same way: `reconstruction.backproject` scales, and until this
+        was fixed the TSDF did not. With the documented `depth_scale: 0.001` for uint16-millimetre
+        depth — what a real sensor and `--record-depth` both deliver — the cloud came out in metres
+        while the field integrated the raw millimetre numbers, every ray fell outside
+        `esdf.depth_max`, and the collision field ended up **entirely empty while the frame still
+        reported `status: ok`**. `_robot_mask_for` is deliberately given the *unscaled* depth: it
+        goes through `backproject`, which applies the scale itself.
         """
         from benchmark.ag3s.esdf import CameraDepth
 
+        scale = float(self.config.pointcloud.depth_scale)
         out = []
         if observations:
             for obs in observations:
@@ -654,18 +756,26 @@ class AG3S:
                     # Each observation carries the `q` it was captured at, so the mask is built
                     # with *that* configuration — the same rule the fused cloud follows.
                     mask = self._robot_mask_for(d, K, T, getattr(obs, "robot_state", None))
+                # E5 (`docs/AG3S_REVIEW_LOG.md` Step 2): `CameraObservation` names itself via
+                # `camera_id`, not `camera`/`name` — those two never existed on it, so all three
+                # real cameras fell back to the same literal `"camera"` and silently overwrote each
+                # other in `EsdfField.stats["per_camera"]`. `camera_id` is tried first now; the old
+                # fallbacks stay for any duck-typed observation that only has those.
+                cam_id = getattr(obs, "camera_id", None)
+                name = (cam_id.value if cam_id is not None
+                        else str(getattr(obs, "camera", getattr(obs, "name", "camera"))))
                 out.append(CameraDepth(
-                    name=str(getattr(obs, "camera", getattr(obs, "name", "camera"))),
-                    depth=d, camera_intrinsics=K, T_base_cam=T, robot_mask=mask))
+                    name=name, depth=d * scale, camera_intrinsics=K, T_base_cam=T,
+                    robot_mask=mask))
         elif depth is not None and camera_intrinsics is not None and T_base_cam is not None:
             d = np.asarray(depth, np.float64)
             K = np.asarray(camera_intrinsics, np.float64)
             T = np.asarray(T_base_cam, np.float64)
-            out.append(CameraDepth("camera", d, K, T,
+            out.append(CameraDepth("camera", d * scale, K, T,
                                    robot_mask=self._robot_mask_for(d, K, T, robot_state)))
         return out
 
-    def _build_esdf(self, depth_cameras, target, phase, context, *, support_points=None):
+    def _build_esdf(self, depth_cameras, target, *, support_points=None):
         """Integrate this frame into the ESDF and return `(field, notes)`.
 
         The builder is kept on the instance rather than rebuilt: that is the only way the local
@@ -680,28 +790,19 @@ class AG3S:
         if self._esdf_builder is None:
             self._esdf_builder = EsdfBuilder(cfg)
 
-        rule = self.config.contact.rule_for(phase)
-        if cfg.exclude_target == "always":
-            exclude = True
-        elif cfg.exclude_target == "never":
-            exclude = False
-        else:
-            # `auto`: follow the phase's contact permission, which is the same input
-            # `ClearancePolicy` reads. Carving the target out of the field is the field's version of
-            # relaxing its margin, and the two must be driven by one rule.
-            exclude = bool(rule.contact_permission) and target is not None
+        # 예전엔 여기서 `contact.rule_for(phase).contact_permission`을 보고 target을 필드에서
+        # 통째로 carve() 했다 (E1, `docs/AG3S_REVIEW_LOG.md` Step 2). 문제: 필드는 익명이라
+        # "누가 묻는지"를 모른다 — GRASP phase가 되면 그 물체는 잡는 손끝뿐 아니라 몸통·전완·
+        # 반대팔에게도 사라졌다. 대신 필드는 **항상** target을 그대로 담아 두고,
+        # `to_adapter.build_constraint_set`가 채우는 `target_link_margin` (구별 마진, 권한 있는
+        # 링크만 완화)이 trajopt의 `_esdf_clearance`에서 그 구별을 한다 — MoveIt의 Allowed
+        # Collision Matrix, cuRobo의 attached-object 패턴과 같은 "지우지 말고 질의 쪽에서
+        # 봐준다" 방식. `cfg.exclude_target`는 이제 이 경로에서 쓰이지 않는다 (config.py 참고).
         points = None if target is None else np.asarray(target.points, np.float64)
         field = self._esdf_builder.update(depth_cameras, target_points=points,
-                                          exclude_target=exclude,
+                                          exclude_target=False,
                                           support_points=support_points)
-        notes = []
-        if exclude:
-            notes.append(
-                f"{field.stats['n_target_voxels_carved']} target voxel(s) were carved out of the "
-                f"collision ESDF because phase {phase} permits contact; the target remains a "
-                "collision candidate in the primitive set"
-            )
-        return field, notes
+        return field, []
 
     @staticmethod
     def _with_camera_provenance(target, fusion, attention_cloud):

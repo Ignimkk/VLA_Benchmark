@@ -97,12 +97,29 @@ class TsdfVolume:
         shape = grid.shape
         self.tsdf = np.full(shape, self.truncation, np.float32)
         self.weight = np.zeros(shape, np.float32)
-        self._centres: Optional[np.ndarray] = None
 
-    def _all_centres(self) -> np.ndarray:
-        if self._centres is None:
-            self._centres = self.grid.centres().reshape(-1, 3).astype(np.float32)
-        return self._centres
+    def _frustum_index_bounds(self, K: np.ndarray, T: np.ndarray, w: int, h: int,
+                              depth_min: float, depth_max: float) -> tuple[np.ndarray, np.ndarray]:
+        """카메라 절두체(근/원 평면 8 코너)의 base 프레임 AABB를 격자 인덱스 범위로 돌려준다.
+
+        절두체는 볼록체이고 근/원 평면 각 4 코너가 그 꼭짓점 전부이므로, 8 코너의 AABB가 절두체
+        전체의 정확한 AABB다 — 코너 사이 어딘가가 더 튀어나오는 경우는 없다. `pad`는 절단대역
+        만큼 여유를 둔다: 표면이 원평면 바로 밖에 있어도 `sdf >= -truncation` 판정으로 갱신
+        대상이 될 수 있는 복셀을 놓치지 않기 위해서다 (`_dirty_blocks`의 padding과 같은 이유).
+        """
+        Kinv = np.linalg.inv(K)
+        corners_uv = np.array([[0, 0, 1], [w, 0, 1], [0, h, 1], [w, h, 1]], np.float64)
+        rays = corners_uv @ Kinv.T  # (4, 3) z=1 평면에서의 방향
+        R, t = T[:3, :3], T[:3, 3]
+        pts = np.concatenate(
+            [(rays * d) @ R.T + t for d in (depth_min, depth_max)], axis=0
+        )  # (8, 3) base 프레임
+        idx, _ = self.grid.to_index(pts)
+        pad = int(np.ceil(self.truncation / self.grid.voxel_size)) + 1
+        shape = np.asarray(self.grid.shape)
+        lo = np.clip(idx.min(axis=0) - pad, 0, shape - 1)
+        hi = np.clip(idx.max(axis=0) + pad, 0, shape - 1)
+        return lo, hi
 
     def integrate(self, depth: np.ndarray, camera_intrinsics: np.ndarray,
                   T_base_cam: np.ndarray, *, depth_min: float = 0.05,
@@ -114,6 +131,13 @@ class TsdfVolume:
         이므로 표면 앞은 양수, 뒤는 음수다. 절단 밖(뒤로 멀리)은 갱신하지 않는다 — 표면 뒤는
         "비어 있다"가 아니라 **가려져서 모른다**이고, 그것을 자유로 적분하면 없는 정보를
         만들어내는 셈이다.
+
+        **전체 격자가 아니라 이 카메라의 절두체가 닿는 부분격자만 투영한다.** 이전에는 매
+        카메라·매 프레임 전체 복셀(RB-Y1 기준 435만)을 투영해 그게 실측 1213 ms/frame의 주범이
+        었다 — 국소 EDT 갱신과 달리 이 단계는 씬이 정적이어도 매 프레임 고정 비용이었다
+        (`docs/AG3S_REVIEW_LOG.md` Step 1, E6). cuRoboV2(Sundaralingam et al. 2026)의
+        block-discovery 단계와 같은 발상을 격자 전체가 아니라 절두체 AABB 단위로 적용한 것 —
+        해시 테이블 없이 numpy 슬라이싱만으로 같은 효과를 낸다.
         """
         depth = np.asarray(depth, np.float64)
         if robot_mask is not None:
@@ -124,9 +148,14 @@ class TsdfVolume:
         T = np.asarray(T_base_cam, np.float64)
         h, w = depth.shape
 
-        centres = self._all_centres()
-        # float32 로 계산한다. 4M 복셀 x 3 카메라에서 이 배열들이 대역폭을 다 쓰고, 복셀 크기가
-        # 5 mm 이상이라 float32 의 상대오차(1e-7)는 격자 해상도보다 네 자릿수 아래다.
+        lo, hi = self._frustum_index_bounds(K, T, w, h, depth_min, depth_max)
+        sub_shape = tuple(int(hi[i] - lo[i] + 1) for i in range(3))
+        n_considered = int(np.prod(sub_shape))
+        ax = [self.grid.origin[i] + (lo[i] + np.arange(sub_shape[i])) * self.grid.voxel_size
+              for i in range(3)]
+        # float32 로 계산한다. 복셀 크기가 5 mm 이상이라 float32 의 상대오차(1e-7)는 격자
+        # 해상도보다 네 자릿수 아래다.
+        centres = np.stack(np.meshgrid(*ax, indexing="ij"), axis=-1).reshape(-1, 3).astype(np.float32)
         cam = ((centres - T[:3, 3]) @ T[:3, :3]).astype(np.float32)
         z = cam[:, 2]
         front = z > _EPS
@@ -140,30 +169,34 @@ class TsdfVolume:
         vi = np.rint(np.clip(v, -1.0, h + 1.0)).astype(np.int64)
         in_image = front & (ui >= 0) & (ui < w) & (vi >= 0) & (vi < h)
         if not in_image.any():
-            return {"n_updated": 0, "n_in_image": 0}
+            return {"n_updated": 0, "n_in_image": 0, "n_considered": n_considered}
 
         sel = np.nonzero(in_image)[0]
         measured = depth[vi[sel], ui[sel]]
         valid = np.isfinite(measured) & (measured >= depth_min) & (measured <= depth_max)
         sel = sel[valid]
         if sel.size == 0:
-            return {"n_updated": 0, "n_in_image": int(in_image.sum())}
+            return {"n_updated": 0, "n_in_image": int(in_image.sum()), "n_considered": n_considered}
         measured = depth[vi[sel], ui[sel]]
         sdf = measured - z[sel]
         # 표면 뒤로 절단을 넘어선 곳은 관측이 아니라 가림이다. 건드리지 않는다.
         keep = sdf >= -self.truncation
         sel, sdf = sel[keep], sdf[keep]
         if sel.size == 0:
-            return {"n_updated": 0, "n_in_image": int(in_image.sum())}
+            return {"n_updated": 0, "n_in_image": int(in_image.sum()), "n_considered": n_considered}
         sdf = np.minimum(sdf, self.truncation)
 
-        flat_t = self.tsdf.reshape(-1)
-        flat_w = self.weight.reshape(-1)
-        w_old = flat_w[sel]
+        # `self.tsdf[lo:hi]`는 대개 비연속 뷰라 `.reshape(-1)`가 조용히 복사본을 만든다 — 그러면
+        # 아래 대입이 원본에 안 먹는다. 그 대신 로컬 (i,j,k)로 되돌려 그 뷰에 팬시 인덱싱으로
+        # 직접 쓴다. 팬시 인덱싱 대입은 뷰든 아니든 스트라이드를 그대로 따라가므로 원본에 반영된다.
+        sl = tuple(slice(int(lo[i]), int(hi[i]) + 1) for i in range(3))
+        view_t, view_w = self.tsdf[sl], self.weight[sl]
+        ii, jj, kk = np.unravel_index(sel, sub_shape)
+        w_old = view_w[ii, jj, kk]
         w_new = np.minimum(w_old + 1.0, max_weight)
-        flat_t[sel] = (flat_t[sel] * w_old + sdf.astype(np.float32)) / np.maximum(w_new, _EPS)
-        flat_w[sel] = w_new
-        return {"n_updated": int(sel.size), "n_in_image": int(in_image.sum())}
+        view_t[ii, jj, kk] = (view_t[ii, jj, kk] * w_old + sdf.astype(np.float32)) / np.maximum(w_new, _EPS)
+        view_w[ii, jj, kk] = w_new
+        return {"n_updated": int(sel.size), "n_in_image": int(in_image.sum()), "n_considered": n_considered}
 
     def occupancy(self, *, surface_band: Optional[float] = None) -> np.ndarray:
         """`FREE` / `OCCUPIED` / `UNKNOWN` 격자.
@@ -184,8 +217,16 @@ class EsdfField:
     """부호 있는 거리 격자와 그 조회. 이 backend 가 TO 에 넘기는 것.
 
     `distance` 는 삼선형 보간, `gradient` 는 격자 위 중심차분을 같은 방식으로 보간한다. 둘 다
-    격자 밖 점에서는 가장자리 값을 쓰되 `outside_distance` 로 대체할 수 있다 — 작업 공간 밖은
-    관측 대상이 아니므로 자유로 두는 것이 기본이다.
+    격자 밖 점에서는 가장자리 값을 쓰되 `outside_distance` 로 대체할 수 있다.
+
+    **격자 밖은 격자 안의 `UNKNOWN`과 같은 것이지 별개의 상태가 아니다.** `EsdfBuilder`가
+    `outside_distance`를 채울 때 `unknown_policy`를 그대로 따른다 — `free`면
+    `+max_distance`, `occupied`면 `-max_distance`. 예전에는 `unknown_policy`와 무관하게
+    항상 `+max_distance`(자유)였는데, 그러면 `occupied`로 안전 쪽을 택한 호출자도 격자 밖에서는
+    "관측 실패"가 "0.5 m 떨어져서 안전함"으로 조용히 둔갑했다 (`docs/AG3S_REVIEW_LOG.md`
+    Step 1, E4). `outside_query_count` / `outside_query_fraction`이 `distance()` 호출마다
+    격자 밖 조회 비율을 세어, `unknown_fraction`처럼 셀 수 있게 만든다 — 이 파일의 설계 철학이
+    "조용히 정하지 않고 보고한다"는 것이므로, 격자 밖도 예외가 아니어야 한다.
 
     **이산화 편향은 복셀 반 칸이고 부호가 보수적이다.** 표면은 점유 복셀의 *중심*에 표시되므로
     거리장이 참값보다 최대 `voxel_size / 2` 만큼 **작게** 나온다. 합성 구로 측정한 값이
@@ -199,6 +240,9 @@ class EsdfField:
     max_distance: float
     stats: dict[str, Any] = dataclasses.field(default_factory=dict)
     outside_distance: Optional[float] = None
+    #: `distance()` 호출이 누적한 것. `outside_query_fraction` 참고.
+    outside_query_count: int = dataclasses.field(default=0, repr=False)
+    queried_point_count: int = dataclasses.field(default=0, repr=False)
 
     def __post_init__(self) -> None:
         if self.distance_grid.shape != tuple(self.grid.shape):
@@ -208,6 +252,18 @@ class EsdfField:
     @property
     def unknown_fraction(self) -> float:
         return float(self.stats.get("unknown_fraction", 0.0))
+
+    @property
+    def outside_query_fraction(self) -> float:
+        """이 필드에 지금까지 들어온 `distance()` 조회 중 격자 밖이었던 비율.
+
+        `unknown_fraction`은 필드를 만들 때 한 번 정해지는 정적 통계고, 이건 그 필드가
+        **얼마나 많이 격자 밖에서 질의됐는지** — 즉 `default_bounds()`가 자른 상자가 이번
+        롤아웃에서 실제로 얼마나 자주 걸렸는지 — 를 나중에 되짚어볼 수 있게 남기는 값이다.
+        """
+        if self.queried_point_count == 0:
+            return 0.0
+        return self.outside_query_count / self.queried_point_count
 
     def _lattice(self, points: np.ndarray):
         p = np.asarray(points, np.float64).reshape(-1, 3)
@@ -234,6 +290,8 @@ class EsdfField:
                            * (t[:, 1] if dy else 1.0 - t[:, 1])
                            * (t[:, 2] if dz else 1.0 - t[:, 2]))
                     out += wgt * g[idx[:, 0], idx[:, 1], idx[:, 2]]
+        self.queried_point_count += len(i0)
+        self.outside_query_count += int((~inside).sum())
         if self.outside_distance is not None and (~inside).any():
             out[~inside] = float(self.outside_distance)
         return out
@@ -511,9 +569,12 @@ class EsdfBuilder:
             "n_occupancy_changed": int(getattr(self, "_n_changed", 0)),
             "per_camera": per_camera,
         })
+        # 격자 밖은 격자 안의 UNKNOWN 과 같은 것이므로 같은 정책을 따른다 — `unknown_policy`
+        # 와 무관하게 항상 자유였던 것이 E4 였다.
+        outside = cfg.max_distance if cfg.unknown_policy == "free" else -cfg.max_distance
         return EsdfField(grid=self.grid, distance_grid=field_grid,
                          max_distance=cfg.max_distance, stats=stats,
-                         outside_distance=cfg.max_distance)
+                         outside_distance=outside)
 
 
 def build_once(cameras: Sequence[CameraDepth], config, *, bounds=None,

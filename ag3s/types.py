@@ -844,6 +844,15 @@ class CollisionConstraintSet:
     #: it only answers "how far is the nearest surface". Dropping the candidates to save memory
     #: would delete the one thing the clearance policy reads.
     esdf: Any = None
+    #: `(n_constraint_spheres,)` required clearance to `target`, per constraint-robot sphere, from
+    #: `ClearancePolicy.margin_matrix`'s TARGET column — `None` when there is no target. This is the
+    #: ESDF path's answer to the same problem the (sphere, slot) primitive margin matrix solves:
+    #: the field is anonymous and cannot itself express "the right fingertips may touch this, the
+    #: rest of the robot may not" (`docs/AG3S_REVIEW_LOG.md` Step 2, E1 — carving the target out of
+    #: the field, the previous fix, relaxed it for **every** sphere, not just the authorized ones).
+    #: An unauthorized sphere's entry is `safety_margin`, identical to having no target at all, so a
+    #: consumer needs no separate authorization check — the array already encodes it.
+    target_link_margin: Optional[np.ndarray] = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "robot_state", np.asarray(self.robot_state, np.float64).reshape(-1))
