@@ -53,7 +53,7 @@ class SafePolicy:
 
     def __init__(self, policy, *, ag3s, to_config: Optional[TrajOptConfig] = None,
                  attention_fn: Optional[Callable[[dict, dict], dict]] = None,
-                 default_phase: str = "approach"):
+                 default_phase: str = "approach", recorder=None):
         self._policy = policy
         self.ag3s = ag3s
         self.to_config = to_config or TrajOptConfig.from_dict({
@@ -61,6 +61,10 @@ class SafePolicy:
         })
         self.attention_fn = attention_fn
         self.default_phase = default_phase
+        #: `ConstraintRecordWriter` 또는 None. `--safe-remote` 로 도는 청크는 서버 밖으로
+        #: attention·grounding·거리장을 내보내지 않으므로, 진단하려면 여기서 남겨야 한다 —
+        #: `benchmark/trajopt/bringup.py`의 `LivePipeline._record`와 같은 계약.
+        self.recorder = recorder
 
         model = ag3s.constraint_robot_model
         if model is None:
@@ -75,6 +79,10 @@ class SafePolicy:
         self._pending: dict[str, Any] = {}
         self._previous_chunk: Optional[np.ndarray] = None
         self._last_constraint_set = None
+        self._last_debug: dict[str, Any] = {}
+        self._last_attention_by_camera: dict[str, Any] = {}
+        self._last_q_now: Optional[np.ndarray] = None
+        self._chunk_index = -1
 
     # --- BasePolicy 인터페이스 -----------------------------------------------------------
     @property
@@ -102,6 +110,9 @@ class SafePolicy:
                 reset()
         self._previous_chunk = None
         self._last_constraint_set = None
+        self._last_debug = {}
+        self._last_attention_by_camera = {}
+        self._last_q_now = None
         self._pending = {}
 
     # ------------------------------------------------------------------------------------
@@ -141,6 +152,9 @@ class SafePolicy:
         verdict = self._verdict(chunk)
         timing["total"] = (time.monotonic() - started) * 1000.0
 
+        if self.recorder is not None:
+            self._record(seq, chunk, refined)
+
         extra = {k: v for k, v in result.items() if k != "actions"}
         return wire.pack_response(refined, verdict, seq=seq, timing_ms=timing, extra=extra)
 
@@ -159,13 +173,20 @@ class SafePolicy:
             raise ValueError("no camera observations in the request")
 
         t = time.monotonic()
-        constraint_set = self.ag3s.process_multi(
+        # `process_multi_debug` 는 `process_multi` 와 **같은 계산**이고 중간 결과를 버리지 않고
+        # 돌려줄 뿐이다 (`AG3S.process_multi`는 이 호출의 [0]이다) — 기록기가 없어도 비용이 없다.
+        constraint_set, debug = self.ag3s.process_multi_debug(
             observations,
             phase=scene.get("phase") or self.default_phase,
             active_manipulators=list(scene.get("active_manipulators", ()) or ()),
         )
         self._pending.setdefault("timing", {})["ag3s"] = (time.monotonic() - t) * 1000.0
         self._last_constraint_set = constraint_set
+        self._last_debug = debug
+        self._last_attention_by_camera = {
+            o.camera_id: np.asarray(o.attention_map)
+            for o in observations if getattr(o, "attention_map", None) is not None
+        }
 
         snapshot = scene_from_constraint_set(
             constraint_set, self.linearizer.robot_radii, self.to_config)
@@ -173,8 +194,50 @@ class SafePolicy:
         # 쓰므로 (`process_multi` 의 robot_state 기본값) 둘이 어긋나지 않는다.
         q_now = np.asarray(
             max(observations, key=lambda o: o.timestamp).robot_state, np.float64)
+        self._last_q_now = q_now
         certified = constraint_set.status.value == "ok"
         return snapshot, q_now, certified
+
+    def _record(self, seq: int, reference: np.ndarray, refined: np.ndarray) -> None:
+        """진단 기록. `bringup.LivePipeline._record`와 같은 계약 — 예외가 정책을 죽이면 안 된다.
+
+        `--safe-remote` 로 도는 청크는 attention·grounding·거리장이 서버 밖으로 나가지 않으므로
+        (응답은 안전 판정과 카메라별 attention 셀 하나뿐), 이것이 로컬 `--record-constraints`와
+        동급으로 서버 쪽 파이프라인을 진단할 수 있는 유일한 자리다.
+        """
+        self._chunk_index += 1
+        try:
+            cs = self._last_constraint_set
+            clearance = None
+            centres = radii = None
+            result = self.refiner.last_result
+            if cs is not None and getattr(cs, "esdf", None) is not None and result is not None:
+                all_centres = self.linearizer.sphere_states(
+                    result.trajectory, self._last_q_now)[0]
+                radii = self.linearizer.robot_radii
+                # 계획 지평 전체의 여유거리 — 첫 스텝만 재면 TO 의 판정(지평 전체를 본다)과
+                # 기록이 어긋나 "TO 는 violated 인데 기록은 위반 0" 이 나온다.
+                clearance = (np.asarray(cs.esdf.distance(all_centres.reshape(-1, 3)), np.float64)
+                             .reshape(all_centres.shape[:2])
+                             - radii[None, :] - float(self.to_config.collision.esdf_margin))
+                centres = all_centres[0]
+            self.recorder.record(
+                t_step=seq, chunk_index=self._chunk_index,
+                constraint_set=cs, debug=self._last_debug,
+                reference_chunk=reference, refined_chunk=refined,
+                sphere_centres=centres, sphere_radii=radii,
+                sphere_link_names=getattr(self.linearizer.robot_model, "sphere_link_names", None),
+                clearance=clearance, to_result=result,
+                attention_maps=self._last_attention_by_camera,
+                occupancy=self._occupancy(),
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(f"[safe_policy] constraint record failed at seq={seq}: {exc}")
+
+    def _occupancy(self):
+        """세 상태 점유 배열. `EsdfField` 가 아니라 그것을 만든 builder 안에 있다."""
+        builder = getattr(self.ag3s, "_esdf_builder", None)
+        return None if builder is None else getattr(builder, "_occupancy", None)
 
     def _preserve_grippers(self, original: np.ndarray, refined: np.ndarray) -> np.ndarray:
         """그리퍼 열은 정책이 낸 값 그대로. TO 는 그 열의 변수를 갖지도 않는다.

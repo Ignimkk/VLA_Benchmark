@@ -100,6 +100,17 @@ def main() -> None:
                     help="AG3S+TO 를 감싸지 않는다. 기존 서빙과 동일")
     ap.add_argument("--allow-uncertified", action="store_true",
                     help="AG3S 가 기하를 인증하지 못한 프레임도 safe 로 볼지. 기본은 보지 않는다")
+    ap.add_argument("--no-attention", action="store_true",
+                    help="attention 추출을 끈다 (체크포인트를 한 번 더 로드하지 않는다). AG3S 는 "
+                         "target 없이 돌아 제약이 더 보수적이 된다")
+    ap.add_argument("--record-constraints", default=None, metavar="DIR",
+                    help="청크마다 AG3S 중간 산출물(attention·grounding·거리장·제약 여유)을 "
+                         "npz 로 남긴다. `--safe-remote` 청크는 이것들을 응답에 싣지 않으므로, "
+                         "서버 쪽 파이프라인을 진단하는 유일한 자리다 — 로컬 "
+                         "`--record-constraints`(`benchmark/ag3s/experiments/constraint_record.py`)"
+                         "와 같은 형식")
+    ap.add_argument("--record-constraints-esdf", choices=("none", "occupancy", "full"),
+                    default="full")
     args = ap.parse_args()
 
     logging.basicConfig(level=logging.INFO, force=True)
@@ -123,8 +134,26 @@ def main() -> None:
         from benchmark.trajopt.config import TrajOptConfig
         from benchmark.trajopt.safe_policy import SafePolicy
 
+        served_policy = policy
+        if not args.no_attention:
+            from benchmark.trajopt.attention_policy import AttentionPolicy, load_attention_model
+
+            logging.info("loading a second copy of the checkpoint for attention extraction")
+            attn_model = load_attention_model(args.config, args.checkpoint)
+            served_policy = AttentionPolicy(policy, attn_model)
+
+        recorder = None
+        if args.record_constraints:
+            from benchmark.ag3s.experiments.constraint_record import ConstraintRecordWriter
+
+            recorder = ConstraintRecordWriter(
+                args.record_constraints, esdf_mode=args.record_constraints_esdf,
+                meta={"config": args.config, "checkpoint": args.checkpoint,
+                      "model_xml": args.model_xml, "links": args.links})
+            logging.info("recording AG3S constraint diagnostics to %s", recorder.run_dir)
+
         served = SafePolicy(
-            policy,
+            served_policy,
             ag3s=build_ag3s(args.model_xml, voxel=args.voxel,
                             range_max=args.range_max, links=args.links),
             to_config=TrajOptConfig.from_dict({
@@ -134,6 +163,7 @@ def main() -> None:
                 "safety": {"require_certified_geometry": not args.allow_uncertified},
             }),
             attention_fn=attention_extractor(),
+            recorder=recorder,
         )
 
     logging.info("serving on port %d", args.port)

@@ -1,5 +1,5 @@
 {
-  "records": "outputs/rby1_atomic_infer/ag3s_step1/ag3s_records/run_0002",
+  "records": "run_0002",
   "cameras": [
     "zed_left",
     "wrist_cam_l",
@@ -19,10 +19,10 @@
       "max_violation_mm": 0.0,
       "safe": false,
       "timing_ms": {
-        "infer": 0.005125999450683594,
-        "ag3s": 550.9625300001062,
-        "trajopt": 98.72741799972573,
-        "total": 649.7675199998412
+        "infer": 0.011267140507698059,
+        "ag3s": 563.7454940006137,
+        "trajopt": 91.31580078974366,
+        "total": 655.2528408356011
       },
       "grippers_held": true,
       "shape_ok": true,
@@ -36,14 +36,14 @@
       "max_violation_mm": 0.0,
       "safe": false,
       "timing_ms": {
-        "infer": 0.00781600010668626,
-        "ag3s": 522.1892409999782,
-        "trajopt": 53.390368000691524,
-        "total": 575.6313079991742
+        "infer": 0.01437915489077568,
+        "ag3s": 491.4224939420819,
+        "trajopt": 63.95486299879849,
+        "total": 555.4599829483777
       },
       "grippers_held": true,
       "shape_ok": true,
-      "delta_max_rad": 0.035720450803637505
+      "delta_max_rad": 0.03589404374361038
     },
     {
       "seq": 3,
@@ -53,65 +53,133 @@
       "max_violation_mm": 0.0,
       "safe": false,
       "timing_ms": {
-        "infer": 0.008316999810631387,
-        "ag3s": 530.5867910001325,
-        "trajopt": 54.56129799949849,
-        "total": 585.2016209992144
+        "infer": 0.04265201278030872,
+        "ag3s": 500.0842339359224,
+        "trajopt": 58.22432693094015,
+        "total": 558.446055976674
       },
       "grippers_held": true,
       "shape_ok": true,
-      "delta_max_rad": 0.09755765926092863
+      "delta_max_rad": 0.09033573977649212
     },
     {
       "seq": 4,
       "ag3s_status": "degraded",
       "geometry_certified": false,
       "trajopt_status": "violated",
-      "max_violation_mm": 6.047388818810284,
+      "max_violation_mm": 1.0002460536568947,
       "safe": false,
       "timing_ms": {
-        "infer": 0.008971000170276966,
-        "ag3s": 531.4455830002771,
-        "trajopt": 78.81972099949053,
-        "total": 610.3199580002183
+        "infer": 0.014308840036392212,
+        "ag3s": 486.7181780282408,
+        "trajopt": 62.30222014710307,
+        "total": 549.1210711188614
       },
       "grippers_held": true,
       "shape_ok": true,
-      "delta_max_rad": 0.12574569508433342
+      "delta_max_rad": 0.1232660822570324
     },
     {
       "seq": 5,
       "ag3s_status": "degraded",
       "geometry_certified": false,
       "trajopt_status": "violated",
-      "max_violation_mm": 6.2443259001545846,
+      "max_violation_mm": 1.7760836744131203,
       "safe": false,
       "timing_ms": {
-        "infer": 0.008973999683803413,
-        "ag3s": 531.7070460005198,
-        "trajopt": 78.18475299882266,
-        "total": 609.9425009997503
+        "infer": 0.019424129277467728,
+        "ag3s": 503.2793669961393,
+        "trajopt": 62.63842107728124,
+        "total": 566.0238480195403
       },
       "grippers_held": true,
       "shape_ok": true,
-      "delta_max_rad": 0.154886307194829
+      "delta_max_rad": 0.1514298040419817
     },
     {
       "seq": 6,
       "ag3s_status": "degraded",
       "geometry_certified": false,
       "trajopt_status": "violated",
-      "max_violation_mm": 4.621035727619932,
+      "max_violation_mm": 0.0,
       "safe": false,
       "timing_ms": {
-        "infer": 0.009022000085678883,
-        "ag3s": 518.4639429999152,
-        "trajopt": 57.630938999864156,
-        "total": 576.1454610001238
+        "infer": 0.031782081350684166,
+        "ag3s": 479.6683199238032,
+        "trajopt": 67.2019540797919,
+        "total": 546.9619899522513
       },
       "grippers_held": true,
       "shape_ok": true,
-      "delta_max_rad": 0.23379480838775635
+      "delta_max_rad": 0.2193537950515747
+    },
+    {
+      "seq": 7,
+      "ag3s_status": "no_target",
+      "geometry_certified": false,
+      "trajopt_status": "violated",
+      "max_violation_mm": 0.0,
+      "safe": false,
+      "timing_ms": {
+        "infer": 0.01340196467936039,
+        "ag3s": 475.0669139903039,
+        "trajopt": 58.314969995990396,
+        "total": 533.4490400273353
+      },
+      "grippers_held": true,
+      "shape_ok": true,
+      "delta_max_rad": 0.08409786224365234
+    },
+    {
+      "seq": 8,
+      "ag3s_status": "no_target",
+      "geometry_certified": false,
+      "trajopt_status": "violated",
+      "max_violation_mm": 0.0,
+      "safe": false,
+      "timing_ms": {
+        "infer": 0.013350043445825577,
+        "ag3s": 502.58057308383286,
+        "trajopt": 67.36500491388142,
+        "total": 570.0172910001129
+      },
+      "grippers_held": true,
+      "shape_ok": true,
+      "delta_max_rad": 0.2691967487335205
+    },
+    {
+      "seq": 9,
+      "ag3s_status": "degraded",
+      "geometry_certified": false,
+      "trajopt_status": "violated",
+      "max_violation_mm": 8.921679357750955,
+      "safe": false,
+      "timing_ms": {
+        "infer": 0.012712087482213974,
+        "ag3s": 515.8052879851311,
+        "trajopt": 63.84496716782451,
+        "total": 579.7214519698173
+      },
+      "grippers_held": true,
+      "shape_ok": true,
+      "delta_max_rad": 0.16049528121948242
+    },
+    {
+      "seq": 10,
+      "ag3s_status": "no_target",
+      "geometry_certified": false,
+      "trajopt_status": "violated",
+      "max_violation_mm": 13.014167445515785,
+      "safe": false,
+      "timing_ms": {
+        "infer": 0.009285053238272667,
+        "ag3s": 496.1416758596897,
+        "trajopt": 64.41624416038394,
+        "total": 560.6127900537103
+      },
+      "grippers_held": true,
+      "shape_ok": true,
+      "delta_max_rad": 0.15711700078099966
     }
   ]
 }
