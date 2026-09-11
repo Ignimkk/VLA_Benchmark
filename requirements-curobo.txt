@@ -1,0 +1,18 @@
+# cuRoboV2 전용 venv 의 의존성.
+#
+# **`requirements-ag3s.txt` 와 같은 환경에 설치하지 말 것.** curobo 는 numpy/scipy 버전을
+# 끌어올리고, 이 서버에서는 그것이 openpi(jax) 를 깨뜨린다. 그래서 venv 를 분리한다.
+#
+# torch 는 여기 고정하지 않는다 — 컨테이너에 이미 있는 CUDA 빌드를 `--system-site-packages`
+# 로 빌려 쓴다 (2026-09-11 검증 환경: torch 2.4.1+cu124, H200 NVL, driver 580.173).
+# torch 를 새로 받으면 2.5 GB 이고 CUDA 버전이 어긋날 위험이 있다.
+#
+# curobo 자체는 소스 설치라 이 파일에 없다 — `docs/CONTAINER_SETUP.md` 의 절차를 따른다.
+
+# JIT 커널 백엔드. **이것이 없으면 ESDF 단계에서 죽는다**
+#   RuntimeError: No curobo kernel backend available!
+# nvcc(CUDA toolkit)로 컴파일하는 길도 있지만(CUROBO_USE_PYBIND=1), 이쪽이 컴파일 없이 된다.
+cuda-core[cu12]==1.2.0
+
+# curobo 가 끌어오는 것들 (pip 이 알아서 넣지만 버전 고정용으로 남긴다)
+warp-lang==1.17.0
