@@ -1,0 +1,1099 @@
+{
+  "records": "run_0004",
+  "frames": 24,
+  "held": "apple",
+  "cameras": "all",
+  "esdf_margin_mm": 50.0,
+  "grasp_frames": [
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18
+  ],
+  "held_pixels_seen_frames": 24,
+  "held_pixels_total": 280737,
+  "held_pixels_deleted": 202303,
+  "deleted_fraction": 0.7206139554102238,
+  "deleted_fraction_while_held": 1.0,
+  "occupancy_delta": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    -1,
+    0,
+    1,
+    2,
+    2,
+    1,
+    0,
+    4,
+    3,
+    3,
+    3,
+    4
+  ],
+  "centroid_delta_mm": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -17.51659077137959,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    25.056516715902344,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "carve": {
+    "carve0": {
+      "worst_mm": -53.546914273801505,
+      "n_violating_frames": 5,
+      "voxels_total": 9,
+      "arm_optimism_max_mm": 16.11587420560455,
+      "arm_optimism_unauthorized_max_mm": 5.700465693626922
+    },
+    "carve1": {
+      "worst_mm": -34.219405702273306,
+      "n_violating_frames": 5,
+      "voxels_total": 29,
+      "arm_optimism_max_mm": 39.584163164855,
+      "arm_optimism_unauthorized_max_mm": 5.700465693626922
+    },
+    "carve2": {
+      "worst_mm": -22.14454979575064,
+      "n_violating_frames": 4,
+      "voxels_total": 67,
+      "arm_optimism_max_mm": 70.56764274695351,
+      "arm_optimism_unauthorized_max_mm": 64.49805144103982
+    },
+    "carve3": {
+      "worst_mm": -12.017153183288158,
+      "n_violating_frames": 3,
+      "voxels_total": 125,
+      "arm_optimism_max_mm": 79.99087082266499,
+      "arm_optimism_unauthorized_max_mm": 73.48815236435844
+    }
+  },
+  "now": {
+    "worst_mm": -72.74757149996407,
+    "n_violating_frames": 5
+  },
+  "unmasked": {
+    "worst_mm": -72.74757149996407,
+    "n_violating_frames": 4
+  },
+  "rows": [
+    {
+      "i": 0,
+      "grip_mm": 90.02129322777338,
+      "grasped": false,
+      "n_held_px": 558,
+      "n_deleted_px": 0,
+      "n_query": 0,
+      "occ_now": 7460,
+      "occ_unmasked": 7460,
+      "d_centroid_now_mm": -31.91412945987495,
+      "d_centroid_unmasked_mm": -31.91412945987495,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -35.18040094834231,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 1,
+      "grip_mm": 89.82072644505557,
+      "grasped": false,
+      "n_held_px": 1146,
+      "n_deleted_px": 0,
+      "n_query": 0,
+      "occ_now": 7617,
+      "occ_unmasked": 7617,
+      "d_centroid_now_mm": -31.905416506611903,
+      "d_centroid_unmasked_mm": -31.905416506611903,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -32.46927051714756,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 2,
+      "grip_mm": 89.95334536054561,
+      "grasped": false,
+      "n_held_px": 2828,
+      "n_deleted_px": 0,
+      "n_query": 0,
+      "occ_now": 7699,
+      "occ_unmasked": 7699,
+      "d_centroid_now_mm": -31.93570344209385,
+      "d_centroid_unmasked_mm": -31.93570344209385,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -34.292549545804334,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 3,
+      "grip_mm": 89.99932379854123,
+      "grasped": false,
+      "n_held_px": 3629,
+      "n_deleted_px": 0,
+      "n_query": 0,
+      "occ_now": 7772,
+      "occ_unmasked": 7772,
+      "d_centroid_now_mm": -31.88865303129365,
+      "d_centroid_unmasked_mm": -31.88865303129365,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -38.70661048204198,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 4,
+      "grip_mm": 89.80367945045448,
+      "grasped": false,
+      "n_held_px": 4227,
+      "n_deleted_px": 0,
+      "n_query": 0,
+      "occ_now": 7782,
+      "occ_unmasked": 7782,
+      "d_centroid_now_mm": -31.88216210268874,
+      "d_centroid_unmasked_mm": -31.88216210268874,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -38.92934624894539,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 5,
+      "grip_mm": 89.92297909736251,
+      "grasped": false,
+      "n_held_px": 6172,
+      "n_deleted_px": 0,
+      "n_query": 0,
+      "occ_now": 7801,
+      "occ_unmasked": 7801,
+      "d_centroid_now_mm": -31.884843659729377,
+      "d_centroid_unmasked_mm": -31.884843659729377,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -46.31453439142781,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 6,
+      "grip_mm": 89.97051868398545,
+      "grasped": false,
+      "n_held_px": 8470,
+      "n_deleted_px": 4792,
+      "n_query": 0,
+      "occ_now": 7820,
+      "occ_unmasked": 7820,
+      "d_centroid_now_mm": -31.887471452243563,
+      "d_centroid_unmasked_mm": -31.887471452243563,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -68.59595236360815,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 7,
+      "grip_mm": 89.9047489359048,
+      "grasped": false,
+      "n_held_px": 10374,
+      "n_deleted_px": 10371,
+      "n_query": 0,
+      "occ_now": 7831,
+      "occ_unmasked": 7831,
+      "d_centroid_now_mm": -31.864756365525057,
+      "d_centroid_unmasked_mm": -31.864756365525057,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -98.93429118466524,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 8,
+      "grip_mm": 89.96027473175644,
+      "grasped": false,
+      "n_held_px": 14255,
+      "n_deleted_px": 14255,
+      "n_query": 0,
+      "occ_now": 7831,
+      "occ_unmasked": 7831,
+      "d_centroid_now_mm": -31.86418268669214,
+      "d_centroid_unmasked_mm": -31.86418268669214,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -124.12955155277109,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 9,
+      "grip_mm": 89.91222585188524,
+      "grasped": false,
+      "n_held_px": 16720,
+      "n_deleted_px": 16720,
+      "n_query": 0,
+      "occ_now": 7838,
+      "occ_unmasked": 7838,
+      "d_centroid_now_mm": -31.85827587629459,
+      "d_centroid_unmasked_mm": -31.85827587629459,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -138.6768304810212,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 10,
+      "grip_mm": 66.10675362845117,
+      "grasped": true,
+      "n_held_px": 16169,
+      "n_deleted_px": 16169,
+      "n_query": 9,
+      "occ_now": 7845,
+      "occ_unmasked": 7845,
+      "d_centroid_now_mm": -31.703830246125268,
+      "d_centroid_unmasked_mm": -31.703830246125268,
+      "d_min_now_mm": -22.747571499964067,
+      "d_min_unmasked_mm": -22.747571499964067,
+      "worst_now_mm": -72.74757149996407,
+      "worst_unmasked_mm": -72.74757149996407,
+      "carved": {
+        "carve0": -53.546914273801505,
+        "carve1": -34.219405702273306,
+        "carve2": -22.14454979575064,
+        "carve3": -12.017153183288158
+      },
+      "carved_voxels": {
+        "carve0": 4,
+        "carve1": 14,
+        "carve2": 34,
+        "carve3": 62
+      },
+      "arm_worst_now_mm": -138.74990444005996,
+      "arm_optimism_mm": {
+        "carve0": 16.11587420560455,
+        "carve1": 38.257075119737515,
+        "carve2": 55.67497670066842,
+        "carve3": 73.55195836180044
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.7949097881859157,
+        "carve2": 23.12378270840744,
+        "carve3": 36.486847972572846
+      }
+    },
+    {
+      "i": 11,
+      "grip_mm": 66.54708464474484,
+      "grasped": true,
+      "n_held_px": 16272,
+      "n_deleted_px": 16272,
+      "n_query": 9,
+      "occ_now": 7851,
+      "occ_unmasked": 7851,
+      "d_centroid_now_mm": -6.044446484967046,
+      "d_centroid_unmasked_mm": -6.044446484967046,
+      "d_min_now_mm": -22.06877854163044,
+      "d_min_unmasked_mm": -22.06877854163044,
+      "worst_now_mm": -72.06877854163044,
+      "worst_unmasked_mm": -72.06877854163044,
+      "carved": {
+        "carve0": -45.080372482468974,
+        "carve1": -25.070733091177054,
+        "carve2": -13.044608286396059,
+        "carve3": -1.9925757224864629
+      },
+      "carved_voxels": {
+        "carve0": 5,
+        "carve1": 14,
+        "carve2": 24,
+        "carve3": 39
+      },
+      "arm_worst_now_mm": -122.94642592713207,
+      "arm_optimism_mm": {
+        "carve0": 9.070408295829022,
+        "carve1": 39.584163164855,
+        "carve2": 70.56764274695351,
+        "carve3": 79.99087082266499
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 5.700465693626922,
+        "carve1": 5.700465693626922,
+        "carve2": 64.49805144103982,
+        "carve3": 73.48815236435844
+      }
+    },
+    {
+      "i": 12,
+      "grip_mm": 66.41650757444162,
+      "grasped": true,
+      "n_held_px": 16328,
+      "n_deleted_px": 16328,
+      "n_query": 9,
+      "occ_now": 7847,
+      "occ_unmasked": 7846,
+      "d_centroid_now_mm": 54.37874172611611,
+      "d_centroid_unmasked_mm": 71.8953324974957,
+      "d_min_now_mm": 34.038549221661924,
+      "d_min_unmasked_mm": 52.29341126914225,
+      "worst_now_mm": -15.961450778338076,
+      "worst_unmasked_mm": 2.2934112691422452,
+      "carved": {
+        "carve0": -15.961450778338076,
+        "carve1": -15.961450778338076,
+        "carve2": 2.2934112691422452,
+        "carve3": 22.150404816117423
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 1,
+        "carve3": 3
+      },
+      "arm_worst_now_mm": -75.67243599220363,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 19.57301162210045,
+        "carve3": 36.59595675054671
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 18.41369307877398,
+        "carve3": 26.307267445819697
+      }
+    },
+    {
+      "i": 13,
+      "grip_mm": 66.22765215415396,
+      "grasped": true,
+      "n_held_px": 16456,
+      "n_deleted_px": 16456,
+      "n_query": 9,
+      "occ_now": 7870,
+      "occ_unmasked": 7870,
+      "d_centroid_now_mm": 120.93248558796007,
+      "d_centroid_unmasked_mm": 120.93248558796007,
+      "d_min_now_mm": 107.77471348230918,
+      "d_min_unmasked_mm": 107.77471348230918,
+      "worst_now_mm": 57.77471348230918,
+      "worst_unmasked_mm": 57.77471348230918,
+      "carved": {
+        "carve0": 57.77471348230918,
+        "carve1": 57.77471348230918,
+        "carve2": 57.77471348230918,
+        "carve3": 57.77471348230918
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -77.37189253000454,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 14,
+      "grip_mm": 65.96396441967318,
+      "grasped": true,
+      "n_held_px": 16398,
+      "n_deleted_px": 16398,
+      "n_query": 9,
+      "occ_now": 7934,
+      "occ_unmasked": 7935,
+      "d_centroid_now_mm": 51.51499820324276,
+      "d_centroid_unmasked_mm": 51.51499820324276,
+      "d_min_now_mm": 43.4775733018095,
+      "d_min_unmasked_mm": 43.4775733018095,
+      "worst_now_mm": -6.522426698190503,
+      "worst_unmasked_mm": -6.522426698190503,
+      "carved": {
+        "carve0": -6.522426698190503,
+        "carve1": -6.522426698190503,
+        "carve2": -4.12296257307225,
+        "carve3": 7.111750714921331
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 1,
+        "carve3": 4
+      },
+      "arm_worst_now_mm": -76.79413865858614,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 8.195681894658136,
+        "carve3": 12.9565105263042
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 8.195681894658136,
+        "carve3": 12.9565105263042
+      }
+    },
+    {
+      "i": 15,
+      "grip_mm": 65.36001042598306,
+      "grasped": true,
+      "n_held_px": 15779,
+      "n_deleted_px": 15779,
+      "n_query": 9,
+      "occ_now": 8086,
+      "occ_unmasked": 8088,
+      "d_centroid_now_mm": 77.50019083653048,
+      "d_centroid_unmasked_mm": 77.50019083653048,
+      "d_min_now_mm": 62.41685115797628,
+      "d_min_unmasked_mm": 62.41685115797628,
+      "worst_now_mm": 12.416851157976277,
+      "worst_unmasked_mm": 12.416851157976277,
+      "carved": {
+        "carve0": 12.416851157976277,
+        "carve1": 12.416851157976277,
+        "carve2": 12.416851157976277,
+        "carve3": 12.416851157976277
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -76.55151472096325,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 16,
+      "grip_mm": 65.323665827067,
+      "grasped": true,
+      "n_held_px": 15692,
+      "n_deleted_px": 15692,
+      "n_query": 9,
+      "occ_now": 8367,
+      "occ_unmasked": 8369,
+      "d_centroid_now_mm": 114.41378393826827,
+      "d_centroid_unmasked_mm": 114.41378393826827,
+      "d_min_now_mm": 90.7232090832732,
+      "d_min_unmasked_mm": 90.7232090832732,
+      "worst_now_mm": 40.723209083273204,
+      "worst_unmasked_mm": 40.723209083273204,
+      "carved": {
+        "carve0": 40.723209083273204,
+        "carve1": 40.723209083273204,
+        "carve2": 40.723209083273204,
+        "carve3": 40.723209083273204
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -75.21298590783445,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 17,
+      "grip_mm": 65.03385553784538,
+      "grasped": true,
+      "n_held_px": 15506,
+      "n_deleted_px": 15506,
+      "n_query": 9,
+      "occ_now": 8364,
+      "occ_unmasked": 8365,
+      "d_centroid_now_mm": 84.3457226738411,
+      "d_centroid_unmasked_mm": 84.3457226738411,
+      "d_min_now_mm": 58.08605929850703,
+      "d_min_unmasked_mm": 58.08605929850703,
+      "worst_now_mm": 8.086059298507031,
+      "worst_unmasked_mm": 8.086059298507031,
+      "carved": {
+        "carve0": 8.086059298507031,
+        "carve1": 8.086059298507031,
+        "carve2": 8.086059298507031,
+        "carve3": 8.086059298507031
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -75.51680369082322,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 18,
+      "grip_mm": 65.0194467935053,
+      "grasped": true,
+      "n_held_px": 15342,
+      "n_deleted_px": 15342,
+      "n_query": 9,
+      "occ_now": 8369,
+      "occ_unmasked": 8369,
+      "d_centroid_now_mm": 58.17211328295761,
+      "d_centroid_unmasked_mm": 58.17211328295761,
+      "d_min_now_mm": 25.58812728075269,
+      "d_min_unmasked_mm": 25.58812728075269,
+      "worst_now_mm": -24.411872719247313,
+      "worst_unmasked_mm": -24.411872719247313,
+      "carved": {
+        "carve0": -24.411872719247313,
+        "carve1": -19.05091759686745,
+        "carve2": -12.09503674619377,
+        "carve3": -1.3158590565861272
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 1,
+        "carve2": 7,
+        "carve3": 17
+      },
+      "arm_worst_now_mm": -76.41816044561341,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 3.453339339104626,
+        "carve2": 12.128983372945823,
+        "carve3": 21.385490176035887
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.07745941055281591,
+        "carve2": 2.5399862563997706,
+        "carve3": 9.665788668057965
+      }
+    },
+    {
+      "i": 19,
+      "grip_mm": 82.4474735155838,
+      "grasped": false,
+      "n_held_px": 15698,
+      "n_deleted_px": 6052,
+      "n_query": 0,
+      "occ_now": 8373,
+      "occ_unmasked": 8377,
+      "d_centroid_now_mm": 23.556810650598596,
+      "d_centroid_unmasked_mm": -1.4997060653037488,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -77.2656976069218,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 20,
+      "grip_mm": 89.75886971935837,
+      "grasped": false,
+      "n_held_px": 15022,
+      "n_deleted_px": 6171,
+      "n_query": 0,
+      "occ_now": 8382,
+      "occ_unmasked": 8385,
+      "d_centroid_now_mm": -4.100023905893405,
+      "d_centroid_unmasked_mm": -4.100023905893405,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -77.69903493736754,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 21,
+      "grip_mm": 89.85502583804129,
+      "grasped": false,
+      "n_held_px": 13183,
+      "n_deleted_px": 0,
+      "n_query": 0,
+      "occ_now": 8389,
+      "occ_unmasked": 8392,
+      "d_centroid_now_mm": -3.80957069415904,
+      "d_centroid_unmasked_mm": -3.80957069415904,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -78.55703684451818,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 22,
+      "grip_mm": 89.74619170761541,
+      "grasped": false,
+      "n_held_px": 12583,
+      "n_deleted_px": 0,
+      "n_query": 0,
+      "occ_now": 8390,
+      "occ_unmasked": 8393,
+      "d_centroid_now_mm": -4.153259798084537,
+      "d_centroid_unmasked_mm": -4.153259798084537,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -78.98711874805436,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    },
+    {
+      "i": 23,
+      "grip_mm": 89.79515862669723,
+      "grasped": false,
+      "n_held_px": 11930,
+      "n_deleted_px": 0,
+      "n_query": 0,
+      "occ_now": 8389,
+      "occ_unmasked": 8393,
+      "d_centroid_now_mm": -4.077995146303807,
+      "d_centroid_unmasked_mm": -4.077995146303807,
+      "d_min_now_mm": NaN,
+      "d_min_unmasked_mm": NaN,
+      "worst_now_mm": NaN,
+      "worst_unmasked_mm": NaN,
+      "carved": {
+        "carve0": NaN,
+        "carve1": NaN,
+        "carve2": NaN,
+        "carve3": NaN
+      },
+      "carved_voxels": {
+        "carve0": 0,
+        "carve1": 0,
+        "carve2": 0,
+        "carve3": 0
+      },
+      "arm_worst_now_mm": -79.09918080893483,
+      "arm_optimism_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      },
+      "arm_optimism_unauth_mm": {
+        "carve0": 0.0,
+        "carve1": 0.0,
+        "carve2": 0.0,
+        "carve3": 0.0
+      }
+    }
+  ]
+}

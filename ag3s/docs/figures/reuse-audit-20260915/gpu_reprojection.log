@@ -1,0 +1,55 @@
+{
+  "gpu": "NVIDIA H200 NVL",
+  "surface_count": 3528,
+  "feature_shape": [
+    3528,
+    1
+  ],
+  "first_feature_minmax": [
+    1.0,
+    1.0
+  ],
+  "second_feature_minmax": [
+    0.5,
+    0.5
+  ],
+  "second_feature_median": 0.5,
+  "current_attention": 0.0,
+  "esdf_queries": [
+    [
+      0.0,
+      0.0,
+      0.800000011920929
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ],
+    [
+      0.800000011920929,
+      0.800000011920929,
+      0.20000000298023224
+    ]
+  ],
+  "esdf_nearest_values": [
+    0.1800537109375,
+    0.0,
+    0.9306640625
+  ],
+  "all_esdf_finite": true,
+  "tsdf_allocated_blocks": 110,
+  "note": "One synthetic plane; supports API feasibility, not segmentation accuracy. No timing claim (JIT included)."
+}
+{
+  "surface_count": 3528,
+  "visible_near_surface_count": 3200,
+  "interior_count": 1920,
+  "interior_binary_agreement": 1.0,
+  "feature_minmax": [
+    0.0,
+    1.0
+  ],
+  "visibility_depth_tolerance_m": 0.03,
+  "notes": "Synthetic planar depth; 4x4 features, left=1/right=0. Boundary excluded from agreement. Reprojection code is experiment-only; does not validate real instance segmentation."
+}

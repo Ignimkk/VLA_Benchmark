@@ -47,6 +47,7 @@ from benchmark.ag3s.support_surface import fit_support_surfaces
 from benchmark.ag3s.target_grounding import GroundingResult, ground_target
 from benchmark.ag3s.to_adapter import build_constraint_set
 from benchmark.ag3s.types import (
+    DESTINATION_LABEL,
     AttachedCollisionGeometry,
     AttentionPointCloud,
     CameraObservation,
@@ -59,6 +60,7 @@ from benchmark.ag3s.types import (
     PipelineStatus,
     PointCloud,
     RobotCollisionModel,
+    SourceType,
 )
 
 
@@ -278,6 +280,8 @@ class AG3S:
         active_manipulators: Any = None,
         contact_context: Optional[ContactPolicyContext] = None,
         observations: Optional[Sequence[CameraObservation]] = None,
+        destination_points: Optional[np.ndarray] = None,
+        static_geometry: Optional[Sequence[Any]] = None,
     ) -> tuple[CollisionConstraintSet, dict[str, Any]]:
         """The single implementation behind `process`, `process_debug` and `process_multi`.
 
@@ -366,8 +370,19 @@ class AG3S:
                 # observations. Rebuilding it here from a single map would need a single camera.
                 attention_cloud = AttentionPointCloud(cloud, fusion.attention, fusion.raw_attention)
             else:
+                # `image_hw` 를 주지 않으면 `lift` 는 **걸러지고 남은 클라우드의 uv 최댓값**으로
+                # 해상도를 추정한다. 클라우드는 깊이 유효성·`range_max`·로봇 자기 필터를 이미
+                # 거친 뒤라 이미지 경계에 못 닿는 일이 흔하고, 그러면 attention 맵이 틀린 크기로
+                # 펼쳐진다 (F9). 실측에서 최대 57 픽셀 — attention 셀 한 칸(40 px)이 넘는다 —
+                # 어긋났고, run_0004 의 두 프레임에서 **target 물체 자체가 바뀌었다**.
+                #
+                # 그런데 그 참값은 여기 이미 있다. `depth` 가 바로 attention 맵이 대응하는 그
+                # 이미지다. 걸러진 점들에서 되짚는 것보다 언제나 옳다.
+                hw = image_hw
+                if hw is None and depth is not None:
+                    hw = tuple(int(x) for x in np.asarray(depth).shape[:2])
                 attention_cloud = self._lift(
-                    cloud, attention_map, image_hw, camera_intrinsics, T_base_cam
+                    cloud, attention_map, hw, camera_intrinsics, T_base_cam
                 )
 
         # 5. target grounding -------------------------------------------------------------
@@ -450,7 +465,10 @@ class AG3S:
                         cameras, grounding.target,
                         support_points=(cloud.points[support_mask]
                                         if cfg.esdf.exclude_support_surfaces
-                                        and support_mask is not None else None))
+                                        and support_mask is not None else None),
+                        destination_points=destination_points,
+                        static_geometry=static_geometry,
+                        robot_state=robot_state)
                 notes.extend(esdf_notes)
                 if esdf_field is not None:
                     # G2 (`docs/AG3S_REVIEW_LOG.md` Step 4): an unobserved field used to produce a
@@ -492,6 +510,7 @@ class AG3S:
 
             constraint_set = self._constraints(
                 esdf=esdf_field,
+                destination_points=destination_points,
                 # Planes still live in the spec, so it is built whenever a support surface survived.
                 # In pure-field mode there is neither a candidate nor a plane to pack.
                 build_spec=primitive_path or bool(surfaces),
@@ -578,7 +597,19 @@ class AG3S:
     def _constraints(
         self, *, candidates, surfaces, grounding, robot_state, phase, timestamp, notes, context,
         validity=ConstraintValidity.VALID, metrics=None, esdf=None, build_spec=True,
+        destination_points=None,
     ):
+        # 목적지 마진은 `ClearancePolicy` 에서 나온다 — 마진이 나오는 곳은 하나여야 하고,
+        # 소비 쪽(trajopt)은 그 값을 다시 계산하지 않고 읽기만 한다.
+        has_destination = destination_points is not None and len(destination_points) > 0
+        destination_label = DESTINATION_LABEL if has_destination else None
+        destination_margin = None
+        if has_destination:
+            policy = getattr(self._builder, "clearance_policy", None)
+            if policy is None:
+                policy = ClearancePolicy.from_config(
+                    self.config.contact, self.config.geometry, self.config.support_surface)
+            destination_margin = float(policy.full_margin(SourceType.DESTINATION))
         if self._builder is None:
             return CollisionConstraintSet(
                 constraints=None,
@@ -604,6 +635,8 @@ class AG3S:
                 metrics=dict(metrics or {}),
                 attached=self._attached,
                 esdf=esdf,
+                destination_label=destination_label,
+                destination_margin=destination_margin,
             )
         return build_constraint_set(
             self._builder,
@@ -623,6 +656,8 @@ class AG3S:
             attached=self._attached,
             esdf=esdf,
             build_spec=build_spec,
+            destination_label=destination_label,
+            destination_margin=destination_margin,
         )
 
     def _esdf_coverage(self, field, robot_state):
@@ -775,7 +810,8 @@ class AG3S:
                                    robot_mask=self._robot_mask_for(d, K, T, robot_state)))
         return out
 
-    def _build_esdf(self, depth_cameras, target, *, support_points=None):
+    def _build_esdf(self, depth_cameras, target, *, support_points=None,
+                    destination_points=None, static_geometry=None, robot_state=None):
         """Integrate this frame into the ESDF and return `(field, notes)`.
 
         The builder is kept on the instance rather than rebuilt: that is the only way the local
@@ -794,14 +830,41 @@ class AG3S:
         # 통째로 carve() 했다 (E1, `docs/AG3S_REVIEW_LOG.md` Step 2). 문제: 필드는 익명이라
         # "누가 묻는지"를 모른다 — GRASP phase가 되면 그 물체는 잡는 손끝뿐 아니라 몸통·전완·
         # 반대팔에게도 사라졌다. 대신 필드는 **항상** target을 그대로 담아 두고,
-        # `to_adapter.build_constraint_set`가 채우는 `target_link_margin` (구별 마진, 권한 있는
+        # `to_adapter.build_constraint_set`가 채우는 `manipulated_link_margin` (구별 마진, 권한 있는
         # 링크만 완화)이 trajopt의 `_esdf_clearance`에서 그 구별을 한다 — MoveIt의 Allowed
         # Collision Matrix, cuRobo의 attached-object 패턴과 같은 "지우지 말고 질의 쪽에서
         # 봐준다" 방식. `cfg.exclude_target`는 이제 이 경로에서 쓰이지 않는다 (config.py 참고).
         points = None if target is None else np.asarray(target.points, np.float64)
+        # 목적지는 **주입**이다. AG3S 는 과제를 모르므로 어느 물체가 목적지인지 알 수 없다 —
+        # phase 와 같은 계약이다. 라벨을 달아 두면 필드가 "가장 가까운 표면이 목적지인가" 를
+        # 답할 수 있고, 그래야 그 표면에만 얇은 마진을 걸 수 있다 (F18).
+        labelled = None
+        if destination_points is not None and len(destination_points):
+            labelled = {DESTINATION_LABEL: np.asarray(destination_points, np.float64)}
+        # 쥔 물체는 **양쪽에 동시에 있으면 안 된다** (A2). 파지가 닫히는 순간 그 물체는
+        # 로봇 쪽 질의점이 되므로 (E3 — 쥔 물체가 optimizer 에 도달하지 않는다), 장애물 쪽에서는
+        # 빠져야 한다. 안 빼면 자기 자신에게 부딪히고 그 행은 **어떤 해로도 못 푼다**.
+        #
+        # **E1(조작 대상을 필드에서 파내면 손끝뿐 아니라 전신에게 사라진다)과 다른 경우다.**
+        # E1 이 금지한 것은 *아직 안 쥔* target 을 파내는 것이었다. 쥔 뒤에는 로봇의 일부이고,
+        # 로봇을 depth 에서 지우는 것과 같은 처리다. 그래서 `attach()` 가 불린 뒤에만 돈다.
+        attached_points = None
+        if (self._attached is not None and robot_state is not None
+                and self.constraint_robot_model is not None):
+            from benchmark.ag3s.attached import attached_points_in_base
+            # **`attach()` 가 쓴 것과 같은 모델이어야 한다.** 점은 그 모델의 parent link 프레임에
+            # 스냅샷돼 있고, 다른 모델로 되돌리면 물체가 조용히 엉뚱한 자리에서 파인다.
+            attached_points = attached_points_in_base(
+                self._attached, robot_model=self.constraint_robot_model,
+                robot_state=robot_state)
         field = self._esdf_builder.update(depth_cameras, target_points=points,
                                           exclude_target=False,
-                                          support_points=support_points)
+                                          support_points=support_points,
+                                          attached_points=attached_points,
+                                          labelled_points=labelled,
+                                          # 아는 정적 기하 — **주입**이다. AG3S 는 무엇이 벽이고
+                                          # 무엇이 선반인지 알 수 없다 (phase·목적지와 같은 계약).
+                                          static_geometry=static_geometry)
         return field, []
 
     @staticmethod

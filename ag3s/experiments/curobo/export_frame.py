@@ -58,15 +58,37 @@ def main() -> None:
         "sphere_centers": np.asarray(centres, np.float64).reshape(-1, 3),
         "sphere_radii": np.asarray(radii, np.float64).reshape(-1),
     }
+    n_masked = {}
     for cam, cid in zip(CAMS, IDS):
-        out[f"depth_{cid}"] = np.asarray(frames[cam].depth, np.float32)
-        out[f"K_{cid}"] = np.asarray(frames[cam].camera_intrinsics, np.float32)
-        out[f"T_{cid}"] = np.asarray(frames[cam].T_base_cam, np.float32)
+        f = frames[cam]
+        depth = np.asarray(f.depth, np.float32)
+        K = np.asarray(f.camera_intrinsics, np.float32)
+        T = np.asarray(f.T_base_cam, np.float32)
+        # 로봇 자기 관측 제거. AG3S 가 자기 ESDF 에 하는 것과 **같은 계산**을 그대로 부른다
+        # (`pipeline.py:_robot_mask_for`). 이것 없이 넣으면 팔이 장애물로 적분되어
+        # 구 120 개 중 105 개가 자기 자신과 충돌한다고 나온다 — AG3S 쪽 주석이 적어둔
+        # "130 of 194 spheres in violation" 과 같은 현상이다.
+        # 마스크된 픽셀은 0.0 으로 둔다. 그러면 우리 TSDF 도 (`esdf.py:146`) cuRobo 도
+        # (`builder_camera_integrate.py:146`, depth < depth_min 이면 return) 그 광선을
+        # 통째로 건너뛴다 — 즉 **자유가 아니라 미관측**이 된다.
+        mask = ag._robot_mask_for(depth.astype(np.float64), K.astype(np.float64),
+                                  T.astype(np.float64), f.robot_state)
+        if mask is None:
+            raise SystemExit(f"{cid}: 로봇 마스크를 만들지 못했다 — self_filter 설정을 확인하라")
+        out[f"depth_{cid}"] = depth
+        out[f"depth_masked_{cid}"] = np.where(mask, np.float32(0.0), depth)
+        out[f"robot_mask_{cid}"] = np.asarray(mask, bool)
+        out[f"K_{cid}"] = K
+        out[f"T_{cid}"] = T
+        n_masked[cid] = int(mask.sum())
 
     np.savez(args.out, **out)
     print(f"wrote {args.out}")
     print(f"  target centroid {np.round(out['target_centroid'], 3)}")
     print(f"  제약 구 {len(out['sphere_radii'])}  카메라 {len(CAMS)}")
+    for cid, n in n_masked.items():
+        tot = out[f"robot_mask_{cid}"].size
+        print(f"  로봇 마스크 {cid:<12} {n:>7,} / {tot:,} px ({100.0*n/tot:.2f} %)")
 
 
 if __name__ == "__main__":

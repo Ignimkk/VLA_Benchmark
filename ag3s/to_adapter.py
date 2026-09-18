@@ -28,6 +28,7 @@ from typing import Any, Iterable, Optional, Sequence
 import numpy as np
 
 from benchmark.ag3s.constraint_builder import ConstraintBuilder
+from benchmark.ag3s.clearance import manipulated_object
 from benchmark.ag3s.types import (
     AttachedCollisionGeometry,
     CollisionCandidate,
@@ -102,6 +103,8 @@ def build_constraint_set(
     metrics: Optional[dict[str, Any]] = None,
     attached: Optional[AttachedCollisionGeometry] = None,
     esdf: Any = None,
+    destination_label: Any = None,
+    destination_margin: Any = None,
     build_spec: bool = True,
 ) -> CollisionConstraintSet:
     """Assemble the final AG3S output.
@@ -174,9 +177,16 @@ def build_constraint_set(
     # 여기서 링크별 마진으로 넘긴다. `margin_matrix`가 이미 primitive TARGET 열에서 하던 계산을
     # 그대로 재사용한다 — 정책 로직이 두 곳에 따로 있지 않다. 권한 없는 링크는 이 배열에서도
     # `safety_margin` 그대로이므로, "허용된 손끝만" 이라는 성질이 값 자체에 이미 들어 있다.
-    target_link_margin = None
-    if target is not None and builder.n_robot_spheres:
-        target_link_margin = builder.clearance_policy.margin_matrix(
+    #
+    # **권한은 attention 이 보는 것이 아니라 로봇이 쥔 것에 붙는다** (F11). 파지 전에는 둘이 같아
+    # 동작이 예전과 완전히 같고, `attach()` 가 불린 뒤부터 갈린다 — 실측에서 정책의 attention 은
+    # 파지 착수 순간 목적지로 옮겨가므로, 주목 대상에 걸면 쥔 물체가 장애물로 남는다.
+    manipulated = manipulated_object(
+        target, attached, robot_model=builder.robot_model, robot_state=robot_state
+    )
+    manipulated_link_margin = None
+    if manipulated is not None and builder.n_robot_spheres:
+        manipulated_link_margin = builder.clearance_policy.margin_matrix(
             builder.sphere_link_names, [SourceType.TARGET], context=ctx, target_grounded=True,
         )[:, 0]
 
@@ -209,8 +219,11 @@ def build_constraint_set(
         contact_context=ctx,
         metrics=dict(metrics or {}),
         attached=attached,
+        destination_label=destination_label,
+        destination_margin=destination_margin,
         esdf=esdf,
-        target_link_margin=target_link_margin,
+        manipulated_link_margin=manipulated_link_margin,
+        manipulated=manipulated,
     )
 
 

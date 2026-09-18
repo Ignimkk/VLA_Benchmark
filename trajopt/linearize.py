@@ -94,14 +94,51 @@ class SceneSnapshot:
     #: two descriptions of the same scene then sit in the same QP and can be compared row for row.
     esdf: Any = None
     esdf_margin: float = 0.0
-    #: `(T, 3)` base frame, AG3S's `TargetGeometry.points` — or `None` when there is no target.
-    #: `target_link_margin` is `(S,)`, AG3S's `ClearancePolicy.margin_matrix` TARGET column for this
-    #: constraint model (`CollisionConstraintSet.target_link_margin`). Together they let
-    #: `_esdf_clearance` tell "this sphere's nearest field obstacle is the target its own link is
-    #: authorized to touch" from "this sphere is near something else" without AG3S carving the
-    #: target out of the shared field for every sphere (`docs/AG3S_REVIEW_LOG.md` Step 2/3, E1).
-    target_points: Optional[np.ndarray] = None
-    target_link_margin: Optional[np.ndarray] = None
+    #: The **manipulated** object, in whichever form measures its distance best, plus the per-sphere
+    #: margin that goes with it. `manipulated_link_margin` is `(S,)`, AG3S's
+    #: `ClearancePolicy.margin_matrix` TARGET column for this constraint model
+    #: (`CollisionConstraintSet.manipulated_link_margin`). Together they let `_esdf_clearance` tell
+    #: "this sphere's nearest field obstacle is the object its own link is authorized to touch" from
+    #: "this sphere is near something else", without AG3S carving that object out of the shared field
+    #: for every sphere (`docs/AG3S_REVIEW_LOG.md` Step 2/3, E1).
+    #:
+    #: Two forms, because the two objects are measured differently (F11, Step 6):
+    #:
+    #: * `manipulated_points` `(T, 3)` — the attention target's observed cloud, when nothing is held.
+    #: * `manipulated_spheres` `(S2, 3)` + `manipulated_sphere_radii` `(S2,)` — a **held** object,
+    #:   placed by FK. Analytic, so accuracy does not depend on how densely a surface was sampled.
+    #:
+    #: At most one is set. All are `None` when there is nothing being manipulated.
+    manipulated_points: Optional[np.ndarray] = None
+    manipulated_spheres: Optional[np.ndarray] = None
+    manipulated_sphere_radii: Optional[np.ndarray] = None
+    manipulated_link_margin: Optional[np.ndarray] = None
+    #: The **held** object as query points riding `attached_parent_link`, in that link's frame
+    #: (`AttachedCollisionGeometry.points`). Once a grasp closes the object stops being part of the
+    #: world and becomes part of the robot, so it belongs on the query side of the field rather than
+    #: inside it -- these points are appended to the robot's spheres with radius zero.
+    #:
+    #: Points rather than a fitted primitive, because a primitive is measurably worse (F19): one
+    #: sphere through an apple's cloud is r = 57.4 mm since it must cover the stem and leaf, which
+    #: costs 13.2 mm of clearance on average against the basket and in one frame reports a collision
+    #: that is not there.
+    #:
+    #: They are `None` together whenever nothing is held.
+    attached_points: Optional[np.ndarray] = None
+    attached_parent_link: Optional[str] = None
+    #: Where the held object is being **put**. `destination_label` is the name it carries in the
+    #: field's label layer; `destination_margin` is the clearance required against it.
+    #:
+    #: Thin (20 mm) rather than the 50 mm every other obstacle gets, because the geometry does not
+    #: leave room for 50: the held apple's points pass within 32.9 mm of the basket's inner wall
+    #: while it is lowered in (F18). This is not a global relaxation -- it applies only where the
+    #: label layer says the nearest surface *is* the destination, so every other obstacle, the
+    #: table included, keeps its full margin.
+    #:
+    #: `None` whenever no destination was named, and naming one is the caller's job: AG3S is never
+    #: told what the task is, so it cannot know which object is the destination.
+    destination_label: Optional[str] = None
+    destination_margin: float = 0.0
 
     @property
     def has_esdf(self) -> bool:
@@ -272,6 +309,12 @@ class CollisionLinearizer:
         self._fk = ca.Function("fk_jac", [q], [centres, jac])
         self._fk_map = self._fk.map(self.horizon)
         self.robot_radii = np.asarray([float(r) for _, r in spheres], np.float64)
+        #: Extra query points riding a link -- the held object. See `set_attached`.
+        self._attached_local: Optional[np.ndarray] = None
+        self._attached_link: Optional[str] = None
+        self._probe_maps: dict = {}
+        #: Radii for every query point: the robot's spheres, then zeros for attached points.
+        self.query_radii = self.robot_radii
 
         # Converting a CasADi DM to numpy costs about 45 ns per *dense* entry regardless of how it is
         # asked for, and the mapped Jacobian is 183 x 600 with only 23% of its entries structurally
@@ -296,9 +339,110 @@ class CollisionLinearizer:
             (self.horizon, self.n_spheres, 3),
         )
 
+    # --- held object ---------------------------------------------------------------------
+    def set_attached(self, points_local, parent_link: Optional[str]) -> None:
+        """Hold `points_local` (N, 3, in `parent_link`'s frame) as extra query points, or clear them.
+
+        The points are appended to the robot's own spheres with radius zero, so every consumer that
+        already walks the sphere axis picks them up: the ESDF rows, the activation band, the budget,
+        and `full_violation`'s guarantee that the reported number came from every row.
+
+        **The QP's sparsity does not move.** The block is `horizon x reduction.rows_per_step`
+        regardless of how many query points exist -- widening the candidate list changes what
+        *competes* for those rows, not how many there are. That is why a grasp can start and end
+        mid-rollout without invalidating the factorization.
+
+        Nothing is rebuilt symbolically when the point set changes. `_link_probe_map` differentiates
+        four points per link -- the origin and its three unit axes -- and every attached point is an
+        exact affine combination of those four, because a rigid transform is affine. So a new grasp
+        costs one numpy matmul, not a CasADi graph.
+        """
+        if points_local is None or parent_link is None or len(points_local) == 0:
+            self._attached_local = None
+            self._attached_link = None
+            self.query_radii = self.robot_radii
+            return
+        self._attached_local = np.asarray(points_local, np.float64).reshape(-1, 3)
+        self._attached_link = str(parent_link)
+        self.query_radii = np.concatenate(
+            [self.robot_radii, np.zeros(self._attached_local.shape[0])]
+        )
+
+    @property
+    def n_attached(self) -> int:
+        return 0 if self._attached_local is None else int(self._attached_local.shape[0])
+
+    def _link_probe_map(self, link: str):
+        """Cached FK for four points rigidly fixed to `link`: its origin and its three unit axes.
+
+        Returned mapped over the horizon. Any point `p` with local coordinates `(a, b, c)` is
+
+            p(q) = o(q) + a (x(q) - o(q)) + b (y(q) - o(q)) + c (z(q) - o(q))
+
+        which is linear in the four probe positions with weights summing to one, so both the point
+        and its Jacobian follow from the probes by the same weights. Four probes therefore cover
+        every possible attached point set on that link, and the graph is built once per link.
+        """
+        import casadi as ca
+
+        cached = self._probe_maps.get(link)
+        if cached is not None:
+            return cached
+        q = ca.SX.sym("q", int(self.robot_model.nq), 1)
+        T = self.robot_model.link_pose_symbolic(q, link)
+        origin = T[:3, 3]
+        probes = ca.horzcat(origin, origin + T[:3, 0], origin + T[:3, 1], origin + T[:3, 2])
+        free = [int(i) for i in self.layout.q_indices]
+        jac = ca.jacobian(ca.reshape(probes, -1, 1), q[free])
+        fn = ca.Function(f"probe_{link}", [q], [probes, jac]).map(self.horizon)
+
+        probe_dm, jac_dm = fn(np.zeros((int(self.robot_model.nq), self.horizon)))
+        rows, cols = jac_dm.sparsity().get_triplet()
+        rows = np.asarray(rows, np.int64)
+        cols = np.asarray(cols, np.int64)
+        probe, xyz = rows // 3, rows % 3
+        step, joint = cols // self.nq_opt, cols % self.nq_opt
+        shape = (self.horizon, 4, 3, self.nq_opt)
+        dest = np.ravel_multi_index((step, probe, xyz, joint), shape)
+        c_step, c_probe = np.divmod(np.arange(self.horizon * 4), 4)
+        c_dest = np.ravel_multi_index(
+            (np.repeat(c_step, 3), np.repeat(c_probe, 3), np.tile(np.arange(3), c_step.size)),
+            (self.horizon, 4, 3),
+        )
+        cached = (fn, dest, shape, c_dest)
+        self._probe_maps[link] = cached
+        return cached
+
+    def attached_states(self, full: np.ndarray):
+        """``(pos[H, N, 3], jac[H, N, 3, nq_opt])`` for the held object, or empty when nothing is held."""
+        if self._attached_local is None:
+            return (np.zeros((self.horizon, 0, 3)),
+                    np.zeros((self.horizon, 0, 3, self.nq_opt)))
+        fn, dest, shape, c_dest = self._link_probe_map(self._attached_link)
+        probe_dm, jac_dm = fn(full)
+        probes = np.zeros(self.horizon * 4 * 3)
+        probes[c_dest] = np.asarray(probe_dm).T.reshape(-1)
+        probes = probes.reshape(self.horizon, 4, 3)
+        pj = np.zeros(int(np.prod(shape)))
+        pj[dest] = np.asarray(jac_dm.nonzeros(), np.float64)
+        pj = pj.reshape(shape)
+
+        a = self._attached_local
+        w = np.column_stack([1.0 - a.sum(axis=1), a])          # (N, 4), rows sum to 1
+        pos = np.einsum("nk,hkj->hnj", w, probes)
+        jac = np.einsum("nk,hkjm->hnjm", w, pj)
+        return pos, jac
+
     # --- raw geometry --------------------------------------------------------------------
     def sphere_states(self, trajectory: np.ndarray, q_now: np.ndarray):
-        """``(centres[H, S, 3], jacobians[H, S, 3, nq_opt])`` along the whole chunk."""
+        """``(centres[H, Q, 3], jacobians[H, Q, 3, nq_opt])`` along the whole chunk.
+
+        ``Q = S + N``: the robot's own spheres first, then the held object's points (radius zero).
+        The candidate and plane blocks slice off the robot's part; the ESDF block uses all of it,
+        because once a grasp closes the held object is part of the robot and has to be checked
+        against the world like any other piece of it (E3 -- the held object never reached the
+        optimizer at all before this).
+        """
         full = self.layout.full_q(trajectory, q_now)
         centres_dm, jac_dm = self._fk_map(full)
 
@@ -306,10 +450,13 @@ class CollisionLinearizer:
         centres[self._centre_dest] = np.asarray(centres_dm).T.reshape(-1)
         jac = np.zeros(int(np.prod(self._jac_shape)))
         jac[self._jac_dest] = np.asarray(jac_dm.nonzeros(), np.float64)
-        return (
-            centres.reshape(self.horizon, self.n_spheres, 3),
-            jac.reshape(self._jac_shape),
-        )
+        centres = centres.reshape(self.horizon, self.n_spheres, 3)
+        jac = jac.reshape(self._jac_shape)
+        if self._attached_local is None:
+            return centres, jac
+        a_pos, a_jac = self.attached_states(full)
+        return (np.concatenate([centres, a_pos], axis=1),
+                np.concatenate([jac, a_jac], axis=1))
 
     # --- clearances ----------------------------------------------------------------------
     def clearances(
@@ -335,28 +482,82 @@ class CollisionLinearizer:
         No slot loop and no selection over candidates: the field answers for the point directly.
         That is why this block is `S` rows where the primitive block is `S * M`.
 
-        **Per-sphere target margin, not a global carve (E1).** AG3S no longer removes the target
-        from the field, so `d` already reflects the target as an obstacle for every sphere. A sphere
-        whose nearest field obstacle *is* the target — `d` agrees with the analytic distance to
-        `scene.target_points` within one voxel of discretization bias — uses
-        `scene.target_link_margin` for that sphere instead of the flat `esdf_margin`. An
-        unauthorized sphere's entry in `target_link_margin` is the full margin already (AG3S builds
-        it that way), so there is nothing else to check here: whether a link may touch the target is
-        entirely encoded in the numbers AG3S handed over.
+        **Per-sphere margin for the manipulated object, not a global carve (E1).** AG3S no longer
+        removes that object from the field, so `d` already reflects it as an obstacle for every
+        sphere. A sphere whose nearest field obstacle *is* that object uses
+        `scene.manipulated_link_margin` for itself instead of the flat `esdf_margin`. An unauthorized
+        sphere's entry is the full margin already (AG3S builds it that way), so there is nothing else
+        to check here: whether a link may touch it is entirely encoded in the numbers AG3S handed
+        over.
+
+        **The object is the one being manipulated, not the one attention is looking at** (F11).
+        Those are the same until a grasp closes; afterwards the policy's attention moves to the
+        destination while the hand still holds the object, and keying the permission on attention
+        leaves the held object demanding full clearance from the fingers holding it.
+
+        **The identification test is two-sided** (F13). Comparing only `d >= d_object - tol` is
+        correct only while that object is actually in the field; when it is missing — a held object
+        erased by the self-filter is exactly that case (F12) — the one-sided form also accepts
+        spheres whose field obstacle is much *further* than the object, and relaxes them wrongly.
+        Requiring the two distances to agree within a voxel says what was meant.
         """
         if scene.esdf is None:
             return np.zeros((centres.shape[0], centres.shape[1], 0))
+        n_query = centres.shape[1]
+        radii = self.query_radii
+        if radii.shape[0] != n_query:
+            raise ValueError(
+                f"{n_query} query points but {radii.shape[0]} radii; `set_attached` and the states "
+                "passed in disagree about what is being held"
+            )
         flat = centres.reshape(-1, 3)
         d = np.asarray(scene.esdf.distance(flat), np.float64).reshape(centres.shape[:2])
         margin = np.full(centres.shape[:2], float(scene.esdf_margin))
-        if (scene.target_points is not None and scene.target_link_margin is not None
-                and len(scene.target_points)):
-            from scipy.spatial import cKDTree
-            d_target = cKDTree(scene.target_points).query(flat)[0].reshape(centres.shape[:2])
-            tol = float(scene.esdf.grid.voxel_size)
-            is_target = d >= (d_target - tol)
-            margin = np.where(is_target, scene.target_link_margin[None, :], margin)
-        return (d - scene.robot_radii[None, :] - margin)[..., None]
+        # 목적지: 가장 가까운 표면이 목적지인 질의점만 얇은 마진을 쓴다. 필드가 라벨을 함께
+        # 답하게 된 덕분에 이 구분이 가능해졌다 — 그 전에는 거리장이 익명이라 "지금 가까운 것이
+        # 목적지인가" 를 물을 수 없었고, 그래서 전역 마진을 내리는 것 말고는 방법이 없었다.
+        #
+        # **그리고 쥔 물체에만 붙는다.** 목적지 마진을 "가장 가까운 것이 목적지인 모든 질의점"
+        # 에 걸었더니 로봇 팔과 몸통의 여유거리까지 함께 완화됐다 — 실측으로 잡았다(프레임 18
+        # 에서 로봇 구 최악 -77.8 mm 가 -47.8 mm 로). 그것은 E1(조작 대상을 필드에서 파내면
+        # 손끝뿐 아니라 전신에게 사라진다)과 같은 종류의 실수다. 바구니 안으로 들어가야 하는
+        # 것은 **쥔 물체**이지 팔꿈치가 아니다.
+        #
+        # 손가락은 이 완화가 필요 없다 — 실측상 바구니 안에서 50.4~51.1 mm 여유가 있어 전역
+        # 마진으로 충분하다. 필요해지는 날 (링크, 목적지) 쌍 권한으로 넓히면 되고, 그것은
+        # `ClearancePolicy` 가 접촉 권한에 이미 쓰는 구조다.
+        if scene.destination_label and getattr(scene.esdf, "has_labels", False):
+            is_dest = np.asarray(
+                scene.esdf.is_label(flat, scene.destination_label)
+            ).reshape(centres.shape[:2])
+            held = np.zeros(centres.shape[:2], bool)
+            held[:, self.n_spheres:] = True
+            margin = np.where(is_dest & held, float(scene.destination_margin), margin)
+        if scene.manipulated_link_margin is not None:
+            d_object = None
+            if scene.manipulated_spheres is not None and len(scene.manipulated_spheres):
+                # Held object: analytic distance to the union of its spheres, so no surface sampling
+                # sits between the geometry and the test.
+                delta = flat[:, None, :] - scene.manipulated_spheres[None, :, :]
+                d_object = (np.linalg.norm(delta, axis=2)
+                            - scene.manipulated_sphere_radii[None, :]).min(axis=1)
+            elif scene.manipulated_points is not None and len(scene.manipulated_points):
+                from scipy.spatial import cKDTree
+                d_object = cKDTree(scene.manipulated_points).query(flat)[0]
+            if d_object is not None:
+                d_object = d_object.reshape(centres.shape[:2])
+                tol = float(scene.esdf.grid.voxel_size)
+                is_object = np.abs(d - d_object) <= tol
+                per_link = np.asarray(scene.manipulated_link_margin, np.float64).reshape(-1)
+                if per_link.shape[0] < n_query:
+                    # The held object's own points get no relaxation: they *are* the object, so
+                    # "may this link touch it" is not a question about them. Padding with the full
+                    # margin is the fail-closed direction and keeps the array conformable.
+                    per_link = np.concatenate(
+                        [per_link, np.full(n_query - per_link.shape[0], float(scene.esdf_margin))]
+                    )
+                margin = np.where(is_object, per_link[None, :], margin)
+        return (d - radii[None, :] - margin)[..., None]
 
     def _clearances_from(self, centres: np.ndarray, scene: SceneSnapshot):
         """``(candidate[H, S, M], plane[H, S, K], distance[H, S, M])`` — no ``delta`` array.
@@ -367,6 +568,7 @@ class CollisionLinearizer:
         direction vector is only needed for the handful of rows that survive selection, and
         `linearize` computes those individually.
         """
+        centres = centres[:, : self.n_spheres]   # 후보·평면 행은 로봇 구에만 붙는다
         flat = centres.reshape(-1, 3)  # (H*S, 3)
         cross = flat @ scene.candidate_pos.T  # (H*S, M)
         squared = (
@@ -439,7 +641,11 @@ class CollisionLinearizer:
         candidate, plane, distance = self._clearances_from(centres, scene)
         esdf = self._esdf_clearance(centres, scene)
 
-        horizon, n_spheres = centres.shape[0], centres.shape[1]
+        horizon = centres.shape[0]
+        # Two counts, deliberately. Candidate and plane rows are per *robot sphere*; ESDF rows are
+        # per *query point*, which includes the held object's points (they carry no candidate slot
+        # because they are not in the world, they are on the robot).
+        n_spheres = self.n_spheres
         n_slots, n_planes = scene.n_slots, scene.n_planes
         band = reduction.activation_band if reduction.enabled else np.inf
         n_candidate = n_spheres * n_slots
@@ -553,6 +759,52 @@ class CollisionLinearizer:
         )
 
 
+
+def _check_support_surface_invariant(constraint_set, config) -> None:
+    """지지면을 제약하는 것이 **하나는** 있는지 확인한다 (F15).
+
+    스위치가 둘이고 **서로 다른 config 에 산다**:
+
+        AG3SConfig.esdf.exclude_support_surfaces   지각 쪽 — 표면을 필드에서 파낼 것인가
+        TrajOptConfig.collision.use_support_planes 최적화 쪽 — 평면 행을 읽을 것인가
+
+    네 조합 중 둘만 일관된다. 파냈으면 평면 행이 받아야 하고, 안 파냈으면 필드가 이미 담고 있다.
+    **`파냄 + 평면 행 없음` 은 지지면을 아무도 제약하지 않는 상태**이고, 그것이 이 검사가 막는
+    것이다. 실측(run_0004, 3 카메라): 파내면 상판 z=0.823 에서 필드가 **-30.5 mm → +6.0 mm** 로
+    바뀐다 — 표면이 자유공간이 된다. 손끝이 실제로 다투는 대역에서 **최대 36.5 mm 낙관적**이다.
+
+    도달하기 쉬운 조합이라는 것이 문제의 핵심이다. `SafePolicy` 는 `to_config` 기본값으로
+    `use_support_planes: False` 를 쓰면서 `ag3s` 는 **밖에서 주입받는다.** 그래서
+
+        ag3s = AG3S(AG3SConfig.from_dict({"collision_backend": "esdf"}), ...)   # exclude 기본 True
+        SafePolicy(policy, ag3s=ag3s)                                            # use_planes 기본 False
+
+    이라는 지극히 자연스러운 코드가 위험 조합을 만든다. 두 config 중 어느 쪽도 상대를 볼 수
+    없으므로, **둘이 만나는 이 지점**이 검사할 수 있는 유일한 자리다.
+
+    파냈다는 사실은 추측하지 않고 필드가 스스로 보고한 것을 읽는다
+    (`EsdfField.stats["n_support_voxels_carved"]`, `esdf.py:568`).
+    """
+    field = getattr(constraint_set, "esdf", None)
+    if field is None:
+        return
+    stats = getattr(field, "stats", None) or {}
+    carved = int(stats.get("n_support_voxels_carved", 0) or 0)
+    if carved <= 0:
+        return
+    if getattr(getattr(config, "collision", None), "use_support_planes", True):
+        return
+    n_planes = len(getattr(constraint_set, "support_surfaces", ()) or ())
+    raise ValueError(
+        f"지지면을 제약하는 것이 없습니다 (F15): AG3S 가 지지면 복셀 {carved} 개를 필드에서 "
+        f"파냈는데(esdf.exclude_support_surfaces=True) collision.use_support_planes=False 라 "
+        f"평면 {n_planes} 개가 최적화기에 도달하지 않습니다. 테이블 상판이 자유공간으로 보입니다 "
+        f"— 실측 +36.5 mm. 둘 중 하나로 맞추세요: "
+        f"exclude_support_surfaces=False (필드가 담게, 두 실제 경로가 쓰는 쪽) 또는 "
+        f"use_support_planes=True (평면 행이 받게)."
+    )
+
+
 def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
                              config) -> Optional[SceneSnapshot]:
     """AG3S 의 `CollisionConstraintSet` -> 이 optimizer 가 실제로 쓸 `SceneSnapshot`.
@@ -573,16 +825,37 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
     spec = constraint_set.constraints
     backend = getattr(getattr(config, "collision", None), "backend", "primitive")
     radii = np.asarray(robot_radii, np.float64).reshape(-1)
-    # E1: AG3S no longer carves the target out of the field, so a sphere on an authorized link needs
-    # its own relaxed margin instead — read straight off `CollisionConstraintSet`, nothing recomputed
-    # here. Both are `None` together whenever there is no grounded target this frame.
-    target = getattr(constraint_set, "target", None)
-    target_points = np.asarray(target.points, np.float64) if target is not None else None
-    target_link_margin = getattr(constraint_set, "target_link_margin", None)
-    if target_link_margin is not None and target_link_margin.shape[0] != radii.size:
+    _check_support_surface_invariant(constraint_set, config)
+    # E1: AG3S no longer carves the manipulated object out of the field, so a sphere on an authorized
+    # link needs its own relaxed margin instead — read straight off `CollisionConstraintSet`, nothing
+    # recomputed here. All are `None` together whenever nothing is being manipulated this frame.
+    # Which object that is — the held one, or the attention target when nothing is held — is AG3S's
+    # decision (`clearance.manipulated_object`), not one this adapter re-derives (F11).
+    manipulated = getattr(constraint_set, "manipulated", None)
+    man_points = getattr(manipulated, "points", None)
+    man_spheres = getattr(manipulated, "sphere_centers", None)
+    man_radii = getattr(manipulated, "sphere_radii", None)
+    manipulated_link_margin = getattr(constraint_set, "manipulated_link_margin", None)
+    # 쥔 물체는 이제 **로봇 쪽 질의점**이다 (E3 — 쥔 물체가 optimizer 에 도달하지 않던 문제).
+    # primitive 가 아니라 점인 이유는 F19: 관측 점구름에 구 하나를 맞추면 꼭지·잎까지 덮느라
+    # 반지름이 57.4 mm 가 되어 여유를 중앙 13.2 mm 먹고, 한 프레임에서는 없는 충돌을 만든다.
+    attached = getattr(constraint_set, "attached", None)
+    attached_points = getattr(attached, "points", None) if attached is not None else None
+    attached_link = getattr(attached, "parent_link", None) if attached is not None else None
+    if attached_points is not None and len(attached_points) == 0:
+        attached_points, attached_link = None, None
+    # 목적지 마진. AG3S 가 정책에서 뽑아 실어 보낸 값을 그대로 읽는다 — 여기서 다시 계산하지
+    # 않는 것은 마진이 나오는 곳이 하나여야 하기 때문이다 (`ClearancePolicy`).
+    destination_label = getattr(constraint_set, "destination_label", None)
+    destination_margin = getattr(constraint_set, "destination_margin", None)
+    if destination_margin is None:
+        destination_label = None
+        destination_margin = 0.0
+    if manipulated_link_margin is not None and manipulated_link_margin.shape[0] != radii.size:
         raise ValueError(
-            f"target_link_margin has {target_link_margin.shape[0]} entries but {radii.size} robot "
-            "radii were given; the optimizer and AG3S must share one constraint model"
+            f"manipulated_link_margin has {manipulated_link_margin.shape[0]} entries but "
+            f"{radii.size} robot radii were given; the optimizer and AG3S must share one "
+            "constraint model"
         )
     if spec is None:
         # No `ConstraintSpec` at all. With the field that is a complete scene — an ESDF-only frame
@@ -598,7 +871,12 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
             plane_active=np.zeros(0, bool), robot_radii=radii,
             candidate_ids=np.zeros(0, np.int64),
             esdf=field, esdf_margin=float(config.collision.esdf_margin),
-            target_points=target_points, target_link_margin=target_link_margin)
+            manipulated_points=man_points, manipulated_spheres=man_spheres,
+            manipulated_sphere_radii=man_radii,
+            manipulated_link_margin=manipulated_link_margin,
+            attached_points=attached_points, attached_parent_link=attached_link,
+            destination_label=destination_label,
+            destination_margin=float(destination_margin))
         return empty
     scene = SceneSnapshot.from_spec(spec, radii)
     if backend not in ("primitive", "esdf", "both"):
@@ -613,7 +891,12 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
                 "확인하세요 — point cloud 만으로는 투영 TSDF 를 만들 수 없습니다.")
         scene = dataclasses.replace(
             scene, esdf=field, esdf_margin=float(config.collision.esdf_margin),
-            target_points=target_points, target_link_margin=target_link_margin)
+            manipulated_points=man_points, manipulated_spheres=man_spheres,
+            manipulated_sphere_radii=man_radii,
+            manipulated_link_margin=manipulated_link_margin,
+            attached_points=attached_points, attached_parent_link=attached_link,
+            destination_label=destination_label,
+            destination_margin=float(destination_margin))
 
     if not getattr(config.collision, "use_support_planes", True):
         # 평면도 끈다(지우지 않는다). AG3S 는 계속 평면을 뽑는다 — grounding 이 그 마스크 없이는

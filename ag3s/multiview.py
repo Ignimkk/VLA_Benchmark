@@ -42,8 +42,8 @@ from typing import Any, Optional, Sequence
 
 import numpy as np
 
-from benchmark.ag3s.attention_lifting import lift, make_adapter
-from benchmark.ag3s.config import AG3SConfig
+from benchmark.ag3s.attention_lifting import lift, make_adapter, normalize_attention
+from benchmark.ag3s.config import AG3SConfig, AttentionConfig
 from benchmark.ag3s.reconstruction import reconstruct
 from benchmark.ag3s.robot_filter import filter_robot_points
 from benchmark.ag3s.types import (
@@ -121,9 +121,11 @@ def process_observation(
     notes: list[str] = []
     if observation.has_attention and not cloud.is_empty:
         adapter = attention_adapter or make_adapter(observation.attention_map, config.attention)
-        # Every camera is lifted with `config.attention` — one normalization for all of them. Per
-        # camera normalization would make the values incomparable, and the fusion `max` would then be
-        # picking the camera with the most generous scaling rather than the best evidence.
+        # `lift()` normalizes over *this camera's* points, so the value it returns is only
+        # comparable within this camera. **That is why `fuse` re-normalizes the fused raw values
+        # instead of using this array** (F2, `AG3S_REVIEW_LOG.md` Step 5) — otherwise the fusion
+        # `max` picks the most generously scaled camera rather than the strongest evidence.
+        # The per-camera array is still carried in the CSR block as provenance.
         attention_cloud = lift(
             cloud,
             observation.attention_map,
@@ -236,6 +238,7 @@ def fuse(
     *,
     voxel_size: float,
     frame_id: str = "base",
+    attention_config: Optional[AttentionConfig] = None,
 ) -> tuple[FusedPointCloud, np.ndarray, np.ndarray]:
     """Merge per-camera clouds on a base-frame voxel grid. Returns `(fused, attention)`.
 
@@ -301,8 +304,26 @@ def fuse(
 
     # Vectorized max per block: `np.maximum.reduceat` over the CSR boundaries, which beats a Python
     # loop over 60k points by two orders of magnitude and gives the identical answer.
-    attention = np.maximum.reduceat(fused.obs_attention, starts).astype(np.float32)
     raw_attention = np.maximum.reduceat(obs_raw[order], starts).astype(np.float32)
+
+    # **F2 — normalization happens here, after fusion, not per camera** (`AG3S_REVIEW_LOG.md`
+    # Step 5). `lift()` normalizes over the points of *one* camera, so each camera stretched its
+    # own maximum to 1.0 and this `max` was choosing the most generously scaled camera rather than
+    # the strongest evidence — exactly what the comment in `process_observation` warns about.
+    # Measured on RB-Y1 `run_0004`: the normalization ceiling differed 2.7x across cameras, rank
+    # correlation between the two schemes was 0.693, and the grounded target changed in 4 of 15
+    # frames (three of them a different object entirely, up to 307.5 mm).
+    #
+    # Normalizing the fused *raw* values gives every camera one scale. Order is preserved by
+    # `normalize_attention`, and a monotone map commutes with `max`, so this is the same ranking as
+    # normalizing every camera against a shared lo/hi before fusion — with no change to `lift()`.
+    # With a single camera the two schemes coincide by definition, so nothing on that path moves.
+    if attention_config is not None:
+        attention = normalize_attention(raw_attention, attention_config).astype(np.float32)
+    else:
+        # No config: fall back to the per-camera values. Kept so `fuse` stays callable on its own
+        # (tests, ablations) rather than silently producing an unnormalized array.
+        attention = np.maximum.reduceat(fused.obs_attention, starts).astype(np.float32)
     return fused, attention, raw_attention
 
 
@@ -326,7 +347,8 @@ def fuse_observations(
         notes.extend(result.notes)
 
     fused, attention, raw_attention = fuse(
-        results, voxel_size=config.timing.fusion_voxel_size, frame_id=config.frame_id
+        results, voxel_size=config.timing.fusion_voxel_size, frame_id=config.frame_id,
+        attention_config=config.attention,
     )
 
     n_input = sum(len(r.cloud) for r in results)

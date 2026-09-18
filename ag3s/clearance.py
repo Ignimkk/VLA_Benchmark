@@ -29,17 +29,20 @@ and support surfaces are never relaxed at all.
 from __future__ import annotations
 
 import dataclasses
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
 import numpy as np
 
 from benchmark.ag3s.config import ContactConfig, GeometryConfig, SupportSurfaceConfig
+from benchmark.ag3s.geometry import to_spheres
 from benchmark.ag3s.types import (
+    AttachedCollisionGeometry,
     ContactPolicyContext,
     Manipulator,
     Phase,
     RobotCollisionModel,
     SourceType,
+    TargetGeometry,
 )
 
 #: What a sphere's link is called when the robot model does not say. Chosen to be a name no URDF
@@ -63,6 +66,94 @@ def resolve_link_names(model: Optional[RobotCollisionModel], n_spheres: int) -> 
     if len(resolved) < n_spheres:
         resolved.extend([UNKNOWN_LINK] * (n_spheres - len(resolved)))
     return tuple(resolved[:n_spheres])
+
+
+# ------------------------------------------------------------------ 조작 대상 대 주목 대상
+
+
+@dataclasses.dataclass(frozen=True)
+class ManipulatedObject:
+    """무엇을 **조작**하고 있는가 — 접촉 권한이 붙어야 할 대상.
+
+    이 모듈의 첫 문단이 말한 것과 같은 종류의 구분이 하나 더 있고, 구현이 아직 따라오지 못했다
+    (F11, `docs/AG3S_REVIEW_LOG.md`). 두 대상은 **같지 않다**:
+
+        주목 대상 (`TargetGeometry`)          attention 이 가리키는 것
+        조작 대상 (`AttachedCollisionGeometry`) 로봇이 실제로 쥐고 있는 것
+
+    실측에서 정책의 attention 은 **파지에 착수하는 순간 목적지로 옮겨간다.** run_0004 와 run_0005
+    양쪽에서, 손이 사과를 쥐고 있는 내내 grounding 이 낸 target 은 바구니였다. 접촉 권한을 주목
+    대상에 걸면 손끝은 *바구니* 를 만질 허가를 받고, 정작 쥐고 있는 *사과* 는 완전 여유거리를
+    요구하는 장애물로 남는다 — 두 기록에서 최악 -138.7 mm / -97.5 mm 로 측정됐다.
+
+    그래서 권한은 **조작 대상**에 건다. 규칙은 한 줄이다:
+
+        쥔 것이 있으면 그것. 없으면 주목 대상.
+
+    파지 전에는 접근 중인 물체가 곧 보고 있는 물체이므로 둘이 일치하고, 이때 동작은 예전과
+    **완전히 같다** — 바뀌는 것은 `attach()` 가 불린 뒤부터다.
+
+    표현이 둘인 것은 일부러다. 주목 대상은 관측된 점구름이라 거리를 점으로 재는 것이 정확하고,
+    쥔 물체는 primitive + FK 자세라 **해석적 거리**가 정확하다. 하나로 합치면 어느 한쪽이
+    나빠진다 — 주목 대상을 경계구로 줄이면 헐거워지고, 쥔 물체를 점으로 샘플링하면 샘플 밀도에
+    정확도가 매달린다.
+    """
+
+    #: `"attached"` 면 쥔 물체, `"target"` 이면 주목 대상. 로그와 시험이 어느 경로였는지 본다.
+    source: str
+    #: 주목 대상 경로 — 관측된 점구름 `(M, 3)`.
+    points: Optional[np.ndarray] = None
+    #: 쥔 물체 경로 — base 프레임 구 `(S, 3)` 와 `(S,)`. FK 로 놓은 스냅샷이다.
+    sphere_centers: Optional[np.ndarray] = None
+    sphere_radii: Optional[np.ndarray] = None
+
+    @property
+    def is_held(self) -> bool:
+        return self.source == "attached"
+
+
+def manipulated_object(
+    target: Optional["TargetGeometry"] = None,
+    attached: Optional["AttachedCollisionGeometry"] = None,
+    *,
+    robot_model: Any = None,
+    robot_state: Optional[np.ndarray] = None,
+) -> Optional[ManipulatedObject]:
+    """쥔 것이 있으면 그것, 없으면 주목 대상. 둘 다 없으면 `None`.
+
+    쥔 물체는 `parent_link` 를 타고 다니므로 base 프레임 좌표를 얻으려면 그 순간의 FK 가 필요하다.
+    `robot_model` 이나 `robot_state` 가 없어서 놓을 수 없으면 **주목 대상으로 물러서지 않고
+    `None` 을 돌려준다** — "쥐고 있는데 어디 있는지 모른다" 를 "바구니를 쥐고 있다" 로 바꾸는 것이
+    이 함수가 막으려는 바로 그 오류이기 때문이다. 권한이 없는 쪽이 닫히는 방향이다.
+    """
+    if attached is not None:
+        pose_fn = getattr(robot_model, "link_pose", None) or getattr(
+            robot_model, "link_pose_numeric", None
+        )
+        if pose_fn is None or robot_state is None:
+            return None
+        T = np.asarray(pose_fn(np.asarray(robot_state, np.float64).reshape(-1),
+                               attached.parent_link), np.float64)
+        T_base_object = T @ np.asarray(attached.T_parent_object, np.float64)
+        R, origin = T_base_object[:3, :3], T_base_object[:3, 3]
+        centres: list[np.ndarray] = []
+        radii: list[float] = []
+        for primitive in attached.primitives:
+            for local, radius in to_spheres(primitive):
+                centres.append(R @ np.asarray(local, np.float64) + origin)
+                radii.append(float(radius))
+        if not centres:
+            return None
+        return ManipulatedObject(
+            source="attached",
+            sphere_centers=np.asarray(centres, np.float64).reshape(-1, 3),
+            sphere_radii=np.asarray(radii, np.float64).reshape(-1),
+        )
+    if target is not None:
+        return ManipulatedObject(
+            source="target", points=np.asarray(target.points, np.float64).reshape(-1, 3)
+        )
+    return None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -104,6 +195,11 @@ class ClearancePolicy:
             return self.safety_margin  # an unnameable source is treated as solid geometry
         if parsed is SourceType.SUPPORT_SURFACE:
             return self.support_margin
+        if parsed is SourceType.DESTINATION:
+            # Thin, but never relaxed further and never zero: the held object goes *into* the
+            # destination, it does not touch it. `contact_margin` (zero) stays reserved for the
+            # object actually being held.
+            return float(self.contact.destination_margin)
         return self.safety_margin
 
     # --- contact authorization ----------------------------------------------------------

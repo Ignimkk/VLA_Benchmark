@@ -125,6 +125,11 @@ class TrajectoryOptimizer:
             )
             iterate = 0.5 * (iterate + shifted)
 
+        # 쥔 물체를 질의점으로 올린다. 매 청크 다시 거는 것은 파지가 청크 사이에 시작되고 끝나기
+        # 때문이고, 값이 같으면 하는 일이 없다 — 심볼릭 그래프는 링크마다 한 번만 만들어진다.
+        self.linearizer.set_attached(
+            getattr(scene, "attached_points", None), getattr(scene, "attached_parent_link", None)
+        )
         reference_violation = -self.linearizer.full_violation(reference, q_now, scene)
         # Forward kinematics for a whole chunk is the most expensive thing left in the loop, so each
         # trajectory's sphere states are computed once and carried: the iterate's states feed both

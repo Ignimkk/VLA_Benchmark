@@ -39,6 +39,7 @@ TRANSPORT_MODEL = pathlib.Path(
 )
 
 #: The 20 joints `benchmark.ag3s.robot_models.load_rby1` expects, in its order.
+from benchmark.ag3s.asset_path import resolve_asset  # noqa: E402
 from benchmark.ag3s.robot_models import DEFAULT_RBY1_JOINTS  # noqa: E402
 
 FREE_JOINTS = ("crate_free", "apple_free", "banana_free", "orange_free", "pear_free")
@@ -120,11 +121,8 @@ class TransportScene:
         import mujoco
 
         self.mujoco = mujoco
-        path = pathlib.Path(model_path)
-        if not path.is_absolute():
-            path = path.resolve()
-        if not path.exists():
-            raise FileNotFoundError(f"transport model not found at {path}")
+        # 기록의 옛 절대경로도 여기서 이 머신의 자산으로 해석된다 — `ag3s.asset_path` 참고.
+        path = resolve_asset(model_path, what="transport model")
         # Absolute, always — see the module docstring.
         self.model = mujoco.MjModel.from_xml_path(str(path))
         self.data = mujoco.MjData(self.model)

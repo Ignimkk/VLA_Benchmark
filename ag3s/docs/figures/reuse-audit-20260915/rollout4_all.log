@@ -1,0 +1,16 @@
+로봇 모델: 자기필터 194구 / 제약 120구  (arms)
+카메라: all (서빙 경로와 같은 진입점)
+target=apple  attention=실측  복셀=20mm  esdf_margin=50mm  계획 지평=32
+  [  0] t=   0 transit   AG3S   2855ms  TO    163ms  전체    -33.5→    +4.8  팔만   -33.5→   +4.8 mm  feasible
+  [  5] t=  40 approach  AG3S   2464ms  TO     79ms  전체    -68.0→    +1.3  팔만   -68.0→   +1.3 mm  violated
+  [ 10] t=  80 grasp     AG3S   1998ms  TO     63ms  전체   -140.3→    +0.6  팔만  -140.3→   +0.6 mm  feasible
+  [ 15] t= 120 grasp     AG3S   2020ms  TO     65ms  전체    -71.8→    +1.9  팔만   -71.8→   +1.9 mm  feasible
+  [ 20] t= 160 grasp     AG3S   1956ms  TO     56ms  전체    -73.9→    -1.4  팔만   -73.9→   -1.4 mm  violated
+  [ 21] t= 168 grasp     AG3S   1708ms  TO     54ms  전체    -74.2→    +0.2  팔만   -74.2→   +0.2 mm  feasible
+
+22청크
+  전체 구  : 위반으로 시작 22/22  해소 19  개선 22
+  팔 구만  : 위반으로 시작 22/22  해소 19  개선 22
+  AG3S 2212 ms  TO 68 ms  합계 2280 ms / 예산 66.7 ms
+  상태: feasible 13, violated 9
+wrote benchmark/ag3s/docs/figures/reuse-audit-20260915/rollout4_all.json

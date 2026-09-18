@@ -1,0 +1,112 @@
+{
+  "unequal_margins": {
+    "reported_m": 0.009999999999999998,
+    "required_min_m": -0.0050000000000000044,
+    "nearest_destination_m": 0.03,
+    "other_obstacle_m": 0.045
+  },
+  "label_boundary": {
+    "points_m": [
+      [
+        0.0099,
+        0.01,
+        0.01
+      ],
+      [
+        0.0101,
+        0.01,
+        0.01
+      ]
+    ],
+    "distance_m": [
+      0.034949999999999995,
+      0.03505
+    ],
+    "label": [
+      0,
+      1
+    ],
+    "clearance_m": [
+      0.014949999999999995,
+      -0.014950000000000005
+    ]
+  },
+  "missing_label": {
+    "unknown_name_matches": false,
+    "outside_label": -1
+  },
+  "roi_boundary": {
+    "query_m": [
+      0.0199,
+      0.0201
+    ],
+    "distance_m": [
+      0.01,
+      0.04
+    ],
+    "outside_query_m": [
+      2,
+      0,
+      0
+    ],
+    "outside_distance_m": 0.04,
+    "outside_gradient": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "has_label_contract": false,
+    "unknown_fraction_without_metadata": 0.0
+  },
+  "unknown_free": {
+    "min_m": 0.4000000059604645,
+    "max_m": 0.4000000059604645
+  },
+  "sample_gap": {
+    "sample_clearance_m": [
+      0.007,
+      0.007
+    ],
+    "surface_midpoint_clearance_m": -0.003,
+    "sample_spacing_m": 0.02
+  },
+  "time_gap": {
+    "endpoint_clearance_m": [
+      0.027,
+      0.027
+    ],
+    "intermediate_clearance_m": -0.003
+  }
+}
+{
+  "label_only_update": {
+    "before": [
+      0,
+      1
+    ],
+    "incremental_after": [
+      0,
+      1
+    ],
+    "full_rebuild_after": [
+      1,
+      0
+    ],
+    "recomputed_voxels": 0
+  },
+  "label_snap_leak": {
+    "seed_m": [
+      0.06999999999999999,
+      0.03,
+      0.03
+    ],
+    "other_obstacle_m": [
+      0.09,
+      0.03,
+      0.03
+    ],
+    "other_assigned_destination": true,
+    "snap_distance_m": 0.04,
+    "fixture": "Two differently owned occupied voxels, only destination supplies seeds."
+  }
+}

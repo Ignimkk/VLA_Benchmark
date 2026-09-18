@@ -8,6 +8,47 @@
 
 ---
 
+## 새 컨테이너 구성 완료 (2026-09-11)
+
+이관된 파일을 보존한 채 새 컨테이너 구성을 완료하고 §3 전체를 실행했다.
+작업 루트는 `/mnt/dev/work`이며 `/work`도 같은 곳을 가리킨다.
+
+| 저장소 | origin | 복구한 브랜치 / 커밋 |
+|---|---|---|
+| `benchmark` | `https://github.com/Ignimkk/VLA_Benchmark.git` | `main` / `7d15cf1` |
+| `pi05_TO_hybrid` | `https://github.com/Ignimkk/pi05_TO_hybrid.git` | `main` / `9b6c63e` |
+| `pi05_TO_hybrid/openpi` | `https://github.com/Ignimkk/openpi.git` | `knows-attn-probs` / `002665b` |
+
+세 폴더 모두 `.git`이 없어 원격 이력을 받아 **작업 파일을 덮어쓰지 않고** 메타데이터만
+복원했다. openpi는 상위 저장소가 고정한 `002665b`에 맞췄다. `.gitmodules`의
+`branch = rby1-seam`은 그대로 두고 상위 저장소의 로컬 설정
+`submodule.openpi.branch = knows-attn-probs`로 실제 브랜치를 지정했다.
+하위 `aloha`와 `libero`의 Git 메타데이터도 지정 커밋으로 복원했다.
+복사본에 없던 openpi의 `.vscode/settings.json`은 삭제 상태로 보존했다.
+
+환경은 다음 두 개다. 명령은 작업 루트에서 실행한다.
+
+- `.venv-ag3s`: Python 3.11.16, `requirements-ag3s.txt`의 고정 버전 전부 설치.
+- `.venv-curobo`: 시스템 Python 3.10.12와 **기존** PyTorch
+  `2.5.0a0+e000cf0ad9.nv24.10` 사용. cuRobo 소스는 `curobo_src`의 `78fd485`,
+  `warp-lang==1.17.0`, `cuda-core==1.2.0`.
+- **이 컨테이너의 cuRobo 환경에는 `numpy==1.26.4`가 필요하다.** 기존 PyTorch가
+  NumPy 1.x로 빌드되어 NumPy 2.2.6에서는 배열 변환이 실패했다.
+  설치 후 `.venv-curobo/bin/python -m pip install numpy==1.26.4`로 맞춘다.
+  AG3S 환경의 NumPy 2.4.6은 별도로 유지한다.
+- 시스템 의존성 `libosmesa6`, `fonts-noto-cjk`, `python3-venv` 설치 완료.
+- 기록의 옛 절대경로를 지원하도록 `/home/mk/dev_ws/vla/pi0_TO_ws`도
+  `/mnt/dev/work`를 가리키는 심볼릭 링크로 만들었다.
+
+§3 결과: 프레임 중심 `[0.554, 0.302, 0.854]`, 제약 구 120개, 카메라 3개;
+15청크 회귀 기준선 일치(`feasible 8 / violated 7`, 해소 14, 개선 15);
+cuRobo 상판 높이 거친 계층 0.790 m / 미세 계층 0.821 m 재현.
+워밍업 후 적분과 두 ESDF 추출 합계는 **3.21 ms**였다.
+로그·JSON·프레임·패키지 목록은 `/mnt/dev/work/outputs/container_setup_20260911/`에 보관했다.
+자세한 실행 기록은 `AG3S_REVIEW_LOG.md`의 마지막 절에 있다.
+
+---
+
 ## 새 세션을 시작할 때 — 이 순서로 읽으면 된다
 
 새 컨테이너의 Claude 에게 줄 지시문은 이것으로 충분하다.
@@ -40,6 +81,10 @@
 - **설명은 평이한 요약을 먼저, 코드 근거(`파일:줄`)는 그 다음.**
 - 테스트가 필요하면 **먼저 사용자에게 요청**한다 — 체크포인트/MuJoCo 실행은 임의로 돌리지 않는다.
 - 기록은 `AG3S_REVIEW_LOG.md` 에 **이어 쓴다.** 새 기록 파일을 만들지 않는다.
+- **모든 스텝에 시각화 자료를 만든다** (2026-09-12 추가). 실제 씬 > 그래프 > 표·수식 순으로
+  우선하고, 숫자를 문장에 흩어 놓는 것은 시각화가 아니다. 그림은 `ag3s/docs/figures/` 에.
+- **끝낼 때마다 전체 틀에서 어디인지 말한다** (2026-09-12 추가) — 무엇이 닫혔고 다음으로
+  무엇에 이어지는지. 비유·예시 환영.
 
 ---
 
@@ -47,8 +92,11 @@
 
 - AG3S/trajopt 검토 Step 0~4 완료, Step 5~11 남음. 발견 17건 중 8건 수정, 1건 기각, 8건 미판정.
 - ESDF 인프라를 **cuRoboV2 로 교체**하기로 결정했고, 그 API 가정을 이 장비에서 검증 완료.
-- **아직 안 한 것이 trajopt 어댑터**다 — cuRobo 가 주는 `VoxelGrid` 를 우리 최적화기가
-  읽는 `SceneSnapshot` 에 물리는 일. 가장 불확실한 부분이라 다음 차례로 잡았다.
+- **trajopt 어댑터는 2026-09-11 에 만들었다** — `ag3s/curobo_field.py`. 계약(세 메서드) 만족과
+  마스킹·합성·정확도까지 검증했고, §6 이 열어 둔 미확인 항목(부호, gradient, 합성 규칙, 함정)은
+  전부 닫혔다. **남은 것은 `esdf_rollout` 15 청크 기준선과의 end-to-end 대조**다.
+  그 과정에서 발견 C1(마스킹 누락)·C2(측정법)·C3(창 경계 불연속)이 나왔다 —
+  `AG3S_REVIEW_LOG.md` 의 마지막 절을 먼저 읽을 것.
 
 ---
 
@@ -123,8 +171,9 @@ tar xzf ag3s_migrate.tgz -C <새 작업 루트>
 
 **디렉터리 구조는 유지해야 한다.** `mujoco_source.py` 가
 `src/rby1_description/models/rby1a/mujoco/model_transport.xml` 를 **작업 루트 기준 상대경로**로
-찾는다. `run_0004/meta.json` 안의 `model_xml` 은 로컬 PC 의 절대경로라 무시되고, 이 상대경로가
-실제로 쓰인다.
+찾는 기본값이 있다. **다만 기록 재생의 `replay_scene()`은 `run_0004/meta.json` 안의
+`model_xml` 절대경로를 그대로 사용한다.** 새 컨테이너에서는 그 경로를 새 자산에 연결해야 한다.
+위 구성에서는 옛 작업 루트에 심볼릭 링크를 만들어 원본 기록을 수정하지 않고 재생했다.
 
 ---
 
@@ -235,6 +284,15 @@ cd benchmark/ag3s/experiments/curobo
 요지: 테이블 상판(참값 z=0.823)을 거친 20 mm 계층은 0.790(−33 mm), 미세 5 mm 계층은
 0.821(−2 mm)로 본다.
 
+> **주의 (2026-09-11)** — 위 `0.790 / 0.821` 은 재현되지만, 그 **해석이 틀렸다.** 그 측정법은
+> `|d| < voxel_size` 인 복셀의 z 중앙값이라 계층의 정확도가 아니라 **대역 폭**을 잰다. 계층
+> 정확도의 옳은 측정은 거친 −3.0 mm / 미세 −2.0 mm 다 (`AG3S_REVIEW_LOG.md` 발견 **C2**).
+> 재현 확인용으로만 쓰고, 2계층의 이득 근거로 인용하지 말 것.
+>
+> 그리고 이 세 스크립트는 **마스킹 안 된 depth** 로 필드를 만든다 — 로봇이 자기 몸을 장애물로
+> 본다 (발견 **C1**). 상판 수치는 그래도 유효하지만 로봇 clearance 는 무의미하다. 마스킹된
+> 경로는 `build_field.py` + `verify_adapter.py` 다.
+
 ---
 
 ## 4. 없는 것 — 알고 있어야 할 두 가지
@@ -278,7 +336,11 @@ assert figstyle.use_korean()      # JP 이름으로 등록되지만 한글이 �
 
 ---
 
-## 6. 다음 작업 — trajopt 어댑터
+## 6. trajopt 어댑터 — **구현 완료 (2026-09-11)**
+
+> 아래는 착수 전에 쓴 배경이다. **결과는 `AG3S_REVIEW_LOG.md` 의
+> "trajopt 어댑터 구현 + cuRobo 검증 수치 재검토" 절**에 있고, 여기 "아직 정하지 않은 것" 은
+> 전부 닫혔다 (합성은 우리 `min()`, gradient 는 우리가 중심차분, 부호는 그대로).
 
 **목표**: cuRobo `Mapper.compute_esdf()` 가 주는 `VoxelGrid` 를 우리 `SceneSnapshot` 에 물려서,
 `benchmark/trajopt` 가 지금과 똑같이 돌게 한다.
@@ -307,6 +369,15 @@ scene.esdf.grid.voxel_size    # E1 의 target 판정 허용오차로
    그때마다 "좌표계 불일치" 처럼 보였지만 **필드는 옳았다.**
 3. **첫 `compute_esdf` 호출 시간을 쓰지 말 것** — JIT 컴파일 + CUDA graph capture 로 1302 ms 다.
    정상 상태는 0.5~0.7 ms. 반드시 워밍업 후 측정한다.
+4. **`compute_esdf()` 결과는 다음 호출 전에 복사할 것.** 반환되는 `VoxelGrid` 래퍼는 호출마다
+   새 객체이고 `voxel_size`·`pose` 도 제 값을 유지하지만, **`feature_tensor` 는 재사용 버퍼라
+   다음 호출이 덮어쓴다.** 두 계층을 다 만든 뒤 읽으면 거친 계층 자리에 미세 계층 값이 들어가고,
+   메타데이터가 멀쩡해서 알아채기 어렵다. `feature_tensor.detach().clone()` 로 즉시 복사한다.
+   발견 **C4** (`AG3S_REVIEW_LOG.md`).
+
+**자기 진단 하나로 3·4 를 다 잡는다**: 어떤 거리장이든 자유공간에서 `|∇d| ≈ 1` 이어야 한다
+(eikonal). `0.25` 나 `4.0` 이면 해상도를 잘못 짝지은 것이다. 필드를 만드는 스크립트는 전부
+이 검사를 하고 끝낸다.
 
 ### 아직 정하지 않은 것
 
@@ -347,9 +418,10 @@ scene.esdf.grid.voxel_size    # E1 의 target 판정 허용오차로
    (진짜 최근접 표면이 ROI 밖에 있을 수 있으므로). 우리 `esdf.py` 의 `_dirty_blocks` 가 같은
    이유로 `max_distance` 만큼 부풀린다.
 2. **ROI 안에서는 해상도를 올릴 것.** 그 문서는 ESDF 를 10~20 mm 로 적었는데, ROI 가 작아진
-   덕에 5 mm 를 감당할 수 있고 **이득의 대부분이 거기서 나온다** — 20 mm 의 이산화 편향
-   −10 mm 는 `esdf_margin` 50 mm 의 20% 를 먹지만 5 mm 는 4% 다. 실측: 같은 테이블 상판을
-   20 mm 계층은 33 mm, 5 mm 계층은 2 mm 틀리게 본다.
+   덕에 5 mm 를 감당할 수 있다. **다만 이득의 크기는 2026-09-11 에 정정됐다** (발견 C2):
+   거친 대 미세의 차이는 중앙값 3~5 mm (50 mm 마진의 6~10 %) 이고, 최악 5 % 구간에서 27 mm
+   이상이다. **이득은 중앙값이 아니라 꼬리에 있다** — 평평한 상판은 거친 복셀로도 충분하고,
+   얇거나 작은 기하에서 벌어진다.
 
 그 문서 7항의 "진행 상황 기록용 md 를 만들어 누적 기록" 은 `AG3S_REVIEW_LOG.md` 가 이미
 그 역할을 하고 있으므로 **새로 만들지 말고 거기 이어 쓰는 것을 권한다** — 기록이 갈라지면

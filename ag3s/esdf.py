@@ -198,7 +198,77 @@ class TsdfVolume:
         view_w[ii, jj, kk] = w_new
         return {"n_updated": int(sel.size), "n_in_image": int(in_image.sum()), "n_considered": n_considered}
 
-    def occupancy(self, *, surface_band: Optional[float] = None) -> np.ndarray:
+    def frustum_mask(self, camera_intrinsics, T_base_cam, shape, *,
+                     depth_min: float = 0.1, depth_max: float = 3.0) -> np.ndarray:
+        """`(nx, ny, nz)` bool — 이 카메라가 **지금 보고 있는** 복셀.
+
+        `integrate` 의 투영을 깊이 비교 **전까지만** 쓴 것이다. 깊이가 유효한지는 묻지 않는다 —
+        "보이는 자리인가" 와 "무엇이 보였나" 는 다른 질문이고, 감쇠가 묻는 것은 앞쪽이다.
+        """
+        K = np.asarray(camera_intrinsics, np.float64)
+        T = np.asarray(T_base_cam, np.float64)
+        h, w = int(shape[0]), int(shape[1])
+        out = np.zeros(self.grid.shape, bool)
+        lo, hi = self._frustum_index_bounds(K, T, w, h, depth_min, depth_max)
+        sub = tuple(int(hi[i] - lo[i] + 1) for i in range(3))
+        ax = [self.grid.origin[i] + (lo[i] + np.arange(sub[i])) * self.grid.voxel_size
+              for i in range(3)]
+        centres = np.stack(np.meshgrid(*ax, indexing="ij"), axis=-1).reshape(-1, 3).astype(np.float32)
+        cam = ((centres - T[:3, 3]) @ T[:3, :3]).astype(np.float32)
+        z = cam[:, 2]
+        front = (z > _EPS) & (z >= depth_min) & (z <= depth_max)
+        u = np.full(len(centres), -1.0); v = np.full(len(centres), -1.0)
+        u[front] = K[0, 0] * cam[front, 0] / z[front] + K[0, 2]
+        v[front] = K[1, 1] * cam[front, 1] / z[front] + K[1, 2]
+        ui = np.rint(np.clip(u, -1.0, w + 1.0)).astype(np.int64)
+        vi = np.rint(np.clip(v, -1.0, h + 1.0)).astype(np.int64)
+        seen = front & (ui >= 0) & (ui < w) & (vi >= 0) & (vi < h)
+        sl = tuple(slice(int(lo[i]), int(hi[i]) + 1) for i in range(3))
+        out[sl] = seen.reshape(sub)
+        return out
+
+    def decay(self, frustums: Sequence[np.ndarray] = (), *,
+              time_decay: float = 1.0, frustum_decay: float = 1.0) -> dict:
+        """관측의 무게를 줄인다 — cuRoboV2 §5.3 의 frustum-aware decay.
+
+            w <- w * a_t * a_f   (절두체 안)
+            w <- w * a_t         (그 밖)
+
+        **왜 필요한가.** 우리 가중치는 `min(w + 1, max_weight)` 로 **단조 증가**한다. 옛 관측이
+        절대 흐려지지 않으므로 사라진 물체의 잔상이 오래 남는다 — 실측(`run_0004`, 머리 카메라,
+        20 mm): 사과가 원래 자리에서 **302 mm 떠난 뒤에도 그 자리가 -6.7 mm 로 점유**였고,
+        8 프레임 내내 한 번도 자유가 되지 않았다 (F20).
+
+        가중치를 줄이면 새 관측이 그만큼 빨리 이긴다. TSDF 갱신이 가중평균
+        ``t <- (t*w_old + sdf) / w_new`` 이므로, `w_old` 가 작을수록 이번 프레임의 `sdf` 가
+        지배한다.
+
+        **절두체 안에만 더 줄이는 이유**는 비대칭이다. 지금 보고 있는 곳은 틀렸다면 바로
+        고칠 수 있지만, 안 보이는 곳은 고칠 방법이 없다. 그래서 보이는 곳은 빨리 잊고
+        (`frustum_decay`), 안 보이는 곳은 천천히 잊는다 (`time_decay`).
+
+        **끄는 것이 기본값이다** (둘 다 1.0). 감쇠는 잔상을 지우지만 **실제 장애물도 함께
+        잊는다** — 시야에서 벗어난 상자가 흐려져 미관측으로 돌아가면 그것은 다시 자유로 나간다.
+        우리는 카메라가 셋이고 프레임이 느려서 그 위험이 cuRoboV2 보다 크다. 켜는 값은 씬에서
+        재고 정한다.
+        """
+        if time_decay >= 1.0 and frustum_decay >= 1.0:
+            return {"decayed": False}
+        before = float(self.weight.sum())
+        if time_decay < 1.0:
+            self.weight *= np.float32(time_decay)
+        n_in = 0
+        if frustum_decay < 1.0:
+            for mask in frustums:
+                m = np.asarray(mask, bool)
+                self.weight[m] *= np.float32(frustum_decay)
+                n_in += int(m.sum())
+        return {"decayed": True, "weight_before": before,
+                "weight_after": float(self.weight.sum()),
+                "n_in_frustum": n_in}
+
+    def occupancy(self, *, surface_band: Optional[float] = None,
+                  min_weight: float = 0.0) -> np.ndarray:
         """`FREE` / `OCCUPIED` / `UNKNOWN` 격자.
 
         가중치가 0인 복셀은 어느 카메라도 보지 못한 것이므로 `UNKNOWN` 이다. 관측된 복셀은
@@ -206,7 +276,9 @@ class TsdfVolume:
         """
         band = self.grid.voxel_size if surface_band is None else float(surface_band)
         out = np.full(self.grid.shape, UNKNOWN, np.int8)
-        seen = self.weight > 0.0
+        # `min_weight` 아래로 흐려진 복셀은 **다시 미관측**이다. 감쇠를 켰을 때 잊는다는 것이
+        # 실제로 뜻하는 바가 이것이다 — 값이 남아 있어도 근거가 사라졌으면 근거 없음으로 돌린다.
+        seen = self.weight > max(float(min_weight), 0.0)
         out[seen] = FREE
         out[seen & (self.tsdf <= band)] = OCCUPIED
         return out
@@ -240,6 +312,18 @@ class EsdfField:
     max_distance: float
     stats: dict[str, Any] = dataclasses.field(default_factory=dict)
     outside_distance: Optional[float] = None
+    #: 라벨 층 `(nx, ny, nz)` int32. 각 복셀에는 **그 복셀의 거리를 만든 표면 복셀의 라벨**이
+    #: 들어 있다 (`-1` = 라벨 없음). 거리장은 원래 익명이라 "가장 가까운 것이 무엇인지" 를
+    #: 말하지 못하는데, 그 익명을 푸는 것이 이 층이다 — 그래야 "목적지에는 얇은 마진" 같은
+    #: 정책을 걸 수 있다 (F18). `None` 이면 라벨 없이 만들어진 필드다.
+    label_grid: Optional[np.ndarray] = None
+    #: 라벨 id -> 이름. `label_grid` 의 값이 이 튜플의 인덱스다.
+    label_names: tuple[str, ...] = ()
+    #: **해석적 채널** — 아는 정적 기하 (`StaticBox` / `StaticPlane`). `distance` 가
+    #: `min(복셀, 해석적)` 을 답한다. cuRoboV2 §5.1 의 `min(depth, geom)` 과 같은 발상이되,
+    #: 우리는 복셀에 찍지 않고 **따로 잰다** — 중요한 기하(선반·벽)가 격자 밖에 있어서 찍기로는
+    #: 닿지 않기 때문이다 (`analytic_distance` 참고). 비어 있으면 아무 일도 하지 않는다.
+    static_shapes: tuple = ()
     #: `distance()` 호출이 누적한 것. `outside_query_fraction` 참고.
     outside_query_count: int = dataclasses.field(default=0, repr=False)
     queried_point_count: int = dataclasses.field(default=0, repr=False)
@@ -294,7 +378,51 @@ class EsdfField:
         self.outside_query_count += int((~inside).sum())
         if self.outside_distance is not None and (~inside).any():
             out[~inside] = float(self.outside_distance)
+        if self.static_shapes:
+            # `min(복셀, 해석적)`. 격자 밖 질의에도 그대로 걸린다 — 거기가 이 채널이 가장
+            # 필요한 자리다.
+            out = np.minimum(out, analytic_distance(points, self.static_shapes))
         return out
+
+    # --- 라벨 층 -------------------------------------------------------------------------
+    @property
+    def has_labels(self) -> bool:
+        return self.label_grid is not None
+
+    def label_id(self, name: str) -> int:
+        """이름에 해당하는 라벨 id. 없으면 `-1` — 예외가 아니라 "라벨 없음" 과 같은 값이다.
+
+        모르는 이름이 예외가 아닌 이유는 소비 쪽 때문이다. 정책은 "가장 가까운 것이 목적지인가"
+        를 묻는데, 목적지가 없는 프레임에서 그 질문의 답은 "아니다" 이지 오류가 아니다. 그리고
+        `-1` 과 비교하면 라벨 없는 복셀과도 일치하지 않으므로 **완화가 일어나지 않는 쪽**으로
+        닫힌다.
+        """
+        try:
+            return int(self.label_names.index(str(name)))
+        except ValueError:
+            return -1
+
+    def label(self, points: np.ndarray) -> np.ndarray:
+        """`(N,)` int32 — 각 점에서 **가장 가까운 표면이 속한 물체**의 라벨 id.
+
+        거리와 달리 보간하지 않는다. 라벨은 범주이고 두 라벨의 가중평균에는 뜻이 없다 —
+        가장 가까운 격자점의 값을 그대로 읽는다. 격자 밖과 라벨 없는 복셀은 둘 다 `-1` 이다.
+        """
+        if self.label_grid is None:
+            return np.full(len(np.asarray(points).reshape(-1, 3)), -1, np.int32)
+        i0, t, inside = self._lattice(points)
+        n = np.asarray(self.grid.shape) - 1
+        idx = np.minimum(i0 + np.round(t).astype(np.int64), n)
+        out = self.label_grid[idx[:, 0], idx[:, 1], idx[:, 2]].astype(np.int32)
+        out[~inside] = -1
+        return out
+
+    def is_label(self, points: np.ndarray, name: str) -> np.ndarray:
+        """`(N,)` bool — 가장 가까운 표면이 `name` 인가. 라벨이 없으면 전부 False."""
+        wanted = self.label_id(name)
+        if wanted < 0:
+            return np.zeros(len(np.asarray(points).reshape(-1, 3)), bool)
+        return self.label(points) == wanted
 
     def gradient(self, points: np.ndarray) -> np.ndarray:
         """`(N, 3)` 무차원. 거리장의 기울기이므로 자유 공간에서 크기가 약 1이다.
@@ -321,6 +449,14 @@ class EsdfField:
                     out += wgt[:, None] * g[idx[:, 0], idx[:, 1], idx[:, 2]]
         if (~inside).any():
             out[~inside] = 0.0
+        if self.static_shapes:
+            # 해석적 채널이 이긴 점은 **그 도형의** 기울기를 쓴다. 거리만 바꾸고 기울기를 두면
+            # 최적화기가 "가깝다" 는 값을 받고 엉뚱한 복셀 표면 쪽으로 밀린다.
+            voxel = self.distance(points)          # 이미 min 이 적용된 값
+            analytic = analytic_distance(points, self.static_shapes)
+            wins = analytic <= voxel + 1e-12
+            if wins.any():
+                out[wins] = analytic_gradient(points, self.static_shapes)[wins]
         return out
 
 
@@ -339,7 +475,10 @@ def occupied_mask(occupancy: np.ndarray, unknown_policy: str) -> np.ndarray:
 def esdf_from_occupancy(occupancy: np.ndarray, grid: VoxelGrid, *, max_distance: float,
                         unknown_policy: str = "free",
                         subbox: Optional[tuple[np.ndarray, np.ndarray]] = None,
-                        previous: Optional[np.ndarray] = None) -> tuple[np.ndarray, dict]:
+                        previous: Optional[np.ndarray] = None,
+                        labels: Optional[np.ndarray] = None,
+                        previous_labels: Optional[np.ndarray] = None,
+                        ) -> tuple[np.ndarray, Optional[np.ndarray], dict]:
     """점유 격자 -> 부호 있는 거리 격자. 음수는 점유 영역 안쪽.
 
     `subbox` 는 `(lo, hi)` 하나이거나 그 목록이다. 각 부분격자만 계산해 `previous` 에 덮어쓰며,
@@ -349,6 +488,19 @@ def esdf_from_occupancy(occupancy: np.ndarray, grid: VoxelGrid, *, max_distance:
     **목록을 받는 이유**는 하나의 AABB 가 흩어진 변화를 요약하지 못하기 때문이다. 팔이 작업
     공간의 양 끝에서 움직이면 바뀐 복셀이 800개뿐이어도 그 AABB 는 격자의 90%가 되고, 국소
     갱신이 이름만 남는다. 블록 단위로 나누면 실제로 바뀐 블록만 다시 계산한다.
+
+    **`labels` 를 주면 라벨 층이 함께 나온다.** 거리장은 원래 익명이라 "가장 가까운 것이
+    **무엇인지**" 를 말하지 못하고, 그래서 "목적지에만 얇은 마진" 같은 정책을 걸 수 없다
+    (F18 — 전역 50 mm 가 담기 동작을 막는 문제). 해법은 volumetric mapping 쪽에 이미 있다:
+    Voxblox++ 도 TSDF++ 도 Panoptic Multi-TSDFs 도 **거리 층 옆에 라벨 층**을 둔다.
+
+    비용은 사실상 없다. **거리 변환은 최근접 표면 복셀을 이미 계산한다** — `return_indices=True`
+    가 그것을 돌려주므로, 라벨은 새 알고리즘이 아니라 조회 한 번이다. (cuRobo 쪽의 PBA+ 도
+    본래 최근접 site 를 구하는 알고리즘이고 거리가 거기서 파생된다. 백엔드를 바꿔도 같은 구조가
+    남는다.)
+
+    라벨 격자는 `(nx, ny, nz)` int32 이고 `-1` 은 "라벨 없음" 이다. 출력은 각 복셀에 대해
+    **그 복셀의 거리를 만든 표면 복셀의 라벨**이다 — 그 복셀 자신의 라벨이 아니다.
     """
     from scipy import ndimage
 
@@ -358,27 +510,49 @@ def esdf_from_occupancy(occupancy: np.ndarray, grid: VoxelGrid, *, max_distance:
 
     vs = grid.voxel_size
 
-    def _edt(view: np.ndarray) -> np.ndarray:
+    want_labels = labels is not None
+    if want_labels and labels.shape != tuple(grid.shape):
+        raise ValueError(f"라벨 격자 {labels.shape} 가 복셀 격자 {tuple(grid.shape)} 와 다릅니다")
+
+    def _edt(view: np.ndarray, lab: Optional[np.ndarray]):
         if not view.any():
-            return np.full(view.shape, float(max_distance), np.float32)
-        outside = ndimage.distance_transform_edt(~view, sampling=(vs, vs, vs))
+            empty = None if lab is None else np.full(view.shape, -1, np.int32)
+            return np.full(view.shape, float(max_distance), np.float32), empty
+        if lab is None:
+            outside = ndimage.distance_transform_edt(~view, sampling=(vs, vs, vs))
+        else:
+            # 최근접 표면 복셀의 인덱스를 함께 받는다. 거리 변환이 이미 계산하는 값이라
+            # 라벨 층은 알고리즘이 아니라 조회 한 번이다.
+            outside, nearest = ndimage.distance_transform_edt(
+                ~view, sampling=(vs, vs, vs), return_indices=True)
         inside = ndimage.distance_transform_edt(view, sampling=(vs, vs, vs))
-        return np.clip(np.where(view, -inside, outside), -float(max_distance),
-                       float(max_distance)).astype(np.float32)
+        field = np.clip(np.where(view, -inside, outside), -float(max_distance),
+                        float(max_distance)).astype(np.float32)
+        if lab is None:
+            return field, None
+        # 표면 안쪽 복셀의 최근접 표면은 자기 자신이다.
+        out = np.where(view, lab, lab[tuple(nearest)]).astype(np.int32)
+        return field, out
 
     if subbox is None:
-        field = _edt(occ)
+        field, label_field = _edt(occ, labels)
         n_recomputed = occ.size
     else:
         boxes = ([subbox] if isinstance(subbox, tuple) and np.ndim(subbox[0]) == 1
                  else list(subbox))
         field = previous if previous is not None else np.full(grid.shape, float(max_distance),
                                                               np.float32)
+        label_field = None
+        if want_labels:
+            label_field = (previous_labels if previous_labels is not None
+                           else np.full(grid.shape, -1, np.int32))
         n_recomputed = 0
         for lo, hi in boxes:
             sl = tuple(slice(int(lo[i]), int(hi[i]) + 1) for i in range(3))
-            local = _edt(occ[sl])
+            local, local_lab = _edt(occ[sl], None if labels is None else labels[sl])
             field[sl] = local
+            if want_labels:
+                label_field[sl] = local_lab
             n_recomputed += int(local.size)
 
     total = occupancy.size
@@ -390,8 +564,154 @@ def esdf_from_occupancy(occupancy: np.ndarray, grid: VoxelGrid, *, max_distance:
         "unknown_policy": unknown_policy,
         "local": subbox is not None,
         "n_recomputed": int(n_recomputed),
+        "labelled": bool(want_labels),
     }
-    return field, stats
+    return field, label_field, stats
+
+
+@dataclasses.dataclass(frozen=True)
+class StaticBox:
+    """축이 돌아간 상자 하나. `rotation` 의 열이 상자 축이다."""
+
+    center: np.ndarray        # (3,)
+    half_extents: np.ndarray  # (3,)
+    rotation: np.ndarray = dataclasses.field(default_factory=lambda: np.eye(3))
+    label: str = "static"
+
+
+@dataclasses.dataclass(frozen=True)
+class StaticPlane:
+    """반공간. `normal` 이 **자유공간 쪽**을 가리킨다 — 그 반대편이 고체다."""
+
+    point: np.ndarray         # (3,)
+    normal: np.ndarray        # (3,)
+    label: str = "static"
+
+
+def analytic_distance(points: np.ndarray, shapes: Sequence[Any]) -> np.ndarray:
+    """`(N,)` — 아는 기하까지의 **정확한** 부호 있는 거리. 격자와 무관하다.
+
+    복셀에 찍지 않고 따로 재는 이유가 측정에서 나왔다. 정적 기하를 점유 격자에 찍어 봤더니
+    낙관 오차가 **0.0 mm** 줄었다 — 중요한 기하가 **격자 밖**이었기 때문이다:
+
+        ESDF 격자   x [-300, 1200]  y [-900, 900]  z [0, 1600] mm
+        선반        y = -1550 ~ -1685            <- 밖
+        벽          x, y = ±3 m                  <- 밖
+        바닥 평면   z = 0, 격자 최하단 복셀 중심이 z = 10 mm  <- 한 복셀도 안 찍힌다
+
+    찍힌 것은 테이블뿐이었고, 테이블은 카메라가 이미 보고 있었다. **고정 상자 구조에서는 찍기가
+    E4(격자 밖·미관측은 무조건 자유)를 풀지 못한다.**
+
+    그래서 해석적으로 잰다. 격자가 없으니 밖이라는 개념이 없고, 이산화 오차도 없다. 상자 몇
+    개를 재는 비용이라 질의당 무시할 수준이다.
+    """
+    P = np.asarray(points, np.float64).reshape(-1, 3)
+    best = np.full(P.shape[0], np.inf)
+    for shape in shapes or ():
+        if isinstance(shape, StaticBox):
+            R = np.asarray(shape.rotation, np.float64).reshape(3, 3)
+            half = np.asarray(shape.half_extents, np.float64)
+            q = np.abs((P - np.asarray(shape.center, np.float64)) @ R) - half
+            outside = np.linalg.norm(np.maximum(q, 0.0), axis=1)
+            inside = np.minimum(q.max(axis=1), 0.0)
+            best = np.minimum(best, outside + inside)
+        elif isinstance(shape, StaticPlane):
+            n = np.asarray(shape.normal, np.float64)
+            n = n / max(float(np.linalg.norm(n)), 1e-12)
+            best = np.minimum(best, (P - np.asarray(shape.point, np.float64)) @ n)
+        else:
+            raise TypeError(f"analytic_distance 는 StaticBox 와 StaticPlane 만 받습니다: {type(shape)}")
+    return best
+
+
+def analytic_gradient(points: np.ndarray, shapes: Sequence[Any]) -> np.ndarray:
+    """`(N, 3)` — `analytic_distance` 의 기울기. 이기는 도형의 것을 쓴다.
+
+    거리만 바꾸고 기울기를 안 바꾸면 **더 나쁘다**: 최적화기는 "가깝다" 는 값을 받고 엉뚱한
+    복셀 표면 쪽으로 밀린다. 그래서 둘을 같은 도형에서 뽑는다.
+    """
+    P = np.asarray(points, np.float64).reshape(-1, 3)
+    best = np.full(P.shape[0], np.inf)
+    grad = np.zeros_like(P)
+    for shape in shapes or ():
+        if isinstance(shape, StaticBox):
+            R = np.asarray(shape.rotation, np.float64).reshape(3, 3)
+            half = np.asarray(shape.half_extents, np.float64)
+            local = (P - np.asarray(shape.center, np.float64)) @ R
+            sign = np.sign(local); sign[sign == 0] = 1.0
+            q = np.abs(local) - half
+            outside = np.linalg.norm(np.maximum(q, 0.0), axis=1)
+            inside = np.minimum(q.max(axis=1), 0.0)
+            dist = outside + inside
+            g_local = np.zeros_like(local)
+            out = outside > 1e-12
+            g_local[out] = np.maximum(q[out], 0.0) / outside[out][:, None]
+            if (~out).any():
+                # 상자 안쪽: 가장 가까운 면 방향.
+                axis = np.argmax(q[~out], axis=1)
+                tmp = np.zeros((int((~out).sum()), 3))
+                tmp[np.arange(tmp.shape[0]), axis] = 1.0
+                g_local[~out] = tmp
+            g = (g_local * sign) @ R.T
+            take = dist < best
+            best[take] = dist[take]; grad[take] = g[take]
+        elif isinstance(shape, StaticPlane):
+            n = np.asarray(shape.normal, np.float64)
+            n = n / max(float(np.linalg.norm(n)), 1e-12)
+            dist = (P - np.asarray(shape.point, np.float64)) @ n
+            take = dist < best
+            best[take] = dist[take]; grad[take] = n
+    return grad
+
+
+def stamp_static(occupancy: np.ndarray, grid: VoxelGrid,
+                 shapes: Sequence[Any]) -> tuple[int, dict]:
+    """아는 기하를 점유 격자에 찍는다 — cuRoboV2 의 geometry 채널에 해당하는 것.
+
+    **왜 필요한가.** 거리장은 depth 가 본 것만 담는다. 그래서 카메라가 한 번도 보지 않은 곳은
+    `unknown_policy=free` 에 따라 **자유**로 답한다 (E4 — 격자 밖·미관측은 무조건 자유). 실측
+    (`run_0004`, 3 카메라, 20 mm): 격자의 **66.3 %** 가 미관측이고, 로봇 구 질의의 **44.1 %** 가
+    그런 복셀에 떨어지며, 그중 **237 회는 거리가 500 mm 로 포화**된다 — "아무것도 안 보인다" 가
+    "반 미터 떨어져 안전하다" 로 나가는 것이다. 그 자리의 **참** 거리는 최소 **168.7 mm** 였다.
+    필드가 **331 mm 낙관적**이었다는 뜻이다.
+
+    벽·선반·테이블 다리·바닥은 **아는 기하**다. 움직이지 않고 CAD 가 있으므로 관측을 기다릴
+    이유가 없다. 여기 찍어 두면 그 331 mm 가 사라진다.
+
+    cuRoboV2 는 복셀마다 채널을 둘 두고 질의에서 `min(depth, geom)` 을 쓰지만(§5.1), 우리
+    구조는 `점유 → EDT → 거리` 라 **점유에 찍는 것이 같은 일을 한다** — EDT 는 출처를 가리지
+    않고 가장 가까운 점유 복셀까지의 거리를 답하기 때문이다. 차이는 아는 기하도 복셀로
+    이산화된다는 것이고, 그 비용은 다른 모든 표면과 같은 복셀 반 칸이다.
+
+    **찍기만 하고 지우지 않는다.** 이미 점유인 복셀은 그대로 두고 자유·미관측만 점유로 바꾼다 —
+    관측이 아는 기하보다 우선할 이유가 없고, 반대도 마찬가지다. 둘 다 "여기 뭔가 있다" 이므로
+    합집합이 맞다.
+    """
+    if not shapes:
+        return 0, {"n_static_voxels": 0, "n_static_shapes": 0}
+
+    ii = np.stack(np.meshgrid(*[np.arange(n) for n in grid.shape], indexing="ij"), -1)
+    centres = grid.origin + ii * grid.voxel_size
+    flat = centres.reshape(-1, 3)
+    inside = np.zeros(flat.shape[0], bool)
+    for shape in shapes:
+        if isinstance(shape, StaticBox):
+            R = np.asarray(shape.rotation, np.float64).reshape(3, 3)
+            local = np.abs((flat - np.asarray(shape.center, np.float64)) @ R)
+            inside |= np.all(local <= np.asarray(shape.half_extents, np.float64), axis=1)
+        elif isinstance(shape, StaticPlane):
+            n = np.asarray(shape.normal, np.float64)
+            n = n / max(np.linalg.norm(n), 1e-12)
+            inside |= ((flat - np.asarray(shape.point, np.float64)) @ n) <= 0.0
+        else:
+            raise TypeError(f"stamp_static 은 StaticBox 와 StaticPlane 만 받습니다: {type(shape)}")
+
+    mask = inside.reshape(grid.shape)
+    changed = int((mask & (occupancy != OCCUPIED)).sum())
+    occupancy[mask] = OCCUPIED
+    return changed, {"n_static_voxels": int(mask.sum()),
+                     "n_static_changed": changed,
+                     "n_static_shapes": len(shapes)}
 
 
 def carve(occupancy: np.ndarray, grid: VoxelGrid, points: np.ndarray, *,
@@ -418,7 +738,8 @@ def carve(occupancy: np.ndarray, grid: VoxelGrid, points: np.ndarray, *,
 
 __all__ = [
     "FREE", "OCCUPIED", "UNKNOWN",
-    "EsdfField", "TsdfVolume", "VoxelGrid", "carve", "esdf_from_occupancy", "occupied_mask",
+    "EsdfField", "StaticBox", "StaticPlane", "TsdfVolume", "VoxelGrid", "carve",
+    "analytic_distance", "analytic_gradient", "esdf_from_occupancy", "occupied_mask", "stamp_static",
 ]
 
 
@@ -511,12 +832,35 @@ class EsdfBuilder:
     def update(self, cameras: Sequence[CameraDepth], *,
                target_points: Optional[np.ndarray] = None,
                exclude_target: bool = False,
-               support_points: Optional[np.ndarray] = None) -> EsdfField:
+               support_points: Optional[np.ndarray] = None,
+               attached_points: Optional[np.ndarray] = None,
+               labelled_points: Optional[dict] = None,
+               static_geometry: Optional[Sequence[Any]] = None) -> EsdfField:
         """관측을 적분하고 ESDF 를 (가능하면 국소로) 갱신해 필드를 돌려준다.
 
         `support_points` 는 지지면으로 이미 half-space 행이 나간 점들이다. 필드에도 남겨두면
         같은 표면을 두 backend 가 **서로 다른 여유거리로** 요구하게 된다 — 평면 행은 10 mm,
         필드는 50 mm. 파내는 것이 옳고, 잃는 것은 없다.
+
+        `attached_points` 는 **쥔 물체**가 지금 차지한 자리다 (base 좌표계). 파지가 닫히면 그
+        물체는 장애물이기를 그치고 로봇 쪽 질의점이 되므로 (E3 — 쥔 물체가 optimizer 에 도달하지
+        않는다), 필드에서는 빠져야 한다. 안 빼면 물체가 자기 자신에게 부딪히고 그 행은 **어떤
+        해로도 못 푼다** — 손에 강체로 붙어 있어 관절로는 자기 복셀에서 못 벗어난다.
+
+        **자기 필터가 이 일을 대신해 주지 않는다.** 실측: 쥔 동안 사과 픽셀을 100 % 지우는데도
+        (손목 카메라 기준 143,942 px) 마스크를 걷어낸 대조군과 점유가 최대 4 복셀밖에 안
+        다르다. 마스크가 막는 것은 **새 관측**이고, 문제를 만드는 것은 물체가 테이블에 놓여
+        있을 때 남긴 **옛 관측**이기 때문이다 (`run_0004` 프레임 10~11, 자기 질의점 −72.7 mm).
+
+        `labelled_points` 는 `{이름: (N, 3) 점}` 이다. 주면 필드가 **라벨 층**을 함께 들고 나와
+        `EsdfField.is_label(p, 이름)` 으로 "이 점에서 가장 가까운 표면이 그 물체인가" 를 물을 수
+        있다. 거리장은 원래 익명이라 그 질문에 답할 수 없었고, 그래서 지금까지는 필드 거리와
+        해석적 거리를 한 복셀 안에서 대조하는 우회로를 썼다 (F13 의 양면 검사).
+
+        **라벨 이름이 바뀌면 국소 갱신을 포기하고 전체를 다시 계산한다.** 라벨은 거리와 달리
+        점유가 바뀌지 않은 복셀에서도 바뀔 수 있다 — 물체 하나에 이름이 새로 붙으면 그 물체에서
+        먼 복셀의 '가장 가까운 것' 라벨까지 달라진다. dirty 상자는 점유 변화만 보므로 그것을
+        못 잡는다.
         """
         cfg = self.config
         per_camera = {}
@@ -526,7 +870,30 @@ class EsdfBuilder:
                 depth_min=cfg.depth_min, depth_max=cfg.depth_max, max_weight=cfg.max_weight,
                 robot_mask=cam.robot_mask)
 
-        occupancy = self.volume.occupancy(surface_band=cfg.surface_band)
+        # 감쇠는 **적분 뒤**다. 이번 프레임 관측을 먼저 쌓고, 그다음 전체를 흐린다 — 순서가
+        # 반대면 방금 본 것을 보기도 전에 지운다.
+        decay_stats = {"decayed": False}
+        if cfg.time_decay < 1.0 or cfg.frustum_decay < 1.0:
+            masks = []
+            if cfg.frustum_decay < 1.0:
+                for cam in cameras:
+                    masks.append(self.volume.frustum_mask(
+                        cam.camera_intrinsics, cam.T_base_cam, np.asarray(cam.depth).shape,
+                        depth_min=cfg.depth_min, depth_max=cfg.depth_max))
+            decay_stats = self.volume.decay(masks, time_decay=cfg.time_decay,
+                                            frustum_decay=cfg.frustum_decay)
+
+        occupancy = self.volume.occupancy(surface_band=cfg.surface_band,
+                                          min_weight=cfg.min_weight)
+        # 아는 기하를 먼저 찍는다 — 파내기(`carve`)보다 **앞**이어야 한다. 순서가 반대면
+        # 지지면을 파낸 자리를 정적 기하가 다시 메워 F15(지지면을 아무도 제약하지 않는 조합)가
+        # 노리는 그 상태로 되돌린다.
+        # **찍지 않는다.** 실측: 정적 기하를 점유 격자에 찍으면 낙관 오차가 0.0 mm 줄었다 —
+        # 중요한 기하(선반 y=-1550, 벽 ±3 m)가 격자 밖이라 찍힐 자리가 없었고, 찍힌 것은 이미
+        # 관측된 테이블뿐이었다. 게다가 프레임당 206 -> 615 ms 였다. 대신 필드에 **해석적
+        # 채널**로 실어 보내 `min(복셀, 해석적)` 로 답하게 한다 (`analytic_distance`).
+        # `stamp_static` 은 격자 안 기하를 EDT 에 넣고 싶은 호출자를 위해 남겨 둔다.
+        static_stats = {"n_static_shapes": len(static_geometry or ())}
         n_carved = 0
         n_support_carved = 0
         if support_points is not None and len(support_points):
@@ -534,14 +901,59 @@ class EsdfBuilder:
         if exclude_target and target_points is not None and len(target_points):
             n_carved = carve(occupancy, self.grid, target_points,
                              dilate=cfg.target_dilate_voxels)
+        # 쥔 물체를 파낸다. **지지면 파내기 뒤, 라벨 붙이기 앞**이어야 한다 — 라벨은 점유
+        # 복셀에 붙으므로, 파낸 뒤에 붙여야 사라진 복셀에 이름이 남지 않는다.
+        n_attached_carved = 0
+        if attached_points is not None and len(attached_points):
+            n_attached_carved = carve(occupancy, self.grid, attached_points,
+                                      dilate=cfg.attached_dilate_voxels)
 
         # 국소 갱신의 범위는 **점유 상태가 실제로 바뀐** 복셀이 정한다. TSDF 가 닿은 복셀로
         # 잡으면 안 된다 — 카메라가 보는 부피 전체가 매 프레임 닿지만 그중 상태가 바뀌는 것은
         # 표면 근처 얇은 껍질뿐이고, 닿은 것을 기준으로 하면 dirty 상자가 격자 전체가 되어
         # 국소 갱신이 이름만 남는다. (첫 판이 그래서 1.82s -> 1.77s 로 이득이 없었다.)
+        # 라벨 격자. 나중에 쓴 이름이 이긴다 — 같은 복셀을 두 물체가 주장하면 마지막이 남고,
+        # 그 순서는 호출자가 dict 로 정한다.
+        #
+        # **라벨은 관측 점의 복셀이 아니라 점유 복셀에 붙어야 한다.** 필드의 표면을 정하는 것은
+        # TSDF 의 영교차이고, 그것이 원본 점이 떨어진 복셀과 꼭 같지는 않다. 처음에 점 복셀에만
+        # 붙였더니 최근접 표면 복셀이 전부 라벨 없음으로 나왔다 — 실측으로 잡은 것이다. 그래서
+        # 점에서 만든 라벨을 `label_snap_voxels` 안의 점유 복셀로 한 번 옮긴다.
+        label_grid = None
+        label_names: tuple = ()
+        if labelled_points:
+            from scipy import ndimage as _nd
+
+            label_names = tuple(str(k) for k in labelled_points)
+            seed = np.full(self.grid.shape, -1, np.int32)
+            for lid, name in enumerate(label_names):
+                pts = np.asarray(labelled_points[name], np.float64).reshape(-1, 3)
+                if not len(pts):
+                    continue
+                idx, inside = self.grid.to_index(pts)
+                idx = idx[inside]
+                if idx.size:
+                    seed[idx[:, 0], idx[:, 1], idx[:, 2]] = lid
+            snap = float(getattr(cfg, "label_snap_voxels", 2.0)) * cfg.voxel_size
+            has_seed = seed >= 0
+            label_grid = np.full(self.grid.shape, -1, np.int32)
+            if has_seed.any():
+                vs_ = cfg.voxel_size
+                near, where = _nd.distance_transform_edt(
+                    ~has_seed, sampling=(vs_, vs_, vs_), return_indices=True)
+                snapped = np.where(near <= snap, seed[tuple(where)], -1).astype(np.int32)
+                # 라벨은 **표면**에만 붙인다. 빈 공간의 복셀이 라벨을 들고 있으면 최근접 표면의
+                # 라벨을 읽는다는 약속이 깨진다.
+                label_grid = np.where(occupancy == OCCUPIED, snapped, -1).astype(np.int32)
+
         occ_now = occupied_mask(occupancy, cfg.unknown_policy)
         subbox = None
-        if cfg.incremental and self._field is not None and self._occupancy is not None:
+        labels_changed = label_names != getattr(self, "_label_names", ())
+        self._label_names = label_names
+        if labels_changed:
+            self._labels = None
+        if (cfg.incremental and not labels_changed
+                and self._field is not None and self._occupancy is not None):
             changed = np.nonzero((occ_now != self._occupancy).reshape(-1))[0]
             if changed.size == 0:
                 # 아무것도 바뀌지 않았다. 빈 목록이면 EDT 를 한 번도 돌지 않고 이전 필드가
@@ -553,10 +965,12 @@ class EsdfBuilder:
                 subbox = self._dirty_blocks(changed, cfg)
         self._occupancy = occ_now
 
-        field_grid, stats = esdf_from_occupancy(
+        field_grid, label_field, stats = esdf_from_occupancy(
             occupancy, self.grid, max_distance=cfg.max_distance,
-            unknown_policy=cfg.unknown_policy, subbox=subbox, previous=self._field)
+            unknown_policy=cfg.unknown_policy, subbox=subbox, previous=self._field,
+            labels=label_grid, previous_labels=getattr(self, "_labels", None))
         self._field = field_grid
+        self._labels = label_field
         self._frames += 1
         stats.update({
             "n_blocks": (0 if subbox is None else len(subbox)),
@@ -566,7 +980,12 @@ class EsdfBuilder:
             "frames": self._frames,
             "n_target_voxels_carved": n_carved,
             "n_support_voxels_carved": n_support_carved,
+            "n_attached_voxels_carved": n_attached_carved,
             "n_occupancy_changed": int(getattr(self, "_n_changed", 0)),
+            **static_stats,
+            "decay": decay_stats,
+            "n_labels": len(label_names),
+            "label_names": list(label_names),
             "per_camera": per_camera,
         })
         # 격자 밖은 격자 안의 UNKNOWN 과 같은 것이므로 같은 정책을 따른다 — `unknown_policy`
@@ -574,7 +993,9 @@ class EsdfBuilder:
         outside = cfg.max_distance if cfg.unknown_policy == "free" else -cfg.max_distance
         return EsdfField(grid=self.grid, distance_grid=field_grid,
                          max_distance=cfg.max_distance, stats=stats,
-                         outside_distance=outside)
+                         outside_distance=outside,
+                         label_grid=label_field, label_names=label_names,
+                         static_shapes=tuple(static_geometry or ()))
 
 
 def build_once(cameras: Sequence[CameraDepth], config, *, bounds=None,

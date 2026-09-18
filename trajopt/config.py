@@ -351,7 +351,13 @@ class CollisionBackendConfig:
     #: cheap but **unbounded**, so a tabletop plane forbids the entire volume beneath it — measured
     #: at 57 of 71 robot spheres in nominal violation on RB-Y1, all of them base and wheels resting
     #: on the floor.
-    use_support_planes: bool = True
+    #:
+    #: **Default off** (F15, 2026-09-14), paired with `AG3SConfig.esdf.exclude_support_surfaces`
+    #: which also flipped. Both real deployments already ran this way. The pair must agree — carve
+    #: and the plane row catches it, or leave it in the field and read no plane row — so
+    #: `scene_from_constraint_set` refuses the combination that constrains a support surface with
+    #: nothing (carved out of the field *and* no plane row).
+    use_support_planes: bool = False
 
     BACKENDS = ("primitive", "esdf", "both")
 

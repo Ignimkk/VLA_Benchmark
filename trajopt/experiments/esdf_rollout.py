@@ -22,6 +22,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import pathlib
 import time
@@ -62,7 +63,8 @@ def main() -> None:
 
     from benchmark.ag3s.experiments.grounding_report import (
         ARM_LINKS, build_constraint_robot_model, build_robot_model)
-    from benchmark.ag3s.experiments.mujoco_source import gaussian_attention, is_robot_body
+    from benchmark.ag3s.experiments.mujoco_source import (
+        camera_observation, gaussian_attention, is_robot_body)
     from benchmark.ag3s.experiments.policy_record import load_run, pose_scene, replay_scene
 
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
@@ -74,6 +76,9 @@ def main() -> None:
     ap.add_argument("--frames", type=int, default=0, help="0이면 전부")
     ap.add_argument("--voxel", type=float, default=0.020)
     ap.add_argument("--range-max", type=float, default=2.0)
+    ap.add_argument("--cameras", choices=("head", "all"), default="head",
+                    help="head = 머리 하나 (회귀 기준선. 이전 측정과 비교 가능). "
+                         "all = 세 대, 서빙 경로(`safe_policy.py`)와 같은 진입점")
     ap.add_argument("--esdf-margin", type=float, default=0.05)
     ap.add_argument("--constraint-links", choices=("arms", "all"), default="arms",
                     help="충돌 제약을 어느 링크에 걸지. `arms` 는 양팔 링크와 손끝만 — 결정 "
@@ -88,6 +93,20 @@ def main() -> None:
                          "테이블을 타고 번져 target 을 못 찾는다")
     ap.add_argument("--phase-boundaries", type=int, nargs=3, default=(24, 56, 72),
                     metavar=("TRANSIT", "APPROACH", "PRE_GRASP"))
+    ap.add_argument("--dump-frames", default=None,
+                    help="프레임마다 head depth·K·T·로봇마스크·target centroid 를 npz 로 남긴다. "
+                         "cuRobo 필드를 만드는 입력 (`experiments/curobo/build_rollout_fields.py`)")
+    ap.add_argument("--curobo-fields", default=None,
+                    help="`build_rollout_fields.py` 가 만든 npz. 프레임마다 AG3S 의 numpy ESDF 를 "
+                         "cuRobo 필드로 **교체**한다. 나머지 배선·정책은 전부 그대로이므로 "
+                         "이 옵션만 켜고 끄면 백엔드 차이가 그대로 나온다")
+    ap.add_argument("--curobo-single-layer", action="store_true",
+                    help="cuRobo 필드에서 거친 계층만 쓴다 (D2 신호 2 의 대조군)")
+    ap.add_argument("--static-geometry", default="none", metavar="none|auto|PATH",
+                    help="아는 고정 기하(벽·선반·테이블·바닥)를 해석적 채널에 싣는다 — 거리장이 "
+                         "min(복셀, 해석적) 을 답해 미관측·격자 밖의 낙관을 없앤다 (E4·N2). "
+                         "none(기본) = 회귀 기준선. auto = 재생 중인 씬에서 뽑는다. "
+                         "PATH = `ag3s.static_scene` 이 쓴 JSON. `serve_safe.py` 와 같은 계약")
     ap.add_argument("--out-json", default="benchmark/trajopt/asset/esdf_rollout.json")
     ap.add_argument("--out-doc", default="benchmark/ag3s/docs/esdf-full-scenario.md")
     args = ap.parse_args()
@@ -130,6 +149,22 @@ def main() -> None:
     })
     ag = AG3S(ag_cfg, robot_model=filter_robot, constraint_robot_model=robot)
 
+    # 정적 기하는 **주입**이다 — AG3S 는 무엇이 벽이고 무엇이 선반인지 모른다. 씬에서 한 번만
+    # 뽑는다: 정의상 안 움직이므로 프레임마다 다시 뽑을 것이 없고, 움직이는 것(자유물체·로봇)은
+    # `from_mujoco` 가 버린다.
+    static_shapes = None
+    if args.static_geometry != "none":
+        from benchmark.ag3s import static_scene
+        pose_scene(scene, run.steps[0])
+        if args.static_geometry == "auto":
+            static_shapes, sg_stats = static_scene.from_mujoco(scene.model, scene.data)
+            print(f"[static] {sg_stats.summary()}")
+        else:
+            static_shapes = static_scene.load(args.static_geometry)
+            print(f"[static] {args.static_geometry} — {len(static_shapes)} 도형")
+        if not static_shapes:
+            raise SystemExit("--static-geometry 가 도형을 하나도 내놓지 않았습니다")
+
     layout = ChunkLayout.rby1(DEFAULT_RBY1_JOINTS)
     to_cfg = TrajOptConfig.from_dict({
         "collision": {"backend": "esdf", "esdf_margin": args.esdf_margin,
@@ -151,6 +186,8 @@ def main() -> None:
     arm_only = np.array([not n.startswith(("base", "wheel")) for n in link_names])
     print(f"로봇 모델: 자기필터 {filter_robot.n_spheres}구 / 제약 {robot.n_spheres}구"
           f"  ({args.constraint_links})")
+    print(f"카메라: {args.cameras} "
+          f"({'서빙 경로와 같은 진입점' if args.cameras == 'all' else '회귀 기준선'})")
 
     def violation(traj, q, snap, mask=None):
         cand, plane, _ = linearizer._clearances_from(
@@ -169,6 +206,14 @@ def main() -> None:
           f"복셀={args.voxel*1000:.0f}mm  esdf_margin={args.esdf_margin*1000:.0f}mm  "
           f"계획 지평={planned.horizon.horizon}")
 
+    dump = {} if args.dump_frames else None
+    fields = None
+    if args.curobo_fields:
+        from benchmark.ag3s.curobo_field import RolloutFields
+        fields = RolloutFields.load(args.curobo_fields, single_layer=args.curobo_single_layer)
+        print(f"cuRobo 필드 사용: {args.curobo_fields}  "
+              f"{fields.n_frames} 프레임  계층 {fields.n_layers}")
+
     rows = []
     previous = None
     for i, step in enumerate(run):
@@ -182,10 +227,44 @@ def main() -> None:
         phase = phase_for(step.t_step, args.phase_boundaries)
 
         t0 = time.time()
-        cs = ag.process(depth=head.depth, camera_intrinsics=head.camera_intrinsics,
-                        T_base_cam=head.T_base_cam, attention_map=att,
-                        robot_state=head.robot_state, phase=phase)
+        if args.cameras == "all":
+            # **서빙 경로**(`trajopt/safe_policy.py`)가 쓰는 진입점. 단일 카메라 경로와 다른
+            # 점이 셋이고 (Step 7), 그래서 판정이 갈릴 수 있다: 카메라 셋, `image_hw` 를
+            # 관측이 들고 옴, 그리고 관측마다 자기 촬영 시각의 자세로 놓임.
+            # 캡처는 어차피 위에서 셋 다 했으므로 추가 비용은 지각 쪽뿐이다.
+            observations = [
+                camera_observation(scene, c, filter_robot, timestamp=float(i),
+                                   attention_map=(att if c == "zed_left" else None))[0]
+                for c in CAMERAS
+            ]
+            cs = ag.process_multi(observations, phase=phase,
+                                  static_geometry=static_shapes)
+        else:
+            cs = ag.process(depth=head.depth, camera_intrinsics=head.camera_intrinsics,
+                            T_base_cam=head.T_base_cam, attention_map=att,
+                            robot_state=head.robot_state, phase=phase,
+                            static_geometry=static_shapes)
         ag_ms = (time.time() - t0) * 1000.0
+
+        if dump is not None:
+            # cuRobo 는 다른 venv 에 있다. 그쪽이 필요로 하는 입력만 그대로 남긴다.
+            # 마스크는 AG3S 가 자기 ESDF 에 쓰는 것과 **같은 계산**이어야 비교가 성립한다.
+            K = np.asarray(head.camera_intrinsics, np.float64)
+            T = np.asarray(head.T_base_cam, np.float64)
+            d_img = np.asarray(head.depth, np.float64)
+            mask = ag._robot_mask_for(d_img, K, T, head.robot_state)
+            dump[f"depth_{i}"] = d_img.astype(np.float32)
+            dump[f"K_{i}"] = K.astype(np.float32)
+            dump[f"T_{i}"] = T.astype(np.float32)
+            dump[f"mask_{i}"] = (np.zeros(d_img.shape, bool) if mask is None
+                                 else np.asarray(mask, bool))
+            dump[f"centroid_{i}"] = (np.asarray(cs.target.centroid, np.float64)
+                                     if cs.target is not None else np.full(3, np.nan))
+
+        if fields is not None:
+            # **백엔드만 교체한다.** target_link_margin(E1)·평면 행·검증 플래그는 AG3S 가 이미
+            # 계산해 `cs` 에 넣어 두었고 그건 손대지 않는다. 바뀌는 것은 거리장 구현 하나다.
+            cs = dataclasses.replace(cs, esdf=fields.field_for(i))
 
         snap = scene_from_constraint_set(cs, linearizer.robot_radii, to_cfg)
         reference = layout.chunk_to_trajectory(step.actions)[:, :planned.horizon.horizon]
@@ -209,7 +288,7 @@ def main() -> None:
             "n_candidates": len(cs.candidates),
             "target": cs.has_target,
             "esdf_unknown": float(cs.esdf.unknown_fraction),
-            "esdf_occupied": int(cs.esdf.stats["n_occupied"]),
+            "esdf_occupied": int(cs.esdf.stats.get("n_occupied", -1)),
             "target_voxels_carved": int(cs.esdf.stats.get("n_target_voxels_carved", 0)),
             "clearance_before_mm": float(before) * 1000.0,
             "clearance_after_mm": float(after) * 1000.0,
@@ -226,11 +305,17 @@ def main() -> None:
                   f"팔만 {before_arm*1000:+7.1f}→{after_arm*1000:+7.1f} mm  {result.status.value}")
     scene.close()
 
+    if dump is not None:
+        pathlib.Path(args.dump_frames).parent.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(args.dump_frames, n_frames=np.asarray(len(rows)), **dump)
+        print(f"프레임 덤프 -> {args.dump_frames}  ({len(rows)} 프레임)")
+
     out = pathlib.Path(args.out_json)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({
         "records": str(run.path), "prompt": run.prompt, "target": target,
         "attention": "measured" if attention_block is not None else "synthetic",
+        "cameras": args.cameras,
         "ag3s": {"collision_backend": "esdf", "voxel_size": args.voxel,
                  "range_max": args.range_max,
                  "constraint_links": args.constraint_links,

@@ -1,0 +1,63 @@
+........................................................................ [ 12%]
+........................................................................ [ 25%]
+........................................................................ [ 37%]
+........................................................................ [ 50%]
+........................................................................ [ 62%]
+........................................................................ [ 75%]
+....
+  IPOPT status         : Solve_Succeeded
+  rows                 : 1360
+  active slots         : 1
+  min h at solution    : -9.177e-09   (>= 0 required)
+  |q* - q_ref|         : 0.2300 rad
+....
+  frame 1: Solve_Succeeded, active slots 1
+  frame 2: Solve_Succeeded, active slots 2  (same solver object, parameters only)
+  min h frame 2        : -9.433e-09
+................................................................ [ 87%]
+......................................................................   [100%]
+=============================== warnings summary ===============================
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+  /mnt/dev/work/.venv-ag3s/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:64: PyparsingDeprecationWarning: 'oneOf' deprecated - use 'one_of'
+    prop = Group((name + Suppress("=") + comma_separated(value)) | oneOf(_CONSTANTS))
+
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+  /mnt/dev/work/.venv-ag3s/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:85: PyparsingDeprecationWarning: 'parseString' deprecated - use 'parse_string'
+    parse = parser.parseString(pattern)
+
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+  /mnt/dev/work/.venv-ag3s/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:89: PyparsingDeprecationWarning: 'resetCache' deprecated - use 'reset_cache'
+    parser.resetCache()
+
+tests/ag3s/test_pipeline.py::test_visualization_imports_lazily_and_writes_every_panel
+  /mnt/dev/work/.venv-ag3s/lib/python3.11/site-packages/matplotlib/_mathtext.py:45: PyparsingDeprecationWarning: 'enablePackrat' deprecated - use 'enable_packrat'
+    ParserElement.enablePackrat()
+
+tests/trajopt/test_esdf_backend.py: 1 warning
+tests/trajopt/test_problem.py: 9 warnings
+tests/trajopt/test_qp.py: 8 warnings
+tests/trajopt/test_refiner.py: 9 warnings
+tests/trajopt/test_sqp.py: 15 warnings
+  /mnt/dev/work/.venv-ag3s/lib/python3.11/site-packages/osqp/interface.py:290: DeprecationWarning: "polish" is deprecated. Please use "polishing" instead.
+    warnings.warn(
+
+tests/trajopt/test_esdf_backend.py: 6 warnings
+tests/trajopt/test_problem.py: 9 warnings
+tests/trajopt/test_qp.py: 9 warnings
+tests/trajopt/test_refiner.py: 60 warnings
+tests/trajopt/test_sqp.py: 91 warnings
+  /mnt/dev/work/.venv-ag3s/lib/python3.11/site-packages/osqp/interface.py:405: PendingDeprecationWarning: The default value of raise_error will change to True in the future.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+574 passed, 231 warnings in 133.21s (0:02:13)

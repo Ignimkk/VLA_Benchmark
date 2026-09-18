@@ -64,6 +64,16 @@ class SourceType(str, enum.Enum):
     UNKNOWN_GEOMETRY = "unknown_geometry"
     TARGET = "target"
     OVERFLOW = "overflow"
+    #: Where the manipulated object is being **put**, not what is being held. The basket in
+    #: "put the apple in the basket". It is an obstacle -- nothing may hit it -- but the held
+    #: object has to go *inside* it, and a full margin makes that geometrically impossible: the
+    #: basket's inner half-width is 82 mm and the held apple needs 32.9 mm of it, so 50 mm leaves
+    #: the placement 17 mm short (F18, `docs/AG3S_REVIEW_LOG.md`). It gets a thin margin instead,
+    #: and only because the distance field can now say *which* surface is nearest (the label layer).
+    #:
+    #: **Injected, never inferred** -- the same contract as `Phase`. AG3S is not told what the task
+    #: is, so it cannot know which object is the destination.
+    DESTINATION = "destination"
 
     @classmethod
     def parse(cls, value: "SourceType | str") -> "SourceType":
@@ -71,6 +81,11 @@ class SourceType(str, enum.Enum):
         if isinstance(value, cls):
             return value
         return cls(str(value).strip().lower())
+
+
+#: 거리장의 라벨 층에서 목적지가 쓰는 이름. `SourceType.DESTINATION` 과 같은 문자열이라
+#: 정책 쪽 축과 필드 쪽 라벨이 갈라질 수 없다 — 두 곳에 상수를 따로 두면 언젠가 어긋난다.
+DESTINATION_LABEL = SourceType.DESTINATION.value
 
 
 class Manipulator(str, enum.Enum):
@@ -752,6 +767,21 @@ class AttachedCollisionGeometry:
     source_candidate_id: int = -1
     attached_at: float = 0.0
     label: str = "attached_object"
+    #: `(N, 3)` observed surface points of the held object, **in the parent link frame**, voxel
+    #: downsampled. This is what the optimizer queries the distance field with, and it exists
+    #: because a fitted primitive is measurably worse (F19, `docs/AG3S_REVIEW_LOG.md`): one sphere
+    #: through an apple's cloud comes out at r = 57.4 mm because it has to cover the stem and leaf,
+    #: which eats 13.2 mm of clearance on average and 23.7 mm at worst, and in one frame reports a
+    #: collision (-1.2 mm) where the points say +9.3 mm.
+    #:
+    #: Downsampling is not an optimisation, it is what makes the representation usable at all: the
+    #: raw cloud is ~15,000 points. At 10 mm it is 64-89 points and the clearance it reports differs
+    #: from the raw cloud by less than 1 mm -- measured on `run_0004` frames 16-18.
+    #:
+    #: `primitives` is kept beside it, not replaced by it, because the points are a *snapshot of one
+    #: view*: they cover the surface the cameras saw and nothing behind it. A consumer that needs a
+    #: closed volume (rendering, a primitive-backend constraint) still has one.
+    points: Optional[np.ndarray] = None
 
     def __post_init__(self) -> None:
         T = np.asarray(self.T_parent_object, np.float64)
@@ -760,6 +790,9 @@ class AttachedCollisionGeometry:
         object.__setattr__(self, "T_parent_object", T)
         object.__setattr__(self, "primitives", list(self.primitives))
         object.__setattr__(self, "allowed_contact_links", frozenset(self.allowed_contact_links))
+        if self.points is not None:
+            pts = np.asarray(self.points, np.float64).reshape(-1, 3)
+            object.__setattr__(self, "points", pts)
 
     def permits_contact_with(self, link: str) -> bool:
         return str(link) in self.allowed_contact_links
@@ -845,14 +878,32 @@ class CollisionConstraintSet:
     #: would delete the one thing the clearance policy reads.
     esdf: Any = None
     #: `(n_constraint_spheres,)` required clearance to `target`, per constraint-robot sphere, from
-    #: `ClearancePolicy.margin_matrix`'s TARGET column — `None` when there is no target. This is the
-    #: ESDF path's answer to the same problem the (sphere, slot) primitive margin matrix solves:
-    #: the field is anonymous and cannot itself express "the right fingertips may touch this, the
-    #: rest of the robot may not" (`docs/AG3S_REVIEW_LOG.md` Step 2, E1 — carving the target out of
-    #: the field, the previous fix, relaxed it for **every** sphere, not just the authorized ones).
-    #: An unauthorized sphere's entry is `safety_margin`, identical to having no target at all, so a
-    #: consumer needs no separate authorization check — the array already encodes it.
-    target_link_margin: Optional[np.ndarray] = None
+    #: `ClearancePolicy.margin_matrix`'s TARGET column, computed for the **manipulated** object —
+    #: `None` when there is nothing being manipulated. This is the ESDF path's answer to the same
+    #: problem the (sphere, slot) primitive margin matrix solves: the field is anonymous and cannot
+    #: itself express "the right fingertips may touch this, the rest of the robot may not"
+    #: (`docs/AG3S_REVIEW_LOG.md` Step 2, E1 — carving the target out of the field, the previous fix,
+    #: relaxed it for **every** sphere, not just the authorized ones). An unauthorized sphere's entry
+    #: is `safety_margin`, identical to having nothing manipulated at all, so a consumer needs no
+    #: separate authorization check — the array already encodes it.
+    #:
+    #: **Named for the manipulated object, not the attention target** (F11). Those are the same thing
+    #: until a grasp closes and different afterwards; see `clearance.ManipulatedObject`.
+    manipulated_link_margin: Optional[np.ndarray] = None
+
+    #: The destination -- where the manipulated object is being put -- as a label the distance
+    #: field carries, and the clearance required against it. `None` unless the caller named one.
+    #:
+    #: It is a separate axis from `target` on purpose. The target is what attention points at and
+    #: the manipulated object is what the hand holds; the destination is neither, and it needs its
+    #: own margin because a full one makes the placement geometrically impossible (F18).
+    destination_label: Optional[str] = None
+    destination_margin: Optional[float] = None
+
+    #: Which object the margin above belongs to, and where it is — `clearance.ManipulatedObject`.
+    #: The consumer needs this to recognise that object in the anonymous field: a point cloud for the
+    #: attention target, analytic spheres for a held one.
+    manipulated: Any = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "robot_state", np.asarray(self.robot_state, np.float64).reshape(-1))

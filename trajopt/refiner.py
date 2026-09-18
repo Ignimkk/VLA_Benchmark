@@ -24,7 +24,9 @@ fix: closing the loop properly needs a physical-to-model inverse and a change to
 
 from __future__ import annotations
 
+import logging
 import time
+import traceback
 from typing import Any, Callable, Optional, Sequence
 
 import numpy as np
@@ -77,12 +79,18 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
         )
         self.optimizer = TrajectoryOptimizer(robot_model, layout, self.limits, planning)
         self.last_result: Optional[TrajOptResult] = None
+        #: 마지막으로 `scene_fn` 이 던진 예외의 요약, 또는 `None`.
+        self.last_failure: Optional[str] = None
+        #: 연속 실패 수. 한 프레임 드롭과 **영구 고장**을 가르는 것이 이 숫자다.
+        self._failure_count = 0
         self._previous: Optional[np.ndarray] = None
 
     def reset(self) -> None:
         """Between episodes. Drops the warm start and the continuity reference."""
         self.optimizer.reset()
         self.last_result = None
+        self.last_failure = None
+        self._failure_count = 0
         self._previous = None
 
     # ------------------------------------------------------------------------------------
@@ -99,12 +107,29 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
         try:
             scene, q_now, certified = self.scene_fn(context)
         except Exception as exc:  # noqa: BLE001 - a perception fault must not kill the policy
+            # **삼키되 크게 말한다.** 예외로 정책을 죽이지 않는 것은 맞다 — 카메라 한 프레임
+            # 드롭으로 로봇이 서면 안 된다. 그러나 조용히 삼키면 **지각과 최적화가 통째로
+            # 멈춘 채 응답만 계속 나간다.** 실측(2026-09-18): AG3S 가 파지 다음 프레임부터
+            # 14 프레임 동안 한 번도 안 돌았는데 아무 데도 안 찍혔다. 원인은
+            # `attached_parent_links` 미예약이었고, 그 한 줄이 로그에 있었으면 즉시 보였다.
             self.last_result = None
-            self._note_failure(f"scene unavailable ({exc}); chunk passed through unchanged")
+            self.last_failure = f"{type(exc).__name__}: {exc}"
+            self._failure_count += 1
+            logging.getLogger(__name__).exception(
+                "scene_fn raised; the chunk passes through UNVERIFIED (consecutive failures: %d)",
+                self._failure_count)
+            self._note_failure(
+                f"scene unavailable ({self.last_failure}); chunk passed through unchanged; "
+                f"consecutive failures: {self._failure_count}\n"
+                + traceback.format_exc(limit=6))
             return chunk
 
         reference = self.layout.chunk_to_trajectory(chunk)[:, :planned]
         previous = self._continuity_reference(context, planned)
+
+        # 여기까지 왔으면 씬을 얻은 것이다 — 연속 실패 수를 지운다.
+        self.last_failure = None
+        self._failure_count = 0
 
         result = self.optimizer.solve(
             reference,

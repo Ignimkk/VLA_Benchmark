@@ -163,9 +163,17 @@ def _collision_elements(link: ET.Element) -> Iterable[ET.Element]:
 
 
 def parse_urdf(path: str | pathlib.Path) -> UrdfModel:
-    """Read links, joints and collision capsules. Meshes are ignored — nothing here needs them."""
+    """Read links, joints and collision capsules. Meshes are ignored — nothing here needs them.
+
+    The path goes through `ag3s.asset_path.resolve_asset`, so the workspace-relative default
+    (`src/rby1_description/...`) still works when the assets actually live somewhere else —
+    `pi05_TO_hybrid/rby1_description/` in this container. Resolving **here** rather than at each
+    call site covers every entry point at once; three of them call `parse_urdf(RBY1_URDF)` directly.
+    """
+    from benchmark.ag3s.asset_path import resolve_asset
+
     parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True))
-    root = ET.fromstring(pathlib.Path(path).read_text(), parser=parser)
+    root = ET.fromstring(resolve_asset(path, what="URDF").read_text(), parser=parser)
 
     links: list[str] = []
     capsules: list[UrdfCapsule] = []
@@ -579,12 +587,10 @@ def load_rby1(
     The default path is workspace-relative, matching how every other entry point here is run
     (`src/openpi/.venv/bin/python -m benchmark....` from the repo root).
     """
-    path = pathlib.Path(urdf_path) if urdf_path is not None else RBY1_URDF
-    if not path.exists():
-        raise FileNotFoundError(
-            f"RB-Y1 URDF not found at {path}. Run from the workspace root, or pass urdf_path."
-        )
-    return UrdfSphereChain(parse_urdf(path), joint_names, **kwargs)
+    # 경로 해석은 `parse_urdf` 가 한다 — 기본값이 작업공간 상대경로라도, 자산이
+    # `src/` 가 아니라 `pi05_TO_hybrid/` 에 있는 환경에서 찾아낸다 (`ag3s/asset_path.py`).
+    return UrdfSphereChain(parse_urdf(urdf_path if urdf_path is not None else RBY1_URDF),
+                           joint_names, **kwargs)
 
 
 __all__ = [

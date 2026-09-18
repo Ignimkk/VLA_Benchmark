@@ -385,26 +385,50 @@ class EsdfConfig:
     #: the target out of the field relaxed it for **every** robot sphere, not just the ones
     #: authorized to touch it, because the field cannot express "who is asking". The pipeline now
     #: always leaves the target in the field and relaxes the authorized links' required margin
-    #: instead (`CollisionConstraintSet.target_link_margin`, from `ClearancePolicy`). Kept as a field
+    #: instead (`CollisionConstraintSet.manipulated_link_margin`, from `ClearancePolicy`). Kept as a field
     #: — rather than removed — only so old configs with `exclude_target: always` do not fail to
     #: parse; `EsdfBuilder.update(exclude_target=...)` itself is still a general capability a direct
     #: caller may use.
     exclude_target: str = "auto"  # auto | always | never — unused by the pipeline; see above
     target_dilate_voxels: int = 0
-    #: Carve support-surface points out of the field. Default on, and it is not an optimisation.
+    #: 쥔 물체를 필드에서 **파낸다** (A2, 2026-09-16). 파지가 닫히면 그 물체는 장애물이기를
+    #: 그치고 **로봇 쪽 질의점**이 된다 (E3 — 쥔 물체가 optimizer 에 도달하지 않는다 / F19 —
+    #: 점 기반). 양쪽에 동시에 있으면 물체가 자기 자신에게 부딪히고, 그 행은 **어떤 해로도 못
+    #: 푼다** — 물체가 손에 강체로 붙어 있어 관절을 어떻게 움직여도 자기 복셀에서 못 벗어난다.
     #:
-    #: A support surface is already emitted as a half-space row with its own margin
-    #: (`support_surface.safety_margin`, 10 mm) because a plane converted to a half-space costs the
-    #: optimizer one linear row and describes the surface exactly. Integrating the same table into
-    #: the field as well makes the two backends *disagree about the same geometry*: the plane row
-    #: asks for 10 mm and the field asks for `esdf_margin` (50 mm) at the same surface. Measured on
-    #: the RB-Y1 scene, that put 23 robot spheres in nominal violation — the base and wheels resting
-    #: on the floor, and the fingertips near the table top — none of which the primitive path calls
-    #: a violation.
+    #: **E1(조작 대상을 필드에서 파내면 손끝뿐 아니라 전신에게 사라진다)과 모순되지 않는다.**
+    #: E1 이 금지한 것은 *아직 안 쥔* target 을 파내는 것이다. 쥔 뒤에는 그 물체가 로봇의
+    #: 일부이고, 로봇을 depth 에서 지우는 것과 **같은 처리**다.
     #:
-    #: Carving loses nothing: the surfaces are still in `CollisionConstraintSet.support_surfaces`
-    #: and still become plane rows, on either backend.
-    exclude_support_surfaces: bool = True
+    #: 실측으로 필요한 것이 확인됐다: `run_0004` 프레임 10~11 에서 쥔 사과가 **테이블에 놓여
+    #: 있을 때 남긴 잔상** 위에 서 있어 자기 질의점이 −72.7 mm 를 읽는다. 자기 필터는 이것을
+    #: 못 막는다 — 쥔 동안 사과 픽셀을 100 % 지우는데도 그렇다(마스크를 걷어내도 점유는 최대
+    #: 4 복셀만 바뀐다). 지우는 것은 **새 관측**이고 남는 것은 **옛 관측**이기 때문이다.
+    attached_dilate_voxels: int = 1
+    #: Carve support-surface points out of the field. **Default off** (F15, 2026-09-14).
+    #:
+    #: This pairs with `TrajOptConfig.collision.use_support_planes`, and the two must agree: carve
+    #: the surface out and the plane row has to catch it; leave it in and the field already has it.
+    #: They live in different config objects and neither can see the other, so
+    #: `trajopt.linearize.scene_from_constraint_set` checks the pair and refuses the combination
+    #: that constrains a support surface with *nothing*.
+    #:
+    #: **Why the default flipped.** Carving was right while a plane was one exact 10 mm row and the
+    #: field carried only what was not a plane — integrating the same table into both makes them
+    #: *disagree about the same geometry* (plane 10 mm vs `esdf_margin` 50 mm), measured at 23 robot
+    #: spheres in nominal violation. But the plane row is **unbounded**, so a tabletop forbids the
+    #: whole volume beneath it (E2), and both real deployments — `trajopt/bringup.py` and
+    #: `trajopt/experiments/esdf_rollout.py` — turned the plane rows off and left the table in the
+    #: field. The default now matches them.
+    #:
+    #: Measured (run_0004, 3 cameras, 20 mm voxels): with the table left in, the field reads
+    #: -30.5 mm at the top surface (z = 0.823); carving it makes the same query read **+6.0 mm** —
+    #: free space where the surface is. The whole 30~50 mm band the fingertips work in goes up to
+    #: 36.5 mm optimistic.
+    #:
+    #: Carving loses nothing *when the plane row is on*: the surfaces stay in
+    #: `CollisionConstraintSet.support_surfaces` and still become plane rows on either backend.
+    exclude_support_surfaces: bool = False
     #: Build the primitive candidate set as well, even though the field is what gets consumed.
     #:
     #: Off by default because `collision_backend: esdf` means the optimizer reads the field, and
@@ -418,6 +442,22 @@ class EsdfConfig:
     #: the primitive view alongside, and note that `collision_backend: both` sets it implicitly
     #: because that mode exists precisely to compare the two.
     emit_candidates: bool = False
+    #: 관측의 무게를 프레임마다 줄이는 비율 (cuRoboV2 §5.3). `1.0` 이면 끈 것 — **기본값이다.**
+    #:
+    #: 우리 가중치는 `min(w + 1, max_weight)` 로 단조 증가해서 옛 관측이 절대 흐려지지 않는다.
+    #: 그래서 사라진 물체의 잔상이 남는다 — 실측: 사과가 302 mm 떠난 뒤에도 그 자리가 -6.7 mm 로
+    #: 점유였고 8 프레임 내내 자유가 되지 않았다 (F20).
+    #:
+    #: 끈 채로 두는 이유는 감쇠가 **실제 장애물도 함께 잊기** 때문이다. 켜는 값은 씬에서 재고
+    #: 정한다.
+    time_decay: float = 1.0
+    #: 절두체 **안**에만 추가로 곱하는 비율. 지금 보고 있는 곳은 틀렸다면 바로 고칠 수 있으므로
+    #: 빨리 잊어도 되고, 안 보이는 곳은 고칠 방법이 없으므로 천천히 잊어야 한다 — 그 비대칭이
+    #: 이 값이 따로 있는 이유다. cuRoboV2 의 예시값은 `a_t = 0.99`, `a_f = 0.5`.
+    frustum_decay: float = 1.0
+    #: 가중치가 이보다 낮아진 복셀은 **다시 미관측**으로 돌린다. 감쇠를 켰을 때 "잊는다" 가
+    #: 실제로 뜻하는 것.
+    min_weight: float = 0.0
     #: Recompute the distance transform only inside the changed region, padded by `max_distance`.
     incremental: bool = True
     #: Side of the cube the local update works in, in voxels. Smaller blocks recompute less but
@@ -434,6 +474,12 @@ class EsdfConfig:
     EXCLUDE_TARGET = ("auto", "always", "never")
 
     def validate(self) -> None:
+        for name in ("time_decay", "frustum_decay"):
+            v = float(getattr(self, name))
+            if not (0.0 < v <= 1.0):
+                raise AG3SConfigError(f"esdf.{name} 는 (0, 1] 이어야 합니다: {v}")
+        if self.min_weight < 0.0:
+            raise AG3SConfigError(f"esdf.min_weight 는 0 이상이어야 합니다: {self.min_weight}")
         if self.voxel_size <= 0.0:
             raise AG3SConfigError(f"esdf.voxel_size must be > 0, got {self.voxel_size}")
         if self.truncation_voxels <= 0.0:
@@ -465,6 +511,9 @@ class EsdfConfig:
         if self.target_dilate_voxels < 0:
             raise AG3SConfigError(
                 f"esdf.target_dilate_voxels must be >= 0, got {self.target_dilate_voxels}")
+        if self.attached_dilate_voxels < 0:
+            raise AG3SConfigError(
+                f"esdf.attached_dilate_voxels must be >= 0, got {self.attached_dilate_voxels}")
 
     @property
     def truncation(self) -> float:
@@ -486,6 +535,18 @@ class ContactConfig:
 
     phase_aware: bool = True
     contact_margin: float = 0.0
+    #: Clearance required against the **destination** -- where the held object is being put.
+    #:
+    #: 20 mm rather than the 50 mm every other obstacle gets, because the geometry does not leave
+    #: room for 50: measured on `run_0004`, the held apple's observed points pass within 32.9 mm of
+    #: the basket's inner wall while it is being lowered in, and the coarse 20 mm grid answers up to
+    #: 7.56 mm optimistically (C5), so the usable ceiling is 25.3 mm. 20 leaves 5.3 mm of engineering
+    #: headroom (F18).
+    #:
+    #: It is **not** a relaxation of the global margin. Every other obstacle keeps 50 mm; this
+    #: number applies only where the distance field's label layer says the nearest surface is the
+    #: destination, and only to a destination the caller explicitly named.
+    destination_margin: float = 0.020
     contact_links: dict[str, tuple[str, ...]] = dataclasses.field(
         default_factory=lambda: {k: tuple(v) for k, v in DEFAULT_CONTACT_LINKS.items()}
     )
@@ -500,6 +561,9 @@ class ContactConfig:
         missing = {p.value for p in Phase} - set(self.phase_rules)
         if missing:
             raise AG3SConfigError(f"contact.phase_rules is missing {sorted(missing)}")
+        if self.destination_margin < 0.0:
+            raise AG3SConfigError(
+                f"contact.destination_margin must be >= 0, got {self.destination_margin}")
         if self.contact_margin < 0.0:
             raise AG3SConfigError(
                 f"contact.contact_margin must be >= 0 (a negative margin authorizes penetration), "

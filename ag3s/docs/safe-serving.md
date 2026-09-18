@@ -39,6 +39,9 @@ python -m benchmark.trajopt.serve_safe \
     --config pi05_rby1_atomic_lora \
     --checkpoint /mnt/dev/work/.../29999 \
     --model-xml <RB-Y1 씬 XML> --port 8000
+    # 아는 고정 기하(벽·선반·테이블·바닥)를 함께 쓰려면 (기본은 끔):
+    #   --static-geometry auto                                   <- --model-xml 에서 뽑는다
+    #   --static-geometry benchmark/ag3s/configs/static_geometry_transport.json
 
 # 터널 (컨테이너는 점프 호스트 내부망이라 직접 닿지 않는다)
 ssh -N -L 8123:localhost:8123 -J blunex@ai.amrc.kr:21151 root@172.21.121.112 -p 32542
@@ -55,6 +58,24 @@ src/openpi/.venv/bin/python src/rby1_bringup/pi05_infer.py \
     --trace outputs/live/trace \
     --record outputs/live/third_person.mp4
 ```
+
+### `--static-geometry` — 아는 고정 기하 (기본 끔)
+
+거리장은 카메라가 **본 것**만 안다. 안 본 곳과 격자 밖은 낙관적으로 "멀다" 고 답하는데,
+이 옵션을 켜면 벽·선반·테이블·바닥까지의 거리를 **따로 수식으로 재어** `min(복셀, 해석적)`
+으로 합친다. 답이 커질 수 없으므로 **틀리는 방향이 안전한 쪽**이다.
+
+| 값 | 무엇 |
+|---|---|
+| `none` (기본) | 안 쓴다. 지금까지와 같다 |
+| `auto` | `--model-xml` 에서 뽑는다. 시뮬용 |
+| `<파일>` | `benchmark.ag3s.static_scene` 이 쓴 JSON. **실기용 — MuJoCo 가 필요 없다** |
+
+실기 파일은 보기(`benchmark/ag3s/configs/static_geometry_transport.json`)를 측량값으로
+바꿔 쓴다. 좌표계는 **로봇 base** 이고, 파일의 `frame` 이 `robot_base` 가 아니면 거절한다.
+
+**`--links all` 과 함께 켜지 말 것** — 바닥 평면이 바퀴·베이스 구에 어떤 해로도 못 푸는
+위반을 상수로 깐다 (실측 `base` −342 mm). 서버가 경고를 찍는다.
 
 **렌더 백엔드는 뷰어를 띄우느냐로 갈린다.** `--headless` 가 없으면 이 루프는
 `mujoco.viewer.launch_passive` 로 대화형 뷰어를 띄우는데, `MUJOCO_GL=osmesa` 는 화면 없는

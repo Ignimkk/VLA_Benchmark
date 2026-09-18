@@ -23,11 +23,32 @@ import numpy as np
 
 from benchmark.trajopt import wire
 from benchmark.trajopt.config import TrajOptConfig
+from benchmark.trajopt.grasp_latch import CentroidIdentity, GraspLatch, LatchConfig
 from benchmark.trajopt.linearize import CollisionLinearizer, scene_from_constraint_set
 from benchmark.trajopt.refiner import TrajOptChunkRefiner
 from benchmark.trajopt.types import ChunkLayout
 
 __all__ = ["SafePolicy"]
+
+
+#: 어느 손이 어느 링크로 쥐는가. 로봇마다 다르므로 **주입**이지만, 기본값이 두 곳에서 필요하다 —
+#: `SafePolicy` 가 `attach` 를 부를 때와, **그보다 먼저** AG3S 가 attached 슬롯을 예약할 때다.
+DEFAULT_GRASP_LINKS: dict[str, tuple] = {
+    "left": ("ee_finger_l1", ("ee_finger_l1", "ee_finger_l2")),
+    "right": ("ee_finger_r1", ("ee_finger_r1", "ee_finger_r2")),
+}
+
+
+def grasp_parent_links(grasp_links: Optional[dict] = None) -> tuple[str, ...]:
+    """AG3S 를 지을 때 `attached_parent_links=` 로 넘겨야 하는 링크들.
+
+    **슬롯은 생성 시점에 예약된다.** `ConstraintBuilder` 의 심볼 그래프와 희소성이 거기서
+    고정되므로 `attach()` 가 나중에 늘릴 수 없다. 안 넘기면 파지가 닫히는 **다음 프레임**에
+    `_scene_fn` 이 `ValueError` 를 던지고, `refiner` 가 그것을 삼켜 **지각과 최적화가 통째로
+    멈춘 채 응답만 계속 나간다** — 실측으로 잡은 결함이다 (2026-09-18, `run_0004` 프레임 10
+    이후 14 프레임 동안 AG3S 가 한 번도 안 돌았다).
+    """
+    return tuple(v[0] for v in (grasp_links or DEFAULT_GRASP_LINKS).values())
 
 
 class SafePolicy:
@@ -53,7 +74,11 @@ class SafePolicy:
 
     def __init__(self, policy, *, ag3s, to_config: Optional[TrajOptConfig] = None,
                  attention_fn: Optional[Callable[[dict, dict], dict]] = None,
-                 default_phase: str = "approach", recorder=None):
+                 default_phase: str = "approach", recorder=None,
+                 latch: Optional[LatchConfig] = None,
+                 grasp_links: Optional[dict] = None,
+                 placed_fn: Optional[Callable[[dict, Any], bool]] = None,
+                 static_geometry: Optional[Sequence[Any]] = None):
         self._policy = policy
         self.ag3s = ag3s
         self.to_config = to_config or TrajOptConfig.from_dict({
@@ -65,6 +90,45 @@ class SafePolicy:
         #: attention·grounding·거리장을 내보내지 않으므로, 진단하려면 여기서 남겨야 한다 —
         #: `benchmark/trajopt/bringup.py`의 `LivePipeline._record`와 같은 계약.
         self.recorder = recorder
+        #: 조작 대상을 에피소드 상태로 붙드는 것 (F17 — grounding 은 무상태라 파지 순간
+        #: attention 이 목적지로 넘어가면 권한이 엉뚱한 물체에 붙는다). `attach`/`detach` 를
+        #: **언제** 불러야 하는지만 답하고, 부르는 것은 이 클래스다 — AG3S 는 그 결정을 하지
+        #: 않는다는 계약(`attached.py` 머리말)이 그대로 남는다.
+        self._latch = GraspLatch(latch)
+        #: grounding 은 이름표를 주지 않으므로 무게중심으로 같은 물체인지 본다.
+        self._identity = CentroidIdentity()
+        #: 어느 손이 어느 링크로 쥐는가. 주입이다 — 로봇마다 다르고 추측할 수 없다.
+        self.grasp_links = dict(grasp_links or DEFAULT_GRASP_LINKS)
+        #: `(scene, constraint_set) -> bool`. 조작 대상이 목적지 안에 들어가 손에서 떨어졌는가.
+        #: 기하 판정이라 외부가 준다 — 이 클래스도 잠금도 씬을 보지 않는다.
+        self.placed_fn = placed_fn
+        #: 아는 정적 기하 (`esdf.StaticBox` / `StaticPlane`) — 벽 · 선반 · 테이블 · 바닥.
+        #: 거리장이 `min(복셀, 해석적)` 으로 답하게 해 미관측·격자 밖의 낙관을 없앤다 (N2 · E4:
+        #: 실측 최대 낙관 +219.5 → +0.0 mm). **주입이다** — AG3S 도 이 클래스도 무엇이 고정
+        #: 기하인지 알 수 없고, `phase` · 목적지와 같은 계약이다. `None` 이면 예전과 같이 돈다.
+        self.static_geometry = tuple(static_geometry or ())
+        #: 이번 프레임에 목적지로 넘길 점. 잠금이 목적지를 확정한 **다음** 프레임부터 찬다.
+        self._destination_points = None
+        #: 잠긴 이름이 마지막으로 target 으로 나왔을 때의 그 target. `attach` 가 이것을 쓴다 —
+        #: 잠금이 걸린 뒤의 target 은 이미 목적지일 수 있으므로 지금 프레임 것을 쓰면 안 된다.
+        self._latched_target = None
+
+        # **파지가 닫히기 전에 여기서 죽는다.** attached 슬롯은 AG3S 생성 시점에 예약되고
+        # `attach()` 가 나중에 늘릴 수 없다. 안 예약된 채로 두면 파지 다음 프레임에
+        # `_scene_fn` 이 던지고 `refiner` 가 그것을 삼켜 **지각과 최적화가 통째로 멈춘 채
+        # 응답만 계속 나간다** — 실측으로 14 프레임 동안 조용했다 (2026-09-18).
+        # 시작할 때 큰 소리로 죽는 편이 낫다.
+        builder = getattr(ag3s, "builder", None)
+        reserved = tuple(getattr(builder, "attached_parent_links", ()) or ())
+        missing = [p for p in grasp_parent_links(self.grasp_links) if p not in reserved]
+        if missing:
+            raise ValueError(
+                f"AG3S reserved attached slots for {list(reserved)} but this SafePolicy grasps "
+                f"with {missing}. Build AG3S with "
+                f"attached_parent_links={grasp_parent_links(self.grasp_links)!r} — the slots are "
+                "fixed at construction and attach() cannot add them later, so without this the "
+                "pipeline dies silently on the frame after the grasp closes."
+            )
 
         model = ag3s.constraint_robot_model
         if model is None:
@@ -110,6 +174,11 @@ class SafePolicy:
                 reset()
         self._previous_chunk = None
         self._last_constraint_set = None
+        # 잠금도 에피소드 상태다. 남기면 다음 과제가 지난 과제의 조작 대상을 물려받는다.
+        self._latch.reset()
+        self._identity.reset()
+        self._destination_points = None
+        self._latched_target = None
         self._last_debug = {}
         self._last_attention_by_camera = {}
         self._last_q_now = None
@@ -139,7 +208,8 @@ class SafePolicy:
 
         # `_scene_fn` 이 읽을 것들. refiner 가 콜백을 부를 때 인자로 넘길 수 없는 값이라
         # 여기 둔다 — 콜백 계약(`context -> (scene, q_now, certified)`)을 바꾸지 않으려는 것이다.
-        self._pending = {"scene": scene, "attention": attention, "timing": timing}
+        self._pending = {"scene": scene, "attention": attention, "timing": timing,
+                         "chunk": chunk}
 
         t = time.monotonic()
         refined = self.refiner.refine(chunk, {"t_step": seq,
@@ -175,14 +245,20 @@ class SafePolicy:
         t = time.monotonic()
         # `process_multi_debug` 는 `process_multi` 와 **같은 계산**이고 중간 결과를 버리지 않고
         # 돌려줄 뿐이다 (`AG3S.process_multi`는 이 호출의 [0]이다) — 기록기가 없어도 비용이 없다.
+        manipulators = list(scene.get("active_manipulators", ()) or ())
         constraint_set, debug = self.ag3s.process_multi_debug(
             observations,
             phase=scene.get("phase") or self.default_phase,
-            active_manipulators=list(scene.get("active_manipulators", ()) or ()),
+            active_manipulators=manipulators,
+            # 목적지는 **지난 프레임**에 잠금이 확정한 것이다. 한 프레임 늦는 것은 의도다 —
+            # 이번 프레임의 grounding 결과를 쓰려면 필드를 두 번 지어야 한다.
+            destination_points=self._destination_points,
+            static_geometry=self.static_geometry or None,
         )
         self._pending.setdefault("timing", {})["ag3s"] = (time.monotonic() - t) * 1000.0
         self._last_constraint_set = constraint_set
         self._last_debug = debug
+        self._run_latch(constraint_set, observations, manipulators)
         self._last_attention_by_camera = {
             o.camera_id: np.asarray(o.attention_map)
             for o in observations if getattr(o, "attention_map", None) is not None
@@ -197,6 +273,58 @@ class SafePolicy:
         self._last_q_now = q_now
         certified = constraint_set.status.value == "ok"
         return snapshot, q_now, certified
+
+    def _run_latch(self, constraint_set, observations, manipulators) -> None:
+        """잠금을 한 프레임 돌리고, 그것이 말할 때만 `attach`/`detach` 를 부른다.
+
+        **판단과 호출이 여기서 만난다.** 잠금은 씬을 보지 않고 이름·점수·그리퍼만 보며,
+        AG3S 는 파지 성공을 판정하지 않는다. 그 둘 사이를 잇는 것이 이 메서드다.
+
+        예외를 삼키지 않는다 — 잠금이 조용히 죽으면 쥔 물체가 optimizer 에서 사라지고, 그것이
+        E3(쥔 물체가 optimizer 에 도달하지 않는다)가 만들던 바로 그 구멍이다.
+        """
+        target = getattr(constraint_set, "target", None)
+        label = self._identity.label(getattr(target, "centroid", None))
+        if target is not None and label is not None and label == self._latch.manipulated:
+            # 잠긴 이름이 지금도 target 으로 나온다 — attach 가 쓸 기하를 갱신해 둔다.
+            self._latched_target = target
+
+        hand = (manipulators or ["left"])[0]
+        parent_link, allowed = self.grasp_links.get(
+            str(hand), self.grasp_links.get("left", ("ee_finger_l1", ())))
+        chunk = self._pending.get("chunk")
+        gripper = None
+        if chunk is not None and len(chunk):
+            column = 6 if str(hand) == "left" else 13
+            if chunk.shape[1] > column:
+                gripper = float(chunk[0, column])
+
+        placed = False
+        if self.placed_fn is not None and self._latch.holding:
+            placed = bool(self.placed_fn(self._pending.get("scene", {}), constraint_set))
+
+        metrics = getattr(target, "metrics", {}) or {}
+        event = self._latch.update(
+            label=label,
+            score=float(getattr(target, "confidence", 0.0) or 0.0),
+            runner_up=float(metrics.get("runner_up_score", 0.0) or 0.0),
+            gripper=gripper,
+            placed=placed,
+        )
+
+        if event.attach and self._latched_target is not None:
+            q = np.asarray(
+                max(observations, key=lambda o: o.timestamp).robot_state, np.float64)
+            self.ag3s.attach(self._latched_target, robot_state=q, parent_link=parent_link,
+                             allowed_contact_links=allowed, label="manipulated")
+        elif event.detach:
+            self.ag3s.detach()
+            # 놓았으니 목적지도 더는 목적지가 아니다. 다음 과제는 새로 잠근다.
+            self._destination_points = None
+
+        # 목적지 점 — 잠금이 목적지를 확정했고 지금 target 이 그것이면 그 점구름을 쓴다.
+        if event.destination is not None and label == event.destination and target is not None:
+            self._destination_points = np.asarray(target.points, np.float64)
 
     def _record(self, seq: int, reference: np.ndarray, refined: np.ndarray) -> None:
         """진단 기록. `bringup.LivePipeline._record`와 같은 계약 — 예외가 정책을 죽이면 안 된다.
@@ -261,10 +389,17 @@ class SafePolicy:
 
         if result is None:
             # 씬을 못 얻었다. 정책 청크가 그대로 나가고, 그것은 검증된 적이 없다.
+            #
+            # **왜 못 얻었는지를 응답에 싣는다.** 예전에는 "no scene was available" 한 줄뿐이라,
+            # 파지 다음 프레임부터 파이프라인이 통째로 멈춘 것을 14 프레임 동안 아무도 몰랐다
+            # (2026-09-18, 원인은 `attached_parent_links` 미예약). 원인 문자열이 여기 있으면
+            # 응답만 보고도 알 수 있다.
+            why = getattr(self.refiner, "last_failure", None)
             return wire.SafetyVerdict(
                 ag3s_status=ag3s_status, geometry_certified=False,
                 trajopt_status="no_solution", max_violation_m=float("inf"), safe=False,
-                notes=notes + ["no scene was available; the policy chunk is unverified"])
+                notes=notes + ["no scene was available; the policy chunk is unverified"
+                               + (f" — {why}" if why else "")])
 
         status = getattr(result.status, "value", "unknown")
         violation = float(result.max_violation)
