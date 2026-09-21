@@ -4,7 +4,7 @@
 산출물은 카메라별 `CollisionConstraintSet`, 그 뒤의 후보 색인, 단계별 그림입니다.
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.rby1_transport
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.rby1_transport
 ```
 
 - 코드: [`benchmark/ag3s/experiments/`](../../experiments/)

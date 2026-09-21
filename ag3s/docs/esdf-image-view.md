@@ -67,6 +67,6 @@
 ## 재현
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.esdf_image_report \\
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.esdf_image_report \\
     --records outputs/rby1_atomic_infer/ag3s_step1/ag3s_records/run_0002 --voxel 0.01
 ```

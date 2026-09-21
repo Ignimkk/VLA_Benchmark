@@ -103,8 +103,7 @@ AG3S 의 target grounding 이다. 실제 trace 로 확인한 뒤에 고친다.
 ## 아직 안 된 것
 
 **attention 이 live 로 오지 않는다.** 지금은 롤아웃이 끝난 뒤 `pi05_attention` 으로 따로 뽑는다.
-서버 서빙이 1단계에서 확정한 셀 하나를 응답에 실어 보내도록 고쳐야 한다 —
-[live-attention-server-prompt.md](live-attention-server-prompt.md) 에 그 프롬프트가 있다.
+서버 서빙이 1단계에서 확정한 셀 하나를 응답에 실어 보내도록 고쳐야 한다.
 
 그때까지 `--trajopt` 는 attention 없이 돈다. AG3S 는 target 을 못 잡고(`no_target`), 거리장이
 target 복셀을 파내지 않아 제약이 **더 보수적**이 된다 — 안전한 방향의 실패다. 합성 attention 을

@@ -54,7 +54,7 @@ class SafeRemoteClient:
 
         self._trace = None
         if trace_dir:
-            from benchmark.ag3s.trace import RunTrace
+            from benchmark.ag3s.runtime.trace import RunTrace
 
             self._trace = RunTrace(trace_dir, meta={
                 "mode": "safe_remote", "cameras": list(self.cameras),

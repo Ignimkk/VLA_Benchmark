@@ -10,9 +10,10 @@
 > **검토 계획서** — [AG3S_REVIEW_PLAN.md](AG3S_REVIEW_PLAN.md). 스텝 분해, 삭제 경계표,
 > 사전 조사에서 찾은 발견 목록의 근거가 그쪽에 있다. 이 파일은 그 계획의 **실행 기록**이다.
 
-> **`CONTAINER_SETUP.md` 는 폐기됐다 (2026-09-12).** 초기 컨테이너 셋업 전용이었고 그 일은
-> 끝났다. **읽지도 쓰지도 않는다.** 계속 필요한 것(cuRobo 함정 목록, 작업 방식)은 이 파일과
-> `AG3S_REVIEW_PLAN.md` 로 옮겼다. 아래 2026-09-11 이전 절에 남은 언급은 **당시 기록**이다.
+> **`CONTAINER_SETUP.md` 는 폐기됐고 (2026-09-12) 2026-09-21 에 삭제했다.** 초기 컨테이너
+> 셋업 전용이었고 그 일은 끝났다. 계속 필요한 것(cuRobo 함정 목록, 작업 방식)은 이 파일과
+> `AG3S_REVIEW_PLAN.md` 로 옮긴 뒤 지웠다. 아래 2026-09-11 이전 절에 남은 언급은 **당시
+> 기록**이며 가리키는 파일은 이제 없다.
 
 > **용어** — 바로 아래 **"용어"** 절. 이 기록에 쓰는 말(ESDF, 거친/미세 계층, 여유거리,
 > feasible/violated 등)을 모아 두었다. **새 용어를 쓸 때는 거기 추가한다.**
@@ -152,6 +153,9 @@
 | — | **trajopt 어댑터** (`curobo_field.py`) | 구현·검증 완료 | 2026-09-11 |
 | — | **end-to-end 대조** (15 청크) | 완료 — cuRobo 교체 성립(이관 확인 끝). 남은 질문은 2계층의 −7.8 mm | 2026-09-12 |
 | — | **참 거리 대조** | 완료 — 2계층의 조임은 **교정**. D2 는 유지 쪽으로 닫힘 | 2026-09-12 |
+| — | **폴더 재배치 — 기능별 서브패키지** | **완료**(2026-09-21) — core 4 그룹(`stages`·`fields`·`constraints`·`runtime`) + experiments 5 그룹. 73 파일 이동 · 664 곳 치환 · shim 없음. 테스트 625 불변, 회귀 기준선 일치 | 2026-09-21 |
+| — | **`docs/` 문서 정리** | **완료**(2026-09-21) — 다 쓴 프롬프트 5 · 폐기 선언 1 · 대체된 스냅샷 1 삭제. 45 → 38 파일, 2.60 → 1.28 MB. 끊어지는 참조 13 곳 수정, 깨진 링크 0 | 2026-09-21 |
+| — | **`docs/` 중복 제거 + archive 분류** | **완료**(2026-09-21) — `_004` 산문 5 개(동일도 89~100 %) 삭제, 닫힌 실험 18 파일을 `archive/` 두 폴더로. 최상위 38 → 15. 스크립트 기본 경로 23 파일 수정, 깨진 링크 0, 테스트 625 불변 | 2026-09-21 |
 
 ---
 
@@ -164,7 +168,7 @@
 
 | # | 무엇 | 어디 | 왜 아직인가 |
 |---|---|---|---|
-| A1 | ~~정적 기하를 누가 주는가~~ | `ag3s/static_scene.py` · `serve_safe --static-geometry` | **닫힘 (2026-09-16)** — 출처 둘: 시뮬은 `from_mujoco`(MJCF), 실기는 `load`(JSON). **그리고 이 과제에는 필요 없다고 확정**: 계획 지평 57,600 질의 중 낙관 0. 기본값 `none` 유지, 잠복으로 전환 신호를 달았다 — 아래 **"정적 기하가 이 과제에 필요한가"** 절 |
+| A1 | ~~정적 기하를 누가 주는가~~ | `ag3s/fields/static_scene.py` · `serve_safe --static-geometry` | **닫힘 (2026-09-16)** — 출처 둘: 시뮬은 `from_mujoco`(MJCF), 실기는 `load`(JSON). **그리고 이 과제에는 필요 없다고 확정**: 계획 지평 57,600 질의 중 낙관 0. 기본값 `none` 유지, 잠복으로 전환 신호를 달았다 — 아래 **"정적 기하가 이 과제에 필요한가"** 절 |
 | A2 | ~~E3 의 필드 예외~~ | `esdf.py` `update(attached_points=...)` · `pipeline._build_esdf` · `attached.attached_points_in_base` | **닫힘 (2026-09-17)** — 쥔 물체를 필드에서 **명시적으로 파낸다**. 전제였던 "자기 필터의 우연" 은 측정으로 **부정됐다**(F12 정정). 실제 문제는 **잔상** — 사과가 테이블에 남긴 표면 위에 서서 자기 질의점이 −72.7 mm 를 읽는다. 팽창 1 로 −34.2 mm, 권한 없는 링크 낙관 +5.7 mm. **팽창 2 에서 E1 재발**(+64.5 mm) — 그것이 상한이다. 아래 **"A2"** 절 |
 | A3 | ~~성공 판정 주입~~ | `trajopt/placed.py` · `grasp_latch.py` · `safe_replay --placed-fn` | **닫힘 (2026-09-17)** — `destination_placement` 가 **관측만**으로 기하를 판정한다(라벨 층에서 목적지 범위를 읽는다). 이탈은 그리퍼가 답하고 잠금이 **AND** 로 묶는다 — 안 묶으면 목적지 위를 지나며 쥔 채로 detach 된다. 검증: 참조 구현이 참값과 **0 프레임 차이·깜빡임 0**. 아래 **"A3"** 절 |
 
@@ -233,7 +237,7 @@
 | X2 | 정보 | 미확정 | overflow 집합체가 빈 슬롯과 구분 불가 (삭제 대상) | `constraint_builder.py:466` | 9 |
 | C1 | 심각 | **확정, 수정됨** | cuRobo 검증 경로가 마스킹 안 된 depth 를 써서 로봇이 자기 몸을 장애물로 봄 (위반 105/120) | `experiments/curobo/export_frame.py` | 어댑터 |
 | C2 | 중간 | **확정, 문서 수정 필요** | "거친 33 mm 대 미세 2 mm" 는 측정법 산물. 정직한 값은 중앙 3~5 mm, 꼬리 27 mm+ | `AG3S_REVIEW_PLAN.md` · 이 로그 "cuRoboV2 API 검증" | 어댑터 |
-| C3 | 중간 | **확정, 미수정** | 미세 창 경계에서 거리장이 낙관적으로 불연속 (중앙 +4.5 mm, 최대 +41.6 mm) | `ag3s/curobo_field.py` 합성 규칙 | 어댑터 |
+| C3 | 중간 | **확정, 미수정** | 미세 창 경계에서 거리장이 낙관적으로 불연속 (중앙 +4.5 mm, 최대 +41.6 mm) | `ag3s/fields/curobo_field.py` 합성 규칙 | 어댑터 |
 | C4 | 심각 | **확정, 수정됨** | `compute_esdf()` 의 `feature_tensor` 는 재사용 버퍼 — 다음 호출이 덮어쓴다. 증상은 `|∇d| = 0.25` | `build_rollout_fields.py` (우리 코드) | end-to-end |
 | C5 | 정보 | **확정** (참 거리 대조) | 거친 20 mm 는 판정 지점에서 여유거리를 **+7.56 mm 낙관적**으로 답한다. 2계층은 −0.49 mm | cuRobo 거친 계층 고유 | 참 거리 |
 | F11 | 심각 | **수정 완료**(2026-09-14) — 갈래 3 | 접촉 권한이 attention 이 보는 것이 아니라 **로봇이 쥔 것**에 붙는다. `clearance.ManipulatedObject` 신규, `target_link_margin`→`manipulated_link_margin`, 해석적 거리 경로. 검증: 두 기록에서 쥔 손끝 **+50.0 mm**(여유거리 전액), 권한 없는 손목 **+0.0 mm**. 접근 단계 동작 불변, 테스트 560 통과 | `clearance.py` · `to_adapter.py` · `linearize.py` | 6 (완료) |
@@ -284,7 +288,7 @@
 | `attached.py` | (Step 10) | — |
 | `robot_models/urdf_sphere_chain.py` | 필요 | 로봇 primitive 는 유지. 자체 캡슐→구 이산화, `geometry.py` 미의존 |
 | *(신규)* cuRobo `Mapper` | **도입 예정** | ESDF 인프라. `curobo_src` 에 clone·설치·검증 완료 (commit `78fd485`). 어댑터는 아래 |
-| *(신규)* `ag3s/curobo_field.py` | **신규, end-to-end 검증됨** (2026-09-12) | cuRobo `VoxelGrid` → trajopt 거리장. 계층당 기존 `EsdfField` 재사용, 합성은 `min()`. 순수 numpy 라 cuRobo 없는 venv 에서 돈다. 15 청크 대조에서 **같은 20 mm 끼리 AG3S numpy 와 거동이 같다** (after 중앙 +3.6 대 +4.7 mm, 반복 1 대 1) |
+| *(신규)* `ag3s/fields/curobo_field.py` | **신규, end-to-end 검증됨** (2026-09-12) | cuRobo `VoxelGrid` → trajopt 거리장. 계층당 기존 `EsdfField` 재사용, 합성은 `min()`. 순수 numpy 라 cuRobo 없는 venv 에서 돈다. 15 청크 대조에서 **같은 20 mm 끼리 AG3S numpy 와 거동이 같다** (after 중앙 +3.6 대 +4.7 mm, 반복 1 대 1) |
 
 ---
 
@@ -358,7 +362,7 @@ $ src/openpi/.venv/bin/python -m pytest tests/ag3s/ tests/trajopt/ -q
 ```
 
 ```
-$ src/openpi/.venv/bin/python -m benchmark.ag3s.pipeline --frames 12 --profile
+$ src/openpi/.venv/bin/python -m benchmark.ag3s.runtime.pipeline --frames 12 --profile
 points: 256884 raw -> 41333 voxel -> 40057 after self-filter
 candidates: 2 object, 0 unknown, 1 target, 1 support
 
@@ -499,7 +503,7 @@ steady-state update() unchanged scene: 1243.9 ms, n_occupancy_changed=0, n_block
 
 ### 수정 적용 — 2026-09-07
 
-사용자 지시로 검토를 잠깐 멈추고 E4·E6를 바로 고쳤다 (`ag3s/esdf.py`만 수정, Step 1 모듈 경계
+사용자 지시로 검토를 잠깐 멈추고 E4·E6를 바로 고쳤다 (`ag3s/fields/esdf.py`만 수정, Step 1 모듈 경계
 안). 관련 문헌: `papers/cuRoboV2_...pdf` (Sundaralingam et al., cuRoboV2 — depth-fused
 TSDF/ESDF, 매니퓰레이터 대상, block-sparse 투영 + 알려진 기하와의 min() 합성).
 
@@ -528,7 +532,7 @@ imports/consumers를 건드리지 않음). **정직하게 남기는 한계**: cu
   (`-28.2→-0.8`, `-134.1→-1.4` mm), feasible/violated 개수(1/4) **완전히 동일** — 수치가
   아니라 계산량만 바뀌었다는 확인.
   ```
-  $ git stash push -- ag3s/esdf.py   # 수정 전으로 되돌려 기준선
+  $ git stash push -- ag3s/fields/esdf.py   # 수정 전으로 되돌려 기준선
   $ MUJOCO_GL=osmesa .../python -m benchmark.trajopt.experiments.esdf_rollout \
       --records run_0002 --attention attention_step1_run0002.npz --frames 5 \
       --voxel 0.020 --esdf-margin 0.05 --support-surfaces field --constraint-links arms
@@ -953,7 +957,7 @@ robot px stage-2 mask would MISS: 47508 (89.3% of the real robot pixels)
 
 ```
 $ grep -rn "outside_query_fraction" --include="*.py" benchmark/
-benchmark/ag3s/esdf.py: (정의·증가만, 읽는 곳 없음)
+benchmark/ag3s/fields/esdf.py: (정의·증가만, 읽는 곳 없음)
 ```
 
 실측 — 로봇 구가 격자 밖에 있을 때:
@@ -1276,7 +1280,7 @@ AG3S 파이프라인까지 드롭인하려면 `_esdf_coverage` (G3·G4) 가 읽�
 | **2계층 합성** | **우리가 `min()`** (사용자 결정 2026-09-11) | cuRobo 질의 커널을 쓰면 로봇 모델까지 cuRobo 로 넘겨야 해 우리 SQP 와 이중화된다 |
 | **프로세스 분리** | **불필요했다** — 질의에 cuRobo 가 필요 없다 | 거리 격자는 `(값, origin, voxel_size)` 로 완전히 기술된다. 어댑터는 순수 numpy 이고 `.venv-ag3s` 에서 돈다 |
 
-`.venv-curobo` 에서 `benchmark.trajopt.linearize` / `benchmark.ag3s.pipeline` 임포트는 **된다**
+`.venv-curobo` 에서 `benchmark.trajopt.linearize` / `benchmark.ag3s.runtime.pipeline` 임포트는 **된다**
 (py3.10.12 / numpy 1.26.4 / scipy 1.14.0). 다만 `mujoco`·`casadi`·`osqp` 가 없어 end-to-end 는
 못 돈다. 그래서 **생산(cuRobo venv) → npz → 소비(ag3s venv)** 로 나눴다. 회귀 기준선을 검증된
 환경에서 그대로 비교할 수 있다는 것이 이 분리의 값어치다.
@@ -1285,7 +1289,7 @@ AG3S 파이프라인까지 드롭인하려면 `_esdf_coverage` (G3·G4) 가 읽�
 
 | 파일 | 하는 일 | venv |
 |---|---|---|
-| `ag3s/curobo_field.py` | **어댑터.** `layer_from_curobo` / `layer_from_arrays` / `CuroboEsdfField` | ag3s (cuRobo 불필요) |
+| `ag3s/fields/curobo_field.py` | **어댑터.** `layer_from_curobo` / `layer_from_arrays` / `CuroboEsdfField` | ag3s (cuRobo 불필요) |
 | `ag3s/experiments/curobo/build_field.py` | 마스킹된 depth → 2계층 ESDF → npz | curobo |
 | `ag3s/experiments/curobo/verify_adapter.py` | 어댑터 검증 5종 | ag3s |
 | `ag3s/experiments/curobo/export_frame.py` | **수정** — 로봇 마스크를 함께 내보낸다 | ag3s |
@@ -1527,7 +1531,7 @@ PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python \
 **회귀 기준선을 검증된 `.venv-ag3s` 에서 그대로 비교**할 수 있다. 이것이 이 분리의 값어치다.
 
 **안 고른 것**: 한 venv 로 합치기. `.venv-curobo` 에서 `benchmark.trajopt.linearize` 와
-`benchmark.ag3s.pipeline` 임포트는 **이미 된다** (py3.10.12 / numpy 1.26.4 / scipy 1.14.0).
+`benchmark.ag3s.runtime.pipeline` 임포트는 **이미 된다** (py3.10.12 / numpy 1.26.4 / scipy 1.14.0).
 `mujoco`·`casadi`·`osqp` 세 개만 넣으면 한 프로세스가 된다.
 
 **갈아타야 하는 신호**
@@ -2035,7 +2039,7 @@ head          0.00000    0.00023    0.00044    0.00057     0.00000    0.00044
 
 ### 시각화 (규칙 A)
 
-생성: `ag3s/experiments/step5_lifting_figures.py` (ag3s venv).
+생성: `ag3s/experiments/studies/step5_lifting_figures.py` (ag3s venv).
 **[`figures/step5-lifting.png`](figures/step5-lifting.png)**
 
 ![Step 5 — attention lifting](figures/step5-lifting.png)
@@ -2081,7 +2085,7 @@ Step 6 에서 갈릴 문제지만 원인의 절반은 이 모듈이 넘긴 값�
 ### 판정 — F2 **확정** (2026-09-12)
 
 카메라 3 대 융합 경로를 15 청크 돌려 세 변형을 나란히 비교했다.
-스크립트: `ag3s/experiments/step5_f2_verdict.py` (ag3s venv).
+스크립트: `ag3s/experiments/studies/step5_f2_verdict.py` (ag3s venv).
 
 | 변형 | 무엇을 하나 |
 |---|---|
@@ -2268,7 +2272,7 @@ esdf_rollout 15 청크 (run_0004, 실측 attention, voxel 20 mm, margin 50 mm, a
 F2 는 의미 융합의 **입력**(눈금)을 고쳤다. **규칙**(`max`)이 옳은지는 별개 질문인데, 그 질문은
 **겹침이 있어야만 성립한다** — 복셀 대부분을 한 대만 본다면 `max` 든 평균이든 같은 값이다.
 
-스크립트: `ag3s/experiments/step5_overlap.py`.
+스크립트: `ag3s/experiments/studies/step5_overlap.py`.
 
 #### 융합은 두 층이다 — 이 구분이 먼저다
 
@@ -2341,7 +2345,7 @@ MuJoCo 재생이 전부 `FileNotFoundError` 로 죽었다. 기록의 `model_xml`
 
 ### 의미 융합 규칙 비교 — `max` 유지 (2026-09-14)
 
-스크립트: `ag3s/experiments/step5_fusion_rules.py`. 융합은 프레임당 **한 번만** 하고 CSR 블록에
+스크립트: `ag3s/experiments/studies/step5_fusion_rules.py`. 융합은 프레임당 **한 번만** 하고 CSR 블록에
 규칙만 바꿔 적용했다 — 세 규칙이 완전히 같은 기하를 본다는 것이 보장된다.
 
 | 규칙 | 뜻 |
@@ -2437,7 +2441,7 @@ run_0004/meta.json:  model_xml = /home/mk/dev_ws/vla/pi0_TO_ws/src/rby1_descript
 
 그래서 이전 세션이 링크 둘로 맞췄고, 2026-09-14 컨테이너 재시작에 `src` 가 날아가 죽었다.
 
-#### 고친 것 — `ag3s/asset_path.py` (신규)
+#### 고친 것 — `ag3s/runtime/asset_path.py` (신규)
 
 ```python
 resolve_asset(path)   # 1. 준 경로가 있으면 그것 (링크 살아 있는 환경은 그대로)
@@ -2453,7 +2457,7 @@ resolve_asset(path)   # 1. 준 경로가 있으면 그것 (링크 살아 있는 
 | URDF (진입점) | `robot_models.load_rby1` | `parse_urdf` 에 위임 |
 | URDF (직접 호출) | `parse_urdf` 자체 | **여기서 해석.** `grounding_report` 2 곳과 `rby1_transport` 가 `parse_urdf(RBY1_URDF)` 를 직접 부른다 — 호출부마다 고치는 대신 읽는 함수에서 한 번에 덮었다 |
 
-`robot_models` 는 core 라 `experiments` 에 의존할 수 없어서 해석기를 `ag3s/asset_path.py` 로
+`robot_models` 는 core 라 `experiments` 에 의존할 수 없어서 해석기를 `ag3s/runtime/asset_path.py` 로
 따로 뺐다.
 
 #### 틀린 자산을 집을 위험
@@ -2493,7 +2497,7 @@ F11 을 "grounding 이 사과 대신 바구니를 낸다" 는 **grounding 의 �
 정책 자체가 바구니를 집는 것이라면 grounding 은 정직한 보고이고 결함이 아니다. 추측으로 둘
 문제가 아니라서 기록을 쟀다 — **물체가 free joint 라 위치가 매 스텝 남아 있다.**
 
-스크립트: `ag3s/experiments/step6_policy_behavior.py`, `step6_attention_vs_hand.py`.
+스크립트: `ag3s/experiments/studies/step6_policy_behavior.py`, `step6_attention_vs_hand.py`.
 
 ### 먼저 — `run_0004` 는 성공한 롤아웃이다
 
@@ -2730,7 +2734,7 @@ TSDF 에 적분한다. 그래서 **한 프레임만 처리한 필드로 특정 �
 
 MuJoCo 세그멘테이션이 **픽셀별 body 참값**(`CameraFrame.body_ids`)을 주므로 추정할 것이 없다.
 가림이면 사과 픽셀 수 자체가 0 이고, 마스크면 픽셀은 있는데 덮인다.
-스크립트: `ag3s/experiments/f12_why_apple_vanishes.py`.
+스크립트: `ag3s/experiments/studies/f12_why_apple_vanishes.py`.
 
 ### 판정 — (a) 자기 필터 마스크
 
@@ -2880,7 +2884,7 @@ keep = np.nonzero(att >= cut)[0]
 (검토 중 이 방향을 한 번 거꾸로 적었다가 실측으로 바로잡았다.)
 
 파이프라인을 돌리면서 `extract_seeds` 를 감싸 **그 함수가 받은 배열**을 기록했다.
-스크립트: `ag3s/experiments/step6_f8_seeds.py`.
+스크립트: `ag3s/experiments/studies/step6_f8_seeds.py`.
 
 ```
 선택된 cell (layer 8, head 2), 두 기록 22 프레임씩
@@ -2950,9 +2954,9 @@ AttachedCollisionGeometry   "An object the robot is holding"                    
 
 | 파일 | 변경 |
 |---|---|
-| `ag3s/clearance.py` | **`ManipulatedObject` + `manipulated_object()` 신규.** "쥔 것이 있으면 그것, 없으면 주목 대상" |
+| `ag3s/constraints/clearance.py` | **`ManipulatedObject` + `manipulated_object()` 신규.** "쥔 것이 있으면 그것, 없으면 주목 대상" |
 | `ag3s/types.py` | `target_link_margin` → **`manipulated_link_margin`**, `manipulated` 필드 추가 |
-| `ag3s/to_adapter.py` | 마진을 조작 대상 기준으로 계산 |
+| `ag3s/constraints/to_adapter.py` | 마진을 조작 대상 기준으로 계산 |
 | `trajopt/linearize.py` | **해석적 거리** 경로 추가(사용자 결정), 귀속 판정을 **양쪽**으로(F13) |
 
 **설계 원칙 하나를 지켰다 — 파지 전 동작은 비트 단위로 그대로다.** 접근 중에는 조작 대상과 주목
@@ -3088,7 +3092,7 @@ hw = image_hw or (int(cloud.uv[:, 1].max()) + 1, int(cloud.uv[:, 0].max()) + 1)
 `lift` 를 감싸 그 함수가 실제로 쓴 hw 를 기록하고, 같은 프레임을 **독립된 TSDF 를 쌓는 AG3S
 인스턴스 둘**에 넣었다 (하나는 지금처럼, 하나는 참 크기를 넘겨서). 거리장이 누적되므로 한
 인스턴스를 두 번 부르면 비교가 성립하지 않는다.
-스크립트: `ag3s/experiments/step5_f9_image_hw.py`.
+스크립트: `ag3s/experiments/studies/step5_f9_image_hw.py`.
 
 ```
 참 해상도 480 x 640,  16x16 맵의 셀 한 칸 = 30 x 40 픽셀
@@ -3241,7 +3245,7 @@ AG3S 는 카메라 셋을 한 씬으로 합치는 방법을 **둘** 갖고 있�
 | 소비자 | 지지면 적합 · target grounding | 충돌 필드 |
 
 "둘이 다르다" 만 세면 어느 쪽이 옳은지 모른다. MuJoCo 세그멘테이션이 **픽셀별 body 참값**을
-주므로 불일치마다 참값으로 심판했다. 스크립트: `ag3s/experiments/step7_fusion_asymmetry.py`.
+주므로 불일치마다 참값으로 심판했다. 스크립트: `ag3s/experiments/studies/step7_fusion_asymmetry.py`.
 
 ### 측정하며 두 번 갈라내야 했다
 
@@ -3319,7 +3323,7 @@ AG3S 는 카메라 셋을 한 씬으로 합치는 방법을 **둘** 갖고 있�
 > into a phantom obstacle attached to the gripper**."*
 
 **설정 한계(100 ms)가 모듈 자신이 해롭다고 든 예(50 ms)보다 2 배 느슨하다.** 재서 확정한다.
-스크립트: `ag3s/experiments/step7_state_lag.py`.
+스크립트: `ag3s/experiments/studies/step7_state_lag.py`.
 
 ### 어떻게 — 지연을 만들어 넣는다
 
@@ -3531,7 +3535,7 @@ esdf 생성하면 되잖아"*
 
 반대인 것은 **라이브러리 기본값뿐**이다 (`exclude_support_surfaces=True`,
 `use_support_planes=True`). 그러나 이것은 **선택이었지 판정이 아니었다** — 비교 측정이 없었다.
-그래서 무엇을 잃는지 쟀다. 스크립트: `ag3s/experiments/step8_planes_vs_field.py`.
+그래서 무엇을 잃는지 쟀다. 스크립트: `ag3s/experiments/studies/step8_planes_vs_field.py`.
 
 ### 측정 — 필드가 그 표면을 실제로 담고 있는가
 
@@ -3601,7 +3605,7 @@ config.py 기본값   exclude_support_surfaces=True,  use_support_planes=True
 attention 근처만 처리하면 안 되나요? 바닥을 처리할 이유는 없어 보입니다. 팔로 물체를 옮기는데
 바닥을 왜 처리해야 하는지 모르겠어."*
 
-낭비 규모를 쟀다. 스크립트: `ag3s/experiments/step8_grid_utilization.py`.
+낭비 규모를 쟀다. 스크립트: `ag3s/experiments/studies/step8_grid_utilization.py`.
 
 ### 낭비는 92.7 % 다
 
@@ -3773,7 +3777,7 @@ TrajOptConfig.collision.use_support_planes    True -> False
 
 ### 주장 1 — "초기 attention 은 사과를 보고 있었다" : **확인됨**
 
-`step-04-grounding_004.json`(run_0004)과 `step-04-grounding.json`(run_0002)에 프레임별
+`archive/step-verification-20260904/step-04-grounding_004.json`(run_0004)과 `archive/step-verification-20260904/step-04-grounding.json`(run_0002)에 프레임별
 `picked_body` 가 남아 있다.
 
 ```
@@ -3989,15 +3993,15 @@ carving · 쥔 것 기준)이 '사과를 바구니에' 에서 내는 답, 그리
 ### 실제 코드에서 확인해 반영한 연결
 
 1. `trajopt/safe_policy.py::infer`, `_scene_fn`: RGB/언어를 받는 VLA와 depth/촬영 시점 로봇 상태를 받는 AG3S 입력을 구분했다. VLA 원본 chunk는 `refiner.refine`에 직접 들어가며, AG3S 출력과 함께 최적화의 입력이 된다.
-2. `ag3s/multiview.py::process_observation`, `fuse`: 카메라별 **재구성 → self-filter → lifting** 후 base 좌표계에서 융합한다. 같은 칸의 **원시 attention을 max로 합친 뒤 정규화**한다. 기하 전체의 좌표를 max로 합친다는 의미가 아니다.
-3. `ag3s/pipeline.py::_run`, `target_grounding.py::ground_target`: 지지면 마스크는 grounding의 연결성에서 테이블을 제외한다. 지지면에서 ESDF를 만드는 직렬 연결이나 기본 평면 충돌 제약으로 그리지 않았다. F15 이후 기본 경로는 표면을 ESDF에 유지하고 평면 제약 소비를 끈다.
-4. `ag3s/clearance.py::manipulated_object`, `ClearancePolicy.lookup`, `to_adapter.py::build_constraint_set`: 접촉 권한은 조작 대상과 권한 링크에 붙는다. 파지 전에는 phase별 접근 완화가 있고 파지 때 접촉 마진이 적용되므로, 모든 phase를 일괄 0으로 표시하지 않았다. 미지 조합은 full margin이다.
-5. `ag3s/attached.py`, `pipeline.py::attach`, `detach`: 파지는 외부에서 확인해 주입한다. attached 표현과 최적화기에서 조작 대상을 거리로 식별하는 경로는 존재하지만, 쥔 물체를 로봇 쪽 충돌 구로 편입해 궤적 전체에서 검사하는 E3 연결은 남은 작업으로 표시했다.
+2. `ag3s/runtime/multiview.py::process_observation`, `fuse`: 카메라별 **재구성 → self-filter → lifting** 후 base 좌표계에서 융합한다. 같은 칸의 **원시 attention을 max로 합친 뒤 정규화**한다. 기하 전체의 좌표를 max로 합친다는 의미가 아니다.
+3. `ag3s/runtime/pipeline.py::_run`, `target_grounding.py::ground_target`: 지지면 마스크는 grounding의 연결성에서 테이블을 제외한다. 지지면에서 ESDF를 만드는 직렬 연결이나 기본 평면 충돌 제약으로 그리지 않았다. F15 이후 기본 경로는 표면을 ESDF에 유지하고 평면 제약 소비를 끈다.
+4. `ag3s/constraints/clearance.py::manipulated_object`, `ClearancePolicy.lookup`, `to_adapter.py::build_constraint_set`: 접촉 권한은 조작 대상과 권한 링크에 붙는다. 파지 전에는 phase별 접근 완화가 있고 파지 때 접촉 마진이 적용되므로, 모든 phase를 일괄 0으로 표시하지 않았다. 미지 조합은 full margin이다.
+5. `ag3s/constraints/attached.py`, `pipeline.py::attach`, `detach`: 파지는 외부에서 확인해 주입한다. attached 표현과 최적화기에서 조작 대상을 거리로 식별하는 경로는 존재하지만, 쥔 물체를 로봇 쪽 충돌 구로 편입해 궤적 전체에서 검사하는 E3 연결은 남은 작업으로 표시했다.
 6. `trajopt/linearize.py::_esdf_clearance`, `scene_from_constraint_set`, `trajopt/refiner.py::refine`: 필드 거리와 조작 대상 거리를 양면 비교한 뒤 구별 마진을 적용한다. 최적화기는 보정 chunk와 판정을 제공하며, 실행/유지/재계획 결정은 과제 소유자의 책임이다.
 
 ### cuRobo와 계획 요소의 표시 범위
 
-cuRobo는 **거리장(ESDF), 거리·기울기 제공** 한 상자로 축약했다. TSDF 적분·복셀 크기·거리장 내부 알고리즘은 사용자가 이후 설명할 영역이므로 이번 그림에서 풀어 쓰지 않았다. `ag3s/curobo_field.py` 어댑터와 cuRobo 필드 생성 실험은 있으나, 현재 `pipeline.py::_build_esdf`는 여전히 기존 `EsdfBuilder`를 호출한다. 따라서 그림의 cuRobo 상자는 선택된 교체 목표를 나타내며, 라이브 파이프라인 교체 완료를 주장하지 않는다.
+cuRobo는 **거리장(ESDF), 거리·기울기 제공** 한 상자로 축약했다. TSDF 적분·복셀 크기·거리장 내부 알고리즘은 사용자가 이후 설명할 영역이므로 이번 그림에서 풀어 쓰지 않았다. `ag3s/fields/curobo_field.py` 어댑터와 cuRobo 필드 생성 실험은 있으나, 현재 `pipeline.py::_build_esdf`는 여전히 기존 `EsdfBuilder`를 호출한다. 따라서 그림의 cuRobo 상자는 선택된 교체 목표를 나타내며, 라이브 파이프라인 교체 완료를 주장하지 않는다.
 
 `swept-volume ROI`, `조작 대상 잠금`, `목적지 마진`은 계획으로 표시했다. 현재 cuRobo 생성 실험은 target 무게중심을 창 중심으로 쓰며(`experiments/curobo/build_rollout_fields.py`), `ground_target`은 프레임 간 잠금 상태가 없고, `SourceType`에 목적지 축이 없다. 잠금 문턱·목적지 마진 수치는 이번 그림에서 정하지 않았다.
 
@@ -5497,7 +5501,7 @@ office_wall_*  +2,612 ~ +3,256 mm
 
 ### 무엇을 넣었나
 
-**`benchmark/ag3s/static_scene.py`** (신규) — 출처 둘. 모듈 자체는 **순수 numpy** 이고
+**`benchmark/ag3s/fields/static_scene.py`** (신규) — 출처 둘. 모듈 자체는 **순수 numpy** 이고
 `mujoco` 임포트는 `from_mujoco` 안에서만 일어난다.
 
 | 무엇 | 쓰임 |
@@ -6065,7 +6069,7 @@ A3 에서 **하나를 구현해 배포했고**, 사용자가 둘을 제안했다
 
 ### 무엇을 넣었나
 
-**`benchmark/ag3s/experiments/record_scripted.py`** (신설). 정책 체크포인트 없이 뜬다 —
+**`benchmark/ag3s/experiments/sources/record_scripted.py`** (신설). 정책 체크포인트 없이 뜬다 —
 `run_0004` 의 **관절 궤적을 본보기로** 삼아 위치 액추에이터로 같은 자세를 따라가게 하고,
 시나리오마다 한 군데만 바꾼다. **물리는 MuJoCo 가 푼다** — 그래야 사과가 실제로 떨어지고
 빈손이 닫힌다.
@@ -6359,3 +6363,251 @@ cameras span 296 ms (limit 100 ms)
 
 다음: 각본 기록(`records/run_0000~0003`)에서 같은 walkthrough 를 돌려 **실패 케이스에서도
 단계가 버티는지** 본다. 완료 판정은 지시대로 마지막에 둔다.
+
+---
+
+## 폴더 재배치 — `ag3s/` 를 기능별 서브패키지로 (2026-09-21)
+
+`benchmark/ag3s/` 의 코드 파일이 평평하게 쌓여 있었다: 최상위 23 개, `experiments/` 54 개.
+파일명만 보고는 그것이 파이프라인 스테이지인지, 거리장 백엔드인지, 일회성 분석 스크립트인지
+알 수 없었다. **기능별 서브패키지로 나누고, 옛 경로는 남기지 않았다** (하드 이동).
+
+### 용어
+
+* **서브패키지 (subpackage)** — 파이썬에서 폴더 하나가 곧 import 경로 한 마디다.
+  `ag3s/esdf.py` 를 `ag3s/fields/esdf.py` 로 옮기면 import 는
+  `benchmark.ag3s.esdf` → `benchmark.ag3s.fields.esdf` 가 된다.
+* **shim** — 옛 경로 자리에 새 경로를 그대로 다시 내보내는 껍데기 모듈.
+  옛 import 를 안 고쳐도 되게 해 주지만 **경로가 두 벌이 되어** 나중에 어느 쪽이 정본인지
+  헷갈린다. 이번에는 두지 않았다 — 경로는 하나뿐이다.
+* **결합도** — 어떤 모듈을 import 하는 파일이 몇 개인가. 그 모듈을 옮길 때 **같이 고쳐야 하는
+  양**과 같다.
+
+### 무엇을 어디로 옮겼나
+
+**core — 4 개 그룹.** `types.py`(전 스테이지 데이터 계약)와 `config.py`(YAML 스키마)는
+모두가 쓰므로 루트에 남겼다.
+
+| 새 위치 | 옮긴 모듈 | 무엇을 하는 묶음인가 |
+|---|---|---|
+| `stages/` (7) | reconstruction · robot_filter · support_surface · attention_lifting · target_grounding · collision_candidates · geometry | 점에서 도형까지, 파이프라인 스테이지 순서 그대로 |
+| `fields/` (3) | esdf · curobo_field · static_scene | 거리장(ESDF) 백엔드 — 생산과 소비 어댑터 |
+| `constraints/` (4) | clearance · attached · constraint_builder · to_adapter | 여유거리에서 CasADi 제약 사양까지 |
+| `runtime/` (6) | pipeline · multiview · profiler · trace · asset_path · visualization | 알고리즘이 아닌 것 — 조율 · 계측 · 자산 경로 · 그림 |
+
+**experiments — 5 개 그룹.** `curobo/` 와 `reuse_audit_20260915/` 는 이미 나뉘어 있어 그대로 뒀다.
+
+| 새 위치 | 개수 | 무엇을 하는 묶음인가 |
+|---|---|---|
+| `experiments/common/` | 3 | figstyle · outputs · imageview — `__main__` 없는 공용 유틸 |
+| `experiments/sources/` | 6 | MuJoCo 씬 · 정책 롤아웃 기록 · 제약 기록을 **만드는** 쪽 |
+| `experiments/reports/` | 11 | 스텝 1–6 + ESDF 상설 검증 리포트 |
+| `experiments/studies/` | 23 | a1~a7 · step5~step8 · f12 — 질문 하나를 재는 일회성 분석 |
+| `experiments/diagrams/` | 10 | doc_* · ppt_* — 측정 없이 도식만 그리는 스크립트 |
+
+### 코드가 무엇이 바뀌었나
+
+| 항목 | 수량 |
+|---|---|
+| 옮긴 파일 | **73 개** |
+| 참조 치환 | **664 곳 / 134 파일** — `experiments/` 내부, `benchmark/trajopt/` 8 파일, `pi05_TO_hybrid/rby1_bringup/pi05_infer.py`, `pi05_TO_hybrid/scripts/analyze_boundary_risk.py`, `tests/` 22 파일, 문서 명령 60 줄, `configs/rby1_three_camera.yaml` |
+| 새 `__init__.py` | 9 개 — 각 그룹이 무엇을 담는지 docstring 으로 적었다 |
+| 손으로 고친 것 | `runtime/visualization.py:35` — `ASSET_DIR` 이 `__file__.parent / "asset"` 이었다. 한 단계 내려갔으므로 `parents[1]` 로 바꿨다. **이동이 조용히 깨뜨릴 수 있었던 유일한 곳** |
+
+**건드리지 않은 것 둘.** `docs/figures/reuse-audit-20260915/baseline.json` 은 2026-09-15 에 뜬
+`git status` **스냅샷**이라 고치면 그때의 기록이 아니게 된다. `docs/CONTAINER_SETUP.md` 는
+폐기 문서다(규칙 E). 둘 다 치환을 되돌렸다.
+
+**프로즈 안의 파일명은 그대로 뒀다.** 기록·문서 142 곳이 `` `esdf.py` `` 처럼 폴더 없이 파일명만
+부른다. 패키지 안에서 basename 이 전부 유일하므로 가리키는 대상이 흐려지지 않고, 과거 기록을
+덮어쓰지 않기 위해 위 배치표로 대신한다.
+
+### 시각화
+
+* **[`figures/reorg-20260921/fig1_layout_before_after.png`](figures/reorg-20260921/fig1_layout_before_after.png)**
+  — 전(평평한 77 개) 대 후(9 개 그룹) 배치 도식.
+* **[`figures/reorg-20260921/fig2_group_sizes_and_coupling.png`](figures/reorg-20260921/fig2_group_sizes_and_coupling.png)**
+  — 그룹별 파일 수 + 결합도 상위 26 개. figstyle 47 · policy_record 43 · grounding_report 36 ·
+  mujoco_source 35 · pipeline 30 이 상위다 — 이동 비용이 어디에 몰려 있었는지 보인다.
+* **[`figures/reorg-20260921/fig3_verification_table.png`](figures/reorg-20260921/fig3_verification_table.png)**
+  — 검증 항목과 기준선 대조표.
+
+![배치 전후](figures/reorg-20260921/fig1_layout_before_after.png)
+
+![그룹 크기와 결합도](figures/reorg-20260921/fig2_group_sizes_and_coupling.png)
+
+![검증 대조표](figures/reorg-20260921/fig3_verification_table.png)
+
+### 검증 — 수치로 확정한 것
+
+| 무엇 | 결과 | 기준 |
+|---|---|---|
+| 모듈 import (`.venv-ag3s`) | **98 / 98 성공** | torch 7 개는 설계상 `.venv-curobo` 전용 |
+| 모듈 import (`.venv-curobo`) | **7 / 7 성공** | `curobo/` 5 + `reuse_audit` gpu_* 2 |
+| `pytest tests/ag3s tests/trajopt` | **625 passed**, 실패 0 (126.8 s) | 이전과 **불변** |
+| 회귀 기준선 `esdf_rollout` | 해소 **14** / 개선 **15** / feasible **8** · violated **7** | 기준선과 **정확히 일치** |
+| 남은 옛 경로 | **0 곳** (코드 · 문서 · yaml 전수 조사) | shim 없음 |
+
+회귀 기준선 명령은 CLAUDE.md 의 것을 그대로 썼다
+(`--records run_0004 --attention attention_step1_run0004.npz --frames 15 --voxel 0.020
+--esdf-margin 0.05 --support-surfaces field --constraint-links arms`).
+
+### 전체 틀에서 지금 어디인가 (규칙 B)
+
+```
+카메라 depth → 로봇 마스크 → [attention lifting → target grounding] → TSDF/ESDF
+            → 거리장 어댑터 → SQP 선형화 → QP 해
+   stages/       stages/            stages/              fields/
+                                                       constraints/ → runtime/pipeline
+```
+
+파이프라인 자체는 **하나도 바뀌지 않았다** — 같은 단계가 같은 순서로 같은 수치를 낸다.
+바뀐 것은 **그 단계를 코드에서 찾는 길**이다. 이제 폴더 이름이 규칙 B 의 화살표와 맞는다.
+
+닫힌 것: 파일 배치가 파이프라인 구조를 드러낸다. 다음 사람이 "ESDF 를 어디서 만드나" 를
+물으면 `fields/` 를 연다.
+
+다음: 각본 기록(`records/run_0000~0003`)에서 walkthrough 를 돌려 **실패 케이스에서도 단계가
+버티는지** 본다 (재배치 전의 다음 항목 그대로 — 재배치는 그 일정을 바꾸지 않는다).
+
+---
+
+## `docs/` 문서 정리 — 다 쓴 프롬프트와 대체된 스냅샷을 지웠다 (2026-09-21)
+
+폴더 재배치에 이어 문서를 정리했다. **45 → 38 파일, 2.60 → 1.28 MB.** 지운 것은 7 개다.
+
+### 지운 것과 판정 근거
+
+| 파일 | 크기 | 분류 | 왜 지웠나 |
+|---|---:|---|---|
+| `review_board.html` | 1,237 KB | 대체된 스냅샷 | 2026-09-10 시점의 **발견 17건** 감사 보드. 지금 정본은 이 로그의 "누적 발견" 표이고 발견은 F20 대까지 늘었다. 아무도 링크하지 않았다 |
+| `CONTAINER_SETUP.md` | 23 KB | 폐기 선언 | 규칙 E. 남길 내용(cuRobo 함정 목록, 작업 방식)은 **이미 이 로그와 계획으로 옮겨져** 있었다 |
+| `server-prompt-safe-serving.md` | 12 KB | 다 쓴 프롬프트 | 배선 결과는 `safe-serving.md` 에 남았다 |
+| `step-01-server-prompt.md` | 11 KB | 다 쓴 프롬프트 | 절차는 `RUNBOOK.md` §5 로 흡수 |
+| `ppt-prompt-step1-3.md` | 10 KB | 다 쓴 프롬프트 | 내용은 `PPT-SOURCE-step1-3.md` (55 KB) 가 통째로 갖고 있다 |
+| `architecture-prompt.md` | 9 KB | 다 쓴 프롬프트 | 산출물은 `figures/ag3s-architecture-v2/` |
+| `live-attention-server-prompt.md` | 4 KB | 다 쓴 프롬프트 | 남은 과제는 `live-integration.md` · `safe-serving.md` 에 적혀 있다 |
+
+**"다 쓴 프롬프트"** 란 다른 Claude 에게 통째로 붙여넣으려고 쓴 글이다. 그 작업이 끝나면
+산출물만 남으면 되고 지시문은 남을 이유가 없다.
+
+### 지우지 않은 것 — 지울 수 없는 이유
+
+| 무엇 | 왜 남겼나 |
+|---|---|
+| `archive/step-verification-20260904/step-01-attention.json` | **12 개 스크립트의 `--step1-json` 기본 입력**이다. 지우면 리포트·스터디가 전부 죽는다 |
+| `archive/step-verification-20260904/step-04-grounding_004.json` | `tests/trajopt/test_grasp_latch.py` 가 읽는다 |
+| `step-01~06-*.md` · `.json` (20) | 이 폴더의 존재 이유인 **실측 검증 기록**이고 `docs/README.md` 가 표로 링크한다. `_004` 는 중복이 아니라 **run_0004 롤아웃의 측정**이다 (비-004 는 run_0002) |
+| `AG3S_CUROBO_LIVE_TEST_PLAN.md` | "실행 상태" 표가 T4 진행 중 · closed-loop 미착수라고 적고 있다 — 살아 있는 작업이다 |
+
+### 코드·문서가 무엇이 바뀌었나
+
+삭제로 끊어지는 참조 **13 곳**을 고쳤다.
+
+| 어디 | 무엇으로 |
+|---|---|
+| `benchmark/requirements-ag3s.txt:8` | `CONTAINER_SETUP.md` 언급 제거 |
+| `benchmark/requirements-curobo.txt:10` | "그 문서의 절차를 따른다" → **사실 기술**: `/mnt/dev/work/curobo_src` 를 editable 로 설치해 뒀고(`nvidia_curobo 0.8.0.post1.dev43`), `import curobo` 가 그 소스를 가리키면 정상이다 |
+| `docs/README.md` 2 곳 | Step 1 행의 "서버 프롬프트" 링크 제거, 실행 명령 주석을 `RUNBOOK.md §5` 로 |
+| `docs/RUNBOOK.md:98` | 전문 링크 문장 제거 |
+| `docs/PPT-SOURCE-step1-3.md` 2 곳 | Step 1 소스 목록에서 제거 + **재배치로 어긋난 경로 3 개 수정**(`experiments/*_report.py` → `experiments/reports/*_report.py`) |
+| `docs/live-integration.md:107` · `docs/safe-serving.md:171` | 프롬프트 링크 문장 제거 (남은 과제 서술은 유지) |
+| 규칙 E — `AG3S_REVIEW_LOG.md` 머리말 · `AG3S_REVIEW_PLAN.md` · `CLAUDE.md` · `.claude/ag3s-rules.md` | "폐기됐다 · 읽지도 쓰지도 않는다" → **"폐기됐고 2026-09-21 에 삭제됐다 · 찾지 않는다"** (규칙 본문은 두 곳을 같이 고친다) |
+
+재배치 때 놓친 상대 링크 둘도 같이 고쳤다 — `docs/README.md` 의
+`../experiments/record_check.py` → `../experiments/sources/record_check.py`,
+`../experiments/imageview.py` → `../experiments/common/imageview.py`.
+
+### 시각화
+
+* **[`figures/docs-cleanup-20260921/fig1_docs_cleanup.png`](figures/docs-cleanup-20260921/fig1_docs_cleanup.png)**
+  — 전후 파일 수·용량 막대, 지운 7 개의 크기(로그 눈금), 지운 것과 남긴 것의 판정표.
+
+![docs 정리](figures/docs-cleanup-20260921/fig1_docs_cleanup.png)
+
+### 검증 — 수치로 확정한 것
+
+| 무엇 | 결과 |
+|---|---|
+| `docs/*.md` 마크다운 링크 전수 검사 | **깨진 링크 0 개** |
+| 지운 파일을 아직 부르는 곳 | 10 곳 — 전부 2026-09-11~12 절의 **백틱 언급**(링크 아님). 당시 기록이라 그대로 두고, 머리말이 파일이 없음을 알린다 |
+| 코드가 지운 파일을 읽는가 | **0 건** (`benchmark/` · `tests/` 전수 조사) |
+| 문서 | 45 → **38 파일**, 2.60 → **1.28 MB** |
+
+백업은 `scratchpad/docs-deleted-20260921.tgz` (923 KB) 에 있다.
+
+---
+
+## `docs/` 중복 제거와 닫힌 실험의 archive 분류 (2026-09-21)
+
+문서 정리를 이어서, **중복을 재서 지우고 닫힌 실험을 폴더로 내렸다.**
+`docs/` 최상위는 **38 → 15 파일**이 됐다.
+
+### 중복은 추측하지 않고 쟀다
+
+문장 집합 겹침(코드블록·표·이미지 제외, 작은 쪽 기준)으로 27 개 문서를 전부 대조했다.
+
+| 쌍 | 산문 동일도 | 판정 |
+|---|---:|---|
+| `step-05-separation` ↔ `_004` | **100.0 %** | 같은 글, 숫자만 다름 |
+| `step-06-geometry` ↔ `_004` | **98.8 %** | 〃 |
+| `step-03-lifting` ↔ `_004` | **97.4 %** | 〃 |
+| `step-04-grounding` ↔ `_004` | **91.9 %** | 〃 |
+| `step-01-attention` ↔ `_004` | **89.2 %** | 〃 |
+| `PPT-SOURCE` ↔ `step-02` | 8.9 % | 중복 아님 — 근거를 모으는 것이 그 문서의 역할 |
+| `live-integration` ↔ `safe-serving` | 2.6 % | 중복 아님 |
+
+**`_004` 쌍만 중복이었다.** 산문 5 개를 지우고 `.json` 은 남겼다 — `run_0004` 의 수치는
+`.json` 에 그대로 있고, 산문은 꼬리표 없는 쪽과 같은 글이라 잃는 것이 없다.
+
+한 파일 안 중복도 하나 있었다. `docs/README.md` 의 §28 "충돌 표현 backend" 와 §33
+"두 번째 충돌 표현" 이 **둘 다 `ESDF-BACKEND.md` 를 같은 말로 소개**하고 있었다 — 한 절로 합쳤다.
+
+### archive 경계 — "로그가 닫았다고 명시한 것만"
+
+| 폴더 | 파일 | 닫힌 근거 |
+|---|---:|---|
+| `archive/step-verification-20260904/` | 17 | 단계 1–6 검증(`run_0002`·`run_0004`). 이후 검토는 로그 Step 5–11 이 이어받았다 |
+| `archive/primitive-era-20260904/` | 1 | `OPEN-geometry-representation.md` — 머리말이 *"보류 → 다른 방법으로 대응됨. 구현하지 않았다"*. 계획의 *"primitive 는 절대 안 됨"*(2026-09-14)과 Step 9(후보·primitive 피팅이 live 경로에서 안 돈다)로 닫혔다 |
+| `archive/README.md` | 1 (신규) | 무엇이 왜 닫혔는지, 무엇이 보관물이 아닌지 |
+
+**`ESDF-BACKEND.md` 는 archive 대상이 아니었다.** 제목이 "두 번째 backend" 라 과거로 보이지만,
+내용은 **지금 도는 backend 의 설계·정확도·비용 참조**다 (세 상태 점유, 복셀 반 칸 −5.0 mm,
+국소 갱신 0.0000 mm 일치, 프레임당 1.8 s). 낡은 것은 머리말 한 줄
+*"기본값 아님 — primitive 가 그대로 기본"* 뿐이라, 그 줄을 **사실로 고쳤다**:
+`AG3SConfig` 기본값은 여전히 `primitive` 지만 live 경로는 `serve_safe.py:49` 와
+`esdf_rollout.py:145` 가 `esdf` 로 고정한다.
+
+### 코드가 무엇이 바뀌었나
+
+| 무엇 | 수량 |
+|---|---:|
+| 삭제한 중복 산문 (`_004.md`) | 5 |
+| archive 로 옮긴 파일 | 18 |
+| **스크립트 기본 경로 수정** — `--step1-json`, `--out-doc` 등 | **23 파일** |
+| docs 최상위 문서의 링크 수정 | 6 파일 |
+| 옮긴 문서 안 링크 수정 (`../asset/` → `../../../asset/`) | 6 파일 |
+| `--tag` 설명의 예시 경로 (`RUNBOOK.md`, `experiments/common/outputs.py`) | 2 |
+
+`step-01-attention.json` 은 archive 안에 있지만 **보관물이 아니다** — 12 개 스크립트가
+`--step1-json` 기본값으로 읽는 살아 있는 입력이다. `step-04-grounding_004.json` 은
+`tests/trajopt/test_grasp_latch.py` 가 읽는다. 둘 다 `archive/README.md` 에 못박아 뒀다.
+
+### 시각화
+
+* **[`figures/docs-archive-20260921/fig1_docs_archive.png`](figures/docs-archive-20260921/fig1_docs_archive.png)**
+  — 문서쌍별 산문 동일도(중복 판정선 50 %), 최상위 38 → 15 막대, 정리 후 배치 도식.
+
+![docs 중복 제거와 archive 분류](figures/docs-archive-20260921/fig1_docs_archive.png)
+
+### 검증 — 수치로 확정한 것
+
+| 무엇 | 결과 |
+|---|---|
+| `docs` 전체(하위 폴더 포함) 마크다운 링크·이미지 경로 전수 검사 | **깨진 링크 0 개** |
+| 코드 안 `benchmark/ag3s/docs/...` 경로 참조 | **정상 56 / 깨짐 0** |
+| `--step1-json` 기본값이 실재하는가 | **OK** — `archive/step-verification-20260904/step-01-attention.json` |
+| `pytest tests/ag3s tests/trajopt` | **625 passed** — 불변 |
+| `docs/` 최상위 | 38 → **15 파일** |
+
+백업은 `scratchpad/docs-before-archive-20260921.tgz` (2.0 MB) 에 있다.

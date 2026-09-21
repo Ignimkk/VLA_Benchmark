@@ -16,26 +16,25 @@ AG3S는 8단계 파이프라인이고, 각 단계는 앞 단계의 출력을 신
 
 | # | 문서 | 검증 대상 | Ground truth | 상태 |
 |---|---|---|---|---|
-| 0 | [record_check](../experiments/record_check.py) | 관측 기록 — 추론 스텝마다 qpos + 정책이 실제로 본 3장의 224×224 이미지 | — | **run_0002 검사 통과** — 28/44 채점 가능 |
-| 1 | [step-01-attention.md](step-01-attention.md) · [서버 프롬프트](step-01-server-prompt.md) | π0.5가 프롬프트가 지목한 물체를 보는가 | MuJoCo 세그멘테이션 | **PASS** — L8 h2, peak-on-target 1.000 |
-| 2 | [step-02-backprojection.md](step-02-backprojection.md) | 깊이 → 3D 점, 카메라 규약 | MuJoCo geom 자세·메시 정점 | **PASS** — 상판 높이 오차 0.7 mm 이내 |
-| 3 | [step-03-lifting.md](step-03-lifting.md) | 2D attention → 3D 점 매핑 | 점별 body id | **PASS** — head peak 1.000, AUC 0.9998 |
-| 4 | [step-04-grounding.md](step-04-grounding.md) | 클러스터링 + 채점이 target을 고르는가 | 물체별 point mask | **PASS** (파지 전) — 8/8, IoU 0.953 |
-| 5 | [step-05-separation.md](step-05-separation.md) | target/obstacle 분리 후에도 기하가 남는가 | 후보 집합 vs 실제 물체 | **PASS** — 덮는 점 차이 0 |
-| 6 | [step-06-geometry.md](step-06-geometry.md) | primitive 근사가 점을 포함하는가 | 포함 검사 + 실제 메시 | **부분 통과** — 관측 점 1.000 / 실제 물체 0.666 |
+| 0 | [record_check](../experiments/sources/record_check.py) | 관측 기록 — 추론 스텝마다 qpos + 정책이 실제로 본 3장의 224×224 이미지 | — | **run_0002 검사 통과** — 28/44 채점 가능 |
+| 1 | [archive/step-verification-20260904/step-01-attention.md](archive/step-verification-20260904/step-01-attention.md) | π0.5가 프롬프트가 지목한 물체를 보는가 | MuJoCo 세그멘테이션 | **PASS** — L8 h2, peak-on-target 1.000 |
+| 2 | [archive/step-verification-20260904/step-02-backprojection.md](archive/step-verification-20260904/step-02-backprojection.md) | 깊이 → 3D 점, 카메라 규약 | MuJoCo geom 자세·메시 정점 | **PASS** — 상판 높이 오차 0.7 mm 이내 |
+| 3 | [archive/step-verification-20260904/step-03-lifting.md](archive/step-verification-20260904/step-03-lifting.md) | 2D attention → 3D 점 매핑 | 점별 body id | **PASS** — head peak 1.000, AUC 0.9998 |
+| 4 | [archive/step-verification-20260904/step-04-grounding.md](archive/step-verification-20260904/step-04-grounding.md) | 클러스터링 + 채점이 target을 고르는가 | 물체별 point mask | **PASS** (파지 전) — 8/8, IoU 0.953 |
+| 5 | [archive/step-verification-20260904/step-05-separation.md](archive/step-verification-20260904/step-05-separation.md) | target/obstacle 분리 후에도 기하가 남는가 | 후보 집합 vs 실제 물체 | **PASS** — 덮는 점 차이 0 |
+| 6 | [archive/step-verification-20260904/step-06-geometry.md](archive/step-verification-20260904/step-06-geometry.md) | primitive 근사가 점을 포함하는가 | 포함 검사 + 실제 메시 | **부분 통과** — 관측 점 1.000 / 실제 물체 0.666 |
 | 7 | step-07-constraints.md | 제약 집합 + TO가 충돌을 없애는가 | MuJoCo 접촉 | 미착수 |
 
 ## 충돌 표현 backend → [ESDF-BACKEND.md](ESDF-BACKEND.md)
 
-경계 구 하나로 표현할 수 없는 기하(중공 용기, 얇고 넓은 슬랩)에 대한 답으로 **TSDF → ESDF**
-backend 를 추가했다. primitive 를 대체하지 않고 나란히 두며, 기본값은 여전히 `primitive` 다.
+경계 구 하나로 표현할 수 없는 기하(중공 용기, 얇고 넓은 슬랩)에 대한 답으로, primitive 근사
+대신 **관측 표면을 그대로 쓰는 TSDF → ESDF** backend 를 추가했다. 정확도는 복셀 반 칸
+(10 mm 복셀에서 −5.0 mm)이고 부호가 보수적이며, 국소 갱신은 전역과 0.0000 mm 로 일치한다 —
+다만 이 씬에서는 속도 이득이 없고 프레임당 1.8 s (10 mm) 로 실시간 예산의 27배다. 그 이유와
+줄일 수 있는 세 가지가 문서에 있다.
 
-## 두 번째 충돌 표현 → [ESDF-BACKEND.md](ESDF-BACKEND.md)
-
-primitive 근사 대신 관측 표면을 그대로 쓰는 TSDF → ESDF backend. `collision_backend: esdf` 로
-켜고, 기본값은 `primitive` 라 기존 결과는 그대로다. 정확도는 복셀 반 칸(10 mm 복셀에서 −5.0 mm)
-이고 부호가 보수적이며, 국소 갱신은 전역과 0.0000 mm 로 일치한다 — 다만 이 씬에서는 속도 이득이
-없고 프레임당 1.8 s (10 mm) 로 실시간 예산의 27배다. 그 이유와 줄일 수 있는 세 가지가 문서에 있다.
+`AG3SConfig` 의 기본값은 아직 `collision_backend: primitive` 지만, **live 경로는 전부 `esdf`**
+다 (`trajopt/serve_safe.py`, `trajopt/experiments/esdf_rollout.py` 가 그렇게 고정한다).
 
 ### ESDF 시각화
 
@@ -44,7 +43,7 @@ primitive 근사 대신 관측 표면을 그대로 쓰는 TSDF → ESDF backend.
 * [esdf-diagnostics.md](esdf-diagnostics.md) — 단면과 항 분해. 남은 위반이 어느 표현의
   책임인지 가른다.
 
-## 미해결 → [OPEN-geometry-representation.md](OPEN-geometry-representation.md)
+## 미해결 → [archive/primitive-era-20260904/OPEN-geometry-representation.md](archive/primitive-era-20260904/OPEN-geometry-representation.md)
 
 6단계에서 발견한 것: **경계 구 하나로는 표현할 수 없는 기하가 두 종류 있다.** 크레이트(중공
 용기)는 구가 내부를 삼켜 "바구니에 넣기"를 불가능하게 만들고, 테이블 잔여 슬랩(41 mm × 1.0 m ×
@@ -107,7 +106,7 @@ attention은 `gaussian_attention`(정답 위치에 놓은 가우시안)이고, 1
 바로 이것입니다.
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.rby1_transport \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.rby1_transport \
     --json benchmark/ag3s/docs/baseline_synthetic_index.json \
     --images benchmark/ag3s/asset/image/baseline_synthetic
 ```
@@ -115,14 +114,14 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.rby1_
 ### ④ 1단계 — attention map
 
 ```bash
-# (서버) 서버를 내리고 → probe → 같은 인자로 재기동. 상세: step-01-server-prompt.md
-src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.pi05_attention \
+# (서버) 서버를 내리고 → probe → 같은 인자로 재기동. 절차는 RUNBOOK.md §5.
+src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.sources.pi05_attention \
     --records run_0002 --config pi05_rby1_lora \
     --checkpoint <서버가 로드했던 절대경로> \
     --out attention_step1_run0002.npz
 
 # (로컬) 채점 — GPU 불필요
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.attention_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.attention_report \
     --records $RUN/ag3s_records/run_0002 \
     --attention benchmark/ag3s/asset/attention/attention_step1_run0002.npz
 ```
@@ -146,7 +145,7 @@ AG3S 3단계의 attention 소스는 `attention[frame, 0, "last", 8, 2, camera]`�
 ### ⑥ 2단계 — 3D back-projection
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.backprojection_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.backprojection_report \
     --records $RUN/ag3s_records/run_0002
 ```
 
@@ -163,7 +162,7 @@ C 물체 표면 오차(깊이 스케일·내부 파라미터), D 카메라 간 �
 ### ⑦ 3단계 — attention lifting
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.lifting_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.lifting_report \
     --records $RUN/ag3s_records/run_0002 \
     --attention benchmark/ag3s/asset/data/attention_step1_run0002.npz
 ```
@@ -183,7 +182,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.lifti
 ### ⑧ 4단계 — target grounding
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.grounding_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.grounding_report \
     --records $RUN/ag3s_records/run_0002 \
     --attention benchmark/ag3s/asset/data/attention_step1_run0002.npz
 ```
@@ -211,7 +210,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.groun
 ### ⑨ 5단계 — target / obstacle 분리
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.separation_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.separation_report \
     --records $RUN/ag3s_records/run_0002 \
     --attention benchmark/ag3s/asset/data/attention_step1_run0002.npz
 ```
@@ -247,7 +246,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.separ
 ### ⑩ 6단계 — geometry 변환 (primitive)
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.geometry_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.geometry_report \
     --records $RUN/ag3s_records/run_0002 \
     --attention benchmark/ag3s/asset/data/attention_step1_run0002.npz
 ```
@@ -304,9 +303,9 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.geome
 | 스크립트 | 실행 위치 | 하는 일 |
 |---|---|---|
 | `pi05_infer.py --record-ag3s DIR` | 로컬 | 추론 스텝마다 `.npz` 하나 — qpos, state(14), 정책 이미지 3장, action chunk |
-| `benchmark.ag3s.experiments.record_check` | 로컬 | 기록이 forward pass를 쓸 값어치가 있는지 — 대상 가시성·이미지 정상성·씬 재생 |
-| `benchmark.ag3s.experiments.pi05_attention` | **GPU 서버** | 체크포인트를 `return_attn_probs=True`로 로드해 3개 카메라 grid의 attention 추출 |
-| `benchmark.ag3s.experiments.attention_report` | 로컬 (GPU 불필요) | 세그멘테이션 대조 채점 → 표 4개 + 그림 4장 + 이 폴더의 문서 |
+| `benchmark.ag3s.experiments.sources.record_check` | 로컬 | 기록이 forward pass를 쓸 값어치가 있는지 — 대상 가시성·이미지 정상성·씬 재생 |
+| `benchmark.ag3s.experiments.sources.pi05_attention` | **GPU 서버** | 체크포인트를 `return_attn_probs=True`로 로드해 3개 카메라 grid의 attention 추출 |
+| `benchmark.ag3s.experiments.reports.attention_report` | 로컬 (GPU 불필요) | 세그멘테이션 대조 채점 → 표 4개 + 그림 4장 + 이 폴더의 문서 |
 
 ### 왜 attention 추출만 GPU 서버인가
 
@@ -322,7 +321,7 @@ attention은 `Pi0Config.return_attn_probs=True`로 prefix/suffix를 직접 구�
 파이프라인이 무엇을 보고 무엇을 만들어 내는지 **눈으로 이해하기 위한** 것이다.
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.cloud_gallery \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.cloud_gallery \
     --records $RUN/ag3s_records/run_0002 \
     --attention benchmark/ag3s/asset/data/attention_step1_run0002.npz --frame 0
 ```
@@ -341,7 +340,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.cloud
 탑뷰는 정확하지만 사람이 보는 공간이 아니다. 4·5·6단계는 같은 결과를 **정책이 실제로 본
 224×224 입력 위에** 되돌려 그린 그림을 함께 낸다 (`fig4_image_overlay` / `fig6_image_overlay`).
 
-되돌리기는 [imageview.py](../experiments/imageview.py) 한 곳이 담당하고, 두 규약이 거기 모여
+되돌리기는 [imageview.py](../experiments/common/imageview.py) 한 곳이 담당하고, 두 규약이 거기 모여
 있다:
 
 * **정규화 좌표로 옮긴다.** 깊이·내부 파라미터는 480×640, 정책 이미지는 224×224인데 둘 다
@@ -401,7 +400,7 @@ flying pixel, 스테레오 정합 실패가 없습니다. 2단계의 "표면 오
 
 ## 그림 규격
 
-모든 단계의 그림은 `benchmark/ag3s/experiments/figstyle.py` 하나를 통해 그린다. 색을 눈으로
+모든 단계의 그림은 `benchmark/ag3s/experiments/common/figstyle.py` 하나를 통해 그린다. 색을 눈으로
 다시 고르는 일이 없고, 단계들이 한 문서처럼 읽히게 하기 위해서다.
 
 | 인코딩 | 무엇에 쓰나 | 규칙 |
@@ -445,3 +444,12 @@ dict를 만들고 `Pi0.embed_prefix`가 그 순서로 이어붙이므로:
 | `cam_left_wrist` | `wrist_cam_l` | left_wrist | 256–511 |
 | `cam_right_wrist` | `wrist_cam_r` | right_wrist | 512–767 |
 | (언어) | — | — | 768– |
+
+## 단계 1–6 문서는 archive 로 옮겼다 (2026-09-21)
+
+위 표가 가리키는 단계별 검증 문서는 [`archive/step-verification-20260904/`](archive/step-verification-20260904/)
+에 있다. 판정이 끝난 실험이고, 이후 검토는 [`AG3S_REVIEW_LOG.md`](AG3S_REVIEW_LOG.md) 의
+Step 5–11 이 이어받았다. 무엇이 왜 옮겨졌는지는 [`archive/README.md`](archive/README.md) 에 있다.
+
+`step-01-attention.json` 은 거기 있지만 **보관물이 아니라 지금도 쓰이는 입력**이다 —
+12 개 스크립트가 `--step1-json` 기본값으로 읽는다.

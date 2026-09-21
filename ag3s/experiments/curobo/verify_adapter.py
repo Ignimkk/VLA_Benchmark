@@ -18,7 +18,7 @@ import argparse
 
 import numpy as np
 
-from benchmark.ag3s.curobo_field import CuroboEsdfField, layer_from_arrays
+from benchmark.ag3s.fields.curobo_field import CuroboEsdfField, layer_from_arrays
 
 TABLE_Z = 0.823  # 참값 (MuJoCo 모델)
 

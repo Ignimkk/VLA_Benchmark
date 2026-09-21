@@ -27,7 +27,7 @@ def _style():
     for path in ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",):
         if pathlib.Path(path).exists():
             fm.fontManager.addfont(path)
-    from benchmark.ag3s.experiments import figstyle
+    from benchmark.ag3s.experiments.common import figstyle
     if not figstyle.use_korean():
         print("경고: 한글 폰트를 못 찾았다 — 라벨이 깨진다")
 
@@ -51,12 +51,12 @@ def fig1(args) -> None:
     from matplotlib.patches import Circle, Rectangle
 
     from benchmark.ag3s.config import AG3SConfig
-    from benchmark.ag3s.curobo_field import CuroboEsdfField, RolloutFields
-    from benchmark.ag3s.pipeline import AG3S
-    from benchmark.ag3s.experiments.grounding_report import (
+    from benchmark.ag3s.fields.curobo_field import CuroboEsdfField, RolloutFields
+    from benchmark.ag3s.runtime.pipeline import AG3S
+    from benchmark.ag3s.experiments.reports.grounding_report import (
         ARM_LINKS, build_constraint_robot_model, build_robot_model)
-    from benchmark.ag3s.experiments.mujoco_source import gaussian_attention
-    from benchmark.ag3s.experiments.policy_record import load_run, pose_scene, replay_scene
+    from benchmark.ag3s.experiments.sources.mujoco_source import gaussian_attention
+    from benchmark.ag3s.experiments.sources.policy_record import load_run, pose_scene, replay_scene
 
     k = args.frame
     run = load_run(args.records, limit=k + 1)

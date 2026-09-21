@@ -30,7 +30,7 @@ import time
 import numpy as np
 
 from benchmark.ag3s.config import AG3SConfig
-from benchmark.ag3s.pipeline import AG3S
+from benchmark.ag3s.runtime.pipeline import AG3S
 from benchmark.ag3s.robot_models import DEFAULT_RBY1_JOINTS
 from benchmark.trajopt.config import TrajOptConfig
 from benchmark.trajopt.limits import build_limits
@@ -61,17 +61,17 @@ def phase_for(t_step: int, boundaries) -> str:
 def main() -> None:
     import mujoco
 
-    from benchmark.ag3s.experiments.grounding_report import (
+    from benchmark.ag3s.experiments.reports.grounding_report import (
         ARM_LINKS, build_constraint_robot_model, build_robot_model)
-    from benchmark.ag3s.experiments.mujoco_source import (
+    from benchmark.ag3s.experiments.sources.mujoco_source import (
         camera_observation, gaussian_attention, is_robot_body)
-    from benchmark.ag3s.experiments.policy_record import load_run, pose_scene, replay_scene
+    from benchmark.ag3s.experiments.sources.policy_record import load_run, pose_scene, replay_scene
 
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--records", required=True)
     ap.add_argument("--attention", default=None,
                     help="1단계 .npz. 없으면 합성 블롭으로 대신하며 그 사실을 결과에 적는다")
-    ap.add_argument("--step1-json", default="benchmark/ag3s/docs/step-01-attention.json")
+    ap.add_argument("--step1-json", default="benchmark/ag3s/docs/archive/step-verification-20260904/step-01-attention.json")
     ap.add_argument("--target", default=None)
     ap.add_argument("--frames", type=int, default=0, help="0이면 전부")
     ap.add_argument("--voxel", type=float, default=0.020)
@@ -112,7 +112,7 @@ def main() -> None:
     args = ap.parse_args()
 
     run = load_run(args.records, limit=args.frames or None)
-    from benchmark.ag3s.experiments.attention_report import target_from_prompt
+    from benchmark.ag3s.experiments.reports.attention_report import target_from_prompt
     target = args.target or target_from_prompt(run.prompt)
 
     cell = None
@@ -154,7 +154,7 @@ def main() -> None:
     # `from_mujoco` 가 버린다.
     static_shapes = None
     if args.static_geometry != "none":
-        from benchmark.ag3s import static_scene
+        from benchmark.ag3s.fields import static_scene
         pose_scene(scene, run.steps[0])
         if args.static_geometry == "auto":
             static_shapes, sg_stats = static_scene.from_mujoco(scene.model, scene.data)
@@ -209,7 +209,7 @@ def main() -> None:
     dump = {} if args.dump_frames else None
     fields = None
     if args.curobo_fields:
-        from benchmark.ag3s.curobo_field import RolloutFields
+        from benchmark.ag3s.fields.curobo_field import RolloutFields
         fields = RolloutFields.load(args.curobo_fields, single_layer=args.curobo_single_layer)
         print(f"cuRobo 필드 사용: {args.curobo_fields}  "
               f"{fields.n_frames} 프레임  계층 {fields.n_layers}")

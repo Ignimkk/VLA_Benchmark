@@ -12,7 +12,7 @@ scipy          # cKDTree, sparse csgraph, linear_sum_assignment, SVD
 casadi         # symbolic constraints + the bundled IPOPT used by test_to_contract.py
 pyyaml         # configs/*.yaml
 
-# Only needed for `python -m benchmark.ag3s.visualization`; imported lazily inside the functions so
+# Only needed for `python -m benchmark.ag3s.runtime.visualization`; imported lazily inside the functions so
 # core imports never touch it.
 matplotlib
 

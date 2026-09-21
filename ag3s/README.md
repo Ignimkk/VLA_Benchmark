@@ -23,31 +23,54 @@ AG3S → CollisionConstraintSet ────────────────
 
 ```
 benchmark/ag3s/
-├── types.py                 전 스테이지 데이터 계약, RobotCollisionModel/AttentionAdapter Protocol
-├── config.py                §9 YAML 스키마 + 검증 + ablation 오버라이드
-├── reconstruction.py    1.  핀홀 백프로젝션, 유효성 필터, 결정론적 보셀/캡
-├── robot_filter.py      2.  주입된 로봇 모델로 self-filter (KD-tree)
-├── support_surface.py   3.  결정론적 RANSAC 평면 → half-space
-├── attention_lifting.py 4.  A(u,v) → 점별 attention (어떤 점도 버리지 않음)
-├── target_grounding.py  5.  seed → 3D 연결성 → 클러스터 → 스코어 / 실패 상태
-├── collision_candidates.py 6. 잔차 클러스터링, unknown 보존, phase 규칙, 프레임 간 트래킹
-├── geometry.py          7.  sphere→capsule→box→ellipsoid 피팅 + to_spheres
-├── clearance.py             phase x manipulator x source x link → 요구 clearance (fail-closed)
-├── multiview.py             카메라별 처리 → base frame 융합 (provenance CSR 보존)
-├── attached.py              POST_GRASP: 잡은 물체를 부모 링크에 붙인 충돌 바디로
-├── constraint_builder.py 8. 고정 슬롯 CasADi 제약 (구조 1회 빌드, 이후 파라미터만)
-├── to_adapter.py            CollisionConstraintSet 조립, to_casadi, refresh, warm-start 맵
-├── pipeline.py              오케스트레이션 전용 (알고리즘 없음)
-├── profiler.py              8단계 latency
-├── visualization.py         단계별 PNG 덤프 (matplotlib lazy import)
+├── types.py                     전 스테이지 데이터 계약, RobotCollisionModel/AttentionAdapter Protocol
+├── config.py                    §9 YAML 스키마 + 검증 + ablation 오버라이드
+│
+├── stages/                  파이프라인 스테이지 — 점에서 도형까지
+│   ├── reconstruction.py    1.  핀홀 백프로젝션, 유효성 필터, 결정론적 보셀/캡
+│   ├── robot_filter.py      2.  주입된 로봇 모델로 self-filter (KD-tree)
+│   ├── support_surface.py   3.  결정론적 RANSAC 평면 → half-space
+│   ├── attention_lifting.py 4.  A(u,v) → 점별 attention (어떤 점도 버리지 않음)
+│   ├── target_grounding.py  5.  seed → 3D 연결성 → 클러스터 → 스코어 / 실패 상태
+│   ├── collision_candidates.py 6. 잔차 클러스터링, unknown 보존, phase 규칙, 프레임 간 트래킹
+│   └── geometry.py          7.  sphere→capsule→box→ellipsoid 피팅 + to_spheres
+│
+├── fields/                  거리장 백엔드
+│   ├── esdf.py                  순수 numpy TSDF/ESDF, 라벨, 감쇠
+│   ├── curobo_field.py          cuRobo 가 만든 격자를 읽는 어댑터
+│   └── static_scene.py          씬에 고정된 기하를 필드에 넣는 경로
+│
+├── constraints/             제약 조립 — 여유거리에서 CasADi 사양까지
+│   ├── clearance.py             phase x manipulator x source x link → 요구 clearance (fail-closed)
+│   ├── attached.py              POST_GRASP: 잡은 물체를 부모 링크에 붙인 충돌 바디로
+│   ├── constraint_builder.py 8. 고정 슬롯 CasADi 제약 (구조 1회 빌드, 이후 파라미터만)
+│   └── to_adapter.py            CollisionConstraintSet 조립, to_casadi, refresh, warm-start 맵
+│
+├── runtime/                 실행 기반 — 알고리즘이 아닌 것
+│   ├── pipeline.py              오케스트레이션 전용 (알고리즘 없음)
+│   ├── multiview.py             카메라별 처리 → base frame 융합 (provenance CSR 보존)
+│   ├── profiler.py              8단계 latency
+│   ├── trace.py                 실행 추적
+│   ├── asset_path.py            MJCF/URDF 자산 탐색 (심볼릭 링크 대체)
+│   └── visualization.py         단계별 PNG 덤프 (matplotlib lazy import)
+│
+├── experiments/             구체적 씬 위의 실행 실험 (RB-Y1 transport)
+│   ├── common/                  figstyle · outputs · imageview (그림 스타일 · 산출 경로)
+│   ├── sources/                 MuJoCo 씬 · 정책 롤아웃 기록 · 제약 기록
+│   ├── reports/                 스텝 1–6 + ESDF 검증 리포트 (상설)
+│   ├── studies/                 a1~a7 · step5~step8 · f12 (질문 하나를 재는 분석)
+│   ├── diagrams/                doc_* · ppt_* (문서·발표용 그림 전용)
+│   ├── curobo/                  cuRobo 필드 생산·검증 (.venv-curobo)
+│   └── reuse_audit_20260915/    2026-09-15 재사용 감사
+│
+├── robot_models/            RB-Y1 URDF sphere chain (numpy/CasADi 공용 FK)
+├── configs/                 default.yaml, rby1_three_camera.yaml
 ├── asset/image/             단계별 PNG 8장 (재생성 가능)
 ├── asset/doc/               구현 보고서(ag3s_report.html) · 이미지 해설 · RB-Y1 실험
-├── experiments/             구체적 씬 위의 실행 실험 (RB-Y1 transport)
-├── robot_models/            RB-Y1 URDF sphere chain (numpy/CasADi 공용 FK)
-└── configs/                 default.yaml, rby1_three_camera.yaml
+└── docs/                    검토 기록(AG3S_REVIEW_LOG.md) · 계획 · RUNBOOK · figures/
 ```
 
-`pipeline.py`는 조율만 합니다. 모든 스테이지는 독립적으로 단위 테스트됩니다.
+`runtime/pipeline.py`는 조율만 합니다. 모든 스테이지는 독립적으로 단위 테스트됩니다.
 
 ## 세 가지 안전 계약
 
@@ -178,13 +201,13 @@ src/openpi/.venv/bin/python -m pytest tests/ag3s/ -q
 src/openpi/.venv/bin/python -m pytest tests/ag3s/test_to_contract.py -q -s
 
 # e2e smoke + 8단계 latency 표
-src/openpi/.venv/bin/python -m benchmark.ag3s.pipeline --frames 12 --profile
+src/openpi/.venv/bin/python -m benchmark.ag3s.runtime.pipeline --frames 12 --profile
 
 # 단계별 시각화 8종 → benchmark/ag3s/asset/image/ (해설: asset/doc/FIGURES.md)
-src/openpi/.venv/bin/python -m benchmark.ag3s.visualization
+src/openpi/.venv/bin/python -m benchmark.ag3s.runtime.visualization
 
 # RB-Y1 transport 씬, 3대 카메라 융합 (ZED head + D435i 양 손목)
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.rby1_transport \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.rby1_transport \
     --json benchmark/ag3s/asset/doc/rby1_transport_fused_index.json
 ```
 
@@ -192,7 +215,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.rby1_
 
 ```python
 from benchmark.ag3s import AG3SConfig
-from benchmark.ag3s.pipeline import AG3S
+from benchmark.ag3s.runtime.pipeline import AG3S
 from benchmark.ag3s.robot_models import load_rby1
 
 ag3s = AG3S(AG3SConfig.from_yaml("benchmark/ag3s/configs/default.yaml"),
@@ -235,7 +258,7 @@ assert constraint_set.geometry_certified   # 아니면 호출자가 정책을 �
 TO 쪽에서는:
 
 ```python
-from benchmark.ag3s.to_adapter import to_casadi, refresh
+from benchmark.ag3s.constraints.to_adapter import to_casadi, refresh
 
 fragment = to_casadi(constraint_set.constraints, Q)   # 셋업 시 1회
 # nlp = {"x": ..., "f": ..., "g": fragment["g"], "p": fragment["p"]}

@@ -86,7 +86,7 @@ ESDF 쪽 위반 71개를 항별로 나누면:
 
 이것은 두 collision backend 어느 쪽도 고칠 수 없다. 고치려면 지지면을 **유계 패치**로 만들거나,
 평면 행을 그 위에 있을 수 있는 링크에만 걸어야 한다. 이 검증에서 세 번째로 발견된 표현 문제이며
-`OPEN-geometry-representation.md` 와 같은 성격이다.
+`archive/primitive-era-20260904/OPEN-geometry-representation.md` 와 같은 성격이다.
 
 여유가 가장 작은 구 8개:
 
@@ -145,6 +145,6 @@ ESDF 쪽 위반 71개를 항별로 나누면:
 ## 재현
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.esdf_report \\
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.esdf_report \\
     --records outputs/rby1_atomic_infer/ag3s_step1/ag3s_records/run_0002 --voxel 0.01
 ```

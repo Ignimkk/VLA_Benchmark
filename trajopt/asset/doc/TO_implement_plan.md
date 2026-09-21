@@ -163,7 +163,7 @@ benchmark/trajopt/
 | 제약 벡터 · 파라미터 갱신 | `to_adapter.to_casadi()` / `refresh()` / `warm_start_map()` |
 | 심볼릭 FK | `UrdfSphereChain.sphere_centers_symbolic` |
 | 씬 → 제약 | `AG3S.process_multi()` |
-| 단계별 계측 | `benchmark.ag3s.profiler.StageProfiler` |
+| 단계별 계측 | `benchmark.ag3s.runtime.profiler.StageProfiler` |
 | 희소 QP 패턴 | `benchmark/knows_vla/cbf/filter.py`의 osqp + scipy.sparse 사용법 |
 | 설정 검증 패턴 | `benchmark.ag3s.config`의 frozen dataclass + unknown-key 하드 에러 |
 

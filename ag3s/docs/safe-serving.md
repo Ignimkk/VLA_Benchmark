@@ -69,7 +69,7 @@ src/openpi/.venv/bin/python src/rby1_bringup/pi05_infer.py \
 |---|---|
 | `none` (기본) | 안 쓴다. 지금까지와 같다 |
 | `auto` | `--model-xml` 에서 뽑는다. 시뮬용 |
-| `<파일>` | `benchmark.ag3s.static_scene` 이 쓴 JSON. **실기용 — MuJoCo 가 필요 없다** |
+| `<파일>` | `benchmark.ag3s.fields.static_scene` 이 쓴 JSON. **실기용 — MuJoCo 가 필요 없다** |
 
 실기 파일은 보기(`benchmark/ag3s/configs/static_geometry_transport.json`)를 측량값으로
 바꿔 쓴다. 좌표계는 **로봇 base** 이고, 파일의 `frame` 이 `robot_base` 가 아니면 거절한다.
@@ -168,7 +168,7 @@ hold 다.** 계약대로 동작한 것이지 버그가 아니다 — "제약을 
 ## 남은 것
 
 1. **attention 이 아직 live 로 오지 않는다.** 서버 서빙이 1단계에서 확정한 셀 하나를 응답에
-   실어야 한다 — [live-attention-server-prompt.md](live-attention-server-prompt.md).
+   실어야 한다.
    그때까지 `no_target` 으로 돌고, 거리장이 target 을 파내지 않아 제약이 더 보수적이다.
 2. **GPU 서버에서 회귀 테스트** (`pytest tests/ag3s tests/trajopt`, 현재 로컬 560 passed).
 3. **end-to-end** — 로컬 MuJoCo 연결, 장애물 회피 시나리오, 실제 지연 측정.

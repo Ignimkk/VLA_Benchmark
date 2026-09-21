@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 from types import SimpleNamespace as NS
 import numpy as np
-from benchmark.ag3s.esdf import EsdfField,VoxelGrid,esdf_from_occupancy,UNKNOWN
-from benchmark.ag3s.curobo_field import CuroboEsdfField
+from benchmark.ag3s.fields.esdf import EsdfField,VoxelGrid,esdf_from_occupancy,UNKNOWN
+from benchmark.ag3s.fields.curobo_field import CuroboEsdfField
 from benchmark.trajopt.linearize import CollisionLinearizer
 OUT=Path('benchmark/ag3s/docs/figures/reuse-audit-20260915')
 lin=CollisionLinearizer.__new__(CollisionLinearizer);lin.n_spheres=1;lin.query_radii=np.zeros(2)
@@ -43,7 +43,7 @@ r['time_gap']={'endpoint_clearance_m':[.03-rad,.03-rad],'intermediate_clearance_
 (OUT/'counterexamples.json').write_text(json.dumps(r,indent=2))
 print(json.dumps(r,indent=2))
 # Label-only changes are not included in the production incremental dirty set.
-from benchmark.ag3s.esdf import EsdfBuilder,FREE,OCCUPIED
+from benchmark.ag3s.fields.esdf import EsdfBuilder,FREE,OCCUPIED
 from benchmark.ag3s.config import EsdfConfig
 cfg=EsdfConfig(voxel_size=.02,bounds_lower=(0,0,0),bounds_upper=(.3,.06,.06),incremental=True,max_distance=.4)
 def toy_builder():

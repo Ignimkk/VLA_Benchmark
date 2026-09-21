@@ -104,7 +104,7 @@ def unpack_camera_observations(scene: dict[str, Any], *, robot_model,
     실행할지 멈출지는 상위가 정한다 — AG3S 가 스스로 정하지 않는 것과 같은 이유다.
     """
     from benchmark.ag3s.types import CameraID, CameraObservation
-    from benchmark.ag3s.experiments.mujoco_source import CAMERA_MOUNTS
+    from benchmark.ag3s.experiments.sources.mujoco_source import CAMERA_MOUNTS
 
     attention = attention or {}
     out = []

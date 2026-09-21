@@ -1,12 +1,15 @@
 # TSDF → ESDF 충돌 표현 (두 번째 backend)
 
-**상태: 구현 완료, 기본값 아님.** `collision_backend: primitive` 가 그대로 기본이라 기존 결과와
-테스트는 한 줄도 달라지지 않는다. `esdf` 또는 `both` 로 켠다.
+**상태: 구현 완료 — live 경로가 쓰는 backend 다** (2026-09-21 갱신). `AG3SConfig` 의 기본값은
+아직 `collision_backend: primitive` 지만, 실제로 도는 경로는 `trajopt/serve_safe.py` 와
+`trajopt/experiments/esdf_rollout.py` 가 `esdf` 로 고정한다. 로그 Step 9 에서 primitive 후보
+피팅은 `emit_candidates: False` 와 함께 **돌지 않는 것으로 닫혔다.** 아래 문서는 이 backend 의
+설계·정확도·비용 참조다.
 
 ## 왜
 
 primitive backend 는 후보 하나를 도형 하나로 줄인다. 조밀하고 볼록한 물체에는 맞지만 두 가지로
-깨진다 ([OPEN-geometry-representation.md](OPEN-geometry-representation.md) 의 측정값):
+깨진다 ([archive/primitive-era-20260904/OPEN-geometry-representation.md](archive/primitive-era-20260904/OPEN-geometry-representation.md) 의 측정값):
 
 | 문제 | 증상 |
 |---|---|
@@ -191,7 +194,7 @@ RB-Y1 씬 프레임 0, `approach`, 20 mm 복셀, `both` backend. 로봇 충돌 �
 경로는 로봇 주변에 **평균 281 mm 두께의 없는 장애물**을 만든다. 그것이 테이블 잔여의 749 mm 구와
 크레이트의 229 mm 구다.
 
-이것이 `OPEN-geometry-representation.md` 가 "작업 공간의 100%가 막힌다"고 적은 것의 다른 얼굴이다.
+이것이 `archive/primitive-era-20260904/OPEN-geometry-representation.md` 가 "작업 공간의 100%가 막힌다"고 적은 것의 다른 얼굴이다.
 ESDF 는 그 114개를 없애면서 **하나도 새로 만들지 않는다** — 과대근사를 걷어내는 것이지 과소근사로
 바꾸는 것이 아니다.
 
@@ -263,7 +266,7 @@ backend 에서든 평면 행이 된다. 기본값 `exclude_support_surfaces: tru
 ## 아직 하지 않은 것
 
 * **작업 공간 막힘 비율의 before/after.** 로봇 구 기준 비교는 했지만(185 → 71),
-  `OPEN-geometry-representation.md` 가 쓴 "테이블 위 평면 격자에서 막힌 비율 100%" 를 같은
+  `archive/primitive-era-20260904/OPEN-geometry-representation.md` 가 쓴 "테이블 위 평면 격자에서 막힌 비율 100%" 를 같은
   방식으로 다시 재지는 않았다. 6단계 스크립트에 backend 축을 붙이면 된다.
 * **띠 기반 적분.** 위 3번.
 * **여유거리의 단계 의존성.** primitive 경로는 `ClearancePolicy` 에서 (로봇 구 × 슬롯) 마진을

@@ -53,7 +53,7 @@ def _style():
     for p in ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",):
         if pathlib.Path(p).exists():
             fm.fontManager.addfont(p)
-    from benchmark.ag3s.experiments import figstyle
+    from benchmark.ag3s.experiments.common import figstyle
     figstyle.use_korean()
 
 
@@ -62,10 +62,10 @@ def main() -> None:
     import mujoco
 
     from benchmark.ag3s.config import AG3SConfig
-    from benchmark.ag3s.pipeline import AG3S
-    from benchmark.ag3s.experiments.grounding_report import (
+    from benchmark.ag3s.runtime.pipeline import AG3S
+    from benchmark.ag3s.experiments.reports.grounding_report import (
         ARM_LINKS, build_constraint_robot_model, build_robot_model)
-    from benchmark.ag3s.experiments.policy_record import load_run, pose_scene, replay_scene
+    from benchmark.ag3s.experiments.sources.policy_record import load_run, pose_scene, replay_scene
     from benchmark.ag3s.robot_models import DEFAULT_RBY1_JOINTS
     from benchmark.trajopt.config import TrajOptConfig
     from benchmark.trajopt.linearize import CollisionLinearizer, scene_from_constraint_set
@@ -74,7 +74,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--records", default="run_0004")
     ap.add_argument("--attention", default="attention_step1_run0004.npz")
-    ap.add_argument("--step1-json", default="benchmark/ag3s/docs/step-01-attention.json")
+    ap.add_argument("--step1-json", default="benchmark/ag3s/docs/archive/step-verification-20260904/step-01-attention.json")
     ap.add_argument("--frames", type=int, default=20)
     ap.add_argument("--voxel", type=float, default=0.020)
     ap.add_argument("--esdf-margin", type=float, default=0.05)
@@ -124,7 +124,7 @@ def main() -> None:
 
     from benchmark.ag3s.types import (
         Manipulator, Primitive, PrimitiveType, TargetGeometry)
-    from benchmark.ag3s.experiments.attention_report import target_from_prompt
+    from benchmark.ag3s.experiments.reports.attention_report import target_from_prompt
     from benchmark.trajopt.experiments.esdf_rollout import phase_for
     tgt_name = target_from_prompt(run.prompt)
 
@@ -254,7 +254,7 @@ def _sync_attachment(ag, grasped, held_centre, q, robot,
 
 def _nearest_body(scene, centroid):
     import mujoco
-    from benchmark.ag3s.experiments.mujoco_source import is_robot_body
+    from benchmark.ag3s.experiments.sources.mujoco_source import is_robot_body
     best, bd = "-", 1e9
     for b in range(scene.model.nbody):
         nm = mujoco.mj_id2name(scene.model, mujoco.mjtObj.mjOBJ_BODY, b) or ""

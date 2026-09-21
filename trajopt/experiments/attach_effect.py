@@ -23,7 +23,7 @@ def _style():
     for p in ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",):
         if pathlib.Path(p).exists():
             fm.fontManager.addfont(p)
-    from benchmark.ag3s.experiments import figstyle
+    from benchmark.ag3s.experiments.common import figstyle
     figstyle.use_korean()
 
 

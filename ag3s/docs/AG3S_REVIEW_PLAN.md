@@ -241,7 +241,7 @@ F11(권한이 엉뚱한 물체에) · F12(쥔 물체가 필드에서 사라짐) 
 `pipeline._build_esdf` 는 여전히 numpy 구현을 부른다. 현재 **AG3S 2.5~3.1 s / 청크 예산 66.7 ms**
 로 40 배 초과다. 이것은 결함이 아니라 **남은 작업**이다.
 
-**6. 자산 경로에 심볼릭 링크가 필요 없어졌다.** `ag3s/asset_path.py` 가 해석한다. 자세한 것은
+**6. 자산 경로에 심볼릭 링크가 필요 없어졌다.** `ag3s/runtime/asset_path.py` 가 해석한다. 자세한 것은
 `CLAUDE.md`.
 
 ---
@@ -292,9 +292,9 @@ F11(권한이 엉뚱한 물체에) · F12(쥔 물체가 필드에서 사라짐) 
 절에 모으고, 새 말을 쓸 때 거기 추가한다. 설명 없이 쓰던 말들(`violated`, `거친 계층`, `2계층`,
 `여유거리` …)이 읽는 쪽에 전달되지 않았다.
 
-**규칙 E — `CONTAINER_SETUP.md` 는 폐기됐다** (2026-09-12). 초기 컨테이너 셋업 전용 문서이고
-그 일은 끝났다. **읽지도 쓰지도 않는다.** 거기 있던 내용 중 계속 필요한 것(cuRobo 함정 목록,
-작업 방식)은 `AG3S_REVIEW_LOG.md` 와 이 문서로 옮겼다.
+**규칙 E — `CONTAINER_SETUP.md` 는 폐기됐다** (2026-09-12) **— 2026-09-21 에 삭제했다.**
+초기 컨테이너 셋업 전용 문서이고 그 일은 끝났다. 거기 있던 내용 중 계속 필요한 것(cuRobo
+함정 목록, 작업 방식)은 `AG3S_REVIEW_LOG.md` 와 이 문서로 옮긴 뒤 파일을 지웠다.
 
 **규칙 D — 모든 Step 을 수행하거나 종료되면 위 규칙에 맞춰 정리한다** (2026-09-14).
 
@@ -323,8 +323,8 @@ cuRoboV2 를 인프라로 쓰기로 하면서 한 줄이 더 움직인다.
 
 | 모듈 | 이전 처분 | 방향 결정 후 |
 |---|---|---|
-| `ag3s/esdf.py` (TSDF/ESDF 코어, 588줄) | 필요 (Step 1) | **대체 후보** — cuRoboV2 가 같은 일을 GPU 에서 한다. Step 1 에서 고친 E4·E6 도 그쪽에서는 구조적으로 안 생기는 문제였다 |
-| `ag3s/pipeline.py` 의 ESDF 조립부 | 필요 (Step 2) | **유지하되 백엔드 교체** — `_depth_cameras_from`·`_esdf_coverage`·`target_link_margin` 배선은 그대로 쓰고, 그 안에서 부르는 필드 구현만 바뀐다 |
+| `ag3s/fields/esdf.py` (TSDF/ESDF 코어, 588줄) | 필요 (Step 1) | **대체 후보** — cuRoboV2 가 같은 일을 GPU 에서 한다. Step 1 에서 고친 E4·E6 도 그쪽에서는 구조적으로 안 생기는 문제였다 |
+| `ag3s/runtime/pipeline.py` 의 ESDF 조립부 | 필요 (Step 2) | **유지하되 백엔드 교체** — `_depth_cameras_from`·`_esdf_coverage`·`target_link_margin` 배선은 그대로 쓰고, 그 안에서 부르는 필드 구현만 바뀐다 |
 | `trajopt/linearize.py` 의 `_esdf_clearance` | 필요 (Step 3) | **유지** — `distance()`/`gradient()` 인터페이스만 맞으면 백엔드는 무관하다 |
 
 즉 **우리가 유지하는 것은 배선과 정책이고, 교체되는 것은 필드 구현 하나**다. Step 1~4 의 수정이
@@ -641,7 +641,7 @@ cs = dataclasses.replace(cs, esdf=fields.field_for(i))
 
 `manipulated_link_margin`(접촉 권한) · 평면 행 · 검증 플래그는 AG3S 가 계산한 그대로 두고
 **거리장 구현 하나만** 바뀐다. 어댑터가 그렇게 설계돼 있다 — trajopt 가 필드에 요구하는 것은
-`distance()` · `gradient()` · `grid.voxel_size` **셋뿐**이다 (`ag3s/curobo_field.py` 머리말).
+`distance()` · `gradient()` · `grid.voxel_size` **셋뿐**이다 (`ag3s/fields/curobo_field.py` 머리말).
 
 ### 아직 합쳐지지 않은 것 셋
 
@@ -1119,7 +1119,7 @@ scene geometry contract) + cuRobo 셋(TSDF mapping · object-aware field adapter
 | 4 | scene state registry | 대기 — 코드상 대응은 `grasp_latch.py`(잠금) + `attach`/`detach` 호출부 |
 | 5 | scene geometry contract | 대기 — 코드상 대응은 `CollisionConstraintSet` + 라벨 층 + 마진 축 |
 | 6 | cuRobo TSDF mapping | 대기 |
-| 7 | object-aware field adapter | 대기 — `ag3s/curobo_field.py` + 라벨 |
+| 7 | object-aware field adapter | 대기 — `ag3s/fields/curobo_field.py` + 라벨 |
 | 8 | ESDF set | 대기 — 2계층 + `min()` 합성 |
 
 **규약**: 슬라이드용 그림은 `figures/ppt/` 에 따로 두고 문서용(`figures/`)과 섞지 않는다.
@@ -1546,3 +1546,99 @@ self-collision N1)은 **의도적으로 끈 잠복**이고 전환 신호가 이�
 | 2 | **B1** — 감쇠를 시야 밖 장애물에서 재고 켤지 판정 | `records/run_0003` |
 | 3 | 남은 발견 — F10(`DEGRADED` 가 `NO_TARGET` 을 가린다) | `run_0004` |
 | 4 | **완료 판정 A·B·C 선택** ← 마지막 (사용자 지시) | `records/run_0001`·`run_0002` |
+
+---
+
+## 폴더 배치를 파이프라인 구조에 맞췄다 (2026-09-21, 사용자 지시)
+
+지시: *"benchmark/ag3s/ 내부가 정리되어있지 않다. 코드파일을 각각 기능에 맞게 정리하라."*
+
+계획 문서의 나머지는 **무엇을 할 것인가**를 적지만, 이 항목은 **어디에 있는가**를 바꾼 것이다.
+검토가 `esdf.py` · `pipeline.py` · `attention_lifting.py` 를 스텝 번호로 부르는 동안 파일은
+한 폴더에 평평하게 쌓여 있었고, 새로 들어온 사람은 파일명만으로 그것이 스테이지인지 백엔드인지
+일회성 분석인지 알 수 없었다.
+
+**결정: 기능별 서브패키지로 나누고 옛 경로는 남기지 않는다** (shim 없음 — 경로가 두 벌이면
+어느 쪽이 정본인지 다시 헷갈린다. 이 검토가 이미 기록 갈라짐으로 겪은 문제다).
+
+```
+core         types.py · config.py        (루트 — 전 스테이지가 쓰는 계약과 설정)
+             stages/       점 → 도형, 파이프라인 스테이지 7 개
+             fields/       거리장 백엔드 3 개
+             constraints/  여유거리 → CasADi 제약 4 개
+             runtime/      조율 · 계측 · 자산 경로 · 그림 6 개
+experiments  common/ sources/ reports/ studies/ diagrams/  (+ curobo/ · reuse_audit_20260915/ 유지)
+```
+
+폴더 이름이 이제 **규칙 B 의 화살표와 맞는다**:
+`stages/` → `fields/` → `constraints/` → `runtime/pipeline`.
+
+수치와 검증은 로그의 **"폴더 재배치 — `ag3s/` 를 기능별 서브패키지로 (2026-09-21)"** 절에 있다
+(73 파일 이동 · 664 곳 치환 · 테스트 625 불변 · 회귀 기준선 일치).
+
+**남은 순서는 바뀌지 않는다** — 재배치는 일정을 건드리지 않는다. 위의 "남은 순서" 표 1~4 를
+그대로 이어서 한다. 다만 그 작업의 경로는 새 것을 쓴다:
+
+| 예전 | 지금 |
+|---|---|
+| `benchmark.ag3s.experiments.a7_episode_walkthrough` | `benchmark.ag3s.experiments.studies.a7_episode_walkthrough` |
+| `benchmark.ag3s.experiments.policy_record` | `benchmark.ag3s.experiments.sources.policy_record` |
+| `benchmark.ag3s.experiments.grounding_report` | `benchmark.ag3s.experiments.reports.grounding_report` |
+| `benchmark.ag3s.esdf` · `pipeline` | `benchmark.ag3s.fields.esdf` · `benchmark.ag3s.runtime.pipeline` |
+
+---
+
+## `docs/` 를 정리했다 (2026-09-21, 사용자 지시)
+
+지시: *"docs 에서 필요 없는 문서를 제거하자."*
+
+폴더에 45 개가 쌓여 있었다. 무엇이 살아 있는 문서이고 무엇이 한 번 쓰고 끝난 것인지
+파일명으로는 구분이 안 됐다. **참조 관계로 갈라 7 개를 지웠다** — 다 쓴 프롬프트 5,
+폐기 선언된 문서 1, 대체된 스냅샷 1.
+
+지우는 판정에 쓴 기준은 셋이다.
+
+1. **누가 가리키는가** — 코드·테스트·다른 문서 중 하나라도 읽거나 링크하면 남긴다.
+   (`archive/step-verification-20260904/step-01-attention.json` 은 12 개 스크립트의 기본 입력이라 절대 못 지운다.)
+2. **산출물이 따로 남았는가** — 프롬프트는 그것이 만들어 낸 그림·문서가 남아 있으면 역할이 끝났다.
+3. **정본이 다른 데 있는가** — `review_board.html` 의 발견 표는 이제 로그의 "누적 발견" 이 정본이다.
+
+**규칙 E 를 갱신했다.** `CONTAINER_SETUP.md` 는 이제 폐기가 아니라 **삭제**다.
+`AG3S_REVIEW_LOG.md` 머리말 · 이 문서 · `CLAUDE.md` · `.claude/ag3s-rules.md` 네 곳을 같이 고쳤다.
+
+수치와 고친 참조 목록은 로그의 **"`docs/` 문서 정리 — 다 쓴 프롬프트와 대체된 스냅샷을 지웠다
+(2026-09-21)"** 절에 있다.
+
+**남은 순서는 바뀌지 않는다** — 위의 "남은 순서" 표 1~4 를 그대로 이어서 한다.
+
+---
+
+## `docs/` 의 중복을 재고 닫힌 실험을 내렸다 (2026-09-21, 사용자 지시)
+
+지시: *"중복으로 설명중인 문서를 제거하고, 과거 실험에서 작성되었던 문서는 폴더로 분류하자."*
+
+**중복은 눈으로 고르지 않고 쟀다.** 27 개 문서를 문장 집합 겹침으로 전부 대조하니
+`_004` 쌍만 89~100 % 였고 나머지는 최대 8.9 % 였다. 이 검토에서 판정을 두 번 뒤집은 경험
+(C2·D2)이 말하는 것과 같다 — **재기 전에는 무엇이 중복인지 모른다.**
+
+**archive 경계는 "로그가 닫았다고 명시한 것" 하나로 잡았다.** 이 기준이 실제로 한 건을
+막았다: `ESDF-BACKEND.md` 는 제목("두 번째 backend")과 머리말("기본값 아님")이 과거처럼
+읽히지만, 내용은 **지금 도는 backend 의 설계 참조**였다. 제목이 아니라 로그의 판정을 본
+덕에 잘못 내리지 않았다. 대신 낡은 머리말을 사실로 고쳤다.
+
+```
+docs/
+├── AG3S_REVIEW_LOG.md · AG3S_REVIEW_PLAN.md · VLA_ACTION_..._PLAN.md   정본 (CLAUDE.md 읽는 순서)
+├── README.md · RUNBOOK.md                                             색인과 절차
+├── AG3S_CUROBO_LIVE_TEST_PLAN.md · live-integration.md · safe-serving.md   열려 있는 작업
+├── ESDF-BACKEND.md · esdf-*.md · observation-sdf-visualization.md      현행 ESDF 참조
+├── PIPELINE-STAGES-AND-CUROBO-ROLE.md · PPT-SOURCE-step1-3.md          2026-09-15 산출물
+├── archive/                                                           닫힌 실험 (19)
+└── figures/
+```
+
+수치와 고친 경로 목록은 로그의 **"`docs/` 중복 제거와 닫힌 실험의 archive 분류 (2026-09-21)"**
+절에 있다.
+
+**남은 순서는 바뀌지 않는다** — 위의 "남은 순서" 표 1~4 를 그대로 이어서 한다.
+다만 단계별 검증 문서를 볼 일이 생기면 `docs/archive/step-verification-20260904/` 에 있다.

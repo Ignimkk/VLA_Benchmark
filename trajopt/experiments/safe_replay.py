@@ -46,7 +46,7 @@ def main() -> None:
                          "안 돈다** — target 이 없으면 잠금도 attach 도 목적지도 없다 "
                          "(실측: 24 청크 전부 no_target · safe 0). none 이면 합성 블롭을 쓰고 "
                          "그 사실을 결과에 적는다")
-    ap.add_argument("--step1-json", default="benchmark/ag3s/docs/step-01-attention.json")
+    ap.add_argument("--step1-json", default="benchmark/ag3s/docs/archive/step-verification-20260904/step-01-attention.json")
     ap.add_argument("--no-attention", action="store_true",
                     help="attention 을 **아예 안 넘긴다** — 고치기 전 상태의 대조군. 실측: "
                          "target 이 한 번도 안 잡혀 잠금·attach·목적지·성공 판정이 전부 "
@@ -60,10 +60,10 @@ def main() -> None:
     args = ap.parse_args()
 
     from benchmark.ag3s.config import AG3SConfig
-    from benchmark.ag3s.experiments.grounding_report import (
+    from benchmark.ag3s.experiments.reports.grounding_report import (
         ARM_LINKS, build_constraint_robot_model, build_robot_model)
-    from benchmark.ag3s.experiments.policy_record import load_run, pose_scene, replay_scene
-    from benchmark.ag3s.pipeline import AG3S
+    from benchmark.ag3s.experiments.sources.policy_record import load_run, pose_scene, replay_scene
+    from benchmark.ag3s.runtime.pipeline import AG3S
     from benchmark.trajopt import wire
     from benchmark.trajopt.config import TrajOptConfig
     from benchmark.trajopt.experiments.esdf_rollout import phase_for
@@ -131,8 +131,8 @@ def main() -> None:
                 [str(c) for c in blob["cameras"]].index("cam_high"))
         attention_kind = "실측"
     else:
-        from benchmark.ag3s.experiments.attention_report import target_from_prompt
-        from benchmark.ag3s.experiments.mujoco_source import gaussian_attention
+        from benchmark.ag3s.experiments.reports.attention_report import target_from_prompt
+        from benchmark.ag3s.experiments.sources.mujoco_source import gaussian_attention
         target_name = target_from_prompt(run.prompt)
         attention_kind = "합성 블롭"
 
@@ -150,7 +150,7 @@ def main() -> None:
     # --- 배선 ② 정적 기하 (A1) --------------------------------------------------------
     static_geometry = None
     if args.static_geometry != "none":
-        from benchmark.ag3s import static_scene
+        from benchmark.ag3s.fields import static_scene
         if args.static_geometry == "auto":
             static_geometry, sg = static_scene.from_mujoco(scene.model, scene.data)
             print(f"[static] {sg.summary()}")

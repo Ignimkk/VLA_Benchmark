@@ -170,7 +170,7 @@ def parse_urdf(path: str | pathlib.Path) -> UrdfModel:
     `pi05_TO_hybrid/rby1_description/` in this container. Resolving **here** rather than at each
     call site covers every entry point at once; three of them call `parse_urdf(RBY1_URDF)` directly.
     """
-    from benchmark.ag3s.asset_path import resolve_asset
+    from benchmark.ag3s.runtime.asset_path import resolve_asset
 
     parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True))
     root = ET.fromstring(resolve_asset(path, what="URDF").read_text(), parser=parser)
@@ -588,7 +588,7 @@ def load_rby1(
     (`src/openpi/.venv/bin/python -m benchmark....` from the repo root).
     """
     # 경로 해석은 `parse_urdf` 가 한다 — 기본값이 작업공간 상대경로라도, 자산이
-    # `src/` 가 아니라 `pi05_TO_hybrid/` 에 있는 환경에서 찾아낸다 (`ag3s/asset_path.py`).
+    # `src/` 가 아니라 `pi05_TO_hybrid/` 에 있는 환경에서 찾아낸다 (`ag3s/runtime/asset_path.py`).
     return UrdfSphereChain(parse_urdf(urdf_path if urdf_path is not None else RBY1_URDF),
                            joint_names, **kwargs)
 

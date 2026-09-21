@@ -19,7 +19,7 @@
 ![파이프라인 지도](figures/doc-pipeline-map.png)
 
 **[`figures/doc-pipeline-map.png`](figures/doc-pipeline-map.png)** · 생성:
-`benchmark/ag3s/experiments/doc_pipeline_map.py`
+`benchmark/ag3s/experiments/diagrams/doc_pipeline_map.py`
 
 ```
 카메라 depth + 지시문 → 로봇 마스크 → attention lifting → target grounding(+잠금)
@@ -42,7 +42,7 @@
 ![cuRobo 의 역할](figures/doc-curobo-role.png)
 
 **[`figures/doc-curobo-role.png`](figures/doc-curobo-role.png)** · 생성:
-`benchmark/ag3s/experiments/doc_curobo_role.py`
+`benchmark/ag3s/experiments/diagrams/doc_curobo_role.py`
 
 ### 1.1 한 문장 정의
 
@@ -70,7 +70,7 @@
 | **cuRobo 가 안 한다** | AG3S | 로봇 마스크 (`pipeline._robot_mask_for`) — **마스크된 depth 를 넣어 준다** |
 | | AG3S | attention · target · 잠금 — cuRobo 는 RGB 도 언어도 안 본다 |
 | | AG3S `clearance.py` | 여유거리 정책 (조작 대상 0 / 목적지 20 / 그 외 50 mm) |
-| | 우리 `ag3s/curobo_field.py` | 계층 `min()` 합성, `distance()`/`gradient()` |
+| | 우리 `ag3s/fields/curobo_field.py` | 계층 `min()` 합성, `distance()`/`gradient()` |
 | | trajopt | SQP 선형화 · OSQP |
 
 **cuRobo 는 "무엇이 target 인가" 를 표현할 수 없다.** 거리장은 익명이라 "가장 가까운 표면까지
@@ -196,7 +196,7 @@ URDF 자신의 링크 자세에서 유도하므로, 나중에 `resolve_T_base_ca
 ![로봇 마스크](figures/doc-stage-robot-mask.png)
 
 **[`figures/doc-stage-robot-mask.png`](figures/doc-stage-robot-mask.png)** · 생성:
-`benchmark/ag3s/experiments/doc_robot_mask.py`
+`benchmark/ag3s/experiments/diagrams/doc_robot_mask.py`
 
 ### ① 방법론
 
@@ -621,7 +621,7 @@ optimizer 에 도달하지 않는다) 배선이고, **2026-09-15 에 완료됐�
 #### 그림 재생성
 
 ```bash
-PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m benchmark.ag3s.experiments.ppt_robot_mask \
+PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m benchmark.ag3s.experiments.diagrams.ppt_robot_mask \
   --frame $S/frame10.npz --field $S/field10.npz --field-raw $S/field10_raw.npz
 ```
 
@@ -637,7 +637,7 @@ PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m benchmark.ag3s.experiments.ppt
 ![attention lifting](figures/doc-stage-attention-lifting.png)
 
 **[`figures/doc-stage-attention-lifting.png`](figures/doc-stage-attention-lifting.png)** · 생성:
-`benchmark/ag3s/experiments/doc_attention_stages.py`
+`benchmark/ag3s/experiments/diagrams/doc_attention_stages.py`
 
 ### ① 방법론
 
@@ -977,7 +977,7 @@ attention map을 조회해 색을 붙였다. 청록색 별은 같은 apple GT �
 ![target grounding](figures/doc-stage-target-grounding.png)
 
 **[`figures/doc-stage-target-grounding.png`](figures/doc-stage-target-grounding.png)** · 생성:
-`benchmark/ag3s/experiments/doc_attention_stages.py`
+`benchmark/ag3s/experiments/diagrams/doc_attention_stages.py`
 
 ### ① 방법론
 
@@ -1150,11 +1150,11 @@ numpy 버전 때문에 합칠 수 없다.
 ![거리장 어댑터](figures/doc-stage-field-adapter.png)
 
 **[`figures/doc-stage-field-adapter.png`](figures/doc-stage-field-adapter.png)** · 생성:
-`benchmark/ag3s/experiments/doc_field_adapter.py`
+`benchmark/ag3s/experiments/diagrams/doc_field_adapter.py`
 
 ### ① 방법론
 
-`ag3s/curobo_field.py` 의 `CuroboEsdfField` 가 계층 여럿을 받아 **하나의 거리장처럼** 보이게
+`ag3s/fields/curobo_field.py` 의 `CuroboEsdfField` 가 계층 여럿을 받아 **하나의 거리장처럼** 보이게
 한다. 계층은 **거친 것부터** 주고, 질의는 계층마다 구한 뒤 `min()` 으로 합친다.
 
 **계층 하나하나는 기존 `EsdfField` 를 그대로 쓴다.** 삼선형 보간과 중심차분 기울기를 다시
@@ -1294,16 +1294,16 @@ PYTHONPATH=/mnt/dev/work .venv-curobo/bin/python -m \
 
 # 3) 그림 넷 (ag3s venv)
 PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m \
-  benchmark.ag3s.experiments.doc_curobo_role --frame $S/frame10.npz --field $S/field10.npz
+  benchmark.ag3s.experiments.diagrams.doc_curobo_role --frame $S/frame10.npz --field $S/field10.npz
 PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m \
-  benchmark.ag3s.experiments.doc_robot_mask --frame $S/frame10.npz \
+  benchmark.ag3s.experiments.diagrams.doc_robot_mask --frame $S/frame10.npz \
   --field $S/field10.npz --field-raw $S/field10_raw.npz
 PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m \
-  benchmark.ag3s.experiments.doc_field_adapter --frame $S/frame10.npz --field $S/field10.npz
+  benchmark.ag3s.experiments.diagrams.doc_field_adapter --frame $S/frame10.npz --field $S/field10.npz
 MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m \
-  benchmark.ag3s.experiments.doc_attention_stages --records run_0004 \
+  benchmark.ag3s.experiments.diagrams.doc_attention_stages --records run_0004 \
   --attention attention_step1_run0004.npz --frame 10
-PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m benchmark.ag3s.experiments.doc_pipeline_map
+PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m benchmark.ag3s.experiments.diagrams.doc_pipeline_map
 ```
 
 **환경** — venv 둘이고 numpy 버전 때문에 합칠 수 없다.

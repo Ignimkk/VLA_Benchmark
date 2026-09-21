@@ -16,11 +16,11 @@ IDS = ("head", "left_wrist", "right_wrist")
 
 def main() -> None:
     from benchmark.ag3s.config import AG3SConfig
-    from benchmark.ag3s.experiments.grounding_report import (
+    from benchmark.ag3s.experiments.reports.grounding_report import (
         ARM_LINKS, build_constraint_robot_model, build_robot_model)
-    from benchmark.ag3s.experiments.mujoco_source import gaussian_attention
-    from benchmark.ag3s.experiments.policy_record import load_run, pose_scene, replay_scene
-    from benchmark.ag3s.pipeline import AG3S
+    from benchmark.ag3s.experiments.sources.mujoco_source import gaussian_attention
+    from benchmark.ag3s.experiments.sources.policy_record import load_run, pose_scene, replay_scene
+    from benchmark.ag3s.runtime.pipeline import AG3S
 
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--records", default="run_0004")

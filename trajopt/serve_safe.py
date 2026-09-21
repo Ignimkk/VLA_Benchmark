@@ -35,10 +35,10 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str):
     import mujoco
 
     from benchmark.ag3s.config import AG3SConfig
-    from benchmark.ag3s.experiments.grounding_report import (
+    from benchmark.ag3s.experiments.reports.grounding_report import (
         ARM_LINKS, build_constraint_robot_model, build_robot_model)
-    from benchmark.ag3s.experiments.mujoco_source import TransportScene
-    from benchmark.ag3s.pipeline import AG3S
+    from benchmark.ag3s.experiments.sources.mujoco_source import TransportScene
+    from benchmark.ag3s.runtime.pipeline import AG3S
 
     mj_model = mujoco.MjModel.from_xml_path(str(pathlib.Path(model_xml).resolve()))
     scene = TransportScene.attach(mj_model, mujoco.MjData(mj_model))
@@ -67,7 +67,7 @@ def load_static_geometry(spec: str, model_xml: str, *, links: str):
     보지만(`build_ag3s` 머리말), **정적 기하는 정의상 안 움직이므로** 시작 때 한 번 읽는 것이
     그 경고에 걸리지 않는다. 움직이는 것(자유물체·로봇)은 `from_mujoco` 가 버린다.
     """
-    from benchmark.ag3s import static_scene
+    from benchmark.ag3s.fields import static_scene
 
     if not spec or spec == "none":
         logging.info("static geometry: 없음 — 격자 밖·미관측은 예전처럼 낙관적으로 답한다 (E4)")
@@ -148,7 +148,7 @@ def main() -> None:
                     help="청크마다 AG3S 중간 산출물(attention·grounding·거리장·제약 여유)을 "
                          "npz 로 남긴다. `--safe-remote` 청크는 이것들을 응답에 싣지 않으므로, "
                          "서버 쪽 파이프라인을 진단하는 유일한 자리다 — 로컬 "
-                         "`--record-constraints`(`benchmark/ag3s/experiments/constraint_record.py`)"
+                         "`--record-constraints`(`benchmark/ag3s/experiments/sources/constraint_record.py`)"
                          "와 같은 형식")
     ap.add_argument("--record-constraints-esdf", choices=("none", "occupancy", "full"),
                     default="full")
@@ -156,7 +156,7 @@ def main() -> None:
                     help="아는 고정 기하(벽·선반·테이블·바닥)를 해석적 채널에 싣는다 — 거리장이 "
                          "min(복셀, 해석적) 을 답해 미관측·격자 밖의 낙관을 없앤다 (E4·N2). "
                          "none(기본) = 지금과 같다. auto = --model-xml 에서 뽑는다(시뮬). "
-                         "PATH = benchmark.ag3s.static_scene 이 쓴 JSON(실기 — MuJoCo 불필요). "
+                         "PATH = benchmark.ag3s.fields.static_scene 이 쓴 JSON(실기 — MuJoCo 불필요). "
                          "주의: --links all 과 함께 쓰면 바닥이 바퀴·베이스에 못 푸는 행을 "
                          "상수로 깐다 (실측 base -342 mm)")
     args = ap.parse_args()
@@ -192,7 +192,7 @@ def main() -> None:
 
         recorder = None
         if args.record_constraints:
-            from benchmark.ag3s.experiments.constraint_record import ConstraintRecordWriter
+            from benchmark.ag3s.experiments.sources.constraint_record import ConstraintRecordWriter
 
             recorder = ConstraintRecordWriter(
                 args.record_constraints, esdf_mode=args.record_constraints_esdf,

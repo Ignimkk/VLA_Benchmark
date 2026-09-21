@@ -95,11 +95,11 @@ def main() -> None:
     ap.add_argument("--slice-frame", type=int, default=10)
     args = ap.parse_args()
 
-    from benchmark.ag3s.curobo_field import CuroboEsdfField, RolloutFields
-    from benchmark.ag3s.experiments.grounding_report import (
+    from benchmark.ag3s.fields.curobo_field import CuroboEsdfField, RolloutFields
+    from benchmark.ag3s.experiments.reports.grounding_report import (
         ARM_LINKS, build_constraint_robot_model)
-    from benchmark.ag3s.experiments.mujoco_source import is_robot_body
-    from benchmark.ag3s.experiments.policy_record import load_run, pose_scene, replay_scene
+    from benchmark.ag3s.experiments.sources.mujoco_source import is_robot_body
+    from benchmark.ag3s.experiments.sources.policy_record import load_run, pose_scene, replay_scene
 
     blob = np.load(args.frames_npz)
     n = int(blob["n_frames"])
@@ -299,7 +299,7 @@ def _figure(slice_cache, rows, xval_box, xval_naive) -> None:
     for path in ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",):
         if pathlib.Path(path).exists():
             fm.fontManager.addfont(path)
-    from benchmark.ag3s.experiments import figstyle
+    from benchmark.ag3s.experiments.common import figstyle
     figstyle.use_korean()
     import matplotlib.pyplot as plt
     from matplotlib.patches import Circle, Rectangle

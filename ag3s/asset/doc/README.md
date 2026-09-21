@@ -13,7 +13,7 @@ asset/
 `image/`는 **언제든 통째로 재생성**됩니다.
 
 ```bash
-src/openpi/.venv/bin/python -m benchmark.ag3s.visualization
+src/openpi/.venv/bin/python -m benchmark.ag3s.runtime.visualization
 ```
 
 인자 없이 실행하면 `asset/image/`에 8장을 덮어씁니다. 다른 곳에 뽑고 싶으면 `--out <경로>`,

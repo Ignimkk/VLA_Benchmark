@@ -5,7 +5,7 @@
 everywhere it's called. `Pi0.sample_actions` (`pi0.py:245` and `:269`) still unpacks a 2-tuple, so
 turning the flag on for the policy that serves actions breaks serving outright. Fixing that is an
 openpi change, so instead: load a **second** copy of the same checkpoint with the flag on, and use it
-only through `AttentionSampler` (`benchmark/ag3s/experiments/pi05_attention.py`), which never calls
+only through `AttentionSampler` (`benchmark/ag3s/experiments/sources/pi05_attention.py`), which never calls
 `sample_actions` — it drives `PaliGemma.llm` directly with the 3-tuple unpack it already expects.
 That sampler is the same one `step-01-attention.json` was scored with; nothing here is reimplemented.
 
@@ -28,7 +28,7 @@ import numpy as np
 
 __all__ = ["AttentionPolicy", "load_attention_model"]
 
-#: `benchmark/ag3s/docs/step-01-attention.json` -> `best`.
+#: `benchmark/ag3s/docs/archive/step-verification-20260904/step-01-attention.json` -> `best`.
 _DENOISE_STEP = 0
 _AGG = "last"
 _LAYER = 8
@@ -40,7 +40,7 @@ def load_attention_model(config_name: str, checkpoint: str):
 
     Returns the bare model (not a `Policy`) — that's all `AttentionSampler` needs.
     """
-    from benchmark.ag3s.experiments.pi05_attention import load_policy
+    from benchmark.ag3s.experiments.sources.pi05_attention import load_policy
 
     return load_policy(config_name, checkpoint)._model  # noqa: SLF001
 
@@ -53,7 +53,7 @@ class AttentionPolicy:
     """
 
     def __init__(self, policy, attn_model, *, num_denoise_steps: int = 10, noise_seed: int = 0):
-        from benchmark.ag3s.experiments.pi05_attention import AttentionSampler
+        from benchmark.ag3s.experiments.sources.pi05_attention import AttentionSampler
 
         self._policy = policy
         self._sampler = AttentionSampler(attn_model, num_steps=num_denoise_steps)
@@ -81,8 +81,8 @@ class AttentionPolicy:
         import jax
         import jax.numpy as jnp
 
-        from benchmark.ag3s.experiments.pi05_attention import AGGREGATIONS
-        from benchmark.ag3s.experiments.policy_record import (
+        from benchmark.ag3s.experiments.sources.pi05_attention import AGGREGATIONS
+        from benchmark.ag3s.experiments.sources.policy_record import (
             ATTENTION_GRID, CAMERA_BINDINGS, POLICY_CAMERA_NAMES)
         from openpi.models import model as _model
 

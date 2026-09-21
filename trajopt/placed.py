@@ -93,7 +93,7 @@ def destination_placement(
         min_points_inside: 쥔 물체의 질의점 중 이 비율 이상이 범위 안이어야 한다. 점 하나로
             판정하면 잡티 한 점이 판정을 뒤집는다.
     """
-    from benchmark.ag3s.attached import attached_points_in_base
+    from benchmark.ag3s.constraints.attached import attached_points_in_base
 
     def placed_fn(_scene: dict, constraint_set: Any) -> bool:
         attached = getattr(constraint_set, "attached", None)

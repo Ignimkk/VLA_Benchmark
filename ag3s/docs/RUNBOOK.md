@@ -68,7 +68,7 @@ TAG=run0003
 ## 3. 기록 검사 (로컬) — forward pass를 쓸 값어치가 있는가
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.record_check \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.sources.record_check \
     --records $REC
 ```
 
@@ -95,7 +95,7 @@ ssh -p 21151 blunex@ai.amrc.kr 'scp -P 32542 ~/ag3s_records.tgz root@172.21.121.
 
 ## 5. attention 추출 (GPU 서버)
 
-전문은 [step-01-server-prompt.md](step-01-server-prompt.md)에 있다. 요지만:
+서버에서 돌리는 절차는 이렇다.
 
 ```bash
 # (a) 실행 중인 서버 커맨드라인을 파일로 남긴다 — 재기동에 필요
@@ -113,11 +113,11 @@ kill $PID && sleep 10 && nvidia-smi
 # (d) 먼저 2프레임 스모크 (layers=18 heads=8 action_tokens=50 확인)
 PY=/mnt/dev/work/pi05_TO_hybrid/openpi/.venv/bin/python
 cd /mnt/dev/work
-$PY -m benchmark.ag3s.experiments.pi05_attention --records run_0003 --limit 2 \
+$PY -m benchmark.ag3s.experiments.sources.pi05_attention --records run_0003 --limit 2 \
     --checkpoint <(a)의 경로> --config <(a)의 config> --out /tmp/attn_smoke.npz
 
 # (e) 전체
-XLA_FLAGS='--xla_gpu_enable_command_buffer=' XLA_PYTHON_CLIENT_PREALLOCATE=false $PY -m benchmark.ag3s.experiments.pi05_attention     --records run_0004     --checkpoint /mnt/dev/work/pi05_TO_hybrid/checkpoints/pi05_rby1_atomic_lora/rby1_atomic_basket_14d_v2_30k_20260825/29999     --config pi05_rby1_atomic_lora     --out /mnt/dev/work/attention_step1_run0004.npz
+XLA_FLAGS='--xla_gpu_enable_command_buffer=' XLA_PYTHON_CLIENT_PREALLOCATE=false $PY -m benchmark.ag3s.experiments.sources.pi05_attention     --records run_0004     --checkpoint /mnt/dev/work/pi05_TO_hybrid/checkpoints/pi05_rby1_atomic_lora/rby1_atomic_basket_14d_v2_30k_20260825/29999     --config pi05_rby1_atomic_lora     --out /mnt/dev/work/attention_step1_run0004.npz
 
 # (f) 서버 재기동 — 이것까지가 작업의 일부다
 cat /tmp/serve_policy_cmdline.txt   # 그대로 재실행
@@ -132,7 +132,7 @@ ps aux | grep serve_policy | grep -v grep; ss -tlnp | grep 8123
 
 ## 6. 채점 — 1~5단계 (전부 로컬, GPU 불필요)
 
-**순서가 중요하다.** 3·4·5단계가 1단계의 결과 파일(`step-01-attention.json`)에서 (층, 헤드,
+**순서가 중요하다.** 3·4·5단계가 1단계의 결과 파일(`archive/step-verification-20260904/step-01-attention.json`)에서 (층, 헤드,
 Euler step, pooling)을 읽는다. 1단계를 먼저 돌리지 않으면 나머지가 실패한다.
 
 ```bash
@@ -142,27 +142,27 @@ ATT=benchmark/ag3s/asset/data/attention_step1_run0003.npz
 PY="MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m"
 
 # 1단계 — attention map  (~1분)
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.attention_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.attention_report \
     --records $REC --attention $ATT
 
 # 2단계 — 3D back-projection  (~2분)
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.backprojection_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.backprojection_report \
     --records $REC
 
 # 3단계 — attention lifting  (~4분)
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.lifting_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.lifting_report \
     --records $REC --attention $ATT
 
 # 4단계 — target grounding  (~8분)
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.grounding_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.grounding_report \
     --records $REC --attention $ATT
 
 # 5단계 — target/obstacle 분리  (~3분)
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.separation_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.separation_report \
     --records $REC --attention $ATT
 
 # 6단계 — geometry 변환 (primitive)  (~5분)
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.geometry_report \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.geometry_report \
     --records $REC --attention $ATT
 ```
 
@@ -186,7 +186,7 @@ done
 | | 기본 | `--tag 004` |
 |---|---|---|
 | 그림 | `asset/image/<단계>/` | `asset/image_004/<단계>/` |
-| 문서 | `docs/step-05-separation.md` | `docs/step-05-separation_004.md` |
+| 문서 | `docs/archive/step-verification-20260904/step-05-separation.md` | 같은 폴더의 `..._004.md` |
 | 문서 안 링크 | `../asset/image/<단계>/` | `../asset/image_004/<단계>/` |
 
 링크는 하드코딩이 아니라 **문서에서 그림 폴더까지의 상대 경로로 계산**하므로
@@ -196,7 +196,7 @@ done
 ## 7. 갤러리 (로컬)
 
 ```bash
-MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.cloud_gallery \
+MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.reports.cloud_gallery \
     --records $REC --attention $ATT --frame 0
 ```
 
@@ -231,7 +231,7 @@ MUJOCO_GL=osmesa src/openpi/.venv/bin/python -m pytest tests/ag3s tests/trajopt 
 | 항목 | 내용 |
 |---|---|
 | **run 번호** | `--record-ag3s`는 매번 새 `run_XXXX`를 만든다. 모든 명령의 경로를 새 번호로 바꾼다 |
-| **단계 순서** | 3·4·5단계가 `step-01-attention.json`을 읽는다. 1단계를 먼저 |
+| **단계 순서** | 3·4·5단계가 `archive/step-verification-20260904/step-01-attention.json`을 읽는다. 1단계를 먼저 |
 | **체크포인트·config 짝** | 서버가 실제 로드한 것을 확인해서 쓴다. 틀려도 결과가 정상으로 보인다 |
 | **`range_max`** | 4·5·6단계 기본값 `2.0 m`. 없으면 voxel이 15.9 mm로 커져 군집이 불가능해진다 (아래 참조) |
 | **결과 덮어쓰기** | 채점 스크립트가 같은 파일에 쓴다. 비교하려면 미리 복사 |

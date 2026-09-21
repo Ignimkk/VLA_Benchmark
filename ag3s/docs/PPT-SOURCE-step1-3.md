@@ -8,12 +8,12 @@
 | 구분 | 파일 |
 |---|---|
 | 시스템 정의 | `benchmark/ag3s/__init__.py`, `benchmark/ag3s/README.md` |
-| 파이프라인 순서 | `benchmark/ag3s/pipeline.py` (모듈 docstring) |
+| 파이프라인 순서 | `benchmark/ag3s/runtime/pipeline.py` (모듈 docstring) |
 | 검증 개요 | `benchmark/ag3s/docs/README.md` |
-| Step 1 | `docs/step-01-attention.md` · `.json` · `docs/step-01-server-prompt.md` |
+| Step 1 | `docs/step-01-attention.md` · `.json` |
 | Step 2 | `docs/step-02-backprojection.md` · `.json` |
 | Step 3 | `docs/step-03-lifting.md` · `.json` |
-| 수식/알고리즘 | `reconstruction.py`, `attention_lifting.py`, `support_surface.py`, `experiments/attention_report.py`, `experiments/backprojection_report.py`, `experiments/lifting_report.py` |
+| 수식/알고리즘 | `reconstruction.py`, `attention_lifting.py`, `support_surface.py`, `experiments/reports/attention_report.py`, `experiments/reports/backprojection_report.py`, `experiments/reports/lifting_report.py` |
 | 설정 | `configs/default.yaml`, `configs/rby1_three_camera.yaml` |
 
 ---
@@ -422,7 +422,7 @@ attention[frame, 0, "last", 8, 2, camera]
 정확하게 계산될 뿐이다.**
 
 검사 프레임: 44개 중 균등 간격 **8개** × 카메라 3대 = 24회.
-역투영 코드: `benchmark.ag3s.reconstruction.backproject` — **AG3S 본체 코드 그대로.**
+역투영 코드: `benchmark.ag3s.stages.reconstruction.backproject` — **AG3S 본체 코드 그대로.**
 
 ### 6.2 수식 — 핀홀 역투영 (`reconstruction.py: backproject`)
 

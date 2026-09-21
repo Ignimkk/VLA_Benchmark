@@ -869,7 +869,7 @@ class CollisionConstraintSet:
     metrics: dict[str, Any] = dataclasses.field(default_factory=dict)
     attached: Optional["AttachedCollisionGeometry"] = None
     #: Optional ESDF collision field, present when `collision_backend` is `esdf` or `both`.
-    #: Typed as `Any` on purpose: `benchmark.ag3s.esdf` imports scipy, and `types` must stay
+    #: Typed as `Any` on purpose: `benchmark.ag3s.fields.esdf` imports scipy, and `types` must stay
     #: importable on a machine that has only numpy — the same rule `__init__` follows.
     #:
     #: It sits **beside** `candidates`, never instead of them. The target/obstacle separation is a

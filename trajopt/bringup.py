@@ -22,7 +22,7 @@ from typing import Any, Callable, Optional, Sequence
 import numpy as np
 
 from benchmark.ag3s.config import AG3SConfig
-from benchmark.ag3s.pipeline import AG3S
+from benchmark.ag3s.runtime.pipeline import AG3S
 from benchmark.ag3s.types import CameraObservation
 from benchmark.trajopt.config import TrajOptConfig
 from benchmark.trajopt.linearize import CollisionLinearizer, scene_from_constraint_set
@@ -191,7 +191,7 @@ def build_live_pipeline(
             상수로 깔아 실제 신호를 묻는다. **자기 필터 모델은 어느 쪽이든 전신이다** — 머리
             카메라가 자기 몸을 내려다보므로 바퀴를 빼면 그 점이 로봇에 용접된 유령 장애물이 된다.
     """
-    from benchmark.ag3s.experiments.grounding_report import (
+    from benchmark.ag3s.experiments.reports.grounding_report import (
         ARM_LINKS, build_constraint_robot_model, build_robot_model)
 
     ag_cfg = ag3s_config or AG3SConfig.from_dict({
