@@ -1,0 +1,52 @@
+{
+  "_comment": "ag3s-verifier 가 쓴다. 해석을 쓰지 않는다 — 숫자와 경로만.",
+  "step": "T3-a",
+  "date": "2026-09-24",
+  "runs": [
+    {
+      "id": "baseline",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.trajopt.experiments.esdf_rollout ...",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T3-a/baseline.json",
+      "stdout_log": "outputs/verify/T3-a/baseline.log"
+    }
+  ],
+  "code_state": {
+    "repo": "benchmark",
+    "head": "<git -C benchmark rev-parse --short HEAD>",
+    "dirty_files": [
+      "benchmark/trajopt/sqp.py"
+    ]
+  },
+  "numbers": {
+    "_comment": "로그와 논문에 쓰이는 모든 수치가 여기에만 있다. 여기 없는 숫자는 쓰지 않는다.",
+    "violated_start": 15,
+    "frames": 15,
+    "resolved": 13,
+    "improved": 15,
+    "feasible": 13,
+    "violated_end": 2
+  },
+  "figures": [
+    {
+      "path": "benchmark/ag3s/docs/figures/live-test/t3a-scene.png",
+      "kind": "scene"
+    },
+    {
+      "path": "benchmark/ag3s/docs/figures/live-test/t3a-trend.png",
+      "kind": "graph"
+    },
+    {
+      "path": "benchmark/ag3s/docs/figures/live-test/t3a-table.png",
+      "kind": "table"
+    }
+  ],
+  "baseline_check": {
+    "matched": true,
+    "note": "해소 13 / feasible 13 / violated 2 — 기준선과 같다"
+  },
+  "verdict": "사실만. 판정은 lead 와 사용자가 한다.",
+  "not_measured": [
+    "attention -> target grounding (has_target 15/15 false)"
+  ]
+}

@@ -56,6 +56,15 @@ def main() -> None:
     ap.add_argument("--phase-boundaries", type=int, nargs=3, default=(24, 56, 72),
                     metavar=("TRANSIT", "APPROACH", "PRE_GRASP"),
                     help="제어 스텝 -> 단계. 고정 phase 를 쓰면 접촉 권한(E1)이 불활성이다")
+    ap.add_argument("--esdf-backend", choices=("legacy", "curobo"), default="legacy",
+                    help="AG3S 가 live 로 쓸 필드 구현. `curobo` 는 cuRobo Mapper 가 필요하므로 "
+                         "`.venv-openpi-live` 에서 돌려야 한다")
+    ap.add_argument("--fine-voxel", type=float, default=0.005,
+                    help="`--esdf-backend curobo` 의 미세 계층 복셀. 0 이면 단일 계층")
+    ap.add_argument("--tsdf-voxel", type=float, default=0.005)
+    ap.add_argument("--attached-sign-threshold", type=float, default=1.5,
+                    help="쥔 물체 복셀에서 부호를 양수로 강제할지 가르는 문턱 (복셀 단위). "
+                         "cuRobo backend 에서만 쓰인다")
     ap.add_argument("--out-json", default="benchmark/trajopt/asset/safe_replay.json")
     args = ap.parse_args()
 
@@ -81,7 +90,14 @@ def main() -> None:
             "collision_backend": "esdf",
             "pointcloud": {"range_max": args.range_max},
             "esdf": {"voxel_size": args.voxel, "max_distance": 0.4,
-                     "exclude_support_surfaces": False},
+                     "exclude_support_surfaces": False,
+                     "backend": args.esdf_backend,
+                     "fine_voxel_size": (args.fine_voxel
+                                         if args.esdf_backend == "curobo"
+                                         and args.fine_voxel else None),
+                     "tsdf_voxel_size": (args.tsdf_voxel
+                                         if args.esdf_backend == "curobo" else None),
+                     "attached_sign_threshold_voxels": args.attached_sign_threshold},
         }),
         robot_model=filter_robot, constraint_robot_model=constraint_robot,
         # **attached 슬롯을 여기서 예약한다.** 슬롯은 생성 시점에 고정되고 `attach()` 가
@@ -235,7 +251,12 @@ def main() -> None:
             "latch": safe._latch.phase.name,
             "held_points": 0 if att is None or att.points is None else int(len(att.points)),
             "carved": (0 if cs is None or cs.esdf is None
-                       else int(cs.esdf.stats.get("n_attached_voxels_carved", 0))),
+                       else int(cs.esdf.stats.get("n_attached_voxels_carved", 0)
+                                or cs.esdf.stats.get("n_attached_seeds_excluded", 0))),
+            "attached_sign_correction": (None if cs.esdf is None
+                                         else cs.esdf.stats.get("attached_sign_correction")),
+            "esdf_backend": (None if cs.esdf is None
+                             else cs.esdf.stats.get("backend", "legacy")),
             "destination": bool(getattr(cs, "destination_label", None)),
             "scene_failure": getattr(safe.refiner, "last_failure", None),
         }

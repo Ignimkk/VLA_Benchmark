@@ -468,7 +468,14 @@ class AG3S:
                                         and support_mask is not None else None),
                         destination_points=destination_points,
                         static_geometry=static_geometry,
-                        robot_state=robot_state)
+                        robot_state=robot_state,
+                        # age 의 기준은 **적분한 관측 중 가장 최신의 촬영 시각**이다.
+                        # `q_now` 를 고르는 규칙(`safe_policy._scene_fn`)과 같게 둔다 —
+                        # 둘이 어긋나면 "이 자세에서 이 필드" 라는 짝이 깨진다.
+                        observed_at=(max(float(o.timestamp) for o in observations)
+                                     if observations else ts),
+                        frame_id=self.config.frame_id,
+                        frame_index=self.frame_index)
                 notes.extend(esdf_notes)
                 if esdf_field is not None:
                     # G2 (`docs/AG3S_REVIEW_LOG.md` Step 4): an unobserved field used to produce a
@@ -480,7 +487,11 @@ class AG3S:
                     # AG3S cannot tell you what is there. Rendering the second as the first is how a
                     # robot drives into an unmodelled wall."
                     stats = esdf_field.stats
-                    if int(stats.get("n_free", 0)) == 0 and int(stats.get("n_occupied", 0)) == 0:
+                    # block-sparse backend 에서 "아무것도 안 봤다" 의 직접 신호는 할당된
+                    # 블록이 0 개인 것이다. dense 의 `n_free`/`n_occupied` 는 그쪽에 없다.
+                    nothing_observed = int(stats.get("n_active_blocks", -1)) == 0
+                    if nothing_observed or (int(stats.get("n_free", 0)) == 0
+                                            and int(stats.get("n_occupied", 0)) == 0):
                         # Not one voxel was observed either way: the integration produced no
                         # information at all. A genuinely empty workspace still yields FREE voxels
                         # along the rays that passed through it, so this only fires on failure —
@@ -492,6 +503,31 @@ class AG3S:
                         )
                         validity = ConstraintValidity.worst(
                             validity, ConstraintValidity.INCOMPLETE)
+                    elif esdf_field.unknown_fraction is None:
+                        # **"모른다" 를 0 으로 읽지 않는다.** block-sparse TSDF 는 "보고 지나간
+                        # 자유 공간" 과 "한 번도 안 본 곳" 을 구분하지 못하므로 legacy 의
+                        # per-voxel UNKNOWN 비율에 대응하는 값이 없다 (F16 — 블록-스파스가
+                        # 만드는 새 안전 질문). 지금은 보수적으로 `DEGRADED` 로 두고 그 이유를
+                        # 노트에 싣는다. **이 정책은 미정이다** — 매 프레임 인증이 내려가면
+                        # 안전 게이트가 통째로 막히므로, 대안(절두체 기반 관측 부피 측정 /
+                        # 질의점 단위 판정)을 재고 정한다.
+                        # **노트만 남기고 인증은 내리지 않는다** (2026-09-22 판정). 전역
+                        # 비율은 block-sparse 에 대응하는 값이 없고, 있어도 이 씬에서는 격자의
+                        # 대부분이 팔이 닿지 못하는 허공이라 판정 기준이 되기에 부적절하다.
+                        # 인증은 아래 `_esdf_coverage` 가 **로봇 구와 쥔 물체가 지나가는 곳**의
+                        # 관측 여부로 한다.
+                        fo = stats.get("frustum_observation") or {}
+                        seen = fo.get("observed_fraction")
+                        notes.append(
+                            "this backend has no dense per-voxel UNKNOWN count (a block-sparse "
+                            "TSDF leaves 'seen through, free' and 'never looked at' both "
+                            f"unallocated); {int(stats.get('n_active_blocks', -1))} block(s) "
+                            "allocated"
+                            + ("" if seen is None else
+                               f", frustum estimate {seen:.1%} of the workspace box observed")
+                            + ". Certification comes from the swept-volume observation check "
+                              "instead of a global fraction"
+                        )
                     elif esdf_field.unknown_fraction >= cfg.esdf.unknown_report_threshold:
                         notes.append(
                             f"{esdf_field.unknown_fraction:.1%} of the ESDF volume was never "
@@ -703,7 +739,31 @@ class AG3S:
             centres, radii = model.sphere_centers_numeric(np.asarray(robot_state, np.float64))
             centres = np.asarray(centres, np.float64).reshape(-1, 3)
             radii = np.asarray(radii, np.float64).reshape(-1)
-            lower, upper = field.grid.origin, field.grid.upper
+            # **관측 판정은 여기서 하지 않는다 — 지평이 여기 없다.**
+            #
+            # 2026-09-22 판정은 "로봇 구와 attached object 가 실제로 지나가는 swept volume 의
+            # 관측 여부를 안전 게이트로 쓴다" 였다. 그 판정은 맞지만 **이 자리가 아니다.**
+            # AG3S 는 현재 프레임의 `q` 만 알고, 현재 자세의 구 중심은 **정의상 로봇 안에**
+            # 있다. 그것을 관측 판정하면 미지 장애물 부피가 아니라 self-occlusion 을 잰다.
+            #
+            # 실측 (seed 101, 구 120 개): 구 중심을 판정하면 63 개가 미관측으로 나오는데,
+            # 그 구들은 첫 표면보다 **중앙 87.2 mm 뒤**에 있고 반지름은 중앙 26 mm 다 —
+            # 자기 몸이나 다른 로봇 부위에 가려진 것이다 (관측된 구는 뒤 깊이 중앙 28.5 mm).
+            # 마스킹한 depth 로 재면 113/120 까지 갔는데 그것은 더 심한 동어반복이었다
+            # (로봇이 자기를 지웠으니 자기가 안 보인다).
+            #
+            # 그래서 필드는 `observation` probe 를 **들고 나가고**, 판정은 지평의 미래 스텝
+            # 구 위치에서 한다 — 그 자리는 trajopt 이고, T4 의 합격 조건 "전체 계획 지평의
+            # 로봇 구와 attached point 가 coarse coverage 안에 있다" 와 같은 곳이다.
+            # **거친 계층의 범위를 본다.** 2계층 필드에서 `field.grid` 는 *가장 미세한* 계층
+            # 이고 (그쪽이 E1 의 target 판정 허용오차에 맞는 선택이다), 미세 창은 관심 영역만
+            # 덮으므로 팔 구 대부분이 당연히 그 밖에 있다. 그것을 G4(로봇 구가 격자 밖이면
+            # 무조건 자유로 읽히는데 아무도 경고 안 한다)로 세면 **매 프레임 degraded** 가
+            # 나고 안전 게이트가 통째로 막힌다 — F14(하네스가 만든 가짜 카메라 지연)와 같은
+            # 모양의 오진이다. `CuroboEsdfField` 가 이 경로를 위해 `coverage_grid` 를 따로
+            # 두고 있고, 여기가 그것을 읽는 자리다.
+            cover = getattr(field, "coverage_grid", None) or field.grid
+            lower, upper = cover.origin, cover.upper
             outside = np.any(
                 (centres - radii[:, None] < lower) | (centres + radii[:, None] > upper), axis=1
             )
@@ -811,20 +871,43 @@ class AG3S:
         return out
 
     def _build_esdf(self, depth_cameras, target, *, support_points=None,
-                    destination_points=None, static_geometry=None, robot_state=None):
+                    destination_points=None, static_geometry=None, robot_state=None,
+                    observed_at=None, frame_id="", frame_index=-1):
         """Integrate this frame into the ESDF and return `(field, notes)`.
 
         The builder is kept on the instance rather than rebuilt: that is the only way the local
         update means anything, since a fresh grid has nothing to be incremental against.
         """
-        from benchmark.ag3s.fields.esdf import EsdfBuilder
-
         cfg = self.config.esdf
         if not depth_cameras:
             return None, ["esdf backend requested but no camera depth was supplied; "
                           "the field was not built and the primitive candidates stand alone"]
         if self._esdf_builder is None:
-            self._esdf_builder = EsdfBuilder(cfg)
+            # **필드 구현만 갈아탄다.** 아래의 정책은 backend 와 무관하게 그대로다 — E1 이
+            # 금지한 target carving, 목적지 라벨(F18), 쥔 물체(A2), 해석적 기하(N2) 의 결정은
+            # 여기서 내려지고 builder 는 그것을 받는 쪽이다.
+            #
+            # `curobo` 일 때 `EsdfBuilder` 를 **만들지 않는다.** 만들면 legacy 가 조용히
+            # 도는 것이고, `AG3S_TOTAL_TEST_Prompt.md` 의 T0 은 그것을 즉시 실패 조건으로
+            # 둔다. 조용히 흐르는 것을 막으려면 갈림길이 여기 하나여야 한다.
+            if cfg.backend == "curobo":
+                from benchmark.ag3s.fields.curobo_builder import CuroboFieldBuilder
+                self._esdf_builder = CuroboFieldBuilder(cfg)
+            else:
+                from benchmark.ag3s.fields.esdf import EsdfBuilder
+                self._esdf_builder = EsdfBuilder(cfg)
+
+        if cfg.backend == "curobo":
+            # **프레임마다 본다.** 위 갈림길은 첫 프레임에 한 번만 지나가므로, 거기서만 확인하면
+            # 그 뒤에 다른 경로가 legacy 를 만들어도 모른다. 출처 도장은 *쓰인* 필드가 무엇인지
+            # 말해 주지만 만들어만 놓은 것은 안 잡는다 — 그래서 생성 횟수를 따로 센다.
+            from benchmark.ag3s.fields.esdf import EsdfBuilder
+            if EsdfBuilder.instances_created:
+                raise RuntimeError(
+                    f"esdf.backend='curobo' 인데 legacy EsdfBuilder 가 이 프로세스에서 "
+                    f"{EsdfBuilder.instances_created} 번 만들어졌다. T0 의 즉시 실패 조건이다 — "
+                    "누가 만들었는지 찾아 없앤다. 두 backend 가 한 프로세스에 공존하면 어느 "
+                    "필드가 판정에 쓰였는지 기록만 보고는 되짚을 수 없다.")
 
         # 예전엔 여기서 `contact.rule_for(phase).contact_permission`을 보고 target을 필드에서
         # 통째로 carve() 했다 (E1, `docs/AG3S_REVIEW_LOG.md` Step 2). 문제: 필드는 익명이라
@@ -864,7 +947,12 @@ class AG3S:
                                           labelled_points=labelled,
                                           # 아는 정적 기하 — **주입**이다. AG3S 는 무엇이 벽이고
                                           # 무엇이 선반인지 알 수 없다 (phase·목적지와 같은 계약).
-                                          static_geometry=static_geometry)
+                                          static_geometry=static_geometry,
+                                          # 출처. age 의 기준은 **관측 시각**이다 — 서버
+                                          # monotonic 은 프로세스마다 원점이 달라 클라이언트가
+                                          # 자기 시계와 견줄 수 없다.
+                                          observed_at=observed_at,
+                                          frame_id=frame_id, frame_index=frame_index)
         return field, []
 
     @staticmethod

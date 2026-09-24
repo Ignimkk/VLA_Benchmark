@@ -50,6 +50,20 @@ class SafeRemoteClient:
         self.last_safe = False
         self.last_reason = "no response yet"
         self.last_verdict: dict[str, Any] = {}
+        #: 마지막 응답이 실어 온 거리장 출처 (`FieldProvenance`). **hold 일 때도 붙든다** —
+        #: control frame 이 왜 멈췄는지를 적으려면 그 프레임의 기하가 무엇이었는지 알아야 한다.
+        self.last_field: Any = None
+        #: 마지막 왕복의 결과. `ok` | `timeout` | `stale` | `unsafe` | `error`.
+        #: T0 이 프레임마다 요구하는 IPC 기록이 이 값과 아래 `stats` 다.
+        self.last_ipc = "none"
+        #: **실제로 찍은** 카메라별 촬영 시각 (단조시계). `_pack` 이 채운다.
+        #:
+        #: 관측 프레임을 기록하려면 촬영 시각이 필요한데, 캡처는 이 클래스 안(`_pack`)에서
+        #: 일어나므로 호출부는 그 값을 볼 길이 없었다. 응답의 `observed_at` 은 **서버가 고른**
+        #: 가장 최근 한 개뿐이라 카메라 간 시차(skew)를 복원할 수 없다 — 세 대가 순차 렌더라
+        #: 그 시차가 손목 클라우드의 번짐과 직결된다. 그래서 왕복이 어떻게 끝나든(hold 포함)
+        #: 남겨 둔다: 요청을 **보내기 전에** 채우므로 timeout 이어도 촬영 시각은 남는다.
+        self.last_stamps: dict[str, float] = {}
         self.stats = {"sent": 0, "safe": 0, "unsafe": 0, "timeout": 0, "stale": 0, "error": 0}
 
         self._trace = None
@@ -98,18 +112,25 @@ class SafeRemoteClient:
             return self._hold(f"stale response: asked for seq {seq}, got {got}", "stale", result)
 
         actions = np.asarray(result.get("actions"))
-        if actions.ndim != 2 or actions.shape[1] != 14:
-            return self._hold(f"unexpected action shape {actions.shape}; expected [H, 14]",
-                              "error", result)
+        if actions.ndim != 2 or actions.shape[1] != wire.ACTION_WIDTH:
+            # **차원이 다르면 hold 다.** 자르거나 채워서 통과시키면 관절이 한 칸씩 밀린
+            # 청크가 실행된다 — 형태는 맞고 뜻은 틀린, 가장 위험한 실패다.
+            return self._hold(
+                f"unexpected action shape {actions.shape}; expected "
+                f"[H, {wire.ACTION_WIDTH}] (arm_joint_dim={wire.ARM_JOINT_DIM}). "
+                "정책과 이 클라이언트의 차원이 다르면 서버 config 를 확인하십시오",
+                "error", result)
 
         self.last_verdict = {k: result.get(k) for k in
                              ("ag3s_status", "geometry_certified", "trajopt_status",
                               "max_violation_m", "timing_ms", "notes")}
+        self.last_field = wire.unpack_field(result)
         if not bool(result.get("safe", False)):
             return self._hold(self._explain(result), "unsafe", result)
 
         self.last_safe = True
         self.last_reason = ""
+        self.last_ipc = "ok"
         self.stats["safe"] += 1
         if self._trace is not None:
             self._trace.mark("verdict", safe=True, seq=seq,
@@ -133,6 +154,7 @@ class SafeRemoteClient:
                 T[cam] = np.asarray(frame.T_base_cam, np.float64)
                 state[cam] = np.asarray(frame.robot_state, np.float64)
                 stamps[cam] = time.monotonic()
+        self.last_stamps = dict(stamps)
         return wire.pack_request(
             obs, cameras=self.cameras, depth=depth, intrinsics=K, extrinsics=T,
             robot_state=state, stamps=stamps, phase=self.phase,
@@ -143,6 +165,16 @@ class SafeRemoteClient:
         """실행하지 않기로 한다. 청크는 **그대로 돌려준다** — 무엇이 거부됐는지 보이도록."""
         self.last_safe = False
         self.last_reason = reason
+        self.last_ipc = kind
+        # **hold 일 때도 필드 출처를 붙든다.** 응답이 아예 없으면 `unavailable` 을 이유와
+        # 함께 남긴다 — control frame 이 왜 멈췄는지를 적으려면 그 프레임의 기하가 무엇이었는지
+        # 알아야 하고, 비워 두면 "기록이 없다" 와 "필드가 없었다" 가 구별되지 않는다.
+        if result is not None:
+            self.last_field = wire.unpack_field(result)
+        else:
+            from benchmark.ag3s.fields.provenance import FieldProvenance
+            self.last_field = FieldProvenance.unavailable(
+                f"no response to read a field from ({kind}): {reason}")
         self.stats[kind] = self.stats.get(kind, 0) + 1
         if self._trace is not None:
             self._trace.mark("verdict", safe=False, kind=kind, reason=reason)
@@ -154,14 +186,24 @@ class SafeRemoteClient:
         return {"actions": hold, "safe": False, "hold_reason": reason}
 
     def _current_state(self) -> np.ndarray:
-        """14-D action 레이아웃의 현재 상태. hold 청크의 모든 행이 된다."""
-        state = self._scene.robot_state()
-        if len(state) == 14:
+        """action 레이아웃의 현재 상태. hold 청크의 모든 행이 된다.
+
+        레이아웃은 `[왼팔 N, 왼 그리퍼, 오른팔 N, 오른 그리퍼]` 이고 `N = wire.ARM_JOINT_DIM`
+        이다. **6 을 박지 않는다** — 박아 두면 16D 에서 그리퍼가 손목 자리에 들어가고 hold
+        청크가 엉뚱한 관절을 지령한다.
+        """
+        state = np.asarray(self._scene.robot_state(), np.float64)
+        if len(state) == wire.ACTION_WIDTH:
             return state
-        # 씬이 12-D 팔 관절만 준다면 그리퍼 자리를 열림(0)으로 채운다. 그리퍼를 임의로 닫으면
+        n = wire.ARM_JOINT_DIM
+        if len(state) < 2 * n:
+            raise ValueError(
+                f"씬이 준 상태가 {len(state)}-D 인데 레이아웃은 팔 관절 {2 * n} 개를 "
+                f"필요로 합니다 (arm_joint_dim={n}). 무엇으로 채워야 할지 추측하지 않습니다")
+        # 씬이 팔 관절만 준다면 그리퍼 자리를 열림(0)으로 채운다. 그리퍼를 임의로 닫으면
         # 잡고 있던 것을 떨어뜨린다.
-        arms = np.asarray(state, np.float64)[:12]
-        return np.concatenate([arms[:6], [0.0], arms[6:12], [0.0]])
+        arms = state[:2 * n]
+        return np.concatenate([arms[:n], [0.0], arms[n:2 * n], [0.0]])
 
     @staticmethod
     def _explain(result: dict[str, Any]) -> str:

@@ -7,7 +7,8 @@
 # 로 빌려 쓴다 (2026-09-11 검증 환경: torch 2.4.1+cu124, H200 NVL, driver 580.173).
 # torch 를 새로 받으면 2.5 GB 이고 CUDA 버전이 어긋날 위험이 있다.
 #
-# curobo 자체는 소스 설치라 이 파일에 없다 — `docs/CONTAINER_SETUP.md` 의 절차를 따른다.
+# curobo 자체는 소스 설치라 이 파일에 없다 — `/mnt/dev/work/curobo_src` 를 editable 로 넣어
+# 두었다 (`nvidia_curobo 0.8.0.post1.dev43`). `import curobo` 가 그 소스를 가리키면 정상이다.
 
 # JIT 커널 백엔드. **이것이 없으면 ESDF 단계에서 죽는다**
 #   RuntimeError: No curobo kernel backend available!

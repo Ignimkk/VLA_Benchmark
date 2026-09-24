@@ -58,7 +58,7 @@ class ChunkLayout:
 
     Attributes:
         action_dim: full padded width of the chunk (32 for π0.5), including columns nobody reads.
-        n_valid: how many leading columns carry meaning (14 for RB-Y1).
+        n_valid: how many leading columns carry meaning (16 for RB-Y1 16-D, 14 for 14-D).
         action_to_q: ``(action_column, q_index)`` for every joint the optimizer may move, in the
             order the optimizer's decision vector uses.
         fixed_q: q indices held at their current value — the torso (no action channel) and `arm_6`
@@ -160,23 +160,44 @@ class ChunkLayout:
 
     @staticmethod
     def rby1(
-        joint_names: Sequence[str], *, action_dim: int = 32, n_valid: int = 14
+        joint_names: Sequence[str], *, action_dim: int = 32,
+        arm_joint_dim: int = 7, n_valid: Optional[int] = None
     ) -> "ChunkLayout":
         """The RB-Y1 π0.5 layout, derived from the model's joint order rather than hard-coded.
 
-        `pi05_infer.py` documents the chunk as
-        ``14 = [L 6 abs joint, L grip, R 6 abs joint, R grip]`` and applies it to ``joints[:6]`` with
-        `arm_6` held fixed. Both halves are reproduced here, and the q indices are looked up by name
-        so a change to `DEFAULT_RBY1_JOINTS` cannot silently shift the mapping by one.
+        `arm_joint_dim` 이 모든 것을 정한다. openpi 쪽이 그 값으로 delta mask 를
+        ``make_bool_mask(N, -1, N, -1)`` 로 만들므로 (`training/config.py:278-281`) 청크 레이아웃이
+        ``[왼팔 N, 왼 그리퍼, 오른팔 N, 오른 그리퍼]`` 이고 총 차원이 ``2 * (N + 1)`` 이다.
+
+        | `arm_joint_dim` | 총 차원 | 그리퍼 열 | 모델 |
+        |---:|---:|---|---|
+        | 6 | 14 | (6, 13) | `pi05_rby1_atomic_lora` 등 — **은퇴** (2026-09-24 판정) |
+        | **7** | **16** | **(7, 15)** | `pi05_rby1_randomized_pick_place_16d_lora` |
+
+        **기본값이 7 이다.** 2026-09-24 에 16D 로 전환하고 14D 를 버리기로 판정했다 —
+        `arm_joint_dim=6` 은 여전히 받지만 기본 경로가 아니다. 16D 는 `arm_6` 를 **놓지
+        않는다**: 14D 에서 고정이던 손목이 이제 정책이 지령하는 관절이 된다.
+
+        q 인덱스는 이름으로 찾으므로 `DEFAULT_RBY1_JOINTS` 가 바뀌어도 매핑이 조용히 한 칸
+        밀리지 않는다.
         """
+        if arm_joint_dim <= 0:
+            raise ValueError(f"arm_joint_dim 은 양수여야 합니다: {arm_joint_dim}")
+        width = 2 * (int(arm_joint_dim) + 1)
+        if n_valid is None:
+            n_valid = width
+        elif int(n_valid) != width:
+            raise ValueError(
+                f"n_valid={n_valid} 가 arm_joint_dim={arm_joint_dim} 이 정하는 "
+                f"{width} 와 다릅니다. 레이아웃은 2*(N+1) 로 결정되므로 둘을 따로 줄 수 없습니다")
         order = {name: i for i, name in enumerate(joint_names)}
         pairs: list[tuple[int, int]] = []
-        for column, name in enumerate(f"left_arm_{i}" for i in range(6)):
+        for column, name in enumerate(f"left_arm_{i}" for i in range(arm_joint_dim)):
             pairs.append((column, order[name]))
-        for offset, name in enumerate(f"right_arm_{i}" for i in range(6)):
-            pairs.append((7 + offset, order[name]))
-        # Everything the action format cannot address: the six torso joints and both `arm_6`
-        # wrists. They are not free, and they are not absent either — forward kinematics needs them.
+        for offset, name in enumerate(f"right_arm_{i}" for i in range(arm_joint_dim)):
+            pairs.append((arm_joint_dim + 1 + offset, order[name]))
+        # 액션 형식이 가리키지 못하는 것: 여섯 토르소 관절, 그리고 `arm_joint_dim=6` 일 때는
+        # 양쪽 `arm_6` 손목도. 자유가 아니지만 없는 것도 아니다 — FK 가 필요로 한다.
         free = {q for _, q in pairs}
         fixed = tuple(i for i in range(len(joint_names)) if i not in free)
         passthrough = tuple(c for c in range(action_dim) if c not in {a for a, _ in pairs})

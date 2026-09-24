@@ -22,7 +22,11 @@ import pathlib
 import sys
 
 
-def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str):
+def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
+               backend: str = "legacy", fine_voxel: float | None = None,
+               tsdf_voxel: float | None = None,
+               attached_sign_threshold: float = 1.5,
+               max_field_age_sec: float | None = None):
     """서버가 쓸 AG3S. 자기 필터는 전신, 제약은 양팔.
 
     **두 모델은 일부러 다르다.** 자기 필터는 바퀴·베이스까지 있어야 한다 — 머리 카메라가 자기
@@ -45,15 +49,54 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str):
     filter_robot = build_robot_model(scene)
     constraint_robot = build_constraint_robot_model(
         scene, link_filter=None if links == "all" else ARM_LINKS)
+    esdf = {"voxel_size": voxel, "max_distance": 0.4,
+            "exclude_support_surfaces": False,
+            "backend": backend,
+            "attached_sign_threshold_voxels": attached_sign_threshold}
+    if backend == "curobo":
+        esdf["fine_voxel_size"] = fine_voxel or None
+        esdf["tsdf_voxel_size"] = tsdf_voxel or None
+    timing = {} if max_field_age_sec is None else {
+        "max_field_age_sec": max_field_age_sec}
     config = AG3SConfig.from_dict({
         "collision_backend": "esdf",
         "pointcloud": {"range_max": range_max},
-        "esdf": {"voxel_size": voxel, "max_distance": 0.4,
-                 "exclude_support_surfaces": False},
+        "esdf": esdf,
+        **({"timing": timing} if timing else {}),
     })
     logging.info("AG3S: self-filter %d spheres, constraints %d spheres (%s)",
                  filter_robot.n_spheres, constraint_robot.n_spheres, links)
-    return AG3S(config, robot_model=filter_robot, constraint_robot_model=constraint_robot)
+    # **어느 필드 구현이 도는지 시작할 때 크게 말한다.** T0 의 즉시 실패 조건이
+    # "legacy backend 호출" 이므로, 서버가 조용히 legacy 로 떠 있는 것이 가장 나쁜 결과다.
+    if backend == "curobo":
+        logging.info("AG3S ESDF backend: cuRobo — coarse %.0f mm%s, TSDF %.0f mm, "
+                     "attached sign threshold %.1f voxels",
+                     voxel * 1000,
+                     (f" + fine {fine_voxel * 1000:.0f} mm" if fine_voxel
+                      else " (단일 계층)"),
+                     (tsdf_voxel or voxel) * 1000, attached_sign_threshold)
+    else:
+        logging.warning(
+            "AG3S ESDF backend: legacy (numpy EsdfBuilder). "
+            "AG3S_TOTAL_TEST_Prompt.md 의 T0 은 이것을 즉시 실패 조건으로 둔다 — "
+            "통합 테스트를 돌리려면 --esdf-backend curobo 를 주십시오")
+    logging.info("AG3S field age limit: %s",
+                 "미정 (stale 판정을 하지 않고 staleness_checked=false 를 싣는다)"
+                 if max_field_age_sec is None else f"{max_field_age_sec:.3f} s")
+    # **attached 슬롯을 여기서 예약한다.** 슬롯은 생성 시점에 고정되고 `attach()` 가 나중에
+    # 늘릴 수 없다 — 심볼 그래프와 희소성이 거기서 결정되기 때문이다. 안 넘기면 파지 다음
+    # 프레임부터 지각도 최적화도 멈추고 **어디에도 안 찍힌다** (2026-09-18 실측: 14 프레임
+    # 동안 상태가 9 프레임 전의 낡은 `ok` 로 나갔다).
+    #
+    # `safe_replay` 는 그때 고쳤는데 **이 production 서버는 안 고쳤다.** 2026-09-24 에
+    # `SafePolicy` 생성자의 가드가 시작할 때 죽여 잡았다 — 그것이 그 가드를 심은 이유다
+    # ("파지 뒤에 죽으면 조용하지만 시작할 때 죽으면 안 조용하다").
+    from benchmark.trajopt.safe_policy import grasp_parent_links
+
+    parents = grasp_parent_links()
+    logging.info("AG3S attached slots: %s", ", ".join(parents))
+    return AG3S(config, robot_model=filter_robot, constraint_robot_model=constraint_robot,
+                attached_parent_links=parents)
 
 
 def load_static_geometry(spec: str, model_xml: str, *, links: str):
@@ -152,6 +195,21 @@ def main() -> None:
                          "와 같은 형식")
     ap.add_argument("--record-constraints-esdf", choices=("none", "occupancy", "full"),
                     default="full")
+    ap.add_argument("--esdf-backend", choices=("legacy", "curobo"), default="legacy",
+                    help="어느 필드 구현이 돌 것인가. `curobo` 는 cuRobo Mapper 가 필요하므로 "
+                         "`.venv-openpi-live` 에서 띄워야 한다. T0 의 즉시 실패 조건이 "
+                         "legacy backend 호출이므로 통합 테스트에서는 `curobo` 여야 한다")
+    ap.add_argument("--fine-voxel", type=float, default=0.005,
+                    help="`--esdf-backend curobo` 의 미세 계층 복셀 (m). 0 이면 단일 계층")
+    ap.add_argument("--tsdf-voxel", type=float, default=0.005,
+                    help="`--esdf-backend curobo` 의 TSDF 복셀 (m)")
+    ap.add_argument("--attached-sign-threshold", type=float, default=1.5,
+                    help="쥔 물체 복셀에서 부호를 양수로 강제할지 가르는 문턱 (복셀 단위). "
+                         "실제 파지 sweep 으로 정한 값이 1.5 다")
+    ap.add_argument("--max-field-age-sec", type=float, default=None,
+                    help="거리장이 몇 초까지 쓸 만한가. **기본값은 미정(None)** 이고 그때는 "
+                         "stale 판정을 하지 않고 응답에 staleness_checked=false 를 싣는다. "
+                         "추측으로 정하지 않는다 (F14)")
     ap.add_argument("--static-geometry", default="none", metavar="none|auto|PATH",
                     help="아는 고정 기하(벽·선반·테이블·바닥)를 해석적 채널에 싣는다 — 거리장이 "
                          "min(복셀, 해석적) 을 답해 미관측·격자 밖의 낙관을 없앤다 (E4·N2). "
@@ -203,7 +261,12 @@ def main() -> None:
         served = SafePolicy(
             served_policy,
             ag3s=build_ag3s(args.model_xml, voxel=args.voxel,
-                            range_max=args.range_max, links=args.links),
+                            range_max=args.range_max, links=args.links,
+                            backend=args.esdf_backend,
+                            fine_voxel=args.fine_voxel,
+                            tsdf_voxel=args.tsdf_voxel,
+                            attached_sign_threshold=args.attached_sign_threshold,
+                            max_field_age_sec=args.max_field_age_sec),
             static_geometry=load_static_geometry(args.static_geometry, args.model_xml,
                                                  links=args.links),
             to_config=TrajOptConfig.from_dict({

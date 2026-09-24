@@ -96,6 +96,15 @@ def main() -> None:
     ap.add_argument("--dump-frames", default=None,
                     help="프레임마다 head depth·K·T·로봇마스크·target centroid 를 npz 로 남긴다. "
                          "cuRobo 필드를 만드는 입력 (`experiments/curobo/build_rollout_fields.py`)")
+    ap.add_argument("--esdf-backend", choices=("legacy", "curobo"), default="legacy",
+                    help="AG3S 가 **live 로** 쓸 필드 구현. `curobo` 는 cuRobo Mapper 가 "
+                         "필요하므로 `.venv-openpi-live` 에서 돌려야 한다. 아래 "
+                         "`--curobo-fields` 와 다르다 — 그쪽은 미리 구워 둔 npz 를 읽는 "
+                         "offline 경로이고 이쪽은 프레임마다 실제로 만든다")
+    ap.add_argument("--fine-voxel", type=float, default=0.005,
+                    help="`--esdf-backend curobo` 의 미세 계층 복셀. 0 이면 단일 계층")
+    ap.add_argument("--tsdf-voxel", type=float, default=0.005,
+                    help="`--esdf-backend curobo` 의 TSDF 복셀")
     ap.add_argument("--curobo-fields", default=None,
                     help="`build_rollout_fields.py` 가 만든 npz. 프레임마다 AG3S 의 numpy ESDF 를 "
                          "cuRobo 필드로 **교체**한다. 나머지 배선·정책은 전부 그대로이므로 "
@@ -145,7 +154,14 @@ def main() -> None:
         "collision_backend": "esdf",
         "pointcloud": {"range_max": args.range_max},
         "esdf": {"voxel_size": args.voxel, "max_distance": 0.4,
-                 "exclude_support_surfaces": plane_mode},
+                 "exclude_support_surfaces": plane_mode,
+                 "backend": args.esdf_backend,
+                 # `legacy` 에서는 무시된다 (numpy 구현은 계층이 하나다). 기본값을 그대로
+                 # 두는 것이 회귀 기준선을 건드리지 않는 조건이다.
+                 "fine_voxel_size": (args.fine_voxel if args.esdf_backend == "curobo"
+                                     and args.fine_voxel else None),
+                 "tsdf_voxel_size": (args.tsdf_voxel if args.esdf_backend == "curobo"
+                                     else None)},
     })
     ag = AG3S(ag_cfg, robot_model=filter_robot, constraint_robot_model=robot)
 
@@ -205,6 +221,14 @@ def main() -> None:
     print(f"target={target}  attention={'실측' if attention_block is not None else '합성'}  "
           f"복셀={args.voxel*1000:.0f}mm  esdf_margin={args.esdf_margin*1000:.0f}mm  "
           f"계획 지평={planned.horizon.horizon}")
+    # **어느 필드 구현이었는지 출력에 남긴다.** 두 backend 는 별도 기준선을 가지므로
+    # (2026-09-22 판정), 이 줄이 없으면 어느 기준선의 숫자인지 나중에 알 수 없다.
+    if args.esdf_backend == "curobo":
+        print(f"ESDF backend: curobo (live) — coarse {args.voxel*1000:.0f}mm"
+              + (f" + fine {args.fine_voxel*1000:.0f}mm" if args.fine_voxel else " 단일 계층")
+              + f", TSDF {args.tsdf_voxel*1000:.0f}mm")
+    else:
+        print("ESDF backend: legacy (numpy EsdfBuilder) — 회귀 기준선")
 
     dump = {} if args.dump_frames else None
     fields = None
@@ -287,7 +311,15 @@ def main() -> None:
             "ag3s_ms": ag_ms, "to_ms": to_ms,
             "n_candidates": len(cs.candidates),
             "target": cs.has_target,
-            "esdf_unknown": float(cs.esdf.unknown_fraction),
+            # `None` = "모른다" 이고 0 과 다르다. block-sparse TSDF 는 dense 의 per-voxel
+            # UNKNOWN 비율에 대응하는 값을 못 내놓는다 (F16 — 블록-스파스가 만드는 새 안전
+            # 질문). 0 으로 적으면 기록이 그 backend 를 실제보다 좋게 말한다.
+            "esdf_unknown": (None if cs.esdf.unknown_fraction is None
+                             else float(cs.esdf.unknown_fraction)),
+            # cuRobo 경로에서 그 자리를 대신하는 것 — 절두체로 잰 관측 부피 비율 (정보용).
+            "esdf_observed_frustum": (cs.esdf.stats.get("frustum_observation") or {})
+                                     .get("observed_fraction"),
+            "esdf_backend": cs.esdf.stats.get("backend", "legacy"),
             "esdf_occupied": int(cs.esdf.stats.get("n_occupied", -1)),
             "target_voxels_carved": int(cs.esdf.stats.get("n_target_voxels_carved", 0)),
             "clearance_before_mm": float(before) * 1000.0,

@@ -469,11 +469,77 @@ class EsdfConfig:
     #: point is that "most of this volume was never looked at" reaches the caller as words rather
     #: than as an assumption buried in `unknown_policy`.
     unknown_report_threshold: float = 0.9
+    #: 어느 필드 구현이 도는가. `legacy` = 이 저장소의 numpy `EsdfBuilder`,
+    #: `curobo` = `fields/curobo_builder.CuroboFieldBuilder` (cuRobo `Mapper`).
+    #:
+    #: **기본값이 `legacy` 인 이유는 재현성이다.** 지금까지의 모든 회귀 수치(해소 14 / 개선 15 /
+    #: feasible 8 · violated 7)가 numpy 필드로 나온 것이고, 기본값을 바꾸면 그 기준선이 조용히
+    #: 다른 것을 재게 된다. cuRobo 는 **별도 기준선**을 갖는다 (2026-09-22 판정).
+    #:
+    #: `curobo` 로 두면 `EsdfBuilder` 를 만드는 것 자체가 예외가 된다
+    #: (`pipeline._build_esdf`). `AG3S_TOTAL_TEST_Prompt.md` 의 T0 이 legacy backend 호출을
+    #: **즉시 실패 조건**으로 두므로, 그 조건을 코드가 스스로 지키게 하는 것이다 — 조용히
+    #: legacy 로 흐르는 것이 가장 나쁜 결과다.
+    backend: str = "legacy"
+    #: 미세 계층의 복셀 크기. `None`/0 이면 단일 계층. `backend: curobo` 에서만 쓰인다 —
+    #: numpy 구현은 계층이 하나다. 창의 중심은 지금 grounding 의 target 무게중심이고,
+    #: swept volume 으로 옮기는 짝 비교는 T3 에 있다.
+    fine_voxel_size: float | None = None
+    #: cuRobo TSDF 의 복셀 크기. `None`/0 이면 `voxel_size` 를 쓴다. ESDF 계층과 분리된 것은
+    #: cuRobo 가 하나의 TSDF 에서 해상도가 다른 ESDF 를 여러 번 뽑기 때문이다.
+    tsdf_voxel_size: float | None = None
+    #: 쥔 물체 복셀에서 **부호를 양수로 강제할지** 가르는 문턱, **복셀 단위**.
+    #:
+    #: cuRobo 는 부호를 질의 복셀의 TSDF 에서 가져오므로(`builder_esdf.py:455-489`) seed 만
+    #: 지우면 "더 먼 거리에 음수 부호" 가 붙는다. 그래서 쥔 물체 복셀의 부호를 양수로
+    #: 고치는데, 그 복셀에 **환경 표면도 있으면** 실제 관통을 숨긴다.
+    #:
+    #: 판정: seed 제외 뒤의 `|d|` 가 `이 값 × 복셀` 보다 **크면** 그 자리에 다른 표면이
+    #: 없다는 뜻이므로 부호를 고친다. 작으면 무언가 있으므로 **그대로 둔다**(보수적).
+    #:
+    #: 표면은 점유 복셀의 *중심*에 표시되므로 이웃 복셀의 표면은 약 **1 복셀** 거리에 있고,
+    #: 그 표면이 우리 복셀 안으로 반 칸까지 뻗을 수 있으므로 물리적으로 의미 있는 값은
+    #: **1.5 복셀**이다.
+    #:
+    #: **그 값을 실측으로 확정했다** (`run_0004` 22 청크, 잠금이 `attach()` 를 부르는 실제
+    #: 파지 구간, `experiments/live/sweep_attached_threshold.py` 와 `safe_replay`):
+    #:
+    #: | 문턱 | 파지 직후(11~12) | 운반(13~17) | 담기(18~21) | trajopt 판정 |
+    #: |---:|---:|---:|---:|---|
+    #: | 1.0 | **0** | **0** | **0** | 동일 |
+    #: | **1.5** | **157** | **0** | **26** | 동일 |
+    #: | 3.0 | 189 | **26** | 101 | 동일 |
+    #:
+    #: 파지 직후 157 은 **잔상 위에 서 있는 사과**다 (A2 가 −72.7 mm 를 읽은 그 상태). 그
+    #: 국면에서 부호를 그대로 두는 것이 옳고, 대가는 청크 12 의 위반 **0.2 mm** 하나였다.
+    #:
+    #: 1.0 은 공유를 하나도 못 잡아 "순수 복셀만" 이라는 규칙이 무력해진다(전면 교정과 같아
+    #: 진다). 3.0 은 운반 중에도 교정을 포기해 쥔 물체가 필드에 남는다. **1.5 만이 운반에서
+    #: 전면 교정하고 담기에서 보수적**이다. 그리고 세 문턱의 trajopt 판정이 프레임 단위로
+    #: 완전히 같았으므로 — 문턱은 최적화 결과가 아니라 **숨김 위험**만 바꾼다 — 운용을 깨지
+    #: 않는 가장 큰 값을 고르는 것이 맞다.
+    attached_sign_threshold_voxels: float = 1.5
 
     UNKNOWN_POLICIES = ("free", "occupied")
     EXCLUDE_TARGET = ("auto", "always", "never")
+    BACKENDS = ("legacy", "curobo")
 
     def validate(self) -> None:
+        if self.backend not in self.BACKENDS:
+            raise AG3SConfigError(
+                f"esdf.backend 는 {self.BACKENDS} 중 하나여야 합니다: {self.backend!r}")
+        if float(self.attached_sign_threshold_voxels) < 0.0:
+            raise AG3SConfigError(
+                "esdf.attached_sign_threshold_voxels 는 0 이상이어야 합니다: "
+                f"{self.attached_sign_threshold_voxels}")
+        for name in ("fine_voxel_size", "tsdf_voxel_size"):
+            v = getattr(self, name)
+            if v is not None and float(v) <= 0.0:
+                raise AG3SConfigError(f"esdf.{name} 는 양수이거나 None 이어야 합니다: {v}")
+        if self.fine_voxel_size and float(self.fine_voxel_size) > float(self.voxel_size):
+            raise AG3SConfigError(
+                f"esdf.fine_voxel_size ({self.fine_voxel_size}) 가 voxel_size "
+                f"({self.voxel_size}) 보다 큽니다 — 계층은 거친 것부터여야 합니다")
         for name in ("time_decay", "frustum_decay"):
             v = float(getattr(self, name))
             if not (0.0 < v <= 1.0):
@@ -648,8 +714,25 @@ class TimingConfig:
     #: Cameras this deployment expects. An empty tuple means "whatever arrived", which is right for
     #: a bench test and wrong for a robot — set it, and a dropped camera becomes visible.
     expected_cameras: tuple[str, ...] = ()
+    #: 거리장이 **몇 초까지 쓸 만한가**. 청크 하나가 8 개 control frame(533 ms)을 덮으므로
+    #: 두 번째 스텝부터는 필드가 `carried` 이고, 이 한도를 넘으면 `stale` 이다.
+    #:
+    #: **`None` 이 기본값이고 그것은 "아직 안 정했다" 는 뜻이다.** `stale` 판정을 하지 않고
+    #: 응답에 `age_limit_sec: null` 과 `staleness_checked: false` 를 실어, 읽는 쪽이
+    #: "한도 검사를 안 했다" 를 알게 한다.
+    #:
+    #: 아무 값이나 넣지 않는 이유는 위의 `max_state_age_sec` 이다. 그 기본값 100 ms 는
+    #: 측정 없이 정해졌고 이 docstring 이 "nobody has measured them here yet" 라고 열어 둔
+    #: 자리였는데, 실측하니 **피해가 16 ms 에서 이미 시작**했다 (F14 — 상태 지연 16 ms 에서
+    #: 로봇 점 851 개가 클라우드로 새고, 허용하는 96 ms 에서 6,275 개가 샌다). 같은 실수를
+    #: 반복하지 않는다. 한도는 T3(전 프레임 TSDF/ESDF)에서 프레임 간 필드 변화량을 재고 정한다.
+    max_field_age_sec: float | None = None
 
     def validate(self) -> None:
+        if self.max_field_age_sec is not None and float(self.max_field_age_sec) <= 0.0:
+            raise AG3SConfigError(
+                "timing.max_field_age_sec 는 양수이거나 None(아직 안 정함)이어야 합니다: "
+                f"{self.max_field_age_sec}")
         for name in ("max_state_age_sec", "max_transform_age_sec", "max_camera_skew_sec"):
             if getattr(self, name) < 0.0:
                 raise AG3SConfigError(f"timing.{name} must be >= 0, got {getattr(self, name)}")

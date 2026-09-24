@@ -121,6 +121,22 @@ class CuroboEsdfField:
     #: 그래서 기본값을 두지 않고 호출자가 정하게 한다.
     outside_distance: Optional[float] = None
     stats: dict[str, Any] = dataclasses.field(default_factory=dict)
+    #: 라벨 id -> 이름. 계층들이 **같은 순서**를 공유해야 한다 — 계층마다 다르면 같은 id 가
+    #: 다른 물체를 뜻하게 되고, 어느 계층이 답했는지에 따라 판정이 뒤집힌다.
+    label_names: tuple[str, ...] = ()
+    #: **해석적 채널** — 아는 정적 기하. 합성 필드 수준에서 한 번 적용한다 (계층마다 걸면
+    #: 같은 도형을 계층 수만큼 다시 재고, `min` 이므로 결과는 같고 비용만 는다).
+    static_shapes: tuple = ()
+    #: `ObservationProbe` — "이 점이 관측됐는가" 를 원본 depth 로 답한다. block-sparse TSDF 는
+    #: dense 필드의 `unknown_fraction` 에 대응하는 값을 못 내놓으므로, 기하 인증을 **전역
+    #: 비율이 아니라 질의점 단위**로 한다 (2026-09-22 판정). `None` 이면 그 판정을 못 한다.
+    observation: Any = None
+    #: 쥔 물체의 질의점 (base 좌표). 관측 판정이 로봇 구와 **함께** 이것을 봐야 한다 —
+    #: 쥔 물체가 미관측 영역에 들어가는 것도 같은 위험이다.
+    attached_query_points: Any = None
+    #: `FieldProvenance` — `EsdfField.provenance` 와 **같은 모양**이다. 두 backend 의 기록을
+    #: 견주려면 같아야 한다.
+    provenance: Any = None
 
     def __post_init__(self) -> None:
         self.layers = tuple(self.layers)
@@ -132,6 +148,16 @@ class CuroboEsdfField:
         # 바깥 계층의 격자 밖 처리는 이 합성 필드가 맡는다. 국소 계층은 자기 창 밖에서
         # 답하지 않아야 하므로 `outside_distance` 를 주지 않는다.
         self.layers[0].outside_distance = self.outside_distance
+        # 해석적 채널은 **여기서만** 적용한다 — 계층에 남아 있으면 두 번 걸린다.
+        for f in self.layers:
+            f.static_shapes = ()
+        named = [f.label_names for f in self.layers if f.label_names]
+        if named and len({tuple(n) for n in named}) != 1:
+            raise ValueError(
+                f"계층들의 라벨 이름이 다릅니다: {named}. 같은 id 가 다른 물체를 뜻하면 "
+                "어느 계층이 거리를 냈는지에 따라 판정이 뒤집힙니다")
+        if named and not self.label_names:
+            self.label_names = tuple(named[0])
 
     # -- trajopt 가 읽는 표면 -------------------------------------------------
 
@@ -146,8 +172,12 @@ class CuroboEsdfField:
         return self.layers[0].grid
 
     def distance(self, points: np.ndarray) -> np.ndarray:
-        """`(N,)` 미터. 음수는 표면 안쪽."""
-        return self._evaluate(points)[0]
+        """`(N,)` 미터. 음수는 표면 안쪽. 해석적 채널이 있으면 `min(복셀, 해석적)`."""
+        d = self._evaluate(points)[0]
+        if self.static_shapes:
+            from benchmark.ag3s.fields.esdf import analytic_distance
+            d = np.minimum(d, analytic_distance(points, self.static_shapes))
+        return d
 
     def gradient(self, points: np.ndarray) -> np.ndarray:
         """`(N, 3)`. **거리를 내놓은 계층**의 기울기 — 값과 어긋나면 SQP 가 수렴하지 않는다."""
@@ -157,7 +187,53 @@ class CuroboEsdfField:
             sel = winner == i
             if sel.any():
                 out[sel] = field.gradient(pts[sel])
+        if self.static_shapes:
+            # 해석적 채널이 이긴 점은 **그 도형의** 기울기를 쓴다. 거리만 바꾸고 기울기를 두면
+            # 최적화기가 "가깝다" 는 값을 받고 엉뚱한 복셀 표면 쪽으로 밀린다
+            # (`EsdfField.gradient` 가 같은 이유를 적어 둔다).
+            from benchmark.ag3s.fields.esdf import analytic_distance, analytic_gradient
+            voxel = self._evaluate(pts)[0]
+            analytic = analytic_distance(pts, self.static_shapes)
+            wins = analytic <= voxel + 1e-12
+            if wins.any():
+                out[wins] = analytic_gradient(pts, self.static_shapes)[wins]
         return out
+
+    # -- 라벨 층 ----------------------------------------------------------------------
+
+    @property
+    def has_labels(self) -> bool:
+        return any(f.has_labels for f in self.layers)
+
+    def label_id(self, name: str) -> int:
+        """이름 -> 라벨 id. 없으면 `-1` — 예외가 아니라 "라벨 없음" 과 같은 값이고, 따라서
+        비교가 **완화가 일어나지 않는 쪽**으로 닫힌다 (`EsdfField.label_id` 와 같은 규약)."""
+        try:
+            return int(self.label_names.index(str(name)))
+        except ValueError:
+            return -1
+
+    def label(self, points: np.ndarray) -> np.ndarray:
+        """`(N,)` int32 — **거리를 내놓은 계층**의 라벨.
+
+        라벨을 거리와 같은 계층에서 읽는 것이 기울기를 그렇게 읽는 것과 같은 이유다. 다른
+        계층에서 읽으면 "가장 가까운 표면" 이 두 계층에서 다른 물체일 수 있고, 그러면 완화가
+        엉뚱한 행에 걸린다.
+        """
+        _, winner, pts = self._evaluate(points, want_winner=True)
+        out = np.full(len(pts), -1, np.int32)
+        for i, field in enumerate(self.layers):
+            sel = winner == i
+            if sel.any() and field.has_labels:
+                out[sel] = field.label(pts[sel])
+        return out
+
+    def is_label(self, points: np.ndarray, name: str) -> np.ndarray:
+        """`(N,)` bool — 가장 가까운 표면이 `name` 인가. 라벨이 없으면 전부 False."""
+        wanted = self.label_id(name)
+        if wanted < 0:
+            return np.zeros(len(np.asarray(points, np.float64).reshape(-1, 3)), bool)
+        return self.label(points) == wanted
 
     # -- 합성 ------------------------------------------------------------------
 
@@ -195,8 +271,16 @@ class CuroboEsdfField:
     # -- 진단 (G2/G4 가 보는 것) -----------------------------------------------
 
     @property
-    def unknown_fraction(self) -> float:
-        return float(self.stats.get("unknown_fraction", 0.0))
+    def unknown_fraction(self) -> Optional[float]:
+        """미관측 비율. **`None` 은 "모른다" 이고 0.0 과 다르다.**
+
+        block-sparse TSDF 에서는 "보고 지나간 자유 공간" 과 "한 번도 안 본 곳" 이 둘 다
+        미할당이라 legacy 의 per-voxel UNKNOWN 비율에 대응하는 값이 없다
+        (`curobo_builder._observation_coverage`). 0.0 으로 답하면 G2(미관측 100 % 필드가
+        `valid` 로 보고됐다)가 잡으려던 축에서 이 backend 가 실제보다 좋아 보인다.
+        """
+        v = self.stats.get("unknown_fraction", 0.0)
+        return None if v is None else float(v)
 
     @property
     def outside_query_fraction(self) -> float:

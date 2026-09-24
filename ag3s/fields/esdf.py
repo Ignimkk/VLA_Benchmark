@@ -33,6 +33,7 @@ ESDF 는 그 축약을 하지 않는다. 관측된 표면을 복셀 격자에 �
 from __future__ import annotations
 
 import dataclasses
+import time
 from typing import Any, Optional, Sequence
 
 import numpy as np
@@ -327,6 +328,10 @@ class EsdfField:
     #: `distance()` 호출이 누적한 것. `outside_query_fraction` 참고.
     outside_query_count: int = dataclasses.field(default=0, repr=False)
     queried_point_count: int = dataclasses.field(default=0, repr=False)
+    #: `FieldProvenance` — 이 필드가 **언제 · 무엇으로 · 몇 번째로** 만들어졌는가.
+    #: 거리값만 보면 방금 만든 것과 낡은 것을 구별할 수 없고, 그것이 2026-09-18 의 조용한
+    #: 정지(14 프레임 동안 지각이 안 돌았는데 상태는 `ok`)가 안 보인 이유다.
+    provenance: Any = None
 
     def __post_init__(self) -> None:
         if self.distance_grid.shape != tuple(self.grid.shape):
@@ -787,7 +792,16 @@ class EsdfBuilder:
     새로 만들면 전체를 다시 계산하게 되고, 그건 `build_once` 가 하는 일이다.
     """
 
+    #: 이 프로세스에서 이 클래스가 몇 번 만들어졌는가. **추론을 불변식으로 바꾸는 장치다.**
+    #:
+    #: `AG3S_TOTAL_TEST_Prompt.md` 의 T0 은 "legacy 가 조용히 돌지 않았는가" 를 즉시 실패
+    #: 조건으로 둔다. 프레임마다 출처 도장(`FieldProvenance.backend`)을 보면 *쓰인* 필드가
+    #: 무엇인지는 알 수 있지만, 만들어만 놓고 안 쓴 경우는 안 잡힌다. 세면 그것도 잡힌다 —
+    #: cuRobo backend 로 도는 동안 이 값이 0 이 아니면 `pipeline._build_esdf` 가 죽는다.
+    instances_created: int = 0
+
     def __init__(self, config, *, bounds=None):
+        type(self).instances_created += 1
         self.config = config
         if bounds is None:
             if config.bounds_lower is not None:
@@ -835,7 +849,9 @@ class EsdfBuilder:
                support_points: Optional[np.ndarray] = None,
                attached_points: Optional[np.ndarray] = None,
                labelled_points: Optional[dict] = None,
-               static_geometry: Optional[Sequence[Any]] = None) -> EsdfField:
+               static_geometry: Optional[Sequence[Any]] = None,
+               observed_at: Optional[float] = None,
+               frame_id: str = "", frame_index: int = -1) -> EsdfField:
         """관측을 적분하고 ESDF 를 (가능하면 국소로) 갱신해 필드를 돌려준다.
 
         `support_points` 는 지지면으로 이미 half-space 행이 나간 점들이다. 필드에도 남겨두면
@@ -991,11 +1007,22 @@ class EsdfBuilder:
         # 격자 밖은 격자 안의 UNKNOWN 과 같은 것이므로 같은 정책을 따른다 — `unknown_policy`
         # 와 무관하게 항상 자유였던 것이 E4 였다.
         outside = cfg.max_distance if cfg.unknown_policy == "free" else -cfg.max_distance
-        return EsdfField(grid=self.grid, distance_grid=field_grid,
-                         max_distance=cfg.max_distance, stats=stats,
-                         outside_distance=outside,
-                         label_grid=label_field, label_names=label_names,
-                         static_shapes=tuple(static_geometry or ()))
+        out = EsdfField(grid=self.grid, distance_grid=field_grid,
+                        max_distance=cfg.max_distance, stats=stats,
+                        outside_distance=outside,
+                        label_grid=label_field, label_names=label_names,
+                        static_shapes=tuple(static_geometry or ()))
+        # 출처는 두 backend 가 **같은 모양으로** 찍는다. 다르면 기록을 견줄 수 없다.
+        from benchmark.ag3s.fields.provenance import FieldProvenance
+        out.provenance = FieldProvenance(
+            sequence=self._frames, backend="legacy",
+            observed_at=observed_at, built_at=time.monotonic(),
+            frame_id=str(frame_id), frame_index=int(frame_index),
+            cameras=tuple(str(c.name) for c in cameras),
+            tiers=({"voxel_size_m": float(cfg.voxel_size),
+                    "shape": [int(v) for v in self.grid.shape],
+                    "origin_m": [float(v) for v in self.grid.origin]},))
+        return out
 
 
 def build_once(cameras: Sequence[CameraDepth], config, *, bounds=None,

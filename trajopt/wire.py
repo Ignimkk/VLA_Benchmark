@@ -31,6 +31,28 @@
 ## 응답
 
 `actions` 외에 안전 판정을 싣는다. 로컬은 이 판정이 유효할 때만 실행한다.
+
+| 키 | 내용 |
+|---|---|
+| `actions` | `[H, ACTION_WIDTH]` (16D 기본). 안전하지 않아도 실린다 — 왜 멈췄는지 보려면 무엇이 제안됐는지 알아야 한다 |
+| `seq` | 요청의 일련번호를 그대로 돌려준다. 오래된 응답을 버리는 근거 |
+| `timing_ms` | 단계별 시간 (서버 시계) |
+| `ag3s_status` · `geometry_certified` · `trajopt_status` · `max_violation_m` · `safe` · `notes` | 안전 판정 |
+| `field` | **거리장의 출처** — `sequence` · `backend` · `observed_at` · `state` · 계층. 아래 |
+
+### `field` — 거리장이 언제 무엇으로 만들어졌는가
+
+`actions` 만 보면 이 청크의 기하가 방금 관측된 것인지 낡은 것인지 알 방법이 없다. 2026-09-18
+의 통합에서 `attach()` 뒤 **14 프레임 동안 지각이 한 번도 안 돌았는데 상태는 `ok`** 로
+나갔고, 그것이 안 보인 이유가 이 블록이 없었기 때문이다.
+
+`state` 는 `new` | `carried` | `stale` | `unavailable` 이다. **서버는 `new` 나 `unavailable`
+만 찍는다** — planning frame 마다 AG3S 를 돌리므로. `carried` 와 `stale` 은 **control frame**
+에서 생기고 (청크 하나가 8 스텝 = 533 ms 를 덮는다) 클라이언트가
+`FieldProvenance.applied_by_client()` 로 채운다.
+
+**age 의 기준은 `observed_at`(클라이언트 시계의 촬영 시각)이다.** 서버의 `built_at` 은
+monotonic 원점이 달라 클라이언트가 자기 시계와 견줄 수 없으므로 단계 시간에만 쓴다.
 """
 
 from __future__ import annotations
@@ -40,9 +62,10 @@ from typing import Any, Optional, Sequence
 import numpy as np
 
 __all__ = [
-    "PREFIX", "DEFAULT_CAMERAS", "GRIPPER_COLUMNS",
+    "PREFIX", "DEFAULT_CAMERAS", "GRIPPER_COLUMNS", "gripper_columns",
+    "ARM_JOINT_DIM", "ACTION_WIDTH",
     "pack_request", "strip_request", "unpack_camera_observations",
-    "pack_response", "SafetyVerdict",
+    "pack_response", "unpack_field", "SafetyVerdict",
 ]
 
 PREFIX = "ag3s/"
@@ -50,9 +73,32 @@ PREFIX = "ag3s/"
 #: 머리 하나 + 손목 둘. `CameraID` 에 HEAD 가 하나뿐이라 `zed_right` 는 `zed_left` 와 겹친다.
 DEFAULT_CAMERAS = ("zed_left", "wrist_cam_l", "wrist_cam_r")
 
-#: 14-D action 에서 그리퍼가 앉은 열. TO 는 이 두 열을 **절대 건드리지 않는다** — 결정 변수가
-#: 아니고, 손을 여닫는 것은 충돌 회피가 판단할 일이 아니다.
-GRIPPER_COLUMNS = (6, 13)
+#: 팔당 관절 수. 청크 레이아웃 전체가 이 값에서 나온다 — openpi 가 delta mask 를
+#: ``make_bool_mask(N, -1, N, -1)`` 로 만들므로 (`training/config.py:278-281`) 레이아웃이
+#: ``[왼팔 N, 왼 그리퍼, 오른팔 N, 오른 그리퍼]`` 이고 총 차원이 ``2*(N+1)`` 이다.
+#:
+#: **7 이 기본이다** — 2026-09-24 에 16D(`pi05_rby1_randomized_pick_place_16d_lora`)로 전환하고
+#: 14D 를 버리기로 판정했다. 16D 는 `arm_6` 손목을 정책이 지령한다 (14D 에서는 고정이었다).
+ARM_JOINT_DIM = 7
+
+#: 액션의 총 차원. `2*(ARM_JOINT_DIM+1)`.
+ACTION_WIDTH = 2 * (ARM_JOINT_DIM + 1)
+
+
+def gripper_columns(arm_joint_dim: int = ARM_JOINT_DIM) -> tuple[int, int]:
+    """그리퍼가 앉은 두 열. TO 는 이 열을 **절대 건드리지 않는다** — 결정 변수가 아니고,
+    손을 여닫는 것은 충돌 회피가 판단할 일이 아니다.
+
+    상수로 박지 않는 이유: 14D 는 `(6, 13)`, 16D 는 `(7, 15)` 다. 박아 두면 차원을 바꿀 때
+    **엉뚱한 열을 그리퍼로 보호하고** 그것이 조용히 지나간다 — 손목 관절이 보호되고 그리퍼가
+    최적화되는, 증상이 안 보이는 종류의 실패다.
+    """
+    n = int(arm_joint_dim)
+    return (n, 2 * n + 1)
+
+
+#: 기본 차원의 그리퍼 열. 편의용이고, 차원이 다른 호출자는 `gripper_columns(N)` 을 쓴다.
+GRIPPER_COLUMNS = gripper_columns()
 
 #: depth 를 uint16 밀리미터로 보내는 배율. 실제 depth 카메라가 주는 형식이고
 #: `PointCloudConfig.depth_scale = 0.001` 이 그것을 되돌린다. float64 로 보내면 payload 가
@@ -156,19 +202,44 @@ class SafetyVerdict:
 
 
 def pack_response(actions: np.ndarray, verdict: SafetyVerdict, *, seq: int,
-                  timing_ms: dict[str, float], extra: Optional[dict[str, Any]] = None
-                  ) -> dict[str, Any]:
-    """응답. `actions` 는 언제나 [H, 14] 이고, 안전하지 않아도 실린다.
+                  timing_ms: dict[str, float], field: Optional[Any] = None,
+                  extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """응답. `actions` 는 `[H, ACTION_WIDTH]` 이고, 안전하지 않아도 실린다.
 
     안전하지 않을 때 청크를 **빼지 않는** 이유는, 로컬이 "왜 멈췄는지" 를 보려면 무엇이
     제안됐는지 알아야 하기 때문이다. 실행 여부는 `safe` 하나로 결정된다.
+
+    `field` 는 `FieldProvenance` 다. **`None` 이면 `unavailable` 로 싣는다** — 키를 빼면
+    읽는 쪽이 "필드가 없었다" 와 "서버가 옛 버전이라 안 보냈다" 를 구별할 수 없고, 전자는
+    hold 해야 하고 후자는 배선 결함이라 대응이 다르다.
     """
+    from benchmark.ag3s.fields.provenance import FieldProvenance
+
+    prov = field if field is not None else FieldProvenance.unavailable(
+        "the server produced no collision field for this chunk")
     out = {
         "actions": np.asarray(actions, np.float32),
         "seq": int(seq),
         "timing_ms": {k: float(v) for k, v in timing_ms.items()},
+        "field": prov.to_dict(),
         **verdict.to_dict(),
     }
     if extra:
         out.update(extra)
     return out
+
+
+def unpack_field(response: dict[str, Any]):
+    """응답의 `field` 블록 -> `FieldProvenance`. 키가 없으면 그것도 상태로 답한다.
+
+    키 없음은 **서버가 이 블록을 모르는 버전**이라는 뜻이고, 필드가 없는 것과 다르다.
+    조용히 같게 취급하면 배선 결함이 안전 판정처럼 보인다.
+    """
+    from benchmark.ag3s.fields.provenance import FieldProvenance
+
+    blob = response.get("field")
+    if blob is None:
+        return FieldProvenance.unavailable(
+            "the response carried no `field` block — the server predates field provenance; "
+            "staleness cannot be judged for this chunk")
+    return FieldProvenance.from_dict(blob)

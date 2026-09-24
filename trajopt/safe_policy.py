@@ -226,7 +226,38 @@ class SafePolicy:
             self._record(seq, chunk, refined)
 
         extra = {k: v for k, v in result.items() if k != "actions"}
-        return wire.pack_response(refined, verdict, seq=seq, timing_ms=timing, extra=extra)
+        return wire.pack_response(refined, verdict, seq=seq, timing_ms=timing,
+                                  field=self._field_provenance(), extra=extra)
+
+    def _field_provenance(self):
+        """이번 청크의 거리장 출처. 없으면 `unavailable` 로 **이유를 달아** 돌려준다.
+
+        서버는 `new` 나 `unavailable` 만 찍는다 — planning frame 마다 AG3S 를 돌리므로
+        여기서 필드를 이어 쓰는 경로가 없다. `carried` 와 `stale` 은 청크 하나가 덮는
+        8 개 control frame 에서 생기고, 클라이언트가
+        `FieldProvenance.applied_by_client()` 로 채운다.
+        """
+        from benchmark.ag3s.fields.provenance import FieldProvenance
+
+        cs = self._last_constraint_set
+        if cs is None:
+            failure = getattr(self.refiner, "last_failure", None)
+            return FieldProvenance.unavailable(
+                "AG3S did not produce a constraint set for this chunk"
+                + (f": {failure}" if failure else ""))
+        field = getattr(cs, "esdf", None)
+        if field is None:
+            return FieldProvenance.unavailable(
+                f"the constraint set carried no ESDF field (status={cs.status.value}, "
+                f"backend={self.ag3s.config.esdf.backend})")
+        prov = getattr(field, "provenance", None)
+        if prov is None:
+            # 필드는 있는데 도장이 없다 = builder 가 안 찍은 것이다. 조용히 `new` 로
+            # 만들어 주면 배선 결함이 정상으로 보이므로 그렇게 하지 않는다.
+            return FieldProvenance.unavailable(
+                f"the {type(field).__name__} carried no provenance stamp — the builder did "
+                "not set it, so this chunk's geometry cannot be dated")
+        return prov
 
     # ------------------------------------------------------------------------------------
     def _scene_fn(self, context: Optional[dict]):
