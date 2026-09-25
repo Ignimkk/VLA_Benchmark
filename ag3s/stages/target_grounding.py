@@ -399,6 +399,22 @@ def ground_target(
             "spatial_compactness": best.spatial_compactness,
             "distance_from_attention_peak": best.distance_from_attention_peak,
             "rms_radius": best.rms_radius,
+            # The margin over the second-best candidate. `GraspLatch` reads exactly this key to
+            # decide whether a frame is unambiguous enough to count toward a lock
+            # (`trajopt/grasp_latch.py`: `confident = score >= score_ratio * max(runner_up, 1e-9)`),
+            # and while it was missing `metrics.get("runner_up_score", 0.0)` returned 0.0 on every
+            # frame — the threshold collapsed to 1.3e-9, so *any* grounded frame read as confident
+            # and the ambiguity test did nothing. `clusters` is already sorted by descending score,
+            # so `best` is [0] and the runner-up is [1].
+            #
+            # A single candidate has no runner-up, and 0.0 is both the literal value of "the second
+            # score" and the right latch answer: with no competitor there is nothing to be ambiguous
+            # about. It is also unambiguous as a signal, because a scored cluster can never reach
+            # 0.0 — `_score_cluster` mixes mean attention with `exp(-d/scale)` terms that are
+            # strictly positive — so `runner_up_score == 0.0` means "one candidate", never "the
+            # second one scored nothing". This matches `_scores()` in
+            # `experiments/diagrams/ppt_target_grounding.py`, which already reports the pair this way.
+            "runner_up_score": float(clusters[1].target_score) if len(clusters) > 1 else 0.0,
         },
     )
     return GroundingResult(
