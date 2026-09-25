@@ -1,0 +1,228 @@
+{
+ "figure": "x3-table.png",
+ "source": "/mnt/dev/work/outputs/verify/X3/probe_headfix_v2.json",
+ "numbers": {
+  "summary": {
+   "n_frames": 15,
+   "n_violated": 13,
+   "n_geometry_certified_false": 13,
+   "n_with_certification_note": 13,
+   "n_violated_with_positive_clearance": 13,
+   "violated_frames": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
+   "uncertified_frames": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
+   "certification_note_frames": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
+   "clearance_delta_mm_max_abs": 0.0,
+   "n_finish_calls": 15,
+   "validity_counts": {
+    "degraded": 13,
+    "valid": 2
+   },
+   "require_certified_geometry": true,
+   "violation_tolerance_mm": 0.1
+  },
+  "rows": [
+   [
+    "0",
+    "transit",
+    "feasible",
+    "+8.36 mm",
+    "valid",
+    "True",
+    "-",
+    "1"
+   ],
+   [
+    "1",
+    "transit",
+    "feasible",
+    "+4.60 mm",
+    "valid",
+    "True",
+    "-",
+    "2"
+   ],
+   [
+    "2",
+    "transit",
+    "violated",
+    "+4.93 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "3",
+    "approach",
+    "violated",
+    "+4.93 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "4",
+    "approach",
+    "violated",
+    "+0.04 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "5",
+    "approach",
+    "violated",
+    "+0.11 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "6",
+    "approach",
+    "violated",
+    "+2.52 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "7",
+    "pre_grasp",
+    "violated",
+    "+4.08 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "8",
+    "pre_grasp",
+    "violated",
+    "+3.30 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "9",
+    "grasp",
+    "violated",
+    "+3.56 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "10",
+    "grasp",
+    "violated",
+    "+4.18 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "11",
+    "grasp",
+    "violated",
+    "+4.70 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "12",
+    "grasp",
+    "violated",
+    "+4.80 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "13",
+    "grasp",
+    "violated",
+    "+4.88 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ],
+   [
+    "14",
+    "grasp",
+    "violated",
+    "+4.79 mm",
+    "degraded",
+    "False",
+    "O",
+    "2"
+   ]
+  ],
+  "header": [
+   "프레임",
+   "단계",
+   "status",
+   "clearance_after",
+   "validity",
+   "certified",
+   "인증 note",
+   "iter"
+  ]
+ }
+}

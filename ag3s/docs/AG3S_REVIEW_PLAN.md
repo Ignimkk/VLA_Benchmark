@@ -2018,3 +2018,17 @@ backend 를 견주면, 견준 결과도 같은 만큼만 읽힌다.
 X2 재촬영의 개수 열한 줄이 **출처 파일 없이** 로그에 들어갔다. 다시 인용하려는 순간
 재현할 길이 없어서 X3 의 첫 측정이 그것을 되살리는 일이 됐다.
 `verify.json` 철칙이 막으려던 것이 정확히 이것이고, **단일 세션에서 역할을 겸할 때 새는 자리**다.
+
+### X3 가 닫은 것 — `feasible` 개수는 clearance 만 세는 숫자가 아니다 (2026-09-25)
+
+`violated` 13 개와 `geometry_certified == False` 13 개가 **같은 집합**이고, 13 개 전부
+clearance 가 양수다. `status` 는 clearance 말고 **기하 인증**을 함께 본다
+(`sqp.py:287-293`). 후보였던 `full_violation` 의 `states` 인자 차이는 0.0 mm 로 탈락했다.
+
+**회귀 기준선의 `feasible` 을 읽는 법이 바뀐다.** 지금까지 그 숫자를 *"궤적이 안 뚫렸다"* 로
+읽었는데, 실제로는 *"안 뚫렸고 + AG3S 가 씬을 다 설명했다"* 다. `regression-baseline` skill 의
+판정 문구는 사용자 판정 뒤에 고친다.
+
+**열린 판정**: `DEGRADED`(점군이 `max_points` 상한에 걸려 voxel 을 키운 상태)를 인증 실패로
+볼 것인가. 만드는 쪽 주석은 *"nothing physical went unobserved"* 라 하고 쓰는 쪽은 인증
+실패로 읽는다 — 선택지 셋과 각각의 위험은 로그의 X3 절에 있다.

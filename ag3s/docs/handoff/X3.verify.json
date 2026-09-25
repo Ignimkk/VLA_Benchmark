@@ -1,0 +1,148 @@
+{
+ "_comment": "ag3s-verifier 산출. 해석을 쓰지 않는다 — 숫자와 경로만.",
+ "step": "X3",
+ "date": "2026-09-25",
+ "runs": [
+  {
+   "id": "measurement-1-rollout",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -u -m benchmark.trajopt.experiments.esdf_rollout --records outputs/live_test/20260925_headfix16d/records/run_0000/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_headfix.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/X3/headfix_rollout.json",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/X3/headfix_rollout.json",
+   "stdout_log": "outputs/verify/X3/headfix_rollout.log"
+  },
+  {
+   "id": "measurement-2-3-4-probe",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -u outputs/verify/X3/probe_status.py --records outputs/live_test/20260925_headfix16d/records/run_0000/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_headfix.npz --frames 15 --out outputs/verify/X3/probe_headfix_v2.json",
+   "venv": ".venv-ag3s",
+   "method": "esdf_rollout.main() 을 그대로 부르고 TrajectoryOptimizer._finish 와 scene_from_constraint_set 만 감쌌다. benchmark/** 는 고치지 않았다",
+   "raw_output": "outputs/verify/X3/probe_headfix_v2.json",
+   "stdout_log": "outputs/verify/X3/probe_headfix_v2.log"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "b241278",
+  "dirty_files": []
+ },
+ "numbers": {
+  "_comment": "로그와 논문에 쓰이는 모든 수치가 여기에만 있다.",
+  "measurement_1_reproduction": {
+   "frames": 15,
+   "has_target": 15,
+   "violated_start": 15,
+   "improved": 15,
+   "resolved": 15,
+   "feasible": 2,
+   "violated_end": 13,
+   "clearance_after_mm_median": 4.6,
+   "clearance_after_mm_min": 0.04,
+   "clearance_after_mm_max": 8.36,
+   "ag3s_ms_median": 2283,
+   "n_candidates_gt0_frames": 0,
+   "target_voxels_carved_total": 0,
+   "log_table_counts_matched": true,
+   "note": "로그 재촬영 표와 개수가 전부 같다. clearance 중앙/최소는 mm 단위로 흔들렸다 (기준선은 개수만 센다)"
+  },
+  "measurement_2_notes": {
+   "frames_with_certification_note": 13,
+   "certification_note_frames": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
+   "note_text": "the trajectory clears every constraint, but AG3S could not certify the geometry behind them; safety cannot be claimed for a scene that was not fully accounted for"
+  },
+  "measurement_3_certified": {
+   "n_violated": 13,
+   "n_geometry_certified_false": 13,
+   "violated_frames": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
+   "uncertified_frames": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
+   "sets_identical": true,
+   "validity_counts": {
+    "degraded": 13,
+    "valid": 2
+   },
+   "require_certified_geometry": true,
+   "violation_tolerance_mm": 0.1
+  },
+  "measurement_4_states_argument": {
+   "clearance_delta_mm_max_abs": 0.0,
+   "note": "full_violation 을 states 를 주고 잰 것과 안 주고 잰 것이 15 프레임 전부 같다"
+  },
+  "n_violated_with_positive_clearance": 13,
+  "degradation_source": {
+   "_comment": "degraded 프레임이 AG3S 에서 단 note. 원문 그대로.",
+   "note": "point cloud capped at max_points=60000; voxel grown to 6.3 mm in 1 step(s)",
+   "config": "benchmark/ag3s/config.py:134 pointcloud.max_points = 60000",
+   "points_voxel": {
+    "frame_0_valid": 129657,
+    "frame_1_valid": 129541,
+    "frame_2_degraded": 114991,
+    "frame_4_degraded": 126391
+   },
+   "not_measured": "voxel 점 수가 더 많은 프레임 0·1 이 capped 가 아니고 더 적은 프레임 2 가 capped 인 이유는 재지 않았다"
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/x3/x3-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/x3/x3-trend.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/x3/x3-table.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": null,
+  "note": "회귀 기준선(run_16d_ep1800, feasible 13/violated 2)과는 기록이 달라 직접 비교하지 않았다. 측정 5(수정 전 기록에 같은 probe)는 아직 안 돌렸다"
+ },
+ "verdict": "사실만. 판정은 lead 와 사용자가 한다.",
+ "not_measured": [
+  "측정 5 — run_16d_ep1800 에 같은 probe (수정 전 기록에서도 같은 구조인가)",
+  "voxel 점 수와 capped 여부의 관계",
+  "require_certified_geometry=false 로 돌렸을 때의 개수"
+ ]
+}

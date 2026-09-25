@@ -217,7 +217,7 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **T1** 연속 프레임 AG3S | 실측 정책 attention 으로 지각이 쓸 만한가 | **진행 중**(2026-09-25) — X2(머리 각도 0 오류)를 고치고 재촬영했다. `has_target` 9/15 → **15/15**, `clearance_after` 최소 −3.15 mm → **+0.02 mm**. 열린 물음은 X3 로 넘겼다 |
 | **X1** 로봇 구 분할 | 고정 구 / 움직일 수 있는 구를 가르는 규칙이 16D 에서 옳은가 | **해결 — 분할은 옳다**(2026-09-25). 고정 구 **42 / 120**, 기구학 파생(`attached.py:241-292`). 14D 의 27 은 구 105 개 모델이라 비교 불가. 회귀 기준선 영향 없음 |
 | **X2** head cam 이 벽을 본다 | teleop keyframe 의 `head_1` 이 기록에서 0 이 되는가 | **해결**(2026-09-25). 수정 + 가드 4 개 + 재촬영. `zed_left` 가 사과를 보는 프레임 **0/15 → 15/15**(중앙 544 px). 단 **재촬영 rollout 의 raw 가 안 남았다** — X3 측정 1 이 되살린다 |
-| **X3** `status` ↔ `clearance_after` | 둘이 같은 것을 재나, 다른 질문의 답인가 | **대기** — 계획 `handoff/X3.task.md`. `clearance_after` 가 15 프레임 전부 양수인데 `status` 는 `violated` 13. 후보 둘: geometry 인증 게이트(`sqp.py:287-293`) · 두 `full_violation` 의 `states` 인자 차이 |
+| **X3** `status` ↔ `clearance_after` | 둘이 같은 것을 재나, 다른 질문의 답인가 | **원인 확정 — 다른 질문의 답이다**(2026-09-25). `violated` 13 개와 `geometry_certified == False` 13 개가 **완전히 같은 집합**이고 `validity` 는 `degraded`(점군이 `max_points=60000` 상한에 걸린다). `states` 인자 차이는 0.0 mm — 탈락. **판정 대기**: `DEGRADED` 를 인증 실패로 볼 것인가 |
 | **T2** pick-place 상태 전이 | 9 개 사건이 정확히 어느 프레임에 있나 | 대기 — 파지 포함 16D 기록 확보됨 |
 | **T3** 전 관측 프레임 TSDF/ESDF | 모든 프레임에서 필드가 서나. `max_field_age_sec` 를 정한다 | 대기 — T0 이 근거 수치를 냈다 (필드 나이 P50 2637 ms) |
 | **T4** fail-closed 주입 | 고장을 넣으면 정말 닫히나 | 대기 |
@@ -1375,3 +1375,110 @@ T1-a 가 *"`head_1` 만 0.7 로 되돌리면 중앙 552 px"* 라고 예측했던
 geometry 인증 게이트(`sqp.py:287-293` 은 clearance 를 다 만족해도 AG3S 가 씬을 인증하지
 못하면 `VIOLATED` 로 내린다)와, 두 `full_violation` 호출의 인자 차이(`states`).
 **둘 다 아직 후보일 뿐이고, 숫자로 확정하기 전에는 판정하지 않는다.**
+
+---
+
+## X3 — `status` 는 clearance 가 아니라 **기하 인증**을 보고 뒤집힌다 (2026-09-25)
+
+출처: `handoff/X3.verify.json`. raw 는 `outputs/verify/X3/`.
+
+### 측정 1 — 재촬영이 재현됐다. raw 가 다시 생겼다
+
+X2 재촬영의 개수가 **전부 같게** 나왔다. 이제 출처 파일이 있다
+(`outputs/verify/X3/headfix_rollout.json`).
+
+| | 로그 재촬영 표 | 이번 재현 |
+|---|---|---|
+| `has_target` | 15/15 | **15/15** |
+| 위반으로 시작 | 15/15 | **15/15** |
+| 개선 | 15 | **15** |
+| `feasible` | 2 | **2** |
+| `violated` | 13 | **13** |
+| `n_candidates` > 0 프레임 | 0 | **0** |
+| `target_voxels_carved` 총합 | 0 | **0** |
+
+`clearance_after` 는 중앙 +4.60 mm · 최소 +0.04 mm · 최대 +8.36 mm 로 mm 단위에서 흔들렸고
+(기준선은 개수만 센다), AG3S 실행 중앙값은 2283 ms 였다.
+
+### 측정 3 — **두 집합이 완전히 같다**
+
+`violated` 인 프레임과 `geometry_certified`(AG3S 가 그 프레임 씬을 빠짐없이 설명했다고
+스스로 보증하는가)가 `False` 인 프레임이 **같은 13 개**다 — 프레임 2~14. `feasible` 인 둘은
+프레임 0·1 이고 둘 다 `certified True` 다.
+
+| | 값 |
+|---|---|
+| `violated` 프레임 | 2 3 4 5 6 7 8 9 10 11 12 13 14 (13 개) |
+| `geometry_certified == False` 프레임 | 2 3 4 5 6 7 8 9 10 11 12 13 14 (13 개) |
+| 두 집합이 같은가 | **같다** |
+| `clearance` 가 양수인데 `violated` | **13 / 13** |
+| `validity` 내역 | `degraded` **13** · `valid` 2 |
+| `require_certified_geometry` | `true` (`configs/rby1.yaml:87`) |
+| `violation_tolerance` | 0.1 mm |
+
+### 측정 2 — SQP 가 그 자리에 문장을 남기고 있었다
+
+13 개 프레임 전부에 `sqp.py:288-293` 의 note 가 붙어 있다:
+
+> the trajectory clears every constraint, but AG3S could not certify the geometry behind them;
+> safety cannot be claimed for a scene that was not fully accounted for
+
+**`violated` 는 궤적이 뚫렸다는 뜻이 아니었다.** *"뚫리지 않았지만 내가 다 본 씬이 아니다"* 다.
+
+### 측정 4 — **후보 B 는 탈락이다**
+
+`full_violation` 을 `states` 를 주고 잰 것과 안 주고 잰 것이 **15 프레임 전부 0.0 mm 차이**다.
+`sqp._finish`(`sqp.py:270`)와 `esdf_rollout`(`esdf_rollout.py:340`)이 인자를 다르게 주는 것은
+사실이지만, **그 차이가 수치를 만들지 않는다.**
+
+### 왜 `degraded` 인가 — 점군 상한에 걸린다
+
+`degraded` 프레임이 AG3S 에서 단 note 원문:
+
+> point cloud capped at max_points=60000; voxel grown to 6.3 mm in 1 step(s)
+
+`pointcloud.max_points = 60000` (`config.py:134`). 상한에 걸리면 `pipeline.py:337-346` 이
+voxel 을 키워 맞추고 `validity` 를 `DEGRADED` 로 내린다.
+
+**그런데 그 코드가 바로 옆에 적어 둔 주석은 이렇다** — *"Coarser is not incomplete: growing the
+voxel keeps a representative in every occupied cell, so nothing physical went unobserved."*
+`ConstraintValidity.certified` 의 docstring 도 *"`DEGRADED` is usable; `INCOMPLETE` is not
+certified"* 라고 적는다. **그런데 `certified` 는 `VALID` 에만 `True` 를 돌려주고**
+(`types.py:169-170`), `sqp.py:287` 은 `certified` 가 아니면 `VIOLATED` 로 내린다.
+
+**만드는 쪽은 "아무것도 안 잃었다" 고 적고, 쓰는 쪽은 "못 본 씬" 으로 읽는다.**
+이것이 갈린 자리다.
+
+**재지 않은 것**: voxel 점 수가 더 많은 프레임 0·1(129657 · 129541)이 capped 가 아니고
+더 적은 프레임 2(114991)가 capped 인 이유. 숫자만 나란히 둔다.
+
+### 시각화 (규칙 A)
+
+* **[`figures/x3/x3-scene.png`](figures/x3/x3-scene.png)** — 실제 씬. 인증된 마지막 프레임 1 과
+  인증이 꺼진 첫 프레임 2 를 나란히 놓는다. **두 씬은 거의 같고 clearance 는 오히려 프레임 2 가
+  더 넓다**(+4.60 → +4.93 mm). 뒤집은 것은 `validity` 하나다.
+* **[`figures/x3/x3-trend.png`](figures/x3/x3-trend.png)** — 그래프. 프레임별 `clearance_after` 를
+  `status` 색으로 찍고 0 선을 그었다 · `geometry_certified` 막대 · `full_violation` 두 벌의 차(0).
+* **[`figures/x3/x3-table.png`](figures/x3/x3-table.png)** — 표. 15 프레임 × status · clearance ·
+  validity · certified · 인증 note · iterations.
+
+![X3 실제 씬](figures/x3/x3-scene.png)
+
+![X3 추이](figures/x3/x3-trend.png)
+
+![X3 표](figures/x3/x3-table.png)
+
+### 판정을 기다리는 물음 (사용자와 함께)
+
+**`DEGRADED` 를 인증 실패로 볼 것인가.** 코드의 두 자리가 서로 다르게 말하고 있으므로
+한쪽을 고쳐야 한다. 고르지 않은 쪽은 "되돌아올 지점" 에 남긴다.
+
+1. **`certified` 를 `VALID` + `DEGRADED` 로 넓힌다** — docstring 과 주석이 말하는 쪽.
+   그러면 `feasible` 이 15 로 간다. 위험: `DEGRADED` 가 붙는 다른 경로도 같이 통과한다.
+2. **`max_points` 를 올린다** — 상한에 안 걸리면 `VALID` 로 남는다.
+   위험: 실시간성. `max_points` 는 성능이 아니라 **실시간 성립 조건**이라고 `config.py:127` 이 적는다.
+3. **그대로 둔다** — `violated 13` 이 맞는 판정이고, 기준선 문구를 고쳐
+   *"`feasible` 은 clearance 와 인증을 함께 센다"* 로 읽게 만든다.
+
+**아직 안 잰 것**: 수정 전 기록(`run_16d_ep1800`)에 같은 probe (측정 5) ·
+`require_certified_geometry=false` 로 돌렸을 때의 개수.
