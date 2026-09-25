@@ -1,0 +1,171 @@
+{
+  "_comment": "ag3s-verifier 가 쓴다. 해석을 쓰지 않는다 — 숫자와 경로만. T2 2라운드: ep1800(운반 없음, 반쪽)과 ep1807(운반 완결)을 나란히 둔다. *_ep1800 키는 1라운드 그대로, *_ep1807 키가 이번 라운드.",
+  "step": "T2",
+  "date": "2026-09-25",
+  "runs": [
+    {
+      "id": "regression_baseline_check_run1",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/T2/regression_check/base_run1.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T2/regression_check/base_run1.json",
+      "note": "T2 착수 전 regression-baseline 확인. lead 판정으로 기준선이 갱신됨 — 아래 baseline_check 참고"
+    },
+    {
+      "id": "regression_baseline_check_run2",
+      "command": "동일 명령, out-json 만 base_run2.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T2/regression_check/base_run2.json"
+    },
+    {
+      "id": "t2_events_ep1800",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T2/measure_t2_events.py --records outputs/live_test/20260925_t2/run_0000/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_t2.npz --out outputs/verify/T2/t2_events.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T2/t2_events.json",
+      "stdout_log": "outputs/verify/T2/t2_events.log",
+      "note": "1라운드 그대로 — 운반이 없어(사과 92mm 들렸다 원위치) 뒤 절반(destination/placement/detach 진짜 판정)을 잴 근거가 없었다"
+    },
+    {
+      "id": "t2_events_ep1807",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T2/measure_t2_events.py --records outputs/live_test/20260925_ep1807/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_ep1807.npz --out outputs/verify/T2/t2_events_ep1807.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T2/t2_events_ep1807.json",
+      "stdout_log": "outputs/verify/T2/t2_events_ep1807.log",
+      "note": "measure_t2_events.py 는 1라운드와 동일 스크립트, --records/--attention 만 ep1807 로 교체. 기록 경로는 task.md 가 준 run_0000/run_0000 이 아니라 실제로 존재하는 run_0000 (단일 계층) 이었다"
+    },
+    {
+      "id": "t2_objects_ep1807",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T2/measure_t2_objects_ep1807.py",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T2/t2_objects_ep1807.json",
+      "note": "measure_t2_events.py 와 별도, latch 로직 없이 물체·손 위치만 프레임별로 뽑는 참값 스크립트 (lead 보고값 대조용)"
+    }
+  ],
+  "code_state": {
+    "repo": "benchmark",
+    "head": "4428c95",
+    "dirty_files": []
+  },
+  "baseline_check": {
+    "matched": "갱신된 기준선과 일치",
+    "note": "위반으로 시작 14/15 · has_target 9/15 · frame0 clearance_before +0.157mm — 2026-09-25 lead 판정으로 갱신된 기준선(자기필터 194→218구, self_filter_inflation 0.02→0.05)과 일치. feasible/violated/해소는 갱신된 기준선에서 판정 항목이 아니다. raw: outputs/verify/T2/regression_check/{base_run1,base_run2,summary}.json"
+  },
+  "numbers": {
+    "_comment": "여기 없는 숫자는 쓰지 않는다. 프레임 번호는 observation frame index (0..74), t_step 은 제어 스텝. ep1800=1라운드(운반 없음, 반쪽) · ep1807=2라운드(운반 완결)",
+
+    "physical_completion_check_ep1807": {
+      "apple_lift_mm": 240.60037282663993,
+      "apple_crate_xy_dist_mm_frame0": 339.1527047247398,
+      "apple_crate_xy_dist_mm_last": 71.14397525621455,
+      "other_fruit_drift_mm": {"banana": 0.09675775054080046, "orange": 0.2056463467285604, "pear": 0.6274889118187092},
+      "source": "outputs/verify/T2/t2_objects_ep1807.json"
+    },
+
+    "nine_events_cycle1_ep1800": {
+      "target_acquired": {"frame": 0, "t_step": 0,
+        "criterion": "cs.target 이 처음 존재하고, CentroidIdentity 라벨이 이후 latch.manipulated 로 잠기는 값(obj0)과 같다"},
+      "target_latched": {"frame": 2, "t_step": 16,
+        "criterion": "GraspLatch.phase 가 SEARCHING->LATCHED (같은 라벨 연속 3프레임, confirm_frames=3)"},
+      "grasp_contact": {"frame": 15, "t_step": 120,
+        "criterion": "MuJoCo data.contact 에 ee_finger_l1/l2 body 와 apple body 의 접촉이 처음 나타남"},
+      "attached": {"frame": 15, "t_step": 120,
+        "criterion": "GraspLatch.update() 가 attach=True 를 낸 프레임 (gripper_left state[7] 이 0.85 밑으로, 0.708)"},
+      "destination_attention_raw": {"frame": 16, "t_step": 128, "criterion": "HELD 진입 뒤 처음 들어온 라벨(obj1, 미확정)"},
+      "destination_attention_locked": {"frame": 20, "t_step": 160, "criterion": "3프레임 연속(18,19,20 모두 obj0)으로 확정"},
+      "transport_start": {"frame": 18, "t_step": 144, "criterion": "attach 시점 대비 world 변위가 처음 50mm 초과 (84.7mm)"},
+      "placement": {"frame": null, "t_step": null, "criterion": "MuJoCo 참값 placed_ground_truth 가 True 인 프레임 — 75 프레임 중 단 한 번도 True 아님 (apple 은 crate 로부터 y=+0.32m 떨어진 채 고정)"},
+      "detached": {"frame": 29, "t_step": 232, "criterion": "그리퍼 open-streak(release_frames=2) 폴백으로 풀림 — placed_now 아님"},
+      "task_state_reset": {"frame": null, "t_step": null, "criterion": "75프레임 전체에서 reset() 호출 없음. phase 는 frame29부터 74까지 'placed' 로 남음"}
+    },
+    "cycle2_second_grasp_ep1800": {
+      "gripper_closing_window": {"frame_start": 61, "frame_end": 63, "t_step_start": 488, "t_step_end": 504, "gripper_left_values": [0.694, 0.538, 0.412]},
+      "latch_phase_during_window": ["placed", "placed", "placed"],
+      "attach_fired": false,
+      "mujoco_contact_during_window": [[], [], []],
+      "manipulated_label_during_window": ["obj1", "obj4", "obj0"]
+    },
+    "object_displacement_full_75_frames_ep1800": {
+      "apple": {"pos_frame0": [0.457, 0.327, 0.850], "pos_frame74": [0.443, 0.318, 0.850], "drift_mm": 16.1},
+      "banana": {"drift_mm": 0.1}, "orange": {"drift_mm": 0.2}, "pear": {"drift_mm": 0.7}, "crate": {"drift_mm": 0.1}
+    },
+    "identity_ambiguity_ep1800": {
+      "latched_target_source_frame": 10,
+      "latched_target_nearest_fruit_at_source_frame": {"name": "banana", "dist_m": 0.009},
+      "actual_contact_at_attach_frame": {"frame": 15, "bodies": ["apple", "apple"]},
+      "apple_banana_separation_m": 0.093
+    },
+    "runner_up_score_metrics_key_ep1800": {
+      "note": "target_grounding.py:394-402 의 metrics dict 에 'runner_up_score' 키 없음",
+      "all_75_frames_runner_up_score": 0.0
+    },
+
+    "nine_events_cycle1_ep1807": {
+      "target_acquired": {"frame": 0, "t_step": 0,
+        "criterion": "cs.target 이 처음 존재(has_target=True, score=0.805)하고 label(obj0)이 이후 latch.manipulated 로 잠기는 값과 같다"},
+      "target_latched": {"frame": 2, "t_step": 16,
+        "criterion": "GraspLatch.phase 가 SEARCHING->LATCHED (frame0,1,2 모두 label obj0, confirm_frames=3)"},
+      "grasp_contact": {"frame": 19, "t_step": 152,
+        "criterion": "MuJoCo data.contact 에 ee_finger_l1/l2 body 와 apple body 의 접촉이 처음 나타남 (frame15~18 은 contact_fruit=[])"},
+      "attached": {"frame": 19, "t_step": 152,
+        "criterion": "GraspLatch.update() 가 attach=True 를 낸 프레임 (gripper_left state[7]=0.698, 0.85 미만). grasp_contact 와 같은 프레임(오프셋 없음, ep1800 은 없었음)"},
+      "destination_attention_raw": {"frame": 28, "t_step": 224,
+        "criterion": "HELD 진입(frame19) 뒤 처음 나온 non-None 라벨(obj1). frame19~27 은 label=None"},
+      "destination_attention_locked": {"frame": null, "t_step": null,
+        "criterion": "3프레임 연속 확정 없음 — HELD 구간(19~31) 라벨 순서: None x9, obj1(28), obj1(29), obj2(30), None(31). 연속 2가 최대"},
+      "transport_start": {"frame": 21, "t_step": 168,
+        "criterion": "ee_finger_l1 의 attach 시점(frame19) 대비 world 변위가 처음 50mm 초과 (55.2mm). frame20 은 1.1mm"},
+      "placement": {"frame": 32, "t_step": 256,
+        "criterion": "MuJoCo 참값 placed_ground_truth(apple, crate 로컬 벽안쪽 + rim-10mm 아래) 가 True — 75프레임 중 이 한 프레임만 True"},
+      "detached": {"frame": 32, "t_step": 256,
+        "criterion": "GraspLatch.update() 가 detach=True. event.note='성공 판정 — detach()' — placed_now(True) 로 풀림, open-streak 폴백 아님(gripper=0.954, 아직 열리는 중)"},
+      "task_state_reset": {"frame": null, "t_step": null,
+        "criterion": "75프레임 전체(frame32~74)에서 reset() 호출 없음. latch.phase 는 frame32부터 74까지 'placed' 로 유지, manipulated='obj0' destination=None 그대로"}
+    },
+    "cycle2_second_grasp_ep1807": {
+      "present": false,
+      "note": "frame33~74 구간에서 gripper_left_state7 이 1.0 에서 벗어나지 않음(재폐쇄 시도 없음) — ep1800 의 frame61~63 같은 2차 그리퍼 닫힘 창이 이 기록엔 없다. latch 가 PLACED 에서 못 빠져나오는지는 frame32 이후 manipulated/destination/phase 가 그대로 유지되는 것으로만 확인 가능 (attach 재시도 여부는 이 기록으로 테스트 불가)"
+    },
+    "phase_stuck_after_detach_ep1807": {
+      "latch_phase_frames_32_to_74": "전부 'placed'",
+      "manipulated_frames_32_to_74": "전부 'obj0'",
+      "destination_frames_32_to_74": "전부 None"
+    },
+    "object_displacement_full_75_frames_ep1807": {
+      "apple": {"pos_frame0": [0.564, 0.320, 0.850], "pos_frame74": [0.490, -0.081, 0.858], "drift_mm": 408.5},
+      "banana": {"pos_frame0": [0.550, -0.305, 0.843], "pos_frame74": [0.550, -0.305, 0.843], "drift_mm": 0.1},
+      "orange": {"pos_frame0": [0.459, 0.331, 0.849], "pos_frame74": [0.459, 0.332, 0.849], "drift_mm": 0.2},
+      "pear": {"pos_frame0": [0.465, -0.324, 0.856], "pos_frame74": [0.465, -0.324, 0.856], "drift_mm": 0.6},
+      "crate": {"pos_frame0": [0.517, -0.016, 0.880], "pos_frame74": [0.517, -0.016, 0.880], "drift_mm": 0.0},
+      "source": "benchmark/ag3s/docs/figures/t2/t2-events-table-ep1807.json"
+    },
+    "identity_ambiguity_ep1807": {
+      "_comment": "ep1800 과 대조 — 여기서는 잠긴 대상과 실제 접촉 대상이 같았다",
+      "manip_target_nearest_fruit_gt_frames_0_to_14": "전부 'apple', 거리 0.016~0.021 m",
+      "latched_target_ground_truth_at_attach_frame19": "apple",
+      "actual_contact_at_attach_frame": {"frame": 19, "bodies": ["apple", "apple"]},
+      "mismatch": false
+    },
+    "runner_up_score_metrics_key_ep1807": {
+      "note": "target_grounding.py:394-402 의 metrics dict 에 'runner_up_score' 키 없음 — ep1800 과 동일 코드경로, 변경 없음",
+      "all_75_frames_runner_up_score": 0.0,
+      "confident_threshold_formula": "_Confirm.update() 의 confident = score >= score_ratio(1.3) * max(runner_up, 1e-9) — runner_up=0.0 이면 임계값이 1.3e-9 로 사실상 0, score>0 이면 항상 통과",
+      "target_score_confidence_frame0": 0.8050778756498425
+    },
+    "identity_vs_runner_up_relation_ep1807": {
+      "note": "ep1807 에서는 defect3(runner_up_score=0.0, confident 문턱 사실상 무력화)는 그대로 재현되지만 defect2(식별 불일치)는 재현되지 않았다 — obj0 후보의 참값이 프레임 0~14 전 구간 apple 하나뿐이라 애매한 2위 후보 자체가 없었다"
+    }
+  },
+  "figures": [
+    {"path": "benchmark/ag3s/docs/figures/t2/t2-scene-hand-trajectory.png", "kind": "scene", "run": "ep1800"},
+    {"path": "benchmark/ag3s/docs/figures/t2/t2-timeline.png", "kind": "graph", "run": "ep1800"},
+    {"path": "benchmark/ag3s/docs/figures/t2/t2-events-table.png", "kind": "table", "run": "ep1800"},
+    {"path": "benchmark/ag3s/docs/figures/t2/t2-scene-hand-trajectory-ep1807.png", "kind": "scene", "run": "ep1807"},
+    {"path": "benchmark/ag3s/docs/figures/t2/t2-timeline-ep1807.png", "kind": "graph", "run": "ep1807"},
+    {"path": "benchmark/ag3s/docs/figures/t2/t2-events-table-ep1807.png", "kind": "table", "run": "ep1807"}
+  ],
+  "verdict": "사실만. 판정은 lead 와 사용자가 한다.",
+  "not_measured": [
+    "잔상(누적 TSDF)의 지속 프레임 수 — 이번 라운드에도 미룸(1라운드와 같은 사유, 이번 task.md 지시에도 포함 안 됨)",
+    "production 참조 placed_fn(ESDF 라벨층 기반) — MuJoCo 참값으로 대체 측정",
+    "ep1807 에서 2차 파지 시도 자체가 없어(그리퍼가 frame32 뒤 계속 열림) PLACED 이후 attach 재시도 여부는 이 기록으로 테스트 불가 — phase/manipulated/destination 이 유지된다는 것만 확인됨"
+  ]
+}

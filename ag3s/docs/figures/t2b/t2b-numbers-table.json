@@ -1,0 +1,115 @@
+{
+ "rows": [
+  [
+   "측정 1 — attach 뒤 쥔 물체",
+   "",
+   ""
+  ],
+  [
+   "attached 가 처음 not None",
+   "frame 19",
+   "T2 attached = frame 19"
+  ],
+  [
+   "attached 구 개수 / 반지름",
+   "1 / 38.02 mm",
+   "attached.py:212"
+  ],
+  [
+   "attached 스냅샷 점 수",
+   "18",
+   "point_voxel = 10 mm"
+  ],
+  [
+   "attached 점의 base 프레임 bbox",
+   "59.2 x 42.3 x 24.0 mm",
+   "attached.py:53"
+  ],
+  [
+   "쥔 점이 필드에서 거리 <= 0 인 프레임 (production)",
+   "[19]",
+   "19 에서 14/18 점, 최소 -26.23 mm"
+  ],
+  [
+   "같은 것, attach 없는 대조",
+   "[19, 20]",
+   "20 에서도 14/18 점"
+  ],
+  [
+   "attached carve 가 0 이 아닌 프레임",
+   "{\"20\": 22, \"21\": 4}",
+   "frame 19 는 0"
+  ],
+  [
+   "cluster 구성이 대조와 다른 프레임 수",
+   "0 / 75",
+   "n_object/unknown/overflow 전부 동일"
+  ],
+  [
+   "held 구간 쥔 물체 참값 80 mm 안의 cluster",
+   "0 (frame 19~31 전부)",
+   "최근접 비-target cluster 101.6~308.3 mm"
+  ],
+  [
+   "attached 가 None 으로 돌아온 프레임",
+   "frame 32",
+   "T2 detached = frame 32"
+  ],
+  [
+   "",
+   "",
+   ""
+  ],
+  [
+   "측정 2 — 누적 TSDF 잔상",
+   "",
+   ""
+  ],
+  [
+   "탐침",
+   "r = 50 mm",
+   "apple frame0 자리 / pear 자리"
+  ],
+  [
+   "사과 참값이 탐침 밖으로",
+   "frame 21",
+   "transport_start = frame 21"
+  ],
+  [
+   "위쪽 반구 점유가 영구 0 이 되는 프레임",
+   "frame 47",
+   "frame 0 에는 12 복셀"
+  ],
+  [
+   "residual_frames_after_transport_start (위쪽 반구)",
+   "26 / 54",
+   "frame 21~46"
+  ],
+  [
+   "탐침 중심 ESDF 가 영구 양수가 되는 프레임",
+   "frame 67",
+   "그 전까지 -19.99 ~ -28.28 mm"
+  ],
+  [
+   "residual_frames_after_transport_start (중심 음수)",
+   "46 / 54",
+   "frame 21~66"
+  ],
+  [
+   "구 전체 점유가 0 이 되는 프레임",
+   "없음 (22~46 복셀)",
+   "테이블 면이 늘 들어온다"
+  ],
+  [
+   "대조 — 배 자리 (drift 0.6 mm)",
+   "위쪽 반구 11~12 복셀",
+   "중심 -27.4 ~ -23.8 mm, 0 인 프레임 없음"
+  ],
+  [
+   "decay 설정",
+   "time_decay 1.0 / frustum_decay 1.0",
+   "config.py:480,484 — 감쇠 없음"
+  ]
+ ],
+ "source": "outputs/verify/T2b/t2b_summary.json"
+}

@@ -1,0 +1,146 @@
+{
+ "_comment": "ag3s-verifier 가 쓴다. 해석을 쓰지 않는다 — 숫자와 경로만. A1 의 runner_up_score 변경이 들어간 코드(md5 ee33a055...)로 회귀 기준선을 다시 잰 것. T2-b.verify.json 을 덮지 않는다.",
+ "step": "T2-c",
+ "date": "2026-09-25",
+ "runs": [
+  {
+   "id": "base_run1",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/T2c/base_run1.json",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T2c/base_run1.json",
+   "stdout_log": "outputs/verify/T2c/base_run1.log",
+   "alone": true,
+   "note": "regression-baseline skill 의 명령 그대로. 단독 실행 — 이 run 이 도는 동안 다른 실행을 띄우지 않았다",
+   "md5_target_grounding_before": "ee33a055a941811da6df094fbe985a94",
+   "md5_target_grounding_after": "ee33a055a941811da6df094fbe985a94",
+   "md5_grasp_latch_before": "f7574b161956611e2e08d2eaa1f8e54b",
+   "md5_grasp_latch_after": "f7574b161956611e2e08d2eaa1f8e54b",
+   "md5_files": ["outputs/verify/T2c/md5_before_base_run1.txt", "outputs/verify/T2c/md5_after_base_run1.txt"]
+  },
+  {
+   "id": "t2c_latch_runner_up_metrics",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T2b/measure_t2b.py --records outputs/live_test/20260925_ep1807/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_ep1807.npz --runner-up-mode metrics --no-control --out outputs/verify/T2c/t2c_latch_runner_up_metrics.json",
+   "venv": ".venv-ag3s",
+   "script": "outputs/verify/T2b/measure_t2b.py",
+   "raw_output": "outputs/verify/T2c/t2c_latch_runner_up_metrics.json",
+   "stdout_log": "outputs/verify/T2c/t2c_latch_runner_up_metrics.log",
+   "wall_s": 142.0,
+   "note": "T2-b 의 같은 script 를 --runner-up-mode metrics 로 돌렸다 — latch 가 runner_up_score 를 실제로 받는다. --no-control (대조 파이프라인 불필요). base_run1 이 끝난 뒤 단독으로 돌렸다",
+   "md5_target_grounding_before": "ee33a055a941811da6df094fbe985a94",
+   "md5_target_grounding_after": "ee33a055a941811da6df094fbe985a94",
+   "md5_grasp_latch_before": "f7574b161956611e2e08d2eaa1f8e54b",
+   "md5_grasp_latch_after": "f7574b161956611e2e08d2eaa1f8e54b",
+   "md5_files": ["outputs/verify/T2c/md5_before_latch.txt", "outputs/verify/T2c/md5_after_latch.txt"]
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "d2a8a46",
+  "md5_target_grounding_py": "ee33a055a941811da6df094fbe985a94",
+  "md5_grasp_latch_py": "f7574b161956611e2e08d2eaa1f8e54b",
+  "dirty_files": [
+   "ag3s/docs/AG3S_REVIEW_PLAN.md",
+   "ag3s/docs/AG3S_T0T6_LOG.md",
+   "ag3s/docs/handoff/T1.impl.md",
+   "ag3s/docs/handoff/T1.verify.json",
+   "ag3s/experiments/sources/mujoco_source.py",
+   "ag3s/stages/target_grounding.py"
+  ],
+  "note": "요구된 변경 후 md5 ee33a055a941811da6df094fbe985a94 확인. 두 run 모두 실행 전후 md5 가 같아 한 run 안에서 코드가 섞이지 않았다. 측정 중 A1 의 impl.md 는 읽지 않았다."
+ },
+ "baseline_check": {
+  "matched": true,
+  "criteria": {
+   "violated_start": {"measured": 14, "of": 15, "baseline": "14/15", "matched": true},
+   "has_target": {"measured": 9, "of": 15, "baseline": "9/15", "matched": true},
+   "frame0_clearance_before_mm": {"measured": 0.15718632962849477, "baseline": 0.15718632962849477, "matched": true}
+  },
+  "note": "셋 다 일치. raw: outputs/verify/T2c/base_run1.json"
+ },
+ "numbers": {
+  "_comment": "로그와 논문에 쓰이는 모든 수치가 여기에만 있다. 여기 없는 숫자는 쓰지 않는다.",
+
+  "regression_baseline_post_change": {
+   "violated_start": 14,
+   "frames": 15,
+   "has_target": 9,
+   "frame0_clearance_before_mm": 0.15718632962849477,
+   "has_target_flags_frames_0_to_14": [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+   "not_a_criterion": {
+    "_comment": "sqp.time_budget_ms 가 벽시계 마감이라 흔들린다. 적기만 하고 판정 근거로 쓰지 않는다.",
+    "resolved": 13,
+    "improved": 15,
+    "feasible": 14,
+    "violated": 1,
+    "violated_frame_index": 9
+   }
+  },
+
+  "identity_with_pre_change_run": {
+   "_comment": "T2-b 의 변경 전 코드 run(outputs/verify/T2b/baseline_check.json)과 프레임마다 대조",
+   "n_frames_compared": 15,
+   "clearance_before_mm_identical_all_frames": true,
+   "n_frames_differing_in_clearance_before": 0,
+   "has_target_flags_identical": true
+  },
+
+  "latch_with_runner_up_actually_fed": {
+   "_comment": "ep1807 75 프레임. T2-b 는 latch 에 runner_up=0.0 을 고정해 먹였고, 이 run 은 target_grounding.py 가 내는 값을 그대로 먹였다. 비교 대상은 T2.verify.json 의 raw = outputs/verify/T2/t2_events_ep1807.json.",
+   "compared_keys": ["latch_phase", "manipulated", "destination", "attach_this_frame", "detach_this_frame", "has_target", "label", "placed_ground_truth"],
+   "n_frames_compared": 75,
+   "n_frames_mismatched": 0,
+   "attach_frames": [19],
+   "detach_frames": [32],
+   "destination_non_none_frames": [],
+   "max_runner_up_score_over_75_frames": 0.2757589427371451,
+
+   "confident_divergent_frames": {
+    "_comment": "confident = score >= score_ratio(1.3) * max(runner_up, 1e-9)  (grasp_latch.py:142). T2-b 가 식으로 계산해 낸 다섯 프레임이 이 run 에서도 같았다. 각 프레임에서 latch 의 phase/manipulated/destination/label 을 T2 raw 와 대조한 결과를 함께 싣는다.",
+    "frames": [30, 35, 67, 68, 71],
+    "30": {"score": 0.267508, "runner_up_score": 0.237437, "threshold_1_3x_runner_up": 0.308668,
+           "confident_if_runner_up_zero": true, "confident_with_runner_up": false,
+           "latch_phase_this_run": "held", "latch_phase_T2_raw": "held",
+           "manipulated_this_run": "obj0", "manipulated_T2_raw": "obj0",
+           "destination_this_run": null, "destination_T2_raw": null,
+           "label_this_run": "obj2", "label_T2_raw": "obj2",
+           "in_held_window_19_to_31": true, "differs_from_T2_raw": false},
+    "35": {"score": 0.28111, "runner_up_score": 0.24085, "threshold_1_3x_runner_up": 0.313105,
+           "confident_if_runner_up_zero": true, "confident_with_runner_up": false,
+           "latch_phase_this_run": "placed", "latch_phase_T2_raw": "placed",
+           "manipulated_this_run": "obj0", "manipulated_T2_raw": "obj0",
+           "destination_this_run": null, "destination_T2_raw": null,
+           "label_this_run": "obj1", "label_T2_raw": "obj1",
+           "in_held_window_19_to_31": false, "differs_from_T2_raw": false},
+    "67": {"score": 0.265931, "runner_up_score": 0.26541, "threshold_1_3x_runner_up": 0.345033,
+           "confident_if_runner_up_zero": true, "confident_with_runner_up": false,
+           "latch_phase_this_run": "placed", "latch_phase_T2_raw": "placed",
+           "manipulated_this_run": "obj0", "manipulated_T2_raw": "obj0",
+           "destination_this_run": null, "destination_T2_raw": null,
+           "label_this_run": "obj1", "label_T2_raw": "obj1",
+           "in_held_window_19_to_31": false, "differs_from_T2_raw": false},
+    "68": {"score": 0.277605, "runner_up_score": 0.23302, "threshold_1_3x_runner_up": 0.302926,
+           "confident_if_runner_up_zero": true, "confident_with_runner_up": false,
+           "latch_phase_this_run": "placed", "latch_phase_T2_raw": "placed",
+           "manipulated_this_run": "obj0", "manipulated_T2_raw": "obj0",
+           "destination_this_run": null, "destination_T2_raw": null,
+           "label_this_run": "obj2", "label_T2_raw": "obj2",
+           "in_held_window_19_to_31": false, "differs_from_T2_raw": false},
+    "71": {"score": 0.268296, "runner_up_score": 0.207673, "threshold_1_3x_runner_up": 0.269975,
+           "confident_if_runner_up_zero": true, "confident_with_runner_up": false,
+           "latch_phase_this_run": "placed", "latch_phase_T2_raw": "placed",
+           "manipulated_this_run": "obj0", "manipulated_T2_raw": "obj0",
+           "destination_this_run": null, "destination_T2_raw": null,
+           "label_this_run": "obj1", "label_T2_raw": "obj1",
+           "in_held_window_19_to_31": false, "differs_from_T2_raw": false}
+   }
+  }
+ },
+ "figures": [],
+ "verdict": "기준선 일치 — 위반으로 시작 14/15 · has_target 9/15 · frame0 clearance_before +0.15718632962849477 mm. 변경 전 run 과 15 프레임 clearance_before 가 전부 같은 값이다. md5 ee33a055a941811da6df094fbe985a94 (변경 후). 판정은 lead 와 사용자가 한다.",
+ "not_measured": [
+  "figure — task 지시대로 이번 라운드에는 만들지 않았다 (불일치가 나오면 요청)",
+  "base_run1 의 재현 반복 (skill 은 단독 1 회를 요구하고 비교 대상 셋이 전부 SQP 이전 값이라 흔들리지 않는다). feasible/violated 는 1 회 값만 적었고 판정에 쓰지 않았다",
+  "runner_up_score 가 latch 를 실제로 바꾸는 시나리오 — ep1807 에서는 confident 가 갈리는 다섯 프레임 전부 SEARCHING 이 아닌 구간(held/placed)이라 phase·manipulated·destination 이 움직이지 않았다. SEARCHING 구간에서 갈리는 기록은 이 기록으로는 시험할 수 없다",
+  "ep1800 기록에서의 같은 대조 — 이번 라운드에 요청되지 않았다"
+ ]
+}

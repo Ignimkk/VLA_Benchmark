@@ -91,6 +91,8 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **margin** | 요구하는 안전 여유. 이 검토에서는 `esdf_margin = 50 mm` |
 | **접촉 권한** | 어느 링크가 target 을 만져도 되는가. 손끝은 사과를 잡아야 하지만 팔꿈치는 아니다 — 발견 E1 이 이것 |
 | **로봇 마스크 / self-filter** | depth 사진에서 **로봇 자기 몸이 찍힌 픽셀**을 지우는 것. 안 지우면 로봇이 자기 자신을 장애물로 본다 — 발견 C1 |
+| **attached collision geometry** | `attach()` 가 쥔 물체를 로봇에 강체로 편입할 때 만드는 구(`AttachedCollisionGeometry`) — 쥔 물체의 관측 점을 근사한 sphere 를 특정 링크(파지한 손가락)에 매달아, 로봇 몸의 일부처럼 자기충돌·여유거리 계산에 들어가게 한다. `detach()` 가 부르면 사라진다. **field 쪽에서 같은 자리를 carve 하는 것과는 별개 경로**라, attach 프레임에 carve 가 아직 안 돌면 그 프레임만 로봇 기하와 field 양쪽에 동시에 존재한다(T2-b) |
+| **탐침 구 (probe sphere)** | 잔상(residual)을 재려고 **특정 좌표에 임의로 띄운** 질의용 구 — 로봇도 장애물도 아니고, 그 자리의 ESDF/occupancy 를 읽기만 하는 측정 도구다. 구를 위·아래 반구로 나눠 보는 이유는 아래쪽이 테이블 같은 실재하는 표면을 항상 포함해 "원래 있는 것"과 "잔상"을 가리기 때문이다 (T2-b) |
 
 ### 최적화
 
@@ -109,9 +111,14 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | 용어 | 뜻 |
 |---|---|
 | **target_score** | 목표 위치 신뢰도. grounding 이 attention 지도에서 점수 상위 후보를 찾을 때 매기는 확률점수 (0~1). 점수 높을수록 찾은 위치를 믿는다 |
+| **`runner_up_score`** | 1 등 후보의 점수와 2 등 후보의 점수 차로 grounding 의 확신을 재려는 값. `_Confirm.update()` 의 `confident = score >= score_ratio(1.3) * max(runner_up, 1e-9)` 가 이것을 문턱에 쓴다. **`target_grounding.py:394-402` 의 metrics dict 에 이 키 자체가 없어** 지금은 항상 0.0 으로 읽힌다 — `runner_up=0.0` 이면 문턱이 `1.3e-9` 로 사실상 무력화되고 `score>0` 이면 항상 통과한다 (T2) |
+| **destination attention lock** | 물체를 쥔(HELD) 뒤 attention 이 목적지로 옮겨갔다고 **`confirm_frames` 연속 같은 label** 로 확정하는 절차. `ep1807` 기록에서는 HELD 구간 75 프레임 동안 연속 2 가 최대라 한 번도 확정되지 않았다 — 그런데도 놓기(`placement`)는 성공했다 (T2) |
+| **`placed_ground_truth`** | MuJoCo 시뮬레이터의 참값(물체·바구니 실좌표)으로만 판정한 "놓였다" — crate 로컬 좌표계의 벽 안쪽 + rim 아래. AG3S/production 이 쓰는 ESDF 라벨층 기반 `placed_fn` 과는 다른, 대조용 참값이다 (T2) |
 | **frame card** | 한 프레임의 결과를 시각화한 카드. 원 사진·지각 출력·충돌 체크를 한 그림에 나란히 띄운다. 전체 동작 시퀀스를 여러 카드로 만들어 한눈에 본다 |
 | **leakage** | self-filter 에서 로봇 마스크가 완전하지 못해 빠져나가는 로봇 픽셀. 단위 px (픽셀). 구 근사와 실제 메시 사이의 간격에서 나온다 |
-| **self_filter_inflation** | self-filter 마스크의 마진. 미터 단위로 로봇 구 바깥쪽으로 더 확대해 마스킹하는 거리. 현재 0.02 m(20 mm), cuRobo 기본값 0.05 m(50 mm) |
+| **self_filter_inflation** | self-filter 마스크의 마진. 미터 단위로 로봇 구 바깥쪽으로 더 확대해 마스킹하는 거리. 현재 **0.05 m(50 mm)** — cuRobo 기본값과 같다 (2026-09-25 에 0.02 m 에서 올렸다, T1) |
+| **gap-filling capsule** | 로봇 구 모델에 구가 아예 없는 링크(예: `EE_BODY_L/R`)를 self-filter 가 덮을 수 있도록 대신 만들어 끼워 넣는 캡슐. `UNCOVERED_LINKS` 목록에 있는 링크마다 MJCF 메시 정점에서 치수를 뽑아(`bounding_capsules`) 만든다. 이름이 목록에 없으면 `gap_filling_capsules` 가 `except KeyError: continue` 로 조용히 캡슐 0 개를 낸다 (T1) |
+| **`MJCF_BODY_ALIASES`** | 캡슐 치수를 **재는 이름**(MJCF, 예: `EE_BODY_L`)과 로봇 모델에 **붙이는 이름**(URDF, 예: `ee_left`)이 다를 때 그 둘을 잇는 번역표. 같은 부품을 두 파일이 다르게 부르는 데서 생기는 함정을 막는다 (`mujoco_source.py:450-453`, T1) |
 | **attention** | VLA 정책이 "어디를 보고 있는가" 를 나타내는 이미지 위의 열지도 |
 | **attention 셀 (cell)** | attention 을 **어디서 꺼내는가**의 한 조합 — `layer × head × denoise step × aggregation`. 16D npz 에서 18 × 8 × 3 × 3 = **1296 개**다. `denoise step` 은 π0.5 가 동작을 여러 번 걸쳐 다듬는 그 몇 번째 단계인가, `aggregation` 은 여러 suffix token 의 attention 을 어떻게 합치는가. **어느 셀을 고르냐에 따라 grounding 이 서기도 하고 안 서기도 한다** — 14D 에서 고른 `L8H2` 가 16D 에서도 서는지가 `T1-a` 의 물음이다 |
 | **lifting** | 그 2차원 열지도를 3차원 점들에 옮겨 붙이는 것 |
@@ -218,11 +225,11 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 |---|---|---|
 | **T0** 환경·배선 | 이 배선 그림이 프레임마다 사실인가 | **통과**(2026-09-24) — 8 항목 × held-out 4 에피소드 |
 | **R** 재측정 | **16D 에서 이 수치들은 얼마인가** (판정 6 으로 14D 비교를 뗐다) | **배선 정렬 대기**(2026-09-25) — 1 차(분류) 끝, `R-port` 이식 끝(P5 제외). R4·R5 는 미세 계층을 요구하는데 그것이 안 붙고, `T1-a` 가 원인을 **배선**으로 좁혔다 |
-| **T1** 연속 프레임 AG3S | 실측 정책 attention 으로 지각이 쓸 만한가 | **항목 2·3·5·6·7·8 통과**(2026-09-25). 항목 1(target 위치): 점수 문턱이 제 일을 한다(에피소드 간 보정은 안 됨). 항목 4(self-filter): 누수가 두 종류(끝단은 무해, 베이스는 해로움), `self_filter_inflation` 0.05 m(50 mm) 수정 진행 중 |
+| **T1** 연속 프레임 AG3S | 실측 정책 attention 으로 지각이 쓸 만한가 | **항목 2·3·5·6·7·8 통과**(2026-09-25). 항목 1(target 위치): 점수 문턱이 제 일을 한다(에피소드 간 보정은 안 됨). 항목 4(self-filter): `self_filter_inflation` 0.02→0.05 m 적용 — `base` 누수 5,758→0 px, `EE_BODY_L/R` 은 구가 없어 불변. `UNCOVERED_LINKS` 에 gap-filling capsule `ee_left`/`ee_right` 추가 — 자기 필터 구 194→218. **판정 완료(2026-09-25)**: 조용한 삼킴(`except KeyError`) → **소리를 내게 만든다**(코드는 이미 그렇게 되어 있다) · 손바닥을 제약 모델에 → **넣지 않는다, 기존 동작 유지** |
 | **X1** 로봇 구 분할 | 고정 구 / 움직일 수 있는 구를 가르는 규칙이 16D 에서 옳은가 | **해결 — 분할은 옳다**(2026-09-25). 고정 구 **42 / 120**, 기구학 파생(`attached.py:241-292`). 14D 의 27 은 구 105 개 모델이라 비교 불가. 회귀 기준선 영향 없음 |
 | **X2** head cam 이 벽을 본다 | teleop keyframe 의 `head_1` 이 기록에서 0 이 되는가 | **해결**(2026-09-25). 수정 + 가드 4 개 + 재촬영. `zed_left` 가 사과를 보는 프레임 **0/15 → 15/15**(중앙 544 px). 단 **재촬영 rollout 의 raw 가 안 남았다** — X3 측정 1 이 되살린다 |
 | **X3** `status` ↔ `clearance_after` | 둘이 같은 것을 재나, 다른 질문의 답인가 | **원인 확정 — 다른 질문의 답이다**(2026-09-25). `violated` 13 개와 `geometry_certified == False` 13 개가 **완전히 같은 집합**이고 `validity` 는 `degraded`(점군이 `max_points=60000` 상한에 걸린다). `states` 인자 차이는 0.0 mm — 탈락. `max_points` 를 200000 으로 올리면 **`valid` 15/15 · `feasible` 15**, clearance 차는 최대 0.320 mm, AG3S 시간은 +0.4 ms. **사용자 판정으로 `max_points` 를 200000 으로 올렸다** — 회귀 기준선은 13/2 그대로, 수정 후 기록은 `feasible` 15/15. `DEGRADED` 의 취급은 여전히 열려 있다 |
-| **T2** pick-place 상태 전이 | 9 개 사건이 정확히 어느 프레임에 있나 | 대기 — 파지 포함 16D 기록 확보됨 |
+| **T2** pick-place 상태 전이 | 9 개 사건이 정확히 어느 프레임에 있나 | **부분 통과로 닫는다(`ep1807`, 2026-09-25, 사용자 판정 2 차).** 통과: 조작 대상 ID 가 latch 로 유지된다 · attach/detach 로 held object 기하 편입·제거가 frame 19/32 로 정확(단 attach 프레임 자체는 carve 가 1 프레임 늦어 field 와 double counting — 결함으로 기록, T5·T6 에서 봄). 불합격: `destination_attention_locked`·`task_state_reset` 이 한 번도 안 됨(`None`) — detach 후 `latch.phase` 가 `'placed'` 로 고착. TSDF residual(위쪽 반구 기준) 26/54 프레임 지속, frame 47 에 영구 소거 — `T3` 의 `max_field_age_sec` 근거로 이어 붙인다. **변경 후 회귀 기준선(`T2-c`) — 동일**: 위반 시작 14/15·`has_target` 9/15·frame0 `clearance_before` +0.157 mm, 15 프레임 `clearance_before` 가 변경 전 run 과 한 프레임도 다르지 않다. `runner_up_score` 를 latch 에 실제로 먹여도 75 프레임 0 불일치 — 단 `confident` 가 갈리는 다섯 프레임이 전부 `held`/`placed` 구간이라 latch 가 잠긴 뒤라 영향이 없고, 효과가 있을 `SEARCHING` 구간은 이 기록으로 시험되지 않았다 |
 | **T3** 전 관측 프레임 TSDF/ESDF | 모든 프레임에서 필드가 서나. `max_field_age_sec` 를 정한다 | 대기 — T0 이 근거 수치를 냈다 (필드 나이 P50 2637 ms) |
 | **T4** fail-closed 주입 | 고장을 넣으면 정말 닫히나 | 대기 |
 | **T5** shadow 루프 | 판정만 하고 실행은 안 하는 루프가 서나 | 대기 — 여기서 AG3S 를 클라이언트 in-process 로 옮긴다 |
@@ -1746,3 +1753,389 @@ monkeypatch 가 아니라 실제 기본값으로 재현했다.
 * **[`figures/t1/t1-items-table.png`](figures/t1/t1-items-table.png)** — 표. 항목 1~8 의 요약 수치와 통과/실패 상태.
 * **[`figures/t1/t1-item1-score-vs-error.png`](figures/t1/t1-item1-score-vs-error.png)** — 확대. 항목 1 의 핵심: 점수 > 0.5 이면 오차도 작다 (거른 6 개 포함).
 * **[`figures/t1/cards/manifest.json`](figures/t1/cards/manifest.json)** — frame card 색인. 45 개 카드를 이미지 경로로 나열.
+* **[`figures/t1/t1-inflation-005-compare.png`](figures/t1/t1-inflation-005-compare.png)** — 표. `self_filter_inflation` 0.02 → 0.05 m 전후 비교(항목 4·5).
+
+### 로봇 마스크 수정 (2026-09-25)
+
+**증상**: self-filter 가 로봇 자기 몸을 놓쳐 장애물 필드로 샜다(위 항목 4). 참값 segmentation
+기준, ep1800 프레임에서 MJCF `EE_BODY_L` 90,690 px · `EE_BODY_R` 90,688 px · `base` 5,758 px
+가 새고 있었다(ep1850·ep1900 은 `EE_BODY_L/R` 만, `base` 는 ep1800 에서만). 각 몸체는 **자기가
+이고 있는 카메라에만 100%** 나타난다 — `EE_BODY_L` → `wrist_cam_l`, `EE_BODY_R` →
+`wrist_cam_r`.
+
+**수정 1 — 팽창값**: `benchmark/ag3s/config.py:171` 의 `self_filter_inflation` 을
+**0.02 → 0.05 m** (20 mm → 50 mm) 로 올렸다. `configs/default.yaml:36` 도 동기화
+(`tests/ag3s/test_config.py:45` 가 둘의 일치를 강제한다). 근거는 cuRobo 의 `RobotSegmenter`
+(`curobo_src/curobo/_src/perception/robot_segmenter.py`)가 **같은 방법**(충돌 구와 depth 점의
+거리)을 쓰고 `distance_threshold` 기본값이 **0.05 m** 라는 것.
+
+**결과**: `base` 누수 **5,758 px → 0 px**. 그러나 `EE_BODY_L/R` 은 **픽셀 단위로 그대로** — 그
+몸체는 구가 아예 없어 구를 부풀려도 닿지 않는다. 부작용으로 `has_target` 이 세 에피소드에서
+15/15·9/15·15/15 → **14/15·8/15·12/15** 로 내려갔고, 회귀 기준선이 시작 15/15 → **14/15**,
+`feasible` 13 → **14**, `violated` 2 → **1** 로 바뀌었다.
+
+**수정 2 — 빠진 링크**: `benchmark/ag3s/experiments/sources/mujoco_source.py` 의
+`UNCOVERED_LINKS`(자기 필터가 구로 못 덮는 링크에 대신 씌우는 **gap-filling capsule** —
+장애물이 아니라 자기 필터 전용으로 만드는 캡슐 — 목록)에 **`ee_left`·`ee_right`** 를
+추가했다. 목록에는 손가락(`ee_finger_*`)은 있는데 **손바닥에 해당하는 것이 빠져 있었다.**
+
+**왜 눈에 안 띄었나 — 이름이 두 파일에서 다르다.** MJCF 는 `EE_BODY_L`, URDF 는 `ee_left`
+다. 캡슐 치수를 잴 때는 MJCF 이름으로 메시를 재고(`bounding_capsules`), 로봇 모델에 붙일
+때는 URDF 링크여야 한다(`UrdfSphereChain` 이 아니면 거부, `urdf_sphere_chain.py:393-395`).
+**둘 다 맞아야 하는데 목록에는 하나만 적게 되어 있었다.** A1 이 번역표
+`MJCF_BODY_ALIASES`(재는 이름 → 붙이는 이름을 잇는 딕셔너리, `mujoco_source.py:450-453`)를
+두어 이 둘을 갈랐다.
+
+**그리고 실패가 조용했다.** `gap_filling_capsules` 가 `except KeyError: continue` 로 삼켜서,
+이름이 틀리면 **캡슐 0 개를 내고 자기 필터에 구멍이 남는다.** 손바닥이 빠진 채 오래 남아 있을
+수 있었던 이유다. **2026-09-25 사용자 판정으로 갱신**: 삼킴을 **소리를 내게 만든다** — 코드는
+이미 그렇게 되어 있다(`_warn_no_capsules`, `except KeyError` 로 여전히 삼키되 어느 spelling 을
+시도했는지까지 `_LOG.warning` 으로 크게 말한다). 상세는 아래 T2 절의 **"사용자 판정"** 표.
+
+**URDF 확인**: `pi05_TO_hybrid/rby1_description/models/rby1a/urdf/model.urdf` (34 링크)에서
+`ee_left`·`ee_right`·`ee_finger_*`·`link_*_arm_6`·`base`·`wheel_*` 은 **collision 0 개, visual
+1 개**다. URDF 만으로는 못 덮는다 — `UNCOVERED_LINKS` 의 gap-filling capsule 이 유일한 길이다.
+
+**캡슐 치수**: `bounding_capsules` 가 MJCF 메시 정점에서 뽑는다(눈대중이 아니다). `segments`
+는 기본 3 유지 — 실측 반지름이 1 에서 59.7 mm, 2 에서 38.1·37.9, **3 에서 33.0·28.4·32.8**,
+4 에서 32.8·23.1·**64.4**·32.9 로 4 는 슬래브 경계가 그리퍼의 넓은 면에 떨어져 하나가 튄다.
+
+**모델 변화**: 자기 필터 구 **194 → 218**, gap-filling 캡슐 **30 → 36**. 회귀 기준선의 제약
+모델은 `link_filter=ARM_LINKS` 라 이 수정에 안 닿는다.
+
+**테스트**: **659 passed** (직전 652 + 신규 `tests/ag3s/test_gap_filling_capsules.py` 7).
+
+**판정 결과 (2026-09-25, 아래 T2 절의 "사용자 판정" 표)**: (a) 조용한 삼킴 — **소리를 내게
+만든다**(코드는 이미 그렇게 되어 있다). (b) 손바닥을 **제약** 모델에도 넣을 것인가 —
+`benchmark/ag3s/config.py:367-370` 의 `DEFAULT_CONTACT_LINKS` 는 `ee_left`/`ee_right` 를
+**이미 접촉 허용 링크로 적고 있는데** 제약 모델(`experiments/reports/rby1_transport.py:454`)은
+`ee_finger_` 만 본다. **넣지 않는다 — 기존 동작 유지**, 어긋남은 알려진 상태로 남긴다(전환
+신호는 T2 절의 "되돌아올 지점").
+
+**곁가지**: 같은 대소문자 함정이 하나 더 있다 — URDF `FT_sensor_L/R` ↔ MJCF `FT_SENSOR_L/R`.
+지금은 `UNCOVERED_LINKS` 에 없어 아무것도 안 걸린다.
+
+---
+
+## T2 — 자산 확보 (ep1807, 2026-09-25)
+
+**T2 는 과제가 물리적으로 완결되는 기록을 요구한다.** 처음 뜬 ep1800 은 그렇지 않았다.
+
+| | ep1800 | **ep1807** |
+|---|---|---|
+| 대상 | apple | apple |
+| 대상 들림 | 92.1 mm | **240.6 mm** |
+| 대상 ↔ 바구니 수평거리 | 328 → 330 mm | **339 → 71 mm** |
+| 다른 과일 셋 | — | 들림 0.0 mm, 거리 불변 |
+| 관측 | 75 (600 스텝) | **75 (600 스텝)** |
+
+**둘 다 held-out(1800–1999)인데 하나는 완결되고 하나는 안 된다.** 에피소드나 정책의 문제가
+아니라 성공률의 문제다 — 몇 개 중 몇 개가 완결되는지는 아직 재지 않았다.
+
+**자산**: 기록 `outputs/live_test/20260925_ep1807/run_0000/run_0000`, attention
+`benchmark/ag3s/asset/data/attention_16d_ep1807.npz` `(75,3,3,18,8,3,16,16)`. `head_1` 75/75
+프레임 +0.7001.
+
+**측정 조건 정정**: 제어 스텝은 **600 이 맞다** (사용자 판정 2026-09-25). lead 가 시연
+길이(41.6~46.8 초)에서 역산해 900 으로 올렸던 것은 근거가 약했고 되돌렸다. 900 으로 뜬
+기록들(`20260925_t2b`, `20260925_train/ep*`)은 조건이 섞여 판정 근거로 쓰지 않는다.
+
+### nine events — `ep1807` (2 라운드, 운반 완결) frame 표
+
+`measure_t2_events.py` 로 `outputs/live_test/20260925_ep1807/run_0000` 를 잰 결과다.
+**`destination_attention_locked` 와 `task_state_reset` 이 `None`** — 아홉 중 일곱만 frame 이 있다.
+
+| 사건 | frame | t_step | 판정 근거 (`criterion`) |
+|---|---|---|---|
+| `target_acquired` | 0 | 0 | `has_target=True`, `score=0.805`, label `obj0` — 이후 `latch.manipulated` 로 잠기는 값과 같다 |
+| `target_latched` | 2 | 16 | frame 0·1·2 모두 label `obj0`(`confirm_frames=3`), `SEARCHING`→`LATCHED` |
+| `grasp_contact` | 19 | 152 | MuJoCo `data.contact` 에 `ee_finger_l1`/`l2` 와 apple 의 접촉이 처음 나타남 (frame 15~18 은 없음) |
+| `attached` | 19 | 152 | `GraspLatch.update()` 가 `attach=True` (`gripper_left state[7]=0.698`, 0.85 미만). `grasp_contact` 와 같은 frame — ep1800 에 있던 오프셋이 여기엔 없다 |
+| `destination_attention_raw` | 28 | 224 | HELD 진입(frame 19) 뒤 처음 나온 non-None 라벨(`obj1`). frame 19~27 은 label `None` |
+| **`destination_attention_locked`** | **None** | **None** | 연속 3프레임(`confirm_frames=3`) 확정 없음 — HELD 구간(19~31) 라벨 순서: `None`×9, `obj1`(28), `obj1`(29), `obj2`(30), `None`(31). 연속 2 가 최대 |
+| `transport_start` | 21 | 168 | `attach` 시점(frame 19) 대비 world 변위가 처음 50 mm 초과 (55.2 mm). frame 20 은 1.1 mm |
+| `placement` | 32 | 256 | MuJoCo 참값 `placed_ground_truth`(apple, crate 로컬 벽 안쪽 + rim −10 mm 아래) 가 True — 75 프레임 중 이 한 프레임뿐 |
+| `detached` | 32 | 256 | `GraspLatch.update()` 가 `detach=True`, `event.note`="성공 판정 — detach()" — `placed_now`(True) 로 풀림, open-streak fallback 아님(`gripper=0.954`, 아직 열리는 중) |
+| **`task_state_reset`** | **None** | **None** | 75 프레임 전체(frame 32~74)에서 `reset()` 호출 없음. `latch.phase` 는 frame 32~74 `'placed'` 로 유지, `manipulated='obj0'` `destination=None` 그대로 |
+
+**처음으로 놓기가 잡혔다.** `placement` 와 `detached` 가 **같은 frame(32)** 에서 함께 일어난다.
+`detach` 가 `placed_now` 성공 경로로 울렸다는 것은 `event.note`(*"성공 판정 — detach()"*)와
+그때 gripper 값(0.954, 아직 열리는 중)이 함께 보증한다 — open-streak fallback(그리퍼가 그냥
+`release_frames=2` 연속 열려서 풀리는 경로)이 아니다. `ep1800`(1 라운드)에서는 `detached` 가
+그 fallback 이었고 `placement` 자체가 75 프레임 내내 한 번도 True 가 되지 않았다 — 뒤 절반이
+반쪽이었다. `ep1807` 에서 그 반쪽이 닫혔다.
+
+**destination attention 이 한 번도 확정되지 않는다.** `destination_attention_locked` 는
+`None` 이다 — HELD 구간(19~31)의 라벨 순서(`None`×9, `obj1`, `obj1`, `obj2`, `None`)에서
+`confirm_frames=3` 연속 같은 라벨이 한 번도 없다(연속 2 가 최대). 그런데도 `placement` 는
+frame 32 에서 성공했다 — **AG3S 의 destination 추적이 확정에 한 번도 기여하지 않은 채로
+정책이 물체를 넣었다**는 뜻이다.
+
+**detach 후 state 가 초기화되지 않는다.** `phase_stuck_after_detach_ep1807` — frame 32~74
+구간에서 `latch_phase` 는 전부 `'placed'`, `manipulated` 는 전부 `'obj0'`, `destination` 은
+전부 `None` 으로 남는다. T2 합격 조건의 *"detach 후 이전 상태가 제거된다"* 는 **불합격**이다.
+단, `cycle2_second_grasp_ep1807.present == False` — 이 기록엔 frame 33~74 구간에서 그리퍼
+재폐쇄 시도 자체가 없다(`gripper_left_state7` 이 1.0 을 벗어나지 않는다). **이 phase 고착이
+다음 과제(2차 파지)를 실제로 막는지는 이 기록만으로는 증명할 수 없다** — phase·manipulated·
+destination 이 유지된다는 것만 확인됐다.
+
+**결함 3(`runner_up_score` 키 부재) 는 재현되고, 결함 2(식별 불일치) 는 재현되지 않는다.**
+`runner_up_score_metrics_key_ep1807` — `target_grounding.py:394-402` 의 metrics dict 에
+`runner_up_score` 키가 없어 전 75 프레임 0.0 (`ep1800` 과 동일 코드경로, 변경 없음).
+`_Confirm.update()` 의 `confident = score >= score_ratio(1.3) * max(runner_up, 1e-9)` 에서
+`runner_up=0.0` 이면 임계값이 `1.3e-9` 로 사실상 0 이 되어 `score>0` 이면 항상 통과한다
+(frame 0 `target_score_confidence=0.805`). `identity_ambiguity_ep1807` — 잠긴 대상(`obj0`)의
+참값이 frame 0~14 전 구간 apple 하나뿐이라(`mismatch: False`) 애매한 2 위 후보 자체가 없었다.
+`identity_vs_runner_up_relation_ep1807` 이 이 둘의 관계를 적는다: 결함 3(`runner_up_score=0.0`,
+confident 문턱 사실상 무력화)는 그대로 재현되지만 결함 2(식별 불일치)는 재현되지 않았다 —
+obj0 후보의 참값이 애매하지 않았기 때문이다.
+
+**object drift — `ep1807` 전 75 프레임** (`object_displacement_full_75_frames_ep1807`):
+
+| 물체 | frame0 위치 (m) | frame74 위치 (m) | drift |
+|---|---|---|---|
+| apple | [0.564, 0.320, 0.850] | [0.490, −0.081, 0.858] | **408.5 mm** |
+| banana | [0.550, −0.305, 0.843] | [0.550, −0.305, 0.843] | 0.1 mm |
+| orange | [0.459, 0.331, 0.849] | [0.459, 0.332, 0.849] | 0.2 mm |
+| pear | [0.465, −0.324, 0.856] | [0.465, −0.324, 0.856] | 0.6 mm |
+| crate | [0.517, −0.016, 0.880] | [0.517, −0.016, 0.880] | 0.0 mm |
+
+**대상(apple)만 움직였다** — 나머지 넷은 mm 단위 잔차 안이다.
+
+**아직 측정하지 않은 것 — `not_measured` 를 그대로 옮긴다**:
+1. 잔상(누적 TSDF residual — 물체가 떠난 뒤에도 accumulated TSDF 에 남는 occupancy)의
+   지속 프레임 수 — 이번 라운드에도 미뤘다(1 라운드와 같은 사유, 이번 task.md 지시에도
+   포함 안 됨)
+2. production 참조 `placed_fn`(ESDF 라벨층 기반) — 이번 측정은 MuJoCo 참값으로 대체했다
+3. `ep1807` 에서 2차 파지 시도 자체가 없어(그리퍼가 frame 32 뒤 계속 열림) `PLACED` 이후
+   attach 재시도 여부는 이 기록으로 테스트 불가 — phase/manipulated/destination 이 유지된다는
+   것만 확인됐다
+
+**`handoff/T2-b.task.md` 로 A2 에게 넘겼다.**
+
+### 시각화 (규칙 A)
+
+* [`figures/t2/t2-scene-hand-trajectory.png`](figures/t2/t2-scene-hand-trajectory.png) —
+  실제 씬 (**`ep1800`**, 1 라운드·운반 없음).
+* [`figures/t2/t2-timeline.png`](figures/t2/t2-timeline.png) — 그래프 (**`ep1800`**).
+* [`figures/t2/t2-events-table.png`](figures/t2/t2-events-table.png) — 표 (**`ep1800`**).
+* [`figures/t2/t2-scene-hand-trajectory-ep1807.png`](figures/t2/t2-scene-hand-trajectory-ep1807.png) —
+  실제 씬 (**`ep1807`**, 2 라운드·운반 완결).
+* [`figures/t2/t2-timeline-ep1807.png`](figures/t2/t2-timeline-ep1807.png) — 그래프 (**`ep1807`**).
+* [`figures/t2/t2-events-table-ep1807.png`](figures/t2/t2-events-table-ep1807.png) — 표 (**`ep1807`**).
+
+### 사용자 판정 (2026-09-25) — T2 게이트와 T1 잔여 둘
+
+| 물음 | 판정 |
+|---|---|
+| T2 를 어떻게 닫나 | **미측정 셋을 먼저 채운 뒤 판정한다** — `T2-b` 로 나갔다 |
+| `runner_up_score` 키 부재 | **지금 고친다** — `T2-fix` 로 A1 에게 나갔다 |
+| `gap_filling_capsules` 의 조용한 삼킴 | **소리를 내게 만든다.** 코드는 이미 그렇게 되어 있다 (`mujoco_source.py` 의 `_warn_no_capsules`, `except KeyError` 로 여전히 삼키되 `_LOG.warning` 으로 어느 spelling 을 시도했는지까지 크게 말한다) — T1 절의 *"이 삼킴은 아직 그대로다 — 판정 대기"* 를 이 판정으로 갱신한다 |
+| 손바닥(`ee_left`/`ee_right`)을 constraint model 에 | **넣지 않는다 — 기존 동작 유지.** `DEFAULT_CONTACT_LINKS`(`config.py:367-370`)와 constraint model(`experiments/reports/rby1_transport.py:454`)이 어긋나는 것(전자는 손바닥을 접촉 허용 링크로 이미 적고 있는데 후자는 `ee_finger_` 만 본다)은 **알려진 상태로 남긴다** |
+
+**되돌아올 지점 — 손바닥을 constraint model 에.** 지금은 `DEFAULT_CONTACT_LINKS` 와
+constraint model 이 어긋난 채로 둔다. **전환 신호**: 과제 동작에서 손바닥(`ee_left`/`ee_right`)이
+장애물이나 목적지에 닿아야 하는 장면이 나오면 — 그때는 `ee_finger_` 만 보는 constraint model
+이 그 접촉을 위반으로 잡아낼 것이고, 그 시점에 손바닥을 constraint model 에도 넣는다.
+
+---
+
+## T2-b — 미측정 둘을 채웠다 (ep1807, 2026-09-25)
+
+`T2.verify.json` 의 `not_measured` 1·3 번(쥔 물체가 robot collision geometry 로 옮겨 앉는가 ·
+잔상 지속 프레임 수)을 잰 것이다.
+
+### 오염 확인 — `T2.verify.json` 의 원 측정과 섞이지 않았다
+
+`t2_replay_match`: 이번 run 은 A1 이 `runner_up_score` 키를 추가한 **변경 후 코드**로 돌았지만
+latch 에는 `runner_up = 0.0` 을 고정해 먹였다(`--runner-up-mode zero`). 그렇게 나온 75 프레임
+latch 계열(`latch_phase`·`manipulated`·`destination`·`attach_this_frame`·`detach_this_frame`·
+`has_target`·`label`·`placed_ground_truth`)을 `T2.verify.json` 의 raw 와 프레임마다 대조하면
+**75 프레임 전부 일치, 불일치 0 프레임** — `attach` frame 19, `detach` frame 32 그대로다.
+
+**변경 후 코드가 실제로 내놓는 `runner_up_score`**(`runner_up_score_observed`, 참고 수치 — 이번
+latch 에는 안 들어갔다): 75 프레임 최대 **0.2757589427371451**. `confident = score >=
+score_ratio(1.3) * max(runner_up, 1e-9)`(`grasp_latch.py:142`) 판정이 0.0 고정 대비 갈리는
+프레임은 **[30, 35, 67, 68, 71] 다섯 개**뿐이고, `target_latched`(frame 2)·`attached`(frame 19)·
+`detached`(frame 32) 중 어느 것도 이 다섯에 없다.
+
+### 측정 1 — held object 는 편입되지만 **carve 가 1 프레임 늦다**
+
+`attached` 는 frame 19 에 처음 not-None, frame 32 에 `None` 복귀 — latch 의 `attach`/`detach`
+프레임과 정확히 일치한다. 쥔 물체는 sphere 1 개(`r = 38.0185 mm`), snapshot 점 18 개로
+`ee_finger_l1` 에 붙는다.
+
+**`field_at_attached_points_mm`** — attached 점 18 개를 그 프레임의 ESDF 에 그대로 물은 값.
+main = production(attach 를 실제로 부름), control = 같은 관측을 쓰지만 attach 를 안 부른
+대조 파이프라인. 음수 = 그 점이 아직 점유 안쪽.
+
+| frame | main_min (mm) | main_n_nonpositive | control_min (mm) | control_n_nonpositive | `n_attached_voxels_carved` |
+|---|---|---|---|---|---|
+| 19 | −26.23 | 14/18 | −26.23 (main 과 **동일**) | 14/18 | 0 |
+| 20 | **+22.05** | 0/18 | −26.44 (여전히 음수) | 14/18 | **22** |
+| 21 | +29.65 | 0/18 | +13.07 | 0/18 | **4** |
+| 22 | +93.98 | 0/18 | +93.98 (main 과 동일) | 0/18 | 0 |
+| 31 | +23.40 | 0/18 | +23.40 (main 과 동일) | 0/18 | 0 |
+
+frame 19 는 main 과 control 이 **완전히 동일**하고 `n_attached_voxels_carved = 0` 이다 —
+attach 가 울린 바로 그 프레임에는 아직 아무것도 파내지지 않았다. frame 20 에서 carve 22 복셀이
+돌아 main 만 최소거리가 양수로 올라가고(control 은 여전히 음수), frame 21 에서 carve 4 복셀이
+마저 돈다. frame 22 부터는 `frames_main_equals_control_at_attached_points`(22~31)로 main·control
+이 다시 같아진다 — carve 할 것이 이미 다 파여서다.
+
+**즉 attach 가 울린 그 프레임(19)에서는 쥔 물체가 robot collision geometry 와 obstacle field
+양쪽에 동시에 들어 있다.** double counting 은 정확히 **1 프레임**이다.
+
+**candidate 층에는 흔적이 없다.** `obstacle_cluster_counts.frames_where_main_cluster_mix_differs_from_control
+= 0`(75 프레임 비교 전부), `clusters_near_held_object_ground_truth.n_within_80mm_all_held_frames_19_to_31
+= 0` — HELD 구간(19~31) 어느 프레임도 쥔 물체의 MuJoCo 참값 위치 80 mm 안에 다른 candidate 가
+없다. **double counting 은 ESDF voxel 층에만 있고, primitive/candidate 층으로는 새지 않는다.**
+
+**원인은 추정이다 — 측정이 아니다.** lead 가 코드로 읽은 것: `benchmark/trajopt/safe_policy.py:335-349`
+에서 `constraint_set`(그 프레임의 field)이 `process_multi_debug`(:280)로 먼저 구워지고, 그
+뒤에 `_run_latch`(:292) 안에서 `self._latch.update(...)` → `if event.attach:
+self.ag3s.attach(...)`(:345-349)가 온다. 그 프레임의 field 는 attach 를 부르기 **전에** 이미
+구워져 있으므로 carve 는 다음 프레임부터 듣는다는 것이 **추정**이다.
+
+### 측정 2 — TSDF residual 이 26 프레임 남는다
+
+decay 는 껐다(`time_decay = 1.0`, `frustum_decay = 1.0`, `config.py:480,484`). apple 이 떠난
+자리(`apple_frame0`, 반지름 50 mm 탐침 구)를 `transport_start_frame = 21` 부터 74 까지(분모 54
+프레임)로 **세 정의를 나란히 둔다**:
+
+| 정의 | 잔상이 남는 프레임 수 | 영구히 사라지는 frame |
+|---|---|---|
+| 위쪽 반구 점유(occupancy) > 0 | **26 / 54** | 47 |
+| 탐침 중심 ESDF ≤ 0 | **46 / 54** | 67 |
+| 구 전체 occupancy > 0 | **54 / 54** (영구히 0 이 안 됨) | — (`null`) |
+
+구 전체가 영구히 0 이 안 되는 것은 아래쪽 반구가 테이블 윗면(`z = 0.820`, base 기준)을 항상
+포함하기 때문이다 — 그 자체가 잔상이 아니라 **실재하는 표면**이다. 그래서 "잔상이 몇 프레임
+남았나"를 재려면 위쪽 반구만 봐야 한다.
+
+**대조군 pear(drift 0.6 mm, 정적 물체)**: 위쪽 반구 점유가 75 프레임 내내 **11~12 로 한 번도
+0 이 안 된다.** apple 탐침의 위쪽 반구 점유가 frame 21(7) 근방에서 시작해 frame 47 에 0 으로
+떨어지는 것과 비교하면, **"원래 거기 있는 것"(pear)과 "잔상"(apple 이 떠난 자리)의 신호
+크기가 같은 자릿수라 필드 값만 보고는 둘을 못 가른다** — 위쪽 반구 점유가 0 으로 완전히
+떨어지는 시점(frame 47)까지 기다려야 잔상이 다 빠졌다고 말할 수 있다.
+
+### 아직 측정하지 않은 것 — `not_measured` 를 그대로 옮긴다
+
+1. production 참조 `placed_fn`(ESDF 라벨층 기반) — `T2` 와 같이 이번에도 MuJoCo 참값으로
+   대체했다
+2. **변경 전 코드**(A1 이 `runner_up_score` 키를 넣기 전, md5 `caae04a1...`)에서의 측정 1·2 —
+   A1 이 14:48:13 UTC 에 저장해 되돌릴 수 없었다. 대신 latch 에 `runner_up=0.0` 을 고정해
+   돌렸고, 그렇게 나온 75 프레임 latch 계열이 `T2` 의 raw 와 0 프레임 불일치였다
+   (`t2_replay_match`). **변경 전 코드 자체로의 재측정은 하지 않았다**
+3. `runner_up_score` 를 latch 에 **실제로 먹였을 때**의 attach/detach frame — 이번 run 은
+   0.0 고정이라 재지 않았다. `confident` 판정이 갈리는 프레임 5 개만 식으로 계산해 적었다
+4. 탐침 구 안 점유의 **카메라별 출처**(어느 카메라의 옛 관측이 그 복셀을 점유로 유지하는가) —
+   이번 측정은 필드 결과만 본다
+5. **frustum/time decay 를 켰을 때**의 잔상 프레임 수 — 기본값 1.0(감쇠 없음) 그대로만 쟀다
+
+### 회귀 기준선 확인
+
+`baseline_check`: 위반으로 시작 **14/15** · `has_target` **9/15** · frame0
+`clearance_before` **+0.15718632962849477 mm** — `T2.verify.json` 의 `base_run1.json` 과
+frame0 clearance 가 소수점까지 같다. 이 확인은 **A1 변경 전 코드**(target_grounding.py
+저장 14:48:13 UTC 이전)로 돌았다.
+
+### 시각화 (규칙 A)
+
+* [`figures/t2b/t2b-scene-residual-slices.png`](figures/t2b/t2b-scene-residual-slices.png) —
+  실제 씬. 배치도 → `zed_left` 렌더 → 같은 프레임 ESDF 수평 단면.
+* [`figures/t2b/t2b-timeline-attached-residual.png`](figures/t2b/t2b-timeline-attached-residual.png) —
+  그래프. attach 전후 field 값과 apple 탐침 점유의 프레임별 추이.
+* [`figures/t2b/t2b-numbers-table.png`](figures/t2b/t2b-numbers-table.png) — 표.
+
+### 사용자 판정 (2026-09-25, 2 차) — T2 게이트를 닫는다
+
+| 물음 | 판정 |
+|---|---|
+| T2 게이트 | **부분 통과로 닫고 T3 로 간다.** 통과: 조작 대상 ID 가 latch 로 유지된다(`identity_ambiguity_ep1807`, `T2`) · attach/detach 로 held object 의 기하 편입·제거가 frame 19/32 로 정확하다. 불합격: detach 후 task state reset 이 없다(`latch.phase` 가 32~74 `'placed'` 로 고착) · destination attention lock 이 한 번도 확정되지 않는다 |
+| carve 1 프레임 지연 | **결함으로 기록하고 T5·T6 에서 본다.** 1 프레임이고 candidate 층에 안 보이니 지금 고치지 않는다 |
+| TSDF residual 26 프레임 | **T3 의 `max_field_age_sec` 근거로 이어 붙인다** — 아래 참고 |
+| 변경 후 회귀 기준선 | **재서 보고 커밋한다** — `T2-c` 로 A2 에게 나갔다 |
+
+**T3 근거 짝짓기**: `max_field_age_sec` 를 정할 때 두 수치를 한 짝으로 쓴다 — T0 이 낸
+**필드 나이 P50 2637 ms**(관측이 얼마나 오래 걸려야 field 가 새로 서는가)와, 이번 측정의
+**위쪽 반구 잔상 26/54 프레임(영구 소거 frame 47)**(field 가 서더라도 옛 표면이 실제로
+빠지기까지 몇 프레임이 걸리는가)이다. 둘 다 "field 가 지금 씬을 얼마나 최신으로 보나"라는
+같은 질문의 다른 절반이다.
+
+**되돌아올 지점 — carve 1 프레임 지연.** 지금은 candidate 층에 흔적이 없고(`n_within_80mm=0`)
+1 프레임뿐이라 고치지 않는다. **전환 신호**: closed loop(T5·T6)에서 파지 순간 가짜 violation
+(쥔 물체가 자기 자신에게 부딪히는 것으로 잡히는 것)이 실제로 관측되면 — 그때
+`safe_policy.py` 의 attach 호출을 `process_multi_debug` 앞으로 당기거나, attach 프레임의
+carve 를 그 자리에서 바로 도는 방식으로 고친다.
+
+---
+
+## T2-c — 변경 후 회귀 기준선: **일치가 아니라 동일** (2026-09-25)
+
+A1 이 `runner_up_score` 키를 추가한 뒤(md5 `ee33a055a941811da6df094fbe985a94`)의 코드로 회귀
+기준선을 다시 쟀다. **단독 실행**(run 이 도는 동안 다른 실행을 띄우지 않음), 실행 전후 md5
+동일 — 한 run 안에서 코드가 섞이지 않았다.
+
+### 기준선 셋 — 동일
+
+**위반으로 시작 14/15 · `has_target` 9/15 · frame0 `clearance_before` +0.15718632962849477 mm.**
+`identity_with_pre_change_run`(T2-b 의 변경 전 run 과 대조): **15 프레임 `clearance_before_mm`
+이 한 프레임도 다르지 않고**(`n_frames_differing_in_clearance_before = 0`), `has_target` 플래그
+배열도 `[0,0,1,1,1,1,1,1,1,1,1,0,0,0,0]` 로 같다. **"일치"가 아니라 "동일"** — 프레임 단위
+소수점까지 같은 값이다.
+
+기준이 **아닌** 값(`not_a_criterion` — `sqp.time_budget_ms` 가 벽시계 마감이라 흔들린다, 참고로만
+적는다): 해소 13 · 개선 15 · `feasible` 14 · `violated` 1(frame 9).
+
+### `runner_up_score` 를 latch 에 실제로 먹였을 때도 아무것도 안 움직인다
+
+`latch_with_runner_up_actually_fed` — `ep1807` 75 프레임을 `T2.verify.json` 의 raw 와
+프레임마다 대조: `latch_phase`·`manipulated`·`destination`·`attach_this_frame`·
+`detach_this_frame`·`has_target`·`label`·`placed_ground_truth` **8 개 키, 0 프레임 불일치**.
+`attach` frame 19 · `detach` frame 32 그대로다. `destination` 이 non-None 인 프레임은 75 프레임
+중 **하나도 없다**(이 run 과 T2 raw 양쪽 다) — 앞서 기록한 `destination_attention_locked =
+None`(T2 절)과 같은 사실의 다른 면이다.
+
+`max_runner_up_score_over_75_frames = 0.2757589427371451`. `confident = score >=
+score_ratio(1.3) * max(runner_up, 1e-9)`(`grasp_latch.py:142`) 판정이 갈리는 다섯 프레임은
+`T2-b`(`runner_up=0.0` 고정, 식으로만 계산)와 **똑같이 [30, 35, 67, 68, 71]**:
+
+| frame | `score` | `runner_up` | 문턱(1.3×ru) | confident(ru=0 이면) | confident(ru 먹이면) | `latch_phase` | `manipulated` |
+|---|---|---|---|---|---|---|---|
+| 30 | 0.267508 | 0.237437 | 0.308668 | True | **False** | held | obj0 |
+| 35 | 0.281110 | 0.240850 | 0.313105 | True | **False** | placed | obj0 |
+| 67 | 0.265931 | 0.265410 | 0.345033 | True | **False** | placed | obj0 |
+| 68 | 0.277605 | 0.233020 | 0.302926 | True | **False** | placed | obj0 |
+| 71 | 0.268296 | 0.207673 | 0.269975 | True | **False** | placed | obj0 |
+
+다섯 모두 `latch_phase`·`manipulated`·`destination`·`label` 이 T2 raw 와 같았다
+(`differs_from_T2_raw: false`).
+
+### 이 수정의 가장 중요한 한계
+
+**다섯 프레임이 전부 `held` 또는 `placed` 구간에 있다** (frame 30 은 `in_held_window_19_to_31:
+true`, 나머지 넷은 `placed`). `GraspLatch`(`_Confirm`)는 **이미 잠긴 뒤에는 `confident` 를
+보지 않는다** — `grasp_latch.py:137`, `if self.locked is not None: return self.locked` 가
+무엇이 들어오든 잠긴 라벨을 그대로 돌려준다. **따라서 이 다섯 프레임에서 `confident` 가
+뒤집혀도 latch 입장에서는 아무 일이 안 일어난 것이고, 이 수정이 latch 에 실제로 무엇을
+하는지는 이 기록으로 시험되지 않았다** — 효과가 나타날 수 있는 곳은 `SEARCHING` 구간뿐인데,
+거기서 갈리는 프레임이 이 기록에는 없다.
+
+**"기준선이 안 움직였다"를 "이 수정이 안전하다"로 쓰지 않는다.** 정확한 문장은 — **"이
+기록에서는 아무것도 바뀌지 않았고, 바뀔 수 있는 구간(`SEARCHING`)은 시험되지 않았다."**
+
+### `not_measured` — 그대로 옮긴다
+
+1. figure — task 지시대로 이번 라운드에는 만들지 않았다(불일치가 나오면 요청)
+2. `base_run1` 의 재현 반복 — skill 은 단독 1 회를 요구하고 비교 대상 셋이 전부 SQP 이전
+   값이라 흔들리지 않는다. `feasible`/`violated` 는 1 회 값만 적었고 판정에 쓰지 않았다
+3. `runner_up_score` 가 latch 를 **실제로 바꾸는** 시나리오 — `ep1807` 에서는 `confident` 가
+   갈리는 다섯 프레임 전부 `SEARCHING` 이 아닌 구간(held/placed)이라 phase·manipulated·
+   destination 이 움직이지 않았다. `SEARCHING` 구간에서 갈리는 기록은 이 기록으로는 시험할
+   수 없다
+4. `ep1800` 기록에서의 같은 대조 — 이번 라운드에 요청되지 않았다
+
+### 시각화
+
+**없다.** 기준선이 움직이지 않아 task 지시대로 이번 라운드에는 figure 를 만들지 않았다.

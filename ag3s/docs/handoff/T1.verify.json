@@ -73,6 +73,42 @@
       "raw_output": "outputs/verify/T1/item4_attr_ep1850.json"
     },
     {
+      "id": "after_inflation_005_items_ep1800",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_items.py --records outputs/live_test/20260925_headfix16d/records/run_0000/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_headfix.npz --out outputs/verify/T1/items_ep1800_after_inflation_005.json",
+      "venv": ".venv-ag3s", "raw_output": "outputs/verify/T1/items_ep1800_after_inflation_005.json"
+    },
+    {
+      "id": "after_inflation_005_items_ep1850",
+      "command": "same as above, --records outputs/live_test/20260925_t1/ep1850/run_0000 --attention .../attention_16d_ep1850.npz",
+      "venv": ".venv-ag3s", "raw_output": "outputs/verify/T1/items_ep1850_after_inflation_005.json"
+    },
+    {
+      "id": "after_inflation_005_items_ep1900",
+      "command": "same as above, --records outputs/live_test/20260925_t1/ep1900/run_0000 --attention .../attention_16d_ep1900.npz",
+      "venv": ".venv-ag3s", "raw_output": "outputs/verify/T1/items_ep1900_after_inflation_005.json"
+    },
+    {
+      "id": "after_inflation_005_item4_attr_ep1800",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_item4_attribution.py --records outputs/live_test/20260925_headfix16d/records/run_0000/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_headfix.npz --out outputs/verify/T1/item4_attr_ep1800_after_inflation_005.json",
+      "venv": ".venv-ag3s", "raw_output": "outputs/verify/T1/item4_attr_ep1800_after_inflation_005.json"
+    },
+    {
+      "id": "after_inflation_005_item4_attr_ep1850",
+      "command": "same, ep1850",
+      "venv": ".venv-ag3s", "raw_output": "outputs/verify/T1/item4_attr_ep1850_after_inflation_005.json"
+    },
+    {
+      "id": "after_inflation_005_item4_attr_ep1900",
+      "command": "same, ep1900",
+      "venv": ".venv-ag3s", "raw_output": "outputs/verify/T1/item4_attr_ep1900_after_inflation_005.json"
+    },
+    {
+      "id": "after_inflation_005_baseline_check",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/T1/baseline_check_after_inflation_005.json",
+      "venv": ".venv-ag3s", "raw_output": "outputs/verify/T1/baseline_check_after_inflation_005.json",
+      "note": "단일 실행 (개수는 알려진 대로 흔들릴 수 있다)"
+    },
+    {
       "id": "item1_score_vs_error_ep1800",
       "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_item1_score.py --records outputs/live_test/20260925_headfix16d/records/run_0000/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_headfix.npz --target apple --out outputs/verify/T1/item1_score_ep1800.json",
       "venv": ".venv-ag3s",
@@ -197,6 +233,52 @@
         "note": "ep1900 frame13, score=0.4136, error=78.02mm — 45개 중 error>50mm 인 프레임의 최고 score"
       }
     },
+    "item4_item5_after_inflation_005": {
+      "_comment": "A1 이 self_filter_inflation 0.02->0.05 로 올린 뒤 재측정. config.py:171 기본값과 configs/default.yaml 은 0.05 로 바뀌었다. configs/rby1_three_camera.yaml 은 여전히 0.02 (안 바뀜) — 이 측정 스크립트는 AG3SConfig.from_dict() 로 dict 에 없는 키는 dataclass 기본값(0.05)을 그대로 쓰므로 실제로 0.05 가 먹었다 (직접 확인: cfg.pointcloud.self_filter_inflation == 0.05)",
+      "robot_mask_violations_total": {
+        "ep1800_apple": {"before_0.02": 187136, "after_0.05": 181378},
+        "ep1850_banana": {"before_0.02": 181370, "after_0.05": 181370},
+        "ep1900_pear": {"before_0.02": 181378, "after_0.05": 181378}
+      },
+      "base_leak_px_total": {
+        "ep1800_apple": {"before_0.02": 5758, "after_0.05": 0},
+        "ep1850_banana": {"before_0.02": 0, "after_0.05": 0},
+        "ep1900_pear": {"before_0.02": 0, "after_0.05": 0}
+      },
+      "EE_BODY_leak_px_total": {
+        "_comment": "EE_BODY_L/R 는 세 에피소드 모두 전후 완전히 동일 (픽셀 단위까지) — link_left_arm_6/right_arm_6 은 UNCOVERED_LINKS 에 있지만 EE_BODY_L/EE_BODY_R 자체는 없다",
+        "ep1800_apple": {"EE_BODY_L": {"before": 90690, "after": 90690}, "EE_BODY_R": {"before": 90688, "after": 90688}},
+        "ep1850_banana": {"EE_BODY_L": {"before": 90684, "after": 90684}, "EE_BODY_R": {"before": 90686, "after": 90686}},
+        "ep1900_pear": {"EE_BODY_L": {"before": 90690, "after": 90690}, "EE_BODY_R": {"before": 90688, "after": 90688}}
+      },
+      "EE_BODY_frac_occupied_le0": {
+        "_comment": "누수점의 cs.esdf.distance() <= 0 비율. 전후 동일 — 리크 자체가 안 바뀌었으니 당연하다",
+        "ep1800_apple": {"EE_BODY_L": 0.0, "EE_BODY_R": 0.0},
+        "ep1850_banana": {"EE_BODY_L": 0.0, "EE_BODY_R": 0.0},
+        "ep1900_pear": {"EE_BODY_L": 0.0154, "EE_BODY_R": 0.0}
+      },
+      "item5_low_obstacle_esdf_mm_frame0": {
+        "_comment": "비-target 과일 세 에피소드 x 15 프레임 전부 확인 — 전후 소수점까지 완전히 동일. 이 기록들에서 비-target 과일이 그리퍼 근처에 있는 프레임이 없었다",
+        "ep1800_apple_frame0": {"before_0.02": {"banana": -22.7653, "orange": -27.1059, "pear": -24.1259},
+                                "after_0.05": {"banana": -22.7653, "orange": -27.1059, "pear": -24.1259}},
+        "ep1850_banana_frame0": {"before_0.02": {"apple": -28.1910, "orange": -25.9869, "pear": -27.9636},
+                                 "after_0.05": {"apple": -28.1910, "orange": -25.9869, "pear": -27.9636}},
+        "ep1900_pear_frame0": {"before_0.02": {"apple": -27.6004, "banana": -22.7610, "orange": -30.9120},
+                               "after_0.05": {"apple": -27.6004, "banana": -22.7610, "orange": -30.9120}},
+        "no_sign_flip_any_frame": true
+      },
+      "item6_has_target_side_effect": {
+        "_comment": "요청하지 않았지만 같은 실행에서 관측됨 — inflation 이 오르며 has_target 이 줄었다",
+        "ep1800_apple": {"before_0.02": "15/15", "after_0.05": "14/15"},
+        "ep1850_banana": {"before_0.02": "9/15", "after_0.05": "8/15"},
+        "ep1900_pear": {"before_0.02": "15/15", "after_0.05": "12/15"}
+      },
+      "regression_baseline_isolated_run_after_inflation_005": {
+        "violated_start": 14, "resolved": 13, "improved": 15, "feasible": 14, "violated_end": 1,
+        "has_target": 9,
+        "note": "단일 실행. frame0 clearance_before_mm 이 -29.03(전) 에서 +0.16(후) 로 바뀌어 위반으로 시작하는 프레임이 15/15 에서 14/15 로 줄었다"
+      }
+    },
     "item4_attribution": {
       "_comment": "A0 요청 2건 — 카메라별 분리, 누수 픽셀의 cs.esdf.distance() 질의. 고치지 않았다",
       "leaked_px_by_camera_by_body": {
@@ -229,6 +311,8 @@
     {"path": "benchmark/ag3s/docs/figures/t1/t1-items-table.png", "kind": "table"},
     {"path": "benchmark/ag3s/docs/figures/t1/t1-item1-score-vs-error.png", "kind": "graph",
      "note": "항목1 재측정 — grounding target_score 대 target 중심 오차, 세 에피소드"},
+    {"path": "benchmark/ag3s/docs/figures/t1/t1-inflation-005-compare.png", "kind": "table",
+     "note": "항목4·5 — self_filter_inflation 0.02->0.05 전후 비교"},
     {"path": "benchmark/ag3s/docs/figures/t1/cards/manifest.json", "kind": "index",
      "note": "항목 8 — 45 장 diagnostic frame card 의 목록. 실물은 cards/<ep>/frame_NN.png"},
     {"path": "benchmark/ag3s/docs/figures/t1/cards/ep1800/", "kind": "scene", "note": "15 장"},
