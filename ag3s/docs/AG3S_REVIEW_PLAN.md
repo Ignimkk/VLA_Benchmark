@@ -1,6 +1,6 @@
 # AG3S 공동 코드 검토 — attention + TSDF/ESDF 전환 전제
 
-> **최종 갱신 2026-09-14 — Step 0~6 완료, 다음은 Step 7.**
+> **최종 갱신 2026-09-25 — 16D 통합 테스트(T0~T6) 진행 중. 최근 발견: X2(머리 카메라) · X1(고정 구 분할) · T1-a(배선 결함)**
 >
 > * 지금 어디인지와 검토가 시작할 때와 무엇이 달라졌는지 → **[현재 위치](#현재-위치-2026-09-14)**
 > * 남은 작업 → **[앞으로 할 것](#앞으로-할-것)**
@@ -436,6 +436,8 @@ attention 맵을 **`zed_left` 한 대에만** 붙이는데(`esdf_rollout.py:266`
 
 수치와 figure 는 [`AG3S_T0T6_LOG.md`](AG3S_T0T6_LOG.md) 의 **"T1-a"** 절,
 raw 는 `handoff/T1-a.verify.json`.
+
+**X2 해결과 재촬영** (2026-09-25) — T1-a 의 전제가 "사과가 `cam_high` 에 안 보인다"였는데, 실제로는 카메라를 보는 시점이 벽(머리 0도)이었다. X2(머리 keyframe 자체모순)를 고쳐 keyframe qpos 에 붙들어 머리 각도를 +0.7001 유지시켰다. 새 기록 `20260925_headfix16d/records/run_0000/` (15 observations) 에서 **`has_target` 9/15 → 15/15**, **`clearance_after` 최소 −3.15 mm → +0.02 mm**. 새 attention npz `attention_16d_headfix.npz`. 열린 물음: `status` (SQP 판정)과 `clearance_after` (궤적 재평가)의 불일치 — 다음 STEP 에서 측정한다.
 
 **그리고 규약 하나가 이 국면 전체에 걸렸다 — 재측정은 원 측정의 파일을 덮어쓰지 않는다.**
 R4 의 `ground_truth.py` 가 출력 경로를 박아 두어 archive 가 C5 의 14D 원 측정 증거로 링크하는
@@ -894,6 +896,7 @@ Step 0에서 로그에 "미확정 후보"로 먼저 적고, 해당 스텝에서 
 - **자기 필터의 비로봇 삭제** — crate 199~1083 px/frame. `self_filter_inflation` 20 mm 를 줄이면
   주는데, docstring 이 밝힌 트레이드오프가 있어 **attached 배선 전에는 건드리지 않는다.**
 - **정책 실패 회차** — 사용자가 관찰한 거동이 기록에 없다. 그 회차 기록이 생기면 대조.
+- **X2(2026-09-25)** — 머리 카메라(cam_high)가 벽을 올려다봤다. `teleop` 키프레임의 position actuator 가 위치를 덮어썼다. `hold_keyframe_pose()` 로 고침. 이것이 T1-a 의 *"사과가 cam_high 에 안 보인다"* 의 근거였으므로 재촬영 중.
 
 
 ---

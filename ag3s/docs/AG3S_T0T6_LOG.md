@@ -188,6 +188,9 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **self-occlusion 과 미지 장애물 부피** | 다른 질문이다. 현재 자세의 로봇 구 중심은 **정의상 로봇 안에** 있으므로 "관측됐는가" 를 물으면 self-occlusion 을 잰다 (실측 63/120 미관측, 첫 표면 뒤 중앙 87.2 mm · 반지름 중앙 26 mm). 안전이 묻는 것은 로봇이 **앞으로 지나갈** 부피가 관측됐는가이고, 그것은 지평이 있는 곳에서만 물을 수 있다 |
 
 | **카메라 시차 (camera skew)** | 한 관측 프레임 안에서 **세 카메라의 촬영 시각이 벌어진 폭**. 순차 렌더의 비용이다 (이 서버 OSMesa 로 중앙값 78~99 ms). 시뮬레이션이 캡처 중 멈춰 있으면 기하 번짐이 없지만, 실제 로봇에서는 그만큼 손목 클라우드가 번지고 자기 필터가 어긋나 로봇 점이 씬에 남는다. 그래서 요청은 카메라마다 자기 `robot_state` 를 따로 싣는다 |
+| **teleop 키프레임** | 조작 시뮬레이션에서 재현할 초기 자세. MuJoCo `mj_resetDataKeyframe` 가 이를 적용한다. 문제가 생기면 `qpos` 와 `ctrl` 이 어긋나 위치 actuator 가 원하는 자세와 반대로 움직일 수 있다 (발견 X2) |
+| **position actuator** | 관절을 목표 위치로 끌어가는 구동기. 현재 위치와 목표(`qpos`)가 어긋하면 settle time 동안 그 목표로 수렴한다 (X2 에서 `head_1_act` 가 이것) |
+| **`hold_keyframe_pose(m, d)`** | joint transmission actuator 전부를 리셋 직후에 키프레임 `qpos` 로 다시 맞춰 주는 함수. 키프레임에서 설정한 목표와 현재 위치의 어긋남을 구조적으로 막는다 (X2) |
 | **기대 쪽이 틀린 경우** | completeness 는 *기대*와 *실제*를 나란히 센다. 둘이 다를 때 **실제가 빠진 것일 수도, 기대가 잘못 세워진 것일 수도** 있다. T0 에서 관측 기대치를 제어 스텝 수로 잡아 10 을 기대했는데 관측은 정책 호출당 한 번이라 실제는 2 였다 — 기대를 실제에 맞춰 *낮춘* 것이 아니라 파이프라인이 실제로 하는 일에 맞춘 것이고, 이 둘을 구별하지 못하면 통과 기준을 낮추는 것과 같아진다 |
 | **smoke 분류 (`runs` · `broken` · `needs-arg` · `needs-outpath`)** | 옛 스크립트를 새 기록에 겨눌 때 **수치보다 먼저 세는 것**. `runs` = 그대로 돌았다, `broken` = 죽었다(에러 원문과 `파일:줄` 을 적어 구현 쪽으로 넘긴다), `needs-arg` = 인자·경로만 바꾸면 된다, `needs-outpath` = 돌기는 하는데 **출력 경로가 박혀 있어 남의 파일을 덮어쓴다**(R 에서 실제로 archive 그림 하나를 덮어써서 생긴 분류다). 분류를 먼저 하지 않으면 **이식 비용을 측정 결과로 착각**한다. **다만 `runs` 는 *프로세스가 0 으로 끝났다* 는 뜻이지 *새 기록을 쟀다* 는 뜻이 아니다** — R 1 차에서 `runs` 4 건 중 셋이 새 씬을 만들거나 옛 `/tmp` npz 를 먹고 있었다 |
 
@@ -209,8 +212,8 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 |---|---|---|
 | **T0** 환경·배선 | 이 배선 그림이 프레임마다 사실인가 | **통과**(2026-09-24) — 8 항목 × held-out 4 에피소드 |
 | **R** 재측정 | **16D 에서 이 수치들은 얼마인가** (판정 6 으로 14D 비교를 뗐다) | **배선 정렬 대기**(2026-09-25) — 1 차(분류) 끝, `R-port` 이식 끝(P5 제외). R4·R5 는 미세 계층을 요구하는데 그것이 안 붙고, `T1-a` 가 원인을 **배선**으로 좁혔다 |
-| **T1** 연속 프레임 AG3S | 실측 정책 attention 으로 지각이 쓸 만한가 | **진행 중**(2026-09-25) — `T1-a` **답이 나왔다**: 1296 조합 전수 `peak_on_target` **0**, 원인은 셀이 아니라 **배선**(오프라인이 attention 을 한 대에만 붙인다). 다음은 배선 정렬(판정 8) |
-| **X1** 로봇 구 분할 | 고정 구 / 움직일 수 있는 구를 가르는 규칙이 16D 에서 옳은가 | **조사 중**(2026-09-25, 사용자 판정 "즉시") — 고정 구가 **42 개**로 나왔는데 `arm_6` 이 자유 관절이 된 16D 에서는 **줄어야** 맞다. 틀리면 **회귀 기준선을 포함한 모든 여유거리 계산**이 그 위에서 돈다 |
+| **T1** 연속 프레임 AG3S | 실측 정책 attention 으로 지각이 쓸 만한가 | **진행 중**(2026-09-25) — X2(머리 각도 0 오류)를 고치고 재촬영했다. `has_target` 9/15 → **15/15**, `clearance_after` 최소 −3.15 mm → **+0.02 mm**. 열린 물음: `status` 와 `clearance_after` 의 불일치 (SQP 판정 vs. 궤적 재평가) |
+| **X1** 로봇 구 분할 | 고정 구 / 움직일 수 있는 구를 가르는 규칙이 16D 에서 옳은가 | **해결 — 분할은 옳다**(2026-09-25). 고정 구 **42 / 120**, 기구학 파생(`attached.py:241-292`). 14D 의 27 은 구 105 개 모델이라 비교 불가. 회귀 기준선 영향 없음 |
 | **T2** pick-place 상태 전이 | 9 개 사건이 정확히 어느 프레임에 있나 | 대기 — 파지 포함 16D 기록 확보됨 |
 | **T3** 전 관측 프레임 TSDF/ESDF | 모든 프레임에서 필드가 서나. `max_field_age_sec` 를 정한다 | 대기 — T0 이 근거 수치를 냈다 (필드 나이 P50 2637 ms) |
 | **T4** fail-closed 주입 | 고장을 넣으면 정말 닫히나 | 대기 |
@@ -671,7 +674,7 @@ localhost:8123`. `.venv-openpi-live` 에 warp·curobo·mink 를 다 넣었으므
 | **R3** | (발견 ID 없음) **쥔 물체 부호 교정 문턱** — seed 제외 뒤 몇 복셀에서 *순수 복셀* 과 *공유 복셀* 을 가르나 | `ag3s/experiments/live/sweep_attached_threshold.py` |
 | **R4** | **C5** — 거친 20 mm 계층이 판정 지점에서 clearance 를 실제보다 넓다고 답한다 (참 거리 대조로 확정) | `ag3s/experiments/curobo/verify_two_tier.py` · `ground_truth.py` |
 | **R5** | **C3** — 미세 계층의 창 경계에서 거리장이 낙관적으로 불연속이다 (2계층 합성 규칙 고유) | 위와 같은 계열 |
-| **R6** | **N1**(self-collision 제약이 `benchmark/trajopt/` 에 코드 0 줄로 아예 없다 — 잠복) · **N2**(아는 정적 기하를 담을 geometry 채널이 없어 격자 밖·미관측이 무조건 자유로 답해졌다 — `min(복셀, 해석적)` 해석적 채널로 수정됨) · **F20**(옮겨진 물체의 *잔상* 이 8 프레임 뒤에도 남는다 — TSDF 가중치가 `min(w+1,64)` 로 단조 증가해 옛 관측이 흐려지지 않는다. decay 는 구현했고 기본값은 끔) | `studies/a1_static_geometry_effect.py` 계열 |
+| **R6** | **N1**(self-collision 제약이 `benchmark/trajopt/` 에 코드 0 줄로 아예 없다 — 잠복. **정정**(2026-09-25): 제약 행은 AG3S 에서 실제로 만들어진다 — `benchmark/ag3s/constraints/constraint_builder.py:280-289` 가 쥔 물체 대 로봇 자기 구의 여유거리 행을 만들고 `:163-164` 가 행 수를 센다. trajopt 이 평가하지 않는 이유는 자체 선형화(`benchmark/trajopt/linearize.py:3-20`)를 따로 만들어 사용하기 때문이다 — 그 선형화는 질의점끼리의 쌍을 계산하지 않는다) · **N2**(아는 정적 기하를 담을 geometry 채널이 없어 격자 밖·미관측이 무조건 자유로 답해졌다 — `min(복셀, 해석적)` 해석적 채널로 수정됨) · **F20**(옮겨진 물체의 *잔상* 이 8 프레임 뒤에도 남는다 — TSDF 가중치가 `min(w+1,64)` 로 단조 증가해 옛 관측이 흐려지지 않는다. decay 는 구현했고 기본값은 끔) | `studies/a1_static_geometry_effect.py` 계열 |
 | **R7** | **F14** — `timing.max_state_age_sec` 기본값 100 ms 가 피해 시작점보다 6 배 이상 느슨하다. 상태 지연이 몇 ms 부터 로봇 점을 클라우드로 새게 하나 | `ag3s/experiments/studies/step7_state_lag.py` |
 
 원 측정은 전부 archive [`AG3S_REVIEW_LOG.md`](AG3S_REVIEW_LOG.md) 에 있다 — I2 는 **"I2 —
@@ -1205,3 +1208,114 @@ R 절이 던진 *"흔들린 것이 판정인가 mm 인가"* 의 답은 **mm** �
 카메라 한 대에 의존하는 구조 자체를 본다.
 
 **다음**: 판정 8 의 배선 정렬(A1) · X1 의 고정 구 분할 감사 · 그다음 `R-measure`.
+
+---
+
+## X1 — 로봇 구 분할 (2026-09-25)
+
+### 결론 — 분할은 옳다. 경보였지 결함이 아니었다
+
+**1. 결정적 실험** — 같은 기록·같은 프레임·같은 물체 점군에서 `free_joints` 만 12(14D) ↔ 14(16D)로 바꿨더니 고정 구 집합이 비트 단위로 같았다. 둘 다 **42 / 120**, 한쪽에만 고정인 구 0 개. 액션 폭은 이 분할에 들어올 자리가 없다.
+
+**2. 분모 혼동** — 14D 의 27 은 구 **105 개** 모델에서 나온 값이고 지금은 **120 개**다. 같은 축의 수가 아니라 나란히 놓을 수 없다(판정 6 — 14D 와 비교하지 않는다).
+
+**3. 기구학 파생** — `benchmark/ag3s/constraints/attached.py:241-292` 의 `rigid_spheres()`. 손으로 쓴 목록이 아니라 기구학에서 파생된다 — 자유 관절을 24 회 흔들어 여유 변화폭이 `1e-6 m` 미만인 구를 고정으로 가른다.
+
+**4. 42 의 정체** — `ee_finger_l1`(11) + `ee_finger_l2`(11) + `link_left_arm_6`(15) + `link_left_arm_5`(5). 앞 셋은 쥔 물체와 같은 강체다. `link_left_arm_5` 는 몸쪽인데도 고정인 이유가 기하로 설명된다: 그 구 5 개가 `arm_6` 회전축 위에 있다. 축까지 거리 `link_left_arm_5` **0.194~0.207 mm** 대 `link_left_arm_4` **37.8~51.6 mm**. `arm_6` 을 1.0 rad 돌려도 여유가 **0.000 nm** 변한다(float64 12 자리 동일).
+
+**5. 회귀 기준선은 영향을 받지 않는다** — `rigid_spheres` 의 소비자가 정의 자신·새 스크립트 `n1_self_collision_clearance.py`·테스트뿐인 것을 lead 가 직접 grep 으로 확인했다.
+
+### 세 번째 배선 사례 — 이 국면의 패턴
+
+이것이 이 국면에서 세 번째 배선 결함이다:
+
+1. **첫째** — 오프라인이 attention 을 한 카메라에만 붙인다(T1-a 의 근거).
+2. **둘째** — 머리 `ctrl` 을 아무도 안 세운다(X2 — 머리 카메라가 벽을 본 이유).
+3. **셋째** — self-collision 제약 행이 AG3S 에서 만들어지는데 trajopt 이 평가하지 않는다(N1).
+
+셋 다 **모듈은 멀쩡한데 호출부가 갈라진 경우**다. 첫째는 pipeline 과 production 경로가 다르고, 둘째는 리셋 경로 2 개가 다르고, 셋째는 AG3S 와 trajopt 의 선형화가 다르다. 코드를 읽을 때 "여기 구현이 없다" 보다 "여기서 호출되나" 를 먼저 묻게 된다는 것이 이 관찰의 가치다. 다음에 같은 모양을 만나면 모듈부터 뒤지지 않는다.
+
+---
+
+## X2 — head cam 이 벽을 보고 있었다 (2026-09-25)
+
+### 1. 증상
+
+수집 때 `cam_high` 영상(`pi05_TO_hybrid/data/rby1_randomized_pick_place_16d_v1/videos/chunk-001/observation.images.cam_high/episode_001800.mp4`)에는 테이블·바구니·과일이 정면으로 다 보인다. 같은 에피소드의 기록 `run_16d_ep1800/step_*.npz` 의 `image_cam_high` 는 벽을 올려다본다. 테이블 윗변만 화면 맨 아래에 걸친다. `image_cam_high` 는 정책에 실제로 들어간 이미지다.
+
+### 2. 원인 — teleop 키프레임이 자기 안에서 모순이다
+
+`model_transport.xml` 의 `teleop` 키프레임: `key_qpos[head_1] = 0.7`(테이블을 내려다봄), `key_ctrl[head_1_act] = 0.0`. `mj_resetDataKeyframe` 는 `qpos` 와 `ctrl` 을 둘 다 적용한다. `head_1_act` 는 position actuator 라 settle 1.5 s 동안 머리를 0 으로 끌어내린다.
+
+그 키프레임에서 ctrl 과 qpos 가 어긋난 actuator 는 29 개 중 **13 개**다. 팔 12 개는 두 리셋 경로가 ctrl 을 명시적으로 덮어써서 살아남았고, **머리만 아무도 안 세웠다.**
+
+수집 경로(`rby1_manipulation/.../transport_scene.py:465`)는 모든 구동 관절을 키프레임 qpos 로 붙들어 처음부터 문제가 없었다. 두 경로가 갈라져 있던 것이다.
+
+### 3. 수정
+
+`pi05_TO_hybrid/rby1_bringup/pi05_infer.py` 에 `hold_keyframe_pose(m, d)` 함수를 넣고 `mj_resetDataKeyframe` 두 곳(:296 에피소드 재생, :950 일반) 뒤에서 부른다. joint transmission actuator 전부를 키프레임 qpos 로 맞춘다.
+
+### 4. 실측 확인
+
+settle 1.5 s 뒤 `head_1`: 고치기 전 `0.7000 → 0.0000`, 고친 뒤 `0.7000 → 0.7001`.
+
+카메라 시선: `head_1=0.0` 일 때 `[1, 0, 0]`(수평), `head_1=0.7` 일 때 `[0.765, 0, -0.644]`(약 40도 아래).
+
+**카메라 장착은 안 건드렸다.** `zed_left` 는 body 사슬 `zed_camera <- link_head_2 <- link_head_1 <- link_torso_5 <- ...` 로 로봇에 붙어 있고, `torso_0` 을 0.3 rad 돌리면 카메라가 **351.2 mm** 따라 움직인다. 월드에 고정한 것이 아니다.
+
+테스트 **652 passed**(기존 648 + 머리 가드 4).
+
+### 5. 가드
+
+`tests/ag3s/test_head_camera_pose.py` 넷:
+- (a) `teleop` 의 `head_1` 이 0.7 인가
+- (b) settle 뒤에도 0.7 로 남는가
+- (c) 맨 리셋은 여전히 머리를 떨어뜨리는가(왜 붙들어야 하는지 못박음)
+- (d) `pi05_infer` 의 모든 `mj_resetDataKeyframe` 뒤에 `hold_keyframe_pose()` 가 있는가(구조적 가드)
+
+### 6. 무효가 되는 기록
+
+2026-09-25 이전의 16D 기록(`run_16d_ep1800`, `20260924_long16d`)은 전부 머리가 0 인 채로 떠났다. 그 위에서 잰 grounding 관련 수치는 다시 재야 한다. 재촬영이 `outputs/live_test/20260925_headfix16d/` 로 진행 중이다.
+
+### 재촬영 결과 (2026-09-25)
+
+**X2(머리 각도가 0 이 되는 keyframe 자체모순)는 닫혔다.**
+
+#### 새 기록 확보
+
+경로: `outputs/live_test/20260925_headfix16d/records/run_0000/run_0000` (15 observations)
+- **`head_1` = +0.7001**, 15/15 프레임 전부에서 유지 (수정 전 0.00004)
+- **`cam_high` 영상**: 테이블·바구니·과일 셋이 보인다 — 수집 때 영상 `episode_001800.mp4` 와 같은 장면 (수정 전 벽만 보임)
+
+#### 새 attention npz
+
+경로: `benchmark/ag3s/asset/data/attention_16d_headfix.npz`
+- 형상 `(15, 3, 3, 18, 8, 3, 16, 16)`, 자료형 float16, 크기 21.5 MB
+
+#### 회귀 기준선 비교
+
+같은 명령(`--cameras all`)과 배선 수정된 `esdf_rollout` 에서:
+
+| 지표 | 수정 전 (머리 0) | 수정 후 (머리 0.7) |
+|---|---|---|
+| `has_target` — 지었나 (후보 덩어리 골랐나) | 9/15 | **15/15** |
+| 위반으로 시작 | 15/15 | 15/15 |
+| 해소 (feasible 이 된 수) | 13 | **15** |
+| 개선 (여유거리 나아진 수) | 15 | **15** |
+| `feasible` — 최악 여유거리 ≥ 0 | 13 | **2** |
+| `violated` — 최악 여유거리 < 0 | 2 | **13** |
+| `clearance_after` 중앙 | +4.35 mm | +4.19 mm |
+| `clearance_after` 최소 | −3.15 mm | **+0.02 mm** |
+| `n_candidates` > 0 프레임 | 0 | 0 |
+| `target_voxels_carved` 총합 | 0 | 0 |
+| AG3S 실행 중앙값 | 1115 ms | **3169 ms** |
+
+#### 열린 물음 — `status` 와 `clearance_after` 의 불일치
+
+새 기록에서 `clearance_after` 가 전 프레임에서 양수(최소 +0.02 mm)인데도 `status` 가 `violated` 를 반복한다. 예: 프레임 1 은 여유 +4.60 mm (positive clearance)에 `feasible`, 프레임 2 는 여유 **+4.87 mm** (더 큼)인데 `violated`.
+
+코드상 둘의 출처가 다르다 (`benchmark/trajopt/experiments/esdf_rollout.py`):
+- `status` = `result.status.value` — `optimizer.solve()` 의 SQP 자신의 판정
+- `clearance_after_mm` = `linearizer.full_violation(result.trajectory, ...)` — 나온 궤적을 **다시 평가**한 값
+
+**원인은 아직 모른다.** 다음 STEP 에서 측정한다.

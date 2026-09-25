@@ -482,7 +482,7 @@
     "wrist_cam_l 의 attention 으로 grounding 이 서는지 — 오프라인 경로가 zed_left 에만 맵을 붙이므로 코드를 고치지 않고는 잴 수 없다 (A1).",
     "파지 구간(36~45)과 wrist_cam_l 사과 픽셀 0 구간(36~43)의 인과."
   ],
-  "verdict": "전제가 무너졌다. 이 STEP 의 sweep 수치(ep1800 0/15 · long16d 0/50 · 1296 조합 전부 peak_on_target 0 · on_apple 0)는 측정으로는 정확하지만, 원인이 셀 선택이 아니라 기록 생성 결함이다 — model_transport.xml 의 teleop 키프레임은 head_1=0.7 인데 두 기록은 전 프레임 head_1=0.0 으로, 머리가 40.1 도 안 숙여져 cam_high 가 벽을 본다. head_1 만 0.7 로 되돌리면 zed_left 가 사과를 ep1800 15/15 (중앙 552 px) · long16d 37/50 (중앙 334 px) 프레임에서 본다. 셀 선택에 대한 판정은 머리를 고친 기록에서 다시 물어야 한다. 축 순서 확인 · 비용 측정 · 재현성 분석은 이 결함과 독립이라 그대로 유효하다. benchmark/**/*.py 는 고치지 않았다.",
+  "verdict": "전제가 무너졌다. 이 STEP 의 sweep 수치(ep1800 0/15 · long16d 0/50 · 1296 조합 전부 peak_on_target 0 · on_apple 0)는 측정으로는 정확하지만, 원인이 셀 선택이 아니라 기록 생성 결함이다 — model_transport.xml 의 teleop 키프레임은 head_1=0.7 인데 두 기록은 전 프레임 head_1 이 2.4e-05 rad 수준(사실상 0)이라, 머리가 40.1 도 안 숙여져 cam_high 가 벽을 본다. head_1 만 0.7 로 되돌리면 zed_left 가 사과를 ep1800 15/15 (중앙 552 px) · long16d 37/50 (중앙 334 px) 프레임에서 본다. 셀 선택에 대한 판정은 머리를 고친 기록에서 다시 물어야 한다. 축 순서 확인 · 비용 측정 · 재현성 분석은 이 결함과 독립이라 그대로 유효하다. benchmark/**/*.py 는 고치지 않았다.",
   "premise_invalidated": {
     "_comment": "코디네이터 통보(사용자 질문에서 출발) 뒤 verifier 가 원본에서 직접 재확인했다.",
     "date": "2026-09-25",
@@ -491,10 +491,11 @@
       "joint": "head_1 (qpos index 30)",
       "xml_keyframe_value_rad": 0.7,
       "xml_keyframe": "pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml key name='teleop' (head_0 head_1 = 0 0.7), line 70-74",
-      "recorded_value_rad": 0.0,
+      "recorded_value_rad": "2.3e-05 ~ 3.9e-05 (실질적으로 0; 0.0023 도 이내)",
       "delta_deg": 40.1,
-      "verified_by_verifier": "두 기록 전 프레임의 qpos[30] 을 직접 읽었다 — ep1800 15/15 프레임과 long16d 50/50 프레임 모두 정확히 0.0000. head_0 은 양쪽 다 0 이라 좌우는 같고 상하만 다르다.",
-      "collection_video_check": "원본 mp4 (pi05_TO_hybrid/data/rby1_randomized_pick_place_16d_v1/videos/chunk-001/observation.images.cam_high/episode_001800.mp4, 224x224, 311 프레임) 를 직접 디코드해 프레임 0 을 봤다 — 테이블·바구니·과일이 정면에 다 보인다. 기록의 image_cam_high 는 같은 에피소드인데 벽을 올려다본다."
+      "verified_by_verifier": "두 기록 전 프레임의 qpos[30] 을 직접 읽었다 — ep1800 15/15, long16d 50/50 프레임 모두 2.3e-05~3.9e-05 rad (표시상 0.0000). head_0 도 양쪽 다 0 이라 좌우는 같고 상하만 다르다.",
+      "collection_video_check": "원본 mp4 (pi05_TO_hybrid/data/rby1_randomized_pick_place_16d_v1/videos/chunk-001/observation.images.cam_high/episode_001800.mp4, 224x224, 311 프레임) 를 직접 디코드해 프레임 0 을 봤다 — 테이블·바구니·과일이 정면에 다 보인다. 기록의 image_cam_high 는 같은 에피소드인데 벽을 올려다본다.",
+      "recorded_value_note": "앞서 '정확히 0.0000' 이라 적은 것은 소수 넷째 자리 표시에서 온 것이다. 실제 값은 0 이 아니라 2.3e-05~3.9e-05 rad 이고, teleop 0.7 과의 차이는 0.69996 rad = 40.105 도다."
     },
     "counterfactual_measured": {
       "_comment": "주장을 수치로 바꿨다. 기록 qpos 를 그대로 놓고 head_1 만 메모리에서 0.7 로 바꿔 같은 프레임을 두 번 잡았다. 기록 파일은 고치지 않았다.",
