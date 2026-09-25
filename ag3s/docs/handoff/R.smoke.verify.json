@@ -1,0 +1,753 @@
+{
+  "_comment": "ag3s-verifier(A2) 가 쓴다. 해석을 쓰지 않는다 — 숫자와 경로만.",
+  "step": "R-smoke",
+  "date": "2026-09-25",
+  "target_record": "outputs/live_test/20260924_long16d/run_0000",
+  "target_record_facts": {
+    "n_steps": 50,
+    "action_width": 16,
+    "nq": 66,
+    "npz_keys": [
+      "actions",
+      "image_cam_high",
+      "image_cam_left_wrist",
+      "image_cam_right_wrist",
+      "infer_ms",
+      "qpos",
+      "qvel",
+      "state",
+      "t_step"
+    ],
+    "no_depth_stored": true,
+    "same_key_set_as": "run_16d_ep1800",
+    "frames_used_in_smoke": 15
+  },
+  "baseline_check": {
+    "matched": true,
+    "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/R/baseline.json",
+    "raw_output": "outputs/verify/R/baseline.json",
+    "stdout_log": "outputs/verify/R/baseline.log",
+    "measured": {
+      "violated_start": 15,
+      "frames": 15,
+      "resolved": 13,
+      "improved": 15,
+      "feasible": 13,
+      "violated_end": 2
+    },
+    "expected": {
+      "violated_start": 15,
+      "frames": 15,
+      "resolved": 13,
+      "improved": 15,
+      "feasible": 13,
+      "violated_end": 2
+    },
+    "note": "개수 전부 일치 — 이 아래 측정은 성한 환경에서 났다"
+  },
+  "code_state": {
+    "repo": "benchmark",
+    "head": "5e35204",
+    "dirty_files": [
+      "ag3s/docs/AG3S_REVIEW_PLAN.md",
+      "ag3s/docs/AG3S_T0T6_LOG.md"
+    ],
+    "untracked": [
+      "ag3s/docs/figures/r-16d/",
+      "ag3s/docs/handoff/R.impl.md",
+      "ag3s/docs/handoff/R.task.md"
+    ],
+    "benchmark_py_modified_by_verifier": false
+  },
+  "classification_counts": {
+    "runs": 4,
+    "broken": 1,
+    "needs-arg": 1,
+    "needs-outpath": 1,
+    "slow": 0,
+    "_note": "venv 재확인 뒤에도 같다. 바뀐 분류 없음."
+  },
+  "scripts": [
+    {
+      "id": "R1",
+      "measures": "I2 — legacy 필드와 cuRobo 필드가 같은 씬에서 얼마나 다른가",
+      "script": "benchmark/ag3s/experiments/live/verify_backend.py",
+      "class": "broken",
+      "venv": ".venv-openpi-live",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-openpi-live/bin/python -m benchmark.ag3s.experiments.live.verify_backend --seed 101 --out outputs/verify/R/R1_verify_backend.json",
+      "exit_code": 1,
+      "stdout_log": "outputs/verify/R/R1_verify_backend.log",
+      "error": {
+        "type": "RuntimeError",
+        "message": "esdf.backend='curobo' 인데 legacy EsdfBuilder 가 이 프로세스에서 1 번 만들어졌다. T0 의 즉시 실패 조건이다 — 누가 만들었는지 찾아 없앤다. 두 backend 가 한 프로세스에 공존하면 어느 필드가 판정에 쓰였는지 기록만 보고는 되짚을 수 없다.",
+        "raised_at": "benchmark/ag3s/runtime/pipeline.py:906",
+        "called_from": "benchmark/ag3s/experiments/live/verify_backend.py:92",
+        "frame_chain": [
+          "benchmark/ag3s/experiments/live/verify_backend.py:257 <module>",
+          "benchmark/ag3s/experiments/live/verify_backend.py:129 main",
+          "benchmark/ag3s/experiments/live/verify_backend.py:92 run_backend",
+          "benchmark/ag3s/runtime/pipeline.py:257 process_multi_debug",
+          "benchmark/ag3s/runtime/pipeline.py:464 _run",
+          "benchmark/ag3s/runtime/pipeline.py:906 _build_esdf"
+        ]
+      },
+      "record_source": "fresh_mujoco_scene(seed=101)",
+      "targets_16d_record": false,
+      "targets_16d_record_note": "--records 옵션이 없다. 씬을 seed 로 새로 만들고 report 에 used_saved_run=false 를 박는다 (verify_backend.py:45 build_scene, :116). 16D 기록에 겨누려면 코드 변경이 필요하다 — A1.",
+      "class_first_try": "broken",
+      "venv_used": ".venv-openpi-live",
+      "venv_recheck": {
+        "rerun_in_openpi_live": true,
+        "note": "최초 실행이 이미 .venv-openpi-live 였다 (스크립트 머리말이 지정한 venv). 같은 RuntimeError 로 죽는다 — 환경 선택이 아니라 실제 결함이다.",
+        "class_after": "broken"
+      }
+    },
+    {
+      "id": "R2",
+      "measures": "cuRobo 별도 기준선 — cuRobo backend 만으로 롤아웃",
+      "script": "benchmark/trajopt/experiments/esdf_rollout.py",
+      "class": "runs",
+      "venv": ".venv-openpi-live",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-openpi-live/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records outputs/live_test/20260924_long16d/run_0000 --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --esdf-backend curobo --out-json outputs/verify/R/R2_curobo.json",
+      "exit_code": 0,
+      "raw_output": "outputs/verify/R/R2_curobo.json",
+      "stdout_log": "outputs/verify/R/R2_curobo.log",
+      "targets_16d_record": true,
+      "first_attempt": {
+        "venv": ".venv-ag3s",
+        "exit_code": 1,
+        "error": "ModuleNotFoundError: No module named 'torch' at benchmark/ag3s/fields/curobo_builder.py:232",
+        "note": "스크립트 자신의 --esdf-backend help (esdf_rollout.py:99-103) 가 .venv-openpi-live 를 지정한다. 스크립트 잘못이 아니라 venv 선택 잘못이었다."
+      },
+      "numbers": {
+        "curobo": {
+          "frames": 15,
+          "violated_start": 12,
+          "resolved": 4,
+          "improved": 15,
+          "feasible": 7,
+          "violated_end": 8,
+          "ag3s_ms_mean": 1737,
+          "to_ms_mean": 253,
+          "total_ms_mean": 1991
+        },
+        "legacy_control_same_record": {
+          "frames": 15,
+          "violated_start": 15,
+          "resolved": 12,
+          "improved": 15,
+          "feasible": 12,
+          "violated_end": 3,
+          "ag3s_ms_mean": 522,
+          "to_ms_mean": 66,
+          "total_ms_mean": 588,
+          "raw_output": "outputs/verify/R/R2_legacy_control.json",
+          "stdout_log": "outputs/verify/R/R2_legacy_control.log"
+        },
+        "curobo_measured_attention": {
+          "frames": 15,
+          "violated_start": 12,
+          "resolved": 4,
+          "improved": 15,
+          "feasible": 7,
+          "violated_end": 8,
+          "ag3s_ms_mean": 1815,
+          "to_ms_mean": 238
+        }
+      },
+      "not_measured": [
+        "attention: 두 실행 모두 attention=synthetic. 이 기록에 대응하는 attention npz 가 없어 --attention 을 주지 않았다. 회귀 기준선은 attention=measured 다 — 같은 조건이 아니다.",
+        "target: 15 프레임 전부 target=false"
+      ],
+      "class_first_try": "broken(venv 오선택)",
+      "venv_used": ".venv-openpi-live",
+      "venv_recheck": {
+        "rerun_in_openpi_live": true,
+        "note": "첫 시도를 .venv-ag3s 로 한 것이 내 잘못이었다 (torch 없음). 스크립트 머리말(esdf_rollout.py:99-103)이 지정한 .venv-openpi-live 에서 돈다.",
+        "class_after": "runs"
+      },
+      "attention_correction": {
+        "first_runs_used": "synthetic (--attention 없음)",
+        "corrected_to": "benchmark/ag3s/asset/data/attention_16d_long.npz",
+        "npz_facts": {
+          "frames": 50,
+          "records": "/mnt/dev/work/outputs/live_test/20260924_long16d/run_0000",
+          "t_step_first": 0,
+          "t_step_last": 392,
+          "checkpoint": ".../rby1_randomized_pick_place_16d_30k_xla_retry_20260923/29999"
+        },
+        "effect_on_counts": "없다. curobo 실측 attention: 시작 12/15 · 해소 4 · feasible 7, violated 8 — synthetic 과 같다. legacy 도 같다.",
+        "target_grounding": "두 경우 모두 target=false 15/15, target_voxels_carved=0. 회귀 기준선의 has_target 15/15 false 와 같다.",
+        "raw_output": [
+          "outputs/verify/R/R2_curobo_attn.json",
+          "outputs/verify/R/R2_legacy_attn.json"
+        ],
+        "stdout_log": [
+          "outputs/verify/R/R2_curobo_attn.log",
+          "outputs/verify/R/R2_legacy_attn.log"
+        ]
+      },
+      "run_to_run_stability": {
+        "_comment": "2026-09-25 정정. 앞선 판(12·7·7·12·12)은 내 집계 오류였다.",
+        "my_error": "R4_dump_base.json 을 '같은 명령' 표본에 넣었는데 그것은 --dump-frames 가 붙은 다른 명령이다 (프레임마다 depth·마스크를 모아 저장하는 일이 더 붙는다). 그것을 빼면 이탈은 2 회가 아니라 1 회다.",
+        "corrected_by": "coordinator, frames[].status 직접 집계",
+        "identical_command_runs": {
+          "config": "legacy backend, --attention attention_16d_long.npz, --dump-frames 없음",
+          "n": 4,
+          "files": [
+            "R2_legacy_attn",
+            "R2_repeat_1",
+            "R2_repeat_2",
+            "R2_repeat_3"
+          ],
+          "feasible": [
+            12,
+            7,
+            12,
+            12
+          ],
+          "deviating_runs": 1
+        },
+        "plus_synthetic_attention_run": {
+          "note": "R2_legacy_control 은 attention 만 synthetic 이고 나머지가 같다. 넣으면 5 회 중 1 회 이탈.",
+          "feasible_5": [
+            12,
+            12,
+            7,
+            12,
+            12
+          ],
+          "deviating_runs": 1
+        },
+        "excluded": {
+          "file": "R4_dump_base",
+          "feasible": 7,
+          "why": "--dump-frames 가 붙은 다른 명령이라 같은 명령의 폭에 넣을 수 없다"
+        },
+        "sqp_iterations": {
+          "median_per_run": [
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "note": "다섯 다 중앙값 2 다. '반복 수가 줄어서' 만으로는 설명되지 않는다 — 앞선 판의 '2-3 -> 1-2' 는 legacy_attn 과 repeat_1 두 표본만 견준 것이었다.",
+          "vectors": {
+            "R2_legacy_attn": [
+              1,
+              3,
+              3,
+              3,
+              3,
+              2,
+              2,
+              3,
+              2,
+              2,
+              2,
+              2,
+              3,
+              2,
+              2
+            ],
+            "R2_legacy_control": [
+              1,
+              3,
+              3,
+              3,
+              3,
+              2,
+              2,
+              3,
+              2,
+              2,
+              2,
+              2,
+              3,
+              2,
+              2
+            ],
+            "R2_repeat_2": [
+              1,
+              3,
+              3,
+              3,
+              3,
+              2,
+              2,
+              3,
+              2,
+              2,
+              2,
+              2,
+              3,
+              2,
+              2
+            ],
+            "R2_repeat_3": [
+              1,
+              2,
+              3,
+              3,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              3,
+              3,
+              2
+            ],
+            "R2_repeat_1": [
+              1,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              1,
+              1,
+              1,
+              1,
+              2,
+              1,
+              2
+            ]
+          }
+        },
+        "curobo_runs": {
+          "feasible": [
+            7,
+            7
+          ],
+          "iterations_all_frames": 1,
+          "note": "cuRobo 2 표본은 전 프레임 반복 1 로 고정이고 둘 다 feasible 7 이다 — legacy 의 산발적 7 과 같은 현상인지는 안 쟀다."
+        },
+        "followup": "프레임 단위 대조는 T1-a 2 차에서 한다 (T1-a.task.md)."
+      }
+    },
+    {
+      "id": "R3",
+      "measures": "쥔 물체 부호 교정 문턱 — 몇 복셀에서 순수/공유를 가르나",
+      "script": "benchmark/ag3s/experiments/live/sweep_attached_threshold.py",
+      "class": "runs",
+      "venv": ".venv-openpi-live",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work XLA_PYTHON_CLIENT_PREALLOCATE=false /mnt/dev/work/.venv-openpi-live/bin/python -m benchmark.ag3s.experiments.live.sweep_attached_threshold --out outputs/verify/R/R3_threshold_sweep.json",
+      "exit_code": 0,
+      "raw_output": "outputs/verify/R/R3_threshold_sweep.json",
+      "stdout_log": "outputs/verify/R/R3_threshold_sweep.log",
+      "record_source": "fresh_mujoco_scene(seed=101)",
+      "targets_16d_record": false,
+      "targets_16d_record_note": "--records 옵션이 없다. JSON 자신이 source=fresh_mujoco_scene, used_saved_run=false 를 적는다. 16D 기록에 겨누려면 코드 변경이 필요하다 — A1.",
+      "numbers": {
+        "selected_threshold_voxels": 3.0,
+        "candidates": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          3.0
+        ],
+        "selected_is_top_of_candidate_list": true,
+        "per_threshold": [
+          {
+            "t": 0.0,
+            "transport_residual_negative": 0,
+            "shared_on_table": 0,
+            "shared_lifted50": 0,
+            "min_on_table_mm": -2.02,
+            "min_lifted50_mm": 6.25,
+            "min_lifted100_mm": 45.46
+          },
+          {
+            "t": 0.5,
+            "transport_residual_negative": 0,
+            "shared_on_table": 0,
+            "shared_lifted50": 0,
+            "min_on_table_mm": -2.02,
+            "min_lifted50_mm": 6.25,
+            "min_lifted100_mm": 45.46
+          },
+          {
+            "t": 1.0,
+            "transport_residual_negative": 0,
+            "shared_on_table": 0,
+            "shared_lifted50": 0,
+            "min_on_table_mm": -2.02,
+            "min_lifted50_mm": 6.25,
+            "min_lifted100_mm": 45.46
+          },
+          {
+            "t": 1.5,
+            "transport_residual_negative": 0,
+            "shared_on_table": 194,
+            "shared_lifted50": 22,
+            "min_on_table_mm": -16.34,
+            "min_lifted50_mm": 6.25,
+            "min_lifted100_mm": 45.46
+          },
+          {
+            "t": 2.0,
+            "transport_residual_negative": 0,
+            "shared_on_table": 200,
+            "shared_lifted50": 28,
+            "min_on_table_mm": -16.34,
+            "min_lifted50_mm": 6.25,
+            "min_lifted100_mm": 45.46
+          },
+          {
+            "t": 3.0,
+            "transport_residual_negative": 0,
+            "shared_on_table": 226,
+            "shared_lifted50": 67,
+            "min_on_table_mm": -16.55,
+            "min_lifted50_mm": 6.25,
+            "min_lifted100_mm": 45.46
+          }
+        ]
+      },
+      "class_first_try": "runs",
+      "venv_used": ".venv-openpi-live",
+      "venv_recheck": {
+        "rerun_in_openpi_live": true,
+        "note": "처음부터 .venv-openpi-live 였다.",
+        "class_after": "runs"
+      }
+    },
+    {
+      "id": "R4",
+      "measures": "C5 — 거친 20 mm 계층이 판정 지점에서 얼마나 낙관하나",
+      "script": "benchmark/ag3s/experiments/curobo/ground_truth.py",
+      "class": "needs-outpath",
+      "venv": ".venv-ag3s",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.ag3s.experiments.curobo.ground_truth --records outputs/live_test/20260924_long16d/run_0000",
+      "exit_code": 0,
+      "stdout_log": "outputs/verify/R/R4R5_ground_truth.log",
+      "hardcoded_output_path": "benchmark/ag3s/experiments/curobo/ground_truth.py:32 — OUT = pathlib.Path(\"benchmark/ag3s/docs/figures\"); savefig at ground_truth.py:412 writes figures/curobo-ground-truth.png",
+      "overwrote": [
+        "benchmark/ag3s/docs/figures/curobo-ground-truth.png"
+      ],
+      "overwrote_note": "이 실행(2026-09-25 07:54, 코디네이터 지시 전)이 archive 증거 파일을 덮어썼다. 그 실행의 png 사본은 outputs/verify/R/OVERWROTE_curobo-ground-truth_16Dpose_14Dnpz.png 에 있다. 원본 복구는 lead 가 git 에서 한다.",
+      "targets_16d_record": false,
+      "targets_16d_record_note": "--records 는 16D 를 가리켰으나 depth·마스크는 --frames-npz(/tmp/rollout_frames.npz, 2026-09-12), 필드는 --fields(/tmp/rollout_fields.npz, 2026-09-12) 에서 온다. 두 npz 는 16D 기록(2026-09-24)보다 앞선 14D 시대 산출물이다. 즉 로봇 자세만 16D, 관측과 필드는 14D 인 혼합 실행이고 스크립트는 그 불일치를 잡지 않는다 (ground_truth.py:103-107).",
+      "numbers_not_valid_as_16d": true,
+      "note": "출력 경로가 박혀 있으므로 다시 돌리지 않는다. 경로를 인자로 빼는 것과 16D /tmp npz 재생성은 A1 의 일이다.",
+      "class_first_try": "needs-outpath",
+      "venv_used": ".venv-ag3s",
+      "venv_recheck": {
+        "rerun_in_openpi_live": false,
+        "note": "출력 경로가 박혀 있어(ground_truth.py:32) 다시 돌리지 않았다. venv 문제가 아니다 — .venv-ag3s 에서 exit 0 이었다.",
+        "class_after": "needs-outpath"
+      },
+      "blocking_fact_16d": {
+        "_comment": "출력 경로보다 앞서는 문제다.",
+        "fact": "이 기록에서 미세 5 mm 계층이 한 프레임도 만들어지지 않는다. build_rollout_fields 가 15 프레임 전부 '계층 1 (target 없음 — 거친 계층만)' 을 찍는다.",
+        "evidence": {
+          "log": "outputs/verify/R/R4_build_fields.log",
+          "fields_npz": "outputs/verify/R/rollout_fields_16d.npz",
+          "fine_keys": 0,
+          "coarse_keys": 45,
+          "n_frames": 15
+        },
+        "why": "target grounding 이 이 기록에서 서지 않는다 (esdf_rollout 에서도 target=false 15/15). 미세 계층은 target 중심에 놓이므로 target 이 없으면 만들어지지 않는다.",
+        "consequence": "R4(거친 대 2계층 낙관)와 R5(미세 창 경계)는 비교 대상이 없어 이 기록에서는 잴 수 없다. 출력 경로를 인자로 빼도 여전히 못 잰다."
+      },
+      "prepared_16d_inputs": {
+        "_comment": "세 인자를 모두 16D 로 맞춘 자산을 미리 만들어 두었다. 코드는 고치지 않았다 — 둘 다 인자로 경로를 받는다.",
+        "frames_npz": "outputs/verify/R/rollout_frames_16d.npz",
+        "fields_npz": "outputs/verify/R/rollout_fields_16d.npz",
+        "records": "outputs/live_test/20260924_long16d/run_0000",
+        "produced_by": [
+          "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records outputs/live_test/20260924_long16d/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_long.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --dump-frames outputs/verify/R/rollout_frames_16d.npz",
+          "PYTHONPATH=/mnt/dev/work .venv-curobo/bin/python -m benchmark.ag3s.experiments.curobo.build_rollout_fields --frames outputs/verify/R/rollout_frames_16d.npz --out outputs/verify/R/rollout_fields_16d.npz"
+        ],
+        "eikonal_self_check": "frame 14 coarse |grad d| 중앙 1.000 OK",
+        "still_blocked_by": [
+          "ground_truth.py:32 출력 경로",
+          "미세 계층이 없다 (blocking_fact_16d)"
+        ]
+      },
+      "three_args_16d_check": {
+        "asked_by": "coordinator",
+        "answer": "내 실행은 셋 중 --records 하나만 16D 였다. --frames-npz 와 --fields 는 기본값(/tmp, 2026-09-12)이 그대로 쓰였다. 그 수치는 못 쓴다 — numbers_not_valid_as_16d 로 이미 표시했다."
+      }
+    },
+    {
+      "id": "R5",
+      "measures": "C3 — 미세 창 경계에서 거리가 얼마나 튀나",
+      "script": "benchmark/ag3s/experiments/curobo/verify_two_tier.py",
+      "class": "needs-arg",
+      "venv": ".venv-curobo",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-curobo/bin/python benchmark/ag3s/experiments/curobo/verify_two_tier.py",
+      "exit_code": 0,
+      "stdout_log": "outputs/verify/R/R4R5_two_tier.log",
+      "writes_figures": false,
+      "hardcoded_input_path": "benchmark/ag3s/experiments/curobo/verify_two_tier.py:7 — np.load(\"/tmp/rby1_frame.npz\"); argparse 가 아예 없다",
+      "targets_16d_record": false,
+      "targets_16d_record_note": "/tmp/rby1_frame.npz 는 2026-09-11 산출물로 16D 기록보다 앞선다. 인자가 없어 다른 프레임을 먹일 방법이 없다.",
+      "numbers_not_valid_as_16d": true,
+      "observed_on_stale_input": {
+        "fine_5mm_pose_center": [
+          0.554,
+          0.302,
+          0.854
+        ],
+        "fine_5mm_dims": [
+          0.64,
+          0.64,
+          0.64
+        ],
+        "near_zero_band_z_median_m": 0.821,
+        "table_top_m": 0.823,
+        "target_centroid_nearest_voxel_d_m": -0.005
+      },
+      "class_first_try": "needs-arg",
+      "venv_used": [
+        ".venv-curobo",
+        ".venv-openpi-live"
+      ],
+      "venv_recheck": {
+        "rerun_in_openpi_live": true,
+        "stdout_log": "outputs/verify/R/R5_two_tier_openpilive.log",
+        "exit_code": 0,
+        "note": "두 venv 모두 exit 0 이고 출력 수치가 같다. venv 문제가 아니라 입력 경로가 박힌 것이다 (verify_two_tier.py:7).",
+        "class_after": "needs-arg"
+      },
+      "blocking_fact_16d": {
+        "_comment": "출력 경로보다 앞서는 문제다.",
+        "fact": "이 기록에서 미세 5 mm 계층이 한 프레임도 만들어지지 않는다. build_rollout_fields 가 15 프레임 전부 '계층 1 (target 없음 — 거친 계층만)' 을 찍는다.",
+        "evidence": {
+          "log": "outputs/verify/R/R4_build_fields.log",
+          "fields_npz": "outputs/verify/R/rollout_fields_16d.npz",
+          "fine_keys": 0,
+          "coarse_keys": 45,
+          "n_frames": 15
+        },
+        "why": "target grounding 이 이 기록에서 서지 않는다 (esdf_rollout 에서도 target=false 15/15). 미세 계층은 target 중심에 놓이므로 target 이 없으면 만들어지지 않는다.",
+        "consequence": "R4(거친 대 2계층 낙관)와 R5(미세 창 경계)는 비교 대상이 없어 이 기록에서는 잴 수 없다. 출력 경로를 인자로 빼도 여전히 못 잰다."
+      }
+    },
+    {
+      "id": "R6",
+      "measures": "N1 · N2 · F20 — self-collision 여유 / 해석적 채널 낙관 / decay 잔상",
+      "script": "benchmark/ag3s/experiments/studies/a1_static_geometry_effect.py",
+      "class": "runs",
+      "venv": ".venv-ag3s",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.ag3s.experiments.studies.a1_static_geometry_effect --records outputs/live_test/20260924_long16d/run_0000 --frames 15 --out outputs/verify/R --out-json outputs/verify/R/R6_a1_static.json",
+      "exit_code": 0,
+      "raw_output": "outputs/verify/R/R6_a1_static.json",
+      "stdout_log": "outputs/verify/R/R6_a1_static.log",
+      "targets_16d_record": true,
+      "covers": "N2 만. --out/--out-json 을 주어 figures/ 를 건드리지 않았다 (기본값은 a1_static_geometry_effect.py:39 에 박혀 있다).",
+      "numbers": {
+        "frames": 15,
+        "n_shapes": 16,
+        "static_survey": {
+          "n_free": 53,
+          "n_robot": 1238,
+          "n_visual": 29,
+          "unsupported": []
+        },
+        "arms_120": {
+          "n_queries": 1800,
+          "off": {
+            "max_optimism_mm": 258.159,
+            "median_mm": 47.658,
+            "n_optimistic": 1241,
+            "saturated_queries": 1084,
+            "outside_grid_queries": 0
+          },
+          "on": {
+            "max_optimism_mm": 0.0,
+            "median_mm": 0.0,
+            "n_optimistic": 0,
+            "saturated_queries": 558,
+            "outside_grid_queries": 0
+          }
+        },
+        "all_194": {
+          "n_queries": 2910,
+          "off": {
+            "max_optimism_mm": 408.028,
+            "median_mm": 80.16,
+            "n_optimistic": 2111,
+            "saturated_queries": 2194,
+            "outside_grid_queries": 60
+          },
+          "on": {
+            "max_optimism_mm": 0.0,
+            "median_mm": 0.0,
+            "n_optimistic": 0,
+            "saturated_queries": 798,
+            "outside_grid_queries": 60
+          }
+        }
+      },
+      "not_measured": [
+        "N1 (self-collision 여유 185.6 mm) — benchmark/** 에 이 값을 내는 실험 스크립트가 없다. grep 으로 185.6 은 문서(AG3S_CUROBO_LIVE_TEST_PLAN.md:828, AG3S_REVIEW_PLAN.md:1241·1246·1335)에만 나온다.",
+        "F20 (decay 잔상 -6.7 mm) — a1_static_geometry_effect.py 가 아니라 benchmark/ag3s/experiments/studies/a4_task_tsdf.py 계열이 낸다. 이번 스모크에서 돌리지 않았다."
+      ],
+      "class_first_try": "runs",
+      "venv_used": ".venv-ag3s",
+      "venv_recheck": {
+        "rerun_in_openpi_live": false,
+        "note": "torch/curobo 를 쓰지 않는다. exit 0 — 다시 돌릴 이유가 없다.",
+        "class_after": "runs"
+      }
+    },
+    {
+      "id": "R7",
+      "measures": "F14 — 상태 지연이 몇 ms 부터 로봇 점을 새게 하나",
+      "script": "benchmark/ag3s/experiments/studies/step7_state_lag.py",
+      "class": "runs",
+      "venv": ".venv-ag3s",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.ag3s.experiments.studies.step7_state_lag --records outputs/live_test/20260924_long16d/run_0000 --frames 8",
+      "exit_code": 0,
+      "stdout_log": "outputs/verify/R/R7_state_lag.log",
+      "targets_16d_record": true,
+      "outpath_hardcoded": "benchmark/ag3s/experiments/studies/step7_state_lag.py:50 — OUT = figures/; 파일명은 step7_state_lag.py:233 에서 args.records[-4:] 로 만들어진다",
+      "overwrote": [],
+      "overwrote_note": "덮어쓴 것 없다. 16D 기록은 run_0000 이라 이름이 step7-state-lag-0000.png 가 되어 14D 증거(step7-state-lag-0004.png, 2026-09-14)와 겹치지 않았다. 새로 난 0000 파일은 규칙에 따라 figures/r-16d/ 로 옮겼다.",
+      "numbers": {
+        "frames": "8..15",
+        "record_step_ms": 16,
+        "config_max_state_age_ms": 100,
+        "leak_at_zero_lag": 0,
+        "leak_onset_lag_ms": 32,
+        "leak_onset_points": 54,
+        "leak_onset_camera_motion_mm": 18.9,
+        "worst_within_config_limit": {
+          "lag_ms": 96,
+          "leak_points": 963,
+          "camera_motion_mean_mm": 49.1,
+          "camera_motion_max_mm": 205.8
+        },
+        "table": [
+          {
+            "lag_ms": 0,
+            "leak_points": 0,
+            "real_object_points": 533604,
+            "camera_motion_mm": 0.0,
+            "within_config": true
+          },
+          {
+            "lag_ms": 16,
+            "leak_points": 0,
+            "real_object_points": 533966,
+            "camera_motion_mm": 9.8,
+            "within_config": true
+          },
+          {
+            "lag_ms": 32,
+            "leak_points": 54,
+            "real_object_points": 534892,
+            "camera_motion_mm": 18.9,
+            "within_config": true
+          },
+          {
+            "lag_ms": 48,
+            "leak_points": 386,
+            "real_object_points": 534901,
+            "camera_motion_mm": 28.0,
+            "within_config": true
+          },
+          {
+            "lag_ms": 64,
+            "leak_points": 789,
+            "real_object_points": 535382,
+            "camera_motion_mm": 36.1,
+            "within_config": true
+          },
+          {
+            "lag_ms": 96,
+            "leak_points": 963,
+            "real_object_points": 536750,
+            "camera_motion_mm": 49.1,
+            "within_config": true
+          },
+          {
+            "lag_ms": 128,
+            "leak_points": 845,
+            "real_object_points": 538118,
+            "camera_motion_mm": 53.2,
+            "within_config": false
+          }
+        ]
+      },
+      "class_first_try": "runs",
+      "venv_used": ".venv-ag3s",
+      "venv_recheck": {
+        "rerun_in_openpi_live": false,
+        "note": "torch/curobo 를 쓰지 않는다. exit 0 — 다시 돌릴 이유가 없다.",
+        "class_after": "runs"
+      }
+    }
+  ],
+  "overwrote": [
+    {
+      "path": "benchmark/ag3s/docs/figures/curobo-ground-truth.png",
+      "by": "R4 — benchmark/ag3s/experiments/curobo/ground_truth.py (OUT 박힘, ground_truth.py:32)",
+      "when": "2026-09-25 07:54 UTC",
+      "linked_as_14d_evidence_from": [
+        "AG3S_REVIEW_LOG.md:1822",
+        "PIPELINE-STAGES-AND-CUROBO-ROLE.md:1127"
+      ],
+      "copy_of_overwriting_version": "outputs/verify/R/OVERWROTE_curobo-ground-truth_16Dpose_14Dnpz.png",
+      "recovery": "lead 가 git 에서 복구한다"
+    }
+  ],
+  "overwrote_full_audit": "find benchmark/ag3s/docs/figures -maxdepth 1 -newermt '2026-09-25 00:00' -type f -> curobo-ground-truth.png 하나뿐. step7-state-lag-0000.png 는 새 파일이었고 figures/r-16d/ 로 옮겼다.",
+  "figures": [
+    {
+      "path": "benchmark/ag3s/docs/figures/r-16d/r-smoke-scene.png",
+      "kind": "scene",
+      "sidecar": "benchmark/ag3s/docs/figures/r-16d/r-smoke-scene.json"
+    },
+    {
+      "path": "benchmark/ag3s/docs/figures/r-16d/r-smoke-trend.png",
+      "kind": "graph",
+      "sidecar": "benchmark/ag3s/docs/figures/r-16d/r-smoke-trend.json"
+    },
+    {
+      "path": "benchmark/ag3s/docs/figures/r-16d/r-smoke-table.png",
+      "kind": "table",
+      "sidecar": "benchmark/ag3s/docs/figures/r-16d/r-smoke-table.json"
+    },
+    {
+      "path": "benchmark/ag3s/docs/figures/r-16d/step7-state-lag-0000.png",
+      "kind": "graph",
+      "note": "step7_state_lag.py 가 figures/ 루트에 낸 것을 옮겼다. sidecar 없음 — 스크립트가 만들지 않는다."
+    }
+  ],
+  "figure_script": "outputs/verify/R/make_figures.py",
+  "timeouts": {
+    "applied_s": 600,
+    "raised_to_s": {
+      "baseline": 1800,
+      "R2": 900,
+      "R6": 900
+    },
+    "hit_timeout": [],
+    "slowest": {
+      "id": "R2-curobo",
+      "per_frame_total_ms": 1991,
+      "compare": "같은 기록 legacy 588 ms/frame"
+    }
+  },
+  "verdict": "회귀 기준선 개수 5/5 일치. 7 건 스모크 분류: runs 4 (R2·R3·R6·R7) · broken 1 (R1) · needs-arg 1 (R5) · needs-outpath 1 (R4) · slow 0. .venv-openpi-live 로 재확인해도 재분류된 것은 없다. R2 는 실측 attention 으로 다시 쟀고 개수가 같았으나, 같은 명령 4 회에서 feasible 이 12/7/12/12 로 1 회 이탈한다 (앞선 12/7/7/12/12 는 --dump-frames 실행을 잘못 섞은 내 집계 오류, 정정함) — 이 기록에서는 개수도 기준선이 아니다. R4·R5 는 이 기록에 미세 계층이 한 프레임도 없어 (target 없음 15/15) 비교 자체가 성립하지 않는다. benchmark/**/*.py 는 고치지 않았다.",
+  "venv_correction": {
+    "date": "2026-09-25",
+    "source": "coordinator + A1",
+    "fact": ".venv-openpi-live (py3.11, numpy 1.26.4) 에 mujoco 3.11.0 · casadi 3.8.0 · osqp 1.1.3 · torch 2.7.1+cu126 · curobo 0.8.0.post1.dev43 · warp 1.17.0 가 전부 있다. mujoco 와 curobo 가 한 프로세스에서 돈다.",
+    "verified_by_verifier": "직접 import 로 확인했다 (6개 전부 OK).",
+    "effect_on_this_smoke": "broken 1 건(R1)을 .venv-openpi-live 로 다시 돌렸으나 같은 RuntimeError 로 죽는다 — venv 문제가 아니다. R5 도 .venv-curobo 와 .venv-openpi-live 양쪽에서 exit 0 이고 출력이 같다. R3 는 처음부터 openpi-live 였다. 재분류로 바뀐 분류는 없다. 다만 R2 의 첫 시도(.venv-ag3s, torch 없음)는 내 venv 오선택이었고 스크립트 결함이 아니다 — class_first_try 에 남겼다.",
+    "reclassified_count": 0
+  }
+}

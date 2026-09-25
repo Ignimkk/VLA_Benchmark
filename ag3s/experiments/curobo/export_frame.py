@@ -4,9 +4,16 @@ curobo 는 격리된 venv 에 있어서 우리 benchmark 코드를 임포트할 
 AG3S 실행은 이쪽에서 하고, 결과만 npz 로 넘긴다.
 
     MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work \\
-        src/openpi/.venv/bin/python -m benchmark.ag3s.experiments.curobo.export_frame
+        /mnt/dev/work/.venv-openpi-live/bin/python -m \\
+        benchmark.ag3s.experiments.curobo.export_frame \\
+        --records outputs/live_test/20260924_long16d/run_0000 --step 9 \\
+        --out outputs/verify/R/rby1_frame_16d.npz
+
+`--records` 와 `--out` 에 기본값을 두지 않는다. 예전 기본값(`run_0004`, `/tmp/rby1_frame.npz`)
+때문에 16D 재측정이 14D 프레임을 말없이 다시 읽었다 (2026-09-25).
 """
 import argparse
+import pathlib
 
 import numpy as np
 
@@ -23,10 +30,13 @@ def main() -> None:
     from benchmark.ag3s.runtime.pipeline import AG3S
 
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--records", default="run_0004")
+    ap.add_argument("--records", required=True,
+                    help="어느 기록에서 프레임을 뽑을지. 기본값 없음 (위 머리말 참고)")
     ap.add_argument("--step", type=int, default=9)
     ap.add_argument("--target", default="apple")
-    ap.add_argument("--out", default="/tmp/rby1_frame.npz")
+    ap.add_argument("--out", required=True,
+                    help="쓸 npz 경로. 기본값 없음. /tmp 는 컨테이너 재시작에 날아가므로 "
+                         "재측정본은 outputs/ 아래에 둔다")
     args = ap.parse_args()
 
     run = load_run(args.records)
@@ -82,7 +92,11 @@ def main() -> None:
         out[f"T_{cid}"] = T
         n_masked[cid] = int(mask.sum())
 
-    np.savez(args.out, **out)
+    # 출처 도장 — 이 프레임이 어느 기록에서 나왔는지 파일이 스스로 말하게 한다.
+    # verify_two_tier.py 가 이것을 읽어 찍는다.
+    from benchmark.ag3s.experiments.sources.policy_record import provenance_arrays
+    pathlib.Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+    np.savez(args.out, **provenance_arrays(run, 1), **out)
     print(f"wrote {args.out}")
     print(f"  target centroid {np.round(out['target_centroid'], 3)}")
     print(f"  제약 구 {len(out['sphere_radii'])}  카메라 {len(CAMS)}")

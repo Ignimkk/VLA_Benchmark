@@ -41,21 +41,9 @@ from benchmark.trajopt.types import ChunkLayout
 CAMERAS = ("zed_left", "wrist_cam_l", "wrist_cam_r")
 
 
-def phase_for(t_step: int, boundaries) -> str:
-    """제어 스텝 -> 단계. 접촉 허가와 target 파냄이 여기에 달려 있다.
-
-    실제 시스템에서 단계는 과제 계층이 정한다 (`AG3S.attach()` 의 docstring 이 "AG3S never calls
-    this itself" 라고 못박는 것과 같은 이유다). 여기서는 재생이므로 스텝 경계로 흉내 내고,
-    그 경계를 인자로 두어 **가정이 코드에 숨지 않게** 한다.
-    """
-    transit, approach, pre_grasp = boundaries
-    if t_step < transit:
-        return "transit"
-    if t_step < approach:
-        return "approach"
-    if t_step < pre_grasp:
-        return "pre_grasp"
-    return "grasp"
+# `phase_for` 는 `sources/policy_record` 로 옮겼다 (2026-09-25). 같은 상수를 두 스크립트가
+# 따로 들고 있으면 한쪽만 고쳤을 때 두 수치가 다른 단계 정의 위에서 나온다 — 실제로 났다.
+from benchmark.ag3s.experiments.sources.policy_record import phase_for  # noqa: E402
 
 
 def main() -> None:
@@ -91,8 +79,13 @@ def main() -> None:
                          "않는다 — **최종 제약을 전부 ESDF 가 만들게 하려면 이쪽**이라 기본값이다. "
                          "어느 쪽이든 평면 *추출* 은 켜져 있다: grounding 이 그 마스크 없이는 "
                          "테이블을 타고 번져 target 을 못 찾는다")
-    ap.add_argument("--phase-boundaries", type=int, nargs=3, default=(24, 56, 72),
-                    metavar=("TRANSIT", "APPROACH", "PRE_GRASP"))
+    ap.add_argument("--phase-boundaries", type=int, nargs=3, default=None,
+                    metavar=("TRANSIT", "APPROACH", "PRE_GRASP"),
+                    help="제어 스텝 단위 단계 경계. **주지 않으면 기록에서 뽑는다** — "
+                         "그리퍼가 열린 값에서 벗어나는 지점을 파지 시작으로 잡는다. "
+                         "옛 기본값 (24, 56, 72) 는 `run_0004` 에서 그렇게 나온 값이고, "
+                         "긴 기록에 그대로 쓰면 t_step >= 72 가 전부 grasp 이 되어 "
+                         "호출 9~49 가 잘못 라벨된다")
     ap.add_argument("--dump-frames", default=None,
                     help="프레임마다 head depth·K·T·로봇마스크·target centroid 를 npz 로 남긴다. "
                          "cuRobo 필드를 만드는 입력 (`experiments/curobo/build_rollout_fields.py`)")
@@ -124,15 +117,51 @@ def main() -> None:
     from benchmark.ag3s.experiments.reports.attention_report import target_from_prompt
     target = args.target or target_from_prompt(run.prompt)
 
+    # 단계 경계는 **판정**이라서, 어떻게 얻었는지를 같이 찍고 결과 JSON 에도 싣는다.
+    # **기록 전체**를 본다 — `--frames N` 으로 잘라 읽으면 파지가 그 뒤에 있을 때
+    # "파지가 없다" 는 답이 나와 조용히 옛 상수로 떨어진다.
+    from benchmark.ag3s.experiments.sources.policy_record import phase_boundaries_for_path
+    if args.phase_boundaries is None:
+        boundaries, phase_evidence = phase_boundaries_for_path(args.records)
+    else:
+        boundaries = tuple(int(x) for x in args.phase_boundaries)
+        phase_evidence = {"source": "cli", "boundaries": list(boundaries)}
+    print(f"단계 경계: {tuple(boundaries)} (제어 스텝) — 출처 {phase_evidence['source']}"
+          + (f", 파지 시작 {phase_evidence['grasp_onset']}"
+             if phase_evidence.get("grasp_onset") else ""))
+
+    # **live 와 같은 배선으로 카메라마다 attention 을 붙인다** (판정 8, 2026-09-25).
+    #
+    # 예전에는 `cam_high` 한 장만 꺼내 `zed_left` 에만 붙였다. live 는 그렇지 않다 —
+    # `serve_safe.py:143-161` 의 `attention_extractor` 가 정책 응답에서 세 카메라를 다 꺼내고
+    # (`ALIAS`: cam_high→zed_left · cam_left_wrist→wrist_cam_l · cam_right_wrist→wrist_cam_r),
+    # `wire.py:171` 이 `attention_map=attention.get(cam)` 으로 관측마다 자기 것을 받는다.
+    # 오프라인만 셋 중 둘을 버리고 있었고, 그래서 **오프라인 수치가 서빙 경로를 대표하지
+    # 못했다** — 이 기록에서 대상이 `zed_left` 에 한 번도 안 보이는 것과 맞물려
+    # "attention 이 대상에 안 떨어진다" 로 나타났다. npz 에는 세 대가 다 들어 있다.
+    #
+    # npz 축 순서는 `(frame, denoise, agg, layer, head, camera, row, col)` 이다
+    # (생산자 `sources/pi05_attention.py`).
+    ATTENTION_ALIAS = {"cam_high": "zed_left",
+                       "cam_left_wrist": "wrist_cam_l",
+                       "cam_right_wrist": "wrist_cam_r"}
     cell = None
     attention_block = None
+    attention_camera_index: dict[str, int] = {}
     if args.attention:
         blob = np.load(args.attention, allow_pickle=False)
         cell = json.loads(pathlib.Path(args.step1_json).read_text())["best"]
         attention_block = np.asarray(blob["attention"], np.float32)
         di = [int(d) for d in blob["denoise_steps"]].index(int(cell["denoise"]))
         ai = [str(a) for a in blob["aggregations"]].index(str(cell["agg"]))
-        ci = [str(c) for c in blob["cameras"]].index("cam_high")
+        # 정책 카메라 이름 -> MuJoCo 카메라 이름으로 옮겨 담는다. npz 에 없는 카메라는
+        # 그냥 빠진다 (그 카메라만 attention 이 없고 나머지는 산다 — live 의 `.get()` 과 같다).
+        for policy_name, mujoco_name in ATTENTION_ALIAS.items():
+            names = [str(c) for c in blob["cameras"]]
+            if policy_name in names:
+                attention_camera_index[mujoco_name] = names.index(policy_name)
+        print(f"attention: {len(attention_camera_index)} 대에 붙인다 "
+              f"{sorted(attention_camera_index)} (live 와 같은 배선)")
 
     scene = replay_scene(run)
     # 두 모델은 **일부러 다르다**. 자기 필터는 전신이어야 바퀴·베이스 점이 클라우드에서 지워지고,
@@ -245,10 +274,17 @@ def main() -> None:
         frames = {c: scene.capture(c) for c in CAMERAS}
         head = frames["zed_left"]
         if attention_block is not None:
-            att = attention_block[i, di, ai, cell["layer"], cell["head"], ci]
+            att_by_cam = {
+                cam: attention_block[i, di, ai, cell["layer"], cell["head"], ci]
+                for cam, ci in attention_camera_index.items()
+            }
         else:
-            att = gaussian_attention(head, scene.body_position_in_base(target))
-        phase = phase_for(step.t_step, args.phase_boundaries)
+            # 합성 블롭도 카메라마다 만든다 — 각 카메라의 프레임에서 대상 위치로.
+            att_by_cam = {c: gaussian_attention(frames[c],
+                                                scene.body_position_in_base(target))
+                          for c in CAMERAS}
+        att = att_by_cam.get("zed_left")
+        phase = phase_for(step.t_step, boundaries)
 
         t0 = time.time()
         if args.cameras == "all":
@@ -258,7 +294,7 @@ def main() -> None:
             # 캡처는 어차피 위에서 셋 다 했으므로 추가 비용은 지각 쪽뿐이다.
             observations = [
                 camera_observation(scene, c, filter_robot, timestamp=float(i),
-                                   attention_map=(att if c == "zed_left" else None))[0]
+                                   attention_map=att_by_cam.get(c))[0]
                 for c in CAMERAS
             ]
             cs = ag.process_multi(observations, phase=phase,
@@ -338,9 +374,14 @@ def main() -> None:
     scene.close()
 
     if dump is not None:
+        from benchmark.ag3s.experiments.sources.policy_record import provenance_arrays
         pathlib.Path(args.dump_frames).parent.mkdir(parents=True, exist_ok=True)
-        np.savez_compressed(args.dump_frames, n_frames=np.asarray(len(rows)), **dump)
-        print(f"프레임 덤프 -> {args.dump_frames}  ({len(rows)} 프레임)")
+        # **출처 도장을 같이 찍는다.** 이 npz 는 cuRobo 쪽 venv 로 건너가 필드가 되고, 그
+        # 필드는 다시 `ground_truth` 로 간다. 도중에 어느 기록에서 나왔는지 잃어버리면
+        # 자세만 새 기록이고 관측은 옛 기록인 혼합 실행이 조용히 성립한다 (2026-09-25).
+        np.savez_compressed(args.dump_frames, n_frames=np.asarray(len(rows)),
+                            **provenance_arrays(run, len(rows)), **dump)
+        print(f"프레임 덤프 -> {args.dump_frames}  ({len(rows)} 프레임, 출처 도장 포함)")
 
     out = pathlib.Path(args.out_json)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -348,6 +389,9 @@ def main() -> None:
         "records": str(run.path), "prompt": run.prompt, "target": target,
         "attention": "measured" if attention_block is not None else "synthetic",
         "cameras": args.cameras,
+        "attention_cameras": sorted(attention_camera_index) or list(CAMERAS),
+        "attention_wiring": "per-camera (live 와 같음, 판정 8)",
+        "phase_boundaries": phase_evidence,
         "ag3s": {"collision_backend": "esdf", "voxel_size": args.voxel,
                  "range_max": args.range_max,
                  "constraint_links": args.constraint_links,

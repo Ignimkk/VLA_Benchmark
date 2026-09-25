@@ -303,6 +303,300 @@ def pose_scene(scene, step: StepRecord) -> None:
     scene.mujoco.mj_forward(scene.model, scene.data)
 
 
+# ---------------------------------------------------- 어느 기록에서 나왔는가 (출처 도장)
+
+#: 중간 산출물(`--dump-frames` npz, cuRobo 필드 npz)에 찍는 출처 도장의 키 이름.
+#: 하나로 모아 두는 이유는 생산자와 소비자가 **문자열을 따로 적으면 짝 검사가 조용히
+#: 아무것도 안 하기** 때문이다 — 키 이름이 어긋나면 `.get()` 이 `None` 을 돌려주고 검사는
+#: 통과한다.
+PROVENANCE_KEY = "source_record"
+PROVENANCE_FINGERPRINT_KEY = "source_record_fingerprint"
+PROVENANCE_FRAMES_KEY = "source_record_frames"
+
+
+def record_fingerprint(record: RunRecord) -> str:
+    """이 기록을 가리키는 짧은 지문. 같은 기록이면 같고, 다른 기록이면 거의 확실히 다르다.
+
+    경로 문자열만으로는 부족하다 — `/tmp/rollout_frames.npz` 가 어느 `run_0000` 에서 나온
+    것인지 경로가 말해 주지 않고, 두 기록이 같은 이름을 쓰는 일이 실제로 있다
+    (`run_0004` 와 `…/20260924_long16d/run_0000` 은 둘 다 `run_XXXX` 다).
+
+    **2026-09-25 에 이것이 없어서 난 일**: R4 가 자세는 16D 기록에서, depth 와 필드는 09-12 자
+    14D npz 에서 가져온 혼합 실행이었는데 스크립트가 그것을 못 잡았다. 로봇은 16D 자세로
+    서 있고 거리장은 14D 씬을 담은 채로 "낙관 오차" 를 쟀다.
+    """
+    import hashlib
+
+    # **`--frames`/`limit` 에 흔들리면 안 된다.** 중간 산출물은 보통 앞 15 프레임만 굽고
+    # 소비자는 `load_run(..., limit=n)` 으로 읽으므로, 지문이 프레임 수에 따라 달라지면
+    # 짝이 맞는 짝을 짝이 아니라고 말한다. 그래서 `meta.json` 전체(프레임 수와 무관하다)와
+    # **첫** 자세만 쓴다 — 끝 자세는 쓰지 않는다.
+    meta = json.dumps(record.meta, sort_keys=True, ensure_ascii=False, default=str)
+    first = record.steps[0]
+    first_qpos = np.asarray(first.qpos, np.float64).tobytes().hex()
+    # **액션 폭을 지문에 넣는다.** 보통은 `meta` 의 `policy_model` 이 14D 와 16D 를 이미
+    # 가르지만, 그것은 문자열이라 녹화 스크립트가 같은 이름을 쓰면 같아진다. 이 STEP 이
+    # 통째로 다루는 구분이 바로 그 폭이므로 지문이 직접 들고 있는 편이 낫다.
+    # (`limit` 과 무관하다 — 첫 스텝에서만 읽는다.)
+    width = int(np.asarray(first.state).reshape(-1).shape[0])
+    return hashlib.sha256(
+        f"{meta}|{width}|{first_qpos}".encode()).hexdigest()[:16]
+
+
+def provenance_arrays(record: RunRecord, n_frames: int) -> dict:
+    """`np.savez` 에 그대로 넘길 출처 도장. 생산자는 이것을 **반드시** 섞어 넣는다."""
+    return {
+        PROVENANCE_KEY: np.asarray(str(record.path)),
+        PROVENANCE_FINGERPRINT_KEY: np.asarray(record_fingerprint(record)),
+        PROVENANCE_FRAMES_KEY: np.asarray(int(n_frames)),
+    }
+
+
+def read_provenance(blob, *, where: str) -> dict:
+    """npz 에서 출처 도장을 읽는다. 도장이 없으면 **어느 기록인지 모른다는 뜻**이다."""
+    def _get(key):
+        if key not in getattr(blob, "files", ()):
+            return None
+        value = blob[key]
+        return value.item() if getattr(value, "shape", ()) == () else value
+
+    fingerprint = _get(PROVENANCE_FINGERPRINT_KEY)
+    return {
+        "where": where,
+        "record": _get(PROVENANCE_KEY),
+        "fingerprint": None if fingerprint is None else str(fingerprint),
+        "frames": _get(PROVENANCE_FRAMES_KEY),
+        "stamped": fingerprint is not None,
+    }
+
+
+def require_same_record(record: RunRecord, *stamps: dict) -> None:
+    """모든 중간 산출물이 `record` 에서 나왔는지 확인하고, 아니면 **즉시 멈춘다**.
+
+    조용히 섞이는 것이 이 검토가 반복해서 만난 실패라서, 경고가 아니라 예외다. 도장이
+    아예 없는(옛 형식) 산출물도 통과시키지 않는다 — "모른다" 를 "맞다" 로 읽는 것이
+    정확히 2026-09-25 에 난 일이다.
+    """
+    want = record_fingerprint(record)
+    problems = []
+    for stamp in stamps:
+        if not stamp.get("stamped"):
+            problems.append(
+                f"  - {stamp['where']}: 출처 도장이 없다 (옛 형식). 이 파일이 "
+                f"{record.path} 에서 나온 것인지 확인할 방법이 없다 — 다시 구워라")
+        elif stamp["fingerprint"] != want:
+            problems.append(
+                f"  - {stamp['where']}: 다른 기록에서 나왔다. 도장 "
+                f"{stamp['fingerprint']} (기록 {stamp.get('record')!r}) "
+                f"≠ 지금 읽는 {want} ({record.path})")
+    if problems:
+        raise SystemExit(
+            "중간 산출물이 지금 읽는 기록과 짝이 맞지 않는다:\n"
+            + "\n".join(problems)
+            + f"\n\n기록 {record.path} (도장 {want}) 에 맞춰 다시 만들어라:\n"
+              "  1) esdf_rollout --records <기록> --dump-frames <frames.npz>\n"
+              "  2) curobo/build_rollout_fields.py --frames <frames.npz> --out <fields.npz>\n"
+              "자세만 새 기록이고 depth·필드가 옛 npz 인 혼합 실행을 막으려는 검사다.")
+
+
+# ------------------------------------------------------- what the record says about time
+
+#: `t_step` 이 세는 단위와 기록 한 장의 간격을 헷갈리면 지연·단계 수치가 통째로 틀어진다.
+#: 한 번만 여기서 풀어 둔다.
+#:
+#: * `t_step` 은 **제어 스텝** 번호다 (`pi05_infer.py:1387` 의 루프 변수).
+#: * 제어 스텝 하나는 `1/ctrl_hz` 초다 (`pi05_infer.py:1110`,
+#:   `steps_per_action = round(1/(CTRL_HZ * timestep))` 가 그만큼 `mj_step` 을 돈다).
+#: * 기록은 **청크를 새로 받을 때만** 한 장 남으므로 (`pi05_infer.py:1500`), 기록 한 장의
+#:   간격은 `open_loop_horizon` 제어 스텝이다 — 그래서 `t_step` 이 8 씩 뛴다.
+#:
+#: 2026-09-25 에 `step7_state_lag.STEP_MS = 16.0` 이 이 셋을 섞은 것이 드러났다: sim
+#: timestep(2 ms)에 8 을 곱해 16 ms 라고 했는데, 8 이 곱해질 상대는 제어 주기(66.7 ms)였다.
+
+
+def record_step_interval_ms(record: RunRecord) -> float:
+    """기록 한 장에서 다음 한 장까지 몇 밀리초인가. **상수로 박지 않는다.**
+
+    `meta` 의 `ctrl_hz` · `open_loop_horizon` 과 실제 `t_step` 간격을 **둘 다** 보고,
+    어긋나면 예외를 낸다. 한쪽만 믿으면 기록 형식이 바뀐 날 조용히 틀린 단위가 나온다 —
+    그것이 바로 이 함수가 생긴 이유다.
+    """
+    meta = record.meta
+    ctrl_hz = float(meta.get("ctrl_hz") or 0.0)
+    if ctrl_hz <= 0:
+        raise ValueError(
+            f"{record.path} 의 meta.json 에 쓸 수 있는 ctrl_hz 가 없다 "
+            f"(ctrl_hz={meta.get('ctrl_hz')!r}). 제어 주기를 모르면 지연을 ms 로 못 바꾼다")
+
+    strides = {int(b.t_step) - int(a.t_step)
+               for a, b in zip(record.steps, record.steps[1:])}
+    if len(record.steps) < 2:
+        stride = int(meta.get("open_loop_horizon") or 0)
+    elif len(strides) != 1:
+        raise ValueError(
+            f"{record.path} 의 t_step 간격이 일정하지 않다: {sorted(strides)}. "
+            f"기록 한 장이 몇 제어 스텝을 덮는지 정할 수 없다")
+    else:
+        stride = strides.pop()
+    if stride <= 0:
+        raise ValueError(f"{record.path} 의 t_step 간격을 정할 수 없다 (stride={stride})")
+
+    declared = int(meta.get("open_loop_horizon") or 0)
+    if declared and declared != stride:
+        raise ValueError(
+            f"{record.path}: meta 의 open_loop_horizon={declared} 인데 실제 t_step 간격은 "
+            f"{stride} 다. 둘이 다르면 어느 쪽이 참인지 모르므로 멈춘다")
+    return 1000.0 * stride / ctrl_hz
+
+
+def control_step_ms(record: RunRecord) -> float:
+    """제어 스텝 하나의 밀리초. `1000 / ctrl_hz`."""
+    ctrl_hz = float(record.meta.get("ctrl_hz") or 0.0)
+    if ctrl_hz <= 0:
+        raise ValueError(f"{record.path} 의 meta.json 에 쓸 수 있는 ctrl_hz 가 없다")
+    return 1000.0 / ctrl_hz
+
+
+# ------------------------------------------------------ 단계 경계를 기록에서 뽑는다
+
+#: 파지 시작 앞의 두 구간이 몇 제어 스텝인가. 14D 시절 `(24, 56, 72)` 를 그대로 되살리는
+#: 값이다 — 아래 `phase_boundaries_from_record` 의 docstring 에 검산이 있다.
+PRE_GRASP_CONTROL_STEPS = 16
+APPROACH_CONTROL_STEPS = 32
+
+
+def gripper_columns_for_state(width: int) -> tuple[int, int]:
+    """`state`/`actions` 의 폭에서 그리퍼 두 열을 낸다. 14D 는 `(6, 13)`, 16D 는 `(7, 15)`.
+
+    폭에서 파생시키는 이유는 `trajopt.wire.gripper_columns` 와 같다: 상수로 박으면 차원을
+    바꿀 때 **엉뚱한 열을 그리퍼로 읽고** 그것이 조용히 지나간다.
+    """
+    width = int(width)
+    if width < 4 or width % 2:
+        raise ValueError(f"액션 폭이 2*(N+1) 꼴이어야 한다: {width}")
+    n = width // 2 - 1
+    return (n, 2 * n + 1)
+
+
+def grasp_onset(record: RunRecord, *, open_tolerance: float = 0.02):
+    """파지가 시작되는 지점. `(기록 인덱스, t_step, 어느 손, 그리퍼 값)` 또는 `None`.
+
+    **관측된 그리퍼가 열린 값에서 처음 벗어나는 곳**을 찾는다. `state` 는 그 호출 *시점의*
+    관측이고 손을 닫으라는 지령은 **한 호출 앞의 청크**에 있었으므로, 단계 경계로 쓸 때는
+    한 칸 앞당겨야 한다 — `phase_boundaries_from_record` 가 그 몫을 한다.
+    """
+    if not record.steps:
+        return None
+    width = int(np.asarray(record.steps[0].state).reshape(-1).shape[0])
+    cols = gripper_columns_for_state(width)
+    states = np.stack([np.asarray(s.state, np.float64).reshape(-1) for s in record.steps])
+    for hand, col in zip(("left", "right"), cols):
+        trace = states[:, col]
+        open_value = float(trace[0])
+        hit = np.flatnonzero(trace < open_value - float(open_tolerance))
+        if hit.size:
+            i = int(hit[0])
+            return i, int(record.steps[i].t_step), hand, float(trace[i])
+    return None
+
+
+def phase_boundaries_from_record(record: RunRecord, *, fallback=(24, 56, 72)):
+    """`(transit, approach, pre_grasp)` 제어 스텝 경계와, 그것을 어떻게 얻었는지.
+
+    반환은 `(boundaries, evidence)` 이고 `evidence` 는 로그·JSON 에 그대로 실을 dict 다.
+    **어떻게 얻었는지를 같이 돌려주는 것이 이 함수의 요점이다** — 경계는 판정이라서, 숫자만
+    돌려주면 읽는 쪽이 그것을 측정으로 오해한다.
+
+    규칙: 파지 시작 `g` 를 그리퍼 관측이 처음 벗어나는 t_step 에서 **한 기록 간격 앞당긴**
+    값으로 잡고, 그 앞에 `pre_grasp` 16 · `approach` 32 제어 스텝을 둔다.
+
+    **이 규칙은 새로 지어낸 것이 아니라 옛 상수를 만든 규칙이다.** `run_0004`(14D)에서
+    왼 그리퍼는 기록 인덱스 10, `t_step=80` 에서 1.0 → 0.732 로 벗어난다. 간격이 8 이므로
+    `g = 80 - 8 = 72`, `pre_grasp = 72 - 16 = 56`, `approach = 72 - 48 = 24` —
+    하드코딩되어 있던 `(24, 56, 72)` 와 **세 값이 모두 일치한다.**
+
+    긴 16D 기록에서는 벗어남이 `t_step=264`(인덱스 33) 이라 `(208, 240, 256)` 이 된다.
+    그래서 옛 상수를 그대로 쓰면 호출 9~49 가 전부 `grasp` 으로 잘못 라벨됐던 것이다.
+    """
+    onset = grasp_onset(record)
+    if onset is None:
+        return tuple(int(x) for x in fallback), {
+            "source": "fallback",
+            "why": "그리퍼가 기록 내내 열린 값에서 벗어나지 않는다 — 파지가 없는 기록이다",
+            "boundaries": [int(x) for x in fallback],
+        }
+    index, t_step, hand, value = onset
+    stride = int(round(record_step_interval_ms(record)
+                       / control_step_ms(record)))
+    grasp = int(t_step) - stride
+    pre_grasp = grasp - PRE_GRASP_CONTROL_STEPS
+    approach = pre_grasp - APPROACH_CONTROL_STEPS
+    boundaries = (approach, pre_grasp, grasp)
+    if not (0 <= approach < pre_grasp < grasp):
+        return tuple(int(x) for x in fallback), {
+            "source": "fallback",
+            "why": f"파지가 너무 일러 앞 구간이 안 들어간다 (파지 t_step={grasp}) — "
+                   f"경계 {boundaries} 가 순서를 깬다",
+            "grasp_onset": {"index": index, "t_step": int(t_step), "hand": hand,
+                            "gripper": value},
+            "boundaries": [int(x) for x in fallback],
+        }
+    return boundaries, {
+        "source": "gripper",
+        "grasp_onset": {"index": index, "t_step": int(t_step), "hand": hand,
+                        "gripper": value},
+        "record_stride_control_steps": stride,
+        "rule": "파지 = 그리퍼가 벗어난 t_step − 기록 간격 1 칸 (지령은 한 호출 앞의 "
+                "청크에 있었다). 그 앞에 pre_grasp 16 · approach 32 제어 스텝",
+        "boundaries": [int(x) for x in boundaries],
+    }
+
+
+def phase_boundaries_for_path(run_dir, *, fallback=(24, 56, 72)):
+    """`phase_boundaries_from_record` 와 같은데 **기록 전체**를 본다. 경로를 받는다.
+
+    `--frames N` 으로 앞 몇 장만 읽은 `RunRecord` 에 경계를 물으면, 파지가 그 뒤에 있을 때
+    "파지가 없다" 는 답이 나와 조용히 fallback 으로 떨어진다. 그러면 잘라 읽은 실행과 전부
+    읽은 실행이 **다른 단계 정의**를 쓰게 된다 — 이 STEP 이 고치려던 바로 그 실패다.
+
+    그래서 경계는 언제나 기록 전체에서 뽑는다. `t_step` 과 `state` 만 읽으므로 (npz 는 지연
+    로딩이라 이미지가 풀리지 않는다) 50 장짜리도 싸다.
+    """
+    path = pathlib.Path(run_dir)
+    meta = json.loads((path / "meta.json").read_text())
+    files = sorted(path.glob("step_*.npz"))
+    if not files:
+        raise ValueError(f"no step_*.npz files in {path}")
+    steps = []
+    for file in files:
+        with np.load(file) as d:
+            steps.append(StepRecord(
+                t_step=int(d["t_step"]), qpos=np.asarray(d["qpos"], np.float64),
+                qvel=np.zeros(0), state=np.asarray(d["state"], np.float64),
+                actions=np.zeros((0, 0), np.float32), infer_ms=0.0, images={}))
+    return phase_boundaries_from_record(
+        RunRecord(path=path, meta=meta, steps=steps), fallback=fallback)
+
+
+def phase_for(t_step: int, boundaries) -> str:
+    """제어 스텝 -> 단계. 접촉 허가와 target 파냄이 여기에 달려 있다.
+
+    단계는 원래 과제 계층이 정하는 것이고 (`AG3S.attach()` 가 *"AG3S never calls this
+    itself"* 라고 못박는 것과 같은 이유다), 재생에서는 경계로 흉내 낸다. 그 경계를
+    **한 군데서만** 만들어 쓰려고 여기 둔다 — 예전에는 `esdf_rollout` 과
+    `curobo/ground_truth` 가 같은 상수를 따로 들고 있었고, 한쪽만 고치면 두 수치가
+    다른 단계 정의 위에서 나왔다.
+    """
+    transit, approach, pre_grasp = boundaries
+    if t_step < transit:
+        return "transit"
+    if t_step < approach:
+        return "approach"
+    if t_step < pre_grasp:
+        return "pre_grasp"
+    return "grasp"
+
+
 # -------------------------------------------------------------------- attention <-> pixels
 
 
@@ -349,17 +643,33 @@ def patch_coverage(labels: np.ndarray, body_ids: Sequence[int], *, grid: int = A
 
 
 __all__ = [
+    "APPROACH_CONTROL_STEPS",
+    "PROVENANCE_FINGERPRINT_KEY",
+    "PROVENANCE_FRAMES_KEY",
+    "PROVENANCE_KEY",
     "ATTENTION_GRID",
     "CAMERA_BINDINGS",
     "LANGUAGE_TOKEN_START",
     "POLICY_CAMERA_NAMES",
+    "PRE_GRASP_CONTROL_STEPS",
     "PolicyRecordWriter",
     "RunRecord",
     "StepRecord",
+    "control_step_ms",
+    "grasp_onset",
+    "gripper_columns_for_state",
     "load_run",
     "patch_coverage",
     "patch_of_uv",
     "patch_to_uv",
+    "phase_boundaries_for_path",
+    "phase_boundaries_from_record",
+    "phase_for",
     "pose_scene",
+    "provenance_arrays",
+    "read_provenance",
+    "record_fingerprint",
+    "require_same_record",
+    "record_step_interval_ms",
     "replay_scene",
 ]

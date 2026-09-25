@@ -1,0 +1,547 @@
+{
+  "_comment": "ag3s-verifier(A2). 숫자와 경로만. 해석·판정은 lead 와 사용자의 몫이다.",
+  "step": "T1-a",
+  "date": "2026-09-25",
+  "code_state": {
+    "repo": "benchmark",
+    "head": "5e35204",
+    "benchmark_py_modified_by_verifier": false,
+    "note": "측정 스크립트는 전부 outputs/verify/T1-a/ 에 두었다."
+  },
+  "assets": {
+    "attention_ep1800": "benchmark/ag3s/asset/data/attention_16d_ep1800.npz",
+    "attention_long": "benchmark/ag3s/asset/data/attention_16d_long.npz",
+    "records_ep1800": "run_16d_ep1800",
+    "records_long": "outputs/live_test/20260924_long16d/run_0000"
+  },
+  "axis_order_correction": {
+    "task_md_said": "(프레임, 카메라 3, denoise 3, layer 18, head 8, agg 3, 16, 16)",
+    "actual": "(frame, denoise 3, agg 3, layer 18, head 8, camera 3, 16, 16)",
+    "evidence": "생산자가 그 순서로 할당한다 — benchmark/ag3s/experiments/sources/pi05_attention.py:234",
+    "why_it_was_invisible": "camera·denoise·agg 가 모두 길이 3 이라 shape 만으로는 구분되지 않는다.",
+    "consumer_is_correct": "benchmark/trajopt/experiments/esdf_rollout.py:252 는 [i, di, ai, layer, head, ci] 로 읽어 생산자와 일치한다. 축 순서 버그는 없다.",
+    "effect_on_sweep": "없다 — sweep 은 1296 조합을 전수로 돈다."
+  },
+  "measurement_cost": {
+    "_comment": "왜 sweep 을 두 단계로 나눴는지의 근거.",
+    "ground_target_s_per_call": 4.82,
+    "lift_s_per_call": 0.005,
+    "cloud_points": 58717,
+    "naive_full_sweep_hours_per_npz": 26.0,
+    "structure": "A 단계 = 1296 조합 전수, 16x16 격자에서만 (조합당 마이크로초). B 단계 = A 상위 N + 14D 셀만 실제 lift -> ground_target."
+  },
+  "numbers": {
+    "target_visibility": {
+      "_comment": "grounding 은 cam_high=zed_left 의 attention 만 읽는다 (esdf_rollout.py:137). 사과가 그 영상에 몇 픽셀 있나.",
+      "method": "MuJoCo 분할 마스크에서 body 'apple'(id 49) 픽셀을 센다",
+      "script": "outputs/verify/T1-a/target_visibility.py",
+      "raw_output": [
+        "outputs/verify/T1-a/visibility_ep1800.json",
+        "outputs/verify/T1-a/visibility_long.json"
+      ],
+      "ep1800_15_frames": {
+        "zed_left": {
+          "frames_with_any_px": 0,
+          "max_px": 0,
+          "median_px": 0
+        },
+        "wrist_cam_l": {
+          "frames_with_any_px": 15,
+          "max_px": 10459,
+          "median_px": 2938
+        },
+        "wrist_cam_r": {
+          "frames_with_any_px": 0,
+          "max_px": 0,
+          "median_px": 0
+        }
+      },
+      "long16d_50_frames": {
+        "zed_left": {
+          "frames_with_any_px": 0,
+          "max_px": 0,
+          "median_px": 0
+        },
+        "wrist_cam_l": {
+          "frames_with_any_px": 42,
+          "max_px": 9937,
+          "median_px": 4178
+        },
+        "wrist_cam_r": {
+          "frames_with_any_px": 0,
+          "max_px": 0,
+          "median_px": 0
+        }
+      },
+      "long16d_wrist_l_zero_px_frames": [
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43
+      ],
+      "long16d_zero_window_note": "R.task.md 는 파지가 정책 호출 36 에서 시작해 45 까지 유지된다고 적는다. 왼 손목 카메라에서 사과 픽셀이 0 이 되는 구간이 36~43 이다. 두 구간의 관계는 재지 않았다 — 숫자만 나란히 둔다."
+    },
+    "attention_wiring": {
+      "_comment": "오프라인과 live 가 카메라별 attention 을 붙이는 방식.",
+      "offline_esdf_rollout": {
+        "line": "benchmark/trajopt/experiments/esdf_rollout.py:266",
+        "code": "attention_map=(att if c == \"zed_left\" else None)",
+        "meaning": "세 카메라 관측을 만들지만 attention 맵은 zed_left 에만 붙는다. 그 맵은 npz 의 cam_high 슬라이스다 (:137 ci = cameras.index('cam_high'))."
+      },
+      "live_serve_safe": {
+        "lines": [
+          "benchmark/trajopt/serve_safe.py:162-163",
+          "benchmark/trajopt/wire.py:171"
+        ],
+        "code": "ALIAS = {cam_high: zed_left, cam_left_wrist: wrist_cam_l, cam_right_wrist: wrist_cam_r} / attention_map=attention.get(cam)",
+        "meaning": "정책이 보낸 세 카메라의 attention 이 각 카메라 관측에 따로 붙는다."
+      },
+      "not_measured": "live 서버를 띄워 실제로 세 맵이 오는지는 재지 않았다 — 코드 경로만 읽었다."
+    },
+    "cell_sweep_stageA": {
+      "_comment": "1296 조합 = denoise 3 x agg 3 x layer 18 x head 8. camera 는 cam_high 고정.",
+      "script": "outputs/verify/T1-a/sweep_cells.py",
+      "raw_output": "outputs/verify/T1-a/sweep_ep1800.json",
+      "stdout_log": "outputs/verify/T1-a/sweep_ep1800.log",
+      "record": "run_16d_ep1800",
+      "n_combos": 1296,
+      "n_frames": 15,
+      "metric": "peak_on_target_frames = attention 최대 칸에 사과 픽셀이 있는 프레임 수",
+      "max_peak_on_target_frames_over_all_1296": 0,
+      "note": "1296 조합 어느 것도 한 프레임에서도 최대 칸이 사과에 떨어지지 않는다. 위 target_visibility 가 cam_high 에서 사과 픽셀 0 이라고 말하는 것과 같은 자리다.",
+      "long16d": {
+        "record": "outputs/live_test/20260924_long16d/run_0000",
+        "npz": "benchmark/ag3s/asset/data/attention_16d_long.npz",
+        "raw_output": "outputs/verify/T1-a/sweep_long.json",
+        "stdout_log": "outputs/verify/T1-a/sweep_long.log",
+        "n_combos": 1296,
+        "n_frames": 50,
+        "max_peak_on_target_frames": 0,
+        "max_target_mass_mean": 0.0,
+        "note": "peak 만 빗나가는 것이 아니라 attention 질량 중 사과 칸의 몫이 1296 조합 전부에서 정확히 0 이다. cam_high 에 사과 픽셀이 한 칸도 없기 때문이다."
+      },
+      "ep1800_max_target_mass_mean": 0.0
+    },
+    "cell_sweep_stageB": {
+      "_comment": "실행 중. 끝나면 sweep_ep1800.json 의 stageB 로 채워진다.",
+      "status": "done",
+      "metrics": [
+        "n_has_target = ground_target 성공 프레임 수",
+        "n_on_apple = 그 중심이 참 사과에서 0.10 m 안인 프레임 수"
+      ],
+      "caution": "예비 실행에서 has_target 7/15 가 나온 조합이 있었다 (peak_on_target 0 인 조합). has_target 는 '무언가를 지었다' 일 뿐 사과라는 뜻이 아니다 — 그래서 n_on_apple 을 따로 센다.",
+      "single_cell_check": {
+        "cell": "denoise 0, agg last, L8H2 (14D 선택)",
+        "frame": 0,
+        "status": "LOW_SCORE",
+        "best_score": 0.1333,
+        "n_clusters": 1,
+        "note": "NO_ATTENTION 이 아니다 — attention 은 도달하고 군집도 하나 생기는데 점수가 문턱 아래다."
+      },
+      "the_14d_cell_source": {
+        "file": "benchmark/ag3s/docs/archive/step-verification-20260904/step-01-attention.json",
+        "read_at": "benchmark/trajopt/experiments/esdf_rollout.py:134 (--step1-json 기본값)",
+        "best": {
+          "denoise": 0,
+          "agg": "last",
+          "layer": 8,
+          "head": 2,
+          "hit_rate": 1.0
+        },
+        "its_own_metadata": {
+          "prompt": "put the apple in the basket",
+          "n_frames": 44,
+          "n_scored": 28
+        },
+        "note": "16D 기록의 프롬프트는 'Place the apple into the basket.' 로 다르다."
+      },
+      "long16d_14d_cell": {
+        "status": "done",
+        "cell": {
+          "denoise": 0,
+          "agg": "last",
+          "layer": 8,
+          "head": 2
+        },
+        "n_frames": 50,
+        "n_has_target": 31,
+        "n_on_apple": 0,
+        "statuses": {
+          "OK": 31,
+          "LOW_SCORE": 19
+        },
+        "dist_to_apple_m_first8": [
+          3.5851,
+          0.404,
+          0.8006,
+          0.8851,
+          0.7384,
+          0.3731,
+          0.4199,
+          0.3644
+        ],
+        "note": "31 프레임에서 grounding 이 성공하지만 그 중심이 사과에서 0.36~3.59 m 떨어져 있다. 성공한 31 건 전부 사과가 아닌 것을 지었다."
+      },
+      "path_caveat": "이 sweep 은 단일 카메라(zed_left) 경로다 — reconstruct -> robot_filter -> fit_support_surfaces -> lift -> ground_target 를 직접 부른다. R 의 롤아웃이 보고한 target 0/15 는 --cameras all 의 융합 경로(process_multi)라서 같은 측정이 아니다. 두 수치를 바로 견주지 말 것.",
+      "ep1800": {
+        "record": "run_16d_ep1800",
+        "n_frames": 15,
+        "n_combos_run": 13,
+        "selection": "A 단계 상위 12 + 14D 셀",
+        "hit_radius_m": 0.1,
+        "combos_with_has_target_gt0": 12,
+        "combos_with_on_apple_gt0": 0,
+        "max_n_on_apple": 0,
+        "the_14d_cell": {
+          "denoise": 0,
+          "agg": "last",
+          "layer": 8,
+          "head": 2,
+          "n_has_target": 8,
+          "n_on_apple": 0,
+          "statuses": {
+            "LOW_SCORE": 7,
+            "OK": 8
+          }
+        },
+        "rows": [
+          {
+            "denoise": 0,
+            "agg": "last",
+            "layer": 8,
+            "head": 2,
+            "is_14d_cell": true,
+            "n_has_target": 8,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 0,
+            "head": 0,
+            "is_14d_cell": false,
+            "n_has_target": 7,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 0,
+            "head": 2,
+            "is_14d_cell": false,
+            "n_has_target": 7,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 0,
+            "head": 3,
+            "is_14d_cell": false,
+            "n_has_target": 7,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 0,
+            "head": 5,
+            "is_14d_cell": false,
+            "n_has_target": 7,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 1,
+            "head": 0,
+            "is_14d_cell": false,
+            "n_has_target": 7,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 1,
+            "head": 1,
+            "is_14d_cell": false,
+            "n_has_target": 7,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 1,
+            "head": 2,
+            "is_14d_cell": false,
+            "n_has_target": 7,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 1,
+            "head": 3,
+            "is_14d_cell": false,
+            "n_has_target": 7,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 0,
+            "head": 6,
+            "is_14d_cell": false,
+            "n_has_target": 6,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 0,
+            "head": 7,
+            "is_14d_cell": false,
+            "n_has_target": 3,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 0,
+            "head": 1,
+            "is_14d_cell": false,
+            "n_has_target": 2,
+            "n_on_apple": 0
+          },
+          {
+            "denoise": 0,
+            "agg": "mean",
+            "layer": 0,
+            "head": 4,
+            "is_14d_cell": false,
+            "n_has_target": 0,
+            "n_on_apple": 0
+          }
+        ],
+        "note": "13 조합 중 12 개가 has_target > 0 이지만 on_apple 은 13 개 모두 0 이다."
+      }
+    },
+    "reproducibility": {
+      "_comment": "새로 돌리지 않았다. outputs/verify/R/ 의 기존 json 만 프레임 단위로 대조했다.",
+      "script": "outputs/verify/T1-a/repro_frames.py",
+      "raw_output": "outputs/verify/T1-a/repro.json",
+      "identical_command_runs": {
+        "config": "legacy backend · 실측 attention · --dump-frames 없음",
+        "files": [
+          "R2_legacy_attn",
+          "R2_repeat_1",
+          "R2_repeat_2",
+          "R2_repeat_3"
+        ],
+        "feasible": [
+          12,
+          7,
+          12,
+          12
+        ],
+        "iter_median": [
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      "flipped_frames": [
+        5,
+        11,
+        12,
+        13,
+        14
+      ],
+      "n_flipped": 5,
+      "which_run_deviates": {
+        "answer": "다섯 프레임 전부 R2_repeat_1 하나에서만 violated 이고 나머지 세 실행은 모두 feasible 이다. 프레임마다 다른 실행이 튀는 것이 아니다.",
+        "per_frame": "repro.json 의 flipped_detail 참조"
+      },
+      "two_runs_bit_identical": {
+        "runs": [
+          "R2_legacy_attn",
+          "R2_repeat_2"
+        ],
+        "evidence": "뒤집힌 5 프레임의 arm_after_mm 가 소수 셋째 자리까지 같다: 4.262 / 2.788 / 4.460 / 2.099 / 4.064",
+        "note": "계산 자체는 결정적이다."
+      },
+      "flip_is_not_a_hairline": {
+        "_comment": "0 에 붙어서 갈린 것인지 실제로 다른 해로 간 것인지.",
+        "per_frame_spread_mm": {
+          "5": 5.51,
+          "11": 22.25,
+          "12": 26.69,
+          "13": 32.13,
+          "14": 35.52
+        },
+        "repeat_1_arm_after_mm": {
+          "5": -1.247,
+          "11": -19.46,
+          "12": -22.232,
+          "13": -27.617,
+          "14": -31.458
+        },
+        "others_arm_after_mm_range": {
+          "5": [
+            4.217,
+            4.262
+          ],
+          "11": [
+            1.358,
+            2.788
+          ],
+          "12": [
+            4.247,
+            4.46
+          ],
+          "13": [
+            2.099,
+            4.517
+          ],
+          "14": [
+            1.997,
+            4.064
+          ]
+        },
+        "note": "프레임 14 에서 폭이 35.5 mm 다. 0 근처에서 +-0.5 mm 로 갈린 것이 아니라 해가 다른 곳에 앉았다."
+      },
+      "stable_frames_can_be_closer_to_zero": {
+        "min_abs_clearance_mm": 0.119,
+        "median_abs_clearance_mm": 3.683,
+        "note": "뒤집히지 않은 프레임 중에 |clearance| 0.119 mm 인 것이 있다 — 0 에 가까운 것만으로는 뒤집힘이 설명되지 않는다."
+      },
+      "iterations_do_not_explain_all": {
+        "identical_iterations_but_different_outcome": [
+          5,
+          14
+        ],
+        "detail": "프레임 5 와 14 는 네 실행의 iterations 가 [2,2,2,2] 로 같은데 결과가 갈린다. 프레임 11·13 은 repeat_1 만 1 회 적다.",
+        "iter_medians_all_2": true
+      },
+      "load_correlate": {
+        "ag3s_ms_sum_per_run": {
+          "R2_legacy_attn": 7806.8,
+          "R2_repeat_1": 9143.4,
+          "R2_repeat_2": 7646.5,
+          "R2_repeat_3": 8225.7,
+          "R2_legacy_control": 7833.2,
+          "R4_dump_base": 8242.7
+        },
+        "feasible_per_run": {
+          "R2_legacy_attn": 12,
+          "R2_repeat_1": 7,
+          "R2_repeat_2": 12,
+          "R2_repeat_3": 12,
+          "R2_legacy_control": 12,
+          "R4_dump_base": 7
+        },
+        "observation": "feasible 7 이 나온 두 실행(repeat_1, dump_base)이 ag3s_ms_sum 상위 둘이다. 표본 6 개의 나란한 값일 뿐 인과를 잰 것이 아니다.",
+        "context": "이 측정 중에도 다른 에이전트의 pytest 가 같은 기계에서 돌고 있었다 (2026-09-25 08:33 확인)."
+      }
+    }
+  },
+  "figures": [
+    {
+      "path": "benchmark/ag3s/docs/figures/t1-a/t1a-scene.png",
+      "kind": "scene",
+      "sidecar": "benchmark/ag3s/docs/figures/t1-a/t1a-scene.json",
+      "shows": "세 카메라 배치도 + 14D 셀의 16x16 attention + 세 카메라 depth 에 사과 픽셀 겹침"
+    },
+    {
+      "path": "benchmark/ag3s/docs/figures/t1-a/t1a-trend.png",
+      "kind": "graph",
+      "sidecar": "benchmark/ag3s/docs/figures/t1-a/t1a-trend.json",
+      "shows": "프레임별 사과 픽셀(3 카메라) · 1296 조합 분포 · 같은 명령 4 회의 프레임별 clearance"
+    },
+    {
+      "path": "benchmark/ag3s/docs/figures/t1-a/t1a-table.png",
+      "kind": "table",
+      "sidecar": "benchmark/ag3s/docs/figures/t1-a/t1a-table.json"
+    },
+    {
+      "path": "benchmark/ag3s/docs/figures/t1-a/t1a-headfix.png",
+      "kind": "scene",
+      "sidecar": "benchmark/ag3s/docs/figures/t1-a/t1a-headfix.json",
+      "shows": "수집 영상 cam_high(원본 mp4 에서 직접 디코드) 대 기록 image_cam_high, head_1 값 대조, head_1 을 0.7 로 되돌린 같은 프레임의 zed_left depth 와 사과 픽셀, 프레임별 추이"
+    }
+  ],
+  "figure_script": "outputs/verify/T1-a/make_figures.py",
+  "figures_root_untouched": true,
+  "not_measured": [
+    "live 서버를 실제로 띄워 세 카메라 attention 이 오는지 — 코드 경로만 읽었다.",
+    "wrist_cam_l 의 attention 으로 grounding 이 서는지 — 오프라인 경로가 zed_left 에만 맵을 붙이므로 코드를 고치지 않고는 잴 수 없다 (A1).",
+    "파지 구간(36~45)과 wrist_cam_l 사과 픽셀 0 구간(36~43)의 인과."
+  ],
+  "verdict": "전제가 무너졌다. 이 STEP 의 sweep 수치(ep1800 0/15 · long16d 0/50 · 1296 조합 전부 peak_on_target 0 · on_apple 0)는 측정으로는 정확하지만, 원인이 셀 선택이 아니라 기록 생성 결함이다 — model_transport.xml 의 teleop 키프레임은 head_1=0.7 인데 두 기록은 전 프레임 head_1=0.0 으로, 머리가 40.1 도 안 숙여져 cam_high 가 벽을 본다. head_1 만 0.7 로 되돌리면 zed_left 가 사과를 ep1800 15/15 (중앙 552 px) · long16d 37/50 (중앙 334 px) 프레임에서 본다. 셀 선택에 대한 판정은 머리를 고친 기록에서 다시 물어야 한다. 축 순서 확인 · 비용 측정 · 재현성 분석은 이 결함과 독립이라 그대로 유효하다. benchmark/**/*.py 는 고치지 않았다.",
+  "premise_invalidated": {
+    "_comment": "코디네이터 통보(사용자 질문에서 출발) 뒤 verifier 가 원본에서 직접 재확인했다.",
+    "date": "2026-09-25",
+    "what_broke": "이 STEP 의 측정은 전부 '사과가 cam_high 에 안 보인다' 위에 서 있는데, 그것이 씬의 성질이 아니라 기록 생성 쪽 결함이다.",
+    "defect": {
+      "joint": "head_1 (qpos index 30)",
+      "xml_keyframe_value_rad": 0.7,
+      "xml_keyframe": "pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml key name='teleop' (head_0 head_1 = 0 0.7), line 70-74",
+      "recorded_value_rad": 0.0,
+      "delta_deg": 40.1,
+      "verified_by_verifier": "두 기록 전 프레임의 qpos[30] 을 직접 읽었다 — ep1800 15/15 프레임과 long16d 50/50 프레임 모두 정확히 0.0000. head_0 은 양쪽 다 0 이라 좌우는 같고 상하만 다르다.",
+      "collection_video_check": "원본 mp4 (pi05_TO_hybrid/data/rby1_randomized_pick_place_16d_v1/videos/chunk-001/observation.images.cam_high/episode_001800.mp4, 224x224, 311 프레임) 를 직접 디코드해 프레임 0 을 봤다 — 테이블·바구니·과일이 정면에 다 보인다. 기록의 image_cam_high 는 같은 에피소드인데 벽을 올려다본다."
+    },
+    "counterfactual_measured": {
+      "_comment": "주장을 수치로 바꿨다. 기록 qpos 를 그대로 놓고 head_1 만 메모리에서 0.7 로 바꿔 같은 프레임을 두 번 잡았다. 기록 파일은 고치지 않았다.",
+      "script": "outputs/verify/T1-a/head_pitch_effect.py",
+      "raw_output": [
+        "outputs/verify/T1-a/head_pitch_ep1800.json",
+        "outputs/verify/T1-a/head_pitch_long.json"
+      ],
+      "ep1800_zed_left_frames_with_apple": {
+        "as_recorded": 0,
+        "with_head1_0p7": 15,
+        "of": 15
+      },
+      "ep1800_zed_left_median_px": {
+        "as_recorded": 0,
+        "with_head1_0p7": 552
+      },
+      "long16d_zed_left_frames_with_apple": {
+        "as_recorded": 0,
+        "with_head1_0p7": 37,
+        "of": 50
+      },
+      "long16d_zed_left_median_px": {
+        "as_recorded": 0,
+        "with_head1_0p7": 334
+      },
+      "note": "머리 관절 하나만 되돌리면 cam_high 가 사과를 본다. 다른 qpos 는 손대지 않았다."
+    },
+    "invalidated_conclusions": [
+      "'1296 조합 어느 것도 사과를 짚지 못한다' 를 셀 선택이나 AG3S 의 성질로 읽는 것 — 이 기록에서 cam_high 에 사과가 없으니 당연한 결과이고, 모델·셀에 대해 아무것도 말하지 않는다.",
+      "'14D 셀 L8H2 가 16D 에서 안 선다' — 머리를 고친 기록에서 다시 물어야 한다.",
+      "'오프라인이 zed_left 에만 attention 을 붙이는 것이 live 와의 차이다' — 배선 차이는 코드 사실로 남지만, 머리를 숙이면 cam_high 가 사과를 보므로 그 차이가 얼마나 무거운지는 다시 재야 한다.",
+      "'사과를 보는 카메라는 wrist_cam_l 뿐' — wrist_cam_l 이 15/15 · 42/50 본다는 것 자체는 참이지만, '뿐' 은 이 결함의 산물이다."
+    ],
+    "still_valid": [
+      "축 순서 확인 — npz 는 (frame, denoise, agg, layer, head, camera) 이고 소비자(esdf_rollout.py:252)가 생산자(pi05_attention.py:234)와 일치한다. 기록 내용과 무관한 코드 사실이다.",
+      "비용 측정 — ground_target 4.82 s/call, lift 0.005 s/call, 58,717 점. 클라우드 크기에 달린 값이고 화각과 무관하다.",
+      "재현성 분석(2 차) 전부 — 같은 명령 4 회 feasible 12·7·12·12, 뒤집힌 프레임 5 개가 전부 한 실행에서만, 두 실행이 소수 셋째 자리까지 동일, 프레임 14 폭 35.5 mm, 프레임 5·14 는 iterations 가 같은데도 갈림. attention·grounding 을 전혀 쓰지 않는 SQP/QP 구간의 성질이라 이 결함과 독립이다.",
+      "attention 배선의 코드 사실 — 오프라인 esdf_rollout.py:266 은 zed_left 에만, live 는 wire.py:171 에서 카메라마다. 읽은 그대로 참이다.",
+      "has_target 과 on_apple 을 갈라 세야 한다는 것 — grounding 성공이 곧 올바른 대상이 아니라는 구분은 화각과 무관하게 남는다."
+    ],
+    "needs_rerun_after_head_fix": [
+      "1296 조합 sweep (두 npz 모두)",
+      "14D 셀 L8H2 의 has_target / on_apple",
+      "오프라인 대 live 의 attention 배선 차이의 무게",
+      "R 국면의 R4·R5 — 미세 계층이 target 에 붙으므로 grounding 이 서면 달라질 수 있다"
+    ],
+    "figure": "benchmark/ag3s/docs/figures/t1-a/t1a-headfix.png"
+  }
+}

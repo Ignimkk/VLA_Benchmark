@@ -75,6 +75,22 @@ def main() -> None:
     h, w = np.asarray(blob["depth_0"]).shape
     dev = "cuda:0"
 
+    # **출처 도장을 그대로 흘려보낸다.** 이 스크립트는 기록을 직접 읽지 않으므로(cuRobo venv 에
+    # mujoco 가 없다) 도장을 새로 찍을 수 없다 — `--frames` 가 달고 온 것을 그대로 옮긴다.
+    # 옮기지 않으면 `ground_truth` 의 짝 검사가 필드 쪽에서 눈을 감는다.
+    from benchmark.ag3s.experiments.sources.policy_record import (
+        PROVENANCE_FINGERPRINT_KEY, PROVENANCE_FRAMES_KEY, PROVENANCE_KEY)
+    passthrough = {k: blob[k] for k in
+                   (PROVENANCE_KEY, PROVENANCE_FINGERPRINT_KEY, PROVENANCE_FRAMES_KEY)
+                   if k in blob.files}
+    if passthrough:
+        print(f"출처 도장: {passthrough[PROVENANCE_KEY]} "
+              f"({passthrough[PROVENANCE_FINGERPRINT_KEY]})")
+    else:
+        print(f"[경고] {args.frames} 에 출처 도장이 없다 (옛 형식). 만들어지는 필드도 "
+              f"어느 기록에서 나왔는지 말하지 못하고, ground_truth 가 그것을 거부한다. "
+              f"esdf_rollout --dump-frames 로 다시 구우면 도장이 붙는다")
+
     cfg = MapperCfg(
         extent_meters_xyz=(1.5, 1.8, 1.6), voxel_size=args.tsdf_voxel,
         esdf_voxel_size=args.coarse,
@@ -156,7 +172,7 @@ def main() -> None:
 
     if not ok_all:
         raise SystemExit("eikonal 검사 실패 — 저장하지 않았다. 발견 C4 를 볼 것")
-    np.savez_compressed(args.out, **out)
+    np.savez_compressed(args.out, **passthrough, **out)
     # 첫 프레임은 JIT 컴파일 + CUDA graph capture 라 버린다 (§6 함정 3).
     print(f"\nwrote {args.out}")
     if n > 1:

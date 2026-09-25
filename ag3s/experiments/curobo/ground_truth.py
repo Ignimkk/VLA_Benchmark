@@ -29,7 +29,10 @@ import pathlib
 
 import numpy as np
 
-OUT = pathlib.Path("benchmark/ag3s/docs/figures")
+#: 기본 출력 자리. **`figures/` 바로 밑이 아니라 `figures/r-16d/` 다** — 2026-09-25 에 16D
+#: 재측정이 `figures/curobo-ground-truth.png` 을 덮어썼는데, 그 그림은 archive 로그가 14D 원
+#: 측정의 증거로 링크하는 것이었다. 재측정은 원 측정의 파일을 덮어쓰지 않는다.
+OUT = pathlib.Path("benchmark/ag3s/docs/figures/r-16d")
 
 
 def backproject(depth, K, T, mask=None, dmin=0.05, dmax=3.0):
@@ -88,24 +91,84 @@ def main() -> None:
     from scipy.spatial import cKDTree
 
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--frames-npz", default="/tmp/rollout_frames.npz")
-    ap.add_argument("--fields", default="/tmp/rollout_fields.npz")
-    ap.add_argument("--records", default="run_0004")
+    ap.add_argument("--frames-npz", required=True,
+                    help="`esdf_rollout --dump-frames` 가 만든 npz. **기본값이 없다** — "
+                         "예전에는 /tmp/rollout_frames.npz 였고, 그래서 자세만 새 기록이고 "
+                         "관측은 옛 기록인 혼합 실행이 조용히 성립했다")
+    ap.add_argument("--fields", required=True,
+                    help="`curobo/build_rollout_fields.py` 가 만든 npz. 위와 같은 이유로 "
+                         "기본값이 없다")
+    ap.add_argument("--records", required=True,
+                    help="위 두 npz 를 만들 때 쓴 **그 기록**. 다르면 즉시 멈춘다")
     ap.add_argument("--voxel-unique", type=float, default=0.001)
     ap.add_argument("--slice-frame", type=int, default=10)
+    ap.add_argument("--out", default=str(OUT),
+                    help="그림과 sidecar 를 쓸 디렉터리. 기본은 figures/r-16d/ — "
+                         "재측정이 원 측정의 그림을 덮어쓰지 않게 한다")
+    ap.add_argument("--phase-boundaries", type=int, nargs=3, default=None,
+                    metavar=("TRANSIT", "APPROACH", "PRE_GRASP"),
+                    help="주지 않으면 기록의 그리퍼에서 뽑는다. 예전에는 (24, 56, 72) 가 "
+                         "함수 기본값으로 박혀 있어 긴 기록에서 호출 9~49 가 전부 grasp 이었다")
     args = ap.parse_args()
 
     from benchmark.ag3s.fields.curobo_field import CuroboEsdfField, RolloutFields
     from benchmark.ag3s.experiments.reports.grounding_report import (
         ARM_LINKS, build_constraint_robot_model)
     from benchmark.ag3s.experiments.sources.mujoco_source import is_robot_body
-    from benchmark.ag3s.experiments.sources.policy_record import load_run, pose_scene, replay_scene
+    from benchmark.ag3s.experiments.sources.policy_record import (
+        load_run, phase_boundaries_for_path, phase_for, pose_scene, read_provenance,
+        replay_scene, require_same_record)
 
     blob = np.load(args.frames_npz)
     n = int(blob["n_frames"])
     rf = RolloutFields.load(args.fields)
 
     run = load_run(args.records, limit=n)
+
+    # ---------- 자산 짝 검사 (P3) ----------
+    # **셋이 같은 기록에서 나왔는지 여기서 끊는다.** 경고가 아니라 예외인 이유: 2026-09-25 의
+    # 실행은 자세만 16D 기록이고 depth·마스크·필드는 09-12 자 14D npz 였는데, 스크립트가
+    # 아무 말도 하지 않고 "낙관 오차" 를 끝까지 계산해 냈다. 숫자가 나왔다는 것이 짝이
+    # 맞았다는 뜻이 아니다.
+    with np.load(args.fields) as fields_blob:
+        field_stamp = read_provenance(fields_blob, where=f"--fields {args.fields}")
+    require_same_record(
+        run,
+        read_provenance(blob, where=f"--frames-npz {args.frames_npz}"),
+        field_stamp)
+    if int(rf.n_frames) != n:
+        raise SystemExit(
+            f"프레임 수가 안 맞는다: --frames-npz 는 {n} 프레임, --fields 는 "
+            f"{rf.n_frames} 프레임이다. 같은 --frames 로 만들어진 짝이 아니다")
+    print(f"자산 짝 검사 통과 — 셋 다 {args.records} (도장 {field_stamp['fingerprint']})")
+
+    # ---------- 잴 것이 있는지 먼저 본다 ----------
+    # 이 스크립트가 묻는 것은 **거친 계층과 2계층의 차이**다. 미세 계층이 하나도 없으면
+    # 두 쪽이 같은 필드라 질문 자체가 성립하지 않는다. 예전에는 아래 `two.layers[1]` 에서
+    # `IndexError` 로 죽어, 읽는 쪽이 "버그" 와 "잴 것이 없다" 를 구분할 수 없었다.
+    #
+    # 미세 계층은 **grounding 된 target 중심**에 놓이므로, target 이 안 서는 기록에서는
+    # `build_rollout_fields` 가 거친 계층만 만든다 (그쪽 로그에 "target 없음 — 거친 계층만").
+    n_fine = sum(1 for i in range(rf.n_frames) if len(rf.field_for(i).layers) > 1)
+    if n_fine < rf.n_frames:
+        raise SystemExit(
+            f"미세 계층이 {rf.n_frames} 프레임 중 {n_fine} 개에만 있다 "
+            f"(필요: 전부).\n"
+            "미세 계층은 grounding 된 target 중심에 놓이므로, 이 기록에서 target 이 서지 "
+            "않으면 만들어지지 않는다 — build_rollout_fields 로그의 "
+            "'target 없음 — 거친 계층만' 을 볼 것.\n"
+            "거친 계층과 2계층을 견주는 것이 이 스크립트의 질문이므로, 비교 대상이 없으면 "
+            "잴 것이 없다. **코드 결함이 아니라 기록의 성질이다.**")
+
+    if args.phase_boundaries is None:
+        boundaries, phase_evidence = phase_boundaries_for_path(args.records)
+    else:
+        boundaries = tuple(int(x) for x in args.phase_boundaries)
+        phase_evidence = {"source": "cli", "boundaries": list(boundaries)}
+    print(f"단계 경계: {tuple(boundaries)} (제어 스텝) — 출처 {phase_evidence['source']}"
+          + (f", 파지 시작 {phase_evidence['grasp_onset']}"
+             if phase_evidence.get("grasp_onset") else ""))
+
     scene = replay_scene(run)
     robot = build_constraint_robot_model(scene, link_filter=ARM_LINKS)
 
@@ -146,7 +209,8 @@ def main() -> None:
         margin = 0.05
         clr_t, clr_c, clr_w = d_true - r - margin, d_co - r - margin, d_tw - r - margin
         k_t = int(np.argmin(clr_t))
-        rows.append(dict(i=i, phase=_phase(run.steps[i].t_step), n_truth=len(accum),
+        rows.append(dict(i=i, phase=phase_for(run.steps[i].t_step, boundaries),
+                         n_truth=len(accum),
                          inwin=int(inwin.sum()),
                          e_co=d_co - d_true, e_tw=d_tw - d_true, inwin_mask=inwin,
                          d_true=d_true, radii=r,
@@ -219,7 +283,7 @@ def main() -> None:
     print("=" * 78)
     E_co = np.concatenate([x["e_co"][x["inwin_mask"]] for x in rows])
     E_tw = np.concatenate([x["e_tw"][x["inwin_mask"]] for x in rows])
-    print(f"  표본 {len(E_co)} 개 (15 프레임 × 창 안 구)")
+    print(f"  표본 {len(E_co)} 개 ({len(rows)} 프레임 x 창 안 구)")
     print(f"  거친 20 mm   오차 중앙 {np.median(E_co)*1000:+6.2f} mm   "
           f"|오차| 중앙 {np.median(np.abs(E_co))*1000:5.2f} mm   RMS {np.sqrt((E_co**2).mean())*1000:5.2f} mm")
     print(f"  2계층 20+5   오차 중앙 {np.median(E_tw)*1000:+6.2f} mm   "
@@ -262,15 +326,15 @@ def main() -> None:
     print(f"  |오차| 중앙                 거친 {np.median(np.abs([x['e_co_at_worst'] for x in rows]))*1000:.2f} mm"
           f"   2계층 {np.median(np.abs([x['e_tw_at_worst'] for x in rows]))*1000:.2f} mm")
     print()
-    print(f"  참 기준 안전한 프레임 {int((wt>=0).sum())}/15   "
+    print(f"  참 기준 안전한 프레임 {int((wt>=0).sum())}/{len(rows)}   "
           f"거친이 그렇다고 한 것 {int((wc>=0).sum())}   2계층 {int((ww>=0).sum())}")
-    print(f"  판정 일치   거친 {int((np.sign(wc)==np.sign(wt)).sum())}/15   "
-          f"2계층 {int((np.sign(ww)==np.sign(wt)).sum())}/15")
+    print(f"  판정 일치   거친 {int((np.sign(wc)==np.sign(wt)).sum())}/{len(rows)}   "
+          f"2계층 {int((np.sign(ww)==np.sign(wt)).sum())}/{len(rows)}")
     unsafe_c = int(((wt < 0) & (wc >= 0)).sum())
     unsafe_w = int(((wt < 0) & (ww >= 0)).sum())
     print(f"  **위험한 오판** (참은 위반인데 안전하다고 함)   거친 {unsafe_c}   2계층 {unsafe_w}")
 
-    _figure(slice_cache, rows, diff, dn)
+    _figure(slice_cache, rows, diff, dn, args, run, phase_evidence)
 
     scene.close()
     np.savez("/tmp/ground_truth.npz",
@@ -287,11 +351,13 @@ def main() -> None:
     print("\nwrote /tmp/ground_truth.npz")
 
 
-def _phase(t, b=(24, 56, 72)):
-    return ("transit" if t < b[0] else "approach" if t < b[1]
-            else "pre_grasp" if t < b[2] else "grasp")
+# `_phase(t, b=(24, 56, 72))` 가 여기 있었다 (2026-09-25 에 제거). 경계가 함수 기본값으로
+# 박혀 있어 플래그로 바꿀 수 없었고, `run_0004` 에서 나온 그 상수를 50 프레임 긴 기록에 쓰면
+# `t_step >= 72` 가 전부 `grasp` 이라 호출 9~49 가 잘못 라벨됐다. 지금은
+# `policy_record.phase_for` + `phase_boundaries_from_record` 를 쓴다 — 경계는 기록의
+# 그리퍼에서 나오고, 어떻게 나왔는지가 sidecar JSON 에 실린다.
 
-def _figure(slice_cache, rows, xval_box, xval_naive) -> None:
+def _figure(slice_cache, rows, xval_box, xval_naive, args, run, phase_evidence) -> None:
     """규칙 A — 실제 씬 + 그래프 + 표를 한 장에."""
     import matplotlib
     matplotlib.use("Agg")
@@ -407,10 +473,37 @@ def _figure(slice_cache, rows, xval_box, xval_naive) -> None:
                  "(이 프레임의 grounded target 은 사과가 아니라 crate 다 — 본문 참고)",
                  fontsize=12.5)
     fig.tight_layout(rect=(0, 0, 1, 0.965))
-    OUT.mkdir(parents=True, exist_ok=True)
-    out = OUT / "curobo-ground-truth.png"
+    out_dir = pathlib.Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    tag = pathlib.Path(str(args.records).rstrip("/")).name or "record"
+    out = out_dir / f"curobo-ground-truth-{tag}.png"
+    if out.exists():
+        print(f"[figure] {out} 가 이미 있다 — 덮어쓴다. 옛 측정의 증거라면 --out 을 바꿔라")
     fig.savefig(out, dpi=105, bbox_inches="tight")
+
+    # 규칙 A — 그림이 쓴 숫자를 같은 이름의 sidecar 로. 단계 경계가 어떻게 나왔는지도 여기.
+    import json
+    side = out.with_suffix(".json")
+    wt = [float(x["worst_true"]) for x in rows]
+    side.write_text(json.dumps({
+        "records": str(args.records),
+        "frames_npz": str(args.frames_npz),
+        "fields": str(args.fields),
+        "n_frames": len(rows),
+        "phase_boundaries": phase_evidence,
+        "record_meta": {k: run.meta.get(k) for k in
+                        ("policy_model", "prompt", "ctrl_hz", "open_loop_horizon", "n_steps")},
+        "per_frame": [{k: (v if not hasattr(v, "tolist") else None)
+                       for k, v in x.items() if k in
+                       ("i", "phase", "n_truth", "inwin", "worst_true", "worst_co",
+                        "worst_tw", "e_co_at_worst", "e_tw_at_worst", "worst_inwin")}
+                      for x in rows],
+        "cross_validation_mm": {"vs_table_box_median": float(np.median(xval_box)),
+                                "vs_z_minus_0823_median": float(np.median(xval_naive))},
+        "worst_true_median_mm": float(np.median(wt) * 1000.0),
+    }, ensure_ascii=False, indent=1))
     print(f"wrote {out}")
+    print(f"wrote {side}")
 
 
 if __name__ == "__main__":
