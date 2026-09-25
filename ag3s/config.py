@@ -124,14 +124,28 @@ class ClusteringConfig:
 class PointCloudConfig:
     """Reconstruction and preprocessing.
 
-    `max_points` is not an optimization, it is a correctness requirement for real-time viability: a
-    640x480 depth frame is 307k points and every KD-tree downstream is superlinear in that. The
-    subsample must be **deterministic** so an ablation rerun produces the same clusters.
+    `max_points` bounds the cloud so the KD-trees downstream stay tractable: a 640x480 depth frame
+    is 307k points and every KD-tree is superlinear in that. The subsample must be **deterministic**
+    so an ablation rerun produces the same clusters.
+
+    **The default was 60000 until 2026-09-25 (X3).** At that value a three-camera RB-Y1 frame hits
+    the cap, `cap_strategy="voxel"` grows the voxel from 5.0 to 6.3 mm, and the frame is reported
+    `DEGRADED` -- which `ConstraintValidity.certified` reads as "not certified", so the SQP marks
+    every trajectory `VIOLATED` even when it clears every constraint by millimetres. Measured on
+    `20260925_headfix16d`: 13 of 15 frames flipped that way, with clearance positive in all 13.
+    Raising the cap to 200000 put all 15 frames back to `VALID`/`feasible`; clearance moved by at
+    most 0.320 mm and the AG3S median by +0.4 ms.
+
+    **That timing was measured under OSMesa software rendering, where AG3S already runs 4.3x over
+    the chunk budget, so it does not establish that the larger cloud is free on real hardware.**
+    The user's call (2026-09-25) is to get the pipeline correct first and revisit the real-time
+    budget at T5/T6, where it is actually measured. If that revisit needs a smaller cloud, the fix
+    is to make `DEGRADED` usable rather than to hide geometry behind a silent `VIOLATED`.
     """
 
     voxel_size: float = 0.005
     self_filter: bool = True
-    max_points: int = 60000
+    max_points: int = 200000
     depth_min: float = 0.05  # metres; below this the sensor is not trustworthy
     depth_max: float = 3.0
     # Optional **radial** range gate, in metres. `depth_min`/`depth_max` bound the pinhole z-depth,

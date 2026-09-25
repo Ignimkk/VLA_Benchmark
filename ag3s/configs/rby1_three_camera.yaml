@@ -10,7 +10,10 @@ frame_id: base
 pointcloud:
   voxel_size: 0.006
   self_filter: true
-  max_points: 60000
+  # 60000 until 2026-09-25 (X3). At that value this three-camera scene hits the cap, the voxel
+  # grows 5.0 -> 6.3 mm, and the frame is reported DEGRADED -- which the SQP reads as
+  # "not certified" and turns into VIOLATED even when every constraint clears by millimetres.
+  max_points: 200000
   depth_min: 0.05
   depth_max: 2.5
   # `depth_max` bounds pinhole z-depth, not distance. These are 90-degree lenses, so at the frame

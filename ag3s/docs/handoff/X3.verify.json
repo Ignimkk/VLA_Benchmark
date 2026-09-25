@@ -26,11 +26,38 @@
    "raw_output": "outputs/verify/X3/probe_headfix_maxpts200k.json",
    "stdout_log": "outputs/verify/X3/probe_headfix_maxpts200k.log",
    "comparison": "outputs/verify/X3/compare_maxpoints.json"
+  },
+  {
+   "id": "measurement-5-ep1800-both-caps",
+   "command": "probe_status.py --records run_16d_ep1800 --attention .../attention_16d_ep1800.npz --frames 15 --max-points {60000,200000}",
+   "venv": ".venv-ag3s",
+   "raw_output": [
+    "outputs/verify/X3/probe_ep1800_cap60k.json",
+    "outputs/verify/X3/probe_ep1800_cap200k.json"
+   ]
+  },
+  {
+   "id": "after-change-baseline-alone",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -u -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/X3/baseline_ep1800_alone.json",
+   "venv": ".venv-ag3s",
+   "note": "단독 실행 (다른 프로세스 0)",
+   "raw_output": "outputs/verify/X3/baseline_ep1800_alone.json"
+  },
+  {
+   "id": "after-change-headfix",
+   "command": "같은 명령, --records outputs/live_test/20260925_headfix16d/records/run_0000/run_0000 --attention .../attention_16d_headfix.npz",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/X3/headfix_after_maxpoints.json"
+  },
+  {
+   "id": "tests",
+   "command": "pytest tests/ -q",
+   "stdout_log": "outputs/verify/X3/tests_after_maxpoints.log"
   }
  ],
  "code_state": {
   "repo": "benchmark",
-  "head": "b241278",
+  "head": "e56cf35",
   "dirty_files": []
  },
  "numbers": {
@@ -183,6 +210,99 @@
     "cap_200k": 2304.3
    },
    "timing_caveat": "이 서버는 OSMesa 소프트웨어 렌더링이고 AG3S 중앙값이 이미 청크 예산 533 ms 의 4.3 배다. 점 수가 시간에 안 보이는 것은 다른 것이 지배하기 때문일 수 있다 — GPU 렌더링에서 같다고 말할 수 없다"
+  },
+  "measurement_5_ep1800_both_caps": {
+   "_comment": "회귀 기준선 기록은 상한에 애초에 안 걸린다 — 이 변경이 기준선을 안 건드리는 근거.",
+   "points_voxel_per_frame_min_max": [
+    53625,
+    91268
+   ],
+   "capped_frames": {
+    "cap_60k": 0,
+    "cap_200k": 0
+   },
+   "validity_counts": {
+    "cap_60k": {
+     "valid": 15
+    },
+    "cap_200k": {
+     "valid": 15
+    }
+   },
+   "violated": {
+    "cap_60k": 2,
+    "cap_200k": 2
+   },
+   "violated_with_positive_clearance": {
+    "cap_60k": 0,
+    "cap_200k": 0
+   }
+  },
+  "after_change": {
+   "code": {
+    "max_points_default": 200000,
+    "files": [
+     "benchmark/ag3s/config.py:134",
+     "benchmark/ag3s/configs/default.yaml:32",
+     "benchmark/ag3s/configs/rby1_three_camera.yaml:13",
+     "tests/ag3s/test_config.py:30"
+    ]
+   },
+   "tests": {
+    "before_yaml_fix": {
+     "failed": 2,
+     "passed": 650
+    },
+    "after_yaml_fix_config_module": {
+     "passed": 34
+    }
+   },
+   "regression_baseline_ep1800_alone": {
+    "violated_start": 15,
+    "frames": 15,
+    "resolved": 13,
+    "improved": 15,
+    "feasible": 13,
+    "violated_end": 2,
+    "has_target": 9,
+    "ag3s_ms_median": 1069,
+    "matches_documented_baseline": true
+   },
+   "headfix_record": {
+    "frames": 15,
+    "violated_start": 15,
+    "resolved": 15,
+    "improved": 15,
+    "feasible": 15,
+    "violated_end": 0
+   }
+  },
+  "load_sensitivity": {
+   "_comment": "같은 코드·기록·명령. 차이는 동시에 돌던 다른 프로세스뿐.",
+   "concurrent_run": {
+    "feasible": 9,
+    "violated": 6,
+    "raw_output": "outputs/verify/X3/baseline_ep1800_after.json"
+   },
+   "alone_run": {
+    "feasible": 13,
+    "violated": 2,
+    "raw_output": "outputs/verify/X3/baseline_ep1800_alone.json"
+   },
+   "flipped_frames": [
+    5,
+    9,
+    10
+   ],
+   "sqp_iterations_on_flipped": {
+    "alone": 2,
+    "concurrent": 1
+   },
+   "clearance_mm_on_frame_10": {
+    "alone": 4.35,
+    "concurrent": -6.77
+   },
+   "mechanism_ref": "sqp.time_budget_ms 는 벽시계 마감 (sqp.py:159)"
   }
  },
  "figures": [
@@ -204,14 +324,13 @@
   }
  ],
  "baseline_check": {
-  "matched": null,
-  "note": "회귀 기준선(run_16d_ep1800, feasible 13/violated 2)과는 기록이 달라 직접 비교하지 않았다. 측정 5(수정 전 기록에 같은 probe)는 아직 안 돌렸다"
+  "matched": true,
+  "note": "위반으로 시작 15/15 · 해소 13 · 개선 15 · feasible 13 · violated 2 · has_target 9/15 — 문서화된 기준선과 같다 (단독 실행)"
  },
  "verdict": "사실만. 판정은 lead 와 사용자가 한다.",
  "not_measured": [
-  "측정 5 — run_16d_ep1800 에 같은 probe (수정 전 기록에서도 같은 구조인가)",
-  "cap 이 per-camera 로 걸리는 자리 — note 는 max_points=60000 이라는데 fusion 뒤 점 수는 중앙 116126 이다",
-  "voxel 점 수가 더 많은 프레임 0·1 이 capped 가 아니고 더 적은 프레임 2 가 capped 인 이유",
-  "GPU 렌더링 환경에서 max_points 200000 의 시간 비용"
+  "cap 이 걸리는 자리 — headfix 기록은 점 수 114991 에서 capped 인데 ep1800 은 91268 에서 capped 가 아니다",
+  "GPU 렌더링 환경에서 max_points 200000 의 시간 비용",
+  "DEGRADED 를 usable 로 볼 것인가 (코드는 안 고쳤다)"
  ]
 }
