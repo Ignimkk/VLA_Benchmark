@@ -444,9 +444,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         # torso and arm links 0-5 only, so a constraint model built from it alone has no sphere on
         # any contact-authorized link — and a clearance policy with nothing to relax cannot express a
         # grasp at all. See `tests/ag3s/test_robot_models.py`, which pins that fact.
+        #
+        # `ee_finger_` and not `ee_`: since 2026-09-25 `UNCOVERED_LINKS` also carries the gripper
+        # *palm* (`ee_left`/`ee_right`), which is there for the self-filter — the wrist cameras see
+        # it — and is not a contact-authorized link. A bare `ee_` prefix would have quietly moved
+        # palm spheres into the constraint set along with it.
         "constraint": UrdfSphereChain(
             urdf,
-            extra_capsules=[c for c in extra if c.link.startswith("ee_")],
+            extra_capsules=[c for c in extra if c.link.startswith("ee_finger_")],
             fixed_joint_values=head_values,
         ),
     }

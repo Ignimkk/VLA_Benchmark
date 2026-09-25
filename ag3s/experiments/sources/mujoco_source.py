@@ -363,6 +363,7 @@ def bounding_capsules(
     model,
     body_name: str,
     *,
+    link: Optional[str] = None,
     segments: int = 3,
     subsample: int = 4000,
 ) -> list:
@@ -375,6 +376,16 @@ def bounding_capsules(
 
     Reuses `geometry.fit_capsule`, so the containment guarantee is the same one the rest of AG3S
     relies on: radius is the maximum distance from the segment, not an average.
+
+    **Nothing here is a hand-chosen dimension.** Radius and length come out of the body's own mesh
+    vertices, so a capsule is as big as the surface the camera actually sees and no bigger. The only
+    knob is `segments`, and it is left at 3 everywhere: at 4 the slab boundaries on `EE_BODY_L` land
+    inside the gripper's wide cheeks and one slab's radius jumps from ~33 mm to 64 mm, which is
+    exactly the over-deletion this split-into-slabs scheme exists to avoid.
+
+    `link` names the **URDF** link the capsule is attached to, when the two models spell the same
+    part differently. `body_name` is always the MuJoCo name (that is what gets measured); `link`
+    defaults to it and only has to be given for the aliased bodies in `MJCF_BODY_ALIASES`.
     """
     import mujoco
 
@@ -384,6 +395,7 @@ def bounding_capsules(
     body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, body_name)
     if body_id < 0:
         raise KeyError(f"no body {body_name!r}")
+    link_name = body_name if link is None else link
     points = _body_vertices(model, body_id)
     if points.shape[0] < 8:
         return []
@@ -409,7 +421,7 @@ def bounding_capsules(
         origin[:3, 3] = capsule.center
         out.append(
             UrdfCapsule(
-                link=body_name,
+                link=link_name,
                 origin=origin,
                 radius=float(capsule.dimensions[0]),
                 length=float(2.0 * capsule.dimensions[1]),
@@ -418,11 +430,46 @@ def bounding_capsules(
     return out
 
 
+#: MuJoCo body name for the links the two robot files spell differently, keyed by the **URDF** name.
+#:
+#: The URDF and the MJCF were exported by different tools and do not agree on every name. The
+#: gripper palm is `ee_left`/`ee_right` in the URDF and `EE_BODY_L`/`EE_BODY_R` in the MJCF, and both
+#: spellings have to be right at the same time, for two different reasons:
+#:
+#: * `bounding_capsules` measures the mesh, so it needs the **MuJoCo** name — `mj_name2id` returns
+#:   -1 for `ee_left`.
+#: * `UrdfSphereChain` attaches the capsule by FK and rejects an `extra_capsules` entry whose `link`
+#:   is not a URDF link (`robot_models/urdf_sphere_chain.py:393-395`) — `EE_BODY_L` is not one.
+#:
+#: Getting it wrong in the MuJoCo direction fails **silently**: `gap_filling_capsules` swallows the
+#: `KeyError` below, so the link simply produces no capsule and the self-filter keeps a hole where
+#: nobody thinks there is one. That is how `ee_left`/`ee_right` stayed missing.
+#:
+#: Same trap, not yet triggered: URDF `FT_sensor_L`/`FT_sensor_R` are `FT_SENSOR_L`/`FT_SENSOR_R` in
+#: the MJCF. Neither is in `UNCOVERED_LINKS`, so nothing depends on it today.
+MJCF_BODY_ALIASES: dict[str, str] = {
+    "ee_left": "EE_BODY_L",
+    "ee_right": "EE_BODY_R",
+}
+
 #: Links the RB-Y1 URDF gives no collision capsule for, but which a camera on the robot sees.
+#: Named the way the **URDF** names them; `MJCF_BODY_ALIASES` translates where the MJCF disagrees.
 #: `link_head_*` is excluded on purpose: the ZED is mounted on it, so it is never in its own view.
+#:
+#: `ee_left`/`ee_right` (the gripper palm, `EE_BODY_L`/`EE_BODY_R` in the MJCF) were missing until
+#: 2026-09-25. The fingers were listed but the lump they hang off was not, and a wrist camera is
+#: bolted to the same wrist link, so it stares straight at its own palm on every frame of every
+#: episode — measured against ground-truth segmentation, `EE_BODY_L`/`EE_BODY_R` leaked 90,690 and
+#: 90,688 px, 100 % of it into `wrist_cam_l`/`wrist_cam_r` respectively and 0 elsewhere.
+#:
+#: Raising `self_filter_inflation` does not reach them. Inflation grows spheres that exist; these
+#: bodies have none, because the URDF gives `ee_*`, `link_*_arm_6`, `base` and `wheel_*` a visual
+#: element and zero `<collision>` elements. Filling the gap from the simulator's meshes is the only
+#: route, which is what this tuple is.
 UNCOVERED_LINKS = (
     "base", "wheel_r", "wheel_l", "link_torso_3",
     "link_right_arm_6", "link_left_arm_6",
+    "ee_left", "ee_right",
     "ee_finger_r1", "ee_finger_r2", "ee_finger_l1", "ee_finger_l2",
 )
 
@@ -432,7 +479,9 @@ def gap_filling_capsules(model, links: Sequence[str] = UNCOVERED_LINKS, **kwargs
     out = []
     for link in links:
         try:
-            out.extend(bounding_capsules(model, link, **kwargs))
+            out.extend(
+                bounding_capsules(model, MJCF_BODY_ALIASES.get(link, link), link=link, **kwargs)
+            )
         except KeyError:
             continue  # a link the simulator does not model separately
     return out
@@ -502,6 +551,7 @@ __all__ = [
     "CAMERA_MOUNTS",
     "CameraFrame",
     "HEAD_JOINTS",
+    "MJCF_BODY_ALIASES",
     "camera_observation",
     "link_pose_error",
     "UNCOVERED_LINKS",
