@@ -29,10 +29,13 @@ z = 0.006 m with a 1.3 mm spread.
 from __future__ import annotations
 
 import dataclasses
+import logging
 import pathlib
 from typing import Optional, Sequence
 
 import numpy as np
+
+_LOG = logging.getLogger(__name__)
 
 TRANSPORT_MODEL = pathlib.Path(
     "src/rby1_description/models/rby1a/mujoco/model_transport.xml"
@@ -441,12 +444,17 @@ def bounding_capsules(
 #: * `UrdfSphereChain` attaches the capsule by FK and rejects an `extra_capsules` entry whose `link`
 #:   is not a URDF link (`robot_models/urdf_sphere_chain.py:393-395`) — `EE_BODY_L` is not one.
 #:
-#: Getting it wrong in the MuJoCo direction fails **silently**: `gap_filling_capsules` swallows the
-#: `KeyError` below, so the link simply produces no capsule and the self-filter keeps a hole where
-#: nobody thinks there is one. That is how `ee_left`/`ee_right` stayed missing.
+#: Getting it wrong in the MuJoCo direction used to fail **silently**: `gap_filling_capsules`
+#: swallows the `KeyError` below, so the link simply produced no capsule and the self-filter kept a
+#: hole where nobody thought there was one. That is how `ee_left`/`ee_right` stayed missing.
+#: **The swallow stays** — a different simulator may legitimately not model a link — but it no longer
+#: keeps quiet: `gap_filling_capsules` warns, by name, for every listed link that yields nothing.
 #:
 #: Same trap, not yet triggered: URDF `FT_sensor_L`/`FT_sensor_R` are `FT_SENSOR_L`/`FT_SENSOR_R` in
-#: the MJCF. Neither is in `UNCOVERED_LINKS`, so nothing depends on it today.
+#: the MJCF. Neither is in `UNCOVERED_LINKS`, so nothing depends on it today — and **that is exactly
+#: the case the warning is for**: the moment someone adds `FT_sensor_L` to `UNCOVERED_LINKS` without
+#: an alias here, the first `gap_filling_capsules` call says so instead of handing back a self-filter
+#: that is quietly one body short.
 MJCF_BODY_ALIASES: dict[str, str] = {
     "ee_left": "EE_BODY_L",
     "ee_right": "EE_BODY_R",
@@ -474,16 +482,79 @@ UNCOVERED_LINKS = (
 )
 
 
+#: `(link, body, reason)` already warned about in this process. `gap_filling_capsules` is a
+#: setup-time call, but sweeps rebuild the robot model once per configuration
+#: (`experiments/live/sweep_attached_threshold.py:110`), so an undeduplicated warning would
+#: repeat once per sweep iteration and train the reader to skip it. Tests that assert on the
+#: warning clear this.
+_WARNED_NO_CAPSULES: set[tuple[str, str, str]] = set()
+
+
+def _warn_no_capsules(link: str, body: str, reason: str, *, empty: int, listed: int) -> None:
+    """**삼키되 크게 말한다.** 캡슐 0 개는 조용히 지나가면 안 되는 사건이다.
+
+    Swallowing is still right — `links` is written for *this* robot and another simulator may not
+    model, say, a wheel as its own body, so raising would break scenes that are merely different.
+    What was wrong is that the swallow said nothing: a link listed in `UNCOVERED_LINKS` is there
+    because someone measured a leak through it, so zero capsules means the leak is back and the
+    self-filter has a hole nobody is looking at. That is how `ee_left`/`ee_right` — 90,690 and
+    90,688 px straight into the wrist cameras — stayed missing.
+
+    `warning`, not `error`, and for the same reason the swallow stays: a legitimately absent link
+    must not read as a fault. It matches `trajopt/serve_safe.py:79`, which is the same shape — a
+    configuration that will silently produce wrong numbers rather than a crash.
+
+    The message has to carry **which spelling was tried**. That is the whole diagnosis: looked up
+    under the MJCF name and still missing means the body is really absent; looked up under the URDF
+    name means `MJCF_BODY_ALIASES` is what needs the entry.
+    """
+    key = (link, body, reason)
+    if key in _WARNED_NO_CAPSULES:
+        return
+    _WARNED_NO_CAPSULES.add(key)
+    spelling = (
+        f"MJCF spelling {body!r} from MJCF_BODY_ALIASES"
+        if body != link
+        else f"URDF spelling {body!r} verbatim — no MJCF_BODY_ALIASES entry"
+    )
+    _LOG.warning(
+        "self-filter gap NOT filled for link %r: %s, %s. "
+        "%d of %d listed links produced no capsule. "
+        "The link stays in UNCOVERED_LINKS and gets no sphere, so the self-filter keeps a "
+        "hole there and everything the cameras see of it survives into the obstacle cloud. "
+        "If the body exists in the MJCF under another spelling, add it to MJCF_BODY_ALIASES "
+        "(`experiments/sources/mujoco_source.py` — `FT_sensor_L`/`FT_SENSOR_L` is the next "
+        "one waiting).",
+        link, spelling, reason, empty, listed,
+    )
+
+
 def gap_filling_capsules(model, links: Sequence[str] = UNCOVERED_LINKS, **kwargs) -> list:
-    """`extra_capsules` for `UrdfSphereChain`, covering what the URDF's arm-only model omits."""
-    out = []
+    """`extra_capsules` for `UrdfSphereChain`, covering what the URDF's arm-only model omits.
+
+    A link that yields **no** capsule is swallowed, as before, but warned about by name — see
+    `_warn_no_capsules` for why that is the right pair. Both silent-zero routes are covered: a
+    `KeyError` (no MuJoCo body under that name) and an empty return from `bounding_capsules` (the
+    body is there but carries no mesh to measure).
+    """
+    links = tuple(links)
+    out: list = []
+    empty: list[tuple[str, str, str]] = []
     for link in links:
+        body = MJCF_BODY_ALIASES.get(link, link)
         try:
-            out.extend(
-                bounding_capsules(model, MJCF_BODY_ALIASES.get(link, link), link=link, **kwargs)
-            )
-        except KeyError:
-            continue  # a link the simulator does not model separately
+            capsules = bounding_capsules(model, body, link=link, **kwargs)
+        except KeyError:  # a link the simulator does not model separately
+            capsules = []
+            reason = "mj_name2id found no such body"
+        else:
+            reason = "the body has no mesh geoms to measure (too few vertices to fit a capsule)"
+        if capsules:
+            out.extend(capsules)
+        else:
+            empty.append((link, body, reason))
+    for link, body, reason in empty:
+        _warn_no_capsules(link, body, reason, empty=len(empty), listed=len(links))
     return out
 
 
