@@ -330,6 +330,51 @@
    },
    "matches_pipeline_note": "파이프라인이 남긴 'voxel grown to 6.3 mm in 1 step(s)' 와 같은 6.3 mm",
    "caveat": "이 재현 경로에는 로봇 self-filter 가 없어 점 수가 파이프라인의 114991 과 다르다 (79393). 걸리는 자리와 voxel 값이 확인 대상이다"
+  },
+  "joint_mapping": {
+   "_comment": "16D 정책 출력이 어느 관절로 가나. ChunkLayout.rby1(DEFAULT_RBY1_JOINTS, action_dim=16, arm_joint_dim=7) 실측.",
+   "action_dim": 16,
+   "nq_opt": 14,
+   "nq_model": 20,
+   "optimized_joints": [
+    "left_arm_0",
+    "left_arm_1",
+    "left_arm_2",
+    "left_arm_3",
+    "left_arm_4",
+    "left_arm_5",
+    "left_arm_6",
+    "right_arm_0",
+    "right_arm_1",
+    "right_arm_2",
+    "right_arm_3",
+    "right_arm_4",
+    "right_arm_5",
+    "right_arm_6"
+   ],
+   "passthrough_columns": [
+    7,
+    15
+   ],
+   "fixed_joints": [
+    "torso_0",
+    "torso_1",
+    "torso_2",
+    "torso_3",
+    "torso_4",
+    "torso_5"
+   ],
+   "torso_range_over_horizon_rad": 0.0,
+   "torso_equals_q_now": true,
+   "why_torso_is_in_the_model": "토르소 각도가 팔의 월드 좌표를 정한다. FK 에서 빼면 충돌 구 120 개가 전부 '똑바로 선' 자리에 놓인다 (types.py:145-152)"
+  },
+  "record_run_0000_scope": {
+   "_comment": "영상을 만들다 확인된 이 기록의 범위.",
+   "policy_calls": 15,
+   "seconds": 8,
+   "left_arm_max_joint_range_rad": 1.145,
+   "gripper_open_all_frames": true,
+   "note": "파지가 없다. 그런데 phase_for() 는 청크 10~14 를 grasp 로 라벨한다 (그리퍼 상태가 아니라 프레임 번호로 매긴다)"
   }
  },
  "figures": [
@@ -360,10 +405,6 @@
   {
    "path": "benchmark/ag3s/docs/figures/x3/x3-impl-table.png",
    "kind": "table"
-  },
-  {
-   "path": "benchmark/ag3s/docs/figures/x3/x3-verify.mp4",
-   "kind": "video"
   }
  ],
  "baseline_check": {
@@ -376,5 +417,14 @@
   "GPU 렌더링 환경에서 max_points 200000 의 시간 비용",
   "DEGRADED 를 usable 로 볼 것인가 (코드는 안 고쳤다)",
   "ep1800 의 fused 점 수 91268 이 60000 상한에 안 걸린 이유 (self-filter 뒤 수가 더 적었을 수 있다 — 재지 않았다)"
+ ],
+ "discarded_artifacts": [
+  {
+   "path": "outputs/verify/X3/BROKEN_x3-verify_joint-mapping-wrong.mp4",
+   "was_at": "benchmark/ag3s/docs/figures/x3/x3-verify.mp4 (커밋 3891395 에 들어갔다가 제거)",
+   "why": "궤적 14 행(양팔 7+7)을 20 개 관절 이름에 그대로 붙여 팔 각도가 torso 로 들어갔다. 로봇이 뒤로 꺾인 영상이 나왔다",
+   "fix": "layout.full_q(trajectory, q_now) 로 20 행으로 펼친다 (types.py:145-159). probe_status.py 가 이미 그렇게 저장하고 traj_headfix.npz 가 20 행이다",
+   "remaining": "outputs/verify/X3/make_x3_video.py 를 다시 돌리면 된다 (OSMesa 약 10 분)"
+  }
  ]
 }
