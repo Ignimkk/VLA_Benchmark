@@ -1,0 +1,65 @@
+{
+ "figure": "x2-table.png",
+ "numbers": {
+  "rows": [
+   [
+    "has_target — 지었나",
+    "9/15",
+    "15/15"
+   ],
+   [
+    "위반으로 시작",
+    "15/15",
+    "15/15"
+   ],
+   [
+    "해소 (feasible 이 된 수)",
+    "13",
+    "15"
+   ],
+   [
+    "개선 (clearance 나아진 수)",
+    "15",
+    "15"
+   ],
+   [
+    "feasible — 최악 clearance >= 0",
+    "13",
+    "2"
+   ],
+   [
+    "violated — 최악 clearance < 0",
+    "2",
+    "13"
+   ],
+   [
+    "clearance_after 중앙",
+    "+4.35 mm",
+    "+4.19 mm"
+   ],
+   [
+    "clearance_after 최소",
+    "-3.15 mm",
+    "+0.02 mm"
+   ],
+   [
+    "n_candidates > 0 프레임",
+    "0",
+    "0"
+   ],
+   [
+    "target_voxels_carved 총합",
+    "0",
+    "0"
+   ],
+   [
+    "AG3S 실행 중앙값",
+    "1115 ms",
+    "3169 ms"
+   ]
+  ],
+  "source": "benchmark/ag3s/docs/AG3S_T0T6_LOG.md — '재촬영 결과 (2026-09-25)' 절",
+  "raw_output": null,
+  "note": "이 열한 줄만 verify.json 근거가 없다. X3 가 재실행해 raw 를 남긴다."
+ }
+}

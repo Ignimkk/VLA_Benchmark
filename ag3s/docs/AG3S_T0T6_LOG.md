@@ -193,6 +193,8 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **`hold_keyframe_pose(m, d)`** | joint transmission actuator 전부를 리셋 직후에 키프레임 `qpos` 로 다시 맞춰 주는 함수. 키프레임에서 설정한 목표와 현재 위치의 어긋남을 구조적으로 막는다 (X2) |
 | **기대 쪽이 틀린 경우** | completeness 는 *기대*와 *실제*를 나란히 센다. 둘이 다를 때 **실제가 빠진 것일 수도, 기대가 잘못 세워진 것일 수도** 있다. T0 에서 관측 기대치를 제어 스텝 수로 잡아 10 을 기대했는데 관측은 정책 호출당 한 번이라 실제는 2 였다 — 기대를 실제에 맞춰 *낮춘* 것이 아니라 파이프라인이 실제로 하는 일에 맞춘 것이고, 이 둘을 구별하지 못하면 통과 기준을 낮추는 것과 같아진다 |
 | **smoke 분류 (`runs` · `broken` · `needs-arg` · `needs-outpath`)** | 옛 스크립트를 새 기록에 겨눌 때 **수치보다 먼저 세는 것**. `runs` = 그대로 돌았다, `broken` = 죽었다(에러 원문과 `파일:줄` 을 적어 구현 쪽으로 넘긴다), `needs-arg` = 인자·경로만 바꾸면 된다, `needs-outpath` = 돌기는 하는데 **출력 경로가 박혀 있어 남의 파일을 덮어쓴다**(R 에서 실제로 archive 그림 하나를 덮어써서 생긴 분류다). 분류를 먼저 하지 않으면 **이식 비용을 측정 결과로 착각**한다. **다만 `runs` 는 *프로세스가 0 으로 끝났다* 는 뜻이지 *새 기록을 쟀다* 는 뜻이 아니다** — R 1 차에서 `runs` 4 건 중 셋이 새 씬을 만들거나 옛 `/tmp` npz 를 먹고 있었다 |
+| **`geometry_certified` (기하 인증)** | AG3S 가 그 프레임의 씬을 **빠짐없이 설명했다고 스스로 보증하는가** (`types.py:917`). `False` 는 "장애물이 있다" 가 아니라 "내가 못 본 자리가 있다" 다. `sqp.py:287-293` 은 이것이 `False` 면 trajectory 가 모든 clearance 를 만족해도 `status` 를 `VIOLATED` 로 내린다 — *안 본 씬에 대해서는 안전을 주장할 수 없다*. `require_certified_geometry` (`configs/rby1.yaml:87`, 기본 `true`)가 켠다 |
+| **`status` 대 `clearance_after`** | **같은 것을 재지 않는다.** `status` 는 `optimizer.solve()` 의 판정이고 clearance 말고도 기하 인증·반복 한도·예산을 함께 본다. `clearance_after` 는 나온 trajectory 를 `full_violation` 으로 **다시 평가한 mm** 하나다. 그래서 clearance 가 양수인데 `violated` 가 나올 수 있다 — 회귀 기준선의 `feasible` 개수가 둘 중 무엇을 세는지는 X3 가 정한다 |
 
 ---
 
@@ -212,8 +214,10 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 |---|---|---|
 | **T0** 환경·배선 | 이 배선 그림이 프레임마다 사실인가 | **통과**(2026-09-24) — 8 항목 × held-out 4 에피소드 |
 | **R** 재측정 | **16D 에서 이 수치들은 얼마인가** (판정 6 으로 14D 비교를 뗐다) | **배선 정렬 대기**(2026-09-25) — 1 차(분류) 끝, `R-port` 이식 끝(P5 제외). R4·R5 는 미세 계층을 요구하는데 그것이 안 붙고, `T1-a` 가 원인을 **배선**으로 좁혔다 |
-| **T1** 연속 프레임 AG3S | 실측 정책 attention 으로 지각이 쓸 만한가 | **진행 중**(2026-09-25) — X2(머리 각도 0 오류)를 고치고 재촬영했다. `has_target` 9/15 → **15/15**, `clearance_after` 최소 −3.15 mm → **+0.02 mm**. 열린 물음: `status` 와 `clearance_after` 의 불일치 (SQP 판정 vs. 궤적 재평가) |
+| **T1** 연속 프레임 AG3S | 실측 정책 attention 으로 지각이 쓸 만한가 | **진행 중**(2026-09-25) — X2(머리 각도 0 오류)를 고치고 재촬영했다. `has_target` 9/15 → **15/15**, `clearance_after` 최소 −3.15 mm → **+0.02 mm**. 열린 물음은 X3 로 넘겼다 |
 | **X1** 로봇 구 분할 | 고정 구 / 움직일 수 있는 구를 가르는 규칙이 16D 에서 옳은가 | **해결 — 분할은 옳다**(2026-09-25). 고정 구 **42 / 120**, 기구학 파생(`attached.py:241-292`). 14D 의 27 은 구 105 개 모델이라 비교 불가. 회귀 기준선 영향 없음 |
+| **X2** head cam 이 벽을 본다 | teleop keyframe 의 `head_1` 이 기록에서 0 이 되는가 | **해결**(2026-09-25). 수정 + 가드 4 개 + 재촬영. `zed_left` 가 사과를 보는 프레임 **0/15 → 15/15**(중앙 544 px). 단 **재촬영 rollout 의 raw 가 안 남았다** — X3 측정 1 이 되살린다 |
+| **X3** `status` ↔ `clearance_after` | 둘이 같은 것을 재나, 다른 질문의 답인가 | **대기** — 계획 `handoff/X3.task.md`. `clearance_after` 가 15 프레임 전부 양수인데 `status` 는 `violated` 13. 후보 둘: geometry 인증 게이트(`sqp.py:287-293`) · 두 `full_violation` 의 `states` 인자 차이 |
 | **T2** pick-place 상태 전이 | 9 개 사건이 정확히 어느 프레임에 있나 | 대기 — 파지 포함 16D 기록 확보됨 |
 | **T3** 전 관측 프레임 TSDF/ESDF | 모든 프레임에서 필드가 서나. `max_field_age_sec` 를 정한다 | 대기 — T0 이 근거 수치를 냈다 (필드 나이 P50 2637 ms) |
 | **T4** fail-closed 주입 | 고장을 넣으면 정말 닫히나 | 대기 |
@@ -1319,3 +1323,55 @@ settle 1.5 s 뒤 `head_1`: 고치기 전 `0.7000 → 0.0000`, 고친 뒤 `0.7000
 - `clearance_after_mm` = `linearizer.full_violation(result.trajectory, ...)` — 나온 궤적을 **다시 평가**한 값
 
 **원인은 아직 모른다.** 다음 STEP 에서 측정한다.
+
+#### 지각은 실제로 섰다 — `zed_left` 가 사과를 본다
+
+`head_1` 만 놓고 잰 것이 아니라, **재촬영 기록의 segmentation 에서 사과 픽셀을 직접 셌다**
+(`outputs/verify/X2/head_pitch_headfix.json`, 기록 qpos 그대로).
+
+| | 수정 전 (`run_16d_ep1800`) | 수정 후 (`20260925_headfix16d`) |
+|---|---|---|
+| `zed_left` 에 사과가 보이는 프레임 | **0 / 15** | **15 / 15** |
+| `zed_left` 사과 픽셀 중앙 | 0 | **544 px** |
+| `wrist_cam_l` 에 보이는 프레임 | 15 / 15 | 15 / 15 |
+| `wrist_cam_r` 에 보이는 프레임 | 0 / 15 | 0 / 15 |
+
+T1-a 가 *"`head_1` 만 0.7 로 되돌리면 중앙 552 px"* 라고 예측했던 값이다 — 메모리에서 관절
+하나를 바꿔 잰 예측과 실제로 다시 촬영한 기록이 **544 대 552 px** 로 맞는다.
+
+두 기록의 `argv` 는 출력 경로 하나만 빼고 같다 (`--episode-index 1800`). 차이는
+`model_transport.xml` 의 teleop keyframe 하나다.
+
+프레임 11 부터 픽셀이 547 → 62 로 떨어진다. **팔이 사과를 가린다** — 카메라가 아니라 가림이다.
+
+#### 재촬영 rollout 의 raw 가 남지 않았다
+
+위 "재촬영 결과" 표 열한 줄은 **출처 파일이 없다.** `outputs/verify/` 에도 `/tmp` 에도
+프레임별 산출이 없다. 개수는 그 자리에서 읽어 옮긴 것이고, **`verify.json` 을 거치지 않았다.**
+`handoff/X3.task.md` 의 측정 1 이 같은 명령을 다시 돌려 `outputs/verify/X3/headfix_rollout.json`
+으로 되살린다. **그때까지 이 열한 줄은 재인용하지 않는다.**
+
+### 시각화 (규칙 A)
+
+* **[`figures/x2/x2-scene.png`](figures/x2/x2-scene.png)** — 실제 씬. 머리 관절 하나가 시선을
+  어디로 보내는지 배치도로 먼저 보이고, 그다음 정책이 실제로 본 `cam_high` 영상을 수정 전후로
+  나란히 놓고, 마지막에 `zed_left` depth 위에 사과 mask 를 얹는다. 수정 전은 벽, 수정 후는
+  테이블과 과일이다.
+* **[`figures/x2/x2-trend.png`](figures/x2/x2-trend.png)** — 그래프. 프레임별 `head_1` ·
+  프레임별 `zed_left` 사과 픽셀 · 카메라 세 대 중 어느 것이 사과를 보나.
+* **[`figures/x2/x2-table.png`](figures/x2/x2-table.png)** — 표. 재촬영 대조표.
+  **raw 가 없는 열한 줄이라는 것을 표 안에 적어 두었다.**
+
+![X2 실제 씬](figures/x2/x2-scene.png)
+
+![X2 추이](figures/x2/x2-trend.png)
+
+![X2 대조표](figures/x2/x2-table.png)
+
+### 다음 — X3
+
+`status` 와 `clearance_after` 의 불일치를 잰다. 계획은 `handoff/X3.task.md` 에 있고,
+측정 1 이 위의 raw 를 먼저 되살린다. 어디를 볼지는 두 군데로 좁혀 두었다 —
+geometry 인증 게이트(`sqp.py:287-293` 은 clearance 를 다 만족해도 AG3S 가 씬을 인증하지
+못하면 `VIOLATED` 로 내린다)와, 두 `full_violation` 호출의 인자 차이(`states`).
+**둘 다 아직 후보일 뿐이고, 숫자로 확정하기 전에는 판정하지 않는다.**
