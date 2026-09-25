@@ -1,0 +1,250 @@
+{
+  "_comment": "ag3s-verifier 가 쓴다. 해석을 쓰지 않는다 — 숫자와 경로만.",
+  "step": "T1",
+  "date": "2026-09-25",
+  "runs": [
+    {
+      "id": "baseline_check_run1",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/T1/baseline_check.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/baseline_check.json",
+      "note": "해소 11 / feasible 11 / violated 4 — 기준선(13/13/2)과 다름"
+    },
+    {
+      "id": "baseline_check_run2",
+      "command": "same as run1, out-json outputs/verify/T1/baseline_check_rerun.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/baseline_check_rerun.json",
+      "note": "해소 11 / feasible 11 / violated 4 — run1 과 재현됨"
+    },
+    {
+      "id": "baseline_check_run3",
+      "command": "same as run1, out-json outputs/verify/T1/baseline_check_run3.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/baseline_check_run3.json",
+      "note": "해소 13 / feasible 13 / violated 2 — 문서화된 기준선과 일치. run1/run2 와의 유일한 차이는 시간(수 분 뒤 재실행)이며, 이 사이 다른 무거운 프로세스는 관측되지 않았다 (ps -eo pcpu 상위 없음, vmstat steal=0)"
+    },
+    {
+      "id": "items_ep1800",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_items.py --records outputs/live_test/20260925_headfix16d/records/run_0000/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_headfix.npz --out outputs/verify/T1/items_ep1800.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/items_ep1800.json",
+      "stdout_log": "outputs/verify/T1/items_ep1800.log"
+    },
+    {
+      "id": "items_ep1850",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_items.py --records outputs/live_test/20260925_t1/ep1850/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_ep1850.npz --out outputs/verify/T1/items_ep1850.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/items_ep1850.json",
+      "stdout_log": "outputs/verify/T1/items_ep1850.log"
+    },
+    {
+      "id": "items_ep1900",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_items.py --records outputs/live_test/20260925_t1/ep1900/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_ep1900.npz --out outputs/verify/T1/items_ep1900.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/items_ep1900.json",
+      "stdout_log": "outputs/verify/T1/items_ep1900.log"
+    },
+    {
+      "id": "item8_cost_probe",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/cost_probe_frame_card.py",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/cost_probe_frame_card.json",
+      "note": "카드 한 장만 만들었다 (ep1800 frame 0), 비용 확인용"
+    },
+    {
+      "id": "item8_all_cards",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/make_frame_cards.py",
+      "venv": ".venv-ag3s",
+      "raw_output": "benchmark/ag3s/docs/figures/t1/cards/manifest.json",
+      "note": "A0 판정 뒤 45 장(15 x 3 에피소드) 전부 생성. 8.52 s 총 (0.189 s/card)"
+    },
+    {
+      "id": "item4_attribution_ep1800",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_item4_attribution.py --records outputs/live_test/20260925_headfix16d/records/run_0000/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_headfix.npz --out outputs/verify/T1/item4_attr_ep1800.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/item4_attr_ep1800.json",
+      "stdout_log": "outputs/verify/T1/item4_attr_ep1800.log"
+    },
+    {
+      "id": "item4_attribution_ep1850",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_item4_attribution.py --records outputs/live_test/20260925_t1/ep1850/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_ep1850.npz --out outputs/verify/T1/item4_attr_ep1850.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/item4_attr_ep1850.json"
+    },
+    {
+      "id": "item1_score_vs_error_ep1800",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_item1_score.py --records outputs/live_test/20260925_headfix16d/records/run_0000/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_headfix.npz --target apple --out outputs/verify/T1/item1_score_ep1800.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/item1_score_ep1800.json",
+      "stdout_log": "outputs/verify/T1/item1_score_ep1800.log"
+    },
+    {
+      "id": "item1_score_vs_error_ep1850",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_item1_score.py --records outputs/live_test/20260925_t1/ep1850/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_ep1850.npz --target banana --out outputs/verify/T1/item1_score_ep1850.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/item1_score_ep1850.json",
+      "stdout_log": "outputs/verify/T1/item1_score_ep1850.log"
+    },
+    {
+      "id": "item1_score_vs_error_ep1900",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_item1_score.py --records outputs/live_test/20260925_t1/ep1900/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_ep1900.npz --target pear --out outputs/verify/T1/item1_score_ep1900.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/item1_score_ep1900.json",
+      "stdout_log": "outputs/verify/T1/item1_score_ep1900.log"
+    },
+    {
+      "id": "item4_attribution_ep1900",
+      "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T1/measure_item4_attribution.py --records outputs/live_test/20260925_t1/ep1900/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_ep1900.npz --out outputs/verify/T1/item4_attr_ep1900.json",
+      "venv": ".venv-ag3s",
+      "raw_output": "outputs/verify/T1/item4_attr_ep1900.json"
+    }
+  ],
+  "code_state": {
+    "repo": "benchmark",
+    "head": "453d91e",
+    "dirty_files": []
+  },
+  "numbers": {
+    "_comment": "로그와 논문에 쓰이는 모든 수치가 여기에만 있다. 여기 없는 숫자는 쓰지 않는다.",
+    "regression_baseline_isolated_run": {
+      "violated_start": 15, "resolved": 11, "improved": 15,
+      "feasible": 11, "violated_end": 4, "has_target": 9,
+      "note": "1·2 회차 (해소/feasible 이 문서화된 기준선과 다름)"
+    },
+    "regression_baseline_isolated_run3": {
+      "violated_start": 15, "resolved": 13, "improved": 15,
+      "feasible": 13, "violated_end": 2, "has_target": 9,
+      "note": "3 회차 (문서화된 기준선과 일치)"
+    },
+    "item1_target_center_error_mm": {
+      "ep1800_apple": {"n": 15, "mean": 48.4516, "median": 34.8205, "max_abs": 90.5548},
+      "ep1850_banana": {"n": 9, "mean": 6.4128, "median": 5.9450, "max_abs": 9.7622},
+      "ep1900_pear": {"n": 15, "mean": 41.7020, "median": 36.0217, "max_abs": 81.8966},
+      "note_n": "n = has_target 인 프레임 수 (ep1800 15, ep1850 9, ep1900 15)"
+    },
+    "item2_support_height_error_mm": {
+      "ep1800_apple": {"n": 15, "mean": 1.3179, "median": 1.3278, "max_abs": 1.3563},
+      "ep1850_banana": {"n": 15, "mean": 1.3022, "median": 1.2952, "max_abs": 1.3604},
+      "ep1900_pear": {"n": 15, "mean": 1.2642, "median": 1.2562, "max_abs": 1.3683}
+    },
+    "item3_cross_camera_alignment_mm": {
+      "ep1800_apple": {"n": 15, "mean": 0.7715, "median": 0.7280, "max_abs": 0.9177},
+      "ep1850_banana": {"n": 15, "mean": 0.7889, "median": 0.7517, "max_abs": 0.8873},
+      "ep1900_pear": {"n": 15, "mean": 0.7759, "median": 0.7627, "max_abs": 0.8948}
+    },
+    "item4_robot_mask_violations": {
+      "ep1800_apple": {"total_px": 187136, "by_body": {"EE_BODY_L": 90690, "EE_BODY_R": 90688, "base": 5758}},
+      "ep1850_banana": {"total_px": 181370, "by_body": {"EE_BODY_L": 90684, "EE_BODY_R": 90686}},
+      "ep1900_pear": {"total_px": 181378, "by_body": {"EE_BODY_L": 90690, "EE_BODY_R": 90688}}
+    },
+    "item5_low_obstacle_esdf_mm_frame0": {
+      "ep1800_apple_frame0": {"banana": -22.7653, "orange": -27.1059, "pear": -24.1259},
+      "note": "frame0 예시값. 전 프레임 값은 outputs/verify/T1/items_ep*.json 의 frames[].low_obstacle_esdf_mm"
+    },
+    "item6_status_counts": {
+      "ep1800_apple": {"status": {"ok": 15}, "validity": {"valid": 15}, "grounding": {"ok": 15}},
+      "ep1850_banana": {"status": {"ok": 9, "no_target": 6}, "validity": {"valid": 15}, "grounding": {"ok": 9, "low_score": 6}},
+      "ep1900_pear": {"status": {"ok": 15}, "validity": {"valid": 15}, "grounding": {"ok": 15}}
+    },
+    "item7_completeness": {
+      "ep1800_apple": {"captured": 15, "processed": 15, "attention_npz_frames": 15},
+      "ep1850_banana": {"captured": 15, "processed": 15, "attention_npz_frames": 15},
+      "ep1900_pear": {"captured": 15, "processed": 15, "attention_npz_frames": 15}
+    },
+    "item8_cost_probe_ep1800_frame0": {
+      "t_setup_s": 0.0024, "t_load_images_s": 0.0107, "t_build_figure_s": 0.0618,
+      "t_save_s": 0.1478, "t_per_card_s": 0.2203,
+      "estimate_45_cards_s": 9.9157, "estimate_45_cards_min": 0.1653,
+      "underlying_perception_wall_s_per_frame": {
+        "ep1800_apple": 2.6339, "ep1850_banana": 2.3285, "ep1900_pear": 2.9250,
+        "note": "measure_items.py 의 wall_s / 15. 카드가 이 값을 재사용하면 추가비용이 아니고, 처음부터 AG3S/MuJoCo 를 다시 돌리면 이만큼이 프레임당 추가된다"
+      }
+    },
+    "item8_all_cards_actual": {
+      "n_cards": 45, "wall_s": 8.52, "s_per_card": 0.189,
+      "note": "A0 판정 뒤 실제로 45 장 전부 생성한 값. cost_probe 의 단일 카드 추정(0.2203 s)과 같은 자릿수"
+    },
+    "item1_score_vs_error": {
+      "_comment": "사용자 판정 2건 재측정 — 가설(a)/(b) 판별용. GroundingResult.best_score 와 clusters[0] 는 LOW_SCORE 로 실패해도 남는다 (target_grounding.py:213-226) — 거른 프레임도 best cluster 기준 '있었다면' 오차를 낼 수 있다. target_score_threshold=0.25 (config.py:91)",
+      "ep1800_apple": {
+        "r_score_vs_wouldbe_error_all15": -0.9488,
+        "passed": {"n": 15, "score_min": 0.2717, "score_max": 0.7484, "score_mean": 0.5676, "score_median": 0.6906},
+        "failed": {"n": 0}
+      },
+      "ep1850_banana": {
+        "r_score_vs_wouldbe_error_all15": -0.9852,
+        "passed": {"n": 9, "score_min": 0.7317, "score_max": 0.8932, "score_mean": 0.8076, "score_median": 0.8034,
+                   "r_score_vs_actual_error_passed_only": 0.1530},
+        "failed": {"n": 6, "score_min": 0.0579, "score_max": 0.2421,
+                   "would_be_error_mm_min": 317.91, "would_be_error_mm_max": 327.73,
+                   "would_be_error_mm_mean": 323.36, "would_be_error_mm_median": 323.05}
+      },
+      "ep1900_pear": {
+        "r_score_vs_wouldbe_error_all15": -0.9436,
+        "passed": {"n": 15, "score_min": 0.2960, "score_max": 0.6822, "score_mean": 0.5649, "score_median": 0.5798},
+        "failed": {"n": 0}
+      },
+      "cross_episode_error_by_score_bin_mm": {
+        "_comment": "같은 target_score 구간(0.1 폭)에서 세 에피소드의 would-be 오차 평균",
+        "0.2-0.3": {"ep1800_apple": 89.54, "ep1850_banana": 320.18, "ep1900_pear": 81.90},
+        "0.7-0.8": {"ep1800_apple": 31.92, "ep1850_banana": 5.33, "ep1900_pear": null}
+      },
+      "high_score_high_error_scan": {
+        "_comment": "score > 0.5 AND error > 50mm 인 프레임을 45개 전부에서 찾은 결과",
+        "n_found": 0,
+        "max_score_among_error_gt_50mm": 0.4136,
+        "note": "ep1900 frame13, score=0.4136, error=78.02mm — 45개 중 error>50mm 인 프레임의 최고 score"
+      }
+    },
+    "item4_attribution": {
+      "_comment": "A0 요청 2건 — 카메라별 분리, 누수 픽셀의 cs.esdf.distance() 질의. 고치지 않았다",
+      "leaked_px_by_camera_by_body": {
+        "ep1800_apple": {"zed_left": {}, "wrist_cam_l": {"EE_BODY_L": 90690, "base": 5758}, "wrist_cam_r": {"EE_BODY_R": 90688}},
+        "ep1850_banana": {"zed_left": {}, "wrist_cam_l": {"EE_BODY_L": 90684}, "wrist_cam_r": {"EE_BODY_R": 90686}},
+        "ep1900_pear": {"zed_left": {}, "wrist_cam_l": {"EE_BODY_L": 90690}, "wrist_cam_r": {"EE_BODY_R": 90688}},
+        "note": "EE_BODY_L 누수는 세 에피소드 모두 wrist_cam_l 에만 있고 zed_left·wrist_cam_r 에는 0. EE_BODY_R 은 대칭으로 wrist_cam_r 에만. base 누수(ep1800 만)는 wrist_cam_l 에만, 프레임마다 0~622 px 로 변동"
+      },
+      "esdf_distance_at_leaked_points_mm": {
+        "ep1800_apple": {
+          "EE_BODY_L": {"n_points_total": 90690, "mean_mm_weighted": 114.909, "frac_occupied_le0_weighted": 0.0, "frac_near_le_voxel_weighted": 0.1004, "frac_clearly_free_gt_50mm_weighted": 0.8},
+          "EE_BODY_R": {"n_points_total": 90688, "mean_mm_weighted": 143.617, "frac_occupied_le0_weighted": 0.0, "frac_near_le_voxel_weighted": 0.0, "frac_clearly_free_gt_50mm_weighted": 1.0},
+          "base": {"n_points_total": 5758, "mean_mm_weighted": -8.172, "frac_occupied_le0_weighted": 0.7569, "frac_near_le_voxel_weighted": 0.9868, "frac_clearly_free_gt_50mm_weighted": 0.0}
+        },
+        "ep1850_banana": {
+          "EE_BODY_L": {"n_points_total": 90684, "mean_mm_weighted": 103.864, "frac_occupied_le0_weighted": 0.0, "frac_near_le_voxel_weighted": 0.0, "frac_clearly_free_gt_50mm_weighted": 0.7968},
+          "EE_BODY_R": {"n_points_total": 90686, "mean_mm_weighted": 143.591, "frac_occupied_le0_weighted": 0.0, "frac_near_le_voxel_weighted": 0.0, "frac_clearly_free_gt_50mm_weighted": 1.0}
+        },
+        "ep1900_pear": {
+          "EE_BODY_L": {"n_points_total": 90690, "mean_mm_weighted": 110.624, "frac_occupied_le0_weighted": 0.0154, "frac_near_le_voxel_weighted": 0.0599, "frac_clearly_free_gt_50mm_weighted": 0.8167},
+          "EE_BODY_R": {"n_points_total": 90688, "mean_mm_weighted": 122.342, "frac_occupied_le0_weighted": 0.0, "frac_near_le_voxel_weighted": 0.0, "frac_clearly_free_gt_50mm_weighted": 1.0}
+        },
+        "note": "voxel=20mm. frac_occupied_le0 = distance<=0 인 누수점 비율(뒤 단계에서 점유로 잡힘), frac_clearly_free_gt_50mm = distance>50mm 인 비율(자유공간으로 남음). EE_BODY_L/R 은 세 에피소드 모두 frac_occupied_le0 이 0에 가깝고(ep1900 EE_BODY_L 만 1.5%) frac_clearly_free_gt_50mm 이 0.80~1.0 — base 는 반대로 0.76~0.99 가 occupied"
+      }
+    }
+  },
+  "figures": [
+    {"path": "benchmark/ag3s/docs/figures/t1/t1-items-scene.png", "kind": "scene"},
+    {"path": "benchmark/ag3s/docs/figures/t1/t1-items-trend.png", "kind": "graph"},
+    {"path": "benchmark/ag3s/docs/figures/t1/t1-items-table.png", "kind": "table"},
+    {"path": "benchmark/ag3s/docs/figures/t1/t1-item1-score-vs-error.png", "kind": "graph",
+     "note": "항목1 재측정 — grounding target_score 대 target 중심 오차, 세 에피소드"},
+    {"path": "benchmark/ag3s/docs/figures/t1/cards/manifest.json", "kind": "index",
+     "note": "항목 8 — 45 장 diagnostic frame card 의 목록. 실물은 cards/<ep>/frame_NN.png"},
+    {"path": "benchmark/ag3s/docs/figures/t1/cards/ep1800/", "kind": "scene", "note": "15 장"},
+    {"path": "benchmark/ag3s/docs/figures/t1/cards/ep1850/", "kind": "scene", "note": "15 장"},
+    {"path": "benchmark/ag3s/docs/figures/t1/cards/ep1900/", "kind": "scene", "note": "15 장"}
+  ],
+  "baseline_check": {
+    "matched": "3회차만 일치",
+    "note": "1·2 회차 해소 11/feasible 11/violated 4, has_target 9/15; 3 회차 해소 13/feasible 13/violated 2, has_target 9/15. regression-baseline skill 의 '부하가 기준선을 바꾼다' 함정과 같은 모양 — 이 세션에서 재현된 다른 무거운 프로세스는 관측되지 않았다"
+  },
+  "verdict": "사실만. 판정은 lead 와 사용자가 한다.",
+  "method_notes": [
+    "item2 초판은 지지면 높이를 offset/normal_z 로 냈다 — 평면이 수평일 때만 맞고 기울면 x=y=0(로봇 base) 에서의 높이를 재게 된다 (실측: -818mm 로 어긋남). 그 지지면을 fit 한 cloud 의 inlier 점 median z 로 교체했다. T1.verify.json 의 item2 수치는 전부 교체 뒤 값이다"
+  ],
+  "not_measured": [
+    "item5 는 frame0 예시값만 numbers 에 실었다 — 전 프레임 값은 raw json 에 있다",
+    "item4_attribution 의 esdf 질의는 legacy backend, voxel 20mm 에서만 쟀다"
+  ]
+}

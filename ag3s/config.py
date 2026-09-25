@@ -155,7 +155,20 @@ class PointCloudConfig:
     # away (measured on the RB-Y1 wrist camera). Set this to bound the workspace by true distance.
     range_max: float | None = None
     depth_scale: float = 1.0  # multiply raw depth by this to get metres (e.g. 0.001 for uint16 mm)
-    self_filter_inflation: float = 0.02  # metres added to each robot sphere before rejecting points
+    # Metres added to each robot sphere before rejecting points. **0.05 m is cuRobo's
+    # `RobotSegmenter` default `distance_threshold`** (`curobo_src/curobo/_src/perception/
+    # robot_segmenter.py:53`), which erases the robot from a depth frame by exactly this method —
+    # distance between the depth points and the collision spheres. We were at 0.02 m, 2.5x tighter.
+    # At 0.02 m the T1 ground-truth segmentation showed the robot's own body leaking through the
+    # self-filter into the obstacle field: `EE_BODY_L` (left gripper assembly) 90,690 px survived
+    # in `wrist_cam_l` on every frame of three episodes — the wrist camera is bolted to the same
+    # wrist link, so it always sees its own gripper — `EE_BODY_R` symmetric at 90,688 px in
+    # `wrist_cam_r`, and `base` 5,758 px in `wrist_cam_l`. The gripper leak was harmless (the ESDF
+    # still answered free there, +100..144 mm); the `base` leak was not — the ESDF called 76-99 %
+    # of it **occupied** (mean -8.2 mm), so the robot's own plinth became an obstacle to itself.
+    # What leaks is precisely what `robot_sphere_mask` already names as the reason to inflate:
+    # "the gap between the capsule chain and the real mesh".
+    self_filter_inflation: float = 0.05
     subsample_seed: int = 0  # only used by the deterministic stride/permutation
     # How `max_points` is enforced. "voxel" grows the voxel size until the cloud fits, so every
     # occupied voxel still contributes a representative and no region larger than the final voxel
