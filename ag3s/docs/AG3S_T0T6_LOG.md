@@ -1592,6 +1592,46 @@ monkeypatch 가 아니라 실제 기본값으로 재현했다.
 ### 아직 열려 있는 것
 
 - **`DEGRADED` 를 usable 로 볼 것인가.** 코드는 안 고쳤다. 상한을 올려 당장은 안 걸릴 뿐이다.
-- **cap 이 걸리는 자리를 못 찾았다.** 수정 후 기록은 점 수 **114991** 에서 capped 인데
-  기준선 기록은 **91268** 에서 capped 가 아니다. 둘 다 `--cameras all` 이다. 숫자만 나란히 둔다.
+- ~~cap 이 걸리는 자리를 못 찾았다~~ → **찾았다 (측정 7, 아래).**
 - GPU 렌더링에서 `max_points 200000` 의 시간 비용.
+
+### 측정 7 — **상한은 카메라별이 아니라 합친 구름에 걸린다**
+
+로그가 *"cap 이 걸리는 자리를 못 찾았다"* 로 남겨 뒀던 물음이다. 재현해 보니 **카메라마다
+따로 점군을 만들면 대당 약 26000 이라 60000 상한에 안 걸린다.** 세 대를 **합친 뒤** 걸어야
+파이프라인과 같아진다.
+
+수정 후 기록(`20260925_headfix16d`) 프레임 2 에서:
+
+| | `max_points` 60000 | `max_points` 200000 |
+|---|---|---|
+| 합친 점 수 | **36498** | **79393** |
+| 상한이 걸렸나 | **걸렸다** | 안 걸렸다 |
+| 최종 voxel | **6.3 mm** | 5.0 mm |
+
+**6.3 mm 는 파이프라인이 그 프레임에 남긴 note 의 값과 같다** (*"voxel grown to 6.3 mm in
+1 step(s)"*). 점 수가 파이프라인의 114991 과 다른 것은 이 재현 경로에 로봇 self-filter 가
+없기 때문이다 — 확인한 것은 **걸리는 자리와 voxel 값**이다.
+
+**아직 안 잰 것**: 기준선 기록 `run_16d_ep1800` 의 합친 점 수 91268 이 60000 상한에 안 걸린
+이유. self-filter 뒤 수가 더 적었을 수 있는데 재지 않았다.
+
+### 시각화 — 구현 검증 (규칙 A)
+
+* **[`figures/x3/x3-impl-scene.png`](figures/x3/x3-impl-scene.png)** — 실제 씬. 테이블 상판
+  한 겹(z 0.80~0.86 m)을 **위에서 내려다본** 점군을 두 상한에서 나란히 놓는다. 사과·바구니
+  윤곽이 양쪽 다 살아 있다 — **성겨졌을 뿐 사라진 영역이 없다.**
+* **[`figures/x3/x3-impl-loadtrap.png`](figures/x3/x3-impl-loadtrap.png)** — 그래프. 단독 실행과
+  부하중 실행의 프레임별 clearance · SQP 반복 수 · 뒤집힌 프레임.
+* **[`figures/x3/x3-impl-table.png`](figures/x3/x3-impl-table.png)** — 표. 문서화된 기준선 ·
+  변경 뒤 `ep1800`(단독) · 변경 뒤 headfix 기록.
+* **[`figures/x3/x3-verify.mp4`](figures/x3/x3-verify.mp4)** — **영상 20 초.** 왼쪽은 정책이 낸
+  청크, 오른쪽은 SQP 가 고친 궤적, 오른쪽 끝은 프레임별 clearance 와 status. 15 청크 × 지평
+  32 스텝을 전부 돌린다. 궤적은 `_finish` 에서 그대로 받은 `result.trajectory` 이고 자막
+  숫자는 `probe_traj.json` 에서 읽는다 — **영상이 만들어 내는 숫자는 없다.**
+
+![X3 구현 실제 씬](figures/x3/x3-impl-scene.png)
+
+![X3 부하 함정](figures/x3/x3-impl-loadtrap.png)
+
+![X3 구현 대조표](figures/x3/x3-impl-table.png)

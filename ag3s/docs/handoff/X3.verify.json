@@ -53,6 +53,13 @@
    "id": "tests",
    "command": "pytest tests/ -q",
    "stdout_log": "outputs/verify/X3/tests_after_maxpoints.log"
+  },
+  {
+   "id": "measurement-7-where-the-cap-binds",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -u outputs/verify/X3/make_x3_impl_figures.py",
+   "venv": ".venv-ag3s",
+   "method": "기록 depth 로 카메라 셋의 점군을 만들어 **합친 뒤** coverage_preserving_cap 을 두 상한으로 건다",
+   "raw_output": "benchmark/ag3s/docs/figures/x3/x3-impl-scene.json"
   }
  ],
  "code_state": {
@@ -303,6 +310,26 @@
     "concurrent": -6.77
    },
    "mechanism_ref": "sqp.time_budget_ms 는 벽시계 마감 (sqp.py:159)"
+  },
+  "measurement_7_where_the_cap_binds": {
+   "_comment": "상한은 카메라별이 아니라 fusion 뒤의 구름에 걸린다.",
+   "record": "20260925_headfix16d",
+   "frame": 2,
+   "per_camera_points_approx": 26000,
+   "fused_points": {
+    "cap_60k": 36498,
+    "cap_200k": 79393
+   },
+   "cap_bound": {
+    "cap_60k": true,
+    "cap_200k": false
+   },
+   "final_voxel_mm": {
+    "cap_60k": 6.3,
+    "cap_200k": 5.0
+   },
+   "matches_pipeline_note": "파이프라인이 남긴 'voxel grown to 6.3 mm in 1 step(s)' 와 같은 6.3 mm",
+   "caveat": "이 재현 경로에는 로봇 self-filter 가 없어 점 수가 파이프라인의 114991 과 다르다 (79393). 걸리는 자리와 voxel 값이 확인 대상이다"
   }
  },
  "figures": [
@@ -321,6 +348,22 @@
   {
    "path": "benchmark/ag3s/docs/figures/x3/x3-maxpoints.png",
    "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/x3/x3-impl-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/x3/x3-impl-loadtrap.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/x3/x3-impl-table.png",
+   "kind": "table"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/x3/x3-verify.mp4",
+   "kind": "video"
   }
  ],
  "baseline_check": {
@@ -329,8 +372,9 @@
  },
  "verdict": "사실만. 판정은 lead 와 사용자가 한다.",
  "not_measured": [
-  "cap 이 걸리는 자리 — headfix 기록은 점 수 114991 에서 capped 인데 ep1800 은 91268 에서 capped 가 아니다",
+  "측정 5 는 했다 — run_16d_ep1800 은 상한에 애초에 안 걸린다",
   "GPU 렌더링 환경에서 max_points 200000 의 시간 비용",
-  "DEGRADED 를 usable 로 볼 것인가 (코드는 안 고쳤다)"
+  "DEGRADED 를 usable 로 볼 것인가 (코드는 안 고쳤다)",
+  "ep1800 의 fused 점 수 91268 이 60000 상한에 안 걸린 이유 (self-filter 뒤 수가 더 적었을 수 있다 — 재지 않았다)"
  ]
 }
