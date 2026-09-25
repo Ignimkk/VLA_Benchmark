@@ -17,6 +17,15 @@
    "method": "esdf_rollout.main() 을 그대로 부르고 TrajectoryOptimizer._finish 와 scene_from_constraint_set 만 감쌌다. benchmark/** 는 고치지 않았다",
    "raw_output": "outputs/verify/X3/probe_headfix_v2.json",
    "stdout_log": "outputs/verify/X3/probe_headfix_v2.log"
+  },
+  {
+   "id": "measurement-6-maxpoints-200k",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -u outputs/verify/X3/probe_status.py --records outputs/live_test/20260925_headfix16d/records/run_0000/run_0000 --attention benchmark/ag3s/asset/data/attention_16d_headfix.npz --frames 15 --max-points 200000 --out outputs/verify/X3/probe_headfix_maxpts200k.json",
+   "venv": ".venv-ag3s",
+   "method": "probe 가 AG3SConfig.from_dict 를 감싸 pointcloud.max_points 한 칸만 갈아 끼운다. 다른 설정은 그대로",
+   "raw_output": "outputs/verify/X3/probe_headfix_maxpts200k.json",
+   "stdout_log": "outputs/verify/X3/probe_headfix_maxpts200k.log",
+   "comparison": "outputs/verify/X3/compare_maxpoints.json"
   }
  ],
  "code_state": {
@@ -119,6 +128,61 @@
     "frame_4_degraded": 126391
    },
    "not_measured": "voxel 점 수가 더 많은 프레임 0·1 이 capped 가 아니고 더 적은 프레임 2 가 capped 인 이유는 재지 않았다"
+  },
+  "measurement_6_resolution_cost": {
+   "_comment": "두 실행은 pointcloud.max_points 하나만 다르다 (60000 기본 · 200000).",
+   "voxel_mm_used": {
+    "cap_60k": [
+     5.0,
+     6.3
+    ],
+    "cap_200k": [
+     5.0
+    ]
+   },
+   "validity_counts": {
+    "cap_60k": {
+     "degraded": 13,
+     "valid": 2
+    },
+    "cap_200k": {
+     "valid": 15
+    }
+   },
+   "feasible": {
+    "cap_60k": 2,
+    "cap_200k": 15
+   },
+   "violated": {
+    "cap_60k": 13,
+    "cap_200k": 0
+   },
+   "points_voxel_median": {
+    "cap_60k": 116126,
+    "cap_200k": 129657
+   },
+   "clearance_delta_mm": {
+    "median": 0.0,
+    "min": -0.32,
+    "max": 0.119,
+    "max_abs": 0.32
+   },
+   "clearance_min_mm": {
+    "cap_60k": 0.0385,
+    "cap_200k": 0.0156
+   },
+   "n_frames_clearance_got_worse_when_finer": 7,
+   "largest_single_change": {
+    "frame": 8,
+    "cap_60k_mm": 3.301,
+    "cap_200k_mm": 2.981,
+    "delta_mm": -0.32
+   },
+   "ag3s_ms_median": {
+    "cap_60k": 2303.9,
+    "cap_200k": 2304.3
+   },
+   "timing_caveat": "이 서버는 OSMesa 소프트웨어 렌더링이고 AG3S 중앙값이 이미 청크 예산 533 ms 의 4.3 배다. 점 수가 시간에 안 보이는 것은 다른 것이 지배하기 때문일 수 있다 — GPU 렌더링에서 같다고 말할 수 없다"
   }
  },
  "figures": [
@@ -133,6 +197,10 @@
   {
    "path": "benchmark/ag3s/docs/figures/x3/x3-table.png",
    "kind": "table"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/x3/x3-maxpoints.png",
+   "kind": "graph"
   }
  ],
  "baseline_check": {
@@ -142,7 +210,8 @@
  "verdict": "사실만. 판정은 lead 와 사용자가 한다.",
  "not_measured": [
   "측정 5 — run_16d_ep1800 에 같은 probe (수정 전 기록에서도 같은 구조인가)",
-  "voxel 점 수와 capped 여부의 관계",
-  "require_certified_geometry=false 로 돌렸을 때의 개수"
+  "cap 이 per-camera 로 걸리는 자리 — note 는 max_points=60000 이라는데 fusion 뒤 점 수는 중앙 116126 이다",
+  "voxel 점 수가 더 많은 프레임 0·1 이 capped 가 아니고 더 적은 프레임 2 가 capped 인 이유",
+  "GPU 렌더링 환경에서 max_points 200000 의 시간 비용"
  ]
 }

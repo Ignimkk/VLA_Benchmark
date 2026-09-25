@@ -2032,3 +2032,15 @@ clearance 가 양수다. `status` 는 clearance 말고 **기하 인증**을 함�
 **열린 판정**: `DEGRADED`(점군이 `max_points` 상한에 걸려 voxel 을 키운 상태)를 인증 실패로
 볼 것인가. 만드는 쪽 주석은 *"nothing physical went unobserved"* 라 하고 쓰는 쪽은 인증
 실패로 읽는다 — 선택지 셋과 각각의 위험은 로그의 X3 절에 있다.
+
+### 측정 6 이 선택지를 좁혔다 (2026-09-25)
+
+`pointcloud.max_points` 만 60000 → 200000 으로 올리면 이 기록에서 `valid` 15/15 ·
+`feasible` 15 가 되고, clearance 는 최대 0.320 mm 움직이며 AG3S 시간은 +0.4 ms 다.
+**`DEGRADED` 는 "못 봄" 이 아니라 "voxel 5.0 → 6.3 mm 로 거칠어짐" 이었다** —
+`INCOMPLETE`(표현조차 못 한 geometry) 는 15 프레임에서 한 번도 안 났다.
+
+**그래도 선택은 열어 둔다.** 이 서버는 OSMesa 소프트웨어 렌더링이고 AG3S 가 이미 청크 예산의
+4.3 배라, 점 수가 시간에 안 나타난 것을 GPU 환경으로 옮겨 말할 수 없다. `max_points` 는
+`config.py:127` 이 **실시간 성립 조건**이라고 적어 둔 값이다 — 그것을 바꾸는 판정은
+T5·T6(실기 루프)의 시간 예산과 함께 해야 한다.
