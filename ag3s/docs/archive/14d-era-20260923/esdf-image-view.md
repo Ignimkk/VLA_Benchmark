@@ -13,7 +13,7 @@
 
 ## 1. target / obstacle 분리
 
-![분리](../asset/image/esdf/fig8_image_separation.png)
+![분리](../../../asset/image/esdf/fig8_image_separation.png)
 
 **만드는 법.** 관측 깊이의 표면점을 그대로 복셀 라벨에 대응시킨다. 레이마칭보다 정직하다 —
 실제로 본 표면이 어떤 라벨을 받았는지만 말하고 필드가 만들어낸 표면을 섞지 않는다. 라벨은
@@ -31,7 +31,7 @@
 
 ## 2. 거리장이 스스로 재구성한 장면
 
-![레이마칭](../asset/image/esdf/fig9_raymarch.png)
+![레이마칭](../../../asset/image/esdf/fig9_raymarch.png)
 
 **만드는 법.** 픽셀마다 광선을 따라 구면 추적(sphere tracing)을 한다. 거리장이 곧 안전 보폭이라
 고정 간격보다 훨씬 적게 돌고, 거리가 복셀 반 칸보다 작아지면 표면으로 본다 — 이산 격자가 표현할
@@ -52,7 +52,7 @@
 
 ## 3. 보이는 것 앞의 여유
 
-![자유 공간](../asset/image/esdf/fig10_free_space.png)
+![자유 공간](../../../asset/image/esdf/fig10_free_space.png)
 
 **만드는 법.** 픽셀마다 표면점에서 카메라 쪽으로 5 cm / 15 cm 물러난 지점의 거리장을 읽는다.
 

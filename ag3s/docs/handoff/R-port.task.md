@@ -17,7 +17,7 @@
 | # | 무엇 | 왜 |
 |---|---|---|
 | P1 | **R1 을 프로세스 분리 구조로 바꾼다** (사용자 판정) | `pipeline.py:906` 의 T0 불변식(backend=curobo 인데 legacy EsdfBuilder 생성)이 한 프로세스 비교를 금지한다. **불변식을 건드리지 않는다** — legacy 로 한 번, cuRobo 로 한 번 따로 돌려 각각 npz 로 내고, 대조는 **밖에서** 한다. `verify_backend.py` 를 `dump` 단계와 `compare` 단계로 가른다 |
-| P2 | **R4 `ground_truth.py`** — 출력 경로(`:32` 의 박힌 `OUT`, savefig `:412`)를 인자로 뺀다 | 지금은 archive 의 `figures/curobo-ground-truth.png` 을 덮어쓴다. 기본값은 `figures/r-16d/` |
+| P2 | **R4 `ground_truth.py`** — 출력 경로(`:32` 의 박힌 `OUT`, savefig `:412`)를 인자로 뺀다 | 지금은 archive 의 `archive/14d-era-20260923/figures/curobo-ground-truth.png` 을 덮어쓴다. 기본값은 `figures/r-16d/` |
 | P3 | **R4 자산 짝 검사를 추가한다** | 1 차가 **자세만 16D, depth·필드는 09-12 자 `/tmp` npz** 인 혼합 실행이었는데 **스크립트가 그것을 안 잡았다.** 세 인자의 출처가 같은 기록인지 확인하고, 아니면 **즉시 실패**시킨다. 조용히 섞이는 것이 이 검토가 반복해서 만난 실패다 |
 | P4 | **R5 `verify_two_tier.py:7`** — `/tmp/rby1_frame.npz` 를 인자로 뺀다 (argparse 없음) | 09-11 자 14D 산물을 말없이 읽는다 |
 | P5 | **R3 이 기록을 먹게 한다** | 지금은 `TransportScene(settle_steps=400)` + seed 로 **새 씬을 만든다**(`:61`, `used_saved_run: false`). 14D 값 1.5 복셀은 *실제 파지* sweep 에서 나왔으므로, 16D 긴 기록의 파지 구간(정책 호출 33~36, `t_step` 264~288)을 먹어야 같은 것을 재는 것이다. **`--thresholds` 상한도 넓힌다** — 1 차가 3.0 을 골랐는데 그것이 후보 목록의 상한값이라 잘린 값이지 측정이 아니다 |

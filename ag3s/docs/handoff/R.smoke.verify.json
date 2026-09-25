@@ -430,9 +430,9 @@
       "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.ag3s.experiments.curobo.ground_truth --records outputs/live_test/20260924_long16d/run_0000",
       "exit_code": 0,
       "stdout_log": "outputs/verify/R/R4R5_ground_truth.log",
-      "hardcoded_output_path": "benchmark/ag3s/experiments/curobo/ground_truth.py:32 — OUT = pathlib.Path(\"benchmark/ag3s/docs/figures\"); savefig at ground_truth.py:412 writes figures/curobo-ground-truth.png",
+      "hardcoded_output_path": "benchmark/ag3s/experiments/curobo/ground_truth.py:32 — OUT = pathlib.Path(\"benchmark/ag3s/docs/figures\"); savefig at ground_truth.py:412 writes archive/14d-era-20260923/figures/curobo-ground-truth.png",
       "overwrote": [
-        "benchmark/ag3s/docs/figures/curobo-ground-truth.png"
+        "benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/curobo-ground-truth.png"
       ],
       "overwrote_note": "이 실행(2026-09-25 07:54, 코디네이터 지시 전)이 archive 증거 파일을 덮어썼다. 그 실행의 png 사본은 outputs/verify/R/OVERWROTE_curobo-ground-truth_16Dpose_14Dnpz.png 에 있다. 원본 복구는 lead 가 git 에서 한다.",
       "targets_16d_record": false,
@@ -692,7 +692,7 @@
   ],
   "overwrote": [
     {
-      "path": "benchmark/ag3s/docs/figures/curobo-ground-truth.png",
+      "path": "benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/curobo-ground-truth.png",
       "by": "R4 — benchmark/ag3s/experiments/curobo/ground_truth.py (OUT 박힘, ground_truth.py:32)",
       "when": "2026-09-25 07:54 UTC",
       "linked_as_14d_evidence_from": [

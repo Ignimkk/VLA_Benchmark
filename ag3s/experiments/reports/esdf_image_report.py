@@ -89,7 +89,7 @@ def main() -> None:
     ap.add_argument("--target", default="apple")
     ap.add_argument("--voxel", type=float, default=0.010)
     ap.add_argument("--camera", default="zed_left")
-    ap.add_argument("--out-doc", default="benchmark/ag3s/docs/esdf-image-view.md")
+    ap.add_argument("--out-doc", default="benchmark/ag3s/docs/archive/14d-era-20260923/esdf-image-view.md")
     ap.add_argument("--out-figs", default="benchmark/ag3s/asset/image/esdf")
     add_tag_argument(ap)
     args = ap.parse_args()

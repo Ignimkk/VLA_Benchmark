@@ -31,9 +31,9 @@ import time
 
 import numpy as np
 
-OUT = pathlib.Path("benchmark/ag3s/docs/figures/a7-episode-walkthrough.png")
-OUT2 = pathlib.Path("benchmark/ag3s/docs/figures/a7-episode-stages.png")
-JSON = pathlib.Path("benchmark/ag3s/docs/figures/a7-episode-walkthrough.json")
+OUT = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a7-episode-walkthrough.png")
+OUT2 = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a7-episode-stages.png")
+JSON = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a7-episode-walkthrough.json")
 CAMERAS = ("zed_left", "wrist_cam_l", "wrist_cam_r")
 
 

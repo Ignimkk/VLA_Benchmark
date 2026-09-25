@@ -53,7 +53,7 @@ import time
 
 import numpy as np
 
-OUT = pathlib.Path("benchmark/ag3s/docs/figures/a4-task-tsdf.png")
+OUT = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a4-task-tsdf.png")
 CAMERAS = ("zed_left", "wrist_cam_l", "wrist_cam_r")
 PROBE_HALF = 0.06          # 사과 주변 탐침 상자의 반 변 (m)
 #: 탐침 상자의 **아랫면**을 사과 중심보다 이만큼만 아래로 둔다. 전체 반 변을 쓰면 사과가
@@ -100,7 +100,7 @@ def main() -> None:
     ap.add_argument("--time-decay", type=float, default=0.99)
     ap.add_argument("--frustum-decay", type=float, default=0.8)
     ap.add_argument("--out", default=str(OUT))
-    ap.add_argument("--out-json", default="benchmark/ag3s/docs/figures/a4-task-tsdf.json")
+    ap.add_argument("--out-json", default="benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a4-task-tsdf.json")
     args = ap.parse_args()
 
     from benchmark.ag3s.config import AG3SConfig

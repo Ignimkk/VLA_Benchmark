@@ -187,7 +187,7 @@ done
 |---|---|---|
 | 그림 | `asset/image/<단계>/` | `asset/image_004/<단계>/` |
 | 문서 | `docs/archive/step-verification-20260904/step-05-separation.md` | 같은 폴더의 `..._004.md` |
-| 문서 안 링크 | `../asset/image/<단계>/` | `../asset/image_004/<단계>/` |
+| 문서 안 링크 | `../../../asset/image/<단계>/` | `../../../asset/image_004/<단계>/` |
 
 링크는 하드코딩이 아니라 **문서에서 그림 폴더까지의 상대 경로로 계산**하므로
 (`experiments/outputs.py`), `--out-figs` 로 아무 데나 지정해도 문서의 이미지가 깨지지 않는다.

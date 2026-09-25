@@ -62,7 +62,7 @@ def main() -> None:
     ap.add_argument("--voxel", type=float, default=0.010)
     ap.add_argument("--z-slice", type=float, default=0.87, help="수평 단면 높이 (m, base 프레임)")
     ap.add_argument("--y-slice", type=float, default=0.0, help="수직 단면 위치 (m)")
-    ap.add_argument("--out-doc", default="benchmark/ag3s/docs/esdf-diagnostics.md")
+    ap.add_argument("--out-doc", default="benchmark/ag3s/docs/archive/14d-era-20260923/esdf-diagnostics.md")
     ap.add_argument("--out-figs", default="benchmark/ag3s/asset/image/esdf")
     add_tag_argument(ap)
     args = ap.parse_args()

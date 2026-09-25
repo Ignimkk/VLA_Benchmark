@@ -14,7 +14,7 @@
 
 ## 1. 세 상태 점유 — 미관측이 어디에 있는가
 
-![점유](../asset/image/esdf/fig1_occupancy.png)
+![점유](../../../asset/image/esdf/fig1_occupancy.png)
 
 **만드는 법.** 세 카메라의 깊이를 TSDF 에 적분한 뒤 복셀마다 점유/자유/미관측을 정한다. 가중치가
 0인 복셀은 어느 카메라도 보지 못한 것이다. 로봇 픽셀은 적분 전에 마스크로 빼므로 팔이 있던
@@ -29,7 +29,7 @@
 
 ## 2. 거리장
 
-![거리장](../asset/image/esdf/fig2_distance.png)
+![거리장](../../../asset/image/esdf/fig2_distance.png)
 
 **만드는 법.** 점유 복셀 집합에 부호 있는 거리 변환(EDT)을 건다. 파란색이 표면에서 멀고
 빨간색이 표면 안쪽이며, 검정선이 표면(d = 0)이다.
@@ -41,7 +41,7 @@
 
 ## 3. 같은 단면 위의 두 표현
 
-![겹침](../asset/image/esdf/fig3_primitive_overlay.png)
+![겹침](../../../asset/image/esdf/fig3_primitive_overlay.png)
 
 **만드는 법.** 같은 수평 단면에 primitive 후보의 제약용 구 단면을 겹친다. 이 단면을 지나지 않는
 구는 그리지 않고, 지나는 구는 `sqrt(r² - dz²)` 로 줄여 그린다.
@@ -51,7 +51,7 @@
 
 ## 4. 로봇 구가 보는 여유거리
 
-![여유 비교](../asset/image/esdf/fig4_clearance_compare.png)
+![여유 비교](../../../asset/image/esdf/fig4_clearance_compare.png)
 
 **만드는 법.** 로봇 충돌 구 194개 각각에서 두 표현의 여유거리를 잰다. 양쪽 모두 같은
 지지면 half-space 행을 포함하므로, 차이는 순수하게 물체 표현에서 온다.
@@ -103,7 +103,7 @@ ESDF 쪽 위반 71개를 항별로 나누면:
 
 ## 5. 복셀 해상도
 
-![해상도](../asset/image/esdf/fig5_resolution.png)
+![해상도](../../../asset/image/esdf/fig5_resolution.png)
 
 **읽는 법.** 세 단면이 같은 씬이다. 왼쪽으로 갈수록 표면선이 매끄럽고 비용이 크다.
 이산화 편향은 복셀의 **정확히 반**이므로 제목에 함께 적었다 — 20 mm 복셀의 10 mm 편향은
@@ -117,7 +117,7 @@ ESDF 쪽 위반 71개를 항별로 나누면:
 
 ## 6. ESDF 이전 — TSDF 와 가중치
 
-![TSDF](../asset/image/esdf/fig6_tsdf.png)
+![TSDF](../../../asset/image/esdf/fig6_tsdf.png)
 
 **읽는 법.** 왼쪽이 절단된 부호 거리다. 표면 앞이 파랑, 뒤가 빨강이고 ±30 mm 에서
 잘린다. 절단 밖은 갱신하지 않으므로 **표면 뒤로 멀리는 "비어 있다"가 아니라 "가려져서 모른다"**
@@ -133,14 +133,14 @@ ESDF 쪽 위반 71개를 항별로 나누면:
 
 ## 7. TO 직전 — 필드 질의가 충돌 제약 행이 되는 순간
 
-![TO 입력](../asset/image/esdf/fig7_to_constraint_input.png)
+![TO 입력](../../../asset/image/esdf/fig7_to_constraint_input.png)
 
 이 그림은 시각화용으로 다시 만든 근사값이 아니라, `EsdfField.distance()`와 `gradient()`를 현재
 로봇 collision sphere 194개 중심에서 직접 질의한 결과다. TO가 각 trajectory timestep에서
 반복하는 것과 같은 계산이며 최종 행은 `h = d_esdf(p) - r_robot - esdf_margin`이다. 왼쪽은 필드와
 질의 위치, 가운데는 가장 제약적인 유효 행의 단면과 separating gradient, 오른쪽은 실제 scalar
 제약값을 보여준다. 전체 194개 행의 중심·반지름·거리·gradient·margin·h는
-[`to_constraint_input.json`](../asset/image/esdf/to_constraint_input.json)에 저장했다.
+[`to_constraint_input.json`](../../../asset/image/esdf/to_constraint_input.json)에 저장했다.
 
 ## 재현
 

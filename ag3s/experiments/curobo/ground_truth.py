@@ -30,7 +30,7 @@ import pathlib
 import numpy as np
 
 #: 기본 출력 자리. **`figures/` 바로 밑이 아니라 `figures/r-16d/` 다** — 2026-09-25 에 16D
-#: 재측정이 `figures/curobo-ground-truth.png` 을 덮어썼는데, 그 그림은 archive 로그가 14D 원
+#: 재측정이 `archive/14d-era-20260923/figures/curobo-ground-truth.png` 을 덮어썼는데, 그 그림은 archive 로그가 14D 원
 #: 측정의 증거로 링크하는 것이었다. 재측정은 원 측정의 파일을 덮어쓰지 않는다.
 OUT = pathlib.Path("benchmark/ag3s/docs/figures/r-16d")
 

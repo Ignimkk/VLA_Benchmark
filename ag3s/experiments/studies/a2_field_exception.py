@@ -48,7 +48,7 @@ import pathlib
 
 import numpy as np
 
-OUT = pathlib.Path("benchmark/ag3s/docs/figures/a2-field-exception.png")
+OUT = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a2-field-exception.png")
 PARENT_LINK = "link_left_arm_6"
 CONTACT_LINKS = frozenset({"ee_finger_l1", "ee_finger_l2"})
 CAMERAS = ("zed_left", "wrist_cam_l", "wrist_cam_r")
@@ -101,7 +101,7 @@ def main() -> None:
                          "사과를 15,910 px 로 본다고 적었고, 픽셀 수가 적어서 적분이 안 되는 "
                          "것이라면 여기서 갈린다")
     ap.add_argument("--out", default=str(OUT))
-    ap.add_argument("--out-json", default="benchmark/ag3s/docs/figures/a2-field-exception.json")
+    ap.add_argument("--out-json", default="benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a2-field-exception.json")
     args = ap.parse_args()
 
     from benchmark.ag3s.constraints.attached import attach_from_target

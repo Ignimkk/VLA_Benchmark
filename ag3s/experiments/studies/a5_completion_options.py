@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 import pathlib
 
-OUT = pathlib.Path("benchmark/ag3s/docs/figures/a5-completion-options.png")
+OUT = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a5-completion-options.png")
 
 
 def _style():

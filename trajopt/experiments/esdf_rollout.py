@@ -110,7 +110,7 @@ def main() -> None:
                          "none(기본) = 회귀 기준선. auto = 재생 중인 씬에서 뽑는다. "
                          "PATH = `ag3s.static_scene` 이 쓴 JSON. `serve_safe.py` 와 같은 계약")
     ap.add_argument("--out-json", default="benchmark/trajopt/asset/esdf_rollout.json")
-    ap.add_argument("--out-doc", default="benchmark/ag3s/docs/esdf-full-scenario.md")
+    ap.add_argument("--out-doc", default="benchmark/ag3s/docs/archive/14d-era-20260923/esdf-full-scenario.md")
     args = ap.parse_args()
 
     run = load_run(args.records, limit=args.frames or None)

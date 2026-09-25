@@ -21,7 +21,7 @@ import pathlib
 
 import numpy as np
 
-OUT = pathlib.Path("benchmark/ag3s/docs/figures/a6-integration-status.png")
+OUT = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a6-integration-status.png")
 #: 그림에 그릴 모듈과, 청크 한 줄에서 그 모듈이 "돌았다" 를 어떻게 읽는가.
 MODULES = [
     ("AG3S 가 돌았다", lambda r: r["ag3s_status"] != "no_geometry" and r.get("scene_ok", True)),

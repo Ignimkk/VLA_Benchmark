@@ -36,7 +36,7 @@ import pathlib
 
 import numpy as np
 
-OUT = pathlib.Path("benchmark/ag3s/docs/figures/a1-static-wiring.png")
+OUT = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a1-static-wiring.png")
 LINK_LABEL = {"arms": "양팔 120 구 — 제약 모델이 쓰는 것",
               "all": "전신 194 구 — 참고"}
 
@@ -118,7 +118,7 @@ def main() -> None:
                     help="질의할 구 집합. 기본은 **둘 다** — 한쪽만 재면 판정이 뒤집힌다 "
                          "(모듈 머리말 참고)")
     ap.add_argument("--out", default=str(OUT))
-    ap.add_argument("--out-json", default="benchmark/ag3s/docs/figures/a1-static-wiring.json")
+    ap.add_argument("--out-json", default="benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a1-static-wiring.json")
     args = ap.parse_args()
 
     from benchmark.ag3s.fields import static_scene

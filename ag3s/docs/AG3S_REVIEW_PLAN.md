@@ -441,7 +441,7 @@ raw 는 `handoff/T1-a.verify.json`.
 
 **그리고 규약 하나가 이 국면 전체에 걸렸다 — 재측정은 원 측정의 파일을 덮어쓰지 않는다.**
 R4 의 `ground_truth.py` 가 출력 경로를 박아 두어 archive 가 C5 의 14D 원 측정 증거로 링크하는
-`figures/curobo-ground-truth.png` 을 덮어썼다. 이름이 같으면 archive 의 본문(14D 숫자)과
+`archive/14d-era-20260923/figures/curobo-ground-truth.png` 을 덮어썼다. 이름이 같으면 archive 의 본문(14D 숫자)과
 그림(16D)이 어긋난다. 재측정 산출물은 자기 디렉토리(R 은 `figures/r-16d/`)에 쓰고 archive 는
 본문도 그림도 고치지 않는다.
 
@@ -994,7 +994,7 @@ cuRobo       적분 2.1~2.7 ms + ESDF(2계층) 1.2~1.3 ms = 3.5~4.0 ms
    → **T0~T6 계획의 I2 가 이것이다**
 5. 스트리밍 — 프레임마다 실시간 갱신 → **T0~T6 계획의 I3·I5**
 
-![통합 지도](figures/integration-map.png)
+![통합 지도](archive/14d-era-20260923/figures/integration-map.png)
 
 
 ---
@@ -1226,7 +1226,7 @@ Step 6 은 F11 갈래 3 으로 닫혔었다. 그때 고친 것은 **권한을 �
 
 이 계획의 방향(cuRoboV2 인프라 · swept volume ROI · 조작 대상/주목 대상 분리)과 위 두 발견을
 한 장으로 합친 그림을 로그에 남겼다 —
-[`figures/ag3s-architecture.png`](figures/ag3s-architecture.png).
+[`archive/14d-era-20260923/figures/ag3s-architecture.png`](archive/14d-era-20260923/figures/ag3s-architecture.png).
 
 ---
 

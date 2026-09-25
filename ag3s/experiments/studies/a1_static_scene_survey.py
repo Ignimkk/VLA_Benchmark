@@ -17,7 +17,7 @@ from collections import defaultdict
 
 import numpy as np
 
-OUT = pathlib.Path("benchmark/ag3s/docs/figures/a1-static-scene.png")
+OUT = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a1-static-scene.png")
 MARGIN = 0.05
 
 

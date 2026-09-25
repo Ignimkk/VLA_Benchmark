@@ -298,7 +298,7 @@ T5를 통과한 뒤 속도를 낮춰 수정 청크를 실제 MuJoCo 제어기에
 이동한 뒤 현재 시뮬레이션 시각의 세 카메라를 캡처했다. 이 실행의 attention은 정책 검증과
 분리된 합성 Gaussian이다.
 
-![fresh T1/T3 dashboard](figures/live-test/fresh-t1-seed17-dashboard.png)
+![fresh T1/T3 dashboard](archive/14d-era-20260923/figures/live-test/fresh-t1-seed17-dashboard.png)
 
 | 항목 | 실측 | 1차 판정 |
 |---|---:|---|
@@ -332,7 +332,7 @@ T5를 통과한 뒤 속도를 낮춰 수정 청크를 실제 MuJoCo 제어기에
 두 번째 새 씬에는 카메라별 MuJoCo body/geom segmentation truth를 함께 저장했다. 이를 이용해
 target 중심과 모든 위반 구의 최근접 body를 귀속했다.
 
-![fresh seed 23 attribution](figures/live-test/fresh-t1-seed23-attribution.png)
+![fresh seed 23 attribution](archive/14d-era-20260923/figures/live-test/fresh-t1-seed23-attribution.png)
 
 ### target 중심
 
@@ -368,7 +368,7 @@ body 원점과 관측 표면 중심은 같은 값이 아니다. AG3S는 보이�
 
 ## coarse -33 mm 판정 교정
 
-![field truth correction](figures/live-test/fresh-t1-seed23-field-truth.png)
+![field truth correction](archive/14d-era-20260923/figures/live-test/fresh-t1-seed23-field-truth.png)
 
 기존 `verify_adapter`의 테이블 정확도는 작업 영역에서 `|d| < voxel_size`인 모든 복셀의 z
 중앙값을 테이블 상판 0.823 m와 비교했다. 이 선택은 테이블 상판뿐 아니라 하판과 주변의 수직
@@ -399,7 +399,7 @@ fine은 중앙 오차는 줄였지만 P95가 19.56 mm로 coarse보다 크다. �
 
 ## fine 오차 꼬리의 귀속
 
-![field competition](figures/live-test/fresh-t1-seed23-field-competition.png)
+![field competition](archive/14d-era-20260923/figures/live-test/fresh-t1-seed23-field-competition.png)
 
 fine 절대오차 P95 19.56 mm인 표본은 미세 창 경계에 모이지 않았다. table과 crate의 거리가
 비슷한 영역에 모였다. 점군 참값은 table 점이 아주 조금 가까우면 `table`로 귀속하지만, 익명

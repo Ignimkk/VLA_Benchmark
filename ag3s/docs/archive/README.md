@@ -8,8 +8,9 @@
 
 | 폴더 | 무엇 | 왜 닫혔나 |
 |---|---|---|
+| [`14d-era-20260923/`](14d-era-20260923/) | 16D 전환 직전에 사용하던 14D 문서와 그림, 그림 재현용 부속 파일 | 2026-09-24에 action layout과 회귀 기준선이 16D로 전환됐다. 전환 뒤 갱신된 현재 문서·그림은 최상위에 남겼다 |
 | [`step-verification-20260904/`](step-verification-20260904/) | 단계 1–6 검증 — fine-tuned π0.5 의 출력을 MuJoCo ground truth 와 대조한 기록. `run_0002` 와 `run_0004` 두 롤아웃 | 단계 1–5 는 통과했고 그 결론이 이후 설계의 전제가 됐다. 단계 6(primitive 근사)은 아래 이유로 닫혔다. 이후 검토는 로그의 Step 5–11 이 이어받는다 |
-| [`primitive-era-20260904/`](primitive-era-20260904/) | 경계 구 하나로 표현할 수 없는 기하의 분석과, 그것을 풀려고 설계했던 primitive 분해 알고리즘 | **구현하지 않았다.** 축약 자체를 하지 않는 TSDF → ESDF 표현을 고르는 쪽으로 갔다 — [`../ESDF-BACKEND.md`](../ESDF-BACKEND.md). 계획의 *"primitive 는 절대 안 됨"* (2026-09-14)과 로그 Step 9(후보·primitive 피팅이 live 경로에서 돌지 않는다)로 닫혔다 |
+| [`primitive-era-20260904/`](primitive-era-20260904/) | 경계 구 하나로 표현할 수 없는 기하의 분석과, 그것을 풀려고 설계했던 primitive 분해 알고리즘 | **구현하지 않았다.** 축약 자체를 하지 않는 TSDF → ESDF 표현을 고르는 쪽으로 갔다 — [`14d-era-20260923/ESDF-BACKEND.md`](14d-era-20260923/ESDF-BACKEND.md). 계획의 *"primitive 는 절대 안 됨"* (2026-09-14)과 로그 Step 9(후보·primitive 피팅이 live 경로에서 돌지 않는다)로 닫혔다 |
 
 ## step-verification-20260904/ 안의 `_004`
 

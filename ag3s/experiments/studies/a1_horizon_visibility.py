@@ -30,7 +30,7 @@ import pathlib
 
 import numpy as np
 
-OUT = pathlib.Path("benchmark/ag3s/docs/figures/a1-horizon-visibility.png")
+OUT = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a1-horizon-visibility.png")
 CAMERAS = ("zed_left", "wrist_cam_l", "wrist_cam_r")
 
 
@@ -62,7 +62,7 @@ def main() -> None:
     ap.add_argument("--phase-boundaries", type=int, nargs=3, default=(24, 56, 72))
     ap.add_argument("--out", default=str(OUT))
     ap.add_argument("--out-json",
-                    default="benchmark/ag3s/docs/figures/a1-horizon-visibility.json")
+                    default="benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a1-horizon-visibility.json")
     args = ap.parse_args()
 
     from benchmark.ag3s.fields import static_scene

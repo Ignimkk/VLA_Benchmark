@@ -972,7 +972,7 @@ curobo 가 한 프로세스에서 못 돈다" 를 전제로 실패를 읽으면 
 ### 규약 — **재측정은 원 측정의 파일을 덮어쓰지 않는다** (실제로 한 번 밟았다)
 
 R4 의 `ground_truth.py` 는 출력 경로가 코드에 박혀 있어(`:32` 의 `OUT`) 1 차 실행이
-`figures/curobo-ground-truth.png` 을 **그대로 덮어썼다**. 그 그림은 archive
+`archive/14d-era-20260923/figures/curobo-ground-truth.png` 을 **그대로 덮어썼다**. 그 그림은 archive
 [`AG3S_REVIEW_LOG.md`](AG3S_REVIEW_LOG.md) 의 참 거리 대조 절과
 `PIPELINE-STAGES-AND-CUROBO-ROLE.md` 가 **C5(거친 20 mm 계층이 판정 지점에서 clearance 를
 넓게 답한다)의 14D 원 측정 증거로 링크**하는 것이다. 이름이 같으면 archive 의 **본문은 14D

@@ -9,7 +9,7 @@
 ## 왜
 
 primitive backend 는 후보 하나를 도형 하나로 줄인다. 조밀하고 볼록한 물체에는 맞지만 두 가지로
-깨진다 ([archive/primitive-era-20260904/OPEN-geometry-representation.md](archive/primitive-era-20260904/OPEN-geometry-representation.md) 의 측정값):
+깨진다 ([archive/primitive-era-20260904/OPEN-geometry-representation.md](../primitive-era-20260904/OPEN-geometry-representation.md) 의 측정값):
 
 | 문제 | 증상 |
 |---|---|

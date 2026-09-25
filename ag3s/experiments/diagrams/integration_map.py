@@ -102,6 +102,6 @@ a.text(0.3, 0.05,
 
 fig.suptitle("cuRoboV2 · attention · trajopt 는 언제 합쳐지는가", fontsize=14.5)
 fig.tight_layout(rect=(0, 0, 1, 0.95))
-o = pathlib.Path("benchmark/ag3s/docs/figures/integration-map.png")
+o = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/integration-map.png")
 fig.savefig(o, dpi=110, bbox_inches="tight")
 print("wrote", o)

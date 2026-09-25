@@ -18,9 +18,9 @@
 
 ## 0. 한 장 지도 — 전체 틀에서 지금 어디인가
 
-![파이프라인 지도](figures/doc-pipeline-map.png)
+![파이프라인 지도](archive/14d-era-20260923/figures/doc-pipeline-map.png)
 
-**[`figures/doc-pipeline-map.png`](figures/doc-pipeline-map.png)** · 생성:
+**[`archive/14d-era-20260923/figures/doc-pipeline-map.png`](archive/14d-era-20260923/figures/doc-pipeline-map.png)** · 생성:
 `benchmark/ag3s/experiments/diagrams/doc_pipeline_map.py`
 
 ```
@@ -41,9 +41,9 @@
 
 ## 1. cuRobo 의 역할
 
-![cuRobo 의 역할](figures/doc-curobo-role.png)
+![cuRobo 의 역할](archive/14d-era-20260923/figures/doc-curobo-role.png)
 
-**[`figures/doc-curobo-role.png`](figures/doc-curobo-role.png)** · 생성:
+**[`archive/14d-era-20260923/figures/doc-curobo-role.png`](archive/14d-era-20260923/figures/doc-curobo-role.png)** · 생성:
 `benchmark/ag3s/experiments/diagrams/doc_curobo_role.py`
 
 ### 1.1 한 문장 정의
@@ -180,8 +180,8 @@ URDF 자신의 링크 자세에서 유도하므로, 나중에 `resolve_T_base_ca
 ### ④ 시각 자료
 
 실제 씬 사진은 아래 [§3 ④](#-시각-자료-1) 의 (a) 패널이 그대로 이 단계의 입력이다.
-프레임당 카메라 기여·신선도 그래프는 [`figures/step7-state-lag-0004.png`](figures/step7-state-lag-0004.png)
-(상태 지연 F14) 와 [`figures/step7-fusion-asymmetry-measured-0004.png`](figures/step7-fusion-asymmetry-measured-0004.png).
+프레임당 카메라 기여·신선도 그래프는 [`archive/14d-era-20260923/figures/step7-state-lag-0004.png`](archive/14d-era-20260923/figures/step7-state-lag-0004.png)
+(상태 지연 F14) 와 [`archive/14d-era-20260923/figures/step7-fusion-asymmetry-measured-0004.png`](archive/14d-era-20260923/figures/step7-fusion-asymmetry-measured-0004.png).
 
 ### ⑤ 왜 이 방법인가
 
@@ -195,9 +195,9 @@ URDF 자신의 링크 자세에서 유도하므로, 나중에 `resolve_T_base_ca
 
 ## 3. 로봇 마스크 (self-filter)
 
-![로봇 마스크](figures/doc-stage-robot-mask.png)
+![로봇 마스크](archive/14d-era-20260923/figures/doc-stage-robot-mask.png)
 
-**[`figures/doc-stage-robot-mask.png`](figures/doc-stage-robot-mask.png)** · 생성:
+**[`archive/14d-era-20260923/figures/doc-stage-robot-mask.png`](archive/14d-era-20260923/figures/doc-stage-robot-mask.png)** · 생성:
 `benchmark/ag3s/experiments/diagrams/doc_robot_mask.py`
 
 ### ① 방법론
@@ -253,8 +253,8 @@ violated 구              18 / 120              105 / 120
 | **그래프** | (c) 구 120 개의 여유거리, 마스크 O/X 두 곡선 · (d) 카메라별 삭제 비율 · (e) 지운 픽셀의 원래 depth 분포 |
 | **표** | (f) 입력·출력·겪은 문제·실측 |
 
-F12 의 상세는 [`figures/f12-why-apple-vanishes-0004.png`](figures/f12-why-apple-vanishes-0004.png),
-F14 는 [`figures/step7-state-lag-0004.png`](figures/step7-state-lag-0004.png).
+F12 의 상세는 [`archive/14d-era-20260923/figures/f12-why-apple-vanishes-0004.png`](archive/14d-era-20260923/figures/f12-why-apple-vanishes-0004.png),
+F14 는 [`archive/14d-era-20260923/figures/step7-state-lag-0004.png`](archive/14d-era-20260923/figures/step7-state-lag-0004.png).
 
 ### ⑤ 왜 이 방법인가
 
@@ -279,8 +279,8 @@ ESDF·여유거리·FK 를 설명 없이 쓰고 발견 ID 를 그대로 노출�
 
 | 블록 | 그림 / 내용 |
 |---|---|
-| 문제 | [`ppt/ppt-rm-01-scene.png`](figures/ppt/ppt-rm-01-scene.png) — 세 카메라에서 지운 픽셀 (머리 17.3 %) |
-| I/O 계약 | [`ppt/ppt-rm-02-io.png`](figures/ppt/ppt-rm-02-io.png) — 입력 4 / `robot_sphere_mask` / 출력 2 |
+| 문제 | [`ppt/ppt-rm-01-scene.png`](archive/14d-era-20260923/figures/ppt/ppt-rm-01-scene.png) — 세 카메라에서 지운 픽셀 (머리 17.3 %) |
+| I/O 계약 | [`ppt/ppt-rm-02-io.png`](archive/14d-era-20260923/figures/ppt/ppt-rm-02-io.png) — 입력 4 / `robot_sphere_mask` / 출력 2 |
 | 왜 (3 줄) | ① **정확성** 안 지우면 자기 몸과 충돌한다고 보고 ② **일관성** 필터와 제약이 같은 FK·같은 sphere chain ③ **정직성** 미관측 ≠ 자유 |
 
 말로 할 인용 (`robot_filter.py:3-5`):
@@ -297,8 +297,8 @@ ESDF·여유거리·FK 를 설명 없이 쓰고 발견 ID 를 그대로 노출�
 
 | 블록 | 그림 / 내용 |
 |---|---|
-| 방법론 | [`ppt/ppt-rm-03-method.png`](figures/ppt/ppt-rm-03-method.png) — FK 구 → 역투영 → uv 산포, 그리고 20 mm 부풀림이 실제로 지우는 자리 |
-| 적용 전후 | [`ppt/ppt-rm-04-beforeafter.png`](figures/ppt/ppt-rm-04-beforeafter.png) — 마스크 X / O 거리장 단면 + 여유거리 곡선 + 큰 수치 |
+| 방법론 | [`ppt/ppt-rm-03-method.png`](archive/14d-era-20260923/figures/ppt/ppt-rm-03-method.png) — FK 구 → 역투영 → uv 산포, 그리고 20 mm 부풀림이 실제로 지우는 자리 |
+| 적용 전후 | [`ppt/ppt-rm-04-beforeafter.png`](archive/14d-era-20260923/figures/ppt/ppt-rm-04-beforeafter.png) — 마스크 X / O 거리장 단면 + 여유거리 곡선 + 큰 수치 |
 | 한계 | F12 — 아래 빨간 박스 |
 
 방법론에서 말할 넷:
@@ -615,8 +615,8 @@ optimizer 에 도달하지 않는다) 배선이고, **2026-09-15 에 완료됐�
 
 | # | 무엇 | 자료 |
 |---|---|---|
-| B1 | F12 원인 규명 — 가림 vs 마스크를 MuJoCo 세그멘테이션 참값으로 가른 과정 | [`f12-why-apple-vanishes-0004.png`](figures/f12-why-apple-vanishes-0004.png) |
-| B2 | 상태 지연이 얼마부터 해로운가 (F14) — 16 ms 에 851 점, 96 ms 에 **6,275 점**이 샌다 | [`step7-state-lag-0004.png`](figures/step7-state-lag-0004.png) |
+| B1 | F12 원인 규명 — 가림 vs 마스크를 MuJoCo 세그멘테이션 참값으로 가른 과정 | [`f12-why-apple-vanishes-0004.png`](archive/14d-era-20260923/figures/f12-why-apple-vanishes-0004.png) |
+| B2 | 상태 지연이 얼마부터 해로운가 (F14) — 16 ms 에 851 점, 96 ms 에 **6,275 점**이 샌다 | [`step7-state-lag-0004.png`](archive/14d-era-20260923/figures/step7-state-lag-0004.png) |
 | B3 | 캡슐 → 구 이산화 — 반지름을 `sqrt(r²+(s/2)²)` 로 올리지 않으면 반지름의 **11.8 %** 가 빈다 | `urdf_sphere_chain.py:345-350` |
 | B4 | 테스트가 고정한 성질 8 개 (경계 정확성 · 구별 반지름 · `uv` 보존 · `q` 불일치는 예외) | `tests/ag3s/test_robot_models.py:291-383` |
 
@@ -636,9 +636,9 @@ PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m benchmark.ag3s.experiments.dia
 
 ## 4. attention lifting
 
-![attention lifting](figures/doc-stage-attention-lifting.png)
+![attention lifting](archive/14d-era-20260923/figures/doc-stage-attention-lifting.png)
 
-**[`figures/doc-stage-attention-lifting.png`](figures/doc-stage-attention-lifting.png)** · 생성:
+**[`archive/14d-era-20260923/figures/doc-stage-attention-lifting.png`](archive/14d-era-20260923/figures/doc-stage-attention-lifting.png)** · 생성:
 `benchmark/ag3s/experiments/diagrams/doc_attention_stages.py`
 
 ### ① 방법론
@@ -692,10 +692,10 @@ attention 을 `max` 로 합친 뒤 정규화한다** — 순서가 반대면 안
 | **그래프** | (e) 카메라별 원시 attention 분포 (log) — F2 의 근거 |
 | **표** | (f) 입력·출력·실측 |
 
-기존 그림도 함께 본다: [`step5-lifting.png`](figures/step5-lifting.png) (모듈 요약),
-[`step5-f2-verdict.png`](figures/step5-f2-verdict.png) (F2 판정),
-[`step5-f9-image-hw-0004.png`](figures/step5-f9-image-hw-0004.png) (F9 판정),
-[`step5-fusion-rules.png`](figures/step5-fusion-rules.png) (융합 규칙).
+기존 그림도 함께 본다: [`step5-lifting.png`](archive/14d-era-20260923/figures/step5-lifting.png) (모듈 요약),
+[`step5-f2-verdict.png`](archive/14d-era-20260923/figures/step5-f2-verdict.png) (F2 판정),
+[`step5-f9-image-hw-0004.png`](archive/14d-era-20260923/figures/step5-f9-image-hw-0004.png) (F9 판정),
+[`step5-fusion-rules.png`](archive/14d-era-20260923/figures/step5-fusion-rules.png) (융합 규칙).
 
 ### ⑤ 왜 이 방법인가
 
@@ -722,8 +722,8 @@ attention 을 `max` 로 합친 뒤 정규화한다** — 순서가 반대면 안
 
 | 블록 | 그림 / 내용 |
 |---|---|
-| 입력과 결과 | [`ppt/ppt-ap-01-attention.png`](figures/ppt/ppt-ap-01-attention.png) — 사과 접근 중 같은 시점의 16×16 격자 3 장 → 정책 RGB overlay → head 3D point cloud projection |
-| I/O 계약 | [`ppt/ppt-ap-02-io.png`](figures/ppt/ppt-ap-02-io.png) — 입력 3 / `lift()` 3 단계 / 출력(값 2 벌) |
+| 입력과 결과 | [`ppt/ppt-ap-01-attention.png`](archive/14d-era-20260923/figures/ppt/ppt-ap-01-attention.png) — 사과 접근 중 같은 시점의 16×16 격자 3 장 → 정책 RGB overlay → head 3D point cloud projection |
+| I/O 계약 | [`ppt/ppt-ap-02-io.png`](archive/14d-era-20260923/figures/ppt/ppt-ap-02-io.png) — 입력 3 / `lift()` 3 단계 / 출력(값 2 벌) |
 | 왜 (3 줄) | ① **대응이 이미 있다** — 재구성이 `uv` 를 보존해 둔다 ② **값이 두 벌이어야 한다** — 문턱용과 argmax 용 ③ **점을 하나도 안 버린다** — attention 은 문턱이 아니다 |
 
 #### 슬라이드 2 — 3D 로 올린 결과, 그리고 적용 전후
@@ -733,8 +733,8 @@ attention 을 `max` 로 합친 뒤 정규화한다** — 순서가 반대면 안
 
 | 블록 | 그림 / 내용 |
 |---|---|
-| 3D 투영 | [`ppt/ppt-ap-03-lift3d.png`](figures/ppt/ppt-ap-03-lift3d.png) — frame 5 사과 접근 장면에서 head 한 대와 세 대 융합 결과 |
-| 적용 전후 | [`ppt/ppt-ap-04-beforeafter.png`](figures/ppt/ppt-ap-04-beforeafter.png) — F9·F2 를 되돌려 나란히 |
+| 3D 투영 | [`ppt/ppt-ap-03-lift3d.png`](archive/14d-era-20260923/figures/ppt/ppt-ap-03-lift3d.png) — frame 5 사과 접근 장면에서 head 한 대와 세 대 융합 결과 |
+| 적용 전후 | [`ppt/ppt-ap-04-beforeafter.png`](archive/14d-era-20260923/figures/ppt/ppt-ap-04-beforeafter.png) — F9·F2 를 되돌려 나란히 |
 | 한계 | F8(씨앗 퍼센타일 컷) — 잠복. 아래 |
 
 **적용 전/후 — 같은 기록에서 수정 전 경로를 되돌려 15 프레임을 다시 돌렸다.**
@@ -976,9 +976,9 @@ attention map을 조회해 색을 붙였다. 청록색 별은 같은 apple GT �
 
 ## 5. target grounding (+ 잠금)
 
-![target grounding](figures/doc-stage-target-grounding.png)
+![target grounding](archive/14d-era-20260923/figures/doc-stage-target-grounding.png)
 
-**[`figures/doc-stage-target-grounding.png`](figures/doc-stage-target-grounding.png)** · 생성:
+**[`archive/14d-era-20260923/figures/doc-stage-target-grounding.png`](archive/14d-era-20260923/figures/doc-stage-target-grounding.png)** · 생성:
 `benchmark/ag3s/experiments/diagrams/doc_attention_stages.py`
 
 ### ① 방법론
@@ -1032,11 +1032,11 @@ attention map을 조회해 색을 붙였다. 청록색 별은 같은 apple GT �
 | **그래프** | (d) 후보 점수 막대 — 1 위/2 위 격차 3.2 배 · (e) 씨앗 컷 히스토그램 (F8 이 사는 자리) |
 | **표** | (f) 입력·출력·실측·알려진 한계 |
 
-기존 그림: [`step6-f8-seeds-0004.png`](figures/step6-f8-seeds-0004.png) (F8 판정),
-[`step6-attention-vs-hand-0004.png`](figures/step6-attention-vs-hand-0004.png) (F11 의 근거),
-[`target-latch-evidence.png`](figures/target-latch-evidence.png) ·
-[`grasp-latch-verify.png`](figures/grasp-latch-verify.png) (F17 잠금),
-[`point-vs-primitive.png`](figures/point-vs-primitive.png) (F19).
+기존 그림: [`step6-f8-seeds-0004.png`](archive/14d-era-20260923/figures/step6-f8-seeds-0004.png) (F8 판정),
+[`step6-attention-vs-hand-0004.png`](archive/14d-era-20260923/figures/step6-attention-vs-hand-0004.png) (F11 의 근거),
+[`target-latch-evidence.png`](archive/14d-era-20260923/figures/target-latch-evidence.png) ·
+[`grasp-latch-verify.png`](archive/14d-era-20260923/figures/grasp-latch-verify.png) (F17 잠금),
+[`point-vs-primitive.png`](archive/14d-era-20260923/figures/point-vs-primitive.png) (F19).
 
 ### ⑤ 왜 이 방법인가
 
@@ -1119,15 +1119,15 @@ numpy 버전 때문에 합칠 수 없다.
 
 ### ④ 시각 자료
 
-[§1](#1-curobo-의-역할) 의 [`doc-curobo-role.png`](figures/doc-curobo-role.png) 이 이 단계의
+[§1](#1-curobo-의-역할) 의 [`doc-curobo-role.png`](archive/14d-era-20260923/figures/doc-curobo-role.png) 이 이 단계의
 그림이다. 여섯 패널이 각각 실제 씬(a) · 3D point cloud map(b) · TSDF→ESDF 표면 3D(c) ·
 거리장 단면(d) · eikonal 그래프(e) · 역할 표(f) 다.
 
-그 밖에: [`curobo-adapter-scene.png`](figures/curobo-adapter-scene.png) (거친/미세/차분 단면
-6 패널), [`curobo-ground-truth.png`](figures/curobo-ground-truth.png) (참 거리 대조),
-[`label-layer-verify.png`](figures/label-layer-verify.png) (라벨 층),
-[`curobo-v2-gap.png`](figures/curobo-v2-gap.png) (F20 잔상 + 구분표),
-[`step8-grid-utilization-0004.png`](figures/step8-grid-utilization-0004.png) (F16 격자 낭비).
+그 밖에: [`curobo-adapter-scene.png`](archive/14d-era-20260923/figures/curobo-adapter-scene.png) (거친/미세/차분 단면
+6 패널), [`curobo-ground-truth.png`](archive/14d-era-20260923/figures/curobo-ground-truth.png) (참 거리 대조),
+[`label-layer-verify.png`](archive/14d-era-20260923/figures/label-layer-verify.png) (라벨 층),
+[`curobo-v2-gap.png`](archive/14d-era-20260923/figures/curobo-v2-gap.png) (F20 잔상 + 구분표),
+[`step8-grid-utilization-0004.png`](archive/14d-era-20260923/figures/step8-grid-utilization-0004.png) (F16 격자 낭비).
 
 ### ⑤ 왜 이 방법인가
 
@@ -1149,9 +1149,9 @@ numpy 버전 때문에 합칠 수 없다.
 
 ## 7. 거리장 어댑터 — distance / gradient
 
-![거리장 어댑터](figures/doc-stage-field-adapter.png)
+![거리장 어댑터](archive/14d-era-20260923/figures/doc-stage-field-adapter.png)
 
-**[`figures/doc-stage-field-adapter.png`](figures/doc-stage-field-adapter.png)** · 생성:
+**[`archive/14d-era-20260923/figures/doc-stage-field-adapter.png`](archive/14d-era-20260923/figures/doc-stage-field-adapter.png)** · 생성:
 `benchmark/ag3s/experiments/diagrams/doc_field_adapter.py`
 
 ### ① 방법론

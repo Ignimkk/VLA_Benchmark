@@ -3,7 +3,7 @@
     PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m \\
         benchmark.ag3s.experiments.diagrams.doc_pipeline_map
 
-`figures/curobo-adapter-map.png` (2026-09-12) 의 갱신판이다. 그 사이에 닫힌 것
+`archive/14d-era-20260923/figures/curobo-adapter-map.png` (2026-09-12) 의 갱신판이다. 그 사이에 닫힌 것
 (E3 쥔 물체 배선 · 라벨 층 · F18 목적지 마진 · F17 잠금 · F15 지지면 기본값)과 새로 뜬 것
 (N1 self-collision · N2 geometry 채널 · F20 잔상)을 반영한다.
 

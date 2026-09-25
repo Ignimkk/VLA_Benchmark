@@ -2,7 +2,7 @@
 
 **상태: 보류 → 다른 방법으로 대응됨.** 아래의 primitive 분해 알고리즘은 구현하지 않았다.
 대신 **TSDF → ESDF backend** 를 추가해 축약 자체를 하지 않는 표현을 골랐다 —
-[ESDF-BACKEND.md](../../ESDF-BACKEND.md) 참조.
+[ESDF-BACKEND.md](../14d-era-20260923/ESDF-BACKEND.md) 참조.
 
 아래 분석은 그대로 유효하다. primitive backend 가 기본값으로 남아 있으므로, 그것을 쓰는 한
 여기 적힌 문제도 그대로 있다. ESDF 로 바꾸면 두 실패(비등방성·중공)가 모두 사라지는데, 그 대신

@@ -362,7 +362,7 @@ def main() -> None:
     ap.add_argument("--y-slice", type=float, default=0.0)
     ap.add_argument("--margin", type=float, default=.05)
     ap.add_argument("--out", default="benchmark/ag3s/asset/image/observation_sdf")
-    ap.add_argument("--out-doc", default="benchmark/ag3s/docs/observation-sdf-visualization.md")
+    ap.add_argument("--out-doc", default="benchmark/ag3s/docs/archive/14d-era-20260923/observation-sdf-visualization.md")
     add_tag_argument(ap)
     args = ap.parse_args()
 

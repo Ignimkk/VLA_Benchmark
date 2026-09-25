@@ -39,7 +39,7 @@ import pathlib
 
 import numpy as np
 
-OUT = pathlib.Path("benchmark/ag3s/docs/figures/a3-release-signal.png")
+OUT = pathlib.Path("benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a3-release-signal.png")
 PARENT_LINK = "link_left_arm_6"
 CONTACT_LINKS = frozenset({"ee_finger_l1", "ee_finger_l2"})
 CAMERAS = ("zed_left", "wrist_cam_l", "wrist_cam_r")
@@ -90,7 +90,7 @@ def main() -> None:
     ap.add_argument("--esdf-margin", type=float, default=0.05)
     ap.add_argument("--cameras", choices=("head", "all"), default="all")
     ap.add_argument("--out", default=str(OUT))
-    ap.add_argument("--out-json", default="benchmark/ag3s/docs/figures/a3-release-signal.json")
+    ap.add_argument("--out-json", default="benchmark/ag3s/docs/archive/14d-era-20260923/archive/14d-era-20260923/figures/a3-release-signal.json")
     args = ap.parse_args()
 
     from benchmark.ag3s.constraints.attached import attach_from_target, attached_points_in_base

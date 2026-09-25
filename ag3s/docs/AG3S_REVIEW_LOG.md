@@ -1645,9 +1645,9 @@ PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-curobo/bin/python -m \
 
 생성: `ag3s/experiments/curobo/figures.py` (ag3s venv). 세 장 모두 위 수치와 같은 실행에서 나온다.
 
-**1. 실제 씬** — [`figures/curobo-adapter-scene.png`](figures/curobo-adapter-scene.png)
+**1. 실제 씬** — [`archive/14d-era-20260923/figures/curobo-adapter-scene.png`](archive/14d-era-20260923/figures/curobo-adapter-scene.png)
 
-![실제 씬](figures/curobo-adapter-scene.png)
+![실제 씬](archive/14d-era-20260923/figures/curobo-adapter-scene.png)
 
 > **읽는 법 — (b) 만 카메라 사진이고 나머지는 공간을 자른 단면이다.** 처음 판에서는 이 구분이
 > 없어 "어디서 촬영한 뷰인가" 를 알 수 없었다 (2026-09-12 사용자 지적). 그래서 (a) 배치도와
@@ -1671,9 +1671,9 @@ run_0004 프레임 10 (grasp 단계).
 
 **AG3S numpy 는 이 그림에서 뺐다** — 교체 대상이지 후보가 아니므로 (위 "무엇을 왜 비교하는가").
 
-**2. 15 청크 추이** — [`figures/curobo-adapter-rollout.png`](figures/curobo-adapter-rollout.png)
+**2. 15 청크 추이** — [`archive/14d-era-20260923/figures/curobo-adapter-rollout.png`](archive/14d-era-20260923/figures/curobo-adapter-rollout.png)
 
-![15 청크 추이](figures/curobo-adapter-rollout.png)
+![15 청크 추이](archive/14d-era-20260923/figures/curobo-adapter-rollout.png)
 
 - **(a)** 최적화 **전**: 세 곡선이 거의 겹친다. 백엔드를 바꿔도 씬을 같게 본다.
 - **(b)** 최적화 **후**: 파랑(AG3S)과 초록(거친)은 0 위, 빨강(2계층)은 0 아래에 눌린다.
@@ -1681,9 +1681,9 @@ run_0004 프레임 10 (grasp 단계).
   ±7 mm 안에 있고 빨강만 선 아래에 있을 뿐이다.
 - **(c)** 단계별 조임. transit −3.7 → grasp −7.6 mm. 오른쪽으로 갈수록 커진다.
 
-**3. 전체 틀 지도** — [`figures/curobo-adapter-map.png`](figures/curobo-adapter-map.png)
+**3. 전체 틀 지도** — [`archive/14d-era-20260923/figures/curobo-adapter-map.png`](archive/14d-era-20260923/figures/curobo-adapter-map.png)
 
-![전체 틀 지도](figures/curobo-adapter-map.png)
+![전체 틀 지도](archive/14d-era-20260923/figures/curobo-adapter-map.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -1819,9 +1819,9 @@ cuRobo 2계층 20+5 mm      -0.49 mm       4.61 mm        -2.33 mm        2.43 m
 
 ### 시각화 (규칙 A)
 
-**[`figures/curobo-ground-truth.png`](figures/curobo-ground-truth.png)** — 실제 씬 + 그래프 + 표.
+**[`archive/14d-era-20260923/figures/curobo-ground-truth.png`](archive/14d-era-20260923/figures/curobo-ground-truth.png)** — 실제 씬 + 그래프 + 표.
 
-![참 거리 대조](figures/curobo-ground-truth.png)
+![참 거리 대조](archive/14d-era-20260923/figures/curobo-ground-truth.png)
 
 - **(a)** 참값 자체 — 역투영 점군까지의 거리. 흰 선이 관측된 표면이고, 흰 바깥은 관측 안 된
   영역이라 비교에서 뺐다.
@@ -1954,9 +1954,9 @@ head          0.00000    0.00023    0.00044    0.00057     0.00000    0.00044
 ### 시각화 (규칙 A)
 
 생성: `ag3s/experiments/studies/step5_lifting_figures.py` (ag3s venv).
-**[`figures/step5-lifting.png`](figures/step5-lifting.png)**
+**[`archive/14d-era-20260923/figures/step5-lifting.png`](archive/14d-era-20260923/figures/step5-lifting.png)**
 
-![Step 5 — attention lifting](figures/step5-lifting.png)
+![Step 5 — attention lifting](archive/14d-era-20260923/figures/step5-lifting.png)
 
 - **(a) 실제 씬** — head depth 위에 16x16 격자를 480x640 으로 확대해 겹친 것.
   **attention 이 사과가 아니라 crate(바구니) 위에 뭉쳐 있다** — F11 의 상류가 여기서 보인다.
@@ -2082,11 +2082,11 @@ C 의 씨앗은 B 와 **완전히 동일**하다 (`B==C 씨앗 동일: True`). �
 
 #### 시각화 (규칙 A)
 
-**[`figures/step5-f2-verdict.png`](figures/step5-f2-verdict.png)** — 실제 씬 + 그래프 + 표.
+**[`archive/14d-era-20260923/figures/step5-f2-verdict.png`](archive/14d-era-20260923/figures/step5-f2-verdict.png)** — 실제 씬 + 그래프 + 표.
 단면이 아니라 **위에서 내려다본 융합 클라우드**다 (x = 앞쪽, y = 왼쪽).
 프레임 7 — A 와 B 가 갈리는 첫 프레임.
 
-![F2 판정](figures/step5-f2-verdict.png)
+![F2 판정](archive/14d-era-20260923/figures/step5-f2-verdict.png)
 
 - **(a) A 현재** — grounded target(청록 별)이 **crate** 위에 있다. 오른쪽에 밝은 덩어리가 크게 떠 있는데
   그것이 손목 카메라가 자기 눈금으로 1.0 까지 펴 놓은 영역이다.
@@ -2239,9 +2239,9 @@ transit(20~23 %)에서 접근·파지로 갈수록 55~67 % 로 올라간다.
 
 #### 시각화
 
-**[`figures/step5-overlap.png`](figures/step5-overlap.png)**
+**[`archive/14d-era-20260923/figures/step5-overlap.png`](archive/14d-era-20260923/figures/step5-overlap.png)**
 
-![multi-view overlap](figures/step5-overlap.png)
+![multi-view overlap](archive/14d-era-20260923/figures/step5-overlap.png)
 
 - **(a) 실제 씬** — 위에서 내려다본 융합 클라우드, 점마다 몇 대가 봤는가.
   **겹침이 무작위가 아니라 공간적으로 구조가 있다** — 오른쪽 띠가 3 대, 가운데가 2 대, 왼쪽이 1 대.
@@ -2319,9 +2319,9 @@ overlap 절에서 "겹친 점의 값 폭 > 0.1 인 비율 7.9 %, 즉 카메라�
 
 #### 시각화
 
-**[`figures/step5-fusion-rules.png`](figures/step5-fusion-rules.png)**
+**[`archive/14d-era-20260923/figures/step5-fusion-rules.png`](archive/14d-era-20260923/figures/step5-fusion-rules.png)**
 
-![융합 규칙 비교](figures/step5-fusion-rules.png)
+![융합 규칙 비교](archive/14d-era-20260923/figures/step5-fusion-rules.png)
 
 - **(a)(b)(c)** 프레임 7 의 세 규칙. 같은 기하 위에 값만 다르다. 셋 다 banana 를 찾는다.
 - **(d)** 겹친 점에서 규칙이 만드는 값 차이. **`mean − max` 는 거의 전부 0 이하** (희석),
@@ -2484,13 +2484,13 @@ cuRobo v1 부록 D 가 그 구조다.
 
 ### 시각화
 
-**[`figures/step6-policy-behavior-0004.png`](figures/step6-policy-behavior-0004.png)** — 무엇이 움직였나.
+**[`archive/14d-era-20260923/figures/step6-policy-behavior-0004.png`](archive/14d-era-20260923/figures/step6-policy-behavior-0004.png)** — 무엇이 움직였나.
 
-![정책 거동](figures/step6-policy-behavior-0004.png)
+![정책 거동](archive/14d-era-20260923/figures/step6-policy-behavior-0004.png)
 
-**[`figures/step6-attention-vs-hand-0004.png`](figures/step6-attention-vs-hand-0004.png)** — 어긋남의 시간축.
+**[`archive/14d-era-20260923/figures/step6-attention-vs-hand-0004.png`](archive/14d-era-20260923/figures/step6-attention-vs-hand-0004.png)** — 어긋남의 시간축.
 
-![attention 대 손](figures/step6-attention-vs-hand-0004.png)
+![attention 대 손](archive/14d-era-20260923/figures/step6-attention-vs-hand-0004.png)
 
 (b) 가 핵심이다. 빨간 선(손-사과)이 스텝 8 에 50 mm 아래로 내려가 붙어 있는 내내, 배경색은
 파랑(target = 바구니)이다. 초록 선(사과 높이)이 11 부터 올라가는 것이 실제로 들어올렸다는 증거다.
@@ -2607,9 +2607,9 @@ TSDF 에 적분한다. 그래서 **한 프레임만 처리한 필드로 특정 �
 
 ### 시각화
 
-**[`figures/grasp-damage-0004.png`](figures/grasp-damage-0004.png)**
+**[`archive/14d-era-20260923/figures/grasp-damage-0004.png`](archive/14d-era-20260923/figures/grasp-damage-0004.png)**
 
-![파지 피해](figures/grasp-damage-0004.png)
+![파지 피해](archive/14d-era-20260923/figures/grasp-damage-0004.png)
 
 (b) 가 핵심이다. 검은 선이 스텝 11 까지 참값(-33 mm, 초록 점선)에 붙어 있다가 들어올려지는
 순간 +121 mm 까지 튄다 — 필드가 사과를 놓친 것이다.
@@ -2717,9 +2717,9 @@ wrist_cam_l  파지 중 사과 픽셀 평균 15,910 개  ->  마스크 후 남�
 
 ### 시각화
 
-**[`figures/f12-why-apple-vanishes-0004.png`](figures/f12-why-apple-vanishes-0004.png)**
+**[`archive/14d-era-20260923/figures/f12-why-apple-vanishes-0004.png`](archive/14d-era-20260923/figures/f12-why-apple-vanishes-0004.png)**
 
-![F12 원인](figures/f12-why-apple-vanishes-0004.png)
+![F12 원인](archive/14d-era-20260923/figures/f12-why-apple-vanishes-0004.png)
 
 (a) 가 결정적이다 — 머리 카메라 화면에서 파란 로봇 마스크가 양팔을 덮고 있고, 손가락 사이의
 사과는 **빨강**(사과인데 마스크에 덮임)이다. 초록(살아남은 사과)이 한 점도 없다.
@@ -2832,17 +2832,17 @@ failure mode becomes reachable" 라고 그 의도를 밝힌다).
 
 ### 시각화
 
-**[`figures/step6-f8-seeds-0004.png`](figures/step6-f8-seeds-0004.png)** ·
-**[`figures/step6-f8-seeds-0005.png`](figures/step6-f8-seeds-0005.png)**
+**[`archive/14d-era-20260923/figures/step6-f8-seeds-0004.png`](archive/14d-era-20260923/figures/step6-f8-seeds-0004.png)** ·
+**[`archive/14d-era-20260923/figures/step6-f8-seeds-0005.png`](archive/14d-era-20260923/figures/step6-f8-seeds-0005.png)**
 
-![F8 판정](figures/step6-f8-seeds-0004.png)
+![F8 판정](archive/14d-era-20260923/figures/step6-f8-seeds-0004.png)
 
 (b) 가 핵심이다 — 초록 선(선택된 cell)은 왼쪽 끝에 있고, 오른쪽 끝 분홍 띠가 아무도 잡지 않는
 위험 구간이다. 로그 축이라 띠 안에 실제로 수백 조합이 있다는 것이 보인다.
 
-**[`figures/grasp-damage-0005.png`](figures/grasp-damage-0005.png)** — run_0005 의 두 국면.
+**[`archive/14d-era-20260923/figures/grasp-damage-0005.png`](archive/14d-era-20260923/figures/grasp-damage-0005.png)** — run_0005 의 두 국면.
 
-![run_0005 파지 피해](figures/grasp-damage-0005.png)
+![run_0005 파지 피해](archive/14d-era-20260923/figures/grasp-damage-0005.png)
 
 ## 실험 스크립트의 그림 이름 규칙
 
@@ -2948,9 +2948,9 @@ manipulator 도 없었다. 하나만 고쳤다면 숫자가 움직이지 않아 
 
 ### 시각화
 
-**[`figures/step6-attach-effect.png`](figures/step6-attach-effect.png)**
+**[`archive/14d-era-20260923/figures/step6-attach-effect.png`](archive/14d-era-20260923/figures/step6-attach-effect.png)**
 
-![attach 효과](figures/step6-attach-effect.png)
+![attach 효과](archive/14d-era-20260923/figures/step6-attach-effect.png)
 
 위 줄이 쥔 손끝, 아래 줄이 권한 없는 손목·전완이다. **위에서는 초록(권한 있음)이 빨강보다
 정확히 50 mm 위에 있고, 아래에서는 두 선이 완전히 겹친다.** 완화가 허용된 링크 밖으로 새지
@@ -3063,10 +3063,10 @@ if hw is None and depth is not None:
 
 ### 시각화
 
-**[`figures/step5-f9-image-hw-0004.png`](figures/step5-f9-image-hw-0004.png)** ·
-**[`figures/step5-f9-image-hw-0005.png`](figures/step5-f9-image-hw-0005.png)**
+**[`archive/14d-era-20260923/figures/step5-f9-image-hw-0004.png`](archive/14d-era-20260923/figures/step5-f9-image-hw-0004.png)** ·
+**[`archive/14d-era-20260923/figures/step5-f9-image-hw-0005.png`](archive/14d-era-20260923/figures/step5-f9-image-hw-0005.png)**
 
-![F9](figures/step5-f9-image-hw-0004.png)
+![F9](archive/14d-era-20260923/figures/step5-f9-image-hw-0004.png)
 
 (a) 의 톱니는 프레임마다 파이프라인 둘(수정 전/후)이 번갈아 불리기 때문이다 — 홀수 호출이
 수정 전으로 40~57 px 모자라고, 짝수 호출이 고친 뒤로 0 이다. (c) 가 답이 바뀐 두 프레임이다.
@@ -3141,7 +3141,7 @@ if hw is None and depth is not None:
 로봇 구로 넣는다) 먼저 배선하면 두 번 반영해야 한다. 선행 확인(casadi·osqp 설치 가능성)만
 아무 때나 해도 무해하다.
 
-![통합 지도](figures/integration-map.png)
+![통합 지도](archive/14d-era-20260923/figures/integration-map.png)
 
 ---
 
@@ -3209,12 +3209,12 @@ AG3S 는 카메라 셋을 한 씬으로 합치는 방법을 **둘** 갖고 있�
 
 ### 시각화
 
-**[`figures/step7-fusion-asymmetry.png`](figures/step7-fusion-asymmetry.png)** — 개념 도식
+**[`archive/14d-era-20260923/figures/step7-fusion-asymmetry.png`](archive/14d-era-20260923/figures/step7-fusion-asymmetry.png)** — 개념 도식
 (사용자가 "1번이 무슨 내용인지 모르겠다" 고 하여 그린 것).
 
-**[`figures/step7-fusion-asymmetry-measured-0004.png`](figures/step7-fusion-asymmetry-measured-0004.png)** — 실측.
+**[`archive/14d-era-20260923/figures/step7-fusion-asymmetry-measured-0004.png`](archive/14d-era-20260923/figures/step7-fusion-asymmetry-measured-0004.png)** — 실측.
 
-![융합 비대칭 실측](figures/step7-fusion-asymmetry-measured-0004.png)
+![융합 비대칭 실측](archive/14d-era-20260923/figures/step7-fusion-asymmetry-measured-0004.png)
 
 ### 용어
 
@@ -3283,9 +3283,9 @@ AG3S 는 카메라 셋을 한 씬으로 합치는 방법을 **둘** 갖고 있�
 
 ### 시각화
 
-**[`figures/step7-state-lag-0004.png`](figures/step7-state-lag-0004.png)**
+**[`archive/14d-era-20260923/figures/step7-state-lag-0004.png`](archive/14d-era-20260923/figures/step7-state-lag-0004.png)**
 
-![상태 지연](figures/step7-state-lag-0004.png)
+![상태 지연](archive/14d-era-20260923/figures/step7-state-lag-0004.png)
 
 (a) 의 초록 영역이 설정이 허용하는 범위인데, 빨간 곡선이 그 안에서 이미 6,275 까지 올라간다.
 
@@ -3506,9 +3506,9 @@ config.py 기본값   exclude_support_surfaces=True,  use_support_planes=True
 
 ### 시각화
 
-**[`figures/step8-planes-vs-field-0004.png`](figures/step8-planes-vs-field-0004.png)**
+**[`archive/14d-era-20260923/figures/step8-planes-vs-field-0004.png`](archive/14d-era-20260923/figures/step8-planes-vs-field-0004.png)**
 
-![평면 대 필드](figures/step8-planes-vs-field-0004.png)
+![평면 대 필드](archive/14d-era-20260923/figures/step8-planes-vs-field-0004.png)
 
 (a) 에서 파란 선이 z=0.79~0.84 에 음수 골을 만드는 것이 필드 안의 테이블이고, z=0 의 회색 점이
 미관측인 바닥이다. 초록 띠가 팔 구가 실제로 있는 높이 — 둘 다에서 멀다.
@@ -3578,9 +3578,9 @@ swept volume 이 정하는 것이 F11 이후의 올바른 분담이다.
 
 ### 시각화
 
-**[`figures/step8-grid-utilization-0004.png`](figures/step8-grid-utilization-0004.png)**
+**[`archive/14d-era-20260923/figures/step8-grid-utilization-0004.png`](archive/14d-era-20260923/figures/step8-grid-utilization-0004.png)**
 
-![격자 이용률](figures/step8-grid-utilization-0004.png)
+![격자 이용률](archive/14d-era-20260923/figures/step8-grid-utilization-0004.png)
 
 (a) 에서 빨간 구름(로봇 구)이 상자 위쪽에 몰려 있고 그 아래 687 mm 가 통째로 비어 있다.
 
@@ -3819,20 +3819,20 @@ grounding 진동을 결함의 근거로 쓰면 안 된다.
 
 ### 시각화
 
-**[`figures/task-relevance-rules.png`](figures/task-relevance-rules.png)** — 세 규칙(attention 기준 ·
+**[`archive/14d-era-20260923/figures/task-relevance-rules.png`](archive/14d-era-20260923/figures/task-relevance-rules.png)** — 세 규칙(attention 기준 ·
 carving · 쥔 것 기준)이 '사과를 바구니에' 에서 내는 답, 그리고 거리장이 익명이라 파낼 수 없는 이유.
 
-![task relevance](figures/task-relevance-rules.png)
+![task relevance](archive/14d-era-20260923/figures/task-relevance-rules.png)
 
-**[`figures/target-latch-evidence.png`](figures/target-latch-evidence.png)** — 44 프레임 전체의
+**[`archive/14d-era-20260923/figures/target-latch-evidence.png`](archive/14d-era-20260923/figures/target-latch-evidence.png)** — 44 프레임 전체의
 `picked_body`, 두 기록의 초기 확신도, 잠금 규칙 셋, 그리고 이미 존재하는 등급.
 
-![latch evidence](figures/target-latch-evidence.png)
+![latch evidence](archive/14d-era-20260923/figures/target-latch-evidence.png)
 
-**[`figures/basket-place-budget.png`](figures/basket-place-budget.png)** — 바구니 단면 실측, 담는
+**[`archive/14d-era-20260923/figures/basket-place-budget.png`](archive/14d-era-20260923/figures/basket-place-budget.png)** — 바구니 단면 실측, 담는
 구간의 여유 추이, 성공 판정.
 
-![basket budget](figures/basket-place-budget.png)
+![basket budget](archive/14d-era-20260923/figures/basket-place-budget.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -3859,9 +3859,9 @@ carving · 쥔 것 기준)이 '사과를 바구니에' 에서 내는 답, 그리
 조작 대상/주목 대상 분리)을 **하나의 그림으로 합친 것**이다. 지금 코드의 모습이 아니라 **닿으려는
 모습**이다.
 
-**[`figures/ag3s-architecture.png`](figures/ag3s-architecture.png)**
+**[`archive/14d-era-20260923/figures/ag3s-architecture.png`](archive/14d-era-20260923/figures/ag3s-architecture.png)**
 
-![AG3S 아키텍처](figures/ag3s-architecture.png)
+![AG3S 아키텍처](archive/14d-era-20260923/figures/ag3s-architecture.png)
 
 ### 읽는 법 — AG3S 안이 세 열인 것이 핵심이다
 
@@ -3900,9 +3900,9 @@ carving · 쥔 것 기준)이 '사과를 바구니에' 에서 내는 답, 그리
 
 사용자 요청에 따라 앞서 제공된 그림 프롬프트만 옮기지 않고, 이 로그의 지지면 판정·잠금/목적지 논의·최종 구현안과 실제 호출 경로를 대조해 두 장을 다시 그렸다. **목표 구조를 설명하는 그림이며, 이번 작업에서 파이프라인 코드를 구현하거나 설계 미결 사항을 확정하지 않았다.**
 
-- [전체 아키텍처 PNG](figures/ag3s-architecture-v2/01_overall.png) · [SVG](figures/ag3s-architecture-v2/01_overall.svg) · [PDF](figures/ag3s-architecture-v2/01_overall.pdf)
-- [AG3S 상세 PNG](figures/ag3s-architecture-v2/02_ag3s_detail.png) · [SVG](figures/ag3s-architecture-v2/02_ag3s_detail.svg) · [PDF](figures/ag3s-architecture-v2/02_ag3s_detail.pdf)
-- [생성 코드](figures/ag3s-architecture-v2/draw_architecture.py)
+- [전체 아키텍처 PNG](archive/14d-era-20260923/figures/ag3s-architecture-v2/01_overall.png) · [SVG](archive/14d-era-20260923/figures/ag3s-architecture-v2/01_overall.svg) · [PDF](archive/14d-era-20260923/figures/ag3s-architecture-v2/01_overall.pdf)
+- [AG3S 상세 PNG](archive/14d-era-20260923/figures/ag3s-architecture-v2/02_ag3s_detail.png) · [SVG](archive/14d-era-20260923/figures/ag3s-architecture-v2/02_ag3s_detail.svg) · [PDF](archive/14d-era-20260923/figures/ag3s-architecture-v2/02_ag3s_detail.pdf)
+- [생성 코드](archive/14d-era-20260923/figures/ag3s-architecture-v2/draw_architecture.py)
 
 ### 실제 코드에서 확인해 반영한 연결
 
@@ -4037,14 +4037,14 @@ cuRoboV2 §5.4 의 **PBA+** 는 본래 최근접 site 를 구하는 알고리즘
 
 ### 시각화
 
-**[`figures/margin-bound.png`](figures/margin-bound.png)** — 손가락은 상한이 아니다 · 구 축소의 손익.
+**[`archive/14d-era-20260923/figures/margin-bound.png`](archive/14d-era-20260923/figures/margin-bound.png)** — 손가락은 상한이 아니다 · 구 축소의 손익.
 
-![마진 상한](figures/margin-bound.png)
+![마진 상한](archive/14d-era-20260923/figures/margin-bound.png)
 
-**[`figures/point-vs-primitive.png`](figures/point-vs-primitive.png)** — 점 기반 대 단일 구, 복셀
+**[`archive/14d-era-20260923/figures/point-vs-primitive.png`](archive/14d-era-20260923/figures/point-vs-primitive.png)** — 점 기반 대 단일 구, 복셀
 다운샘플 비용, 마진 예산.
 
-![점 대 primitive](figures/point-vs-primitive.png)
+![점 대 primitive](archive/14d-era-20260923/figures/point-vs-primitive.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -4150,10 +4150,10 @@ numpy 곱 한 번이지 그래프 재생성이 아니다. **근사가 아니라 
 
 ### 시각화
 
-**[`figures/attached-points-verify.png`](figures/attached-points-verify.png)** — 실제 씬(스냅샷이
+**[`archive/14d-era-20260923/figures/attached-points-verify.png`](archive/14d-era-20260923/figures/attached-points-verify.png)** — 실제 씬(스냅샷이
 관측 점 위에 남는다) · 표면 어긋남 추이 · 검증 표.
 
-![E3 배선 검증](figures/attached-points-verify.png)
+![E3 배선 검증](archive/14d-era-20260923/figures/attached-points-verify.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -4256,10 +4256,10 @@ F13 이 쓰던 우회로(필드 거리와 해석적 거리를 한 복셀 안에�
 
 ### 시각화
 
-**[`figures/label-layer-verify.png`](figures/label-layer-verify.png)** — 라벨 격자의 z 단면(자른
+**[`archive/14d-era-20260923/figures/label-layer-verify.png`](archive/14d-era-20260923/figures/label-layer-verify.png)** — 라벨 격자의 z 단면(자른
 높이 배치도 포함) · 사과가 보는 것 · 검증 표.
 
-![라벨 층 검증](figures/label-layer-verify.png)
+![라벨 층 검증](archive/14d-era-20260923/figures/label-layer-verify.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -4349,10 +4349,10 @@ F18(전역 마진 50 mm 가 담기 동작을 구조적으로 막는다)의 수�
 
 ### 시각화
 
-**[`figures/destination-margin.png`](figures/destination-margin.png)** — 담기가 풀리는 것 ·
+**[`archive/14d-era-20260923/figures/destination-margin.png`](archive/14d-era-20260923/figures/destination-margin.png)** — 담기가 풀리는 것 ·
 로봇 구가 불변인 것 · 마진 표.
 
-![목적지 마진](figures/destination-margin.png)
+![목적지 마진](archive/14d-era-20260923/figures/destination-margin.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -4424,10 +4424,10 @@ geometry 채널 stamping 이 그대로 옳다** — 그때는 F19 가 적용되�
 
 ### 시각화
 
-**[`figures/curobo-v2-gap.png`](figures/curobo-v2-gap.png)** — 잔상 실측 · 항목별 구분표 ·
+**[`archive/14d-era-20260923/figures/curobo-v2-gap.png`](archive/14d-era-20260923/figures/curobo-v2-gap.png)** — 잔상 실측 · 항목별 구분표 ·
 두 채널 구조.
 
-![cuRoboV2 대비](figures/curobo-v2-gap.png)
+![cuRoboV2 대비](archive/14d-era-20260923/figures/curobo-v2-gap.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -4556,10 +4556,10 @@ grounding  apple ...........  | crate ................... orange   | crate
 
 ### 시각화
 
-**[`figures/grasp-latch-verify.png`](figures/grasp-latch-verify.png)** — 두 줄이 프레임 7 부터
+**[`archive/14d-era-20260923/figures/grasp-latch-verify.png`](archive/14d-era-20260923/figures/grasp-latch-verify.png)** — 두 줄이 프레임 7 부터
 갈라지는 것 · 그리퍼 신호 · 검증 표.
 
-![잠금 검증](figures/grasp-latch-verify.png)
+![잠금 검증](archive/14d-era-20260923/figures/grasp-latch-verify.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -4601,7 +4601,7 @@ grounding  apple ...........  | crate ................... orange   | crate
 | curobo_src | `78fd485fa82d9b9a063fb4985e371814587e666a` | 기준 시점 clean |
 | pi05_TO_hybrid | `9b6c63ea96c666021be45201c9fa5d5e7ab98773` | 정확한 상태는 baseline.json에 저장 |
 
-[baseline.json](figures/reuse-audit-20260915/baseline.json)에 353개 관련 파일의 SHA-256, git status와 diff 통계를 저장했다. tracked 변경 patch도 같은 디렉터리에 보관했다. **patch만으로 기존 untracked 파일까지 복원되지는 않는다.** 입력 `run_0004`, `run_0005`, 두 attention NPZ의 파일별 해시도 포함한다. [environment.json](figures/reuse-audit-20260915/environment.json)은 실제 Python·라이브러리·GPU·cuRobo import 경로다. CPU와 cuRobo 환경은 NumPy 주버전이 달라 분리했다.
+[baseline.json](archive/14d-era-20260923/figures/reuse-audit-20260915/baseline.json)에 353개 관련 파일의 SHA-256, git status와 diff 통계를 저장했다. tracked 변경 patch도 같은 디렉터리에 보관했다. **patch만으로 기존 untracked 파일까지 복원되지는 않는다.** 입력 `run_0004`, `run_0005`, 두 attention NPZ의 파일별 해시도 포함한다. [environment.json](archive/14d-era-20260923/figures/reuse-audit-20260915/environment.json)은 실제 Python·라이브러리·GPU·cuRobo import 경로다. CPU와 cuRobo 환경은 NumPy 주버전이 달라 분리했다.
 
 검증은 기존 기록의 MuJoCo 오프라인 재생, 기존 테스트, 독립적인 합성 반례, 기존 H200 GPU의 Mapper 실험으로 한정했다. 보정 청크를 실기 로봇이나 닫힌 제어 루프에서 실행하지 않았고, 신규 모델 가중치 다운로드·학습·신규 실측 데이터 수집도 하지 않았다. 아래 속도는 동시 실행과 JIT의 영향을 통제한 비교가 아니므로 성능 순위에 사용하지 않는다.
 
@@ -4767,7 +4767,7 @@ P0는 안전 판정을 잘못 긍정할 수 있어 기능 활성화 전에 고�
 
 ### 5. 이번에 실행한 결과
 
-기존 suite **574 passed, 231 warnings, 133.21 s**. [pytest.log](figures/reuse-audit-20260915/pytest.log). 테스트 통과는 새 반례가 없다는 뜻이 아니며, 새 반례는 운영 테스트를 변경하지 않고 별도 실험으로 남겼다.
+기존 suite **574 passed, 231 warnings, 133.21 s**. [pytest.log](archive/14d-era-20260923/figures/reuse-audit-20260915/pytest.log). 테스트 통과는 새 반례가 없다는 뜻이 아니며, 새 반례는 운영 테스트를 변경하지 않고 별도 실험으로 남겼다.
 
 | 기록·카메라 | 청크 수 | 기하 위반 해소 / 개선 | 반환 feasible / violated | 보정 후 최소 / 중앙 여유 mm | 기준 궤적 차이 중앙 |
 |---|---:|---:|---:|---:|---:|
@@ -4782,7 +4782,7 @@ P0는 안전 판정을 잘못 긍정할 수 있어 기능 활성화 전에 고�
 
 **이 재생의 중요한 한계:** `esdf_rollout.py`는 원래 기록 자세에서 각 청크를 다시 보정한다. 보정 청크 실행 후 바뀐 다음 관측을 생성하는 closed-loop 실험이 아니다. attach/detach/destination 주입이 비활성이므로 F18/F19 새 경로의 전체 기능 시험도 아니다. phase는 t_step=(24,56,72)의 고정 경계이며 놓은 뒤 release 상태를 자동 인식하지 않는다. 22개 청크로 파지 전부터 후반까지 관측 범위는 확장했지만 이를 정확한 파지/이동/해제 라벨 평가로 부르지 않는다.
 
-![기록 재현](figures/reuse-audit-20260915/recorded-results.png)
+![기록 재현](archive/14d-era-20260923/figures/reuse-audit-20260915/recorded-results.png)
 
 | 작은 실험 | 이번 결과 | 근거 |
 |---|---|---|
@@ -4796,13 +4796,13 @@ P0는 안전 판정을 잘못 긍정할 수 있어 기능 활성화 전에 고�
 | cuRobo 특성 누적 | 1→0 입력, 누적값 0.5 | H200 public Mapper 실행 |
 | 표면 재투영 연결 | 가시 표면 3,200개; 경계 제외 1,920개 분류 일치 | 합성 depth 평면, 실제 GPU 출력 |
 
-[반례 JSON](figures/reuse-audit-20260915/counterexamples.json), [GPU 누적 JSON](figures/reuse-audit-20260915/gpu_features.json), [재투영 JSON](figures/reuse-audit-20260915/gpu_reprojection.json), [기록 집계 JSON](figures/reuse-audit-20260915/rollout_summary.json).
+[반례 JSON](archive/14d-era-20260923/figures/reuse-audit-20260915/counterexamples.json), [GPU 누적 JSON](archive/14d-era-20260923/figures/reuse-audit-20260915/gpu_features.json), [재투영 JSON](archive/14d-era-20260923/figures/reuse-audit-20260915/gpu_reprojection.json), [기록 집계 JSON](archive/14d-era-20260923/figures/reuse-audit-20260915/rollout_summary.json).
 
-![반례](figures/reuse-audit-20260915/counterexamples.png)
+![반례](archive/14d-era-20260923/figures/reuse-audit-20260915/counterexamples.png)
 
-![GPU 연결](figures/reuse-audit-20260915/gpu-mapping.png)
+![GPU 연결](archive/14d-era-20260923/figures/reuse-audit-20260915/gpu-mapping.png)
 
-**실제 씬의 기존 관찰 그림:** [자기 필터에 의한 파지 손상](figures/grasp-damage-0004.png), [라벨 층 관찰](figures/label-layer-verify.png), [점·primitive 비교](figures/point-vs-primitive.png). 이 세 그림은 이번 새 생성 결과가 아니라 앞선 실험의 시각 자료다. 새 반례 그림은 합성, 재생 그래프는 기존 기록을 새로 처리한 수치임을 구분했다.
+**실제 씬의 기존 관찰 그림:** [자기 필터에 의한 파지 손상](archive/14d-era-20260923/figures/grasp-damage-0004.png), [라벨 층 관찰](archive/14d-era-20260923/figures/label-layer-verify.png), [점·primitive 비교](archive/14d-era-20260923/figures/point-vs-primitive.png). 이 세 그림은 이번 새 생성 결과가 아니라 앞선 실험의 시각 자료다. 새 반례 그림은 합성, 재생 그래프는 기존 기록을 새로 처리한 수치임을 구분했다.
 
 ### 6. 대안 비교와 권고
 
@@ -4838,11 +4838,11 @@ P0는 안전 판정을 잘못 긍정할 수 있어 기능 활성화 전에 고�
 
 **간략 그림:** cuRobo 설명은 TSDF·ESDF·표면 추출 상자 하나로 유지했다.
 
-![간략 아키텍처](figures/reuse-audit-20260915/architecture-simple.png)
+![간략 아키텍처](archive/14d-era-20260923/figures/reuse-audit-20260915/architecture-simple.png)
 
 **상세 그림:** 구현 완료된 현황도가 아니라 이번 근거로 수정한 제안이다.
 
-![상세 아키텍처](figures/reuse-audit-20260915/architecture-detailed.png)
+![상세 아키텍처](archive/14d-era-20260923/figures/reuse-audit-20260915/architecture-detailed.png)
 
 바로 재사용할 부분은 cuRobo `Mapper`의 기하 적분·표면/거리장 추출, 기존 카메라 보정·attention 입력 변환, SQP의 청크 계약이다. 우리 쪽에서 구현할 부분은 현재 attention 재투영 어댑터, 물체 정체·파지 상태, 정확한 쌍별 마진, 관측·ROI·시간 검사다. GPU 로봇 마스크, 독립 feature 시간 누적, 전체 cuRobo optimizer 교체는 먼저 비교 실험할 부분이다.
 
@@ -4908,12 +4908,12 @@ bash benchmark/ag3s/experiments/reuse_audit_20260915/reproduce.sh
 
 | 그림 | 생성 스크립트 | 무엇 |
 |---|---|---|
-| [`doc-curobo-role.png`](figures/doc-curobo-role.png) | `experiments/doc_curobo_role.py` | 마스크된 depth · 3D 점구름 772,397 점 · ESDF 표면 복셀 92,360 개(3D) · 수평 단면 · eikonal 분포 · 역할 경계표 |
-| [`doc-stage-robot-mask.png`](figures/doc-stage-robot-mask.png) | `experiments/doc_robot_mask.py` | 세 카메라 마스크 · 마스크 전/후 점구름(3D) · **마스크 없는 대조군과의 여유거리 대조** · 삭제 비율 · 지운 픽셀의 depth 분포 |
-| [`doc-stage-attention-lifting.png`](figures/doc-stage-attention-lifting.png) | `experiments/doc_attention_stages.py` | 16x16 원본 3 장 · 씬 투영 · **점구름에 칠한 3인칭 뷰** · 융합 후 3D · 카메라별 눈금 분포(F2 근거) |
-| [`doc-stage-target-grounding.png`](figures/doc-stage-target-grounding.png) | 같은 스크립트 | 씨앗·지지면·최고점(3D) · 후보 덩어리(3D) · 고른 target + 경계구 · 점수 막대 · 씨앗 컷(F8 자리) |
-| [`doc-stage-field-adapter.png`](figures/doc-stage-field-adapter.png) | `experiments/doc_field_adapter.py` | 수직 단면 + **∇d 화살표** · 구 120 개를 여유거리로 칠한 3인칭 · 제약 행 전부 · 2계층 − 거친 차이 · 기울기 검증 |
-| [`doc-pipeline-map.png`](figures/doc-pipeline-map.png) | `experiments/doc_pipeline_map.py` | 규칙 B 지도 2026-09-15 판. `curobo-adapter-map.png`(09-12)의 갱신 |
+| [`doc-curobo-role.png`](archive/14d-era-20260923/figures/doc-curobo-role.png) | `experiments/doc_curobo_role.py` | 마스크된 depth · 3D 점구름 772,397 점 · ESDF 표면 복셀 92,360 개(3D) · 수평 단면 · eikonal 분포 · 역할 경계표 |
+| [`doc-stage-robot-mask.png`](archive/14d-era-20260923/figures/doc-stage-robot-mask.png) | `experiments/doc_robot_mask.py` | 세 카메라 마스크 · 마스크 전/후 점구름(3D) · **마스크 없는 대조군과의 여유거리 대조** · 삭제 비율 · 지운 픽셀의 depth 분포 |
+| [`doc-stage-attention-lifting.png`](archive/14d-era-20260923/figures/doc-stage-attention-lifting.png) | `experiments/doc_attention_stages.py` | 16x16 원본 3 장 · 씬 투영 · **점구름에 칠한 3인칭 뷰** · 융합 후 3D · 카메라별 눈금 분포(F2 근거) |
+| [`doc-stage-target-grounding.png`](archive/14d-era-20260923/figures/doc-stage-target-grounding.png) | 같은 스크립트 | 씨앗·지지면·최고점(3D) · 후보 덩어리(3D) · 고른 target + 경계구 · 점수 막대 · 씨앗 컷(F8 자리) |
+| [`doc-stage-field-adapter.png`](archive/14d-era-20260923/figures/doc-stage-field-adapter.png) | `experiments/doc_field_adapter.py` | 수직 단면 + **∇d 화살표** · 구 120 개를 여유거리로 칠한 3인칭 · 제약 행 전부 · 2계층 − 거친 차이 · 기울기 검증 |
+| [`doc-pipeline-map.png`](archive/14d-era-20260923/figures/doc-pipeline-map.png) | `experiments/doc_pipeline_map.py` | 규칙 B 지도 2026-09-15 판. `curobo-adapter-map.png`(09-12)의 갱신 |
 
 전부 `run_0004` **프레임 10**(grasp) 한 프레임이다. cuRobo 필드는 `build_field.py` 로 새로
 만들었고 두 계층 모두 eikonal 검사(`|∇d|` 중앙 거친 0.999 · 미세 1.000)를 통과했다.
@@ -5021,10 +5021,10 @@ bash benchmark/ag3s/experiments/reuse_audit_20260915/reproduce.sh
 
 ### 시각화
 
-**[`figures/self-collision-latent.png`](figures/self-collision-latent.png)** — 상수인 최소 여유 ·
+**[`archive/14d-era-20260923/figures/self-collision-latent.png`](archive/14d-era-20260923/figures/self-collision-latent.png)** — 상수인 최소 여유 ·
 구 분류 · 허용목록의 출처.
 
-![self-collision 잠복](figures/self-collision-latent.png)
+![self-collision 잠복](archive/14d-era-20260923/figures/self-collision-latent.png)
 
 ### 검증
 
@@ -5210,10 +5210,10 @@ ESDF 격자   x [-300, 1200]  y [-900, 900]  z [0, 1600] mm
 
 ### 시각화
 
-**[`figures/analytic-channel.png`](figures/analytic-channel.png)** — 미관측 비율 · 낙관 오차
+**[`archive/14d-era-20260923/figures/analytic-channel.png`](archive/14d-era-20260923/figures/analytic-channel.png)** — 미관측 비율 · 낙관 오차
 분포 · 찍기가 안 된 이유.
 
-![해석적 채널](figures/analytic-channel.png)
+![해석적 채널](archive/14d-era-20260923/figures/analytic-channel.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -5304,10 +5304,10 @@ cuRoboV2 보다 적다** — 그쪽은 GPU 로 수십 Hz 를 돌리며 계속 �
 
 ### 시각화
 
-**[`figures/frustum-decay.png`](figures/frustum-decay.png)** — 잔상이 지워지는가 · 실제 기하가
+**[`archive/14d-era-20260923/figures/frustum-decay.png`](archive/14d-era-20260923/figures/frustum-decay.png)** — 잔상이 지워지는가 · 실제 기하가
 살아남는가 · 판정표.
 
-![frustum decay](figures/frustum-decay.png)
+![frustum decay](archive/14d-era-20260923/figures/frustum-decay.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -5411,7 +5411,7 @@ office_wall_*  +2,612 ~ +3,256 mm
 3. **월드 = base 로 봐도 된다** — `base` 가 44 프레임 동안 원점에서 **0.16 mm** 움직였다.
    베이스가 실제로 움직이면 깨지는 가정이므로 `T_world_base` 를 열어 뒀다.
 
-![A1 정적 기하 조사](figures/a1-static-scene.png)
+![A1 정적 기하 조사](archive/14d-era-20260923/figures/a1-static-scene.png)
 
 ### 무엇을 넣었나
 
@@ -5468,7 +5468,7 @@ office_wall_*  +2,612 ~ +3,256 mm
 인용할 때는 구 집합을 같이 적어야 한다 — 안 적으면 "제약 모델의 낙관이 사라졌다" 로 읽히고,
 제약 모델에는 그 낙관이 애초에 없었다.
 
-![A1 live 경로 주입](figures/a1-static-wiring.png)
+![A1 live 경로 주입](archive/14d-era-20260923/figures/a1-static-wiring.png)
 
 ### 판정
 
@@ -5484,9 +5484,9 @@ office_wall_*  +2,612 ~ +3,256 mm
 
 ### 시각화
 
-* **[`figures/a1-static-scene.png`](figures/a1-static-scene.png)** — 씬 배치도 · 도형별
+* **[`archive/14d-era-20260923/figures/a1-static-scene.png`](archive/14d-era-20260923/figures/a1-static-scene.png)** — 씬 배치도 · 도형별
   최소 여유거리 · 프레임별 추이 · 갈래표 · 링크별 최악표.
-* **[`figures/a1-static-wiring.png`](figures/a1-static-wiring.png)** — 구 집합 둘 각각에 대해
+* **[`archive/14d-era-20260923/figures/a1-static-wiring.png`](archive/14d-era-20260923/figures/a1-static-wiring.png)** — 구 집합 둘 각각에 대해
   낙관 오차 분포 · 프레임별 최대 낙관 · 결과표.
 
 ### 검증 요약
@@ -5585,10 +5585,10 @@ A1 검증 ②(`a1_static_geometry_effect.py`)는 제약 모델(양팔 120 구)�
 
 ### 시각화
 
-**[`figures/a1-horizon-visibility.png`](figures/a1-horizon-visibility.png)** — 세 궤적의 낙관
+**[`archive/14d-era-20260923/figures/a1-horizon-visibility.png`](archive/14d-era-20260923/figures/a1-horizon-visibility.png)** — 세 궤적의 낙관
 오차 분포 · 청크별 최대 낙관 · 결과표. 세 곡선 모두 0 선 아래에 머문다.
 
-![계획 지평 가시성](figures/a1-horizon-visibility.png)
+![계획 지평 가시성](archive/14d-era-20260923/figures/a1-horizon-visibility.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -5700,10 +5700,10 @@ base 로 옮긴다 — **최적화기가 질의하는 것과 같은 점 집합**
 
 ### 시각화
 
-**[`figures/a2-field-exception.png`](figures/a2-field-exception.png)** — 사과가 필드 안인가 ·
+**[`archive/14d-era-20260923/figures/a2-field-exception.png`](archive/14d-era-20260923/figures/a2-field-exception.png)** — 사과가 필드 안인가 ·
 자기 자신에게 부딪히는가 · 팽창 맞바꿈 · F12 재현.
 
-![A2 쥔 물체 파내기](figures/a2-field-exception.png)
+![A2 쥔 물체 파내기](archive/14d-era-20260923/figures/a2-field-exception.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -5801,10 +5801,10 @@ if placed_now or self._open_streak >= cfg.release_frames:
 
 ### 시각화
 
-**[`figures/a3-release-signal.png`](figures/a3-release-signal.png)** — 세 조건의 추이 ·
+**[`archive/14d-era-20260923/figures/a3-release-signal.png`](archive/14d-era-20260923/figures/a3-release-signal.png)** — 세 조건의 추이 ·
 세 신호(attach · 성공 판정 · 참조 구현 · 그리퍼 폴백)의 시점 · 늦은 detach 의 낙관 · 결과표.
 
-![A3 해제 신호](figures/a3-release-signal.png)
+![A3 해제 신호](archive/14d-era-20260923/figures/a3-release-signal.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -5946,14 +5946,14 @@ A3 에서 **하나를 구현해 배포했고**, 사용자가 둘을 제안했다
 
 ### 시각화
 
-* **[`figures/a5-completion-options.png`](figures/a5-completion-options.png)** — 세 안의 비교표.
-* **[`figures/a4-task-tsdf.png`](figures/a4-task-tsdf.png)** — C 의 단계별 실측.
-* **[`figures/a3-relation-design.png`](figures/a3-relation-design.png)** — A 와 B 의 파이프라인 도식.
-* **[`figures/a3-release-signal.png`](figures/a3-release-signal.png)** — A 의 검증.
+* **[`archive/14d-era-20260923/figures/a5-completion-options.png`](archive/14d-era-20260923/figures/a5-completion-options.png)** — 세 안의 비교표.
+* **[`archive/14d-era-20260923/figures/a4-task-tsdf.png`](archive/14d-era-20260923/figures/a4-task-tsdf.png)** — C 의 단계별 실측.
+* **[`archive/14d-era-20260923/figures/a3-relation-design.png`](archive/14d-era-20260923/figures/a3-relation-design.png)** — A 와 B 의 파이프라인 도식.
+* **[`archive/14d-era-20260923/figures/a3-release-signal.png`](archive/14d-era-20260923/figures/a3-release-signal.png)** — A 의 검증.
 
-![선택지 셋](figures/a5-completion-options.png)
+![선택지 셋](archive/14d-era-20260923/figures/a5-completion-options.png)
 
-![작업용 TSDF 실측](figures/a4-task-tsdf.png)
+![작업용 TSDF 실측](archive/14d-era-20260923/figures/a4-task-tsdf.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -6151,10 +6151,10 @@ attach 가 유지된다.** 그리고 청크 19~24 의 위반(0.4~14.2 mm)은 이
 
 ### 시각화
 
-**[`figures/a6-integration-status.png`](figures/a6-integration-status.png)** — 청크별로 어느
+**[`archive/14d-era-20260923/figures/a6-integration-status.png`](archive/14d-era-20260923/figures/a6-integration-status.png)** — 청크별로 어느
 모듈이 돌았는지, 고치기 전과 후.
 
-![통합 경로 모듈 활동](figures/a6-integration-status.png)
+![통합 경로 모듈 활동](archive/14d-era-20260923/figures/a6-integration-status.png)
 
 ### 전체 틀에서 지금 어디인가 (규칙 B)
 
@@ -6243,15 +6243,15 @@ cameras span 296 ms (limit 100 ms)
 
 ### 시각화
 
-* **[`figures/a7-episode-walkthrough.png`](figures/a7-episode-walkthrough.png)** — 프레임 ×
+* **[`archive/14d-era-20260923/figures/a7-episode-walkthrough.png`](archive/14d-era-20260923/figures/a7-episode-walkthrough.png)** — 프레임 ×
   단계 적용 지도(전체 44 프레임) + 단계별 요약표 + 에피소드 요약표.
-* **[`figures/a7-episode-stages.png`](figures/a7-episode-stages.png)** — 전체 프레임의 수치
+* **[`archive/14d-era-20260923/figures/a7-episode-stages.png`](archive/14d-era-20260923/figures/a7-episode-stages.png)** — 전체 프레임의 수치
   추이 여섯: 관측/마스크/융합 · attention→target · 점유와 미관측 · 쥔 물체와 파내기와 라벨 ·
   SQP 위반 전후 · 프레임당 시간.
 
-![에피소드 단계 적용](figures/a7-episode-walkthrough.png)
+![에피소드 단계 적용](archive/14d-era-20260923/figures/a7-episode-walkthrough.png)
 
-![에피소드 수치 추이](figures/a7-episode-stages.png)
+![에피소드 수치 추이](archive/14d-era-20260923/figures/a7-episode-stages.png)
 
 ### 검증
 
@@ -6328,7 +6328,7 @@ cameras span 296 ms (limit 100 ms)
 | 새 `__init__.py` | 9 개 — 각 그룹이 무엇을 담는지 docstring 으로 적었다 |
 | 손으로 고친 것 | `runtime/visualization.py:35` — `ASSET_DIR` 이 `__file__.parent / "asset"` 이었다. 한 단계 내려갔으므로 `parents[1]` 로 바꿨다. **이동이 조용히 깨뜨릴 수 있었던 유일한 곳** |
 
-**건드리지 않은 것 둘.** `docs/figures/reuse-audit-20260915/baseline.json` 은 2026-09-15 에 뜬
+**건드리지 않은 것 둘.** `docs/archive/14d-era-20260923/figures/reuse-audit-20260915/baseline.json` 은 2026-09-15 에 뜬
 `git status` **스냅샷**이라 고치면 그때의 기록이 아니게 된다. `docs/CONTAINER_SETUP.md` 는
 폐기 문서다(규칙 E). 둘 다 치환을 되돌렸다.
 
@@ -6338,19 +6338,19 @@ cameras span 296 ms (limit 100 ms)
 
 ### 시각화
 
-* **[`figures/reorg-20260921/fig1_layout_before_after.png`](figures/reorg-20260921/fig1_layout_before_after.png)**
+* **[`archive/14d-era-20260923/figures/reorg-20260921/fig1_layout_before_after.png`](archive/14d-era-20260923/figures/reorg-20260921/fig1_layout_before_after.png)**
   — 전(평평한 77 개) 대 후(9 개 그룹) 배치 도식.
-* **[`figures/reorg-20260921/fig2_group_sizes_and_coupling.png`](figures/reorg-20260921/fig2_group_sizes_and_coupling.png)**
+* **[`archive/14d-era-20260923/figures/reorg-20260921/fig2_group_sizes_and_coupling.png`](archive/14d-era-20260923/figures/reorg-20260921/fig2_group_sizes_and_coupling.png)**
   — 그룹별 파일 수 + 결합도 상위 26 개. figstyle 47 · policy_record 43 · grounding_report 36 ·
   mujoco_source 35 · pipeline 30 이 상위다 — 이동 비용이 어디에 몰려 있었는지 보인다.
-* **[`figures/reorg-20260921/fig3_verification_table.png`](figures/reorg-20260921/fig3_verification_table.png)**
+* **[`archive/14d-era-20260923/figures/reorg-20260921/fig3_verification_table.png`](archive/14d-era-20260923/figures/reorg-20260921/fig3_verification_table.png)**
   — 검증 항목과 기준선 대조표.
 
-![배치 전후](figures/reorg-20260921/fig1_layout_before_after.png)
+![배치 전후](archive/14d-era-20260923/figures/reorg-20260921/fig1_layout_before_after.png)
 
-![그룹 크기와 결합도](figures/reorg-20260921/fig2_group_sizes_and_coupling.png)
+![그룹 크기와 결합도](archive/14d-era-20260923/figures/reorg-20260921/fig2_group_sizes_and_coupling.png)
 
-![검증 대조표](figures/reorg-20260921/fig3_verification_table.png)
+![검증 대조표](archive/14d-era-20260923/figures/reorg-20260921/fig3_verification_table.png)
 
 ### 검증 — 수치로 확정한 것
 
@@ -6434,10 +6434,10 @@ cameras span 296 ms (limit 100 ms)
 
 ### 시각화
 
-* **[`figures/docs-cleanup-20260921/fig1_docs_cleanup.png`](figures/docs-cleanup-20260921/fig1_docs_cleanup.png)**
+* **[`archive/14d-era-20260923/figures/docs-cleanup-20260921/fig1_docs_cleanup.png`](archive/14d-era-20260923/figures/docs-cleanup-20260921/fig1_docs_cleanup.png)**
   — 전후 파일 수·용량 막대, 지운 7 개의 크기(로그 눈금), 지운 것과 남긴 것의 판정표.
 
-![docs 정리](figures/docs-cleanup-20260921/fig1_docs_cleanup.png)
+![docs 정리](archive/14d-era-20260923/figures/docs-cleanup-20260921/fig1_docs_cleanup.png)
 
 ### 검증 — 수치로 확정한 것
 
@@ -6509,10 +6509,10 @@ cameras span 296 ms (limit 100 ms)
 
 ### 시각화
 
-* **[`figures/docs-archive-20260921/fig1_docs_archive.png`](figures/docs-archive-20260921/fig1_docs_archive.png)**
+* **[`archive/14d-era-20260923/figures/docs-archive-20260921/fig1_docs_archive.png`](archive/14d-era-20260923/figures/docs-archive-20260921/fig1_docs_archive.png)**
   — 문서쌍별 산문 동일도(중복 판정선 50 %), 최상위 38 → 15 막대, 정리 후 배치 도식.
 
-![docs 중복 제거와 archive 분류](figures/docs-archive-20260921/fig1_docs_archive.png)
+![docs 중복 제거와 archive 분류](archive/14d-era-20260923/figures/docs-archive-20260921/fig1_docs_archive.png)
 
 ### 검증 — 수치로 확정한 것
 
