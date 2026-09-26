@@ -44,8 +44,9 @@ from benchmark.ag3s.stages.reconstruction import reconstruct
 from benchmark.ag3s.stages.robot_filter import filter_robot_points
 from benchmark.ag3s.runtime.multiview import fuse_observations
 from benchmark.ag3s.stages.support_surface import fit_support_surfaces
-from benchmark.ag3s.stages.target_grounding import GroundingResult, ground_target
+from benchmark.ag3s.stages.target_grounding import GroundingResult, TargetConfirm, ground_target
 from benchmark.ag3s.constraints.to_adapter import build_constraint_set
+from benchmark.ag3s.runtime.degradation import ensure_reason, reason
 from benchmark.ag3s.types import (
     DESTINATION_LABEL,
     AttachedCollisionGeometry,
@@ -106,6 +107,10 @@ class AG3S:
         self.constraint_robot_model = constraint_robot_model or robot_model
         self.attention_adapter = attention_adapter
         self.tracker = CandidateTracker(self.config.collision_candidate)
+        #: The only cross-frame state grounding has (T5e). `ground_target` still decides from one
+        #: frame; this decides whether a *different* object has led long enough to take the target
+        #: over. It lives here because the episode lives here — `reset()` is the episode boundary.
+        self._target_confirm = TargetConfirm(self.config.clustering)
         #: Kept across frames so the ESDF's local update has something to be incremental against.
         self._esdf_builder = None
         self.profiler = StageProfiler(
@@ -149,6 +154,7 @@ class AG3S:
         """
         self.tracker.reset()
         self.profiler.reset()
+        self._target_confirm.reset()
         self.frame_index = 0
         self._attached = None
         self._esdf_builder = None
@@ -335,12 +341,13 @@ class AG3S:
                 )
         validity = ConstraintValidity.VALID if fusion is None else fusion.validity
         if recon_stats["capped"]:
-            notes.append(
+            notes.append(reason(
+                "pointcloud_capped",
                 f"point cloud capped at max_points={cfg.pointcloud.max_points} "
                 f"(from {recon_stats['n_voxel']}); voxel grown to "
                 f"{recon_stats['final_voxel_size'] * 1000:.1f} mm in "
-                f"{recon_stats['n_growth_steps']} step(s)"
-            )
+                f"{recon_stats['n_growth_steps']} step(s)",
+            ))
             # Coarser is not incomplete: growing the voxel keeps a representative in every occupied
             # cell, so nothing physical went unobserved. Index selection makes no such promise.
             validity = ConstraintValidity.worst(validity, ConstraintValidity.DEGRADED)
@@ -395,6 +402,7 @@ class AG3S:
                 exclude_mask=support_mask,
                 min_radius=cfg.geometry.min_radius,
                 timestamp=ts,
+                confirm=self._target_confirm,
             )
         if fusion is not None and grounding.target is not None:
             grounding = dataclasses.replace(
@@ -405,6 +413,17 @@ class AG3S:
             notes.append(
                 f"no target ({grounding.status.value}); all geometry held at full clearance"
             )
+        else:
+            decision = self._target_confirm.last
+            if decision is not None and decision.mode in ("hold", "switch", "unobserved"):
+                # Said out loud only when the hysteresis did something, because a frame where it
+                # overruled the highest-scoring cluster is otherwise indistinguishable from one
+                # where it agreed. Not a `reason(...)`: nothing is degraded — the target is named
+                # with full geometry either way.
+                notes.append(
+                    f"target {decision.mode} (rank {decision.rank}, challenger at "
+                    f"{decision.streak}/{decision.frames} frames)"
+                )
 
         # 6 + 7. collision candidates and primitive fitting -------------------------------
         # Skipped entirely when the field is the only thing the optimizer will read. See
@@ -434,12 +453,13 @@ class AG3S:
         if primitive_path:
             profiler.record("primitive_fitting", candidate_stats.get("primitive_fit_ms", 0.0))
         if candidate_stats.get("n_overflow"):
-            notes.append(
+            notes.append(reason(
+                "candidate_overflow",
                 f"{candidate_stats['n_overflow_points']} point(s) beyond "
                 f"max_clusters={cfg.collision_candidate.max_clusters} / "
                 f"unknown_min_points={cfg.collision_candidate.unknown_min_points} were folded into "
-                f"{candidate_stats['n_overflow']} conservative aggregate(s)"
-            )
+                f"{candidate_stats['n_overflow']} conservative aggregate(s)",
+            ))
             validity = ConstraintValidity.worst(validity, ConstraintValidity.DEGRADED)
         if candidate_stats.get("n_unassigned_points"):
             # The only path that actually loses points, and only under `overflow_groups: 0`.
@@ -529,11 +549,13 @@ class AG3S:
                               "instead of a global fraction"
                         )
                     elif esdf_field.unknown_fraction >= cfg.esdf.unknown_report_threshold:
-                        notes.append(
+                        notes.append(reason(
+                            "esdf_unknown_fraction",
                             f"{esdf_field.unknown_fraction:.1%} of the ESDF volume was never "
-                            f"observed and is treated as {cfg.esdf.unknown_policy} by "
-                            "esdf.unknown_policy"
-                        )
+                            f"observed (threshold "
+                            f"{cfg.esdf.unknown_report_threshold:.1%}) and is treated as "
+                            f"{cfg.esdf.unknown_policy} by esdf.unknown_policy",
+                        ))
                         # "represented, but ... partially observed" — the enum's own words for
                         # DEGRADED. Still usable; no longer certified.
                         validity = ConstraintValidity.worst(
@@ -663,7 +685,15 @@ class AG3S:
                 ),
                 grounding_status=grounding.status,
                 frame_index=self.frame_index,
-                notes=notes + ["no robot model injected; constraints not generated"],
+                # `build_constraint_set` 을 거치지 않는 유일한 경로이므로 마지막 관문도
+                # 여기서 한 번 더 지난다 — 관문이 한 곳뿐이면 이 분기가 그 밖에 남는다.
+                notes=ensure_reason(
+                    notes + [reason(
+                        "no_robot_model",
+                        f"no robot model injected; {len(list(candidates))} candidate(s) and "
+                        f"{len(list(surfaces))} support surface(s) were found but no constraints "
+                        "were generated against them")],
+                    degraded=True),
                 # There is geometry but nothing to write constraints against. That is not a certified
                 # scene, and calling it VALID would let a caller read "no constraints" as "clear".
                 validity=ConstraintValidity.worst(validity, ConstraintValidity.DEGRADED),
@@ -727,11 +757,12 @@ class AG3S:
         per_camera = field.stats.get("per_camera", {}) or {}
         dead = sorted(n for n, s in per_camera.items() if int(s.get("n_updated", 0)) == 0)
         if dead and len(dead) < len(per_camera):
-            notes.append(
-                f"camera(s) {', '.join(dead)} contributed no voxels to the ESDF this frame; the "
-                "field is built from the remaining view(s) only — check their extrinsics and depth "
-                "range"
-            )
+            notes.append(reason(
+                "esdf_dead_camera",
+                f"camera(s) {', '.join(dead)} contributed no voxels to the ESDF this frame "
+                f"({len(dead)} of {len(per_camera)}); the field is built from the remaining "
+                "view(s) only — check their extrinsics and depth range",
+            ))
             validity = ConstraintValidity.worst(validity, ConstraintValidity.DEGRADED)
 
         model = self.constraint_robot_model
@@ -771,12 +802,14 @@ class AG3S:
                 names = getattr(model, "sphere_link_names", None)
                 where = (f" ({', '.join(sorted(set(str(names[i]) for i in np.flatnonzero(outside))))})"
                          if names is not None and len(names) == outside.size else "")
-                notes.append(
+                notes.append(reason(
+                    "spheres_outside_grid",
                     f"{int(outside.sum())} of {outside.size} constraint sphere(s) lie outside the "
                     f"ESDF grid{where}; the field answers "
                     f"{field.outside_distance:+.2f} m for them regardless of what is there, so they "
-                    "are not constrained by it — widen esdf.bounds_lower/upper or exclude those links"
-                )
+                    "are not constrained by it — widen esdf.bounds_lower/upper or exclude those "
+                    "links",
+                ))
                 validity = ConstraintValidity.worst(validity, ConstraintValidity.DEGRADED)
         return notes, validity
 

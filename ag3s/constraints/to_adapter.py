@@ -29,6 +29,7 @@ import numpy as np
 
 from benchmark.ag3s.constraints.constraint_builder import ConstraintBuilder
 from benchmark.ag3s.constraints.clearance import manipulated_object
+from benchmark.ag3s.runtime.degradation import ensure_reason, reason
 from benchmark.ag3s.types import (
     AttachedCollisionGeometry,
     CollisionCandidate,
@@ -153,11 +154,12 @@ def build_constraint_set(
 
     overflow = int(spec.layout.get("n_overflow_spheres", 0)) if spec is not None else 0
     if overflow:
-        notes.append(
+        notes.append(reason(
+            "constraint_sphere_overflow",
             f"{overflow} constraint sphere(s) exceeded max_candidates={builder.max_candidates} "
             f"and were folded into {builder.constraint_config.reserved_overflow_slots} conservative "
-            "aggregate slot(s); every one is still represented"
-        )
+            "aggregate slot(s); every one is still represented",
+        ))
     extra_planes = max(0, len(support_surfaces) - builder.max_support_surfaces)
     if extra_planes:
         # A plane that does not fit is a plane the robot can drive through. There is no conservative
@@ -189,6 +191,11 @@ def build_constraint_set(
         manipulated_link_margin = builder.clearance_policy.margin_matrix(
             builder.sphere_link_names, [SourceType.TARGET], context=ctx, target_grounded=True,
         )[:, 0]
+
+    # **여기가 사유의 마지막 관문이다.** 이 함수가 모든 정상 경로의 `validity` 를 확정하므로,
+    # degraded 인데 코드 달린 사유가 하나도 없으면 그 사실 자체를 사유로 남긴다 — 새 DEGRADED
+    # 분기가 `degradation.reason()` 을 빠뜨려도 와이어에 빈 사유가 나가지 않는다.
+    notes = ensure_reason(notes, degraded=validity is ConstraintValidity.DEGRADED)
 
     if validity is ConstraintValidity.INCOMPLETE:
         status = PipelineStatus.GEOMETRY_INCOMPLETE

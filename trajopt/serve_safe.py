@@ -12,6 +12,12 @@ openpi 는 vendored 서브모듈이라 손대면 다음 sync 에서 충돌하고
 
 `--no-safe` 로 띄우면 감싸지 않는다 — 기존 서빙과 같은 동작이라, 문제가 안전 계층에 있는지
 아닌지를 플래그 하나로 가를 수 있다.
+
+`--shadow` 는 **계산을 줄이지 않는다.** AG3S·ESDF·SQP·판정이 전부 돌고 `actions` 도 그대로
+refined 다. 응답에 정책 **원본** 청크를 `actions_reference` 로 함께 실어, 로컬이 그것을
+실행할 수 있게 하는 것뿐이다 (T5 — 수정이 여유거리를 나쁘게 만드는지를 로봇을 움직이기 전에
+본다). 로컬도 `pi05_infer.py --safe-shadow` 로 켜야 하고, 짝이 안 맞으면 클라이언트가 즉시
+죽는다 — 조용히 refined 를 실행하면 shadow 가 아닌데 shadow 라고 기록된다.
 """
 
 from __future__ import annotations
@@ -165,6 +171,13 @@ def attention_extractor():
     return extract
 
 
+def wire_reference_key() -> str:
+    """로그에 찍을 선택 키 이름. `wire` 에서 가져온다 — 문자열을 두 곳에 박으면 갈라진다."""
+    from benchmark.trajopt import wire
+
+    return wire.ACTIONS_REFERENCE
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -182,6 +195,13 @@ def main() -> None:
     ap.add_argument("--esdf-margin", type=float, default=0.05)
     ap.add_argument("--no-safe", action="store_true",
                     help="AG3S+TO 를 감싸지 않는다. 기존 서빙과 동일")
+    ap.add_argument("--shadow", action="store_true",
+                    help="shadow 실행(T5). **서버가 하는 일은 하나도 줄지 않는다** — AG3S 지각·"
+                         "ESDF·SQP·판정이 그대로 돌고 응답의 `actions` 도 그대로 refined 다. "
+                         "달라지는 것은 응답에 정책 **원본** 청크를 `actions_reference` 로 함께 "
+                         "싣는 것뿐이고, 그것을 실행할지는 로컬이 고른다 "
+                         "(`pi05_infer.py --safe-shadow`). 로컬도 켜야 한다 — 짝이 안 맞으면 "
+                         "클라이언트가 즉시 죽는다")
     ap.add_argument("--allow-uncertified", action="store_true",
                     help="AG3S 가 기하를 인증하지 못한 프레임도 safe 로 볼지. 기본은 보지 않는다")
     ap.add_argument("--no-attention", action="store_true",
@@ -219,6 +239,11 @@ def main() -> None:
                          "상수로 깐다 (실측 base -342 mm)")
     args = ap.parse_args()
 
+    if args.shadow and args.no_safe:
+        ap.error("--shadow 는 안전 계층이 돌아야 뜻이 있습니다 (--no-safe 는 그것을 끕니다). "
+                 "shadow 는 '전부 계산하되 수정을 로봇에 보내지 않는' 실행이므로, 계산이 없으면 "
+                 "그림자로 둘 것도 없습니다")
+
     logging.basicConfig(level=logging.INFO, force=True)
     # openpi 는 서브모듈이라 sys.path 에 올려야 한다 (`serve_policy.py` 와 같은 규칙).
     repo = pathlib.Path(__file__).resolve().parents[2]
@@ -255,7 +280,9 @@ def main() -> None:
             recorder = ConstraintRecordWriter(
                 args.record_constraints, esdf_mode=args.record_constraints_esdf,
                 meta={"config": args.config, "checkpoint": args.checkpoint,
-                      "model_xml": args.model_xml, "links": args.links})
+                      "model_xml": args.model_xml, "links": args.links,
+                      # shadow 일 때만 더한다 — 기본 기록을 T0 때와 같은 키 집합으로 둔다.
+                      **({"shadow": True} if args.shadow else {})})
             logging.info("recording AG3S constraint diagnostics to %s", recorder.run_dir)
 
         served = SafePolicy(
@@ -277,7 +304,21 @@ def main() -> None:
             }),
             attention_fn=attention_extractor(),
             recorder=recorder,
+            shadow=args.shadow,
         )
+        # **어느 모드로 떠 있는지 시작할 때 크게 말한다.** legacy backend 경고와 같은 이유다 —
+        # 조용히 shadow 로 떠 있으면(또는 shadow 가 아닌 채로) 로그를 읽는 사람이 그 실행이
+        # 로봇을 움직였는지 아닌지 알 방법이 없다.
+        if args.shadow:
+            logging.info(
+                "SHADOW mode: everything runs (AG3S · ESDF · SQP · verdict) and the response "
+                "carries the policy chunk as %r next to the refined `actions`. The local side "
+                "must run with --safe-shadow; a mismatched pair fails immediately on the "
+                "client.", wire_reference_key())
+        else:
+            logging.info("closed-loop mode: the response carries the refined chunk only "
+                         "(no %s key). Local --safe-shadow will refuse to run against this "
+                         "server.", wire_reference_key())
 
     logging.info("serving on port %d", args.port)
     websocket_policy_server.WebsocketPolicyServer(

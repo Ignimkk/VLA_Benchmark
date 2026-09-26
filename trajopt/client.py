@@ -6,6 +6,16 @@
 실행" 으로 끝난다. 그래서 이 클래스는 `last_safe` 를 **기본 False 로 두고**, 모든 것이 확인된
 경우에만 True 로 올린다.
 
+**shadow (T5) 는 그 수렴에 구멍을 내지 않는다.** shadow 실행은 *"전부 계산하되 수정된 청크를
+로봇에 보내지 않는"* 것이고, 그래서 바꾸는 것은 **네 실패 모드 중 하나도 아니다** — 판정이
+`unsafe` 인 프레임에서 hold 대신 **정책 원본 청크**를 실행한다는 것뿐이다. timeout·오래된
+응답·서버 오류·차원 불일치는 shadow 에서도 그대로 hold 다: 그 넷은 "이 청크가 위험하다" 가
+아니라 **"이 청크를 신뢰할 근거가 없다"** 이고, 원본이든 수정본이든 똑같이 근거가 없다.
+
+`last_safe` 는 shadow 에서도 **서버 판정 그대로**다. 실행 여부를 알고 싶으면
+`should_execute` · `last_executed_chunk` 를 본다. 한 값이 둘을 겸하게 만들면 기록에
+*"safe 인데 unsafe 였다"* 가 남고, 나중에 그 기록을 읽는 사람은 어느 쪽이 참인지 알 수 없다.
+
 오래된 응답을 버리는 이유는 따로 적을 만하다. 서버가 늦으면 그 청크는 이미 지나간 자세를 위해
 계획된 것이다. 8스텝(533 ms) 뒤의 팔은 다른 곳에 있고, 그 청크의 첫 action 은 절대 관절 목표라
 관절이 순간적으로 튄다. `seq` 왕복이 그것을 잡는 유일한 장치다.
@@ -33,17 +43,23 @@ class SafeRemoteClient:
         timeout_s: 응답 제한. 넘으면 hold.
         phase / active_manipulators: AG3S 에 주입한다. AG3S 는 절대 추론하지 않는다.
         trace_dir: 왕복 시간을 기록할 곳. None 이면 기록하지 않는다.
+        shadow: **shadow 실행(T5)이면 True.** 서버는 전부 돌지만 로봇은 정책 원본 청크를
+            실행하고, `unsafe` 판정에 멈추지 않는다 (판정과 사유는 프레임마다 그대로 남는다).
+            **서버도 `--shadow` 로 떠 있어야 한다** — 짝이 안 맞으면 생성자나 첫 왕복에서
+            즉시 죽는다. 조용히 refined 를 실행하면 shadow 가 아닌데 shadow 라고 기록된다.
     """
 
     def __init__(self, *, policy, scene, cameras: Sequence[str] = wire.DEFAULT_CAMERAS,
                  timeout_s: float = 2.0, phase: str = "approach",
-                 active_manipulators: Sequence[str] = (), trace_dir: Optional[str] = None):
+                 active_manipulators: Sequence[str] = (), trace_dir: Optional[str] = None,
+                 shadow: bool = False):
         self._policy = policy
         self._scene = scene
         self.cameras = tuple(cameras)
         self.timeout_s = float(timeout_s)
         self.phase = phase
         self.active_manipulators = tuple(active_manipulators)
+        self.shadow = bool(shadow)
 
         self._seq = 0
         #: 확인된 것이 없으면 실행하지 않는다. 첫 청크가 오기 전에도 이 값이 읽힌다.
@@ -64,6 +80,18 @@ class SafeRemoteClient:
         #: 그 시차가 손목 클라우드의 번짐과 직결된다. 그래서 왕복이 어떻게 끝나든(hold 포함)
         #: 남겨 둔다: 요청을 **보내기 전에** 채우므로 timeout 이어도 촬영 시각은 남는다.
         self.last_stamps: dict[str, float] = {}
+        #: 마지막 응답의 `ag3s` 블록 (`{}` 면 인증됐거나 옛 서버다). **hold 일 때도 붙든다** —
+        #: 왜 멈췄는지를 적으려면 그 프레임의 지각 사유가 무엇이었는지 알아야 한다.
+        #: `last_verdict` 에 합치지 않는 것은 그 딕셔너리의 키 집합이 T0 기록의 `verdict` 이고,
+        #: 여기에 키를 더하면 옛 기록과 모양이 갈라지기 때문이다.
+        self.last_ag3s: dict[str, Any] = {}
+        #: 이번 프레임에 로봇이 실행할 청크가 **무엇인가**: `refined` | `reference` | `none`.
+        #: `none` 이 hold 다. 기본값이 `none` 인 것은 `last_safe` 가 False 로 시작하는 것과
+        #: 같은 이유다 — 첫 응답이 오기 전에도 이 값이 읽히고, 확인된 것이 없으면 실행하지 않는다.
+        #:
+        #: **`last_safe` 와 겸하지 않는 이유**: shadow 에서는 `last_safe=False` 인 프레임도
+        #: 실행된다. 한 값이 판정과 실행을 겸하면 기록에서 그 둘을 되살릴 수 없다.
+        self.last_executed_chunk = "none"
         self.stats = {"sent": 0, "safe": 0, "unsafe": 0, "timeout": 0, "stale": 0, "error": 0}
 
         self._trace = None
@@ -71,9 +99,15 @@ class SafeRemoteClient:
             from benchmark.ag3s.runtime.trace import RunTrace
 
             self._trace = RunTrace(trace_dir, meta={
-                "mode": "safe_remote", "cameras": list(self.cameras),
+                "mode": "safe_shadow" if self.shadow else "safe_remote",
+                "cameras": list(self.cameras),
                 "timeout_s": self.timeout_s, "phase": phase,
             })
+
+        # **짝을 접속 시점에 본다.** 프레임마다 보는 검사(`_check_shadow_pairing`)가 보증이지만,
+        # 그것은 첫 왕복이 끝난 뒤다. 메타데이터는 접속 즉시 와 있으므로 여기서 죽으면 카메라도
+        # 한 번 안 찍고, 무엇보다 **로봇이 아직 아무것도 실행하지 않았다**.
+        self._check_server_metadata()
 
     # ----------------------------------------------------------------------------------
     def infer(self, obs: dict[str, Any], *, reset: bool = False) -> dict[str, Any]:
@@ -81,6 +115,10 @@ class SafeRemoteClient:
 
         예외를 밖으로 내지 않는 것은 refiner 와 같은 이유다 — 네트워크 한 번 끊긴 것으로 제어
         루프가 죽으면, 팔은 마지막 `d.ctrl` 에 매달린 채 아무도 hold 를 걸어주지 않는다.
+
+        **예외가 하나 있다: shadow 모드의 짝이 안 맞을 때** (`_check_shadow_pairing`). 그것은
+        런타임 실패가 아니라 설정 오류이고, hold 로 삼키면 *"shadow 라고 적힌 T6 실행"* 이
+        남는다. 이 검사는 청크를 돌려주기 **전에** 하므로 로봇은 한 스텝도 실행하지 않는다.
         """
         self._seq += 1
         seq = self._seq
@@ -121,21 +159,127 @@ class SafeRemoteClient:
                 "정책과 이 클라이언트의 차원이 다르면 서버 config 를 확인하십시오",
                 "error", result)
 
+        reference = wire.unpack_actions_reference(result)
+        # 모드가 어긋났으면 여기서 죽는다. 아래 어느 갈래로도 가지 않는다.
+        self._check_shadow_pairing(reference)
+        if self.shadow and reference.shape != actions.shape:
+            # reference 와 refined 의 모양이 다르면 어느 쪽이 어느 스텝인지 알 수 없다.
+            # `actions` 차원 검사와 같은 이유로 hold 다 — 형태는 맞고 뜻은 틀린 실패.
+            return self._hold(
+                f"{wire.ACTIONS_REFERENCE} has shape {reference.shape} but actions has "
+                f"{actions.shape}; refusing to execute a chunk of unknown alignment",
+                "error", result)
+
         self.last_verdict = {k: result.get(k) for k in
                              ("ag3s_status", "geometry_certified", "trajopt_status",
                               "max_violation_m", "timing_ms", "notes")}
         self.last_field = wire.unpack_field(result)
-        if not bool(result.get("safe", False)):
+        self.last_ag3s = wire.unpack_ag3s(result)
+        safe = bool(result.get("safe", False))
+        if not safe and not self.shadow:
             return self._hold(self._explain(result), "unsafe", result)
 
-        self.last_safe = True
-        self.last_reason = ""
-        self.last_ipc = "ok"
-        self.stats["safe"] += 1
+        if safe:
+            self.last_safe = True
+            self.last_reason = ""
+            self.last_ipc = "ok"
+            self.stats["safe"] += 1
+        else:
+            # **shadow 인데 unsafe 다.** 멈추지 않는다 — 멈추면 에피소드가 서고 볼 것이 없어진다.
+            # 대신 판정과 사유를 **그대로** 남긴다: `last_safe` 는 False 이고 `last_ipc` 는
+            # `unsafe` 다. 실행됐다는 사실은 `last_executed_chunk` 가 따로 말한다. 여기서
+            # `last_safe` 를 True 로 올리면 "unsafe 여도 진행했다" 가 기록에서 사라진다.
+            self.last_safe = False
+            self.last_reason = self._explain(result)
+            self.last_ipc = "unsafe"
+            self.stats["unsafe"] += 1
+            # 키를 **일어났을 때만** 만든다. shadow 가 아닌 실행의 `stats` 를 T0 과 같은
+            # 키 집합으로 두려는 것이다 (`--trajectory-out` 의 `ipc_stats` 가 이것을 받는다).
+            self.stats["shadow_override"] = self.stats.get("shadow_override", 0) + 1
+
+        if not self.shadow:
+            self.last_executed_chunk = "refined"
+            if self._trace is not None:
+                self._trace.mark("verdict", safe=True, seq=seq,
+                                 **{k: v for k, v in self.last_verdict.items()
+                                    if k != "timing_ms"})
+            return result
+
+        # shadow: 로봇이 실행하는 것은 **정책 원본**이다. refined 는 버리지 않고 다른 키로
+        # 함께 돌려준다 — 조용히 덮으면 호출부가 무엇을 받았는지 알 수 없다.
+        self.last_executed_chunk = "reference"
         if self._trace is not None:
-            self._trace.mark("verdict", safe=True, seq=seq,
+            self._trace.mark("verdict", safe=self.last_safe, seq=seq, shadow=True,
+                             executed="reference",
                              **{k: v for k, v in self.last_verdict.items() if k != "timing_ms"})
-        return result
+        out = dict(result)
+        out["actions"] = reference
+        out["actions_refined"] = actions
+        out["executed_chunk"] = "reference"
+        return out
+
+    @property
+    def should_execute(self) -> bool:
+        """이 프레임의 청크를 실행해도 되는가. **hold 판단은 이 하나만 본다.**
+
+        shadow 가 아니면 `last_safe` 와 정확히 같다 — 그래서 기본 동작이 바뀌지 않는다.
+        shadow 면 판정이 unsafe 여도 참이 될 수 있고, 그때 무엇이 실행되는지는
+        `last_executed_chunk` 가 말한다.
+        """
+        return self.last_executed_chunk != "none"
+
+    def _check_server_metadata(self) -> None:
+        """접속 즉시 서버가 shadow 인지 본다. 전송 계층이 메타데이터를 안 주면 넘어간다.
+
+        여기서 못 잡는 경우(메타데이터 없는 전송)는 `_check_shadow_pairing` 이 첫 왕복에서
+        잡는다. 그래서 이 검사는 **보증이 아니라 조기 경고**다 — 조기인 것이 중요한 이유는
+        여기서 죽으면 카메라도 한 번 안 찍고 로봇이 아무것도 실행하지 않았기 때문이다.
+        """
+        get = getattr(self._policy, "get_server_metadata", None)
+        if not callable(get):
+            return
+        try:
+            meta = dict(get() or {})
+        except Exception:  # noqa: BLE001 — 메타데이터를 못 읽는 것으로 죽지 않는다
+            return
+        if bool(meta.get("shadow", False)) == self.shadow:
+            return
+        raise RuntimeError(self._pairing_message(server_shadow=not self.shadow))
+
+    def _check_shadow_pairing(self, reference) -> None:
+        """`--safe-shadow`(로컬)와 `--shadow`(서버)의 짝. **안 맞으면 즉시 죽는다.**
+
+        응답에 `actions_reference` 가 있고 없는 것이 서버 모드의 유일한 신호다. 두 방향 모두
+        예외인 이유는 **둘 다 기록을 거짓으로 만들기** 때문이다:
+
+        * 로컬만 shadow → reference 가 없다. 조용히 refined 를 실행하면 shadow 가 아닌데
+          shadow 라고 기록된다.
+        * 서버만 shadow → 로컬이 reference 를 무시하고 refined 를 실행한다. 로봇은 닫힌
+          고리로 도는데 서버 기록은 shadow 라고 말한다.
+
+        hold 로 수렴시키지 않는 이유: hold 는 *"이 청크를 실행하지 않는다"* 이고 그래도 실행은
+        계속된다. 설정이 어긋난 채로 계속 도는 실행은 결과가 무슨 뜻인지 아무도 모른다.
+        """
+        if self.shadow and reference is None:
+            raise RuntimeError(self._pairing_message(server_shadow=False))
+        if not self.shadow and reference is not None:
+            raise RuntimeError(self._pairing_message(server_shadow=True))
+
+    def _pairing_message(self, *, server_shadow: bool) -> str:
+        """두 곳(생성자·프레임)에서 같은 문장을 쓴다. 그래서 *"응답이 왔는데"* 처럼 한쪽에서만
+        참인 말을 쓰지 않는다 — 근거는 `actions_reference` 의 있음/없음 하나다."""
+        if server_shadow:
+            return (
+                f"the server runs with --shadow (it carries {wire.ACTIONS_REFERENCE!r}) but "
+                "this client does not: --safe-shadow is off. Refusing to continue — the robot "
+                "would execute the refined chunk, a closed loop, while the server-side record "
+                "says shadow. Either add --safe-shadow locally or restart the server without "
+                "--shadow.")
+        return (
+            f"--safe-shadow is on but the server carries no {wire.ACTIONS_REFERENCE!r}, so it "
+            "is not running with --shadow. Refusing to continue — executing the refined chunk "
+            "here would record a shadow run that actually closed the loop, the one mistake this "
+            "mode exists to prevent. Restart the server with --shadow.")
 
     # ----------------------------------------------------------------------------------
     def _pack(self, obs: dict[str, Any], *, reset: bool, seq: int) -> dict[str, Any]:
@@ -166,12 +310,19 @@ class SafeRemoteClient:
         self.last_safe = False
         self.last_reason = reason
         self.last_ipc = kind
+        # **hold 는 shadow 에서도 hold 다.** timeout·stale·서버 오류·차원 불일치는 "이 청크가
+        # 위험하다" 가 아니라 "신뢰할 근거가 없다" 이고, 원본이든 수정본이든 근거가 없다.
+        self.last_executed_chunk = "none"
         # **hold 일 때도 필드 출처를 붙든다.** 응답이 아예 없으면 `unavailable` 을 이유와
         # 함께 남긴다 — control frame 이 왜 멈췄는지를 적으려면 그 프레임의 기하가 무엇이었는지
         # 알아야 하고, 비워 두면 "기록이 없다" 와 "필드가 없었다" 가 구별되지 않는다.
         if result is not None:
             self.last_field = wire.unpack_field(result)
+            self.last_ag3s = wire.unpack_ag3s(result)
         else:
+            # 응답이 아예 없으면 지각 사유도 없다. **지난 프레임 것을 남겨 두지 않는다** —
+            # 남기면 이 프레임이 그 사유로 멈춘 것처럼 읽힌다.
+            self.last_ag3s = {}
             from benchmark.ag3s.fields.provenance import FieldProvenance
             self.last_field = FieldProvenance.unavailable(
                 f"no response to read a field from ({kind}): {reason}")
@@ -207,12 +358,30 @@ class SafeRemoteClient:
 
     @staticmethod
     def _explain(result: dict[str, Any]) -> str:
-        """왜 거부됐는지를 한 줄로. 상태값만으로는 두 갈래가 구분되지 않는다."""
+        """왜 거부됐는지를 한 줄로. 상태값만으로는 두 갈래가 구분되지 않는다.
+
+        **인증 실패에는 사유를 붙인다.** 2026-09-25 첫 live smoke 에서 이 문장이
+        `"AG3S could not certify the geometry (status=degraded)"` 까지만 나왔고, 거기서 멈추면
+        읽는 사람이 서버에 다시 들어가야 한다 — 그런데 서버 로그에도 없었다. 응답의 `ag3s`
+        블록이 이제 사유를 싣고 있으므로 그것을 이 한 줄에 넣는다.
+        """
+        from benchmark.ag3s.runtime import degradation
+
         violation = result.get("max_violation_m")
         if not result.get("geometry_certified", True):
+            block = wire.unpack_ag3s(result)
+            # 제어 루프의 한 줄이다 — 프레임마다 찍히므로 전문을 넣으면 다른 것을 밀어낸다.
+            # 전문은 `ag3s` 블록의 `notes` 와 프레임 기록에 그대로 있다.
+            why = degradation.explain(block.get("notes") or (), detail_chars=64)
+            if not why:
+                # 코드 달린 사유가 없다 = 옛 서버이거나 제약 집합 자체가 없었다. 그 사실을
+                # 말한다 — 빈칸으로 두면 "사유가 없는 degraded" 와 구별되지 않는다.
+                why = ("; ".join(str(n) for n in (block.get("notes") or ())[:2])
+                       or "no reason on the wire (the server predates the `ag3s` block)")
             return (f"AG3S could not certify the geometry "
-                    f"(status={result.get('ag3s_status')}); the trajectory may clear every "
-                    f"constraint and still meet something nobody saw")
+                    f"(status={result.get('ag3s_status')}, "
+                    f"grounding={block.get('grounding_status', 'unknown')}); the trajectory may "
+                    f"clear every constraint and still meet something nobody saw — {why}")
         return (f"TO says {result.get('trajopt_status')}"
                 + (f", {violation * 1000:.1f} mm of penetration remains"
                    if isinstance(violation, (int, float)) and np.isfinite(violation) else ""))
@@ -224,6 +393,10 @@ class SafeRemoteClient:
         if s["sent"]:
             print(f"[safe] {s['sent']} chunks: safe {s['safe']}, unsafe {s['unsafe']}, "
                   f"timeout {s['timeout']}, stale {s['stale']}, error {s['error']}")
+            if self.shadow:
+                print(f"[shadow] the robot executed the policy reference chunk on every "
+                      f"executed chunk; {s.get('shadow_override', 0)} of them carried an "
+                      f"unsafe verdict and ran anyway (nothing was held for the verdict)")
 
 
 class _NullSpan:

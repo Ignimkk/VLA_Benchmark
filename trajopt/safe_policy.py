@@ -65,6 +65,12 @@ class SafePolicy:
             내놓는지는 체크포인트마다 다르므로 주입받는다. None 이면 attention 없이 돌고, 그러면
             AG3S 가 target 을 못 잡아 거리장이 target 을 파내지 않는다 — 제약이 더 보수적이
             되는, 안전한 방향의 실패다.
+        shadow: **shadow 실행(T5)이면 True.** 서버가 하는 일은 하나도 줄지 않는다 — AG3S 지각·
+            ESDF·SQP·판정이 그대로 돌고 `actions` 도 그대로 refined 다. 달라지는 것은 둘뿐이다:
+            응답에 정책 원본 청크를 `actions_reference` 로 함께 싣고(그래야 로컬이 그것을
+            실행할 수 있다), 연속성 기준을 **로봇이 실제로 실행한 쪽**으로 잡는다. 기본값
+            False 에서는 응답도 내부 상태도 예전과 한 바이트도 다르지 않다.
+
         기하 인증을 요구할지는 **`to_config.safety.require_certified_geometry` 하나가 정한다.**
         여기에 같은 뜻의 두 번째 스위치를 두었다가 반쪽만 작동하는 것을 실측으로 확인했다 —
         SafePolicy 쪽만 끄면 sqp 가 여전히 상태를 VIOLATED 로 내려서, 위반이 0 mm 인데도
@@ -78,7 +84,8 @@ class SafePolicy:
                  latch: Optional[LatchConfig] = None,
                  grasp_links: Optional[dict] = None,
                  placed_fn: Optional[Callable[[dict, Any], bool]] = None,
-                 static_geometry: Optional[Sequence[Any]] = None):
+                 static_geometry: Optional[Sequence[Any]] = None,
+                 shadow: bool = False):
         self._policy = policy
         self.ag3s = ag3s
         self.to_config = to_config or TrajOptConfig.from_dict({
@@ -107,6 +114,11 @@ class SafePolicy:
         #: 실측 최대 낙관 +219.5 → +0.0 mm). **주입이다** — AG3S 도 이 클래스도 무엇이 고정
         #: 기하인지 알 수 없고, `phase` · 목적지와 같은 계약이다. `None` 이면 예전과 같이 돈다.
         self.static_geometry = tuple(static_geometry or ())
+        #: shadow 실행인가. **판정은 하되 수정을 로봇에 보내지 않는** 실행이고, 이 클래스가
+        #: 그것 때문에 바꾸는 것은 응답에 `actions_reference` 를 더하는 것과 연속성 기준을
+        #: 실행된 쪽으로 잡는 것뿐이다. 계산은 하나도 건너뛰지 않는다 — shadow 의 목적이
+        #: **전체 파이프라인을 돌린 결과**를 로봇을 움직이기 전에 보는 것이기 때문이다.
+        self.shadow = bool(shadow)
         #: 이번 프레임에 목적지로 넘길 점. 잠금이 목적지를 확정한 **다음** 프레임부터 찬다.
         self._destination_points = None
         #: 잠긴 이름이 마지막으로 target 으로 나왔을 때의 그 target. `attach` 가 이것을 쓴다 —
@@ -159,6 +171,11 @@ class SafePolicy:
             "esdf_margin_m": float(self.to_config.collision.esdf_margin),
             "planned_horizon": int(self.to_config.horizon.planned),
         })
+        # **shadow 일 때만 키를 더한다.** 로컬이 접속하자마자 짝이 맞는지 보는 근거이고
+        # (`SafeRemoteClient` 가 생성자에서 검사한다), 없을 때 `False` 를 넣지 않는 것은
+        # 기본 메타데이터를 T0 때와 같게 두기 위해서다.
+        if self.shadow:
+            meta["shadow"] = True
         return meta
 
     def reset(self) -> None:
@@ -216,7 +233,12 @@ class SafePolicy:
                                               "previous_physical_chunk": self._previous_chunk})
         timing["trajopt"] = (time.monotonic() - t) * 1000.0 - timing.get("ag3s", 0.0)
         refined = np.asarray(refined, np.float64)
-        self._previous_chunk = refined
+        # 연속성 기준은 **로봇이 실제로 실행한 청크**여야 한다 — `_continuity_reference` 가
+        # "앞 execution_length 스텝은 이미 실행됐다" 를 전제로 꼬리를 잘라 쓰기 때문이다
+        # (`refiner.py:179-195`). shadow 에서 로봇이 실행하는 것은 reference 이므로 그것을
+        # 물려준다. refined 를 물려주면 SQP 가 **날아간 적 없는 궤적**에서 이어지는 것으로
+        # 계획하고, 그 오차는 어디에도 안 찍힌다.
+        self._previous_chunk = chunk if self.shadow else refined
 
         refined = self._preserve_grippers(chunk, refined)
         verdict = self._verdict(chunk)
@@ -225,9 +247,69 @@ class SafePolicy:
         if self.recorder is not None:
             self._record(seq, chunk, refined)
 
+        ag3s_block = self._ag3s_block(verdict)
+        if ag3s_block is not None:
+            # **서버 로그에도 사유를 남긴다.** 첫 live smoke 에서 응답에도 서버 로그에도 없어서
+            # 왜 절반이 HOLD 인지 알 수 없었다 (2026-09-25). 와이어에만 싣고 여기 안 찍으면
+            # 로컬 기록을 못 얻는 상황(수동 실행·정책만 띄운 세션)에서 같은 일이 되풀이된다.
+            from benchmark.ag3s.runtime import degradation
+
+            print(f"[safe_policy] seq={seq} ag3s={ag3s_block['status']} "
+                  f"(validity={ag3s_block['validity']}, "
+                  f"grounding={ag3s_block['grounding_status']}) — "
+                  + (degradation.explain(ag3s_block["notes"])
+                     or "; ".join(ag3s_block["notes"][:2]) or "no reason recorded"))
+
         extra = {k: v for k, v in result.items() if k != "actions"}
+        # **`actions` 는 shadow 에서도 refined 다.** 서버는 자기가 계산한 것을 그대로 말하고,
+        # 무엇을 실행할지는 로컬이 고른다 — `SafetyVerdict` 가 판정이지 명령이 아닌 것과 같은
+        # 계약이다. shadow 가 아니면 키가 아예 실리지 않아 응답이 예전과 같다.
         return wire.pack_response(refined, verdict, seq=seq, timing_ms=timing,
-                                  field=self._field_provenance(), extra=extra)
+                                  field=self._field_provenance(),
+                                  actions_reference=(chunk if self.shadow else None),
+                                  ag3s=ag3s_block,
+                                  extra=extra)
+
+    def _ag3s_block(self, verdict: wire.SafetyVerdict) -> Optional[dict[str, Any]]:
+        """`ag3s_status` 가 `ok` 가 아닐 때의 **사유**. `ok` 면 `None` — 키가 안 실린다.
+
+        **이 블록이 없어서 첫 live smoke 가 막혔다** (2026-09-25). 2 청크 중 1 개가
+        `max_violation_m = 0.0` 인데 `degraded` 로 HOLD 됐고, 궤적이 아니라 기하 인증이 실패한
+        것인데 **왜인지가 응답에도 서버 로그에도 없었다.** 사유는 줄곧 여기 있었다 —
+        `CollisionConstraintSet.notes` 다. 나가는 길이 없었을 뿐이다: 응답의 `notes` 는
+        `TrajOptResult.notes`(최적화기 쪽)이고 지각 쪽이 아니다.
+
+        **`ok` 일 때 `None` 인 것이 요구사항이다.** 정상 프레임의 응답이 T0 때와 한 바이트도
+        달라지면 회귀 기준선이 재현되지 않는다.
+
+        `reasons` 가 비는 일은 없다 — `degradation.ensure_reason` 이 마지막 관문에서 채운다.
+        비어 있다면 그것은 **옛 서버**라는 뜻이고, 그 조합(`status != ok` + 빈 블록)을 로컬이
+        구분할 수 있게 두는 것이 `unpack_ag3s` 가 상태 객체를 만들지 않는 이유다.
+        """
+        from benchmark.ag3s.runtime import degradation
+
+        if verdict.ag3s_status == "ok":
+            return None
+        cs = self._last_constraint_set
+        notes = [str(n) for n in (getattr(cs, "notes", ()) or ())]
+        block: dict[str, Any] = {
+            "status": verdict.ag3s_status,
+            "validity": getattr(getattr(cs, "validity", None), "value", "unknown"),
+            "grounding_status": getattr(
+                getattr(cs, "grounding_status", None), "value", "unknown"),
+            "reasons": degradation.reasons(notes),
+            "notes": notes,
+        }
+        if cs is None:
+            # 제약 집합이 아예 없다 = 씬을 못 얻었다. 그 이유는 refiner 가 붙들고 있다
+            # (`_field_provenance` 가 쓰는 것과 같은 값) — 여기서도 싣는다. 그러지 않으면
+            # `status: no_geometry` 만 나가고 왜 지각이 안 돌았는지는 다시 서버 안에 남는다.
+            why = getattr(self.refiner, "last_failure", None)
+            block["notes"] = [
+                "AG3S produced no constraint set for this chunk"
+                + (f": {why}" if why else "")]
+            block["reasons"] = []
+        return block
 
     def _field_provenance(self):
         """이번 청크의 거리장 출처. 없으면 `unavailable` 로 **이유를 달아** 돌려준다.

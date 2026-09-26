@@ -35,10 +35,53 @@
 | 키 | 내용 |
 |---|---|
 | `actions` | `[H, ACTION_WIDTH]` (16D 기본). 안전하지 않아도 실린다 — 왜 멈췄는지 보려면 무엇이 제안됐는지 알아야 한다 |
+| `actions_reference` | **선택 키.** shadow 일 때만 실린다 — 정책의 **원본** 청크. 아래 |
 | `seq` | 요청의 일련번호를 그대로 돌려준다. 오래된 응답을 버리는 근거 |
 | `timing_ms` | 단계별 시간 (서버 시계) |
 | `ag3s_status` · `geometry_certified` · `trajopt_status` · `max_violation_m` · `safe` · `notes` | 안전 판정 |
 | `field` | **거리장의 출처** — `sequence` · `backend` · `observed_at` · `state` · 계층. 아래 |
+| `ag3s` | **선택 키.** `ag3s_status` 가 `ok` 가 아닐 때만 실린다 — **왜** 인증이 안 됐나. 아래 |
+
+### `actions_reference` — shadow 실행이 무엇을 실행할지 고를 수 있게 하는 것
+
+**shadow 실행(T5)은 전부 계산하되 수정된 청크를 로봇에 보내지 않는다.** 수정이 여유거리를 나쁘게
+만드는지를 로봇을 움직이기 전에 보려는 것이다. 그러려면 로컬이 **정책의 원본 청크**를 알아야 하는데,
+지금까지 응답에는 `actions`(= refined) 하나뿐이라 로컬이 그것을 볼 길이 없었다.
+
+**`actions` 는 shadow 에서도 여전히 refined 다.** 서버는 자기가 계산한 것을 그대로 말하고
+(거짓말하지 않는다), 무엇을 실행할지는 로컬이 고른다 — `SafetyVerdict` 가 판정이지 명령이
+아닌 것과 같은 계약이다.
+
+**키는 shadow 일 때만 실린다.** 기본 응답에 `actions_reference` 가 없어야 T0 기록과 회귀
+기준선이 그대로 재현된다. 그래서 있음/없음 자체가 *"이 응답은 shadow 서버가 낸 것"* 이라는
+신호이고, 로컬이 그 짝을 검사한다 (`client.SafeRemoteClient`): 한쪽만 켜져 있으면 즉시 실패한다.
+조용히 refined 를 실행하면 shadow 가 아닌데 shadow 라고 기록된다.
+
+### `ag3s` — `degraded` 의 **사유**
+
+`ag3s_status` 는 *"인증했나"* 만 말하고 *"왜 못 했나"* 는 말하지 않았다. 2026-09-25 첫 live
+smoke 에서 그것이 바로 막혔다: 2 청크 중 1 개가 `max_violation_m = 0.0` (궤적은 모든 제약을
+통과)인데 `ag3s_status = degraded` · `geometry_certified = False` 로 HOLD 됐고, **왜 degraded
+인지가 와이어에도 서버 로그에도 없었다.**
+
+사유는 서버 안에 이미 있었다 — `CollisionConstraintSet.notes` 다. 나가는 길이 없었을 뿐이다
+(응답의 `notes` 는 **최적화기**쪽 `TrajOptResult.notes` 이고 지각 쪽이 아니다).
+
+| 안쪽 키 | 내용 |
+|---|---|
+| `status` | `CollisionConstraintSet.status` (= `ag3s_status` 와 같은 값. 블록만 보고도 짝을 확인할 수 있게 둔다) |
+| `validity` | `ConstraintValidity` — `status` 가 그것에서 파생된다 |
+| `grounding_status` | target 을 왜 못 잡았나. **T5b 까지 로컬은 이 값을 `unavailable-on-client` 로 적고 있었다** |
+| `reasons` | `[{"code", "detail"}]` — **기계가 읽는 사유.** 코드는 `ag3s/runtime/degradation.py:CODES` 에 등록된 것뿐이고, 코드 하나가 소스의 한 분기에 대응한다 |
+| `notes` | 지각 쪽 노트 전부 (코드 없는 산문 노트까지). 사람이 읽는 쪽 |
+
+**`status` 가 `ok` 일 때는 키가 아예 없다.** 회귀 기준선과 T0 기록이 정상 프레임의 응답에
+달려 있으므로 그쪽은 한 바이트도 건드리지 않는다. `actions_reference` 와 같은 규약이고, 이유도
+같다 — 키의 있음/없음 자체가 신호다.
+
+**`reasons` 가 비는 경우는 없다.** `degradation.ensure_reason` 이 마지막 관문에서 `degraded`
+인데 코드가 하나도 없으면 `degraded_without_reason` 을 달아 보낸다. 그 코드가 보이면 씬의 성질이
+아니라 **AG3S 의 배선 결함**이다.
 
 ### `field` — 거리장이 언제 무엇으로 만들어졌는가
 
@@ -63,12 +106,24 @@ import numpy as np
 
 __all__ = [
     "PREFIX", "DEFAULT_CAMERAS", "GRIPPER_COLUMNS", "gripper_columns",
-    "ARM_JOINT_DIM", "ACTION_WIDTH",
+    "ARM_JOINT_DIM", "ACTION_WIDTH", "ACTIONS_REFERENCE",
     "pack_request", "strip_request", "unpack_camera_observations",
-    "pack_response", "unpack_field", "SafetyVerdict",
+    "pack_response", "unpack_field", "unpack_actions_reference", "unpack_ag3s",
+    "SafetyVerdict", "AG3S_BLOCK",
 ]
 
 PREFIX = "ag3s/"
+
+#: 응답의 **선택 키** — 정책의 원본 청크. shadow 실행에서만 실린다 (위 머리말).
+#: 이름을 상수로 두는 이유는 서버·클라이언트·테스트 세 곳이 같은 문자열을 써야 하고, 오타가
+#: 나면 로컬이 "reference 가 안 왔다" 로 읽어 즉시 실패하기 때문이다 — 조용히는 안 지나가지만
+#: 원인을 찾는 데 시간이 든다.
+ACTIONS_REFERENCE = "actions_reference"
+
+#: 응답의 **선택 키** — `ag3s_status` 가 `ok` 가 아닐 때의 사유 블록 (위 머리말).
+#: `ag3s/` 접두(요청 쪽)와 글자가 겹치지만 충돌하지 않는다: `strip_request` 는 **요청**만
+#: 가르고 `"ag3s/"`(슬래시 포함)로 시작하는 키만 본다. 응답은 애초에 stripping 을 안 지난다.
+AG3S_BLOCK = "ag3s"
 
 #: 머리 하나 + 손목 둘. `CameraID` 에 HEAD 가 하나뿐이라 `zed_right` 는 `zed_left` 와 겹친다.
 DEFAULT_CAMERAS = ("zed_left", "wrist_cam_l", "wrist_cam_r")
@@ -203,6 +258,8 @@ class SafetyVerdict:
 
 def pack_response(actions: np.ndarray, verdict: SafetyVerdict, *, seq: int,
                   timing_ms: dict[str, float], field: Optional[Any] = None,
+                  actions_reference: Optional[np.ndarray] = None,
+                  ag3s: Optional[dict[str, Any]] = None,
                   extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """응답. `actions` 는 `[H, ACTION_WIDTH]` 이고, 안전하지 않아도 실린다.
 
@@ -212,21 +269,69 @@ def pack_response(actions: np.ndarray, verdict: SafetyVerdict, *, seq: int,
     `field` 는 `FieldProvenance` 다. **`None` 이면 `unavailable` 로 싣는다** — 키를 빼면
     읽는 쪽이 "필드가 없었다" 와 "서버가 옛 버전이라 안 보냈다" 를 구별할 수 없고, 전자는
     hold 해야 하고 후자는 배선 결함이라 대응이 다르다.
+
+    `actions_reference` 는 **`None` 이면 키를 아예 싣지 않는다** — `field` 와 규칙이 반대인
+    것은 뜻이 반대이기 때문이다. `field` 없음은 **판정에 필요한 정보의 부재**라 상태로 적어야
+    하고, `actions_reference` 없음은 **shadow 가 아니다** 라는 뜻이다. 키가 빠지는 것 자체가
+    그 신호이므로 기본 응답은 예전과 한 바이트도 다르지 않다.
+
+    `ag3s` 도 **`None` 이면 키를 싣지 않는다** — 정상 프레임(`ag3s_status == "ok"`)의 응답을
+    T0 때와 같게 두기 위해서다. 호출부(`SafePolicy._ag3s_block`)가 `ok` 일 때 `None` 을 준다.
+
+    Raises:
+        ValueError: `actions_reference` 의 모양이 `actions` 와 다를 때. 로컬이 둘 중 하나를
+            골라 실행하므로 모양이 어긋난 채 나가면 **한 칸씩 밀린 청크가 실행된다** — 형태는
+            맞고 뜻은 틀린, 가장 위험한 실패다. 여기서 크게 죽는 편이 낫다.
     """
     from benchmark.ag3s.fields.provenance import FieldProvenance
 
     prov = field if field is not None else FieldProvenance.unavailable(
         "the server produced no collision field for this chunk")
+    packed = np.asarray(actions, np.float32)
     out = {
-        "actions": np.asarray(actions, np.float32),
+        "actions": packed,
         "seq": int(seq),
         "timing_ms": {k: float(v) for k, v in timing_ms.items()},
         "field": prov.to_dict(),
         **verdict.to_dict(),
     }
+    if actions_reference is not None:
+        reference = np.asarray(actions_reference, np.float32)
+        if reference.shape != packed.shape:
+            raise ValueError(
+                f"actions_reference has shape {reference.shape} but actions has "
+                f"{packed.shape}. The client picks one of the two to execute, so a mismatch "
+                "would put a shifted chunk on the robot")
+        out[ACTIONS_REFERENCE] = reference
+    if ag3s:
+        out[AG3S_BLOCK] = dict(ag3s)
     if extra:
         out.update(extra)
     return out
+
+
+def unpack_actions_reference(response: dict[str, Any]) -> Optional[np.ndarray]:
+    """응답의 정책 원본 청크, 또는 **`None`** — 서버가 shadow 가 아니라는 뜻이다.
+
+    `unpack_field` 와 달리 "없음" 을 상태 객체로 감싸지 않는다. 필드 없음은 판정을 바꾸지만
+    (hold 해야 한다) reference 없음은 **모드가 다르다** 는 뜻이고, 그 불일치를 어떻게 처리할지는
+    한 곳에서만 정해야 한다 — `SafeRemoteClient` 가 shadow 를 요구했는지 알고 있으므로 거기서
+    즉시 실패한다.
+    """
+    blob = response.get(ACTIONS_REFERENCE)
+    return None if blob is None else np.asarray(blob)
+
+
+def unpack_ag3s(response: dict[str, Any]) -> dict[str, Any]:
+    """응답의 `ag3s` 블록, 없으면 **빈 딕셔너리**.
+
+    키 없음은 두 가지를 뜻할 수 있다 — 기하가 인증됐다(`ok`) 거나, 서버가 이 블록을 모르는
+    버전이다. `unpack_field` 처럼 그 둘을 구분해 주지 않는 이유는 **`ag3s_status` 가 이미 같은
+    응답에 있기** 때문이다: `ag3s_status != "ok"` 인데 이 블록이 비어 있으면 그것이 곧 옛 서버다.
+    읽는 쪽이 그 조합을 보고 판단할 수 있으므로 여기서 상태 객체를 만들지 않는다.
+    """
+    blob = response.get(AG3S_BLOCK)
+    return dict(blob) if isinstance(blob, dict) else {}
 
 
 def unpack_field(response: dict[str, Any]):

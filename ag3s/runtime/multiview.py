@@ -44,6 +44,7 @@ import numpy as np
 
 from benchmark.ag3s.stages.attention_lifting import lift, make_adapter, normalize_attention
 from benchmark.ag3s.config import AG3SConfig, AttentionConfig
+from benchmark.ag3s.runtime.degradation import reason
 from benchmark.ag3s.stages.reconstruction import reconstruct
 from benchmark.ag3s.stages.robot_filter import filter_robot_points
 from benchmark.ag3s.types import (
@@ -191,23 +192,26 @@ def check_freshness(
         state_age = abs(obs.timestamp - obs.state_time)
         if state_age > timing.max_state_age_sec:
             stale_state += 1
-            notes.append(
+            notes.append(reason(
+                "camera_state_stale",
                 f"{obs.camera_id.value}: robot state is {state_age * 1000:.0f} ms from the image "
-                f"(limit {timing.max_state_age_sec * 1000:.0f} ms); its cloud may be mis-placed"
-            )
+                f"(limit {timing.max_state_age_sec * 1000:.0f} ms); its cloud may be mis-placed",
+            ))
         transform_age = abs(reference - obs.timestamp)
         if transform_age > timing.max_transform_age_sec:
             stale_transform += 1
-            notes.append(
+            notes.append(reason(
+                "camera_transform_stale",
                 f"{obs.camera_id.value}: image is {transform_age * 1000:.0f} ms behind the frame "
-                f"(limit {timing.max_transform_age_sec * 1000:.0f} ms)"
-            )
+                f"(limit {timing.max_transform_age_sec * 1000:.0f} ms)",
+            ))
 
     if skew > timing.max_camera_skew_sec:
-        notes.append(
+        notes.append(reason(
+            "camera_skew",
             f"cameras span {skew * 1000:.0f} ms (limit {timing.max_camera_skew_sec * 1000:.0f} ms); "
-            "the views may disagree about a scene that moved between them"
-        )
+            "the views may disagree about a scene that moved between them",
+        ))
     if stale_state or stale_transform or skew > timing.max_camera_skew_sec:
         # Degraded, not incomplete. The geometry is all here; some of it is in the wrong place, and
         # the caller has to decide whether that is tolerable for what it is doing.
@@ -217,7 +221,9 @@ def check_freshness(
     expected = {CameraID.parse(c) for c in timing.expected_cameras}
     missing = sorted(c.value for c in expected - present)
     if missing:
-        notes.append(f"camera(s) {missing} did not report; the scene is only partially observed")
+        notes.append(reason(
+            "camera_missing",
+            f"camera(s) {missing} did not report; the scene is only partially observed"))
         validity = ConstraintValidity.worst(validity, ConstraintValidity.DEGRADED)
 
     return validity, notes, {
@@ -373,6 +379,21 @@ def fuse_observations(
         )
         validity = ConstraintValidity.worst(validity, ConstraintValidity.INCOMPLETE)
     elif any(r.stats.get("capped", False) for r in results):
+        # **2026-09-25 까지 이 분기에만 노트가 없었다.** `validity` 만 내리고 조용히 지나가서,
+        # 로컬은 `degraded` 를 받고도 어느 단계가 원인인지 알 길이 없었다 (첫 live smoke 에서
+        # 2 청크 중 1 개가 그렇게 HOLD 로 갔다). 어느 카메라가 몇 점에서 걸렸는지까지 적는다 —
+        # 사유에 수치가 없으면 다음 사람이 다시 서버에 들어가서 재야 한다.
+        capped = {r.camera_id.value: (int(r.stats.get("n_voxel", 0)),
+                                      float(r.stats.get("final_voxel_size", 0.0)))
+                  for r in results if r.stats.get("capped", False)}
+        notes.append(reason(
+            "fused_pointcloud_capped",
+            "camera(s) "
+            + ", ".join(f"{cam} ({n} pts -> voxel {v * 1000:.1f} mm)"
+                        for cam, (n, v) in sorted(capped.items()))
+            + f" hit pointcloud.max_points={config.pointcloud.max_points} and had their voxel "
+              "grown; the fused cloud is coarser than configured (nothing was dropped — the "
+              "path that drops points reports INCOMPLETE instead)"))
         validity = ConstraintValidity.worst(validity, ConstraintValidity.DEGRADED)
 
     return FusionResult(
