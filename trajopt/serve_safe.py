@@ -255,6 +255,57 @@ def announce_cost_weights(overrides: dict) -> None:
         ", ".join(f"{k}: {getattr(base, k):g} → {v:g}" for k, v in sorted(overrides.items())))
 
 
+def announce_reference_payload() -> None:
+    """**데이터 한 가지 사실만 말한다** — 응답이 정책 원본 청크를 함께 싣는다 (T9).
+
+    **모드를 주장하지 않는다.** 처음 쓴 문구는 여기서 *"the robot still executes the refined
+    chunk"* 라고 단정했는데, `--shadow` 로 띄운 서버에서는 그 문장이 거짓이다. 데이터를 설명하는
+    줄이 모드를 단정하면 `announce_execution_mode` 와 반대를 말할 수 있고, T9 이 끊으려던 겸직이
+    로그에서 되살아난다. 모드는 그 함수만 말한다 — 여기서는 그쪽을 가리키기만 한다.
+    """
+    logging.getLogger(__name__).info(
+        "response carries %r on every chunk (T9): the policy's ORIGINAL chunk rides next to the "
+        "refined one, in BOTH modes, so 'how much did TO change it' is measurable in closed loop "
+        "too. This key is data, not a mode — which chunk the robot executes is the next line. "
+        "Cost: a planning record row grows from ~19.8 KB to ~36.7 KB.", wire_reference_key())
+
+
+def announce_execution_mode(shadow: bool) -> None:
+    """**로봇이 무엇을 실행하는가.** 모드는 `shadow` 로만 말한다.
+
+    T9 이 이 자리를 한 번 거짓으로 만들었다. 예전 문구는 closed loop 을
+    *"the response carries the refined chunk only (no 'actions_reference' key)"* 라고 적었는데,
+    T9 부터 원본 청크는 **두 모드 모두** 실리므로 앞 절반이 거짓이 됐다 — 같은 시작 로그 안에서
+    두 줄이 반대를 말했다.
+
+    원인은 문구가 아니라 **키 이름을 모드의 설명에 쓴 것**이다. 그러면 데이터 키가 다시 모드를
+    겸하기 시작하고, T9 가 끊은 겸직이 로그에서 되살아난다. 그래서 여기서는 `actions_reference`
+    를 **입에 올리지 않는다** — 그 키를 설명하는 줄은 따로 있다 (위의 "response carries ...").
+
+    셋은 **각각 다른 사실**이고, 문장도 셋으로 갈라 적는다.
+
+    1. 로봇이 무엇을 실행하는가 (refined / 정책 원본).
+    2. 원본 청크가 기록에 실리는가 — **두 모드 모두 실린다.** 모드의 특징이 아니다.
+    3. 로컬의 `--safe-shadow` 짝이 맞아야 하는가 — 안 맞으면 클라이언트가 즉시 죽는다.
+    """
+    log = logging.getLogger(__name__)
+    if shadow:
+        log.info(
+            "SHADOW mode (%s=True): everything runs (AG3S · ESDF · SQP · verdict) and **the "
+            "robot executes the POLICY chunk, not the refined one** — the local side makes that "
+            "choice. The local side must run with --safe-shadow; a mismatched pair fails "
+            "immediately on the client. Carrying the original chunk is NOT what makes this "
+            "shadow: every response carries it in either mode (see the line above).",
+            wire_shadow_key())
+        return
+    log.info(
+        "closed-loop mode (%s=False): **the robot executes the REFINED chunk.** Local "
+        "--safe-shadow will refuse to run against this server (the pair must match, and the "
+        "client fails immediately). The policy's original chunk is still carried in every "
+        "response for the record — that is data, not a mode (see the line above).",
+        wire_shadow_key())
+
+
 def announce_row_budget(*, n_constraint_spheres: int, n_filter_spheres: int,
                         planned: int | None = None, rows_per_step: int | None = None) -> None:
     """구 개수와 **행 개수**를 시작 로그에 찍는다. 실시간으로 도는지가 여기 달렸다.
@@ -618,7 +669,11 @@ def attention_extractor():
 
 
 def wire_reference_key() -> str:
-    """로그에 찍을 선택 키 이름. `wire` 에서 가져온다 — 문자열을 두 곳에 박으면 갈라진다."""
+    """로그에 찍을 **데이터** 키 이름. `wire` 에서 가져온다 — 문자열을 두 곳에 박으면 갈라진다.
+
+    T9 부터 이 키는 선택 키가 아니다 (두 모드 모두 실린다). 그리고 **모드를 설명하는 문장에는
+    쓰지 않는다** — 그 자리에 키 이름이 나오면 데이터가 다시 모드를 겸하기 시작한다.
+    """
     from benchmark.trajopt import wire
 
     return wire.ACTIONS_REFERENCE
@@ -943,15 +998,7 @@ def main() -> None:
             to_config.cost.w_track, to_config.cost.w_smooth,
             to_config.cost.w_continuity, to_config.cost.w_slack,
             "" if weights else " (전부 기본값)")
-        # **응답이 원본 청크를 함께 싣는다** (T9). shadow 모드와 **다른 것**이다 — 이것은
-        # 기록에 싣는 것이고, shadow 는 로컬이 그것을 **실행하는** 모드다. 둘을 헷갈리면
-        # "shadow 라고 적힌 closed loop" 이 남는다.
-        logging.info(
-            "response carries %r on every chunk (T9): the policy's ORIGINAL chunk rides next to "
-            "the refined one so 'how much did TO change it' is measurable in closed loop too. "
-            "This is NOT shadow mode — the robot still executes the refined chunk. Mode is "
-            "declared separately as %r=%s. Cost: a planning record row grows from ~19.8 KB to "
-            "~36.7 KB.", wire_reference_key(), wire_shadow_key(), bool(args.shadow))
+        announce_reference_payload()
 
         served = SafePolicy(
             served_policy,
@@ -978,16 +1025,7 @@ def main() -> None:
         # **어느 모드로 떠 있는지 시작할 때 크게 말한다.** legacy backend 경고와 같은 이유다 —
         # 조용히 shadow 로 떠 있으면(또는 shadow 가 아닌 채로) 로그를 읽는 사람이 그 실행이
         # 로봇을 움직였는지 아닌지 알 방법이 없다.
-        if args.shadow:
-            logging.info(
-                "SHADOW mode: everything runs (AG3S · ESDF · SQP · verdict) and the response "
-                "carries the policy chunk as %r next to the refined `actions`. The local side "
-                "must run with --safe-shadow; a mismatched pair fails immediately on the "
-                "client.", wire_reference_key())
-        else:
-            logging.info("closed-loop mode: the response carries the refined chunk only "
-                         "(no %s key). Local --safe-shadow will refuse to run against this "
-                         "server.", wire_reference_key())
+        announce_execution_mode(args.shadow)
 
     logging.info("serving on port %d", args.port)
     websocket_policy_server.WebsocketPolicyServer(
