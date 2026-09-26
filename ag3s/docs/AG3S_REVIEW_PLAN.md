@@ -2184,3 +2184,46 @@ A1 의 `runner_up_score` 변경 이후 코드(md5 `ee33a055...`)로 회귀 기�
 **T2-c** 절.
 
 **`T2-fix` 가 끝나면 T3(TSDF/ESDF 나이)를 열고 R을 집고 넘어간다.**
+
+## T5 — shadow 루프와 target 선택 (2026-09-25~26)
+
+**아키텍처 판정을 뒤집었다.** *"T5·T6 에서 AG3S 를 클라이언트 in-process 로 옮긴다"* 를
+철회하고 **AG3S·cuRobo·TO 는 서버에 둔다** — IPC 왕복은 청크 왕복 2725 ms 중 약 206 ms
+(7.6 %)뿐이고, 지배 항은 AG3S 지각 1943 ms(서버 시간의 77 %)라 옮겨도 청크 예산 533 ms 를
+못 맞춘다.
+
+**`T5a`(shadow 배선)** — 서버 `--shadow` + 로컬 `--safe-shadow`. 서버는 판정만 하고 무엇을
+실행할지는 로컬이 정책 원본(`actions_reference`)과 refined(`actions`) 중 고른다. 플래그가
+어긋나면 로봇이 움직이기 전에 즉시 죽는다. 플래그가 없으면 T0 과 완전히 같다.
+
+**`T5b`(degradation 사유 배선)** — `DEGRADED` 를 내리는 자리 열 곳 중 아홉은 이미 노트가
+있었고 나가는 길만 없었다. 새 `degradation.py` 의 `CODES` 등록부(12 개)로 응답에 사유가
+실린다.
+
+**`T5c`(shadow 첫 실행)** — `ep1807` 75 chunk. `has_target` 16/75, fine layer 가 붙은 16 개
+chunk 집합이 `grounding ok` 집합과 정확히 일치 — fine layer 가 실측에서 잘 안 보이던 것은
+계층 자체의 결함이 아니라 target 부재 때문이었다. 회귀 기준선 3 종은 그대로다.
+
+**`T5d`(attention 흐름 해부)** — apple 이 self-filter 뒤 seq 16–32 에서 점이 0 개가 되고
+(볼 것이 없어서), gripper 가 닫히는 시점(seq 20)·attention peak 이 crate 로 넘어가는 시점
+(seq 23)과 전부 다른 시점(seq 16)에 apple cluster 가 먼저 사라진다. crate 가 1 등이 된 것은
+attention 이 옮겨가서가 아니라 남은 유일한 후보였기 때문. **사용자 판정**: self-filter 가
+쥔 apple 을 지우는 것은 옳다·집은 뒤의 target 은 crate 다·score 는 무시하고 1 등만 본다·
+grace window 는 2–3 frame 으로 족하다.
+
+**`T5e`(구현)** — `target_score_threshold` 0.25→0.0(1 등을 거부하지 않는다) + 새 클래스
+`TargetConfirm`(3 프레임 연속 1 등이어야 target 이 바뀌는 hysteresis, `GraspLatch._Confirm`
+과는 다른 이유 넷으로 재사용하지 않음). 대가는 점수라는 2 차 방어선이 사라진 것 — `exclude_mask`
+없이 부르면 번진 덩어리가 target 이 될 수 있다.
+
+**`T5f`(재실행) — T5 게이트 통과 (사용자 판정 2026-09-26).** safe/unsafe 14/61 → **68/7**,
+`no_target`·`degraded` 54/6 → **0/0**, target 이 `table`/`unknown`/`robot`/flood 가 된 chunk
+**0 개**(A1 이 경고한 대가가 안 났다). hysteresis 가 연속 chunk 간 이름 flip 을 9 회 → **3 회**로
+줄였다(11 chunk 에서 hold, 그중 8 chunk 는 이름 자체가 hold 로 바뀌었다). `violated` 7 건은
+MuJoCo 참값 clearance 로 대조하면 **6 건이 field 의 비관**(오른팔 `ee_finger_r2`↔crate, 참값
++13.4~+20.2 mm 로 양수)이고 **1 건(seq 32)만 실제 접촉**(자기가 쥔 apple, 참값 −0.08 mm)이다.
+camera timing 이 좋아진 것(capture span p50 93.61→74.94 ms)은 원인을 재지 않았다. A2 가 자기
+측정 도구의 버그(`mj_geomDistance(distmax=1.0)` 이 mesh 쌍에서 거짓 0.0 을 냄)를 스스로
+잡았다. **단, T5 핵심 조건인 refined 대 reference clearance 비교는 미측정**(기록에 `actions`
+가 없다). 회귀 기준선 `has_target` 9/15 → **15/15** 로 갱신. 다음은 T6(실행 모드). 상세와
+수치·figure 는 [`AG3S_T0T6_LOG.md`](AG3S_T0T6_LOG.md) 의 **T5** 절.

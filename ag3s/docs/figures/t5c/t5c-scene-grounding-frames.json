@@ -1,0 +1,84 @@
+{
+ "records": "outputs/live_test/20260925_ep1807/run_0000",
+ "t_steps": [
+  64,
+  120,
+  424
+ ],
+ "target_score_threshold": 0.25,
+ "note": "왼쪽 열은 MuJoCo 자유 카메라, 나머지는 정책이 본 세 카메라. 사과 윤곽은 MuJoCo body segmentation 참값. live_shadow 열은 서버 경로의 판정 (target_score 를 싣지 않는다).",
+ "frames": {
+  "64": {
+   "offline": {
+    "target_score": 0.8440582432646476,
+    "grounding_status": "ok",
+    "has_target": true,
+    "apple_pixels": {
+     "zed_left": 413,
+     "wrist_cam_l": 3392,
+     "wrist_cam_r": 0
+    },
+    "ee_apple_dist_mm": 233.75845556546548,
+    "phase": "transit",
+    "target_center_error_mm": 6.557204375526493
+   },
+   "live_shadow": {
+    "seq": 9,
+    "ag3s_status": "ok",
+    "grounding_status": "ok",
+    "trajopt_status": "feasible",
+    "safe": true,
+    "reason_codes": []
+   }
+  },
+  "120": {
+   "offline": {
+    "target_score": 0.015123839989658237,
+    "grounding_status": "low_score",
+    "has_target": false,
+    "apple_pixels": {
+     "zed_left": 290,
+     "wrist_cam_l": 9230,
+     "wrist_cam_r": 0
+    },
+    "ee_apple_dist_mm": 117.63184122586135,
+    "phase": "approach",
+    "target_center_error_mm": null
+   },
+   "live_shadow": {
+    "seq": 16,
+    "ag3s_status": "no_target",
+    "grounding_status": "low_score",
+    "trajopt_status": "violated",
+    "safe": false,
+    "reason_codes": []
+   }
+  },
+  "424": {
+   "offline": {
+    "target_score": 0.12056221767735933,
+    "grounding_status": "low_score",
+    "has_target": false,
+    "apple_pixels": {
+     "zed_left": 186,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 5035
+    },
+    "ee_apple_dist_mm": 427.6467859774525,
+    "phase": "grasp",
+    "target_center_error_mm": null
+   },
+   "live_shadow": {
+    "seq": 54,
+    "ag3s_status": "degraded",
+    "grounding_status": "low_score",
+    "trajopt_status": "violated",
+    "safe": false,
+    "reason_codes": [
+     "camera_transform_stale",
+     "camera_skew"
+    ]
+   }
+  }
+ }
+}

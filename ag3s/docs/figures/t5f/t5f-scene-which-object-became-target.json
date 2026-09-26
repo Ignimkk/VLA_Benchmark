@@ -1,0 +1,171 @@
+{
+ "records": "outputs/live_test/20260925_ep1807/run_0000",
+ "picked_seq": [
+  15,
+  16,
+  18,
+  31,
+  32,
+  66
+ ],
+ "note": "confirm 은 프레임 순서에 의존하므로 1..75 를 전부 순서대로 돌리고 고른 여섯 chunk 만 그린다",
+ "panels": [
+  {
+   "seq": 15,
+   "t_step": 112,
+   "task_phase": "approach",
+   "rank1_name": "apple",
+   "rank1_score": 0.709981359426946,
+   "before_name": "apple",
+   "before_status": "ok",
+   "after_name": "apple",
+   "after_rank": 1,
+   "after_score": 0.709981359426946,
+   "after_mode": "keep_or_first",
+   "after_confirm_streak": 0,
+   "after_point_count": 34,
+   "after_rms_radius_mm": 25.23,
+   "after_name_purity": 1.0,
+   "after_name_counts": {
+    "apple": 34
+   },
+   "n_clusters": 3,
+   "gt_min_clearance_mm": 13.5664,
+   "gt_min_pair": [
+    "ee_finger_r2",
+    "crate"
+   ]
+  },
+  {
+   "seq": 16,
+   "t_step": 120,
+   "task_phase": "approach",
+   "rank1_name": "crate",
+   "rank1_score": 0.015123839989658237,
+   "before_name": null,
+   "before_status": "low_score",
+   "after_name": "crate",
+   "after_rank": 1,
+   "after_score": 0.015123839989658237,
+   "after_mode": "unobserved",
+   "after_confirm_streak": 1,
+   "after_point_count": 1462,
+   "after_rms_radius_mm": 149.82,
+   "after_name_purity": 1.0,
+   "after_name_counts": {
+    "crate": 1462
+   },
+   "n_clusters": 1,
+   "gt_min_clearance_mm": 13.3969,
+   "gt_min_pair": [
+    "ee_finger_r2",
+    "crate"
+   ]
+  },
+  {
+   "seq": 18,
+   "t_step": 136,
+   "task_phase": "approach",
+   "rank1_name": "crate",
+   "rank1_score": 0.032780288661154455,
+   "before_name": null,
+   "before_status": "low_score",
+   "after_name": "crate",
+   "after_rank": 1,
+   "after_score": 0.032780288661154455,
+   "after_mode": "switch",
+   "after_confirm_streak": 0,
+   "after_point_count": 1451,
+   "after_rms_radius_mm": 149.59,
+   "after_name_purity": 1.0,
+   "after_name_counts": {
+    "crate": 1451
+   },
+   "n_clusters": 2,
+   "gt_min_clearance_mm": 0.8916,
+   "gt_min_pair": [
+    "ee_finger_l1",
+    "apple"
+   ]
+  },
+  {
+   "seq": 31,
+   "t_step": 240,
+   "task_phase": "place",
+   "rank1_name": "pear",
+   "rank1_score": 0.2675077452770984,
+   "before_name": "pear",
+   "before_status": "ok",
+   "after_name": "crate",
+   "after_rank": 2,
+   "after_score": 0.23743710339145238,
+   "after_mode": "hold",
+   "after_confirm_streak": 1,
+   "after_point_count": 1205,
+   "after_rms_radius_mm": 155.79,
+   "after_name_purity": 1.0,
+   "after_name_counts": {
+    "crate": 1205
+   },
+   "n_clusters": 2,
+   "gt_min_clearance_mm": -0.0768,
+   "gt_min_pair": [
+    "ee_finger_l1",
+    "apple"
+   ]
+  },
+  {
+   "seq": 32,
+   "t_step": 248,
+   "task_phase": "place",
+   "rank1_name": "pear",
+   "rank1_score": 0.1798641811812704,
+   "before_name": null,
+   "before_status": "low_score",
+   "after_name": "crate",
+   "after_rank": 3,
+   "after_score": 0.15437775202580134,
+   "after_mode": "hold",
+   "after_confirm_streak": 2,
+   "after_point_count": 1024,
+   "after_rms_radius_mm": 157.05,
+   "after_name_purity": 1.0,
+   "after_name_counts": {
+    "crate": 1024
+   },
+   "n_clusters": 3,
+   "gt_min_clearance_mm": -0.0763,
+   "gt_min_pair": [
+    "ee_finger_l1",
+    "apple"
+   ]
+  },
+  {
+   "seq": 66,
+   "t_step": 520,
+   "task_phase": "retreat",
+   "rank1_name": "apple",
+   "rank1_score": 0.5199831400046923,
+   "before_name": "apple",
+   "before_status": "ok",
+   "after_name": "pear",
+   "after_rank": 2,
+   "after_score": 0.17491632067127516,
+   "after_mode": "hold",
+   "after_confirm_streak": 1,
+   "after_point_count": 181,
+   "after_rms_radius_mm": 48.95,
+   "after_name_purity": 0.6685,
+   "after_name_counts": {
+    "pear": 121,
+    "banana": 60
+   },
+   "n_clusters": 3,
+   "gt_min_clearance_mm": 18.9415,
+   "gt_min_pair": [
+    "ee_finger_r2",
+    "crate"
+   ]
+  }
+ ]
+}

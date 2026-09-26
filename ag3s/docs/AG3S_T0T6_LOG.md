@@ -111,6 +111,8 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | 용어 | 뜻 |
 |---|---|
 | **target_score** | 목표 위치 신뢰도. grounding 이 attention 지도에서 점수 상위 후보를 찾을 때 매기는 확률점수 (0~1). 점수 높을수록 찾은 위치를 믿는다 |
+| **`target_score_threshold`** | grounding 이 1 등 cluster 를 **거부**하는 점수 하한(`config.py:105`). 비교가 `score < threshold` 라 **0.0 이면 아무것도 거부하지 않는다**(`score`는 `w_geometry > 0` 이면 항상 양수). 옛 기본값 0.25 는 T5e 에서 0.0 으로 내렸다 — `LOW_SCORE` 분기와 설정 키 자체는 그대로 남아, 값 하나로 예전 동작을 되돌릴 수 있다 |
+| **`TargetConfirm`** | grounding 이 고른 1 등 cluster 가 **프레임마다 바뀌지 않도록** 잡아 두는 상태 기계(`stages/target_grounding.py:276`, T5e). "지금 target 인 물체의 centroid" 하나만 기억하고, 도전자가 `target_confirm_frames`(기본 3) 프레임 **연속** 1 등이 될 때까지 기존 물체를 유지한다. 소유자는 AG3S pipeline 이고 `reset()` 에서 청소된다. `grasp_latch.py` 의 `_Confirm`(영구 잠금 · score threshold 내장 · 이름 비교)과는 다른 규칙이라 재사용하지 않았다 |
 | **`runner_up_score`** | 1 등 후보의 점수와 2 등 후보의 점수 차로 grounding 의 확신을 재려는 값. `_Confirm.update()` 의 `confident = score >= score_ratio(1.3) * max(runner_up, 1e-9)` 가 이것을 문턱에 쓴다. **`target_grounding.py:394-402` 의 metrics dict 에 이 키 자체가 없어** 지금은 항상 0.0 으로 읽힌다 — `runner_up=0.0` 이면 문턱이 `1.3e-9` 로 사실상 무력화되고 `score>0` 이면 항상 통과한다 (T2) |
 | **destination attention lock** | 물체를 쥔(HELD) 뒤 attention 이 목적지로 옮겨갔다고 **`confirm_frames` 연속 같은 label** 로 확정하는 절차. `ep1807` 기록에서는 HELD 구간 75 프레임 동안 연속 2 가 최대라 한 번도 확정되지 않았다 — 그런데도 놓기(`placement`)는 성공했다 (T2) |
 | **`placed_ground_truth`** | MuJoCo 시뮬레이터의 참값(물체·바구니 실좌표)으로만 판정한 "놓였다" — crate 로컬 좌표계의 벽 안쪽 + rim 아래. AG3S/production 이 쓰는 ESDF 라벨층 기반 `placed_fn` 과는 다른, 대조용 참값이다 (T2) |
@@ -186,6 +188,8 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **diagnostic frame card** | 한 observation frame 의 실제 씬 · 3인칭 · 카메라 영상 · attention · lifting · grounding · 점군을 **한 장에** 모은 그림. 대표 프레임 하나가 아니라 **프레임마다 하나씩** 만든다 |
 | **completeness** | 기대한 프레임 수와 실제로 기록된 프레임 수가 같은가. 누락 0 · 중복 일련번호 0 · timestamp 역전 0 · 설명 안 되는 `carried`/`stale` 0 을 함께 센다 |
 | **shadow mode** | AG3S · cuRobo · SQP 를 전부 돌리되 **수정된 청크를 로봇에 보내지 않는** 실행. T5 가 이것이고, 실제로 보내는 T6 앞에 두는 이유는 수정이 여유거리를 나쁘게 만드는지를 로봇을 움직이기 전에 보기 위해서다 |
+| **`actions_reference`** | shadow 응답에 실리는 선택 키(`wire.py:93`) — 정책이 낸 **원본** 청크. `actions` 는 shadow 에서도 여전히 refined 다(서버가 거짓말하지 않는다). 무엇을 실행할지는 **로컬**이 이 둘 중 고른다. 키가 없으면 shadow 가 아니라는 뜻이고, `None` 이면 `pack_response` 가 키 자체를 안 싣는다 (T5a) |
+| **degradation code** | `ag3s_status != ok` 인 응답의 `ag3s.reasons`(`[{code, detail}]`)에 실리는 짧은 식별자. `degradation.py` 의 `CODES` 등록부에 12 개가 있고(`pointcloud_capped`·`candidate_overflow`·`esdf_unknown_fraction`·`no_robot_model`·`esdf_dead_camera`·`spheres_outside_grid`·`camera_state_stale`·`camera_transform_stale`·`camera_skew`·`camera_missing`·`fused_pointcloud_capped`·`constraint_sphere_overflow`), 등록 안 된 코드는 `reason()`이 거절한다. 코드가 하나도 없이 `degraded` 면 `degraded_without_reason` 이 대신 붙는다 — 그것이 나오면 씬이 아니라 AG3S 의 배선 결함이다 (T5b) |
 | **`openpi-live` venv** | openpi venv 의 복제본에 `warp-lang` 과 `curobo` 를 더한 네 번째 venv. 정책 · MuJoCo · AG3S · cuRobo · SQP 가 **한 프로세스**에서 돌게 하려고 만든다. 원본을 건드리지 않는 것이 요점 |
 | **site (최근접 site)** | 거리 변환이 어떤 복셀의 거리를 답할 때 **그 거리를 만든 표면 복셀**. cuRobo 는 이것을 `site_index` 에 dense int32 로 남긴다 (포장 `(z<<20)` \| `(y<<10)` \| `x`). 그래서 "가장 가까운 표면이 무엇인가" 는 추가 알고리즘이 아니라 **조회 한 번**이다 — 실측 오차 중앙 0.10 mm |
 | **seed 제외 (seed exclusion)** | 거리장을 만들기 **전에** 특정 표면 복셀을 씨앗에서 빼는 것. 파내기(carve)와 둘이 다르다 — TSDF 를 안 다치므로 물체를 놓으면 그 표면이 살아 있고, 뺀 물체 **뒤에** 있는 다른 장애물의 거리가 유지된다 (second-nearest). 쥔 물체를 cuRobo 경로에서 이렇게 다룬다 |
@@ -232,7 +236,7 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **T2** pick-place 상태 전이 | 9 개 사건이 정확히 어느 프레임에 있나 | **부분 통과로 닫는다(`ep1807`, 2026-09-25, 사용자 판정 2 차).** 통과: 조작 대상 ID 가 latch 로 유지된다 · attach/detach 로 held object 기하 편입·제거가 frame 19/32 로 정확(단 attach 프레임 자체는 carve 가 1 프레임 늦어 field 와 double counting — 결함으로 기록, T5·T6 에서 봄). 불합격: `destination_attention_locked`·`task_state_reset` 이 한 번도 안 됨(`None`) — detach 후 `latch.phase` 가 `'placed'` 로 고착. TSDF residual(위쪽 반구 기준) 26/54 프레임 지속, frame 47 에 영구 소거 — `T3` 의 `max_field_age_sec` 근거로 이어 붙인다. **변경 후 회귀 기준선(`T2-c`) — 동일**: 위반 시작 14/15·`has_target` 9/15·frame0 `clearance_before` +0.157 mm, 15 프레임 `clearance_before` 가 변경 전 run 과 한 프레임도 다르지 않다. `runner_up_score` 를 latch 에 실제로 먹여도 75 프레임 0 불일치 — 단 `confident` 가 갈리는 다섯 프레임이 전부 `held`/`placed` 구간이라 latch 가 잠긴 뒤라 영향이 없고, 효과가 있을 `SEARCHING` 구간은 이 기록으로 시험되지 않았다 |
 | **T3** 전 관측 프레임 TSDF/ESDF | 모든 프레임에서 필드가 서나. `max_field_age_sec` 를 정한다 | 대기 — T0 이 근거 수치를 냈다 (필드 나이 P50 2637 ms) |
 | **T4** fail-closed 주입 | 고장을 넣으면 정말 닫히나 | 대기 |
-| **T5** shadow 루프 | 판정만 하고 실행은 안 하는 루프가 서나 | 대기 — 여기서 AG3S 를 클라이언트 in-process 로 옮긴다 |
+| **T5** shadow 루프 | 판정만 하고 실행은 안 하는 루프가 서나 | **통과**(`T5f`, 사용자 판정 2026-09-26) — 75 chunk 전부 돌고 target 이 한 번도 엉뚱하게 잡히지 않았고 `violated` 7 건이 진짜 충돌이 아니다. **단 핵심 조건인 refined 대 reference clearance 비교는 미측정**(기록에 `actions` 배열이 없다). 회귀 기준선 `has_target` 9/15 → 15/15 갱신 |
 | **T6** 실기 닫힌 루프 | 예산 안에서 실제로 도나 | 대기 |
 | — **실시간성** | 청크 예산 533 ms 안에 드나 | **별도 판정 실패** — P50 2519 ms, 24/24 청크가 4.7 배 |
 
@@ -272,7 +276,7 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | I3 — `max_field_age_sec` 를 비워 둔다 | 근거 없는 판정을 기록에 남기지 않는다. T3 에서 정한다 | — |
 | 쥔 물체 — seed 제외 + **순수 복셀 부호 교정** | cuRobo 는 부호를 질의 복셀의 TSDF 에서 가져오므로 seed 만 지우면 더 나빠진다 | 14D |
 | T0 — legacy 생성 0 을 **불변식**으로 | 출처 도장은 *쓰인* 필드만 말한다 | 16D |
-| 아키텍처 — T1~T4 는 서버 쪽 AG3S 유지 | T0~T4 가 프레임별 IPC 기록을 요구하고, 한 프로세스 안에서는 IPC 가 없어진다. T5·T6 에서 옮긴다 | — |
+| ~~아키텍처 — T1~T4 는 서버 쪽 AG3S 유지, T5·T6 에서 AG3S 를 클라이언트 in-process 로 옮긴다~~ | ~~T0~T4 가 프레임별 IPC 기록을 요구하고, 한 프로세스 안에서는 IPC 가 없어진다~~ | **철회 — 사용자 판정 2026-09-25 (T5 절 참고).** AG3S·cuRobo·TO 는 **서버에 둔다.** 로컬은 `--safe-remote` 로 관측·프롬프트만 보내고 action 을 받는다. 근거는 IPC 가 왕복 2725 ms 중 약 206 ms(7.6 %)뿐이라 옮겨도 청크 예산 533 ms 를 못 맞추고, 지배 항은 AG3S 지각 1943 ms(서버 시간의 77 %)라는 T0 실시간성 절의 수치다 |
 
 원 측정: [`AG3S_REVIEW_LOG.md`](AG3S_REVIEW_LOG.md) 의 **"누적 발견"** 표와 각 발견의 절.
 
@@ -2139,3 +2143,303 @@ true`, 나머지 넷은 `placed`). `GraspLatch`(`_Confirm`)는 **이미 잠긴 �
 ### 시각화
 
 **없다.** 기준선이 움직이지 않아 task 지시대로 이번 라운드에는 figure 를 만들지 않았다.
+
+---
+
+## T5 — shadow 루프와 target 선택 (2026-09-25~26)
+
+### 아키텍처 판정 (사용자, 2026-09-25) — AG3S · cuRobo · TO 는 **서버**에 둔다
+
+물려받은 결정 *"T5·T6 에서 AG3S 를 클라이언트 in-process 로 옮긴다"* 를 **철회**했다
+(위 "물려받은 결정" 표에 취소선으로 남겼다). 대신 로컬은 `pi05_infer.py --safe-remote` 로
+관측·프롬프트를 보내고 action 만 받는다. 근거는 T0 의 실시간성 표다 — 정책 infer(클라이언트가
+잰 왕복 전체) 중앙값 2725 ms 와 서버 total 중앙값 2519 ms 의 차, 즉 IPC 왕복 자체는 약 206 ms
+(2725 ms 의 7.6 %)뿐이다. **AG3S 를 로컬로 옮겨 이 206 ms 를 없애도** 지배 항인 AG3S 지각
+1943 ms(서버 시간의 77 %)가 그대로 남아 청크 예산 533 ms 를 맞추지 못한다. 옮길 값어치가 없는
+비용을 없애자고 프로세스 경계를 허무는 것은 방향이 아니라는 것이 이 판정의 요지다.
+
+### shadow 배선 (`T5a`)
+
+서버에 `--shadow`, 로컬에 `--safe-shadow` 를 새로 달았다. 서버는 **하던 일을 하나도 줄이지
+않는다** — AG3S 지각·cuRobo ESDF·SQP·안전 판정이 전부 그대로 돌고, 응답에 정책의 **원본**
+청크를 선택 키 **`actions_reference`** 로 하나 더 싣는다. `actions` 는 shadow 에서도 여전히
+refined 다(서버가 거짓말하지 않는다). **무엇을 실행할지는 로컬이 고른다** — `--safe-shadow`
+가 켜지면 판정이 `unsafe` 여도 멈추지 않고 원본(`actions_reference`)을 실행한다.
+
+**두 플래그 중 하나만 켜면 즉시 `RuntimeError`** 다. 접속 시점(서버 metadata)과 첫 왕복(응답에
+키가 있나) 두 곳에서 검사한다. 조용히 refined 를 실행하면 "shadow 라고 적힌 실행이 실은 닫힌
+루프로 돌았다" 는 기록이 남기 때문이다. **플래그가 없으면 한 바이트도 안 바뀐다** — 응답 키
+집합·클라이언트가 돌려주는 객체·`stats`·frame record 의 키 집합이 T0 과 전부 같고, 이것을
+단위 테스트로 고정했다(`benchmark/trajopt/wire.py`·`safe_policy.py`·`client.py`,
+`pi05_infer.py`).
+
+### degradation 사유를 와이어에 (`T5b`)
+
+`ConstraintValidity.DEGRADED` 로 내려가는 자리는 지시서가 준 다섯이 아니라 **열**이었다.
+그중 **아홉은 이미 수치가 든 문장을 `notes` 에 남기고 있었다** — 문제는 그 노트가 지각
+(`CollisionConstraintSet.notes`) 쪽이라 서버 프로세스 밖으로 나가는 경로가 하나도 없었던 것뿐
+이다(응답의 `notes` 는 최적화기 쪽인 `TrajOptResult.notes` 였다). 정말로 노트가 비어 있던
+자리는 `multiview.py` 의 *"카메라 중 하나가 자기 점군에서 `max_points` cap 에 걸렸다"* 분기
+**하나**였다.
+
+새 파일 `ag3s/runtime/degradation.py` 에 **degradation code**(위 "용어" 절) 등록부 `CODES` 를
+뒀다 — 12 개가 등록돼 있고, 등록되지 않은 코드는 `reason()` 이 거절한다. 응답의 선택 키
+`ag3s` 블록에 `status`·`validity`·`grounding_status`·`reasons`(`[{code, detail}]`)·`notes` 가
+실린다. 관문 둘(`to_adapter.py:198` · `pipeline.py:673`)이 `ensure_reason` 으로 지키고 있어,
+degraded 인데 코드가 하나도 없으면 `degraded_without_reason` 이 대신 붙는다 — 나오면 씬의
+성질이 아니라 AG3S 자체의 배선 결함이다.
+
+### shadow 루프 첫 실행 (`T5c`)
+
+`ep1807` 을 75 chunk(관측 프레임 75 · control 프레임 600) shadow 로 굴렸다. 기록 완결성은
+전부 0(중복 · timestamp 역전 · 설명 안 된 carried/stale) 이고 `completeness_pass: true` 다.
+
+| | 수치 |
+|---|---|
+| safe / unsafe | 14 / 61 |
+| `ag3s_status` ok / no_target / degraded | 15 / 54 / 6 |
+| `has_target`(실제 grounding=ok) | **16 / 75** |
+| TO `violated` (`ag3s` 는 ok 인데) | 1 (seq 4, `max_violation_m` 0.003) |
+| `client_ipc_shadow_override`(unsafe 인데 실행) | 61 |
+| `control_executed_chunk_kinds` | `["reference"]` — 600/600 |
+| `reason_code_combos` | `camera_transform_stale,camera_skew` 6 건, 나머지 69 건은 없음 |
+| `degraded_without_reason` | 0 |
+
+`no_target` 54 프레임은 흩어져 있지 않고 **8 개 구간으로 뭉쳐 있다**(가장 긴 구간이 seq
+55–70, 16 프레임). fine layer(5 mm)가 붙은 chunk 는 16 / 75 이고, **이 16 개
+chunk 의 집합이 `grounding ok` 16 개 집합과 정확히 일치한다**(`one_tier_set_equals_low_score_set:
+true`). 이것이 R4·R5(fine layer 가 실측에서 한 번도 붙지 않는 것처럼 보이던 것)가 실은 fine
+layer 자체의 결함이 아니라 target 이 없으면 fine layer 를 놓을 자리(target centroid)가 없어서
+안 붙었을 뿐이라는 것을 보여준다.
+
+카메라 세 대 촬영 시차(`camera_span_ms`)는 p50 93.6 ms, p95 100.7 ms 이고 100 ms 한도를 넘긴
+프레임이 6 건(100~107 ms) — 전부 `camera_transform_stale`+`camera_skew` 코드를 낸다.
+
+**손집계와 측정값이 두 곳에서 갈렸다 — 규칙 A 가 다시 잡았다.** `has_target` 은 브리핑에서
+21/75(75 − `no_target` 54) 로 셌지만, `degraded` 6 건 중 5 건이 `grounding=low_score`(target
+없음)라 실측은 **16/75** 다. 카메라 시차 100 ms 초과 6 건도 브리핑은 100·101·107 세 값만
+들었지만 실제 여섯 값은 100·101·101·**103**·107·107 이다.
+
+지연(첫 chunk 제외 n=74): 정책 infer p50 259 ms, AG3S p50 2650 ms, TO p50 224 ms, 서버 total
+p50 3131 ms, client roundtrip p50 3347 ms — 청크 예산 533 ms 대비 여전히 크다.
+
+변경 후 회귀 기준선은 그대로다: **위반으로 시작 14/15 · `has_target` 9/15 · frame0
+`clearance_before` +0.157186 mm**, 15 프레임 `clearance_before` 가 변경 전 run 과 한 프레임도
+다르지 않다.
+
+#### 시각화 (규칙 A)
+
+* [`figures/t5c/t5c-scene-grounding-frames.png`](figures/t5c/t5c-scene-grounding-frames.png) —
+  실제 씬.
+* [`figures/t5c/t5c-chunkwise-verdict-and-score.png`](figures/t5c/t5c-chunkwise-verdict-and-score.png) —
+  그래프. chunk 별 판정·점수 추이.
+* [`figures/t5c/t5c-paths-and-camera-timing-table.png`](figures/t5c/t5c-paths-and-camera-timing-table.png) —
+  표.
+
+### attention 흐름과 실패 해부 (`T5d`)
+
+seq 1–51(t_step 0–400, gripper 가 seq 20 에 닫히고 seq 33 에 다시 열리는 구간을 덮는다)을
+offline replay 로 전수 재구성했다. `top_name`(1 등 cluster 를 MuJoCo segmentation body 다수결로
+붙인 것) 은 apple(seq 1–15) → crate(seq 16–30) → pear(seq 31–32) → crate(seq 33–34) →
+apple(seq 35, 1 프레임) → crate(seq 36–51) 순으로 바뀐다.
+
+**핵심 셋:**
+
+1. **apple 의 점이 self-filter 뒤 seq 16–32(17개 프레임) 에 0 개다** — `n_after_self_filter`
+   가 이 구간 전부 0(`n_seq_with_zero_after_self_filter: 17`, `n_seq_where_all_loss_is_self_filter:
+   17`). grounding 이 점수를 낮게 준 것이 아니라 **애초에 apple 을 볼 점이 없었다**. seq 15 는
+   재구성 후 507 점 중 self-filter 뒤 139 점이 남아 있었다(그 프레임까지는 아직 보인다).
+2. **세 사건이 서로 다른 시점에 일어난다.** apple cluster 가 사라지는 시점(seq 16, `top_name`
+   이 apple→crate 로 바뀜) · gripper 가 닫히는 시점(`first_closed_seq: 20`) · attention peak 이
+   crate 로 넘어가는 시점(seq 23, `attention_peak_name` 표에서 seq 22 까지 `table` 이다가 seq
+   23 에 `crate`) 이 전부 다르다. **crate 가 seq 16 에 1 등이 된 것은 attention 이 crate 로
+   옮겨가서가 아니다** — 그 프레임의 `attention_peak_name` 은 여전히 `table` 이고, `n_clusters`
+   가 1 로 줄어(apple cluster 가 없어져) **남은 것 중 유일한 후보라서 1 등이 됐을 뿐**이다
+   (그 프레임의 `top_score` 는 0.015로 threshold 0.25 에 크게 못 미친다).
+
+**손집계와 측정값이 다시 갈렸다.** 브리핑은 "seq 15 self-filter 뒤 563 → 139" 로 들었지만
+측정값은 self-filter **전** 507 · **후** 139 다 (`n_after_recon` 507, `n_after_self_filter`
+139) — 뒤 값(139)은 같지만 앞 값(563)은 틀렸다.
+3. **grace window** — 실패(`no_target`/`degraded low_score`) 구간을 경계(gripper 닫힘 seq 20 ·
+   열림 seq 33) 로부터 ±2 seq 떨어진 것과 아닌 것으로 나누면, live 35 건 중 **34 건**이 grasp
+   경계(seq 10–21, 12 건)나 place 경계(seq 30–51, 22 건)에 닿아 있고 **경계에서 먼 것은 seq
+   25 하나뿐**이다. offline 30 건도 grasp 경계(seq 16–28, 13 건) · place 경계(seq 32–33, 2 건)
+   · 경계와 무관한 나머지(seq 37–51, 15 건)로 나뉜다.
+
+latch(`GraspLatch`) 는 이 구간 내내 `manipulated=obj0` 을 유지한다(35 건 전부
+`latch_manipulated_col7_counts: {"obj0": 35}`) — target 이 사라진 것과 조작 대상 식별이
+흔들린 것은 별개다.
+
+#### 사용자 판정 (2026-09-25~26)
+
+| 물음 | 판정 |
+|---|---|
+| self-filter 가 쥔 apple 을 지우는 것 | **옳다** — 쥔 apple 을 장애물로 두면 로봇 자신과의 충돌로 읽힌다 |
+| 집은 뒤의 target | **crate 다** — 시스템이 실제로 crate 를 1 등으로 찾고 있었다 |
+| score 판정 | **무시하고 1 등만 본다** |
+| seq 33 이후(준비자세 복귀) | **판정에 쓰지 않는다** — 과제는 step 350–400 에 성공한다 |
+| `camera_skew` 판정 | **이번에 건드리지 않는다** |
+| grace window | **2–3 frame 으로 족하다** — 완전무결을 요구하지 않는다 |
+
+#### 시각화 (규칙 A)
+
+* [`figures/t5d/t5d-scene-attention-handoff.png`](figures/t5d/t5d-scene-attention-handoff.png) —
+  실제 씬.
+* [`figures/t5d/t5d-topcluster-band-and-score.png`](figures/t5d/t5d-topcluster-band-and-score.png) —
+  그래프. frame 축에 1 등 물체가 바뀌는 띠 + 점수 추이.
+* [`figures/t5d/t5d-segments-failures-and-grace-table.png`](figures/t5d/t5d-segments-failures-and-grace-table.png) —
+  표.
+* [`figures/t5d/t5d-scene-five-moments.png`](figures/t5d/t5d-scene-five-moments.png) —
+  사용자 요청(2026-09-25)으로 더한 다섯 순간(seq 15·16·20·30·33)의 3인칭 자유 카메라 + 세
+  카메라 실제 이미지 + base frame 평면도. apple point 를 self-filter 전/후 둘 다 적는다.
+
+### 구현 (`T5e`) — 1 등을 target 으로, hysteresis 로 흔들림을 누른다
+
+사용자 판정을 코드로 옮겼다. 두 조각은 독립이고 따로 끌 수 있다.
+
+1. **점수 거부를 껐다** — `target_score_threshold` 기본값을 **0.25 → 0.0** 으로 내렸다.
+   비교가 `score < threshold` 라 0.0 은 아무것도 거부하지 않는다. `LOW_SCORE` 분기와 설정 키는
+   그대로 남아, 값 하나로 예전 동작을 되돌릴 수 있다.
+2. **`TargetConfirm`**(위 "용어" 절) 을 새로 넣어 프레임 간 hysteresis 를 뒀다 — 도전자가
+   `target_confirm_frames`(기본 3) 프레임 **연속** 1 등이 될 때까지 기존 target 을 유지한다.
+   "같은 물체인가" 는 `target_identity_tolerance`(0.06 m, `CentroidIdentity` 와 같은 값) 로
+   centroid 근접을 본다.
+
+`grasp_latch._Confirm` 을 재사용하지 않은 근거 넷:
+
+| | 왜 안 되나 |
+|---|---|
+| 잠금 대 hysteresis | `_Confirm` 은 한 번 잠기면 `release()` 전까지 절대 안 바뀐다. target 은 apple 다음에 crate 로 **정당하게** 바뀌어야 하므로 "바뀌지만 한 프레임으로는 안 바뀐다" 는 다른 규칙이 필요하다 |
+| 박힌 score threshold | `_Confirm.update` 는 매 프레임 점수비 threshold 를 먼저 본다 — T5e 가 없애려는 바로 그 점수 거부다 |
+| 이름 부재 | `_Confirm` 은 `label` 문자열을 비교하는데 grounding 의 cluster id 는 프레임 간에 뜻이 없다. 그래서 centroid 근접(`CentroidIdentity` 와 같은 규칙·tolerance)으로 정체를 본다 |
+| 의존 방향 | `benchmark/ag3s` 는 `benchmark/trajopt` 를 import 하지 않는다. 위로 손을 뻗으면 방향이 뒤집힌다 |
+
+**대가**: `exclude_mask` 없이 `ground_target` 을 부르면 테이블로 번진 덩어리가 target 이 된다
+— 점수라는 2 차 방어선이 사라졌기 때문이다(단위 테스트로 이 사실 자체를 고정했다). live
+경로는 pipeline 이 `support_mask` 를 항상 넘기므로 이 대가에 노출되지 않지만, `exclude_mask`
+를 주지 않는 다른 호출자에게는 방어선이 없어졌다.
+
+이 STEP 은 코드 변경만이고, 재실행 측정(`T5f`, A2 진행 중)의 결과는 이 절에 아직 없다.
+
+### 재실행 (`T5f`) — 1 등 선택이 실제로 무엇을 바꿨나 (2026-09-26)
+
+같은 `ep1807` · 같은 75 chunk · 같은 서버 설정(cuRobo coarse 20 mm + fine layer 5 mm, TSDF
+5 mm)으로 두 번 굴렸다. **바뀐 것은 target 선택 하나**(`target_score_threshold` 0.25 → 0.0 +
+`target_confirm_frames` 3)다.
+
+#### 1 — 이전/이후
+
+| | 이전(threshold 0.25) | 이후(1 등 + confirm 3) |
+|---|---|---|
+| safe / unsafe | 14 / 61 | **68 / 7** |
+| `ag3s_status` ok / no_target / degraded | 15 / 54 / 6 | **75 / 0 / 0** |
+| `trajopt_status` feasible / violated | 14 / 61 | **68 / 7** |
+| `geometry_certified` | 15 | **75** |
+| field two-tier / one-tier chunk | 16 / 59 | **75 / 0** |
+| reason code 조합 | none 69 · `camera_transform_stale,camera_skew` 6 | none 75 |
+| `violated_with_nonzero_violation` | 1(seq 4) | 7(seq 4·15·16·32·72·74·75) |
+
+#### 2 — A1 이 경고한 대가는 나지 않았다
+
+`table`/`unknown`/`robot` 이 target 이 된 chunk는 **0 개**, T5e 가 고친 단위 테스트가 주장한
+flood 모양(10,000 점 이상 + `spatial_compactness < 0.01`)이 target 이 된 chunk 도 **0 개**다.
+75 chunk 의 target 은 apple 23 · crate 49 · pear 3 로만 나뉜다.
+
+crate chunk 31 개가 `name_purity < 1.0` 인데, **섞인 점은 crate 안에 든 apple 의 점**이다(최악
+seq 38, purity 0.9167, crate 1233 점 · apple 112 점) — apple 이 crate 안에 놓인 뒤라 물리적으로
+맞다. purity 0.9 미만은 3 chunk(seq 65–67, pear cluster 에 banana 점 60 개가 섞였다).
+
+#### 3 — hysteresis 가 실제로 일했다
+
+rank 1(1 등) 을 그대로 썼다면 연속 chunk 사이 target 이름이 9 회 바뀌었을 것이다. `confirm_frames
+3` 을 적용한 뒤에는 **3 회**로 줄었다(`name_flips_between_consecutive_chunks`). `confirm_activity`
+의 `chosen_rank_counts` — rank 1 을 64 회, rank 2 를 10 회, rank 3 을 1 회 골랐다 — 는 **11
+chunk 에서 그 프레임의 1 등이 아닌 것을 붙들고 있었다**는 뜻이고(`mode_counts.hold: 11`,
+`hold_seqs`: 31·32·33·34·35·40·63·64·66·67·69), 그것이 hysteresis 다. 그중 **hold 가 실제로
+이름을 바꿔 놓은(1 등을 안 따라갔다면 다른 이름이 됐을) chunk 는 8 개**
+(`seqs_where_hold_changed_the_name`: 31·32·35·63·64·66·67·69).
+
+#### 4 — `violated` 7 건은 진짜 충돌이 아니다
+
+| seq | `max_violation_mm` | SQP 전 violation (mm) | 참값 최소 clearance (mm) | 참값 최근접 쌍 | phase | target |
+|---|---|---|---|---|---|---|
+| 4 | 3.9867 | 11.7 | 14.9637 | `ee_finger_r2`↔crate | approach | apple |
+| 15 | 1.1930 | 110.8 | 13.5664 | `ee_finger_r2`↔crate | approach | apple |
+| 16 | 1.7307 | 90.7 | 13.3969 | `ee_finger_r2`↔crate | approach | crate |
+| 32 | 5.3178 | 45.0 | **−0.0763** | `ee_finger_l1`↔apple | place | crate |
+| 72 | 2.5565 | 43.5 | 19.7791 | `ee_finger_r2`↔crate | retreat | apple |
+| 74 | 0.1350 | 44.0 | 20.1820 | `ee_finger_r2`↔crate | retreat | apple |
+| 75 | 5.6895 | 44.4 | 20.1698 | `ee_finger_r2`↔crate | retreat | apple |
+
+**6 건이 `ee_finger_r2` ↔ crate 다.** `ep1807` 은 왼팔 에피소드이고 오른팔은 그 내내 crate
+옆에 세워져 있다 — 참값 clearance 는 **+13.4 ~ +20.2 mm 로 양수**인데 field 가 0.1~5.7 mm
+위반이라 말한다. **field 가 비관적인 것이지 부딪친 것이 아니다.**
+
+**1 건(seq 32)만 참값이 음수(−0.0763 mm)이고 `ee_finger_l1` ↔ apple 다.** 그 시점 gripper 는
+아직 닫혀 있고(`first_reopen_seq` 33) — **자기가 쥔 apple 과 닿아 있는 것**이다.
+
+7 건 전부 `geometry_certified: true` 이고 field 는 two-tier 다.
+
+**lead 의 앞선 기술을 바로잡는다**: 이전 실행의 "TO violated 1" 은 틀렸다 — 실제로는
+`trajopt_status=violated` 가 **61** 이고, 그중 `max_violation_m > 0` 인 것이 **1**(seq 4,
+3.0031 mm)이었다. 나머지 60 은 violation 이 0.0 인데 geometry 미인증(`no_target` 54 ·
+`degraded` 6)으로 `violated` 로 내려간 것이다.
+
+#### 5 — camera timing 이 좋아진 것은 우리 공이 아니다
+
+카메라 세 대 촬영 폭이 이전 p50 93.61 ms · p95 100.68 ms · max 107.22 ms 에서 이후 p50
+74.94 ms · p95 88.22 ms · max 93.97 ms 로 줄었다. **AG3S/trajopt 코드가 건드린 곳이 아니고
+원인은 재지 않았다.** `degraded` 6 → 0 은 이번 실행이 더 빨랐기 때문으로 보이고, "왜 빨라졌나"
+는 `not_measured` 에 남는다.
+
+#### 6 — A2 가 자기 측정 도구의 버그를 잡았다
+
+참값 clearance 를 재던 첫 시도에서 `mj_geomDistance(..., distmax=1.0)` 이 **실제 거리
+0.37~0.56 m 인 mesh geom 쌍에서 정확히 0.0** 을 돌려주었다 — `distmax` 0.3 m 부터 나타나고
+0.1 m 이하에서 사라지는 결함이다. 시각 전용 geom(`contype==0 and conaffinity==0`, 팔 geom
+307 개 중 40 개)도 같은 0.0 을 만들었다. **둘 다 못 잡았으면 참값 clearance 가 전부 0 이
+나와 "다 부딪쳤다" 는 정반대 결론이 났을 것**이다(고치기 전 seq 1 값 0.0 mm, 고친 뒤
++15.17 mm). 고친 뒤에는 `distmax` 0.02/0.05/0.1 m 세 값이 75 chunk 전부에서 일치한다.
+
+#### 사용자 판정 — **T5 게이트: 통과** (2026-09-26)
+
+- **통과 근거**: 루프가 75 chunk 전부 돈다(`n_chunks: 75`, safe+unsafe·ag3s_ok 모두 75 로
+  합이 맞는다) · target 이 한 번도 `table`/`unknown`/`robot`/flood 로 엉뚱하게 잡히지 않았다 ·
+  `violated` 7 건이 진짜 충돌이 아니다(위 4).
+- **단, T5 의 핵심 합격 조건인 refined 대 reference clearance 비교는 미측정이다** — 기록에
+  `actions` 배열이 없다(`executed_chunk` 는 `"reference"` 라는 이름표뿐이고 qpos·물체 자세도
+  없다). 이 조건은 통과 판정에 **포함되지 않았다.**
+- **회귀 기준선 갱신(사용자 판정)**: `has_target` **9/15 → 15/15**. 나머지 둘은 소수점까지
+  그대로다 — **위반으로 시작 14/15** · frame0 `clearance_before` **+0.15718632962849477 mm**.
+  lead 가 `.claude/skills/regression-baseline/SKILL.md` 를 이미 갱신했다.
+- **다음은 T6(실행 모드)** — shadow 를 끄고 서버가 다듬은(refined) chunk 를 실제로 실행한다
+  (사용자 판정).
+
+#### `not_measured`
+
+1. refined 대 reference clearance 비교 — `frames.jsonl` 의 `executed_chunk` 는 `"reference"`
+   라는 이름표일 뿐이고 `actions` 배열이 없다(`chunk_shape` 만 있다). qpos·물체 자세도 없다.
+   재려면 기록기가 `actions`·`actions_reference`·qpos 를 남겨야 한다.
+2. live `violated` 7 건이 어느 constraint(어느 link 대 어느 물체)였나 — 기록의 verdict 는
+   `max_violation_m` 과 note 세 줄만 싣고 위반 constraint 의 신원을 싣지 않는다. 대신 그
+   chunk 의 MuJoCo 참값 최소 clearance 와 그 최근접 쌍을 쟀다 — 그것은 참값 기하의 최근접
+   쌍이지 SQP 가 어긴 constraint 가 아니다.
+3. live 경로의 cluster·score·target 이름 — 서버 응답에도 두 로그에도 없다. 이번 STEP 의
+   이름은 전부 offline replay 에서 나온 것이다.
+4. 왼팔(작업 팔) 의 offline replay 대 live shadow 정렬 — shadow 기록에 qpos 가 없어 오른팔
+   7 관절로만 확인됐다(T5c, 최대 절대차 0.00–0.02 rad).
+5. 참값 clearance 의 궤적 전체 값 — 잰 것은 각 chunk 의 관측 qpos 한 자세다. 50×16 chunk 를
+   따라간 값은 live 기록에 `actions` 가 없어 못 잰다.
+6. camera capture 폭이 왜 두 실행에서 다른가 — 두 분포(p50 93.61 → 74.94 ms)만 쟀다. 원인은
+   안 쟀다.
+
+#### 시각화 (규칙 A)
+
+* [`figures/t5f/t5f-scene-which-object-became-target.png`](figures/t5f/t5f-scene-which-object-became-target.png) —
+  실제 씬.
+* [`figures/t5f/t5f-target-name-bands.png`](figures/t5f/t5f-target-name-bands.png) —
+  그래프. frame 축에 target 이름이 바뀌는 띠.
+* [`figures/t5f/t5f-tables-before-after.png`](figures/t5f/t5f-tables-before-after.png) —
+  표.
+
+---

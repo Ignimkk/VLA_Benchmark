@@ -1,0 +1,370 @@
+{
+ "_comment": "ag3s-verifier(A2) 가 쓴다. 해석을 쓰지 않는다 — 숫자와 경로만.",
+ "step": "T5c",
+ "date": "2026-09-25",
+ "record_consumed": {
+  "frames": "outputs/live_test/20260925_t5shadow/shadow_ep1807/frames.jsonl",
+  "manifest": "outputs/live_test/20260925_t5shadow/shadow_ep1807/manifest.json",
+  "completeness": "outputs/live_test/20260925_t5shadow/shadow_ep1807/completeness.json",
+  "client_log": "outputs/live_test/logs/t5shadow_run.log",
+  "server_log": "outputs/live_test/logs/serve_safe_8000_shadow.log",
+  "server_argv": "python -m benchmark.trajopt.serve_safe --config pi05_rby1_randomized_pick_place_16d_lora --checkpoint .../29999 --model-xml .../model_transport.xml --port 8000 --esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links arms --shadow",
+  "client_argv": "pi05_infer.py --model rby1_randomized_pick_place_16d --remote localhost:8000 --safe-remote --safe-shadow --safe-timeout 120 --episode-index 1807 --max-steps 600 --headless --start-delay 0 --speed 0 --safe-phase approach --safe-manipulators left --record-frames outputs/live_test/20260925_t5shadow/shadow_ep1807",
+  "curobo_commit": "78fd485fa82d9b9a063fb4985e371814587e666a",
+  "venv_of_record": ".venv-openpi-live"
+ },
+ "runs": [
+  {
+   "id": "baseline",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/T5c/baseline_check.json",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T5c/baseline_check.json",
+   "stdout_log": "outputs/verify/T5c/baseline_check.log"
+  },
+  {
+   "id": "shadow_record_aggregate",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T5c/agg_shadow_record.py",
+   "venv": ".venv-ag3s",
+   "script": "outputs/verify/T5c/agg_shadow_record.py",
+   "raw_output": "outputs/verify/T5c/shadow_agg.json"
+  },
+  {
+   "id": "offline_grounding_ep1807",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T5c/measure_offline_grounding_ep1807.py",
+   "venv": ".venv-ag3s",
+   "script": "outputs/verify/T5c/measure_offline_grounding_ep1807.py",
+   "raw_output": "outputs/verify/T5c/offline_grounding_ep1807.json",
+   "stdout_log": "outputs/verify/T5c/offline_grounding_ep1807.log",
+   "inputs": "records outputs/live_test/20260925_ep1807/run_0000 (T2 가 쓴 것과 같은 기록) · attention benchmark/ag3s/asset/data/attention_16d_ep1807.npz · esdf backend legacy 20 mm"
+  },
+  {
+   "id": "rollout_alignment",
+   "command": "PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T5c/measure_rollout_alignment.py",
+   "venv": ".venv-ag3s",
+   "script": "outputs/verify/T5c/measure_rollout_alignment.py",
+   "raw_output": "outputs/verify/T5c/rollout_alignment_right_arm.json"
+  },
+  {
+   "id": "merge_live_vs_offline",
+   "command": "PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T5c/merge_live_vs_offline.py",
+   "venv": ".venv-ag3s",
+   "script": "outputs/verify/T5c/merge_live_vs_offline.py",
+   "raw_output": "outputs/verify/T5c/live_vs_offline_by_chunk.json"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "b9386c9",
+  "dirty_files": [
+   ".claude/roles/AGENTS-MAP.md",
+   "tests/trajopt/test_safe_client.py",
+   "tests/trajopt/test_safe_policy.py",
+   "tests/ag3s/test_degradation_reason.py (untracked)"
+  ],
+  "note": "benchmark/**/*.py 는 이 스텝에서 한 줄도 고치지 않았다"
+ },
+ "numbers": {
+  "_comment": "로그와 논문에 쓰이는 모든 수치가 여기에만 있다. 여기 없는 숫자는 쓰지 않는다.",
+
+  "record_shape": {
+   "chunks": 75,
+   "observation_frames": 75,
+   "planning_records": 75,
+   "control_records": 600,
+   "chunk_shape": [50, 16],
+   "completeness_pass": true,
+   "duplicate_sequence_ids": 0,
+   "timestamp_reversals": 0,
+   "unexplained_carried_or_stale": 0,
+   "field_state_new": 150,
+   "field_state_carried": 525,
+   "client_ipc_sent": 75,
+   "client_ipc_safe": 14,
+   "client_ipc_unsafe": 61,
+   "client_ipc_timeout": 0,
+   "client_ipc_stale": 0,
+   "client_ipc_error": 0,
+   "client_ipc_shadow_override": 61,
+   "control_executed_chunk_kinds": ["reference"],
+   "control_records_not_executed": 0
+  },
+
+  "verdict_counts_live": {
+   "safe_true": 14,
+   "safe_false": 61,
+   "ag3s_status_ok": 15,
+   "ag3s_status_no_target": 54,
+   "ag3s_status_degraded": 6,
+   "geometry_certified_true": 15,
+   "trajopt_status_feasible": 14,
+   "trajopt_status_violated": 61,
+   "grounding_status_ok": 16,
+   "grounding_status_low_score": 59,
+   "has_target_true": 16,
+   "has_target_false": 59,
+   "reason_code_combos": {"(none)": 69, "camera_transform_stale,camera_skew": 6},
+   "degraded_without_reason": 0,
+   "trajopt_violated_with_ag3s_ok": {"n": 1, "seqs": [4], "max_violation_m": 0.0030030982460759748},
+   "derivation_of_has_target_16": "서버 로그가 seq 별로 grounding 을 찍는다(ok 프레임은 줄을 남기지 않는다). grounding=ok 16 = safe 14 + TO violated 1(seq 4) + degraded 이면서 grounding=ok 1(seq 5). grounding=low_score 59 = no_target 54 + degraded 5. 16 + 59 = 75",
+   "lead_hand_count_difference": "브리핑의 has_target 21/75 은 75 − no_target 54 다. degraded 6 중 5 건이 grounding=low_score 라 target 이 없는 프레임이다 — 측정값은 16/75"
+  },
+
+  "no_target_chunks": {
+   "n": 54,
+   "seqs": [10,11,12,13,14,15,16,17,18,19,20,21,25,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,48,49,51,52,53,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,72,73,74,75],
+   "t_step_of_seq": "t_step = (seq − 1) × 8",
+   "contiguous_runs_seq": [
+    {"seq_from": 10, "seq_to": 21, "n": 12},
+    {"seq_from": 25, "seq_to": 25, "n": 1},
+    {"seq_from": 30, "seq_to": 44, "n": 15},
+    {"seq_from": 46, "seq_to": 46, "n": 1},
+    {"seq_from": 48, "seq_to": 49, "n": 2},
+    {"seq_from": 51, "seq_to": 53, "n": 3},
+    {"seq_from": 55, "seq_to": 70, "n": 16},
+    {"seq_from": 72, "seq_to": 75, "n": 4}
+   ],
+   "n_runs": 8,
+   "longest_run_n": 16,
+   "t_step_ranges": ["72-160", "192", "232-344", "360", "376-384", "400-416", "432-552", "568-592"],
+   "has_target_seqs": [1,2,3,4,5,6,7,8,9,22,23,24,26,27,28,29],
+   "has_target_t_steps": [0,8,16,24,32,40,48,56,64,168,176,184,200,208,216,224],
+   "has_target_contiguous_runs_seq": [
+    {"seq_from": 1, "seq_to": 9, "n": 9},
+    {"seq_from": 22, "seq_to": 24, "n": 3},
+    {"seq_from": 26, "seq_to": 29, "n": 4}
+   ],
+   "last_has_target_seq": 29,
+   "chunks_after_last_has_target": 46,
+   "chunks_after_last_has_target_all_without_target": true
+  },
+
+  "field_tiers_live": {
+   "tier_config_has_target": [{"voxel_m": 0.02, "shape": [128,128,128]}, {"voxel_m": 0.005, "shape": [128,128,128]}],
+   "tier_config_no_target": [{"voxel_m": 0.02, "shape": [128,128,128]}],
+   "n_chunks_with_one_tier": 59,
+   "n_chunks_with_two_tiers": 16,
+   "one_tier_set_equals_low_score_set": true
+  },
+
+  "target_score": {
+   "threshold": 0.25,
+   "threshold_source": "benchmark/ag3s/config.py:91 · benchmark/ag3s/configs/rby1_three_camera.yaml:55 (둘 다 0.25)",
+   "live_path_values": "not_measured — 응답의 ag3s 블록에도 서버·클라이언트 로그에도 점수가 없다 (benchmark/trajopt/safe_policy.py:294-301 이 status·validity·grounding_status·reasons·notes 만 싣는다)",
+   "offline_path_ep1807": {
+    "records": "outputs/live_test/20260925_ep1807/run_0000",
+    "attention": "benchmark/ag3s/asset/data/attention_16d_ep1807.npz",
+    "n_frames": 75,
+    "has_target": 29,
+    "low_score": 46,
+    "all_min": 0.0151238,
+    "all_p50": 0.1915531,
+    "all_max": 0.8440582,
+    "all_mean": 0.3017275,
+    "failing_min": 0.0151238,
+    "failing_p50": 0.1373954,
+    "failing_max": 0.2494984,
+    "failing_mean": 0.1391521,
+    "failing_within_0p05_below_threshold": 5,
+    "failing_below_half_threshold_0p125": 17,
+    "failing_exactly_zero": 0,
+    "passing_min": 0.2586002,
+    "passing_p50": 0.7007124,
+    "passing_max": 0.8440582,
+    "target_center_error_mm_when_has_target": {"n": 29, "min": 6.5, "p50": 9.3, "max": 270.4}
+   },
+   "offline_score_grouped_by_live_label": {
+    "live_has_target_16": {"min": 0.1558315, "p50": 0.7939689, "max": 0.8440582, "mean": 0.5392058},
+    "live_no_target_59": {"min": 0.0151238, "p50": 0.1607998, "max": 0.8178457, "mean": 0.2373266}
+   },
+   "live_vs_offline_agreement": {
+    "same_label": 50,
+    "different_label": 25,
+    "live_yes_offline_no_seqs": [22,23,24,26,27,28],
+    "live_no_offline_yes_seqs": [10,11,12,13,14,15,30,31,34,35,36,66,67,68,69,70,71,72,75]
+   }
+  },
+
+  "has_target_vs_no_target_geometry": {
+   "_source": "기하와 점수는 outputs/live_test/20260925_ep1807/run_0000 (ep1807 의 다른 rollout) 을 t_step 으로 맞춰 붙인 것. shadow 기록에는 qpos·물체 자세가 없다",
+   "_alignment_evidence": "오른팔(비작업 팔) 7 관절만 비교 가능 — 75 청크 전부에서 최대 절대차 0.00-0.02 rad (클라이언트 로그가 0.01 rad 로 반올림해 찍는다). 왼팔(작업 팔)은 shadow 기록에 없어 not_measured",
+   "ee_finger_l1_to_apple_mm": {
+    "live_has_target_16": {"min": 53.0, "p50": 229.8, "max": 233.8, "mean": 154.2},
+    "live_no_target_59": {"min": 52.3, "p50": 427.2, "max": 430.4, "mean": 318.9}
+   },
+   "apple_z_m": {
+    "live_has_target_16": {"min": 0.8500, "p50": 0.8500, "max": 1.0906, "mean": 0.9324},
+    "live_no_target_59": {"min": 0.8500, "p50": 0.8580, "max": 1.0848, "mean": 0.8671}
+   },
+   "apple_pixels_mean_per_camera": {
+    "zed_left": {"live_has_target_16": 283.8, "live_no_target_59": 186.5},
+    "wrist_cam_l": {"live_has_target_16": 8448.1, "live_no_target_59": 3700.0},
+    "wrist_cam_r": {"live_has_target_16": 0.0, "live_no_target_59": 3349.7}
+   },
+   "frames_with_zero_apple_pixels": {
+    "zed_left": {"live_has_target_16": 0, "live_no_target_59": 0},
+    "wrist_cam_l": {"live_has_target_16": 0, "live_no_target_59": 24},
+    "wrist_cam_r": {"live_has_target_16": 16, "live_no_target_59": 15}
+   },
+   "phase_counts_offline_labels": {
+    "transit": {"live_has_target_16": 9, "live_no_target_59": 3},
+    "approach": {"live_has_target_16": 0, "live_no_target_59": 4},
+    "pre_grasp": {"live_has_target_16": 0, "live_no_target_59": 2},
+    "grasp": {"live_has_target_16": 7, "live_no_target_59": 50}
+   },
+   "offline_same_split": {
+    "ee_apple_dist_mm_has_target_29": {"min": 58.2, "p50": 231.2, "max": 429.7, "mean": 263.1},
+    "ee_apple_dist_mm_no_target_46": {"min": 52.3, "p50": 427.2, "max": 430.4, "mean": 296.8},
+    "apple_pixels_mean_has_target_29": {"zed_left": 281.4, "wrist_cam_l": 4159.1, "wrist_cam_r": 1503.3},
+    "apple_pixels_mean_no_target_46": {"zed_left": 160.5, "wrist_cam_l": 5062.1, "wrist_cam_r": 3348.7}
+   }
+  },
+
+  "camera_timing": {
+   "limit_ms": 100,
+   "degraded_chunks": [
+    {"seq": 5, "t_step": 32, "head_lag_ms": 107, "camera_span_ms": 107, "grounding_status": "ok"},
+    {"seq": 45, "t_step": 352, "head_lag_ms": 101, "camera_span_ms": 101, "grounding_status": "low_score"},
+    {"seq": 47, "t_step": 368, "head_lag_ms": 103, "camera_span_ms": 103, "grounding_status": "low_score"},
+    {"seq": 50, "t_step": 392, "head_lag_ms": 107, "camera_span_ms": 107, "grounding_status": "low_score"},
+    {"seq": 54, "t_step": 424, "head_lag_ms": 101, "camera_span_ms": 101, "grounding_status": "low_score"},
+    {"seq": 71, "t_step": 560, "head_lag_ms": 100, "camera_span_ms": 100, "grounding_status": "low_score"}
+   ],
+   "observed_values_ms": [100, 101, 101, 103, 107, 107],
+   "lead_hand_count_difference": "브리핑은 100·101·107 셋을 들었다 — 실제 여섯 값에는 103(seq 47) 과 101·107 이 두 번씩 들어 있다",
+   "three_camera_capture_span_ms": {
+    "n_frames": 75,
+    "min": 88.33,
+    "p50": 93.61,
+    "p95": 100.68,
+    "max": 107.22,
+    "mean": 94.06
+   },
+   "n_frames_span_at_or_over_100ms": 6,
+   "n_frames_span_at_or_over_90ms": 72,
+   "capture_order": ["zed_left", "wrist_cam_l", "wrist_cam_r"],
+   "mean_gap_ms": {"zed_left->wrist_cam_l": 47.83, "wrist_cam_l->wrist_cam_r": 46.23},
+   "reason_codes_per_degraded_chunk": ["camera_transform_stale", "camera_skew"]
+  },
+
+  "state_consistency": {
+   "contradictions_found": 0,
+   "checks_run": [
+    "safe=True 인데 geometry_certified=False",
+    "safe=True 인데 trajopt != feasible",
+    "safe=False 인데 ag3s ok + feasible",
+    "grounding ok 인데 status no_target",
+    "ag3s != ok 인데 reason code 없음 (no_target 제외)",
+    "control 기록의 executed / executed_chunk"
+   ],
+   "control_executed_chunk": "600/600 이 reference",
+   "staleness_checked": false,
+   "staleness_limit_sec": null
+  },
+
+  "sqp": {
+   "time_budget_ms": 50.0,
+   "chunks_hitting_budget": 75,
+   "iterations_per_chunk": 1,
+   "note_reduction_rows_per_step": 24,
+   "chunks_with_reduction_bound_note": 75,
+   "chunks_with_limit_overshoot_note": 6,
+   "max_limit_overshoot_position_m": 0.000138,
+   "best_effort_note": {"n": 1, "seq": 4, "penetration_remaining_mm": 3.0, "penetration_initial_mm": 10.8}
+  },
+
+  "latency_ms": {
+   "first_chunk_seq1": {
+    "infer": 42888,
+    "ag3s": 7449,
+    "trajopt": 262,
+    "server_total": 50599,
+    "client_roundtrip": 51520,
+    "field_build": 50347
+   },
+   "excluding_first_chunk_n74": {
+    "infer": {"p50": 259, "p95": 273, "max": 330, "min": 249},
+    "ag3s": {"p50": 2650, "p95": 3020, "max": 3204, "min": 2089},
+    "trajopt": {"p50": 224, "p95": 285, "max": 433, "min": 178},
+    "server_total": {"p50": 3131, "p95": 3508, "max": 3752, "min": 2615},
+    "client_roundtrip": {"p50": 3347, "p95": 3730, "max": 3969, "min": 2814},
+    "field_build": {"p50": 2919, "p95": 3294, "max": 3476, "min": 2358}
+   },
+   "chunk_budget_ms": 533.3333333333334,
+   "capture_span_ms_p50": 93.61
+  },
+
+  "regression_baseline": {
+   "violated_start": 14,
+   "frames": 15,
+   "has_target": 9,
+   "frame0_clearance_before_mm": 0.15718632962849477,
+   "resolved": 13,
+   "improved": 15,
+   "feasible": 14,
+   "violated_end": 1,
+   "has_target_rate_pct": 60.0,
+   "episode": "ep1800 (run_16d_ep1800), 15 프레임, 오프라인 재생, attention_16d_ep1800.npz, legacy ESDF 20 mm"
+  },
+
+  "has_target_side_by_side": {
+   "regression_baseline_ep1800_offline": "9 / 15 (60.0 %)",
+   "offline_replay_ep1807": "29 / 75 (38.7 %)",
+   "live_server_path_ep1807_shadow": "16 / 75 (21.3 %)",
+   "condition_differences": [
+    "에피소드가 다르다 — 기준선은 ep1800(target apple), 이번은 ep1807(target apple, layout 15)",
+    "프레임 수가 다르다 — 15 대 75. 기준선 15 프레임은 t=0..112 구간이고 ep1807 의 같은 구간(seq 1-15)은 live 9/15 · offline 15/15",
+    "attention 출처가 다르다 — 오프라인 둘은 미리 뽑아 둔 npz(고정 셀 layer/head/denoise/agg), live 는 서버가 체크포인트 두 번째 사본으로 프레임마다 뽑는다",
+    "ESDF backend 가 다르다 — 오프라인 둘은 legacy 20 mm 단일 계층, live 는 cuRobo 20 mm + 5 mm 2 계층 · TSDF 5 mm",
+    "카메라 이미지가 다르다 — 오프라인은 기록된 rollout 을 MuJoCo 로 다시 세워 캡처, live 는 실행 중 캡처(세 대 span p50 93.6 ms)",
+    "rollout 이 다르다 — 두 ep1807 실행은 서로 다른 실행이고 오른팔 관절 최대차 0.02 rad 로만 대조했다"
+   ]
+  },
+
+  "t2_side_by_side": {
+   "_comment": "task.md 항목 3. T2 값은 outputs/verify/T2/t2_objects_ep1807.json (records = outputs/live_test/20260925_ep1807/run_0000)",
+   "t2_apple_lift_mm": 240.6,
+   "t2_apple_crate_xy_first_mm": 339.2,
+   "t2_apple_crate_xy_last_mm": 71.1,
+   "t2_drift_mm": {"banana": 0.1, "orange": 0.2, "pear": 0.6},
+   "live_shadow_values": "not_measured — shadow 기록에 qpos·물체 자세가 없다"
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t5c/t5c-scene-grounding-frames.png",
+   "sidecar": "benchmark/ag3s/docs/figures/t5c/t5c-scene-grounding-frames.json",
+   "script": "outputs/verify/T5c/make_fig1_scene.py",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t5c/t5c-chunkwise-verdict-and-score.png",
+   "sidecar": "benchmark/ag3s/docs/figures/t5c/t5c-chunkwise-verdict-and-score.json",
+   "script": "outputs/verify/T5c/make_fig2_graphs.py",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t5c/t5c-paths-and-camera-timing-table.png",
+   "sidecar": "benchmark/ag3s/docs/figures/t5c/t5c-paths-and-camera-timing-table.json",
+   "script": "outputs/verify/T5c/make_fig3_tables.py",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "위반으로 시작 14/15 · has_target 9/15 · frame0 clearance_before +0.157186 mm — 셋 다 기준선과 같다. 같이 인용하지 않는 값(feasible 14 / violated 1 / 해소 13)도 남겼다",
+  "raw": "outputs/verify/T5c/baseline_check.json"
+ },
+ "verdict": "기준선 일치. 브리핑의 손집계와 두 곳이 다르다: has_target 은 21/75 이 아니라 16/75 (degraded 6 중 5 건이 grounding=low_score), camera timing 6 건의 값은 100·101·101·103·107·107 (103 이 빠져 있었다). 나머지 집계(75 청크 · safe 14 / unsafe 61 · shadow_override 61 · no_target 54 · degraded 6 · TO violated 1 · field new 150 / carried 525 · reversal 0 · duplicate 0 · unexplained 0 · completeness pass)는 브리핑과 같다. task.md 의 재는 것 1(refined 대 reference 여유거리)과 3(과제 완료 참값)은 기록에 해당 데이터가 없어 재지 못했다.",
+ "not_measured": [
+  "task.md 재는 것 1 — refined / reference 두 청크의 MuJoCo 참값 clearance. frames.jsonl 에 actions 가 한 개도 없다(chunk_shape 만 있다). 서버 쪽 --record-constraints 도 이 실행에서는 쓰지 않았다. 재려면 actions·actions_reference 를 남기는 재실행이 필요하다",
+  "task.md 재는 것 3 — live 경로의 apple 들림 / apple↔crate 거리 / 다른 과일 drift. shadow 기록에 qpos·물체 자세·third-person 프레임이 없다 (third_person_frames 0)",
+  "task.md 재는 것 2 의 가설 — multiview.py:378-396 의 per-camera max_points cap. 75 청크의 notes·reason·서버 로그 어디에도 max_points / cap / voxel 확대 문자열이 없다. 걸렸는지 아닌지를 이 기록으로는 판별할 수 없다",
+  "live 경로의 프레임별 target_score — 응답에도 로그에도 없다 (값 자리는 offline 재측정으로 대신했다)",
+  "live 경로의 왼팔(작업 팔) 자세 — 클라이언트 로그는 오른팔 q_r 만 찍는다",
+  "회귀 기준선의 grounding low_score / no_target / degraded 세부 — esdf_rollout 이 has_target(target bool)만 남긴다"
+ ],
+ "script_promotion_candidate": {
+  "path": "outputs/verify/T5c/agg_shadow_record.py",
+  "note": "shadow/live 기록(frames.jsonl + 서버 로그)을 청크 표로 접는 것. 같은 형식의 다음 실행에도 그대로 쓴다. benchmark/ 로 올릴지는 A1 이 정한다"
+ }
+}

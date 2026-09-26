@@ -1,0 +1,329 @@
+{
+ "records": "outputs/live_test/20260925_ep1807/run_0000",
+ "picked_seq": [
+  15,
+  16,
+  20,
+  30,
+  33
+ ],
+ "free_camera": {
+  "type": "free",
+  "distance": 2.2,
+  "azimuth": 138.0,
+  "elevation": -26.0,
+  "lookat_body": "crate"
+ },
+ "count_definitions": {
+  "apple_points_after_reconstruct": "세 카메라 각각의 reconstruct 뒤 apple point 를 더한 값 (apple_stages_ep1807.json 의 n_after_recon_total)",
+  "apple_points_after_self_filter": "같은 합, robot self-filter 뒤 (n_after_filter_total)",
+  "apple_points_in_fused_cloud": "fusion 이 voxel 마다 대표점 하나만 남긴 뒤의 apple point (attention_flow_ep1807.json 의 apple_cloud_points) — 위 두 값보다 작은 것은 같은 voxel 의 관측이 하나로 접히기 때문이다"
+ },
+ "panels": [
+  {
+   "seq": 15,
+   "t_step": 112,
+   "why": "apple points start collapsing; top cluster still apple",
+   "top_cluster_name": "apple",
+   "top_cluster_score": 0.709981359426946,
+   "apple_rank": 1,
+   "apple_score": 0.709981359426946,
+   "task_phase": "approach",
+   "gripper_obs_left": 0.9999999735670128,
+   "gripper_state": "open",
+   "gripper_closed_below": 0.85,
+   "apple_points_after_reconstruct": 507,
+   "apple_points_after_self_filter": 139,
+   "apple_points_in_fused_cloud": 55,
+   "per_camera": {
+    "zed_left": {
+     "apple_gt_pixel": 401,
+     "after_reconstruct": 228,
+     "after_self_filter": 57,
+     "min_apple_to_sphere_surface_mm": 17.094072417481065
+    },
+    "wrist_cam_l": {
+     "apple_gt_pixel": 7293,
+     "after_reconstruct": 279,
+     "after_self_filter": 82,
+     "min_apple_to_sphere_surface_mm": 13.973376838273294
+    },
+    "wrist_cam_r": {
+     "apple_gt_pixel": 0,
+     "after_reconstruct": 0,
+     "after_self_filter": 0,
+     "min_apple_to_sphere_surface_mm": null
+    }
+   },
+   "offline_grounding_status": "ok",
+   "offline_has_target": true,
+   "live_has_target": false,
+   "latch_phase_col7": "latched",
+   "latch_manipulated_col7": "obj0",
+   "clusters_top4": [
+    {
+     "score": 0.709981359426946,
+     "point_count": 34,
+     "centroid": [
+      0.5723457800127184,
+      0.30172369908223295,
+      0.8537186110097423
+     ]
+    },
+    {
+     "score": 0.11181720744770489,
+     "point_count": 71,
+     "centroid": [
+      0.4537128896195016,
+      0.32895961675881147,
+      0.8641897941397636
+     ]
+    },
+    {
+     "score": 0.014242219970153637,
+     "point_count": 1467,
+     "centroid": [
+      0.5198398161058106,
+      -0.030923571641556756,
+      0.9037625745397323
+     ]
+    }
+   ]
+  },
+  {
+   "seq": 16,
+   "t_step": 120,
+   "why": "apple points reach 0; top cluster flips to crate",
+   "top_cluster_name": "crate",
+   "top_cluster_score": 0.015123839989658237,
+   "apple_rank": null,
+   "apple_score": null,
+   "task_phase": "approach",
+   "gripper_obs_left": 0.9997471737088718,
+   "gripper_state": "open",
+   "gripper_closed_below": 0.85,
+   "apple_points_after_reconstruct": 424,
+   "apple_points_after_self_filter": 0,
+   "apple_points_in_fused_cloud": 0,
+   "per_camera": {
+    "zed_left": {
+     "apple_gt_pixel": 290,
+     "after_reconstruct": 161,
+     "after_self_filter": 0,
+     "min_apple_to_sphere_surface_mm": -3.0167343873503674
+    },
+    "wrist_cam_l": {
+     "apple_gt_pixel": 9230,
+     "after_reconstruct": 263,
+     "after_self_filter": 0,
+     "min_apple_to_sphere_surface_mm": -12.150698701035592
+    },
+    "wrist_cam_r": {
+     "apple_gt_pixel": 0,
+     "after_reconstruct": 0,
+     "after_self_filter": 0,
+     "min_apple_to_sphere_surface_mm": null
+    }
+   },
+   "offline_grounding_status": "low_score",
+   "offline_has_target": false,
+   "live_has_target": false,
+   "latch_phase_col7": "latched",
+   "latch_manipulated_col7": "obj0",
+   "clusters_top4": [
+    {
+     "score": 0.015123839989658237,
+     "point_count": 1462,
+     "centroid": [
+      0.5184567887558884,
+      -0.03363474572034645,
+      0.9033192102605867
+     ]
+    }
+   ]
+  },
+  {
+   "seq": 20,
+   "t_step": 152,
+   "why": "gripper closes (first_closed_seq); latch fires attach",
+   "top_cluster_name": "crate",
+   "top_cluster_score": 0.04652371234496261,
+   "apple_rank": null,
+   "apple_score": null,
+   "task_phase": "grasp",
+   "gripper_obs_left": 0.6979382897576423,
+   "gripper_state": "closed",
+   "gripper_closed_below": 0.85,
+   "apple_points_after_reconstruct": 180,
+   "apple_points_after_self_filter": 0,
+   "apple_points_in_fused_cloud": 0,
+   "per_camera": {
+    "zed_left": {
+     "apple_gt_pixel": 14,
+     "after_reconstruct": 12,
+     "after_self_filter": 0,
+     "min_apple_to_sphere_surface_mm": -47.690586785681916
+    },
+    "wrist_cam_l": {
+     "apple_gt_pixel": 15476,
+     "after_reconstruct": 168,
+     "after_self_filter": 0,
+     "min_apple_to_sphere_surface_mm": -58.57852995639111
+    },
+    "wrist_cam_r": {
+     "apple_gt_pixel": 0,
+     "after_reconstruct": 0,
+     "after_self_filter": 0,
+     "min_apple_to_sphere_surface_mm": null
+    }
+   },
+   "offline_grounding_status": "low_score",
+   "offline_has_target": false,
+   "live_has_target": false,
+   "latch_phase_col7": "held",
+   "latch_manipulated_col7": "obj0",
+   "clusters_top4": [
+    {
+     "score": 0.04652371234496261,
+     "point_count": 1459,
+     "centroid": [
+      0.5173332227681806,
+      -0.0341395801816681,
+      0.9048698398286035
+     ]
+    },
+    {
+     "score": 0.030311654006202386,
+     "point_count": 177,
+     "centroid": [
+      0.49525268779715403,
+      -0.31160574015700987,
+      0.8637865924249652
+     ]
+    }
+   ]
+  },
+  {
+   "seq": 30,
+   "t_step": 232,
+   "why": "middle of place; crate score near its peak",
+   "top_cluster_name": "crate",
+   "top_cluster_score": 0.29759413310130356,
+   "apple_rank": null,
+   "apple_score": null,
+   "task_phase": "place",
+   "gripper_obs_left": 0.7204410629510153,
+   "gripper_state": "closed",
+   "gripper_closed_below": 0.85,
+   "apple_points_after_reconstruct": 196,
+   "apple_points_after_self_filter": 0,
+   "apple_points_in_fused_cloud": 0,
+   "per_camera": {
+    "zed_left": {
+     "apple_gt_pixel": 40,
+     "after_reconstruct": 20,
+     "after_self_filter": 0,
+     "min_apple_to_sphere_surface_mm": -49.359347551635295
+    },
+    "wrist_cam_l": {
+     "apple_gt_pixel": 14503,
+     "after_reconstruct": 176,
+     "after_self_filter": 0,
+     "min_apple_to_sphere_surface_mm": -59.107578420304634
+    },
+    "wrist_cam_r": {
+     "apple_gt_pixel": 0,
+     "after_reconstruct": 0,
+     "after_self_filter": 0,
+     "min_apple_to_sphere_surface_mm": null
+    }
+   },
+   "offline_grounding_status": "ok",
+   "offline_has_target": true,
+   "live_has_target": false,
+   "latch_phase_col7": "held",
+   "latch_manipulated_col7": "obj0",
+   "clusters_top4": [
+    {
+     "score": 0.29759413310130356,
+     "point_count": 1275,
+     "centroid": [
+      0.5325493486961419,
+      -0.05342654410558282,
+      0.9067415122653768
+     ]
+    }
+   ]
+  },
+  {
+   "seq": 33,
+   "t_step": 256,
+   "why": "gripper reopens (first_reopen_seq); apple points come back",
+   "top_cluster_name": "crate",
+   "top_cluster_score": 0.21968876348851113,
+   "apple_rank": null,
+   "apple_score": null,
+   "task_phase": "retreat",
+   "gripper_obs_left": 0.9544237047703656,
+   "gripper_state": "open",
+   "gripper_closed_below": 0.85,
+   "apple_points_after_reconstruct": 567,
+   "apple_points_after_self_filter": 56,
+   "apple_points_in_fused_cloud": 19,
+   "per_camera": {
+    "zed_left": {
+     "apple_gt_pixel": 29,
+     "after_reconstruct": 13,
+     "after_self_filter": 0,
+     "min_apple_to_sphere_surface_mm": 21.510472335349167
+    },
+    "wrist_cam_l": {
+     "apple_gt_pixel": 8932,
+     "after_reconstruct": 347,
+     "after_self_filter": 34,
+     "min_apple_to_sphere_surface_mm": 19.275433102434512
+    },
+    "wrist_cam_r": {
+     "apple_gt_pixel": 3751,
+     "after_reconstruct": 207,
+     "after_self_filter": 22,
+     "min_apple_to_sphere_surface_mm": 19.340622837878755
+    }
+   },
+   "offline_grounding_status": "low_score",
+   "offline_has_target": false,
+   "live_has_target": false,
+   "latch_phase_col7": "held",
+   "latch_manipulated_col7": "obj0",
+   "clusters_top4": [
+    {
+     "score": 0.21968876348851113,
+     "point_count": 35,
+     "centroid": [
+      0.4296715802676767,
+      -0.09618940889668351,
+      0.8480811251503563
+     ]
+    },
+    {
+     "score": 0.20714377515270813,
+     "point_count": 994,
+     "centroid": [
+      0.5560261979734674,
+      -0.005756880926695863,
+      0.9087797562684832
+     ]
+    },
+    {
+     "score": 0.14848623074134648,
+     "point_count": 193,
+     "centroid": [
+      0.49664849167478237,
+      -0.310935783484513,
+      0.8611685482990888
+     ]
+    }
+   ]
+  }
+ ]
+}

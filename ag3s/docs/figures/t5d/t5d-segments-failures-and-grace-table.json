@@ -1,0 +1,300 @@
+{
+ "source": "outputs/verify/T5d/aggregate_T5d.json",
+ "segments_by_top_name": [
+  {
+   "top_name": "apple",
+   "seq_from": 1,
+   "seq_to": 15,
+   "n": 15,
+   "top_score": {
+    "n": 15,
+    "min": 0.7007123683250917,
+    "p50": 0.7945502252015038,
+    "max": 0.8440582432646476,
+    "mean": 0.7851982438460043
+   },
+   "t_step_from": 0,
+   "t_step_to": 112,
+   "task_phases": [
+    "approach"
+   ]
+  },
+  {
+   "top_name": "crate",
+   "seq_from": 16,
+   "seq_to": 30,
+   "n": 15,
+   "top_score": {
+    "n": 15,
+    "min": 0.015123839989658237,
+    "p50": 0.1558314985716946,
+    "max": 0.29759413310130356,
+    "mean": 0.13817693762636293
+   },
+   "t_step_from": 120,
+   "t_step_to": 232,
+   "task_phases": [
+    "approach",
+    "grasp",
+    "transport",
+    "place"
+   ]
+  },
+  {
+   "top_name": "pear",
+   "seq_from": 31,
+   "seq_to": 32,
+   "n": 2,
+   "top_score": {
+    "n": 2,
+    "min": 0.1798641811812704,
+    "p50": 0.2675077452770984,
+    "max": 0.2675077452770984,
+    "mean": 0.2236859632291844
+   },
+   "t_step_from": 240,
+   "t_step_to": 248,
+   "task_phases": [
+    "place"
+   ]
+  },
+  {
+   "top_name": "crate",
+   "seq_from": 33,
+   "seq_to": 34,
+   "n": 2,
+   "top_score": {
+    "n": 2,
+    "min": 0.21968876348851113,
+    "p50": 0.33153713027514126,
+    "max": 0.33153713027514126,
+    "mean": 0.2756129468818262
+   },
+   "t_step_from": 256,
+   "t_step_to": 264,
+   "task_phases": [
+    "retreat"
+   ]
+  },
+  {
+   "top_name": "apple",
+   "seq_from": 35,
+   "seq_to": 35,
+   "n": 1,
+   "top_score": {
+    "n": 1,
+    "min": 0.39875842145666107,
+    "p50": 0.39875842145666107,
+    "max": 0.39875842145666107,
+    "mean": 0.39875842145666107
+   },
+   "t_step_from": 272,
+   "t_step_to": 272,
+   "task_phases": [
+    "retreat"
+   ]
+  },
+  {
+   "top_name": "crate",
+   "seq_from": 36,
+   "seq_to": 51,
+   "n": 16,
+   "top_score": {
+    "n": 16,
+    "min": 0.08149951084338125,
+    "p50": 0.13739541217534007,
+    "max": 0.281110063159794,
+    "mean": 0.15535970126103485
+   },
+   "t_step_from": 280,
+   "t_step_to": 400,
+   "task_phases": [
+    "retreat"
+   ]
+  }
+ ],
+ "failure_table": {
+  "header": [
+   "",
+   "live shadow (35)",
+   "offline replay (30)"
+  ],
+  "rows": [
+   [
+    "n frames",
+    35,
+    30
+   ],
+   [
+    "top cluster = apple",
+    7,
+    0
+   ],
+   [
+    "top cluster = crate",
+    26,
+    29
+   ],
+   [
+    "top cluster = pear",
+    2,
+    1
+   ],
+   [
+    "apple cluster present",
+    8,
+    0
+   ],
+   [
+    "apple cluster absent",
+    27,
+    30
+   ],
+   [
+    "apple cloud points = 0",
+    10,
+    14
+   ],
+   [
+    "apple cloud points > 0",
+    25,
+    16
+   ],
+   [
+    "threshold gap p50",
+    "0.0701",
+    "0.1130"
+   ],
+   [
+    "threshold gap max",
+    "0.2349",
+    "0.2349"
+   ],
+   [
+    "gap <= 0.05",
+    2,
+    3
+   ],
+   [
+    "gap > 0.10",
+    17,
+    17
+   ],
+   [
+    "offline status = ok on the same seq",
+    11,
+    "-"
+   ],
+   [
+    "latch manipulated = obj0",
+    35,
+    30
+   ],
+   [
+    "latch manipulated = None",
+    0,
+    0
+   ]
+  ]
+ },
+ "grace_table": {
+  "header": [
+   "",
+   "live shadow",
+   "offline replay"
+  ],
+  "rows": [
+   [
+    "runs / longest run",
+    "3 / 22",
+    "3 / 15"
+   ],
+   [
+    "run lengths",
+    "1x1, 12x1, 22x1",
+    "2x1, 13x1, 15x1"
+   ],
+   [
+    "runs on grasp boundary",
+    "1 (12 frames)",
+    "1 (13 frames)"
+   ],
+   [
+    "runs on place boundary",
+    "1 (22 frames)",
+    "1 (2 frames)"
+   ],
+   [
+    "runs elsewhere",
+    "1 (1 frames)",
+    "1 (15 frames)"
+   ],
+   [
+    "N = 1  covered",
+    "1/3 runs · 2.9 % frames",
+    "0/3 runs · 0.0 % frames"
+   ],
+   [
+    "N = 2  covered",
+    "1/3 runs · 2.9 % frames",
+    "1/3 runs · 6.7 % frames"
+   ],
+   [
+    "N = 3  covered",
+    "1/3 runs · 2.9 % frames",
+    "1/3 runs · 6.7 % frames"
+   ],
+   [
+    "N = 5  covered",
+    "1/3 runs · 2.9 % frames",
+    "1/3 runs · 6.7 % frames"
+   ],
+   [
+    "N = 8  covered",
+    "1/3 runs · 2.9 % frames",
+    "1/3 runs · 6.7 % frames"
+   ],
+   [
+    "N = 12  covered",
+    "2/3 runs · 37.1 % frames",
+    "1/3 runs · 6.7 % frames"
+   ],
+   [
+    "N = 13  covered",
+    "2/3 runs · 37.1 % frames",
+    "2/3 runs · 50.0 % frames"
+   ],
+   [
+    "N = 15  covered",
+    "2/3 runs · 37.1 % frames",
+    "3/3 runs · 100.0 % frames"
+   ],
+   [
+    "N = 20  covered",
+    "2/3 runs · 37.1 % frames",
+    "3/3 runs · 100.0 % frames"
+   ]
+  ]
+ },
+ "pipeline_counts": {
+  "18": {
+   "n_gt_pixel": 17537,
+   "n_in_range": 17537,
+   "n_after_recon": 209,
+   "n_after_filter": 0
+  },
+  "25": {
+   "n_gt_pixel": 15234,
+   "n_in_range": 15234,
+   "n_after_recon": 248,
+   "n_after_filter": 0
+  },
+  "40": {
+   "n_gt_pixel": 8045,
+   "n_in_range": 8045,
+   "n_after_recon": 673,
+   "n_after_filter": 673
+  }
+ },
+ "gate_reference": "benchmark/ag3s/runtime/pipeline.py:406"
+}
