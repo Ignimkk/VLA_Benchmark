@@ -1,0 +1,1445 @@
+{
+ "step": "T9a",
+ "date": "2026-09-26",
+ "task": "benchmark/ag3s/docs/handoff/T9a.task.md",
+ "runs": [
+  {
+   "id": "m0_state_tensor",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T9a/m0_state_tensor.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T9a/m0_state_tensor.npz",
+   "raw_meta": "outputs/verify/T9a/m0_state_tensor.meta.json",
+   "stdout_log": "outputs/verify/T9a/m0.log"
+  },
+  {
+   "id": "m1to5_analysis",
+   "command": "PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T9a/m1to5_analysis.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T9a/m1to5_analysis.json",
+   "extra_output": "outputs/verify/T9a/m1to5_curves.npz",
+   "stdout_log": "outputs/verify/T9a/m1to5.log"
+  },
+  {
+   "id": "fig1_scene",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T9a/fig1_scene.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "benchmark/ag3s/docs/figures/t9a/t9a-scene.json",
+   "stdout_log": "outputs/verify/T9a/fig1.log"
+  },
+  {
+   "id": "fig2_graphs",
+   "command": "PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T9a/fig2_graphs.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "benchmark/ag3s/docs/figures/t9a/t9a-graphs.json",
+   "stdout_log": "outputs/verify/T9a/fig2.log"
+  },
+  {
+   "id": "fig3_tables",
+   "command": "PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T9a/fig3_tables.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "benchmark/ag3s/docs/figures/t9a/t9a-table.json",
+   "stdout_log": "outputs/verify/T9a/fig3.log"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark (nested git repo at /mnt/dev/work/benchmark)",
+  "head": "(A1 작업 중 — 코드를 읽기만 했고 커밋 상태를 바꾸지 않았다)",
+  "note": "benchmark/**/*.py 를 고치지 않았다. 제약 구 모델은 UrdfSphereChain 을 서버와 같은 설정으로 세워 읽었고, 서버 시작 로그의 구 266 개 · capsule 36 개 · link 별 유효 반지름과 한 자리까지 일치한다.",
+  "inputs": "outputs/live_test/20260926_t8/execute_ep1807/frames.jsonl 그대로. MuJoCo rollout 을 돌리지 않았고 포트 8123 서버를 건드리지 않았다."
+ },
+ "method": {
+  "offline_rebuild": "기록된 qpos (물체 free joint 포함) -> mj_forward -> 제약 구 중심 -> MuJoCo 충돌 geom 표면까지 해석적 거리. mj_geomDistance 미사용 (distmax 포화 없음). outputs/verify/T8a/m0_clearance_tensor.py 와 같은 방법.",
+  "sphere_model": {
+   "sphere_spacing": 0.4,
+   "max_spheres_per_capsule": 32,
+   "capsule_radius_scale": 0.2,
+   "capsule_extent_by_link": {
+    "link_left_arm_5": -0.1,
+    "link_right_arm_5": -0.1
+   }
+  },
+  "sphere_model_matches_server": true,
+  "server_log_says_spheres_capsules": [
+   266,
+   36
+  ],
+  "this_model_spheres_capsules": [
+   266,
+   36
+  ],
+  "clearance_definition": "surface_distance(sphere centre, nearest collidable geom of body) - sphere_radius",
+  "mesh_note": "box geoms (table, crate) exact; mesh geoms (apple/banana/orange/pear) use vertex-minimum = upper bound on distance",
+  "state_rows": "control 312 + planning 39 = 351 행. t_step 으로 정렬했고 같은 t_step 에서는 planning 을 먼저 놓았다.",
+  "object_pose_source": "기록 qpos 의 free joint — object_poses 와 소수점까지 같다 (apple 첫 행 0.5635149 vs 0.56351433).",
+  "ee_body_name_note": "MJCF 의 손 body 이름은 URDF link 이름과 다르다 — 제약 모델의 ee_left/ee_right 는 MJCF 에서 EE_BODY_L/EE_BODY_R 다",
+  "recorded_clearance_is_post_margin": "기록의 max_violation_pair.clearance_m 은 **margin 을 이미 뺀 값**이다: clearance_m = d_esdf(p) - r_robot - margin. 근거는 benchmark/trajopt/linearize.py:489 `_esdf_clearance` 의 docstring 과 반환식 (`(H, S) — d_esdf(p) - r_robot - margin`), :704 가 그 block 원소를 `_identify` 로 넘기고 :718 이 `\"clearance_m\": float(value)` 로 담는 경로다. 따라서 max_violation = max(0, -clearance_m) 이고, clearance_m >= 0 은 위반이 아니다. 이 값을 esdf_margin 과 비교하면 안 된다 — margin 이 두 번 들어간다.",
+  "offline_clearance_is_pre_margin": "이 측정의 오프라인 clearance 는 surface_distance - sphere_radius 로 **margin 을 빼지 않은** 값이다 (M1·M4 의 모든 mm 이 그렇다). 기록의 clearance_m 과 견주려면 margin 10 mm 를 더해야 정의가 같아진다."
+ },
+ "numbers": {
+  "_comment": "로그와 논문에 쓰이는 모든 수치가 여기에만 있다.",
+  "setup": {
+   "record": "/mnt/dev/work/outputs/live_test/20260926_t8/execute_ep1807/frames.jsonl",
+   "serve_log": "/mnt/dev/work/outputs/live_test/20260926_t8/serve_safe_8123.log",
+   "n_state_rows": 351,
+   "t_step_range": [
+    0,
+    311
+   ],
+   "n_planning": 39,
+   "n_control": 312,
+   "n_observation": 39,
+   "n_spheres": 266,
+   "n_capsules": 36,
+   "n_spheres_by_link": {
+    "ee_finger_l1": 19,
+    "ee_finger_l2": 19,
+    "ee_finger_r1": 19,
+    "ee_finger_r2": 19,
+    "ee_left": 23,
+    "ee_right": 23,
+    "link_left_arm_0": 4,
+    "link_left_arm_1": 11,
+    "link_left_arm_2": 5,
+    "link_left_arm_3": 9,
+    "link_left_arm_4": 8,
+    "link_left_arm_5": 6,
+    "link_left_arm_6": 29,
+    "link_right_arm_0": 4,
+    "link_right_arm_1": 11,
+    "link_right_arm_2": 5,
+    "link_right_arm_3": 9,
+    "link_right_arm_4": 8,
+    "link_right_arm_5": 6,
+    "link_right_arm_6": 29
+   },
+   "radius_mm_by_link": {
+    "ee_finger_l1": [
+     3.6,
+     3.97,
+     4.72
+    ],
+    "ee_finger_l2": [
+     3.6,
+     3.97,
+     4.72
+    ],
+    "ee_finger_r1": [
+     3.6,
+     3.97,
+     4.72
+    ],
+    "ee_finger_r2": [
+     3.6,
+     3.97,
+     4.72
+    ],
+    "ee_left": [
+     7.92,
+     8.83,
+     8.92
+    ],
+    "ee_right": [
+     7.92,
+     8.83,
+     8.92
+    ],
+    "link_left_arm_0": [
+     19.0
+    ],
+    "link_left_arm_1": [
+     14.14
+    ],
+    "link_left_arm_2": [
+     14.14
+    ],
+    "link_left_arm_3": [
+     10.75
+    ],
+    "link_left_arm_4": [
+     9.75
+    ],
+    "link_left_arm_5": [
+     19.53
+    ],
+    "link_left_arm_6": [
+     6.67,
+     7.07,
+     7.52
+    ],
+    "link_right_arm_0": [
+     19.0
+    ],
+    "link_right_arm_1": [
+     14.14
+    ],
+    "link_right_arm_2": [
+     14.14
+    ],
+    "link_right_arm_3": [
+     10.75
+    ],
+    "link_right_arm_4": [
+     9.75
+    ],
+    "link_right_arm_5": [
+     19.53
+    ],
+    "link_right_arm_6": [
+     6.69,
+     7.09,
+     7.38
+    ]
+   },
+   "capsule_trims": [
+    {
+     "link": "link_left_arm_5",
+     "keep_z_min": -0.1,
+     "keep_z_max": Infinity,
+     "axis_z_min": -0.225,
+     "axis_z_max": 0.024999999999999994,
+     "n_spheres_before": 10,
+     "n_spheres_after": 6,
+     "reach_z_min_before": -0.24544263276997122,
+     "reach_z_min_after": -0.11952562418976664,
+     "released_links": [
+      [
+       "FT_sensor_L",
+       -0.1087,
+       false
+      ],
+      [
+       "ee_left",
+       -0.1548,
+       true
+      ],
+      [
+       "ee_finger_l1",
+       -0.2278,
+       true
+      ],
+      [
+       "ee_finger_l2",
+       -0.2278,
+       true
+      ]
+     ]
+    },
+    {
+     "link": "link_right_arm_5",
+     "keep_z_min": -0.1,
+     "keep_z_max": Infinity,
+     "axis_z_min": -0.225,
+     "axis_z_max": 0.024999999999999994,
+     "n_spheres_before": 10,
+     "n_spheres_after": 6,
+     "reach_z_min_before": -0.24544263276997122,
+     "reach_z_min_after": -0.11952562418976664,
+     "released_links": [
+      [
+       "FT_sensor_R",
+       -0.1087,
+       false
+      ],
+      [
+       "ee_right",
+       -0.1548,
+       true
+      ],
+      [
+       "ee_finger_r1",
+       -0.2278,
+       true
+      ],
+      [
+       "ee_finger_r2",
+       -0.2278,
+       true
+      ]
+     ]
+    }
+   ],
+   "scene_bodies": [
+    "apple",
+    "banana",
+    "crate",
+    "orange",
+    "pear",
+    "table"
+   ],
+   "n_scene_geoms": 26,
+   "crate_rim_top_z_mm": 976.9912,
+   "table_top_z_mm": 820.0,
+   "esdf_margin_mm": 10.0,
+   "gripper_columns": {
+    "left": 7,
+    "right": 15
+   },
+   "rebuild_elapsed_s": 1.6
+  },
+  "m1_finger_to_apple": {
+   "metric": "min over (left fingertip sphere) of surface_distance(centre, apple) - radius",
+   "left_min_mm": 17.0591,
+   "left_min_t_step": 96,
+   "left_min_kind": "planning",
+   "left_min_chunk_seq": 13,
+   "left_min_over_planning_rows_mm": 17.0591,
+   "left_min_over_planning_t_step": 96,
+   "right_min_mm": 576.1184,
+   "left_palm_min_mm": 58.4597,
+   "left_palm_min_t_step": 104,
+   "n_rows_below_0mm": 0,
+   "n_rows_below_10mm": 0,
+   "n_rows_below_20mm": 4,
+   "comparison_mm": {
+    "this_run_left_min": 17.0591,
+    "prev_closed_loop_T7a": 89.8562,
+    "successful_shadow_T7a": -17.9552,
+    "this_minus_prev_closed_loop": -72.7971,
+    "this_minus_shadow": 35.0143,
+    "fraction_of_the_gap_closed": 0.675226
+   },
+   "note_radius_changed": "T7a 의 두 기준값은 손끝 구 반지름 13.9/15.4/18.7 mm 모델에서 나온 값이고 이번 모델의 손끝 구는 3.6/3.97/4.72 mm 다. clearance 는 surface_distance - r 이므로 같은 자세라도 이번 모델이 약 14 mm 더 크게 나온다. 중심-표면 거리도 함께 낸다.",
+   "left_min_centre_to_apple_surface_mm": 21.7743
+  },
+  "m2_gripper_close": {
+   "left": {
+    "closed": true,
+    "close_threshold": 0.85,
+    "t_step": 112,
+    "kind": "control",
+    "chunk_seq": 15,
+    "step_in_chunk": 0,
+    "command_value": 0.822252,
+    "command_at_previous_t_step": 0.935497,
+    "previous_t_step": 111,
+    "finger_to_apple_surface_mm": 22.6591,
+    "finger_centre_to_apple_surface_mm": 27.3743,
+    "closest_sphere_index": 261,
+    "closest_sphere_link": "ee_finger_l2",
+    "closest_sphere_radius_mm": 4.7151,
+    "offset_closest_sphere_minus_apple_centre_mm": {
+     "x": 46.6875,
+     "y": -23.9425,
+     "z": 28.3044,
+     "norm": 59.6163
+    },
+    "offset_hand_centroid_minus_apple_centre_mm": {
+     "x": 15.0274,
+     "y": -25.2507,
+     "z": 79.258,
+     "norm": 84.5296
+    },
+    "apple_centre_m": [
+     0.563453,
+     0.320496,
+     0.850003
+    ],
+    "first_row_any_kind": {
+     "t_step": 112,
+     "kind": "planning",
+     "command_value": 0.822252,
+     "finger_to_apple_surface_mm": 22.6591
+    },
+    "n_rows_command_below_threshold": 225,
+    "min_command": 0.409543,
+    "finger_to_apple_min_while_closed_mm": 22.6591
+   },
+   "right": {
+    "closed": false,
+    "min_command": 0.9945442080497742
+   }
+  },
+  "m3_apple_ground_truth": {
+   "source": "recorded qpos free joint of body 'apple' (identical to object_poses)",
+   "start_pos_m": [
+    0.563514,
+    0.320411,
+    0.850002
+   ],
+   "max_lift_mm": 0.0016,
+   "min_z_mm_rel_start": -0.0183,
+   "max_horizontal_displacement_mm": 0.3321,
+   "max_total_displacement_mm": 0.3321,
+   "argmax_total_t_step": 310,
+   "n_rows_with_displacement_gt_1mm": 0,
+   "z_mm_series_first_last": [
+    850.0021,
+    849.9983
+   ],
+   "other_objects_max_total_displacement_mm": {
+    "apple": 0.3321,
+    "crate": 0.0283,
+    "orange": 0.2137,
+    "pear": 0.3469,
+    "banana": 0.033
+   }
+  },
+  "m4_descent_over_crate": {
+   "over_crate_rule": "|EE_BODY_L xy - crate xy| < 110 mm on both axes",
+   "first_over_crate_t_step": 201,
+   "n_rows_over_crate": 124,
+   "hand_z_mm_min_while_over_crate": 1123.0259,
+   "hand_z_mm_at_last_row": 1123.0259,
+   "crate_body_origin_z_mm": 879.9905,
+   "crate_rim_top_z_mm": 976.9912,
+   "hand_above_crate_rim_mm_min": 146.0347,
+   "planning_rows_from_first_over_crate": [
+    {
+     "t_step": 208,
+     "chunk_seq": 27,
+     "hand_z_mm": 1164.1453,
+     "hand_above_crate_rim_mm": 284.1547,
+     "min_clearance_to_crate_mm": 50.2422,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 161.2878,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 50.2422,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "attached:ee_finger_l1[10]",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 0,
+     "mvp_clearance_mm": 62.5607
+    },
+    {
+     "t_step": 216,
+     "chunk_seq": 28,
+     "hand_z_mm": 1179.6622,
+     "hand_above_crate_rim_mm": 299.6717,
+     "min_clearance_to_crate_mm": 49.6212,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 159.6913,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 49.6212,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "ee_right",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 2,
+     "mvp_clearance_mm": 75.3721
+    },
+    {
+     "t_step": 224,
+     "chunk_seq": 29,
+     "hand_z_mm": 1174.4645,
+     "hand_above_crate_rim_mm": 294.4738,
+     "min_clearance_to_crate_mm": 49.4369,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 159.3303,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 49.4369,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "ee_right",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 2,
+     "mvp_clearance_mm": 75.0191
+    },
+    {
+     "t_step": 232,
+     "chunk_seq": 30,
+     "hand_z_mm": 1172.2179,
+     "hand_above_crate_rim_mm": 292.2272,
+     "min_clearance_to_crate_mm": 49.135,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 158.8695,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 49.135,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "attached:ee_finger_l1[10]",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 7,
+     "mvp_clearance_mm": 72.9858
+    },
+    {
+     "t_step": 240,
+     "chunk_seq": 31,
+     "hand_z_mm": 1166.9522,
+     "hand_above_crate_rim_mm": 286.9617,
+     "min_clearance_to_crate_mm": 49.0723,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 158.7399,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 49.0723,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "attached:ee_finger_l1[5]",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 7,
+     "mvp_clearance_mm": 65.8769
+    },
+    {
+     "t_step": 248,
+     "chunk_seq": 32,
+     "hand_z_mm": 1160.6543,
+     "hand_above_crate_rim_mm": 280.6639,
+     "min_clearance_to_crate_mm": 49.1158,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 158.7813,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 49.1158,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "attached:ee_finger_l1[5]",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 7,
+     "mvp_clearance_mm": 58.6201
+    },
+    {
+     "t_step": 256,
+     "chunk_seq": 33,
+     "hand_z_mm": 1145.8104,
+     "hand_above_crate_rim_mm": 265.8198,
+     "min_clearance_to_crate_mm": 49.4124,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 159.1814,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 49.4124,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "attached:ee_finger_l1[10]",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 7,
+     "mvp_clearance_mm": 58.4555
+    },
+    {
+     "t_step": 264,
+     "chunk_seq": 34,
+     "hand_z_mm": 1140.1525,
+     "hand_above_crate_rim_mm": 260.1619,
+     "min_clearance_to_crate_mm": 49.8399,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 159.8106,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 49.8399,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "attached:ee_finger_l1[5]",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 7,
+     "mvp_clearance_mm": 56.3533
+    },
+    {
+     "t_step": 272,
+     "chunk_seq": 35,
+     "hand_z_mm": 1135.2265,
+     "hand_above_crate_rim_mm": 255.2363,
+     "min_clearance_to_crate_mm": 49.8025,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 159.9262,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 49.8025,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "attached:ee_finger_l1[10]",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 7,
+     "mvp_clearance_mm": 57.8553
+    },
+    {
+     "t_step": 280,
+     "chunk_seq": 36,
+     "hand_z_mm": 1131.8373,
+     "hand_above_crate_rim_mm": 251.8469,
+     "min_clearance_to_crate_mm": 50.5622,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 160.9271,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 50.5622,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "attached:ee_finger_l1[10]",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 7,
+     "mvp_clearance_mm": 58.9225
+    },
+    {
+     "t_step": 288,
+     "chunk_seq": 37,
+     "hand_z_mm": 1131.3479,
+     "hand_above_crate_rim_mm": 251.357,
+     "min_clearance_to_crate_mm": 50.5827,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 161.1018,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 50.5827,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "attached:ee_finger_l1[10]",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 7,
+     "mvp_clearance_mm": 61.8215
+    },
+    {
+     "t_step": 296,
+     "chunk_seq": 38,
+     "hand_z_mm": 1135.8007,
+     "hand_above_crate_rim_mm": 255.8099,
+     "min_clearance_to_crate_mm": 50.7749,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 161.4756,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 50.7749,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "attached:ee_finger_l1[10]",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 7,
+     "mvp_clearance_mm": 59.0992
+    },
+    {
+     "t_step": 304,
+     "chunk_seq": 39,
+     "hand_z_mm": 1126.3575,
+     "hand_above_crate_rim_mm": 246.3673,
+     "min_clearance_to_crate_mm": 50.7147,
+     "min_clearance_to_crate_link": "ee_right",
+     "min_clearance_to_table_mm": 161.5285,
+     "min_clearance_to_table_link": "ee_finger_r2",
+     "min_clearance_any_body_mm": 50.7147,
+     "min_clearance_any_link": "ee_right",
+     "min_clearance_any_body": "crate",
+     "safe": true,
+     "hold_reason": "",
+     "ag3s_reason_codes": [],
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "mvp_link": "attached:ee_finger_l1[10]",
+     "mvp_obstacle": null,
+     "mvp_block": "esdf",
+     "mvp_step": 7,
+     "mvp_clearance_mm": 56.9496
+    }
+   ],
+   "destination_margin_hypothesis": {
+    "question": "쥔 것이 없으면 destination_margin 이 적용되지 않는다 — 그래서 하강이 막혔는가",
+    "planning_record_keys": [
+     "actions",
+     "ag3s_reason_codes",
+     "chunk_shape",
+     "duplicate_sequence",
+     "field",
+     "hold_reason",
+     "ipc",
+     "kind",
+     "max_violation_pair",
+     "object_poses",
+     "qpos",
+     "safe",
+     "seq",
+     "t_step",
+     "timing_ms",
+     "verdict"
+    ],
+    "attached_rows_in_max_violation_pair": {
+     "n_chunks_with_attached_link": 20,
+     "n_chunks_total": 39,
+     "attached_link_labels": [
+      "attached:ee_finger_l1[10]",
+      "attached:ee_finger_l1[26]",
+      "attached:ee_finger_l1[29]",
+      "attached:ee_finger_l1[35]",
+      "attached:ee_finger_l1[37]",
+      "attached:ee_finger_l1[43]",
+      "attached:ee_finger_l1[5]"
+     ],
+     "obstacle_values_seen": [
+      "None",
+      "__attached__",
+      "target"
+     ],
+     "attached_clearance_mm_min": 5.4046,
+     "attached_clearance_mm_max": 72.9858,
+     "note": "기록에 attached 전용 키는 없다. 이 숫자는 max_violation_pair.link 의 'attached:' 접두사와 obstacle 값에서 센 것이다 — chunk 마다 한 행만 기록되므로 attached 점의 전체 개수는 기록에서 셀 수 없다."
+    },
+    "apple_max_lift_mm": 0.0016,
+    "all_chunks_safe": true,
+    "max_violation_m_max": 0.0,
+    "left_hand_min_clearance_to_crate_mm_over_descent": 82.3345,
+    "right_hand_min_clearance_to_crate_mm_over_descent": 48.9269,
+    "esdf_margin_mm": 10.0
+   }
+  },
+  "m5_max_violation_pair": {
+   "note": "unsafe 0 이므로 이것은 위반이 아니라 각 chunk 에서 가장 빡빡한 행이다",
+   "n_chunks": 39,
+   "link_counts": {
+    "attached:ee_finger_l1[10]": 9,
+    "ee_finger_r2": 8,
+    "ee_finger_l2": 6,
+    "attached:ee_finger_l1[5]": 3,
+    "ee_finger_l1": 2,
+    "attached:ee_finger_l1[29]": 2,
+    "attached:ee_finger_l1[35]": 2,
+    "attached:ee_finger_l1[26]": 2,
+    "ee_right": 2,
+    "ee_left": 1,
+    "attached:ee_finger_l1[37]": 1,
+    "attached:ee_finger_l1[43]": 1
+   },
+   "obstacle_counts": {
+    "None": 37,
+    "target": 1,
+    "__attached__": 1
+   },
+   "block_counts": {
+    "esdf": 39
+   },
+   "clearance_mm_min": 3.8144,
+   "clearance_mm_max": 75.3721,
+   "clearance_mm_median": 58.6201,
+   "n_chunks_safe": 39,
+   "n_chunks_unsafe": 0,
+   "trajopt_status_counts": {
+    "feasible": 39
+   },
+   "max_violation_m_counts": {
+    "0.0": 39
+   },
+   "ee_left_in_mvp": 1,
+   "ee_right_in_mvp": 2,
+   "recorded_clearance_is_post_margin": {
+    "definition": "max_violation_pair.clearance_m = d_esdf(p) - r_robot - margin. margin 은 이미 빠져 있다 (linearize.py:489 _esdf_clearance 의 반환식과 docstring; :704 가 그 block 원소를 _identify 에 넘기고 :718 이 clearance_m 으로 담는다).",
+    "consequence": "clearance_m >= 0 이면 위반이 아니다. max_violation = max(0, -clearance_m) 이다.",
+    "esdf_margin_mm": 10.0,
+    "n_chunks_clearance_below_0": 0,
+    "min_clearance_mm_post_margin": 3.8144,
+    "min_clearance_mm_pre_margin_equivalent": 13.8144,
+    "verdict_max_violation_m_all_zero": true,
+    "n_chunks_safe_true": 39,
+    "consistent": true,
+    "corrected_misread": {
+     "what_was_written_first": "39 chunk 중 5 개(t=72·80·88·96·184)에서 clearance_m 이 esdf margin 10 mm 보다 작은데 max_violation_m 은 0.0 이라 모순으로 보였다",
+     "why_it_was_wrong": "clearance_m 은 이미 margin 을 뺀 값이라 10 mm 와 견줄 것이 아니다. 3.8144 mm 는 margin 을 빼고도 3.81 mm 남았다는 뜻이고 위반이 아니다.",
+     "n_chunks_clearance_below_10mm_post_margin": 5,
+     "t_steps_of_those_chunks": [
+      72,
+      80,
+      88,
+      96,
+      184
+     ],
+     "note": "이 숫자 자체는 맞다 — 뜻이 '위반에 가까웠다'가 아니라 'margin 을 뺀 뒤 10 mm 미만이 남았다'일 뿐이다. 다음 사람이 같은 비교를 하지 않도록 남긴다."
+    }
+   },
+   "offline_clearance_is_pre_margin": {
+    "definition": "이 측정의 오프라인 clearance 는 surface_distance - sphere_radius 로 margin 을 빼지 않은 값이다.",
+    "to_compare": "기록의 clearance_m 에 margin 10 mm 를 더하면 오프라인 값과 같은 정의가 된다 (둘은 거리장이 다르므로 값 자체는 일치하지 않는다)."
+   },
+   "per_chunk": [
+    {
+     "t_step": 0,
+     "seq": 1,
+     "link": "ee_finger_r2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 3,
+     "query": 227,
+     "clearance_mm": 67.3729,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 8,
+     "seq": 2,
+     "link": "ee_finger_l1",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 0,
+     "query": 242,
+     "clearance_mm": 65.2084,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 16,
+     "seq": 3,
+     "link": "ee_finger_r2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 0,
+     "query": 227,
+     "clearance_mm": 67.404,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 24,
+     "seq": 4,
+     "link": "ee_finger_r2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 0,
+     "query": 227,
+     "clearance_mm": 66.9825,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 32,
+     "seq": 5,
+     "link": "ee_finger_r2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 0,
+     "query": 227,
+     "clearance_mm": 66.5566,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 40,
+     "seq": 6,
+     "link": "ee_finger_r2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 227,
+     "clearance_mm": 66.0395,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 48,
+     "seq": 7,
+     "link": "ee_finger_r2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 227,
+     "clearance_mm": 65.5579,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 56,
+     "seq": 8,
+     "link": "ee_finger_r2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 3,
+     "query": 227,
+     "clearance_mm": 65.6575,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 64,
+     "seq": 9,
+     "link": "ee_finger_l1",
+     "obstacle": "target",
+     "block": "esdf",
+     "step": 7,
+     "query": 246,
+     "clearance_mm": 22.0574,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 72,
+     "seq": 10,
+     "link": "ee_finger_l2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 261,
+     "clearance_mm": 5.8105,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 80,
+     "seq": 11,
+     "link": "ee_finger_l2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 261,
+     "clearance_mm": 4.4826,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 88,
+     "seq": 12,
+     "link": "ee_finger_l2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 260,
+     "clearance_mm": 7.4846,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 96,
+     "seq": 13,
+     "link": "ee_finger_l2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 6,
+     "query": 260,
+     "clearance_mm": 3.8144,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 104,
+     "seq": 14,
+     "link": "ee_finger_l2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 5,
+     "query": 260,
+     "clearance_mm": 12.7334,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 112,
+     "seq": 15,
+     "link": "ee_finger_l2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 0,
+     "query": 260,
+     "clearance_mm": 15.914,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 120,
+     "seq": 16,
+     "link": "attached:ee_finger_l1[29]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 1,
+     "query": 295,
+     "clearance_mm": 11.0588,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 128,
+     "seq": 17,
+     "link": "ee_left",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 0,
+     "query": 144,
+     "clearance_mm": 59.7444,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 136,
+     "seq": 18,
+     "link": "ee_finger_r2",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 0,
+     "query": 227,
+     "clearance_mm": 68.1946,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 144,
+     "seq": 19,
+     "link": "attached:ee_finger_l1[35]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 301,
+     "clearance_mm": 67.843,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 152,
+     "seq": 20,
+     "link": "attached:ee_finger_l1[29]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 295,
+     "clearance_mm": 51.1249,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 160,
+     "seq": 21,
+     "link": "attached:ee_finger_l1[37]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 303,
+     "clearance_mm": 36.8453,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 168,
+     "seq": 22,
+     "link": "attached:ee_finger_l1[43]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 309,
+     "clearance_mm": 26.9314,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 176,
+     "seq": 23,
+     "link": "attached:ee_finger_l1[35]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 301,
+     "clearance_mm": 19.6482,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 184,
+     "seq": 24,
+     "link": "attached:ee_finger_l1[10]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 6,
+     "query": 276,
+     "clearance_mm": 5.4046,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 192,
+     "seq": 25,
+     "link": "attached:ee_finger_l1[26]",
+     "obstacle": "__attached__",
+     "block": "esdf",
+     "step": 4,
+     "query": 292,
+     "clearance_mm": 16.1077,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 200,
+     "seq": 26,
+     "link": "attached:ee_finger_l1[26]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 0,
+     "query": 292,
+     "clearance_mm": 50.7666,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 208,
+     "seq": 27,
+     "link": "attached:ee_finger_l1[10]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 0,
+     "query": 276,
+     "clearance_mm": 62.5607,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 216,
+     "seq": 28,
+     "link": "ee_right",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 2,
+     "query": 189,
+     "clearance_mm": 75.3721,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 224,
+     "seq": 29,
+     "link": "ee_right",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 2,
+     "query": 189,
+     "clearance_mm": 75.0191,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 232,
+     "seq": 30,
+     "link": "attached:ee_finger_l1[10]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 276,
+     "clearance_mm": 72.9858,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 240,
+     "seq": 31,
+     "link": "attached:ee_finger_l1[5]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 271,
+     "clearance_mm": 65.8769,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 248,
+     "seq": 32,
+     "link": "attached:ee_finger_l1[5]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 271,
+     "clearance_mm": 58.6201,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 256,
+     "seq": 33,
+     "link": "attached:ee_finger_l1[10]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 276,
+     "clearance_mm": 58.4555,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 264,
+     "seq": 34,
+     "link": "attached:ee_finger_l1[5]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 271,
+     "clearance_mm": 56.3533,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 272,
+     "seq": 35,
+     "link": "attached:ee_finger_l1[10]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 276,
+     "clearance_mm": 57.8553,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 280,
+     "seq": 36,
+     "link": "attached:ee_finger_l1[10]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 276,
+     "clearance_mm": 58.9225,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 288,
+     "seq": 37,
+     "link": "attached:ee_finger_l1[10]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 276,
+     "clearance_mm": 61.8215,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 296,
+     "seq": 38,
+     "link": "attached:ee_finger_l1[10]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 276,
+     "clearance_mm": 59.0992,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    },
+    {
+     "t_step": 304,
+     "seq": 39,
+     "link": "attached:ee_finger_l1[10]",
+     "obstacle": null,
+     "block": "esdf",
+     "step": 7,
+     "query": 276,
+     "clearance_mm": 56.9496,
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0
+    }
+   ],
+   "offline_tightest_link_counts": {
+    "ee_right": 17,
+    "ee_finger_r2": 13,
+    "ee_finger_l1": 5,
+    "ee_finger_l2": 2,
+    "ee_left": 2
+   },
+   "offline_tightest_body_counts": {
+    "crate": 34,
+    "apple": 5
+   }
+  },
+  "scene_figure_panels": [
+   {
+    "label": "A  gripper closes (M2)",
+    "row_index": 126,
+    "t_step": 112,
+    "kind": "planning",
+    "chunk_seq": 15,
+    "gripper_cmd_left": 0.822252,
+    "gripper_cmd_right": 1.001982,
+    "left_finger_to_apple_mm": 22.6591,
+    "closest_sphere_index": 261,
+    "closest_sphere_link": "ee_finger_l2",
+    "closest_sphere_radius_mm": 4.7151,
+    "offset_sphere_minus_apple_centre_mm": [
+     46.6875,
+     -23.9425,
+     28.3044
+    ],
+    "ee_body_l_z_mm": 982.5309,
+    "min_clearance_to_crate_mm": 38.2509,
+    "min_clearance_to_crate_link": "ee_left",
+    "apple_z_displacement_mm": 0.001,
+    "max_violation_pair": {
+     "block": "esdf",
+     "clearance_m": 0.015913961586154365,
+     "step": 0,
+     "query": 260,
+     "link": "ee_finger_l2",
+     "slot": null,
+     "candidate_id": null,
+     "obstacle": null,
+     "point_m": [
+      0.5964430592389584,
+      0.30273412673891326,
+      0.9185931149575668
+     ]
+    },
+    "safe": true,
+    "trajopt_status": "feasible"
+   },
+   {
+    "label": "B  descent stops (M4, last record)",
+    "row_index": 350,
+    "t_step": 311,
+    "kind": "control",
+    "chunk_seq": 39,
+    "gripper_cmd_left": 0.45532,
+    "gripper_cmd_right": 1.001761,
+    "left_finger_to_apple_mm": 366.5256,
+    "closest_sphere_index": 261,
+    "closest_sphere_link": "ee_finger_l2",
+    "closest_sphere_radius_mm": 4.7151,
+    "offset_sphere_minus_apple_centre_mm": [
+     -11.7781,
+     -353.7942,
+     194.6806
+    ],
+    "ee_body_l_z_mm": 1123.0259,
+    "min_clearance_to_crate_mm": 51.1002,
+    "min_clearance_to_crate_link": "ee_right",
+    "apple_z_displacement_mm": -0.003737,
+    "max_violation_pair": {
+     "block": "esdf",
+     "clearance_m": 0.05694963319812512,
+     "step": 7,
+     "query": 276,
+     "link": "attached:ee_finger_l1[10]",
+     "slot": null,
+     "candidate_id": null,
+     "obstacle": null,
+     "point_m": [
+      0.48976873452713976,
+      -0.011397596293871177,
+      0.9903030247351899
+     ]
+    },
+    "safe": true,
+    "trajopt_status": "feasible"
+   }
+  ]
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t9a/t9a-scene.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t9a/t9a-scene.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t9a/t9a-graphs.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t9a/t9a-graphs.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t9a/t9a-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t9a/t9a-table.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": null,
+  "note": "regression baseline 을 다시 돌리지 않았다 (이 task 는 기록 분석이다). 대신 제약 구 모델을 서버 시작 로그와 대조했다: 구 266 · capsule 36 · link_*_arm_5 19.53 mm · 손가락 4.72 mm · ee_left/ee_right 8.92 mm 가 모두 일치한다."
+ },
+ "verdict": "M3 사과는 움직이지 않았다 — 최대 들림 +0.0016 mm, 최대 총 변위 0.3321 mm, 변위 1 mm 초과 행 0/351. M1 왼손 손끝이 사과 표면까지 최소 +17.0591 mm (t=96, chunk seq 13); 기준 둘은 이전 closed-loop +89.8562 mm 와 성공한 shadow -17.9552 mm 로, 이번 값은 그 사이 67.5 % 지점이다 (이번 모델의 손끝 구 반지름이 3.6/3.97/4.72 mm 로 T7a 의 13.9/15.4/18.7 mm 와 달라 중심-표면 거리도 함께 냈다: +21.7743 mm). ee_left 손바닥은 최소 +58.4597 mm. M2 왼쪽 gripper 명령이 0.85 아래로 처음 내려간 것은 t_step 112 (값 0.822252, t=111 에서는 0.935497) 이고 그때 손끝-사과 표면은 +22.6591 mm, 가장 가까운 구는 ee_finger_l2 (r 4.7151 mm) 이며 사과 중심 기준 offset 은 x +46.69 · y -23.94 · z +28.30 mm (norm 59.62), 손 중심 기준은 x +15.03 · y -25.25 · z +79.26 mm (norm 84.53) 다. 오른쪽 gripper 는 한 번도 0.85 아래로 안 갔다 (최소 0.9945). M4 손은 t=201 부터 crate 위에 있었고 (124 행) EE_BODY_L z 최저값은 1123.03 mm 로 crate rim 976.99 mm 보다 +146.03 mm 높다 — 기록이 끝날 때까지 그 아래로 내려간 적이 없다. 하강 구간에서 왼손의 crate 최소 clearance 는 82.33 mm, 오른손은 48.93 mm 이고 39 chunk 전부 safe · max_violation_m 0.0 이다. destination_margin 가설에 대해: 기록의 max_violation_pair.link 가 39 chunk 중 20 개에서 attached:ee_finger_l1[*] 이고 (라벨 7 종, clearance 5.40~72.99 mm), obstacle 값으로 __attached__ 와 target 이 각각 한 번씩 나타난다 — 사과는 한 번도 들리지 않았는데도 attached 행이 활성이었다. M5 가장 빡빡한 행은 attached:ee_finger_l1[10] 9회 · ee_finger_r2 8회 · ee_finger_l2 6회 순이고 ee_left 는 1회 · ee_right 는 2회 나타난다. 기록된 clearance 는 **margin 을 이미 뺀 값**이고 (linearize.py:489) 최소 3.8144 · 중앙값 58.6201 · 최대 75.3721 mm 다 — margin 10 mm 를 더하면 오프라인 정의와 같은 13.8144 · 68.6201 · 85.3721 mm 이다. clearance_m < 0 인 chunk 는 0 개이고 verdict.max_violation_m 이 39 chunk 전부 0.0 · safe 도 전부 True 인 것과 일치한다. (앞선 판에서 \"5 개 chunk 의 clearance 가 margin 10 mm 보다 작은데 위반이 0 이라 모순\" 이라고 적은 것은 **오독이었다** — post-margin 값을 margin 과 견준 것이다. numbers.m5_max_violation_pair.recorded_clearance_is_post_margin.corrected_misread 에 남겨 두었다.) 오프라인으로 다시 잰 39 planning 행의 가장 빡빡한 구는 ee_right 17 · ee_finger_r2 13 · ee_finger_l1 5 · ee_finger_l2 2 · ee_left 2 이고 상대 body 는 crate 34 · apple 5 다.",
+ "not_measured": [
+  "actions_reference (정책 원본 chunk) — 이 기록에 없다. A1 이 싣는 중이라고 들었다. 따라서 \"TO 가 chunk 를 얼마나 바꿨나\" 는 이번에 잴 수 없다.",
+  "attached 점의 전체 개수와 그 좌표 — 기록에는 chunk 마다 max_violation_pair 한 행만 있다. attached:ee_finger_l1[k] 의 k 로 7 종을 봤을 뿐 전체 집합은 셀 수 없다. destination_margin 이 그 행들에 실제로 적용됐는지도 기록에 없다 — 구현 필요.",
+  "ESDF 거리장 자체의 행 값 — 기록에 거리장이 없다. 오프라인 행은 MuJoCo ground-truth 표면으로 다시 만든 것이고, 기록의 ESDF 값은 max_violation_pair 한 행만 대조에 썼다.",
+  "gripper 의 실제 개폐 상태 — 16D action 의 명령 열(7, 15)만 기록돼 있고 gripper joint 의 측정값은 qpos 에서 팔 관절과 분리해 확인하지 않았다. M2 는 명령 기준이다.",
+  "t>304 이후 — 사용자가 t=304 에서 중단했다 (planned_missing_frames 36). 하강이 더 진행됐을지는 기록에 없다.",
+  "rollout 로 다시 돌린 결과 — 돌리지 않았다. 모든 수치는 기록의 오프라인 재구성이다.",
+  "(해소됨) max_violation_pair.clearance_m 와 verdict.max_violation_m 의 관계 — linearize.py:489/:704/:718 을 읽어 확인했다. clearance_m 은 post-margin 이고 max_violation = max(0, -clearance_m) 이라 둘은 모순이 아니다. method.recorded_clearance_is_post_margin 참조."
+ ],
+ "corrections": [
+  {
+   "date": "2026-09-26",
+   "what": "numbers.m5_max_violation_pair 의 \"recorded_clearance_vs_margin\" 항목",
+   "was": "39 chunk 중 5 개에서 max_violation_pair.clearance_m 이 esdf margin 10 mm 보다 작은데 verdict.max_violation_m 은 0.0 이고 safe 도 True 라고, 두 값을 모순처럼 나란히 놓았다.",
+   "now": "clearance_m 은 이미 margin 을 뺀 값(linearize.py:489)이므로 margin 과 견줄 대상이 아니다. 항목을 recorded_clearance_is_post_margin 으로 바꾸고 corrected_misread 에 무엇을 잘못 견줬는지 남겼다. figure 의 축 라벨과 제목도 POST-margin 으로 고쳤다.",
+   "raised_by": "lead",
+   "verified_by": "benchmark/trajopt/linearize.py:489 _esdf_clearance docstring/반환식, :704, :718 (읽기만 했다)"
+  }
+ ]
+}

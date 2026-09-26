@@ -1,0 +1,155 @@
+{
+ "margin_mm": 10.0,
+ "authorized_links": [
+  "ee_finger_l1",
+  "ee_finger_l2",
+  "link_left_arm_5"
+ ],
+ "source_tensor": "/mnt/dev/work/outputs/verify/T8a/m0_clearance_tensor.npz",
+ "panels": [
+  {
+   "label": "A  fingertip deepest in apple",
+   "chunk": 21,
+   "seq": 22,
+   "t_step": 168,
+   "plan_step": 7,
+   "sphere_index": 119,
+   "link": "ee_finger_l2",
+   "sphere_radius_mm": 18.6981,
+   "focus_body": "apple",
+   "clearance_mm_by_body": {
+    "apple": -17.4506,
+    "banana": 266.6744,
+    "crate": 128.6496,
+    "orange": 434.981,
+    "pear": 268.0391,
+    "table": 234.337
+   },
+   "table_top_z_m": 0.82,
+   "trajopt_status": "feasible",
+   "recorded_max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.002043566379063444,
+    "step": 31,
+    "query": 41,
+    "link": "link_left_arm_5",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": null,
+    "point_m": [
+     0.5049898341278973,
+     -0.09147575475616634,
+     1.0696527644455864
+    ]
+   }
+  },
+  {
+   "label": "B  link_left_arm_5 deepest in apple",
+   "chunk": 23,
+   "seq": 24,
+   "t_step": 184,
+   "plan_step": 6,
+   "sphere_index": 41,
+   "link": "link_left_arm_5",
+   "sphere_radius_mm": 81.25,
+   "focus_body": "apple",
+   "clearance_mm_by_body": {
+    "apple": -78.2977,
+    "banana": 179.6471,
+    "crate": -5.3323,
+    "orange": 332.3586,
+    "pear": 174.0587,
+    "table": 107.881
+   },
+   "table_top_z_m": 0.82,
+   "trajopt_status": "feasible",
+   "recorded_max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.001379769776256784,
+    "step": 21,
+    "query": 41,
+    "link": "link_left_arm_5",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": null,
+    "point_m": [
+     0.5076437117229454,
+     -0.09144150394613249,
+     1.0679809974864316
+    ]
+   }
+  },
+  {
+   "label": "C  worst row left after removing apple",
+   "chunk": 24,
+   "seq": 25,
+   "t_step": 192,
+   "plan_step": 17,
+   "sphere_index": 41,
+   "link": "link_left_arm_5",
+   "sphere_radius_mm": 81.25,
+   "focus_body": "crate",
+   "clearance_mm_by_body": {
+    "apple": -75.0978,
+    "banana": 172.9929,
+    "crate": -24.7846,
+    "orange": 323.0054,
+    "pear": 167.1528,
+    "table": 88.4972
+   },
+   "table_top_z_m": 0.82,
+   "trajopt_status": "feasible",
+   "recorded_max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.0012366505538647932,
+    "step": 16,
+    "query": 41,
+    "link": "link_left_arm_5",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": null,
+    "point_m": [
+     0.5071587514552958,
+     -0.09092593708283553,
+     1.0676989249115765
+    ]
+   }
+  },
+  {
+   "label": "D  table at an apple-negative query point",
+   "chunk": 5,
+   "seq": 6,
+   "t_step": 40,
+   "plan_step": 48,
+   "sphere_index": 41,
+   "link": "link_left_arm_5",
+   "sphere_radius_mm": 81.25,
+   "focus_body": "table",
+   "clearance_mm_by_body": {
+    "apple": -66.8163,
+    "banana": 515.9664,
+    "crate": 41.5131,
+    "orange": -21.6552,
+    "pear": 531.8789,
+    "table": -15.7964
+   },
+   "table_top_z_m": 0.82,
+   "trajopt_status": "feasible",
+   "recorded_max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.00047996101889344334,
+    "step": 19,
+    "query": 41,
+    "link": "link_left_arm_5",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": null,
+    "point_m": [
+     0.5644184576424528,
+     0.31853877695887145,
+     1.0317450701981459
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,57 @@
+{
+ "margin_mm": 10.0,
+ "source": "r_crit = min over kept rows of surface_distance - margin(10 mm); the largest sphere radius with zero violations for that capsule group",
+ "panels": [
+  {
+   "label": "A  link_left_arm_5 vs crate  (worst remaining row)",
+   "window": "full50",
+   "group": "link_left_arm_5__r81250.0000mm",
+   "chunk": 24,
+   "seq": 25,
+   "plan_step": 17,
+   "sphere_index": 41,
+   "link": "link_left_arm_5",
+   "table_top_z_m": 0.82,
+   "r_at_scale_1_mm": 81.25,
+   "r_crit_mm": 46.4654,
+   "scale_crit": 0.458494,
+   "floor_mm": 31.25,
+   "min_surface_distance_mm": 56.4654,
+   "argmin_body": "crate"
+  },
+  {
+   "label": "B  ee_finger_l1 vs table  (full50: r_crit < 0)",
+   "window": "full50",
+   "group": "ee_finger_l1__r18698.0760mm",
+   "chunk": 5,
+   "seq": 6,
+   "plan_step": 48,
+   "sphere_index": 108,
+   "link": "ee_finger_l1",
+   "table_top_z_m": 0.82,
+   "r_at_scale_1_mm": 18.698075545040886,
+   "r_crit_mm": -1.6563,
+   "scale_crit": null,
+   "floor_mm": 6.267034914344546,
+   "min_surface_distance_mm": 8.3437,
+   "argmin_body": "table"
+  },
+  {
+   "label": "C  ee_finger_l1 vs table  (exec8: r_crit 7.75 mm)",
+   "window": "exec8",
+   "group": "ee_finger_l1__r18698.0760mm",
+   "chunk": 12,
+   "seq": 13,
+   "plan_step": 5,
+   "sphere_index": 108,
+   "link": "ee_finger_l1",
+   "table_top_z_m": 0.82,
+   "r_at_scale_1_mm": 18.698075545040886,
+   "r_crit_mm": 7.7514,
+   "scale_crit": 0.258941,
+   "floor_mm": 6.267034914344546,
+   "min_surface_distance_mm": 17.7514,
+   "argmin_body": "table"
+  }
+ ]
+}

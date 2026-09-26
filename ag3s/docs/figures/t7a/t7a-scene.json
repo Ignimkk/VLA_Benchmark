@@ -1,0 +1,739 @@
+{
+ "required_margin_mm": 50.0,
+ "selection": "no_target__left_spheres",
+ "chunk_choice_reason_numbers": {
+  "first_chunk_shadow_tip_below_0mm": 9,
+  "chunk_of_max_gap_tip_mm": 24,
+  "max_gap_tip_mm": 134.692
+ },
+ "panels": [
+  {
+   "label": "shadow / executed reference",
+   "run": "shadow_approach",
+   "variant": "reference",
+   "chunk": 9,
+   "seq": 10,
+   "t_step": 72,
+   "render_plan_step": 7,
+   "trajopt_status": "feasible",
+   "recorded_max_violation_m": 0.0,
+   "recorded_max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.002903767946357716,
+    "step": 5,
+    "query": 41,
+    "link": "link_left_arm_5",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": null,
+    "point_m": [
+     0.587099912054743,
+     0.3153812479059246,
+     1.0250561775114502
+    ]
+   },
+   "min_margin_slack_mm_exec8": -40.45125077645856,
+   "top_rows_exec8": [
+    {
+     "step": 7,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "orange",
+     "geom_id": 1318,
+     "clearance_mm": 9.5487,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -40.4513,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 6,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "orange",
+     "geom_id": 1318,
+     "clearance_mm": 14.3106,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -35.6894,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 5,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "orange",
+     "geom_id": 1318,
+     "clearance_mm": 19.0317,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -30.9683,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 4,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "orange",
+     "geom_id": 1318,
+     "clearance_mm": 21.2529,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -28.7471,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 3,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "orange",
+     "geom_id": 1318,
+     "clearance_mm": 25.228,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -24.772,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 7,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "table",
+     "geom_id": 1266,
+     "clearance_mm": 28.9611,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -21.0389,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 2,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "orange",
+     "geom_id": 1318,
+     "clearance_mm": 29.4679,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -20.5321,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 1,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "orange",
+     "geom_id": 1318,
+     "clearance_mm": 30.6364,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -19.3636,
+     "sphere_radius_mm": 81.25
+    }
+   ],
+   "fingertip_to_apple_mm": -14.6458
+  },
+  {
+   "label": "closed-loop / executed refined",
+   "run": "closed_loop_approach",
+   "variant": "refined",
+   "chunk": 9,
+   "seq": 10,
+   "t_step": 72,
+   "render_plan_step": 4,
+   "trajopt_status": "feasible",
+   "recorded_max_violation_m": 0.0,
+   "recorded_max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.0048370372475174395,
+    "step": 17,
+    "query": 41,
+    "link": "link_left_arm_5",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": "destination",
+    "point_m": [
+     0.6016392771585455,
+     0.3314307634087604,
+     1.031914926898877
+    ]
+   },
+   "min_margin_slack_mm_exec8": 13.197706578945395,
+   "top_rows_exec8": [
+    {
+     "step": 4,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 63.1977,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 13.1977,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 5,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 63.2098,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 13.2098,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 6,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 63.9738,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 13.9738,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 7,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 64.5512,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 14.5512,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 3,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 64.792,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 14.792,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 2,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 66.6016,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 16.6016,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 1,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 68.3192,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 18.3192,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 0,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 68.9373,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 18.9373,
+     "sphere_radius_mm": 81.25
+    }
+   ],
+   "fingertip_to_apple_mm": 90.4031
+  },
+  {
+   "label": "shadow / executed reference",
+   "run": "shadow_approach",
+   "variant": "reference",
+   "chunk": 24,
+   "seq": 25,
+   "t_step": 192,
+   "render_plan_step": 4,
+   "trajopt_status": "feasible",
+   "recorded_max_violation_m": 0.0,
+   "recorded_max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.0012366505538647932,
+    "step": 16,
+    "query": 41,
+    "link": "link_left_arm_5",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": null,
+    "point_m": [
+     0.5071587514552958,
+     -0.09092593708283553,
+     1.0676989249115765
+    ]
+   },
+   "min_margin_slack_mm_exec8": -74.61277158421774,
+   "top_rows_exec8": [
+    {
+     "step": 4,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1273,
+     "clearance_mm": -24.6128,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -74.6128,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 3,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1273,
+     "clearance_mm": -23.8682,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -73.8682,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 5,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1273,
+     "clearance_mm": -23.3315,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -73.3315,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 6,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1273,
+     "clearance_mm": -22.5096,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -72.5096,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 7,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1273,
+     "clearance_mm": -22.2481,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -72.2481,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 2,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1273,
+     "clearance_mm": -21.8792,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -71.8792,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 1,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1273,
+     "clearance_mm": -19.0133,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -69.0133,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 0,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1273,
+     "clearance_mm": -14.7345,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": -64.7345,
+     "sphere_radius_mm": 81.25
+    }
+   ],
+   "fingertip_to_apple_mm": -16.7443
+  },
+  {
+   "label": "closed-loop / executed refined",
+   "run": "closed_loop_approach",
+   "variant": "refined",
+   "chunk": 24,
+   "seq": 25,
+   "t_step": 192,
+   "render_plan_step": 0,
+   "trajopt_status": "feasible",
+   "recorded_max_violation_m": 0.0,
+   "recorded_max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.004594668167625798,
+    "step": 25,
+    "query": 41,
+    "link": "link_left_arm_5",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": "destination",
+    "point_m": [
+     0.6288266027705988,
+     0.325438508246016,
+     1.0250087286827678
+    ]
+   },
+   "min_margin_slack_mm_exec8": 26.491566993465693,
+   "top_rows_exec8": [
+    {
+     "step": 0,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 76.4916,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 26.4916,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 1,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 76.8444,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 26.8444,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 2,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 76.941,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 26.941,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 3,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 77.1198,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 27.1198,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 4,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 77.3907,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 27.3907,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 5,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 77.558,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 27.558,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 6,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 77.9961,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 27.9961,
+     "sphere_radius_mm": 81.25
+    },
+    {
+     "step": 7,
+     "sphere_index": 41,
+     "link": "link_left_arm_5",
+     "arm_joints": [
+      "left_arm_0",
+      "left_arm_1",
+      "left_arm_2",
+      "left_arm_3",
+      "left_arm_4",
+      "left_arm_5"
+     ],
+     "obstacle_body": "crate",
+     "geom_id": 1276,
+     "clearance_mm": 78.0169,
+     "required_margin_mm": 50.0,
+     "margin_slack_mm": 28.0169,
+     "sphere_radius_mm": 81.25
+    }
+   ],
+   "fingertip_to_apple_mm": 117.9476
+  }
+ ]
+}

@@ -1,0 +1,431 @@
+{
+ "view": "oblique-right",
+ "azimuth_deg": 40.0,
+ "elevation_deg": -18.0,
+ "distance_m": 1.75,
+ "model_xml": "/mnt/dev/work/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+ "pose": {
+  "record": "/mnt/dev/work/outputs/live_test/local_shadow_from_pc/frames.jsonl",
+  "chunk": 9,
+  "seq": 10,
+  "t_step": 72,
+  "plan_step": 7,
+  "variant": "actions_reference",
+  "fingertip_to_apple_surface_mm": -14.6458
+ },
+ "model_A": {
+  "link_filter": [
+   "ee_finger_l1",
+   "ee_finger_l2",
+   "ee_finger_r1",
+   "ee_finger_r2",
+   "link_left_arm_0",
+   "link_left_arm_1",
+   "link_left_arm_2",
+   "link_left_arm_3",
+   "link_left_arm_4",
+   "link_left_arm_5",
+   "link_left_arm_6",
+   "link_right_arm_0",
+   "link_right_arm_1",
+   "link_right_arm_2",
+   "link_right_arm_3",
+   "link_right_arm_4",
+   "link_right_arm_5",
+   "link_right_arm_6"
+  ],
+  "n_spheres": 120,
+  "radius_mm_by_link": {
+   "ee_finger_l1": [
+    13.8964,
+    15.4262,
+    18.6981
+   ],
+   "ee_finger_l2": [
+    13.8964,
+    15.4262,
+    18.6981
+   ],
+   "ee_finger_r1": [
+    13.8964,
+    15.4262,
+    18.6981
+   ],
+   "ee_finger_r2": [
+    13.8964,
+    15.4262,
+    18.6981
+   ],
+   "link_left_arm_0": [
+    82.7647
+   ],
+   "link_left_arm_1": [
+    55.9017
+   ],
+   "link_left_arm_2": [
+    53.8516
+   ],
+   "link_left_arm_3": [
+    44.3549
+   ],
+   "link_left_arm_4": [
+    38.4148
+   ],
+   "link_left_arm_5": [
+    81.25
+   ],
+   "link_left_arm_6": [
+    25.9529,
+    27.5766,
+    29.2173
+   ],
+   "link_right_arm_0": [
+    82.7647
+   ],
+   "link_right_arm_1": [
+    55.9017
+   ],
+   "link_right_arm_2": [
+    53.8516
+   ],
+   "link_right_arm_3": [
+    44.3549
+   ],
+   "link_right_arm_4": [
+    38.4148
+   ],
+   "link_right_arm_5": [
+    81.25
+   ],
+   "link_right_arm_6": [
+    25.9797,
+    27.7134,
+    28.6574
+   ]
+  },
+  "n_spheres_by_link": {
+   "ee_finger_l1": 11,
+   "ee_finger_l2": 11,
+   "ee_finger_r1": 11,
+   "ee_finger_r2": 11,
+   "link_left_arm_0": 2,
+   "link_left_arm_1": 5,
+   "link_left_arm_2": 3,
+   "link_left_arm_3": 4,
+   "link_left_arm_4": 4,
+   "link_left_arm_5": 5,
+   "link_left_arm_6": 15,
+   "link_right_arm_0": 2,
+   "link_right_arm_1": 5,
+   "link_right_arm_2": 3,
+   "link_right_arm_3": 4,
+   "link_right_arm_4": 4,
+   "link_right_arm_5": 5,
+   "link_right_arm_6": 15
+  }
+ },
+ "model_B": {
+  "approximation": "arm_5 spheres with local z < z_cut removed; no capsule-length flag exists, so this is a drawing approximation",
+  "z_cut_m": -0.1,
+  "finger_capsule_radius_scale": 0.28,
+  "palm_links_added": [
+   "ee_left",
+   "ee_right"
+  ],
+  "n_spheres_drawn": 140,
+  "n_spheres_before_cut": 144,
+  "radius_mm_by_link": {
+   "ee_finger_l1": [
+    6.1799,
+    6.7846,
+    7.9754
+   ],
+   "ee_finger_l2": [
+    6.1799,
+    6.7846,
+    7.9754
+   ],
+   "ee_finger_r1": [
+    6.1799,
+    6.7846,
+    7.9754
+   ],
+   "ee_finger_r2": [
+    6.1799,
+    6.7846,
+    7.9754
+   ],
+   "ee_left": [
+    30.4371,
+    35.567,
+    35.8332
+   ],
+   "ee_right": [
+    30.4371,
+    35.567,
+    35.8332
+   ],
+   "link_left_arm_0": [
+    82.7647
+   ],
+   "link_left_arm_1": [
+    55.9017
+   ],
+   "link_left_arm_2": [
+    53.8516
+   ],
+   "link_left_arm_3": [
+    44.3549
+   ],
+   "link_left_arm_4": [
+    38.4148
+   ],
+   "link_left_arm_5": [
+    81.25
+   ],
+   "link_left_arm_6": [
+    25.9529,
+    27.5766,
+    29.2173
+   ],
+   "link_right_arm_0": [
+    82.7647
+   ],
+   "link_right_arm_1": [
+    55.9017
+   ],
+   "link_right_arm_2": [
+    53.8516
+   ],
+   "link_right_arm_3": [
+    44.3549
+   ],
+   "link_right_arm_4": [
+    38.4148
+   ],
+   "link_right_arm_5": [
+    81.25
+   ],
+   "link_right_arm_6": [
+    25.9797,
+    27.7134,
+    28.6574
+   ]
+  },
+  "n_spheres_by_link": {
+   "ee_finger_l1": 11,
+   "ee_finger_l2": 11,
+   "ee_finger_r1": 11,
+   "ee_finger_r2": 11,
+   "ee_left": 12,
+   "ee_right": 12,
+   "link_left_arm_0": 2,
+   "link_left_arm_1": 5,
+   "link_left_arm_2": 3,
+   "link_left_arm_3": 4,
+   "link_left_arm_4": 4,
+   "link_left_arm_5": 3,
+   "link_left_arm_6": 15,
+   "link_right_arm_0": 2,
+   "link_right_arm_1": 5,
+   "link_right_arm_2": 3,
+   "link_right_arm_3": 4,
+   "link_right_arm_4": 4,
+   "link_right_arm_5": 3,
+   "link_right_arm_6": 15
+  }
+ },
+ "arm5_axis_samples": {
+  "frame": "link_left_arm_5, x=y=0, z from -300 to +100 mm step 10 mm",
+  "n_points": 41,
+  "n_uncovered_model_A": 0,
+  "n_uncovered_model_B": 10,
+  "uncovered_z_mm_model_B": [
+   -300.0,
+   -270.0,
+   -260.0,
+   -250.0,
+   -240.0,
+   -230.0,
+   -220.0,
+   -210.0,
+   -200.0,
+   -190.0
+  ],
+  "depth_inside_nearest_sphere_mm_model_A": [
+   6.266,
+   16.266,
+   26.266,
+   36.266,
+   46.266,
+   56.266,
+   66.266,
+   76.266,
+   76.234,
+   66.234,
+   56.234,
+   53.766,
+   63.766,
+   73.766,
+   78.734,
+   68.734,
+   58.734,
+   51.266,
+   61.266,
+   71.266,
+   81.223,
+   71.234,
+   61.234,
+   51.234,
+   58.766,
+   68.766,
+   78.766,
+   73.734,
+   63.734,
+   53.734,
+   56.266,
+   66.266,
+   76.266,
+   76.234,
+   66.234,
+   56.234,
+   46.234,
+   36.234,
+   26.234,
+   16.234,
+   6.234
+  ],
+  "depth_inside_nearest_sphere_mm_model_B": [
+   -7.566,
+   1.373,
+   1.219,
+   -7.764,
+   -3.199,
+   -2.23,
+   -5.802,
+   -3.519,
+   -9.15,
+   -12.454,
+   -6.766,
+   -2.47,
+   6.266,
+   14.456,
+   21.266,
+   31.266,
+   41.266,
+   51.266,
+   61.266,
+   71.266,
+   81.223,
+   71.234,
+   61.234,
+   51.234,
+   58.766,
+   68.766,
+   78.766,
+   73.734,
+   63.734,
+   53.734,
+   56.266,
+   66.266,
+   76.266,
+   76.234,
+   66.234,
+   56.234,
+   46.234,
+   36.234,
+   26.234,
+   16.234,
+   6.234
+  ],
+  "z_mm": [
+   -300.0,
+   -290.0,
+   -280.0,
+   -270.0,
+   -260.0,
+   -250.0,
+   -240.0,
+   -230.0,
+   -220.0,
+   -210.0,
+   -200.0,
+   -190.0,
+   -180.0,
+   -170.0,
+   -160.0,
+   -150.0,
+   -140.0,
+   -130.0,
+   -120.0,
+   -110.0,
+   -100.0,
+   -90.0,
+   -80.0,
+   -70.0,
+   -60.0,
+   -50.0,
+   -40.0,
+   -30.0,
+   -20.0,
+   -10.0,
+   0.0,
+   10.0,
+   20.0,
+   30.0,
+   40.0,
+   50.0,
+   60.0,
+   70.0,
+   80.0,
+   90.0,
+   100.0
+  ]
+ },
+ "annotated_object_pixels": {
+  "apple (target)": [
+   413.4,
+   386.2
+  ],
+  "crate": [
+   542.9,
+   417.9
+  ],
+  "pear": [
+   698.5,
+   490.5
+  ],
+  "banana": [
+   706.9,
+   475.8
+  ]
+ },
+ "object_poses_m": {
+  "apple (target)": [
+   0.56348,
+   0.32048,
+   0.85
+  ],
+  "crate": [
+   0.51691,
+   -0.01552,
+   0.87999
+  ],
+  "pear": [
+   0.4652,
+   -0.32385,
+   0.85557
+  ],
+  "banana": [
+   0.54997,
+   -0.305,
+   0.84334
+  ]
+ },
+ "landmarks_z_mm_in_arm5_frame": {
+  "link_left_arm_6": 0.0,
+  "FT_sensor_L": -108.7,
+  "ee_left": -154.8,
+  "ee_finger_l1_root": -227.8
+ }
+}

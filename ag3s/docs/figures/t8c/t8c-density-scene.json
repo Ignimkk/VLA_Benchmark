@@ -1,0 +1,102 @@
+{
+ "chunk": 24,
+ "plan_step": 17,
+ "seq": 25,
+ "table_top_z_m": 0.82,
+ "ee_finger_l1_root_world": [
+  0.47456,
+  -0.04742,
+  0.99207
+ ],
+ "ee_left_world": [
+  0.0,
+  -1.55,
+  0.0
+ ],
+ "panels": [
+  {
+   "sphere_spacing": 1.0,
+   "max_spheres_per_capsule": 8,
+   "arm5_n_spheres": 5,
+   "n_spheres_total": 120,
+   "arm5_radius_mm_at_scale_1": 81.25,
+   "arm5_floor_mm": 31.25,
+   "exec8_feasible_pick": null
+  },
+  {
+   "sphere_spacing": 0.5,
+   "max_spheres_per_capsule": 8,
+   "arm5_n_spheres": 8,
+   "n_spheres_total": 188,
+   "arm5_radius_mm_at_scale_1": 77.0965,
+   "arm5_floor_mm": 17.8571,
+   "exec8_feasible_pick": {
+    "key": "n8__arm5_0.5__finger_0.35",
+    "arm5_scale": 0.5,
+    "finger_scale": 0.35,
+    "arm5_radius_mm": 41.5347,
+    "exec8": {
+     "n_rows_slack_le0": 0,
+     "n_chunks_slack_le0": 0,
+     "global_min_slack_mm": 0.3034
+    },
+    "full50": {
+     "n_rows_slack_le0": 66,
+     "n_chunks_slack_le0": 4,
+     "global_min_slack_mm": -9.1043
+    },
+    "worst_shortfall_mm": 35.5619
+   }
+  },
+  {
+   "sphere_spacing": 0.29,
+   "max_spheres_per_capsule": 13,
+   "arm5_n_spheres": 13,
+   "n_spheres_total": 292,
+   "arm5_radius_mm_at_scale_1": 75.7199,
+   "arm5_floor_mm": 10.4167,
+   "exec8_feasible_pick": {
+    "key": "n13__arm5_0.6__finger_0.35",
+    "arm5_scale": 0.6,
+    "finger_scale": 0.35,
+    "arm5_radius_mm": 46.1899,
+    "exec8": {
+     "n_rows_slack_le0": 0,
+     "n_chunks_slack_le0": 0,
+     "global_min_slack_mm": 0.4473
+    },
+    "full50": {
+     "n_rows_slack_le0": 56,
+     "n_chunks_slack_le0": 2,
+     "global_min_slack_mm": -8.3122
+    },
+    "worst_shortfall_mm": 29.53
+   }
+  },
+  {
+   "sphere_spacing": 0.17,
+   "max_spheres_per_capsule": 21,
+   "arm5_n_spheres": 21,
+   "n_spheres_total": 472,
+   "arm5_radius_mm_at_scale_1": 75.26,
+   "arm5_floor_mm": 6.25,
+   "exec8_feasible_pick": {
+    "key": "n21__arm5_0.6__finger_0.35",
+    "arm5_scale": 0.6,
+    "finger_scale": 0.35,
+    "arm5_radius_mm": 45.432,
+    "exec8": {
+     "n_rows_slack_le0": 0,
+     "n_chunks_slack_le0": 0,
+     "global_min_slack_mm": 1.2053
+    },
+    "full50": {
+     "n_rows_slack_le0": 69,
+     "n_chunks_slack_le0": 2,
+     "global_min_slack_mm": -7.9774
+    },
+    "worst_shortfall_mm": 29.828
+   }
+  }
+ ]
+}

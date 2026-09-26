@@ -1,0 +1,83 @@
+{
+ "margin_mm": 10.0,
+ "panels": [
+  {
+   "label": "A  gripper closes (M2)",
+   "row_index": 126,
+   "t_step": 112,
+   "kind": "planning",
+   "chunk_seq": 15,
+   "gripper_cmd_left": 0.822252,
+   "gripper_cmd_right": 1.001982,
+   "left_finger_to_apple_mm": 22.6591,
+   "closest_sphere_index": 261,
+   "closest_sphere_link": "ee_finger_l2",
+   "closest_sphere_radius_mm": 4.7151,
+   "offset_sphere_minus_apple_centre_mm": [
+    46.6875,
+    -23.9425,
+    28.3044
+   ],
+   "ee_body_l_z_mm": 982.5309,
+   "min_clearance_to_crate_mm": 38.2509,
+   "min_clearance_to_crate_link": "ee_left",
+   "apple_z_displacement_mm": 0.001,
+   "max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.015913961586154365,
+    "step": 0,
+    "query": 260,
+    "link": "ee_finger_l2",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": null,
+    "point_m": [
+     0.5964430592389584,
+     0.30273412673891326,
+     0.9185931149575668
+    ]
+   },
+   "safe": true,
+   "trajopt_status": "feasible"
+  },
+  {
+   "label": "B  descent stops (M4, last record)",
+   "row_index": 350,
+   "t_step": 311,
+   "kind": "control",
+   "chunk_seq": 39,
+   "gripper_cmd_left": 0.45532,
+   "gripper_cmd_right": 1.001761,
+   "left_finger_to_apple_mm": 366.5256,
+   "closest_sphere_index": 261,
+   "closest_sphere_link": "ee_finger_l2",
+   "closest_sphere_radius_mm": 4.7151,
+   "offset_sphere_minus_apple_centre_mm": [
+    -11.7781,
+    -353.7942,
+    194.6806
+   ],
+   "ee_body_l_z_mm": 1123.0259,
+   "min_clearance_to_crate_mm": 51.1002,
+   "min_clearance_to_crate_link": "ee_right",
+   "apple_z_displacement_mm": -0.003737,
+   "max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.05694963319812512,
+    "step": 7,
+    "query": 276,
+    "link": "attached:ee_finger_l1[10]",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": null,
+    "point_m": [
+     0.48976873452713976,
+     -0.011397596293871177,
+     0.9903030247351899
+    ]
+   },
+   "safe": true,
+   "trajopt_status": "feasible"
+  }
+ ]
+}
