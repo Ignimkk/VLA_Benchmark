@@ -212,6 +212,9 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **smoke 분류 (`runs` · `broken` · `needs-arg` · `needs-outpath`)** | 옛 스크립트를 새 기록에 겨눌 때 **수치보다 먼저 세는 것**. `runs` = 그대로 돌았다, `broken` = 죽었다(에러 원문과 `파일:줄` 을 적어 구현 쪽으로 넘긴다), `needs-arg` = 인자·경로만 바꾸면 된다, `needs-outpath` = 돌기는 하는데 **출력 경로가 박혀 있어 남의 파일을 덮어쓴다**(R 에서 실제로 archive 그림 하나를 덮어써서 생긴 분류다). 분류를 먼저 하지 않으면 **이식 비용을 측정 결과로 착각**한다. **다만 `runs` 는 *프로세스가 0 으로 끝났다* 는 뜻이지 *새 기록을 쟀다* 는 뜻이 아니다** — R 1 차에서 `runs` 4 건 중 셋이 새 씬을 만들거나 옛 `/tmp` npz 를 먹고 있었다 |
 | **`geometry_certified` (기하 인증)** | AG3S 가 그 프레임의 씬을 **빠짐없이 설명했다고 스스로 보증하는가** (`types.py:917`). `False` 는 "장애물이 있다" 가 아니라 "내가 못 본 자리가 있다" 다. `sqp.py:287-293` 은 이것이 `False` 면 trajectory 가 모든 clearance 를 만족해도 `status` 를 `VIOLATED` 로 내린다 — *안 본 씬에 대해서는 안전을 주장할 수 없다*. `require_certified_geometry` (`configs/rby1.yaml:87`, 기본 `true`)가 켠다 |
 | **`status` 대 `clearance_after`** | **같은 것을 재지 않는다.** `status` 는 `optimizer.solve()` 의 판정이고 clearance 말고도 기하 인증·반복 한도·예산을 함께 본다. `clearance_after` 는 나온 trajectory 를 `full_violation` 으로 **다시 평가한 mm** 하나다. 그래서 clearance 가 양수인데 `violated` 가 나올 수 있다 — 회귀 기준선의 `feasible` 개수가 둘 중 무엇을 세는지는 X3 가 정한다 |
+| **plan horizon / execution window** | 서버가 SQP 로 다듬는 스텝 수(`plan_horizon` → `HorizonConfig.planned`)와, 그 chunk 중 실제로 로봇에 적용되는 앞부분 스텝 수(**execution window**, `open_loop_horizon`=8 — 클라이언트에 있고 와이어로 오지 않는다). `T6f` 이전에는 이 둘이 별개 숫자(계획 32, 실행 8)였는데 **결정 변수 개수 · 충돌 행이 걸리는 스텝 · chunk 에 되쓰는 행 · `max_violation` 을 재는 범위**가 전부 `planned` 하나로 묶여 있어, 실행되지 않는 뒤 24 스텝도 같은 비용을 물고 있었다. `plan_horizon` 이 이제 실행 창을 따라가는 sentinel 이 기본값이다 |
+| **`manipulated_link_margin`** | target 에 접촉 권한이 있는 link 에만 margin 을 완화하는 벡터. `is_authorized` 가 문자열 그대로 일치하는 link 이름만 골라 phase(`approach`/`pre_grasp`/`grasp`)별로 다른 margin 을 준다. `T6d` 에서 `arms` 제약 model 120 구 중 22 구가 실제로 완화를 받는 것으로 확인됐다 — AG3S 가 cuRobo 에 넘기는 이 경계는 결백하다 |
+| **`capsule_radius_scale`** | `UrdfSphereChain` 이 로봇 구를 만들 때 URDF capsule 반지름에 곱하는 배율(`T6f`, `--capsule-radius-scale`). 기본 1.0 — 줄이면 팔의 실제 두께에 가까워지지만 덮개(coverage)를 잃을 수 있어 생성 시점에 `coverage_report()` 가 경고를 찍는다 |
 
 ---
 
@@ -239,7 +242,7 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **T3** 전 관측 프레임 TSDF/ESDF | 모든 프레임에서 필드가 서나. `max_field_age_sec` 를 정한다 | 대기 — T0 이 근거 수치를 냈다 (필드 나이 P50 2637 ms) |
 | **T4** fail-closed 주입 | 고장을 넣으면 정말 닫히나 | 대기 |
 | **T5** shadow 루프 | 판정만 하고 실행은 안 하는 루프가 서나 | **통과**(`T5f`, 사용자 판정 2026-09-26) — 75 chunk 전부 돌고 target 이 한 번도 엉뚱하게 잡히지 않았고 `violated` 7 건이 진짜 충돌이 아니다. **단 핵심 조건인 refined 대 reference clearance 비교는 미측정**(기록에 `actions` 배열이 없다). 회귀 기준선 `has_target` 9/15 → 15/15 갱신 |
-| **T6** 실기 닫힌 루프 | 예산 안에서 실제로 도나 | **실행 완료(execute, closed loop, `ep1807`), 집계는 `T6b` 로 측정 중, 기록기 수정은 `T6a` 로 진행 중(담당 A1)** — 사용자 판정: 멈춘 자리를 재려면 기록기부터 고친다, 과제는 놓는 순간 끝나고 복귀 구간엔 최적화·collision avoidance 가 필요 없다 |
+| **T6** 실기 닫힌 루프 | 예산 안에서 실제로 도나 | ~~실행 완료(execute, closed loop, `ep1807`), 집계는 `T6b` 로 측정 중, 기록기 수정은 `T6a` 로 진행 중(담당 A1)~~ → **과제 구간(seq 1-37) collision 위반 0 · closed loop 에서 잡기 실패 · 원인 미확정, `T7` 로 이어짐**(2026-09-26). `T6d` 가 AG3S→cuRobo·cuRobo·TO 세 단계를 전부 결백으로 확인했고(`manipulated_link_margin` 22/120 구 완화 · `unknown_policy=free` 220/225 프레임 100 mm 안 무장애물 · refined 가 reference 보다 나빠진 chunk 0/75), 로컬 GPU 렌더링 재현 여섯 건 중 다섯이 closed-loop 에서 apple 0.0 mm 로 실패한다 |
 | — **실시간성** | 청크 예산 533 ms 안에 드나 | **별도 판정 실패** — P50 2519 ms, 24/24 청크가 4.7 배 |
 
 ### 이 국면에서 쓰는 자산
@@ -2526,5 +2529,138 @@ constraint 의 신원)를, control record 마다 `qpos` 를 남긴다. **`not_me
 **`T6b`(담당 A2)** 가 이번 실행에서 지금 기록으로 잴 수 있는 것(chunk 별 판정 · hold 위치 ·
 위반 폭의 seq 축 추이 · 지연)을 낸다. `T6a` 가 끝난 뒤 재실행에서 위 네 가지(멈춘 자리의
 참값, 과제 완결 여부, constraint 신원)를 다시 잰다.
+
+### T6a · T6e · T6f — 기록기에 참값을 싣고, 진단 flag 셋을 더했다 (구현, 담당 A1)
+
+**T6a — 기록기가 청크와 MuJoCo 참값을 남기게 했다.** planning record 마다 `actions`(서버가
+낸 refined chunk) · `actions_reference`(shadow 일 때만) · `qpos`(66 개 전체) ·
+`object_poses`(과일 넷 + crate) · `max_violation_pair`(최악 위반 행의 신원 — link 이름,
+쥔 물체면 `attached:<link>[i]`, ESDF 행이면 label 층이 답한 obstacle 이름)가, control record
+마다 `qpos` 가 더해졌다. episode 당 **3.70 MB**(75 planning + 600 control, shadow) — 옛 키는
+하나도 움직이지 않았다.
+
+**T6e — `--exclude-links` 진단 flag.** 제약 model 에서만 준 link 를 뺀다(self-filter 는
+손대지 않는다). 안 주면 제약 model 이 예전과 글자 그대로 같다. **이것은 해답이 아니라
+진단이다** — 팔뚝을 빼는 동안 그 팔뚝이 무엇에 부딫혀도 아무도 막지 않는다.
+
+**T6f — 실행 창과 팔 굵기.** 이 패키지에서 "계획하는 지평(plan horizon)" 과 "실제로
+로봇에 적용되는 실행 창(**execution window**)" 은 원래 **한 숫자**(`HorizonConfig.planned`)
+였다 — 결정 변수 개수 · 충돌 행이 걸리는 스텝 · chunk 에 되쓰는 행 · `max_violation` 을
+재는 범위를 전부 같이 정했다. `plan_horizon` 이 이제 실행 창(기본 8)을 따라간다 —
+`--plan-horizon 32`/`full` 로 예전 동작으로 되돌릴 수 있다. 팔 굵기는 `capsule_radius_scale` ·
+`max_sphere_radius` · `sphere_spacing` · `max_spheres_per_capsule` 네 손잡이로 조절 가능해졌고,
+기본값은 그대로다(안 주면 구 집합이 비트 단위로 같다). **그 과정에서 실제 버그 하나를
+찾았다** — `safe_policy.py:411` 이 grasp latch 가 읽는 gripper 열을 `6 if left else 13`
+(14D 배치)으로 박아 두고 있었다. 16D 에서 열 6 은 `left_arm_6`(손목), 열 13 은 `right_arm_5`
+다. latch 는 그 열 값이 0.85 미만이면 "닫혔다" 로 읽으므로(`grasp_latch.py:71`), **손이
+열려 있어도 `attach` 가 울릴 수 있는 배선**이었다 — 궤적 오차가 아니라 권한이 엉뚱한 link
+에 붙는 조용한 증상이다. `wire.gripper_columns(nq_opt//2)` = `(7, 15)` 로 고쳤다.
+
+**타원체 평가는 구현하지 않았다.** ESDF 질의를 점 기반에서 지지함수 기반으로 바꾸면 구는
+그 특수한 경우로 들어가지만, `arm_5` capsule(URDF r=75 mm, L=250 mm)을 담는 최소부피 회전
+타원체의 최소 허리 반지름은 **89.4 mm**(장축 246.5 mm)로 지금 구 사슬의 81.25 mm 보다
+오히려 두껍다(T6f 구현 기록의 정적 기하 계산 — measurement 가 아니라 URDF 만 읽고 계산한
+값이다). **"한 link 에 타원체 하나" 로는 이득이 없다** — 이득의 출처는 primitive 자체가
+아니라 URDF capsule(75 mm) 대신 mesh(65.4~68.4 mm)를 직접 쓰는 데서 온다. 구현 전에 재서
+protocol · 두 forward-kinematics 경로 · 각속도 야코비안까지 손대는 큰 작업을 안 하게 된
+사례다.
+
+### T6b — 과제 구간은 collision 위반이 0, 붕괴는 seq 38 부터 (결과, 담당 A2)
+
+과제 구간을 seq 1~37 로 두면(`task_phase_overlay` — `first_reopen_seq` 33 까지는 reference
+episode 의 offline replay 에서 잰 값이고 execute 실행 자신의 phase 는 아니다), **그 안에서
+`max_violation` 은 모든 chunk 에서 0.0 mm 다.** hold 4 건(seq 3·22·26·28)은 전부
+`(degraded, violated)` 이면서 `max_violation == 0` — camera timing 이 만든 hold 이고
+collision 이 아니다(`execute_degraded_holds_equal_frames_with_camera_skew_over_100ms`: 서버
+응답에 `camera_transform_stale`/`camera_skew` 사유가 붙은 chunk 7 건 = camera skew 100 ms
+초과 프레임 7 건 = degraded hold 7 건, 세 수가 전부 같다).
+
+**seq 38 부터 hold 가 끝(seq 75)까지 끊기지 않고 이어지고, 그 안에서 위반이 커진다.**
+chunk 당 기울기 **+0.358 mm**(`slope_mm_per_chunk_from_onset`), 처음 10 개 chunk 의 p50
+**5.16 mm** 에서 마지막 10 개의 p50 **20.19 mm** 로 자라며, 최댓값 **37.83 mm** 은 seq 49
+(`argmax_seq`)에서 나온다.
+
+**camera 캡처 폭은 세 실행에서 값이 다르지만, 그것은 이번 수정의 공이 아니다** —
+T6a·T6e·T6f 는 카메라 캡처 경로를 한 줄도 고치지 않았다. `camera_skew_ms`(p50/max/100 ms
+초과 프레임 수): `shadow_threshold` 93.6/107.2 ms·6 건, `shadow_rank1` 74.9/94.0 ms·0 건,
+`execute` 95.1/112.5 ms·7 건 — 세 실행이 같은 서버·같은 씬을 돌면서도 이만큼 흔들린다.
+
+[`figures/t6b/t6b-scene-shared-start-and-hold-seqs.png`](figures/t6b/t6b-scene-shared-start-and-hold-seqs.png)
+— 실제 씬 (세 실행의 공유 시작과 hold seq).
+[`figures/t6b/t6b-chunk-bands-and-violation.png`](figures/t6b/t6b-chunk-bands-and-violation.png)
+— 그래프 (chunk 별 판정 band 와 `max_violation` 추이).
+[`figures/t6b/t6b-three-runs-table-and-rule.png`](figures/t6b/t6b-three-runs-table-and-rule.png)
+— 표 (세 실행 집계와 hold gate 규칙).
+
+### 로컬 PC 실행이 서버와 다른 값을 냈다 — `T6c` 는 착수 전에 접었다
+
+서버(OSMesa 소프트웨어 렌더링)의 execute 실행에서는 hold 가 **42/75**(safe 33/75,
+`T6b.verify.json`)였지만, 같은 조건을 로컬 PC(GPU 렌더링)에서 다시 돌리자 hold 가
+closed-loop/`approach` 에서 **0/75**, closed-loop/`grasp` 에서 **1/75** 로 거의 사라졌다
+(lead 가 `object_poses` 참값으로 직접 센 값, `handoff/T6d.task.md` 의 "확정된 사실" 표).
+**서버에서 본 hold 는 거의 전부 렌더링 속도가 만든 camera timing 이었다.** 이 결론에 따라
+카메라 캡처를 병렬화하려던 `T6c` 는 **착수 전에 접었다** — 되살리는 신호(로컬 GPU 렌더링
+에서도 `camera_skew`/`camera_transform_stale` 이 다시 나타나면 재개한다)와 함께
+`handoff/T6c.task.md` 에 남겨 두었다.
+
+### T6d — AG3S 도 cuRobo 도 결백하다, TO 의 품질도 나쁘지 않다 (담당 A2)
+
+로컬 PC(GPU 렌더링)의 세 실행(closed-loop/`approach` · shadow/`approach` ·
+closed-loop/`grasp`, 서버·AG3S·field 설정은 같고 변수 하나씩만 다르다)을 파이프라인의 세
+단계로 나눠 쟀다(`T6d.verify.json`).
+
+**Stage 1 — AG3S → cuRobo.** `manipulated_link_margin`(target 에 접촉 권한이 있는 link 에만
+margin 을 완화하는 벡터)이 실제로 만들어지고 걸린다 — `arms` 제약 model **120 구 중 22 구**
+가 완화를 받는다(`n_spheres_relaxed_arms_left = 22`, `n_authorized_links_left = 3`, phase 별
+margin 은 `approach` 20/50 mm · `grasp` 0/50 mm). **AG3S 가 cuRobo 에 넘기는 경계는
+결백하다.**
+
+**Stage 2 — cuRobo field.** `esdf.unknown_policy` 는 `free` 다(미관측 voxel 을 점유로 보지
+않는다). 참값으로 225 프레임 중 **220 프레임**에서 100 mm 안에 씬 물체가 없다
+(`gt_scene_min_mm_range_over_225_frames.n_frames_with_nothing_within_100mm`). **cuRobo
+단계도 결백하다** — 팔뚝이 피하는 자리에는 참값으로 거의 아무것도 없다.
+
+**Stage 3 — TO.** `refined` 가 `reference` 보다 참값 clearance 를 나쁘게 만든 chunk 는
+실행 창(8 스텝) 기준 **0/75** 이고, 실행 창 전역 최소가 reference **−24.61 mm** 에서
+refined **+25.61 mm** 로 개선된다(`gt_clearance_apple_excluded_exec8`). **T5 의 핵심 합격
+조건(refined 가 reference 보다 나빠지지 않는가)이 여기서 통과했다** — `T5c` 부터 네 라운드
+연속 미측정이던 항목이다.
+
+**그런데도 closed-loop 는 사과를 못 든다.** 어느 단계도 결백을 벗지 못했는데 과제는
+실패한다 — 이것이 `T7` 로 넘어가는 이유다.
+
+[`figures/t6d/t6d-scene.png`](figures/t6d/t6d-scene.png) — 실제 씬 (세 실행의 같은 chunk 에서
+손끝·사과·팔뚝·위반 좌표).
+[`figures/t6d/t6d-trend.png`](figures/t6d/t6d-trend.png) — 그래프 (chunk 축 clearance 추이).
+[`figures/t6d/t6d-table.png`](figures/t6d/t6d-table.png) — 표 (세 단계 집계).
+
+### 여섯 실행, 그리고 lead 가 추측으로 네 번 방향을 잘못 잡았다
+
+로컬 PC(GPU 렌더링) 실행 여섯의 결과(`handoff/T7.task.md`):
+
+| 시험한 것 | 결과 |
+|---|---|
+| shadow(원본 chunk) | 성공 — apple 245.2 mm 들림, crate 까지 339 → 21 mm |
+| closed-loop, phase `approach` | 실패, 0.0 mm |
+| closed-loop, phase `grasp` | 실패, 0.0 mm |
+| closed-loop, 팔뚝 둘 제약 제외(구 110) | 실패, 0.0 mm — 최악 위반 link 가 `link_left_arm_6` 로 옮겨갈 뿐 |
+| closed-loop, `plan_horizon` = 실행 창(8) | 실패 |
+| closed-loop, `esdf_margin` 10 mm + `capsule_radius_scale` 0.8 | 실패 |
+
+**lead 가 추측으로 네 번 방향을 잘못 잡았고, 전부 측정으로 뒤집혔다** — 이 국면에서 가장
+값어치 있는 교훈이다:
+
+1. *"`manipulated_link_margin` 이 안 걸린다"* — `T6d` 가 120 구 중 22 구에서 실제로 걸리는
+   것을 확인했다.
+2. *"미관측 voxel 이 점유다"* — `T6d` 가 `unknown_policy = free` 이고 220/225 프레임에
+   100 mm 안 물체가 없는 것을 확인했다.
+3. *"phase 가 원인이다"* — `approach` 와 `grasp` 을 바꿔도 결과가 완전히 같다(둘 다
+   0.0 mm, `handoff/T6d.task.md`).
+4. *"실행 창이 원인이다"* — `plan_horizon` 을 실행 창(8)으로 줄여도 closed-loop 는 여전히
+   실패한다(위 표).
+
+**넷 다 표나 그림 없이 코드만 읽고 낸 추측이었고, 넷 다 측정 한 번으로 뒤집혔다.**
+목적함수의 `w_slack`(1e3) 대 `w_track`(1.0) 비율이 다음 의심 대상이지만 **아직 추측이고
+측정되지 않았다** — `T7` 로 넘어간다.
 
 ---

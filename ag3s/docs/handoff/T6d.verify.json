@@ -1,0 +1,977 @@
+{
+ "step": "T6d",
+ "date": "2026-09-26",
+ "task": "benchmark/ag3s/docs/handoff/T6d.task.md",
+ "runs": [
+  {
+   "id": "baseline",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/T6d/baseline.json",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T6d/baseline.json",
+   "stdout_log": "outputs/verify/T6d/baseline.log"
+  },
+  {
+   "id": "m1_authorized_vs_spheres",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T6d/m1_authorized_vs_spheres.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T6d/m1_authorized_vs_spheres.json",
+   "stdout_log": "outputs/verify/T6d/m1.log"
+  },
+  {
+   "id": "m1b_query_index_identity",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T6d/m1b_query_index_identity.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T6d/m1b_query_index_identity.json",
+   "stdout_log": "outputs/verify/T6d/m1b.log"
+  },
+  {
+   "id": "m2_gt_at_violation_points (mj_geomDistance, distmax 0.02/0.05/0.10)",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T6d/m2_gt_at_violation_points.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T6d/m2_gt_at_violation_points.json",
+   "stdout_log": "outputs/verify/T6d/m2.log"
+  },
+  {
+   "id": "m2c_gt_unsaturated (analytic point-to-surface, no distmax)",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T6d/m2c_gt_unsaturated.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T6d/m2c_gt_unsaturated.json",
+   "stdout_log": "outputs/verify/T6d/m2c.log"
+  },
+  {
+   "id": "m2d_ghost_history",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T6d/m2d_ghost_history.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T6d/m2d_ghost_history.json",
+   "stdout_log": "outputs/verify/T6d/m2d.log"
+  },
+  {
+   "id": "m3_to_refined_vs_reference",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T6d/m3_to_refined_vs_reference.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T6d/m3_to_refined_vs_reference.json",
+   "stdout_log": "outputs/verify/T6d/m3.log"
+  },
+  {
+   "id": "m3b_executed_window",
+   "command": "inline, see stdout_log",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T6d/m3b_executed_window.json",
+   "stdout_log": "outputs/verify/T6d/m3b_executed_window.log"
+  },
+  {
+   "id": "m3c_clearance_split",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T6d/m3c_clearance_split.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T6d/m3c_clearance_split.json",
+   "stdout_log": "outputs/verify/T6d/m3c.log"
+  },
+  {
+   "id": "m3d_divergence",
+   "command": "inline, see stdout_log",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T6d/m3d_divergence.json",
+   "stdout_log": "outputs/verify/T6d/m3d_divergence.log"
+  }
+ ],
+ "inputs": {
+  "recordings": [
+   "outputs/live_test/local_t6_from_pc/",
+   "outputs/live_test/local_shadow_from_pc/",
+   "outputs/live_test/local_grasp_from_pc/"
+  ],
+  "planning_frames_per_run": 75,
+  "control_steps_per_run": 600,
+  "model_xml": "pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+  "no_new_capture": true
+ },
+ "code_state": {
+  "repo": "benchmark",
+  "head": "517c601",
+  "dirty_files": [
+   ".claude/agents/ag3s-scribe.md",
+   ".claude/agents/ag3s-verifier.md",
+   "CLAUDE.md"
+  ],
+  "untracked": [
+   "tests/trajopt/test_exclude_constraint_links.py"
+  ]
+ },
+ "numbers": {
+  "_comment": "T6d 가 잰 값 전부. 여기 없는 숫자는 쓰지 않는다.",
+  "stage1_ag3s_to_curobo": {
+   "DEFAULT_CONTACT_LINKS_left": [
+    "ee_left",
+    "ee_finger_l1",
+    "ee_finger_l2"
+   ],
+   "DEFAULT_CONTACT_LINKS_right": [
+    "ee_right",
+    "ee_finger_r1",
+    "ee_finger_r2"
+   ],
+   "constraint_model_used_by_the_three_recordings": "arms (ARM_LINKS)",
+   "constraint_model_identified_by": "recorded (max_violation_pair.query, link) pairs",
+   "arms_model_consistent_with_records": true,
+   "all_model_consistent_with_records": false,
+   "arms_model_n_spheres": 120,
+   "all_model_n_spheres": 218,
+   "self_filter_model_n_spheres": 218,
+   "arms_model_sphere_link_names_unique": [
+    "ee_finger_l1",
+    "ee_finger_l2",
+    "ee_finger_r1",
+    "ee_finger_r2",
+    "link_left_arm_0",
+    "link_left_arm_1",
+    "link_left_arm_2",
+    "link_left_arm_3",
+    "link_left_arm_4",
+    "link_left_arm_5",
+    "link_left_arm_6",
+    "link_right_arm_0",
+    "link_right_arm_1",
+    "link_right_arm_2",
+    "link_right_arm_3",
+    "link_right_arm_4",
+    "link_right_arm_5",
+    "link_right_arm_6"
+   ],
+   "arms_model_sphere_count_per_link": {
+    "ee_finger_l1": 11,
+    "ee_finger_l2": 11,
+    "ee_finger_r1": 11,
+    "ee_finger_r2": 11,
+    "link_left_arm_0": 2,
+    "link_left_arm_1": 5,
+    "link_left_arm_2": 3,
+    "link_left_arm_3": 4,
+    "link_left_arm_4": 4,
+    "link_left_arm_5": 5,
+    "link_left_arm_6": 15,
+    "link_right_arm_0": 2,
+    "link_right_arm_1": 5,
+    "link_right_arm_2": 3,
+    "link_right_arm_3": 4,
+    "link_right_arm_4": 4,
+    "link_right_arm_5": 5,
+    "link_right_arm_6": 15
+   },
+   "overlap_authorized_vs_sphere_link_names_arms_left": [
+    "ee_finger_l1",
+    "ee_finger_l2"
+   ],
+   "n_overlap_arms_left": 2,
+   "n_authorized_links_left": 3,
+   "n_spheres_relaxed_arms_left": 22,
+   "n_spheres_relaxed_all_left": 34,
+   "ee_left_spheres_in_arms_model": 0,
+   "ee_left_spheres_in_all_model": 12,
+   "ee_finger_l1_spheres_in_arms_model": 11,
+   "target_margin_mm_arms_left_by_phase": {
+    "transit": [
+     50.0
+    ],
+    "approach": [
+     20.0,
+     50.0
+    ],
+    "pre_grasp": [
+     5.0,
+     50.0
+    ],
+    "grasp": [
+     0.0,
+     50.0
+    ]
+   },
+   "worst_pair_links_observed": {
+    "closed_loop_approach": [
+     "link_left_arm_5",
+     "link_right_arm_5"
+    ],
+    "shadow_approach": [
+     "link_left_arm_5",
+     "link_left_arm_6",
+     "link_right_arm_5"
+    ],
+    "closed_loop_grasp": [
+     "link_left_arm_5",
+     "link_right_arm_5"
+    ]
+   },
+   "n_frames_where_worst_pair_link_is_contact_authorized": 0,
+   "n_frames_scanned": 225
+  },
+  "stage2_curobo_field": {
+   "sphere_radius_mm": {
+    "link_left_arm_5": 81.25,
+    "link_right_arm_5": 81.25,
+    "link_left_arm_6": 29.21728072820923
+   },
+   "urdf_collision_capsule_link_arm_5": {
+    "radius_m": 0.075,
+    "length_m": 0.25
+   },
+   "esdf_margin_mm": 50.0,
+   "required_free_radius_mm_arm_5": 131.25,
+   "esdf_unknown_policy": "free",
+   "esdf_unknown_policy_source": "benchmark/ag3s/config.py:443 default; serve_safe.py:58-66 passes no override",
+   "esdf_time_decay": 1.0,
+   "esdf_frustum_decay": 1.0,
+   "field_tiers_every_frame": [
+    {
+     "voxel_size_m": 0.02,
+     "shape": [
+      128,
+      128,
+      128
+     ]
+    },
+    {
+     "voxel_size_m": 0.005,
+     "shape": [
+      128,
+      128,
+      128
+     ]
+    }
+   ],
+   "field_backend_every_frame": "curobo",
+   "base_frame_equals_world_frame": true,
+   "hold_frames": {
+    "closed_loop_approach": [],
+    "shadow_approach": [
+     {
+      "seq": 4,
+      "t_step": 24,
+      "link": "link_left_arm_5",
+      "query": 41,
+      "step_in_chunk": 31,
+      "clearance_mm": -1.0680407283149285,
+      "sphere_radius_mm": 81.25,
+      "required_free_radius_mm": 131.25,
+      "implied_esdf_distance_mm": 130.18195927168506,
+      "point_m": [
+       0.5579725312641537,
+       0.32460751450554237,
+       1.0281495765271573
+      ],
+      "gt_nearest_scene_surface_mm": 141.69922466744592,
+      "gt_nearest_scene_body": "crate",
+      "gt_per_body_mm": {
+       "apple": 148.64,
+       "banana": 630.096,
+       "crate": 141.699,
+       "orange": 175.824,
+       "pear": 648.954,
+       "table": 208.15
+      },
+      "gt_nearest_robot_surface_mm": 14.824008175116727,
+      "gt_nearest_robot_body": "ee_finger_l1",
+      "gt_robot_top5_mm": [
+       [
+        "ee_finger_l1",
+        14.824
+       ],
+       [
+        "EE_BODY_L",
+        73.69
+       ],
+       [
+        "ee_finger_l2",
+        82.677
+       ],
+       [
+        "FT_SENSOR_L",
+        139.493
+       ],
+       [
+        "link_left_arm_6",
+        190.101
+       ]
+      ],
+      "self_surface_history_min_mm": 14.824008175116683,
+      "self_surface_history_min_at_seq": 4,
+      "dist_to_apple_centre_mm": 178.28246215613967,
+      "mj_geomDistance_scene_min_mm_distmax_0p10": 100.5
+     },
+     {
+      "seq": 15,
+      "t_step": 112,
+      "link": "link_left_arm_6",
+      "query": 61,
+      "step_in_chunk": 10,
+      "clearance_mm": -2.698811338187279,
+      "sphere_radius_mm": 29.21728072820923,
+      "required_free_radius_mm": 79.21728072820923,
+      "implied_esdf_distance_mm": 76.51846939002195,
+      "point_m": [
+       0.46956764806668044,
+       0.28539828349639806,
+       1.1198142543325438
+      ],
+      "gt_nearest_scene_surface_mm": 170.39100233189635,
+      "gt_nearest_scene_body": "crate",
+      "gt_per_body_mm": {
+       "apple": 253.32,
+       "banana": 629.059,
+       "crate": 170.391,
+       "orange": 245.692,
+       "pear": 635.412,
+       "table": 299.814
+      },
+      "gt_nearest_robot_surface_mm": 30.491428399754387,
+      "gt_nearest_robot_body": "link_left_arm_5",
+      "gt_robot_top5_mm": [
+       [
+        "link_left_arm_5",
+        30.491
+       ],
+       [
+        "link_left_arm_6",
+        89.049
+       ],
+       [
+        "link_left_arm_4",
+        99.826
+       ],
+       [
+        "FT_SENSOR_L",
+        111.216
+       ],
+       [
+        "link_left_arm_3",
+        153.769
+       ]
+      ],
+      "self_surface_history_min_mm": 4.777548074562179,
+      "self_surface_history_min_at_seq": 9,
+      "dist_to_apple_centre_mm": 284.3567985034443,
+      "mj_geomDistance_scene_min_mm_distmax_0p10": 100.5
+     },
+     {
+      "seq": 51,
+      "t_step": 400,
+      "link": "link_left_arm_5",
+      "query": 41,
+      "step_in_chunk": 13,
+      "clearance_mm": -42.345951927688006,
+      "sphere_radius_mm": 81.25,
+      "required_free_radius_mm": 131.25,
+      "implied_esdf_distance_mm": 88.904048072312,
+      "point_m": [
+       0.5032752554645956,
+       0.2911525968845012,
+       1.110156544772869
+      ],
+      "gt_nearest_scene_surface_mm": 165.76663246503983,
+      "gt_nearest_scene_body": "crate",
+      "gt_per_body_mm": {
+       "apple": 419.99,
+       "banana": 627.18,
+       "crate": 165.767,
+       "orange": 238.526,
+       "pear": 638.465,
+       "table": 290.157
+      },
+      "gt_nearest_robot_surface_mm": 12.615572633976521,
+      "gt_nearest_robot_body": "EE_BODY_L",
+      "gt_robot_top5_mm": [
+       [
+        "EE_BODY_L",
+        12.616
+       ],
+       [
+        "ee_finger_l1",
+        37.05
+       ],
+       [
+        "FT_SENSOR_L",
+        47.017
+       ],
+       [
+        "link_left_arm_6",
+        93.653
+       ],
+       [
+        "ee_finger_l2",
+        97.894
+       ]
+      ],
+      "self_surface_history_min_mm": 0.6097445437998349,
+      "self_surface_history_min_at_seq": 8,
+      "dist_to_apple_centre_mm": 452.2821115525421,
+      "mj_geomDistance_scene_min_mm_distmax_0p10": 100.5
+     },
+     {
+      "seq": 53,
+      "t_step": 416,
+      "link": "link_left_arm_5",
+      "query": 41,
+      "step_in_chunk": 0,
+      "clearance_mm": -41.4450716198356,
+      "sphere_radius_mm": 81.25,
+      "required_free_radius_mm": 131.25,
+      "implied_esdf_distance_mm": 89.8049283801644,
+      "point_m": [
+       0.5032360822522636,
+       0.29060647333695433,
+       1.1107726487116647
+      ],
+      "gt_nearest_scene_surface_mm": 165.93824565260672,
+      "gt_nearest_scene_body": "crate",
+      "gt_per_body_mm": {
+       "apple": 419.922,
+       "banana": 627.023,
+       "crate": 165.938,
+       "orange": 239.198,
+       "pear": 638.187,
+       "table": 290.773
+      },
+      "gt_nearest_robot_surface_mm": 13.13597322934645,
+      "gt_nearest_robot_body": "EE_BODY_L",
+      "gt_robot_top5_mm": [
+       [
+        "EE_BODY_L",
+        13.136
+       ],
+       [
+        "ee_finger_l1",
+        37.793
+       ],
+       [
+        "FT_SENSOR_L",
+        46.104
+       ],
+       [
+        "link_left_arm_6",
+        92.776
+       ],
+       [
+        "ee_finger_l2",
+        97.435
+       ]
+      ],
+      "self_surface_history_min_mm": 0.16120735800161626,
+      "self_surface_history_min_at_seq": 8,
+      "dist_to_apple_centre_mm": 452.2130465052948,
+      "mj_geomDistance_scene_min_mm_distmax_0p10": 100.5
+     },
+     {
+      "seq": 55,
+      "t_step": 432,
+      "link": "link_left_arm_5",
+      "query": 41,
+      "step_in_chunk": 0,
+      "clearance_mm": -40.5991149185109,
+      "sphere_radius_mm": 81.25,
+      "required_free_radius_mm": 131.25,
+      "implied_esdf_distance_mm": 90.6508850814891,
+      "point_m": [
+       0.5034648674846971,
+       0.2920926940762105,
+       1.1101355236741024
+      ],
+      "gt_nearest_scene_surface_mm": 166.31234767739454,
+      "gt_nearest_scene_body": "crate",
+      "gt_per_body_mm": {
+       "apple": 420.767,
+       "banana": 628.018,
+       "crate": 166.312,
+       "orange": 238.436,
+       "pear": 639.328,
+       "table": 290.136
+      },
+      "gt_nearest_robot_surface_mm": 11.876753473607305,
+      "gt_nearest_robot_body": "EE_BODY_L",
+      "gt_robot_top5_mm": [
+       [
+        "EE_BODY_L",
+        11.877
+       ],
+       [
+        "ee_finger_l1",
+        36.472
+       ],
+       [
+        "FT_SENSOR_L",
+        46.812
+       ],
+       [
+        "link_left_arm_6",
+        93.499
+       ],
+       [
+        "ee_finger_l2",
+        98.364
+       ]
+      ],
+      "self_surface_history_min_mm": 1.2585094551130285,
+      "self_surface_history_min_at_seq": 8,
+      "dist_to_apple_centre_mm": 453.06206992932556,
+      "mj_geomDistance_scene_min_mm_distmax_0p10": 100.5
+     },
+     {
+      "seq": 75,
+      "t_step": 592,
+      "link": "link_right_arm_5",
+      "query": 18,
+      "step_in_chunk": 4,
+      "clearance_mm": -0.6555266856412001,
+      "sphere_radius_mm": 81.25,
+      "required_free_radius_mm": 131.25,
+      "implied_esdf_distance_mm": 130.5944733143588,
+      "point_m": [
+       0.47402218253023365,
+       -0.3163246148639186,
+       1.041429636064883
+      ],
+      "gt_nearest_scene_surface_mm": 112.94455556433873,
+      "gt_nearest_scene_body": "crate",
+      "gt_per_body_mm": {
+       "apple": 263.83,
+       "banana": 189.161,
+       "crate": 112.945,
+       "orange": 645.216,
+       "pear": 145.501,
+       "table": 221.43
+      },
+      "gt_nearest_robot_surface_mm": 25.728472849053713,
+      "gt_nearest_robot_body": "EE_BODY_R",
+      "gt_robot_top5_mm": [
+       [
+        "EE_BODY_R",
+        25.728
+       ],
+       [
+        "ee_finger_r1",
+        31.104
+       ],
+       [
+        "FT_SENSOR_R",
+        54.7
+       ],
+       [
+        "ee_finger_r2",
+        62.962
+       ],
+       [
+        "link_right_arm_6",
+        105.99
+       ]
+      ],
+      "self_surface_history_min_mm": 9.799089277381396,
+      "self_surface_history_min_at_seq": 5,
+      "dist_to_apple_centre_mm": 296.3368997843794,
+      "mj_geomDistance_scene_min_mm_distmax_0p10": 100.5
+     }
+    ],
+    "closed_loop_grasp": [
+     {
+      "seq": 5,
+      "t_step": 32,
+      "link": "link_left_arm_5",
+      "query": 41,
+      "step_in_chunk": 27,
+      "clearance_mm": -25.18215734113677,
+      "sphere_radius_mm": 81.25,
+      "required_free_radius_mm": 131.25,
+      "implied_esdf_distance_mm": 106.06784265886323,
+      "point_m": [
+       0.5495425043451354,
+       0.33665545446909445,
+       1.0014797026192146
+      ],
+      "gt_nearest_scene_surface_mm": 122.60869199777764,
+      "gt_nearest_scene_body": "apple",
+      "gt_per_body_mm": {
+       "apple": 122.609,
+       "banana": 635.311,
+       "crate": 146.252,
+       "orange": 148.559,
+       "pear": 653.296,
+       "table": 181.48
+      },
+      "gt_nearest_robot_surface_mm": 56.65877975367328,
+      "gt_nearest_robot_body": "ee_finger_l1",
+      "gt_robot_top5_mm": [
+       [
+        "ee_finger_l1",
+        56.659
+       ],
+       [
+        "ee_finger_l2",
+        81.214
+       ],
+       [
+        "EE_BODY_L",
+        100.32
+       ],
+       [
+        "FT_SENSOR_L",
+        165.387
+       ],
+       [
+        "link_left_arm_6",
+        215.914
+       ]
+      ],
+      "self_surface_history_min_mm": 32.344431519828966,
+      "self_surface_history_min_at_seq": 3,
+      "dist_to_apple_centre_mm": 152.98183640611433,
+      "mj_geomDistance_scene_min_mm_distmax_0p10": 100.5
+     }
+    ]
+   },
+   "gt_scene_min_mm_range_over_225_frames": {
+    "min": 6.342667959985225,
+    "max": 170.39100233189635,
+    "n_frames_with_nothing_within_100mm": 220,
+    "n_frames": 225
+   },
+   "implied_esdf_distance_formula": "clearance_mm + sphere_radius_mm + esdf_margin_mm",
+   "field_not_persisted_in_recordings": true,
+   "implied_esdf_minus_gt_scene_mm": {
+    "min": -93.8725329418744,
+    "max": 126.95089841907824,
+    "n_frames_field_nearer_than_ground_truth": 37,
+    "n_frames": 225
+   },
+   "nearest_gt_scene_body_counts": {
+    "crate": 213,
+    "apple": 12
+   },
+   "base_body_world_pos_m": [
+    -4.752173250100967e-06,
+    -3.2627041041478134e-06,
+    0.0
+   ]
+  },
+  "stage3_to": {
+   "horizon_planned": 50,
+   "horizon_executed": 8,
+   "horizon_executed_evidence": "control records carry step_in_chunk 0..7 only, 600 control steps / 75 chunks in all three runs",
+   "n_chunks_with_any_refinement": 75,
+   "largest_max_abs_joint": "left_arm_0",
+   "largest_rms_joint": "left_arm_0",
+   "per_column_delta": [
+    {
+     "col": 0,
+     "joint": "left_arm_0",
+     "max_abs_rad": 0.3715590834617615,
+     "max_abs_deg": 21.28876732210804,
+     "rms_rad": 0.06810338000143011,
+     "rms_deg": 3.9020362446576
+    },
+    {
+     "col": 1,
+     "joint": "left_arm_1",
+     "max_abs_rad": 0.2398788183927536,
+     "max_abs_deg": 13.744043888489927,
+     "rms_rad": 0.06198830962428198,
+     "rms_deg": 3.551668520621539
+    },
+    {
+     "col": 2,
+     "joint": "left_arm_2",
+     "max_abs_rad": 0.31656890362501144,
+     "max_abs_deg": 18.138062102796862,
+     "rms_rad": 0.062385383285702485,
+     "rms_deg": 3.574419165576741
+    },
+    {
+     "col": 3,
+     "joint": "left_arm_3",
+     "max_abs_rad": 0.16958558559417725,
+     "max_abs_deg": 9.716538320800929,
+     "rms_rad": 0.03541689049621364,
+     "rms_deg": 2.0292383489100376
+    },
+    {
+     "col": 4,
+     "joint": "left_arm_4",
+     "max_abs_rad": 0.0949814710766077,
+     "max_abs_deg": 5.442037424633521,
+     "rms_rad": 0.029124485757813557,
+     "rms_deg": 1.668710114411592
+    },
+    {
+     "col": 5,
+     "joint": "left_arm_5",
+     "max_abs_rad": 0.2320488691329956,
+     "max_abs_deg": 13.29542084210421,
+     "rms_rad": 0.03550626964375982,
+     "rms_deg": 2.034359396840911
+    },
+    {
+     "col": 6,
+     "joint": "left_arm_6",
+     "max_abs_rad": 0.3072197437286377,
+     "max_abs_deg": 17.60239469874168,
+     "rms_rad": 0.03316248573020533,
+     "rms_deg": 1.9000704705035836
+    },
+    {
+     "col": 7,
+     "joint": "left_gripper",
+     "max_abs_rad": 0.0,
+     "max_abs_deg": 0.0,
+     "rms_rad": 0.0,
+     "rms_deg": 0.0
+    },
+    {
+     "col": 8,
+     "joint": "right_arm_0",
+     "max_abs_rad": 0.018702596426010132,
+     "max_abs_deg": 1.071579841146838,
+     "rms_rad": 0.005114495293740569,
+     "rms_deg": 0.29303899467085687
+    },
+    {
+     "col": 9,
+     "joint": "right_arm_1",
+     "max_abs_rad": 0.02352440357208252,
+     "max_abs_deg": 1.3478490402428063,
+     "rms_rad": 0.011603385338340048,
+     "rms_deg": 0.6648250079508635
+    },
+    {
+     "col": 10,
+     "joint": "right_arm_2",
+     "max_abs_rad": 0.02170930802822113,
+     "max_abs_deg": 1.2438517261665458,
+     "rms_rad": 0.010542114307938522,
+     "rms_deg": 0.604018656989356
+    },
+    {
+     "col": 11,
+     "joint": "right_arm_3",
+     "max_abs_rad": 0.01953887939453125,
+     "max_abs_deg": 1.11949532572177,
+     "rms_rad": 0.006242920742442564,
+     "rms_deg": 0.35769301037663737
+    },
+    {
+     "col": 12,
+     "joint": "right_arm_4",
+     "max_abs_rad": 0.012390881776809692,
+     "max_abs_deg": 0.7099452302567578,
+     "rms_rad": 0.005627743394491697,
+     "rms_deg": 0.3224459446870018
+    },
+    {
+     "col": 13,
+     "joint": "right_arm_5",
+     "max_abs_rad": 0.008316993713378906,
+     "max_abs_deg": 0.47652863801344963,
+     "rms_rad": 0.0010765638348933448,
+     "rms_deg": 0.06168256411580744
+    },
+    {
+     "col": 14,
+     "joint": "right_arm_6",
+     "max_abs_rad": 0.00611424446105957,
+     "max_abs_deg": 0.350320402529954,
+     "rms_rad": 0.000956221632241423,
+     "rms_deg": 0.05478746380654426
+    },
+    {
+     "col": 15,
+     "joint": "right_gripper",
+     "max_abs_rad": 0.0,
+     "max_abs_deg": 0.0,
+     "rms_rad": 0.0,
+     "rms_deg": 0.0
+    }
+   ],
+   "gt_clearance_apple_excluded_exec8": {
+    "n_chunks": 75,
+    "n_refined_worse": 0,
+    "n_refined_better": 75,
+    "worst_degradation_mm": 7.516636056677267,
+    "best_improvement_mm": 55.315270812417175,
+    "chunks_refined_worse": [],
+    "reference_global_min_mm": -24.612771584217736,
+    "refined_global_min_mm": 25.60670700469586
+   },
+   "gt_clearance_apple_excluded_full50": {
+    "n_chunks": 75,
+    "n_refined_worse": 0,
+    "n_refined_better": 28,
+    "worst_degradation_mm": 0.0,
+    "best_improvement_mm": 43.58133726132697,
+    "chunks_refined_worse": [],
+    "reference_global_min_mm": -24.784613544863735,
+    "refined_global_min_mm": -22.765384241374047
+   },
+   "gt_clearance_all_scene_geoms_full50": {
+    "n_chunks": 75,
+    "n_refined_worse_than_reference": 3,
+    "n_refined_better": 28,
+    "n_equal": 44,
+    "worst_degradation_mm": -7.488361901334138,
+    "best_improvement_mm": 77.65707026258832,
+    "chunks_where_refined_worse": [
+     {
+      "seq": 17,
+      "delta_mm": -2.0976341482355845,
+      "reference_mm": -33.490232199625495,
+      "refined_mm": -35.58786634786108
+     },
+     {
+      "seq": 18,
+      "delta_mm": -7.488361901334138,
+      "reference_mm": -56.878765662320674,
+      "refined_mm": -64.36712756365482
+     },
+     {
+      "seq": 22,
+      "delta_mm": -0.9496266711041951,
+      "reference_mm": -76.40598766838166,
+      "refined_mm": -77.35561433948584
+     }
+    ]
+   },
+   "closed_loop_runs_gt_clearance": {
+    "closed_loop_approach": {
+     "no_apple_min_mm_full50": -13.548774999116914,
+     "no_apple_min_mm_exec8": 32.04456964089874,
+     "apple_min_mm_full50": -63.40010603188653,
+     "apple_min_mm_exec8": 74.29340772891209
+    },
+    "closed_loop_grasp": {
+     "no_apple_min_mm_full50": -12.400116484963474,
+     "no_apple_min_mm_exec8": 25.185426452075152,
+     "apple_min_mm_full50": -70.97355543238895,
+     "apple_min_mm_exec8": 72.03564541151265
+    }
+   },
+   "tip_to_apple_executed_window_mm": {
+    "shadow_reference": -17.955217000323767,
+    "shadow_refined": -18.10923662879464,
+    "closed_loop_approach": 89.8561617661729,
+    "closed_loop_grasp": 85.75973982776692
+   },
+   "tip_to_apple_full50_best_mm": {
+    "closed_loop_approach": -17.605535933360002,
+    "closed_loop_grasp": -17.36666511263806,
+    "shadow_reference": -18.165507312582456,
+    "shadow_refined": -18.165507312582456
+   },
+   "tip_divergence": {
+    "closed_loop_approach_vs_shadow_reference": {
+     "first_chunk_diff_gt_20mm": 6,
+     "first_chunk_diff_gt_50mm": 8,
+     "first_chunk_diff_gt_100mm": 10,
+     "max_abs_diff_mm": 201.6892944827498,
+     "min_value_mm": 89.8561617661729
+    },
+    "closed_loop_grasp_vs_shadow_reference": {
+     "first_chunk_diff_gt_20mm": 7,
+     "first_chunk_diff_gt_50mm": 8,
+     "first_chunk_diff_gt_100mm": 10,
+     "max_abs_diff_mm": 192.78773234708189,
+     "min_value_mm": 85.75973982776692
+    },
+    "shadow_refined_vs_shadow_reference": {
+     "first_chunk_diff_gt_20mm": 8,
+     "first_chunk_diff_gt_50mm": 9,
+     "first_chunk_diff_gt_100mm": 11,
+     "max_abs_diff_mm": 125.69445672511307,
+     "min_value_mm": -18.10923662879464
+    },
+    "reference_first_chunk_tip_below_apple_surface": 10,
+    "pre_touch": {
+     "chunks": "1..10",
+     "n_refined_further_from_apple": 6,
+     "n_refined_closer": 4,
+     "max_push_mm": 97.9560361603858,
+     "max_pull_mm": -3.8192133485746496
+    },
+    "post_touch": {
+     "chunks": "11..75",
+     "n_refined_further_from_apple": 57,
+     "max_push_mm": 125.69445672511307
+    },
+    "whole_run": {
+     "n_refined_further_from_apple": 63,
+     "max_push_mm": 125.69445672511307,
+     "max_pull_mm": -75.61240805036314
+    },
+    "executed_window_best_tip_mm": {
+     "shadow_reference": -17.955217000323767,
+     "shadow_refined": -18.10923662879464,
+     "closed_loop_approach": 89.8561617661729,
+     "closed_loop_grasp": 85.75973982776692
+    }
+   },
+   "gripper": {
+    "local_t6_from_pc": {
+     "action_col7_min": -0.01461095828562975,
+     "action_col7_max": 1.0079554319381714,
+     "qpos_gripper_l1_min": -0.04500016225134273,
+     "qpos_gripper_l1_max": -0.04394589875900677
+    },
+    "local_shadow_from_pc": {
+     "action_col7_min": -0.008500969968736172,
+     "action_col7_max": 1.0165334939956665,
+     "qpos_gripper_l1_min": -0.04518573837169297,
+     "qpos_gripper_l1_max": -0.031549824704932436,
+     "reference_col7_min": -0.008500969968736172,
+     "reference_col7_max": 1.0165334939956665
+    },
+    "local_grasp_from_pc": {
+     "action_col7_min": -0.0018951697275042534,
+     "action_col7_max": 1.0113248825073242,
+     "qpos_gripper_l1_min": -0.04500035582628938,
+     "qpos_gripper_l1_max": -0.04408695889557493
+    }
+   },
+   "action_column_map": {
+    "left_arm_0..6": "col 0..6",
+    "left_gripper": "col 7",
+    "right_arm_0..6": "col 8..14",
+    "right_gripper": "col 15"
+   },
+   "action_column_map_evidence": "chunk row at (chunk_seq, step_in_chunk) vs next control qpos, 599 pairs, mae <= 0.011 rad"
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t6d/t6d-scene.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t6d/t6d-scene.json",
+   "script": "outputs/verify/T6d/fig1_scene.py"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t6d/t6d-trend.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t6d/t6d-trend.json",
+   "script": "outputs/verify/T6d/fig2_graphs.py"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t6d/t6d-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t6d/t6d-table.json",
+   "script": "outputs/verify/T6d/fig3_tables.py"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "violated_start": "14/15",
+  "has_target": "15/15",
+  "frame0_clearance_before_mm": 0.15718632962849477,
+  "note": "위반으로 시작 14/15 · has_target 15/15 · frame0 clearance_before +0.15718632962849477 mm — 기준선과 소수점까지 같다. feasible/violated (14/1) 는 기준이 아니다."
+ },
+ "verdict": "기준선 일치. 세 단계 측정 완료 — 판정은 lead 와 사용자가 한다.",
+ "not_measured": [
+  "manipulated_link_margin 의 live 값. 세 기록의 planning 레코드에는 has_target·grounding·contact_context·manipulated·margin 벡터가 하나도 실려 있지 않다 (planning 키 전부: kind, seq, t_step, duplicate_sequence, ipc, field, verdict, timing_ms, actions, actions_reference, qpos, object_poses, max_violation_pair, safe, hold_reason, chunk_shape, ag3s_reason_codes, shadow, executed_chunk). observation 레코드의 grounding_status 는 세 실행 모두 'unavailable-on-client'. A1 에게: 서버가 프레임마다 ClearancePolicy.describe(ctx) 와 manipulated_link_margin 의 (min, max, 완화된 sphere 개수) 를 wire 에 실으면 잴 수 있다.",
+  "ESDF 를 직접 질의한 값. 기록에 필드가 없어서 d_esdf 는 clearance + sphere radius + margin 으로 되짚은 값이다. A1 에게: field 를 npz 로 덤프하거나 worst_row 에 d_esdf 를 함께 실으면 직접 잴 수 있다.",
+  "손끝(ee_finger_*) 구의 ESDF clearance. max_violation_pair 는 전체 최악 한 행만 싣는다 — 손끝 행이 얼마였는지는 기록에 없다.",
+  "사과 자리의 ESDF 부호와 값 (사과를 부풀리고 있는가). 필드가 기록에 없어 질의할 수 없다 — 같은 이유로 위 항목과 함께 막혔다. 참값 쪽만 쟀다: apple 충돌 mesh 의 반지름 대용 크기 [0.0311, 0.0333, 0.0333] m (geom apple_geom, model_transport.xml).",
+  "위반 좌표가 카메라 절두체 안이었는가. curobo_builder 가 stats['frustum_observation'] 을 계산하지만(curobo_builder.py:313-316) 와이어의 field 블록에는 sequence/backend/observed_at/built_at/frame_id/frame_index/cameras/tiers/state/applied_at/age_ms/age_limit_sec/staleness_checked/reason 만 있고 stats 가 없다.",
+  "서버 기동 인자. manifest 의 extra.argv 에는 클라이언트 인자만 있다. constraint 모델 범위(arms)는 (query, link) 짝으로 역추정했다 — --esdf-margin, --constraint-links 의 실제 값은 기록에 없다.",
+  "mesh geom 까지의 참값 거리는 정점 최소거리(상한)다. box/sphere/capsule/cylinder/plane 은 정확한 해석식."
+ ]
+}

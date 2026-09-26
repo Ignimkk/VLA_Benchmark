@@ -1,0 +1,72 @@
+{
+ "seq": 5,
+ "esdf_margin_m": 0.05,
+ "runs": {
+  "closed-loop / approach": {
+   "t_step": 32,
+   "trajopt_status": "feasible",
+   "hold_reason": "",
+   "worst_link": "link_left_arm_5",
+   "query": 41,
+   "step_in_chunk": 31,
+   "clearance_mm": 2.7664504894408246,
+   "sphere_radius_mm": 81.25,
+   "required_free_radius_mm": 131.25,
+   "point_m": [
+    0.5599886395501087,
+    0.32985121750075735,
+    1.0324091559777677
+   ],
+   "dist_point_to_apple_centre_mm": 182.6834538927305,
+   "apple_pos": [
+    0.56350561718031,
+    0.32043443404401806,
+    0.8500024691928394
+   ]
+  },
+  "shadow / approach": {
+   "t_step": 32,
+   "trajopt_status": "feasible",
+   "hold_reason": "",
+   "worst_link": "link_left_arm_5",
+   "query": 41,
+   "step_in_chunk": 26,
+   "clearance_mm": 3.284303528525906,
+   "sphere_radius_mm": 81.25,
+   "required_free_radius_mm": 131.25,
+   "point_m": [
+    0.5665143729486145,
+    0.3198823213717813,
+    1.0334834486315212
+   ],
+   "dist_point_to_apple_centre_mm": 183.5064774209731,
+   "apple_pos": [
+    0.56350561718031,
+    0.32043443404401806,
+    0.8500024691928394
+   ]
+  },
+  "closed-loop / grasp": {
+   "t_step": 32,
+   "trajopt_status": "violated",
+   "hold_reason": "TO says violated, 25.2 mm of penetration remains",
+   "worst_link": "link_left_arm_5",
+   "query": 41,
+   "step_in_chunk": 27,
+   "clearance_mm": -25.18215734113677,
+   "sphere_radius_mm": 81.25,
+   "required_free_radius_mm": 131.25,
+   "point_m": [
+    0.5495425043451354,
+    0.33665545446909445,
+    1.0014797026192146
+   ],
+   "dist_point_to_apple_centre_mm": 152.98183640611433,
+   "apple_pos": [
+    0.56350561718031,
+    0.32043443404401806,
+    0.8500024691928394
+   ]
+  }
+ }
+}

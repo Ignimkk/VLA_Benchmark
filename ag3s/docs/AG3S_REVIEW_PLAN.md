@@ -2251,3 +2251,16 @@ camera timing 이 좋아진 것(capture span p50 93.61→74.94 ms)은 원인을 
 순간 끝나고, 복귀 구간에는 최적화도 collision avoidance 도 필요 없다**(`GraspLatch` 의
 `PLACED`/`placed` 고착을 종료 신호 후보로 보되, 아직 판정이 아니라 후보). 상세는
 [`AG3S_T0T6_LOG.md`](AG3S_T0T6_LOG.md) 의 **T6** 절.
+
+**결과(2026-09-26) — 기록기·진단 flag 셋(`T6a`·`T6e`·`T6f`)을 붙이고 세 갈래로 쟀다.**
+과제 구간(seq 1-37)의 `max_violation` 은 모든 chunk 에서 0.0 mm 다(`T6b`) — 서버에서 본 hold
+42/75 는 거의 전부 렌더링 속도가 만든 camera timing 이었고(로컬 GPU 렌더링에서 hold
+0~1/75), 카메라 캡처 병렬화(`T6c`)는 착수 전에 접었다. `T6d` 는 AG3S→cuRobo · cuRobo · TO
+세 단계를 **전부 결백**으로 확인했다(`manipulated_link_margin` 22/120 구 완화 ·
+`unknown_policy=free` 이고 225 프레임 중 220 에서 100 mm 안 무장애물 · refined 가
+reference 보다 나빠진 chunk 0/75, T5 의 핵심 합격 조건 통과). **그런데도 로컬 GPU 재현
+여섯 건 중 다섯(팔뚝 제외 · phase 전환 · 실행 창 축소 포함)이 closed-loop 에서 apple
+0.0 mm 로 실패한다.** lead 가 추측으로 낸 방향 넷이 전부 측정으로 뒤집혔다 — 다음은
+`T7`(목적함수의 `w_slack` 대 `w_track` 비율, cuRobo 의 attached-object 설계와의 대조,
+그리퍼만 남기는 진단, 활성 제약 전체 분포 기록). 상세는 [`AG3S_T0T6_LOG.md`](AG3S_T0T6_LOG.md)
+의 **T6** 절 하위 항목과 `benchmark/ag3s/docs/handoff/T7.task.md`.
