@@ -102,8 +102,12 @@ class SafeRemoteClient:
         #: 두 갈래로 갈린다. `T5c` 가 `refined` 대 `reference` 비교를 미측정으로 닫은 것이
         #: 바로 그 청크들이 기록에 없었기 때문이다.
         self.last_actions_refined = None
-        #: 정책 **원본** 청크, 또는 `None` — shadow 가 아니라는 뜻이다 (응답의
-        #: `actions_reference` 있음/없음 그대로).
+        #: 정책 **원본** 청크, 또는 `None`.
+        #:
+        #: **T9 부터 closed loop 에서도 채워진다.** 그 전에는 shadow 에서만 왔고, 그래서
+        #: *"TO 가 청크를 얼마나 바꿨나"* 를 닫힌 고리에서 잴 수 없었다 — 같은 결핍에 다섯 번
+        #: 막혔다. `None` 은 이제 "shadow 가 아니다" 가 아니라 **그 프레임에 원본이 없었다**
+        #: (hold · 옛 서버) 를 뜻한다. 모드는 `self.shadow` 와 응답의 `shadow` 키가 말한다.
         self.last_actions_reference = None
         #: `max_violation_m` 을 만든 행의 신원, 또는 `None` (`wire.VIOLATION_PAIR`).
         #: `last_verdict` 에 넣지 않는 것은 그 딕셔너리의 키 집합이 T0 기록의 `verdict` 이고,
@@ -178,7 +182,7 @@ class SafeRemoteClient:
 
         reference = wire.unpack_actions_reference(result)
         # 모드가 어긋났으면 여기서 죽는다. 아래 어느 갈래로도 가지 않는다.
-        self._check_shadow_pairing(reference)
+        self._check_shadow_pairing(reference, wire.unpack_shadow(result))
         if self.shadow and reference.shape != actions.shape:
             # reference 와 refined 의 모양이 다르면 어느 쪽이 어느 스텝인지 알 수 없다.
             # `actions` 차원 검사와 같은 이유로 hold 다 — 형태는 맞고 뜻은 틀린 실패.
@@ -268,11 +272,19 @@ class SafeRemoteClient:
             return
         raise RuntimeError(self._pairing_message(server_shadow=not self.shadow))
 
-    def _check_shadow_pairing(self, reference) -> None:
+    def _check_shadow_pairing(self, reference, server_shadow=None) -> None:
         """`--safe-shadow`(로컬)와 `--shadow`(서버)의 짝. **안 맞으면 즉시 죽는다.**
 
-        응답에 `actions_reference` 가 있고 없는 것이 서버 모드의 유일한 신호다. 두 방향 모두
-        예외인 이유는 **둘 다 기록을 거짓으로 만들기** 때문이다:
+        **근거가 T9 에서 옮겨갔다.** 예전에는 `actions_reference` 의 있음/없음이 서버 모드의
+        유일한 신호였고, 그래서 closed loop 이 원본 청크를 실을 수 없었다 (실으면 로컬이
+        "서버가 shadow 다" 로 읽고 즉시 죽는다). 지금은 응답의 `shadow` 키가 모드를 **명시**
+        하고, 이 검사는 그것을 본다. `actions_reference` 는 데이터일 뿐이다.
+
+        `server_shadow is None` 이면 그 키를 모르는 **옛 서버**이므로 예전 규칙으로 물러난다 —
+        그때는 `actions_reference` 의 있음/없음이 여전히 유일한 신호다.
+
+        **거절은 한 줄도 느슨해지지 않았다.** 두 방향 모두 예외인 이유는 **둘 다 기록을 거짓으로
+        만들기** 때문이다:
 
         * 로컬만 shadow → reference 가 없다. 조용히 refined 를 실행하면 shadow 가 아닌데
           shadow 라고 기록된다.
@@ -282,26 +294,45 @@ class SafeRemoteClient:
         hold 로 수렴시키지 않는 이유: hold 는 *"이 청크를 실행하지 않는다"* 이고 그래도 실행은
         계속된다. 설정이 어긋난 채로 계속 도는 실행은 결과가 무슨 뜻인지 아무도 모른다.
         """
+        if server_shadow is None:
+            # 옛 서버 — 추론으로 물러난다.
+            if self.shadow and reference is None:
+                raise RuntimeError(self._pairing_message(server_shadow=False))
+            if not self.shadow and reference is not None:
+                raise RuntimeError(self._pairing_message(server_shadow=True))
+            return
+        if bool(server_shadow) != self.shadow:
+            raise RuntimeError(self._pairing_message(server_shadow=bool(server_shadow)))
         if self.shadow and reference is None:
-            raise RuntimeError(self._pairing_message(server_shadow=False))
-        if not self.shadow and reference is not None:
-            raise RuntimeError(self._pairing_message(server_shadow=True))
+            # 서버가 shadow 라고 말했는데 실행할 청크를 안 보냈다. 모드 불일치가 아니라
+            # **서버 쪽 결함**이지만, 결과는 같다 — 실행할 것이 없으므로 여기서 죽는다.
+            raise RuntimeError(
+                f"the server says {wire.SHADOW}=True but sent no {wire.ACTIONS_REFERENCE}: "
+                "there is nothing for the robot to execute in shadow mode. This is a server-side "
+                "fault, not a mode mismatch — check the server log for a hold on this chunk.")
 
     def _pairing_message(self, *, server_shadow: bool) -> str:
         """두 곳(생성자·프레임)에서 같은 문장을 쓴다. 그래서 *"응답이 왔는데"* 처럼 한쪽에서만
-        참인 말을 쓰지 않는다 — 근거는 `actions_reference` 의 있음/없음 하나다."""
+        참인 말을 쓰지 않는다.
+
+        **근거를 문장에 적지 않는다** (T9). 이 메시지는 메타데이터(`shadow`) · 응답의 `shadow`
+        키 · 옛 서버의 `actions_reference` 추론 세 경로에서 다 쓰이므로, 한 경로의 근거를 적으면
+        나머지 두 경로에서 거짓말이 된다. 예전 문장은 *"it carries 'actions_reference'"* 라고
+        적었는데, 그것은 closed loop 도 그 키를 싣는 지금 틀린 말이다.
+        """
         if server_shadow:
             return (
-                f"the server runs with --shadow (it carries {wire.ACTIONS_REFERENCE!r}) but "
-                "this client does not: --safe-shadow is off. Refusing to continue — the robot "
-                "would execute the refined chunk, a closed loop, while the server-side record "
-                "says shadow. Either add --safe-shadow locally or restart the server without "
-                "--shadow.")
+                "the server runs with --shadow but this client does not: --safe-shadow is off. "
+                "Refusing to continue — the robot would execute the refined chunk, a closed "
+                "loop, while the server-side record says shadow. Either add --safe-shadow "
+                "locally or restart the server without --shadow.")
         return (
-            f"--safe-shadow is on but the server carries no {wire.ACTIONS_REFERENCE!r}, so it "
-            "is not running with --shadow. Refusing to continue — executing the refined chunk "
-            "here would record a shadow run that actually closed the loop, the one mistake this "
-            "mode exists to prevent. Restart the server with --shadow.")
+            "--safe-shadow is on but the server is not running with --shadow. Refusing to "
+            "continue — executing the refined chunk here would record a shadow run that "
+            "actually closed the loop, the one mistake this mode exists to prevent. Restart "
+            f"the server with --shadow. (The server may also be an old build that does not "
+            f"report {wire.SHADOW!r}; then it is telling us by not carrying "
+            f"{wire.ACTIONS_REFERENCE!r}.)")
 
     # ----------------------------------------------------------------------------------
     def _pack(self, obs: dict[str, Any], *, reset: bool, seq: int) -> dict[str, Any]:

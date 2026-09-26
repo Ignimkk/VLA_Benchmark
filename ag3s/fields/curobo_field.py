@@ -137,9 +137,27 @@ class CuroboEsdfField:
     #: `FieldProvenance` — `EsdfField.provenance` 와 **같은 모양**이다. 두 backend 의 기록을
     #: 견주려면 같아야 한다.
     provenance: Any = None
+    #: **target 의 seed 를 지운 뒤에 뽑은 계층들.** `layers` 와 같은 TSDF · 같은 격자 규약이고
+    #: 다른 것은 하나뿐이다 — 아직 쥐지 않은 target 의 표면이 없다.
+    #:
+    #: `layers` 에 넣지 **않는다.** `distance()` 는 `min()` 합성이므로 넣으면 모든 질의점에서
+    #: target 이 사라지고 그것이 곧 E1 이다. 이 계층은 `target_free_distance()` 로만 읽히고,
+    #: 누가 그것을 읽을 권한이 있는지는 AG3S 쪽 정책(`constraint.target_field_policy` 와
+    #: `contact.contact_links`)이 정한다.
+    #:
+    #: 미세 계층만 둔다 (`curobo_builder`). 권한 있는 link 은 손 근처에 있으므로 미세 창이
+    #: 그들을 덮고, 거친 계층까지 두 겹 만들면 프레임당 비용이 두 배가 된다.
+    target_free_layers: tuple[EsdfField, ...] = ()
+    #: 위 계층이 무엇을 뺀 것인지 — 라벨 층에서 target 이 쓰는 이름 (`types.TARGET_LABEL`).
+    #: **진단용이다.** 어느 질의점의 최근접 표면이 target 인지 기록에서 되짚을 때 쓴다
+    #: (`is_label`). `target_free_distance` 는 이 이름에 **기대지 않는다** — 그 이유는
+    #: 그 메서드의 docstring 에 있다 (거친 격자에서 라벨과 값이 어긋나는 자리가 하필 파지하는
+    #: 자리다).
+    target_label: Optional[str] = None
 
     def __post_init__(self) -> None:
         self.layers = tuple(self.layers)
+        self.target_free_layers = tuple(self.target_free_layers)
         if not self.layers:
             raise ValueError("계층이 최소 하나는 있어야 합니다")
         sizes = [f.grid.voxel_size for f in self.layers]
@@ -149,8 +167,12 @@ class CuroboEsdfField:
         # 답하지 않아야 하므로 `outside_distance` 를 주지 않는다.
         self.layers[0].outside_distance = self.outside_distance
         # 해석적 채널은 **여기서만** 적용한다 — 계층에 남아 있으면 두 번 걸린다.
-        for f in self.layers:
+        for f in tuple(self.layers) + tuple(self.target_free_layers):
             f.static_shapes = ()
+        # target 없는 계층은 **국소**다. 창 밖을 자기가 답하면 그 밖에서 target 이 아닌 표면까지
+        # 사라지므로, 창 밖 처리는 `target_free_distance` 가 target 이 든 합성으로 되돌린다.
+        for f in self.target_free_layers:
+            f.outside_distance = None
         named = [f.label_names for f in self.layers if f.label_names]
         if named and len({tuple(n) for n in named}) != 1:
             raise ValueError(
@@ -234,6 +256,73 @@ class CuroboEsdfField:
         if wanted < 0:
             return np.zeros(len(np.asarray(points, np.float64).reshape(-1, 3)), bool)
         return self.label(points) == wanted
+
+    # -- target 없는 계층 -------------------------------------------------------------
+
+    @property
+    def has_target_free(self) -> bool:
+        """target 을 뺀 계층을 들고 있는가. 기본 정책(`relax`)에서는 언제나 `False`."""
+        return bool(self.target_free_layers)
+
+    def target_free_distance(self, points: np.ndarray) -> np.ndarray:
+        """`(N,)` — **아직 쥐지 않은 target 을 없는 것으로 보는** 최근접 표면 거리.
+
+        table 과 crate 는 그대로 답한다. 이것이 "행을 끄는 것" 과 다른 점이고, 계층을 따로
+        만든 이유 전부다 — ESDF 의 한 행은 최근접 표면까지의 거리 **하나**뿐이라, 그 행을 끄면
+        그 질의점은 target 뿐 아니라 table 에 대해서도 보호를 잃는다.
+
+        합성은 세 값의 조합이다. `d` = 본 계층(target 이 든) 답, `f` = target 없는 계층 답,
+        `b` = 그 계층 창의 **경계까지의 거리**.
+
+            창 밖:  d
+            창 안:  min(f, max(d, b))
+
+        **왜 `b` 가 필요한가.** `f` 는 창 안의 표면만 안다. 창 **밖**의 표면은 정의상 `b` 보다
+        멀고, 동시에 `d` 보다 멀다 (`d` 는 target 까지 포함한 최소값이므로). 그래서 창 밖
+        표면까지의 거리는 `max(d, b)` 이상이고, 위 식은 참값의 **하한**이다 — 즉 안전한 쪽으로
+        틀린다. 실제로는 창이 target 을 중심으로 120 mm 씩 열려 있어 손끝 근처에서 `b` 가
+        `f` 보다 훨씬 크고, 그때 답은 정확히 `f` 다.
+
+        **그리고 이 식은 지금 동작보다 더 보수적이 되지 않는다.** `f >= d`(표면을 빼면 거리가
+        줄지 않는다)이므로 `min(f, max(d, b)) >= d` 다. 그래서 이 경로가 켜져서 **없던 위반이
+        생기는 일은 없다** — 창 경계에서 유령 장애물이 서지 않는다는 뜻이고, 그것이 `b` 를
+        그냥 쓰지 않고 `max(d, b)` 로 쓴 이유다.
+
+        **라벨을 판정에 쓰지 않는다.** `TARGET_LABEL` 은 필드에 실려 있고 진단에 쓰이지만, "가장
+        가까운 표면이 target 인가" 를 라벨로 물으면 거친 계층에서 어긋난다: 값은 삼선형 보간이고
+        라벨은 최근접 격자점이라, 사과와 테이블이 만나는 자리 — **정확히 파지하는 자리** — 에서
+        20 mm 격자의 라벨이 "테이블" 이라고 답하는데 값은 사과에서 온다. 실측으로 잡혔다
+        (테이블 위 4 mm, 사과 밑면 안쪽에서 라벨 판정이 완화를 껐다). 위 식은 라벨의 정확도에
+        기대지 않는다.
+        """
+        pts = np.asarray(points, np.float64).reshape(-1, 3)
+        d = np.asarray(self.distance(pts), np.float64).copy()
+        if not self.target_free_layers or not len(pts):
+            return d
+        for layer in self.target_free_layers:
+            inside = self._covers(layer.grid, pts)
+            if not inside.any():
+                continue
+            here = pts[inside]
+            free = np.asarray(layer.distance(here), np.float64)
+            # 해석적 채널은 target 이 아니다 — 아는 정적 기하는 계속 막아야 한다.
+            if self.static_shapes:
+                from benchmark.ag3s.fields.esdf import analytic_distance
+                free = np.minimum(free, analytic_distance(here, self.static_shapes))
+            bound = self._boundary_distance(layer.grid, here)
+            d[inside] = np.minimum(free, np.maximum(d[inside], bound))
+        return d
+
+    @staticmethod
+    def _boundary_distance(grid: VoxelGrid, pts: np.ndarray) -> np.ndarray:
+        """`(N,)` — 그 점에서 이 계층의 **보간 격자 경계**까지의 거리 (음수는 0 으로).
+
+        경계는 `_covers` 와 같다 — 첫 복셀 중심부터 마지막 복셀 중심까지. 두 곳이 다르면
+        "창 안" 의 뜻이 갈라지고, 위 합성의 하한 논증이 성립하지 않는다.
+        """
+        last = grid.origin + (np.asarray(grid.shape) - 1) * grid.voxel_size
+        gap = np.minimum(pts - grid.origin, last - pts)
+        return np.maximum(gap.min(axis=1), 0.0)
 
     # -- 합성 ------------------------------------------------------------------
 

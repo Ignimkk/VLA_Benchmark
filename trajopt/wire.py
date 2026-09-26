@@ -35,7 +35,8 @@
 | 키 | 내용 |
 |---|---|
 | `actions` | `[H, ACTION_WIDTH]` (16D 기본). 안전하지 않아도 실린다 — 왜 멈췄는지 보려면 무엇이 제안됐는지 알아야 한다 |
-| `actions_reference` | **선택 키.** shadow 일 때만 실린다 — 정책의 **원본** 청크. 아래 |
+| `actions_reference` | 정책의 **원본** 청크. **2026-09-26 부터 closed loop 에서도 실린다.** 아래 |
+| `shadow` | **모드**. `actions_reference` 가 아니라 **이 키**가 shadow 서버의 신호다. 아래 |
 | `seq` | 요청의 일련번호를 그대로 돌려준다. 오래된 응답을 버리는 근거 |
 | `timing_ms` | 단계별 시간 (서버 시계) |
 | `ag3s_status` · `geometry_certified` · `trajopt_status` · `max_violation_m` · `safe` · `notes` | 안전 판정 |
@@ -57,7 +58,29 @@ link 대 어느 obstacle 인지는 **최적화기 안에만** 있었다. 숫자�
 키를 빼는 것이 낫다 — 그래야 *"신원을 낼 수 있는 서버"* 와 옛 서버가 구별된다.
 `actions_reference` · `ag3s` 와 같은 규약이다.
 
-### `actions_reference` — shadow 실행이 무엇을 실행할지 고를 수 있게 하는 것
+### `shadow` — **모드는 이제 명시된다** (2026-09-26, T9)
+
+`actions_reference` 의 **있음/없음**이 shadow 서버의 신호였다. 그 신호는 값이 하나뿐인 자리에
+두 가지 뜻(무엇을 실행할지 고르는 데 필요한 청크 · 서버가 어느 모드인지)을 실었고, 둘째 뜻
+때문에 **closed loop 에서는 원본 청크를 실을 수 없었다.**
+
+그 결핍에 다섯 번 막혔다. 마지막이 결정적이다 — 충돌 제약이 하나도 활성이 아닌 판에서도 TO 가
+청크를 고친다 (실행되는 8 step 안에서 중앙값 2.6°, 최대 8.8°, 손이 다가갈수록 커진다). 그러면
+남은 변형은 전부 **목적함수**가 만든 것인데, closed loop 의 원본 청크가 기록에 없으면 그 크기를
+잴 수 없다. shadow 는 성공하고(245.2 mm 들어 올린다) closed loop 은 헛잡는 차이가 거기 있다.
+
+그래서 두 뜻을 갈랐다.
+
+| 키 | 뜻 | 언제 |
+|---|---|---|
+| `actions_reference` | 정책 원본 청크 — **데이터** | 언제나 (closed loop 포함) |
+| `shadow` | 서버가 reference 를 **실행하라고 내보내는 모드인가** — **모드** | 언제나 (`True`/`False`) |
+
+**`shadow` 는 `False` 여도 실린다.** 이 키만이 짝 검사의 근거이므로, 없음을 "closed loop" 으로
+읽으면 **옛 서버**(키를 모르는 서버)와 구별할 수 없다. 옛 서버에는 `actions_reference` 의 있음/
+없음으로 물러나 추론한다 (`client._check_shadow_pairing`).
+
+### `actions_reference` — 서버가 계산에 쓴 **입력** 청크
 
 **shadow 실행(T5)은 전부 계산하되 수정된 청크를 로봇에 보내지 않는다.** 수정이 여유거리를 나쁘게
 만드는지를 로봇을 움직이기 전에 보려는 것이다. 그러려면 로컬이 **정책의 원본 청크**를 알아야 하는데,
@@ -67,10 +90,17 @@ link 대 어느 obstacle 인지는 **최적화기 안에만** 있었다. 숫자�
 (거짓말하지 않는다), 무엇을 실행할지는 로컬이 고른다 — `SafetyVerdict` 가 판정이지 명령이
 아닌 것과 같은 계약이다.
 
-**키는 shadow 일 때만 실린다.** 기본 응답에 `actions_reference` 가 없어야 T0 기록과 회귀
-기준선이 그대로 재현된다. 그래서 있음/없음 자체가 *"이 응답은 shadow 서버가 낸 것"* 이라는
-신호이고, 로컬이 그 짝을 검사한다 (`client.SafeRemoteClient`): 한쪽만 켜져 있으면 즉시 실패한다.
-조용히 refined 를 실행하면 shadow 가 아닌데 shadow 라고 기록된다.
+**키는 이제 언제나 실린다** (T9). *"TO 가 청크를 얼마나 바꿨나"* 는 closed loop 에서 가장
+알아야 하는 값이고, 그것을 재려면 `actions`(refined) 옆에 원본이 있어야 한다.
+
+**대가는 응답 크기다.** 청크 하나가 `[H, 16] float32` 이므로 planning 기록 한 줄이 실측
+19,837 B → shadow 수준(36,704 B)으로 커진다. 그 값을 아는 채로 고른 것이다 — 15 Hz 에서
+한 프레임에 17 KB 가 더 흐르는 것보다, 같은 결핍에 여섯 번째로 막히는 것이 비싸다.
+
+**무엇을 실행할지는 여전히 `shadow` 키가 정한다.** 로컬이 그 짝을 검사하고
+(`client.SafeRemoteClient`), 한쪽만 켜져 있으면 즉시 실패한다 — 조용히 refined 를 실행하면
+shadow 가 아닌데 shadow 라고 기록된다. **그 거절은 T9 에서 한 줄도 느슨해지지 않았다**: 근거가
+"reference 가 왔나" 에서 "서버가 shadow 라고 말했나" 로 옮겨간 것뿐이다.
 
 ### `ag3s` — `degraded` 의 **사유**
 
@@ -121,20 +151,26 @@ import numpy as np
 
 __all__ = [
     "PREFIX", "DEFAULT_CAMERAS", "GRIPPER_COLUMNS", "gripper_columns",
-    "ARM_JOINT_DIM", "ACTION_WIDTH", "ACTIONS_REFERENCE",
+    "ARM_JOINT_DIM", "ACTION_WIDTH", "ACTIONS_REFERENCE", "SHADOW",
     "pack_request", "strip_request", "unpack_camera_observations",
     "pack_response", "unpack_field", "unpack_actions_reference", "unpack_ag3s",
-    "unpack_violation_pair",
+    "unpack_violation_pair", "unpack_shadow",
     "SafetyVerdict", "AG3S_BLOCK", "VIOLATION_PAIR",
 ]
 
 PREFIX = "ag3s/"
 
-#: 응답의 **선택 키** — 정책의 원본 청크. shadow 실행에서만 실린다 (위 머리말).
+#: 응답 키 — 정책의 원본 청크. **T9 부터 closed loop 에서도 실린다** (위 머리말).
 #: 이름을 상수로 두는 이유는 서버·클라이언트·테스트 세 곳이 같은 문자열을 써야 하고, 오타가
 #: 나면 로컬이 "reference 가 안 왔다" 로 읽어 즉시 실패하기 때문이다 — 조용히는 안 지나가지만
 #: 원인을 찾는 데 시간이 든다.
 ACTIONS_REFERENCE = "actions_reference"
+
+#: 응답 키 — **모드.** `True` 면 서버는 로컬이 reference 를 실행하기를 기대한다 (shadow).
+#: `False` 여도 실린다: 이 키가 짝 검사의 유일한 근거이므로, 없음은 "closed loop" 이 아니라
+#: **"이 키를 모르는 옛 서버"** 를 뜻해야 한다. 그 구분이 없으면 옛 서버에 shadow 로컬을
+#: 붙였을 때 조용히 refined 가 실행된다.
+SHADOW = "shadow"
 
 #: 응답의 **선택 키** — `ag3s_status` 가 `ok` 가 아닐 때의 사유 블록 (위 머리말).
 #: `ag3s/` 접두(요청 쪽)와 글자가 겹치지만 충돌하지 않는다: `strip_request` 는 **요청**만
@@ -292,6 +328,7 @@ class SafetyVerdict:
 def pack_response(actions: np.ndarray, verdict: SafetyVerdict, *, seq: int,
                   timing_ms: dict[str, float], field: Optional[Any] = None,
                   actions_reference: Optional[np.ndarray] = None,
+                  shadow: bool = False,
                   ag3s: Optional[dict[str, Any]] = None,
                   extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """응답. `actions` 는 `[H, ACTION_WIDTH]` 이고, 안전하지 않아도 실린다.
@@ -303,10 +340,12 @@ def pack_response(actions: np.ndarray, verdict: SafetyVerdict, *, seq: int,
     읽는 쪽이 "필드가 없었다" 와 "서버가 옛 버전이라 안 보냈다" 를 구별할 수 없고, 전자는
     hold 해야 하고 후자는 배선 결함이라 대응이 다르다.
 
-    `actions_reference` 는 **`None` 이면 키를 아예 싣지 않는다** — `field` 와 규칙이 반대인
-    것은 뜻이 반대이기 때문이다. `field` 없음은 **판정에 필요한 정보의 부재**라 상태로 적어야
-    하고, `actions_reference` 없음은 **shadow 가 아니다** 라는 뜻이다. 키가 빠지는 것 자체가
-    그 신호이므로 기본 응답은 예전과 한 바이트도 다르지 않다.
+    `actions_reference` 는 **`None` 이면 키를 싣지 않는다** — 그러나 그것이 더 이상 "shadow 가
+    아니다" 를 뜻하지 않는다 (T9). 모드는 `shadow` 키가 말하고, 이 키는 **데이터의 있음/없음**
+    만 말한다: 원본 청크를 낼 수 없었던 프레임(정책이 청크를 못 낸 hold 등)이 그 경우다.
+
+    `shadow` 는 **`False` 여도 싣는다.** 짝 검사의 근거가 이 키 하나이므로, 없음이 "closed
+    loop" 이 아니라 "이 키를 모르는 옛 서버" 를 뜻해야 한다.
 
     `ag3s` 도 **`None` 이면 키를 싣지 않는다** — 정상 프레임(`ag3s_status == "ok"`)의 응답을
     T0 때와 같게 두기 위해서다. 호출부(`SafePolicy._ag3s_block`)가 `ok` 일 때 `None` 을 준다.
@@ -326,6 +365,8 @@ def pack_response(actions: np.ndarray, verdict: SafetyVerdict, *, seq: int,
         "seq": int(seq),
         "timing_ms": {k: float(v) for k, v in timing_ms.items()},
         "field": prov.to_dict(),
+        # **모드는 명시한다** (T9). `actions_reference` 의 있음/없음으로 추론하던 자리다.
+        SHADOW: bool(shadow),
         **verdict.to_dict(),
     }
     if actions_reference is not None:
@@ -344,15 +385,27 @@ def pack_response(actions: np.ndarray, verdict: SafetyVerdict, *, seq: int,
 
 
 def unpack_actions_reference(response: dict[str, Any]) -> Optional[np.ndarray]:
-    """응답의 정책 원본 청크, 또는 **`None`** — 서버가 shadow 가 아니라는 뜻이다.
+    """응답의 정책 원본 청크, 또는 **`None`** — 그 프레임에 원본이 없었다는 뜻이다.
 
-    `unpack_field` 와 달리 "없음" 을 상태 객체로 감싸지 않는다. 필드 없음은 판정을 바꾸지만
-    (hold 해야 한다) reference 없음은 **모드가 다르다** 는 뜻이고, 그 불일치를 어떻게 처리할지는
-    한 곳에서만 정해야 한다 — `SafeRemoteClient` 가 shadow 를 요구했는지 알고 있으므로 거기서
-    즉시 실패한다.
+    **T9 부터 "없음" 은 모드가 아니라 데이터의 부재다.** 모드는 `unpack_shadow` 가 답한다.
+    `unpack_field` 와 달리 없음을 상태 객체로 감싸지 않는 것은 그대로다 — 이 값을 어떻게 다룰지
+    (실행할지, 기록만 할지)는 `SafeRemoteClient` 한 곳에서 정한다.
     """
     blob = response.get(ACTIONS_REFERENCE)
     return None if blob is None else np.asarray(blob)
+
+
+def unpack_shadow(response: dict[str, Any]) -> Optional[bool]:
+    """서버가 shadow 모드인가. **`None` 은 "말하지 않았다"** = 이 키를 모르는 옛 서버.
+
+    세 값을 가르는 것이 요점이다. `True`/`False` 는 서버의 선언이고 `None` 은 선언이 없는
+    것이다. 없음을 `False` 로 접으면 옛 서버에 shadow 로컬을 붙였을 때 조용히 refined 가
+    실행된다 — 그래서 호출부는 `None` 일 때 `actions_reference` 의 있음/없음으로 물러나
+    추론한다 (`client._check_shadow_pairing`).
+    """
+    if SHADOW not in response:
+        return None
+    return bool(response[SHADOW])
 
 
 def unpack_ag3s(response: dict[str, Any]) -> dict[str, Any]:

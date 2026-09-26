@@ -269,10 +269,20 @@ class SafePolicy:
         extra = {k: v for k, v in result.items() if k != "actions"}
         # **`actions` 는 shadow 에서도 refined 다.** 서버는 자기가 계산한 것을 그대로 말하고,
         # 무엇을 실행할지는 로컬이 고른다 — `SafetyVerdict` 가 판정이지 명령이 아닌 것과 같은
-        # 계약이다. shadow 가 아니면 키가 아예 실리지 않아 응답이 예전과 같다.
+        # 계약이다.
+        #
+        # **원본 청크는 이제 closed loop 에서도 싣는다** (T9). 그 전까지는 shadow 에서만 실었고,
+        # 그 이유는 키의 있음/없음이 **모드의 신호**였기 때문이다. 그 겸직을 끊었다 — 모드는
+        # `shadow=` 인자가 명시적으로 말하고, `actions_reference` 는 데이터일 뿐이다.
+        #
+        # 왜 지금 필요한가: 충돌 제약이 하나도 활성이 아닌 판에서도 TO 가 청크를 고치므로
+        # (실행 창 안 중앙값 2.6°, 최대 8.8°), 남은 변형은 전부 목적함수가 만든 것이다. 그 크기를
+        # closed loop 에서 재려면 `actions`(refined) 옆에 원본이 있어야 한다. 대가는 응답 크기다
+        # (planning 기록 한 줄 19,837 B → shadow 수준 36,704 B).
         return wire.pack_response(refined, verdict, seq=seq, timing_ms=timing,
                                   field=self._field_provenance(),
-                                  actions_reference=(chunk if self.shadow else None),
+                                  actions_reference=chunk,
+                                  shadow=self.shadow,
                                   ag3s=ag3s_block,
                                   extra=extra)
 

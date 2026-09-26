@@ -113,6 +113,16 @@ class SceneSnapshot:
     manipulated_spheres: Optional[np.ndarray] = None
     manipulated_sphere_radii: Optional[np.ndarray] = None
     manipulated_link_margin: Optional[np.ndarray] = None
+    #: `(S,)` bool — 이 질의점이 **target 이 빠진 계층**에 거리를 묻는가 (T8b).
+    #: `None`(기본)이면 이 축이 없는 것과 같고 코드 경로가 한 줄도 달라지지 않는다.
+    #:
+    #: 위의 `manipulated_link_margin` 과 **같은 문제의 다른 해**다. 마진은 `d − r ≥ m` 의 `m`
+    #: 을 내리는 것이고 `m ≥ 0` 이라 표면 안쪽을 허용할 수 없는데, 성공한 grasp 는 손끝 구가
+    #: 사과 표면을 −17.96 mm 관통한다 (T7a). 그래서 `m` 이 아니라 `d` 를 바꾼다.
+    #:
+    #: **행을 끄는 것과 다르다.** ESDF 의 한 행은 최근접 표면까지의 거리 하나뿐이므로 끄면
+    #: table 에 대한 보호까지 잃는다. 여기서 바뀌는 것은 "어느 계층이 답하는가" 뿐이다.
+    target_free_mask: Optional[np.ndarray] = None
     #: The **held** object as query points riding `attached_parent_link`, in that link's frame
     #: (`AttachedCollisionGeometry.points`). Once a grasp closes the object stops being part of the
     #: world and becomes part of the robot, so it belongs on the query side of the field rather than
@@ -512,6 +522,29 @@ class CollisionLinearizer:
             )
         flat = centres.reshape(-1, 3)
         d = np.asarray(scene.esdf.distance(flat), np.float64).reshape(centres.shape[:2])
+        # **아직 쥐지 않은 target 을 빼는 길** (T8b). 권한 있는 질의점만 target 이 없는 계층에
+        # 되묻고, 나머지 행은 위에서 받은 값을 그대로 쓴다 — `"relax"`(기본)에서는
+        # `target_free_mask` 가 `None` 이라 이 블록이 통째로 없는 것과 같다.
+        #
+        # 마스크가 있는데 필드가 그 계층을 못 내놓으면 **죽는다.** 조용히 지금 동작으로
+        # 되돌아가면 정책을 켰다고 믿은 채 아무 일도 일어나지 않고, 그것이 이 프로젝트에서
+        # 가장 나쁜 실패 방식이다.
+        if scene.target_free_mask is not None:
+            mask = np.asarray(scene.target_free_mask, bool).reshape(-1)
+            if mask.shape[0] < n_query:
+                # 쥔 물체의 점은 권한 대상이 아니다 — 그 점들이 곧 물체다. 못 닫는 쪽으로
+                # 채우는 것이 fail-closed 방향이고 배열 모양도 맞는다.
+                mask = np.concatenate([mask, np.zeros(n_query - mask.shape[0], bool)])
+            if mask.any():
+                free = getattr(scene.esdf, "target_free_distance", None)
+                if free is None:
+                    raise ValueError(
+                        "target_free_mask 가 왔는데 필드에 target_free_distance 가 없습니다 — "
+                        "정책을 켰다고 믿은 채 아무 일도 일어나지 않는 상태입니다. AG3S 쪽 "
+                        "esdf.backend 가 'curobo' 인지, 필드가 target 없는 계층을 들고 나왔는지 "
+                        "확인하세요")
+                d_free = np.asarray(free(flat), np.float64).reshape(centres.shape[:2])
+                d = np.where(mask[None, :n_query], d_free, d)
         margin = np.full(centres.shape[:2], float(scene.esdf_margin))
         # 목적지: 가장 가까운 표면이 목적지인 질의점만 얇은 마진을 쓴다. 필드가 라벨을 함께
         # 답하게 된 덕분에 이 구분이 가능해졌다 — 그 전에는 거리장이 익명이라 "지금 가까운 것이
@@ -967,6 +1000,15 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
             f"{radii.size} robot radii were given; the optimizer and AG3S must share one "
             "constraint model"
         )
+    # target 없는 계층에 되물을 구 (T8b). `"relax"`(기본)에서는 AG3S 가 `None` 을 싣는다.
+    target_free_mask = getattr(constraint_set, "target_field_exclude", None)
+    if target_free_mask is not None:
+        target_free_mask = np.asarray(target_free_mask, bool).reshape(-1)
+        if target_free_mask.shape[0] != radii.size:
+            raise ValueError(
+                f"target_field_exclude has {target_free_mask.shape[0]} entries but "
+                f"{radii.size} robot radii were given; the optimizer and AG3S must share one "
+                "constraint model")
     if spec is None:
         # No `ConstraintSpec` at all. With the field that is a complete scene — an ESDF-only frame
         # never builds the primitive parameter vector — so return a field-only snapshot rather than
@@ -984,6 +1026,7 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
             manipulated_points=man_points, manipulated_spheres=man_spheres,
             manipulated_sphere_radii=man_radii,
             manipulated_link_margin=manipulated_link_margin,
+            target_free_mask=target_free_mask,
             attached_points=attached_points, attached_parent_link=attached_link,
             destination_label=destination_label,
             destination_margin=float(destination_margin))
@@ -1004,6 +1047,7 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
             manipulated_points=man_points, manipulated_spheres=man_spheres,
             manipulated_sphere_radii=man_radii,
             manipulated_link_margin=manipulated_link_margin,
+            target_free_mask=target_free_mask,
             attached_points=attached_points, attached_parent_link=attached_link,
             destination_label=destination_label,
             destination_margin=float(destination_margin))

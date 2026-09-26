@@ -233,10 +233,15 @@ class FrameRecorder:
         | `object_poses` | 과일 넷 + crate 의 MuJoCo 참값 | `null` |
         | `max_violation_pair` | `max_violation_m` 을 만든 **제약의 신원** | `null` |
 
-        **`actions_reference` 만 규칙이 다르다.** 그 키의 있음/없음 자체가 *"이 실행은
-        shadow"* 라는 신호이기 때문이다 — 응답 쪽(`wire.ACTIONS_REFERENCE`)의 규약과 같게
-        둔다. 나머지 넷은 값이 없어도 키를 남긴다: A2 가 프레임을 세로로 세므로 있음/없음이
-        섞이면 파서가 두 갈래로 갈린다.
+        **`actions_reference` 만 규칙이 다르다** — 값이 없으면 키를 안 남긴다. 응답
+        쪽(`wire.ACTIONS_REFERENCE`)의 규약과 같게 두는 것이고, 나머지 넷은 값이 없어도 키를
+        남긴다 (A2 가 프레임을 세로로 세므로 있음/없음이 섞이면 파서가 두 갈래로 갈린다).
+
+        **그러나 그 키의 있음이 더 이상 "이 실행은 shadow" 를 뜻하지 않는다** (2026-09-26, T9).
+        closed loop 에서도 서버가 원본 청크를 실어 보내므로 그쪽 기록에도 이 키가 찬다. 모드를
+        묻는 자리는 **`extra` 의 `shadow` 키** 하나다 (`pi05_infer` 가 shadow 일 때만 더한다).
+        옛 기록을 읽을 때만 "이 키가 있으면 shadow" 가 참이고, T9 이후 기록에서는 아니다 —
+        `field.backend` 나 서버 meta 로 실행 시점을 가른 다음 판단해야 한다.
         """
         prov = self._as_prov(field)
         duplicate = seq in self._seen_seq

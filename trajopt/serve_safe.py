@@ -77,6 +77,279 @@ def constraint_links_minus(present: Sequence[str], exclude: Sequence[str],
     return kept
 
 
+#: `--links` 선택지. **기본은 `arms` 이고 그것이 지금까지의 서버다.**
+LINK_GROUPS: tuple[str, ...] = ("arms", "gripper", "all")
+
+
+def target_field_policy_choices() -> tuple[str, ...]:
+    """`--target-field-policy` 선택지 (CLI 는 하이픈, config 는 밑줄).
+
+    목록의 정본은 `ConstraintConfig` 쪽 하나다 (`config.TARGET_FIELD_POLICIES`) — 선택지를
+    여기 다시 적으면 갈라지고, 갈라지는 날 parser 가 받은 이름이 config 에 없는 이름이 된다.
+    """
+    from benchmark.ag3s.config import TARGET_FIELD_POLICIES
+
+    return tuple(name.replace("_", "-") for name in TARGET_FIELD_POLICIES)
+
+
+def resolve_target_field_policy(value: str) -> str:
+    """`"exclude-authorized"` → `"exclude_authorized"`. 모르는 이름은 여기서 죽는다."""
+    from benchmark.ag3s.config import TARGET_FIELD_POLICIES
+
+    text = str(value).strip().lower().replace("-", "_")
+    if text not in TARGET_FIELD_POLICIES:
+        raise ValueError(
+            f"--target-field-policy 는 {list(target_field_policy_choices())} 중 하나여야 "
+            f"합니다: {value!r}")
+    return text
+
+
+def constraint_link_filter(links: str):
+    """`--links` 값 → `build_constraint_robot_model(link_filter=...)` 에 줄 것.
+
+    `arms`(기본) = 양팔 14 link + 손가락 4 · `gripper` = **손가락 4 만** · `all` = 전신(`None`).
+
+    이름 목록을 `grounding_report` 에서 가져오는 것이 요점이다 (T7b). 같은 일을
+    `--exclude-links` 로 하려면 남길 것 넷을 빼고 열넷을 손으로 적어야 하고, `link_filter` 는
+    집합 교집합이라 오타 하나가 조용히 사라진다 — 그래서 집합 이름을 선택지로 둔다.
+    """
+    from benchmark.ag3s.experiments.reports.grounding_report import ARM_LINKS, GRIPPER_LINKS
+
+    if links == "all":
+        return None
+    if links == "arms":
+        return ARM_LINKS
+    if links == "gripper":
+        return GRIPPER_LINKS
+    raise ValueError(f"--links 는 {LINK_GROUPS} 중 하나여야 합니다: {links!r}")
+
+
+def parse_link_scales(pairs: Sequence[str]) -> dict[str, float]:
+    """`["gripper=0.35"]` → `{link: scale}`. 빈 입력이면 빈 dict (예전과 같은 모델).
+
+    키는 **link 이름이거나 `--links` 의 집합 이름** (`arms` · `gripper`)이다. 집합 이름을
+    받는 것이 이 flag 의 요점이다 — 손가락 넷을 손으로 적는 것이 오타 위험이기 때문이다.
+    `all` 은 받지 않는다: 전신에 거는 배율은 `--capsule-radius-scale` 그 자체다.
+
+    형식이 아니거나 배율이 0 이하면 **여기서 죽는다.** 조용히 버리면 얇게 했다고 믿은 채
+    예전 굵기로 뜨고, 그것이 `--exclude-links` 가 이미 밟은 함정이다. URDF 에 없는 이름은
+    `UrdfSphereChain` 이 거절한다 — 검사는 이름을 아는 곳에서 한다.
+    """
+    out: dict[str, float] = {}
+    for item in pairs or ():
+        text = str(item)
+        if "=" not in text:
+            raise ValueError(
+                f"--capsule-radius-scale-link 는 LINK=배율 형식입니다: {text!r} "
+                f"(예: gripper=0.35, link_left_arm_5=0.8)")
+        name, _, value = text.partition("=")
+        name = name.strip()
+        try:
+            scale = float(value)
+        except ValueError:
+            raise ValueError(
+                f"--capsule-radius-scale-link {text!r} 의 배율이 숫자가 아닙니다") from None
+        if not scale > 0.0:
+            raise ValueError(
+                f"--capsule-radius-scale-link {text!r}: 배율은 0 보다 커야 합니다")
+        if name == "all":
+            raise ValueError(
+                "--capsule-radius-scale-link all=... 은 받지 않습니다. 전신에 거는 배율은 "
+                "--capsule-radius-scale 그 자체입니다")
+        if name in LINK_GROUPS:
+            group = constraint_link_filter(name)
+            for link in group or ():
+                out[str(link)] = scale
+        elif not name:
+            raise ValueError(f"--capsule-radius-scale-link {text!r}: link 이름이 비었습니다")
+        else:
+            out[name] = scale
+    return out
+
+
+def parse_link_extents(pairs: Sequence[str]) -> dict[str, tuple[float, float]]:
+    """`["link_left_arm_5=-0.10"]` → `{link: (z_min, z_max)}`. 빈 입력이면 빈 dict (예전 모델).
+
+    **단위는 미터다** (`--esdf-margin` 과 같은 규약). `LINK=Z` 는 "z 이상만 남긴다" = 원위
+    절단면이고 (RB-Y1 팔의 원위 방향이 −z 다), `LINK=Zmin:Zmax` 는 그 구간만 남긴다.
+
+    `|z| > 3 m` 는 **거절한다.** mm 로 적어 `-100` 을 주면 유지 구간이 `[-100 m, inf]` 가 되어
+    **아무것도 안 잘리는데 잘랐다고 믿는다** — 이 flag 에서 가장 있을 법한 실수이고, 조용히
+    지나가면 안 되는 종류다 (`--capsule-radius-scale-link` 의 오타 거절과 같은 규율).
+
+    집합 이름(`arms`·`gripper`·`all`)은 받지 않는다. 절단면은 **link frame 의 z** 이고 그 값은
+    link 마다 다른 것을 뜻하므로, 집합에 한 숫자를 거는 것은 뜻이 없다 — 양팔을 자르려면 두
+    이름을 다 적는다 (`link_left_arm_5=-0.10 link_right_arm_5=-0.10`).
+    """
+    out: dict[str, tuple[float, float]] = {}
+    for item in pairs or ():
+        text = str(item)
+        if "=" not in text:
+            raise ValueError(
+                f"--capsule-extent-link 는 LINK=Z 또는 LINK=Zmin:Zmax 형식입니다 (미터): "
+                f"{text!r} (예: link_left_arm_5=-0.10)")
+        name, _, value = text.partition("=")
+        name = name.strip()
+        if not name:
+            raise ValueError(f"--capsule-extent-link {text!r}: link 이름이 비었습니다")
+        if name in LINK_GROUPS:
+            raise ValueError(
+                f"--capsule-extent-link {text!r}: 집합 이름({LINK_GROUPS})은 받지 않습니다. "
+                "절단면은 link frame 의 z 이므로 link 마다 뜻이 다릅니다 — 이름을 각각 적으십시오")
+        try:
+            parts = [float(v) for v in value.split(":")] if ":" in value else [float(value)]
+        except ValueError:
+            raise ValueError(
+                f"--capsule-extent-link {text!r} 의 z 가 숫자가 아닙니다 (미터)") from None
+        if any(abs(v) > 3.0 for v in parts):
+            raise ValueError(
+                f"--capsule-extent-link {text!r}: **단위는 미터입니다.** |z| > 3 m 는 받지 "
+                f"않습니다 — mm 로 적으면 아무것도 안 잘리는데 잘랐다고 믿게 됩니다 "
+                f"(-100 mm 는 -0.10 입니다)")
+        if len(parts) == 1:
+            out[name] = (parts[0], float("inf"))
+        elif len(parts) == 2:
+            if not parts[0] < parts[1]:
+                raise ValueError(
+                    f"--capsule-extent-link {text!r}: Zmin < Zmax 여야 합니다")
+            out[name] = (parts[0], parts[1])
+        else:
+            raise ValueError(
+                f"--capsule-extent-link {text!r}: 값은 Z 하나이거나 Zmin:Zmax 둘입니다")
+    return out
+
+
+#: `--w-*` flag 이름 → `CostConfig` 필드 이름. 목록이 한 곳이어야 flag 를 더할 때 announce 와
+#: config 가 갈라지지 않는다.
+COST_WEIGHTS: tuple[str, ...] = ("w_track", "w_smooth", "w_continuity", "w_slack")
+
+
+def cost_overrides(args) -> dict[str, float]:
+    """`--w-*` 중 **실제로 준 것만** 담은 dict. 안 준 flag 는 키가 아예 없다.
+
+    `sphere_options` 와 같은 계약이다 — 기본값을 여기 적으면 `CostConfig` 와 두 곳이 되고,
+    갈라지는 날 목적함수가 조용히 달라진다. 빈 dict 면 `TrajOptConfig` 호출이 예전과 글자
+    그대로 같다.
+    """
+    given = {name: getattr(args, name, None) for name in COST_WEIGHTS}
+    return {k: float(v) for k, v in given.items() if v is not None}
+
+
+def announce_cost_weights(overrides: dict) -> None:
+    """**기본이 아닌 목적함수로 떠 있으면 크게 말한다.**
+
+    충돌 제약과 달리 이 넷은 *"무엇을 금지하나"* 가 아니라 *"무엇을 더 좋다고 보나"* 를 바꾼다.
+    그래서 조용히 달라져도 위반 수치에는 안 나타나고, **청크가 얼마나 바뀌었나**에만 나타난다 —
+    그 값은 지금까지 closed loop 기록에 없었다 (T9 가 그것을 실었다). 로그가 이 조합을 적어야
+    두 실행의 궤적 차이를 목적함수 차이로 되짚을 수 있다.
+    """
+    if not overrides:
+        return
+    from benchmark.trajopt.config import CostConfig
+
+    base = CostConfig()
+    logging.getLogger(__name__).warning(
+        "!!! THE OBJECTIVE IS NOT THE DEFAULT ONE !!!\n    %s\n"
+        "    제약이 아니라 **목적함수**를 바꾼 것입니다 — 위반 수치는 그대로여도 청크가 달라집니다."
+        " 응답의 actions_reference 와 actions 를 견주면 그 크기가 보입니다.",
+        ", ".join(f"{k}: {getattr(base, k):g} → {v:g}" for k, v in sorted(overrides.items())))
+
+
+def announce_row_budget(*, n_constraint_spheres: int, n_filter_spheres: int,
+                        planned: int | None = None, rows_per_step: int | None = None) -> None:
+    """구 개수와 **행 개수**를 시작 로그에 찍는다. 실시간으로 도는지가 여기 달렸다.
+
+    `--sphere-spacing` 을 내려 구를 촘촘하게 만들면 구 개수가 는다. 그런데 **QP 행은 늘지
+    않는다** — `horizon × reduction.rows_per_step` 이고 구 개수와 무관하다
+    (`linearize.py` 의 활성 띠). 늘어나는 것은 ESDF 질의점 수와 FK 평가 비용이다 (실측: 구
+    120 → 218 에서 QP 행 192 그대로, FK 0.509 → 0.690 ms). 그 구분이 로그에 있어야 "구를 늘렸다"
+    가 "실시간을 잃었다" 로 읽히지 않는다.
+    """
+    log = logging.getLogger(__name__)
+    if planned is None or rows_per_step is None:
+        log.info("AG3S spheres: constraint %d, self-filter %d",
+                 n_constraint_spheres, n_filter_spheres)
+        return
+    log.info(
+        "row budget: 제약 구 %d 개 → ESDF 질의 행 %d/청크 (%d 스텝 × %d 구) · "
+        "QP 행 %d/청크 (%d × rows_per_step %d, **구 개수와 무관**) · 자기 필터 구 %d 개",
+        n_constraint_spheres, planned * n_constraint_spheres, planned, n_constraint_spheres,
+        planned * rows_per_step, planned, rows_per_step, n_filter_spheres)
+
+
+def announce_diagnostic_scope(*, links: str, self_collision: bool,
+                              link_scales: dict, constraint_links: Sequence[str] = (),
+                              filter_spheres: int | None = None,
+                              target_field_policy: str = "relax",
+                              authorized_links: Sequence[str] = (),
+                              link_extents: dict | None = None,
+                              radius_by_link: str = "") -> None:
+    """**무엇을 끄고 떴는지 시작 로그에 크게 찍는다.** 조용한 것이 이 프로젝트의 함정이다.
+
+    `--exclude-links` 와 `--sphere-*` 가 같은 성질의 flag 이고 같은 크기로 말한다. 이 함수를
+    따로 뺀 이유는 하나다 — 메시지가 실제로 나가는지 테스트가 MuJoCo 없이 확인할 수 있어야
+    한다. `build_ag3s` 안에 묻어 두면 그 검사가 소스 문자열 비교로 내려간다.
+    """
+    log = logging.getLogger(__name__)
+    if links != "arms":
+        log.warning(
+            "!!! CONSTRAINT SCOPE IS %s, NOT THE DEFAULT 'arms' !!!\n"
+            "    제약이 걸리는 link: %s\n"
+            "    **여기 없는 것은 무엇에 부딪혀도 아무도 막지 않습니다** — 팔뚝·몸통·반대팔이"
+            " 그 안에 있습니다. 진단용입니다 (T7b).",
+            links.upper(), ", ".join(str(n) for n in constraint_links) or "(전신)")
+    if not self_collision:
+        log.warning(
+            "!!! SELF-COLLISION IS OFF (--no-self-collision) !!!\n"
+            "    쥔 물체와 로봇 자신의 쌍이 전부 면제됩니다 — 로봇이 자기 자신과 부딪혀도 "
+            "아무도 모릅니다.\n"
+            "    이 repo 에 로봇-로봇 쌍 검사는 원래 없습니다 (N1). 이 flag 가 끄는 것은 "
+            "**쥔 물체 대 로봇 구** 한 블록뿐이고, 그것이 여기 있는 자기 충돌 전부입니다.\n"
+            "    행은 남고 mask 만 0 이므로 다시 켜는 것은 flag 를 빼는 것뿐입니다.")
+    if target_field_policy == "exclude_authorized":
+        log.warning(
+            "!!! TARGET IS EXCLUDED FROM THE DISTANCE FIELD FOR AUTHORIZED LINKS "
+            "(--target-field-policy exclude-authorized) !!!\n"
+            "    권한 있는 link (%s) 의 질의점은 **target 이 빠진 계층**에 거리를 묻습니다 — "
+            "그 link 은 아직 쥐지 않은 target 을 통과할 수 있습니다.\n"
+            "    권한 없는 link 은 그대로이고, table·crate 는 그 계층에도 남아 있으므로 "
+            "보호가 유지됩니다. 쥔 뒤에는 이 정책이 돌지 않습니다 (그때 target 은 crate 이고 "
+            "crate 는 빼면 안 됩니다).",
+            ", ".join(str(n) for n in authorized_links) or "(없음 — 아무 일도 일어나지 않습니다)")
+    if target_field_policy == "exclude_all":
+        log.warning(
+            "!!! TARGET IS EXCLUDED FROM THE DISTANCE FIELD FOR **EVERY** LINK "
+            "(--target-field-policy exclude-all) !!!\n"
+            "    **E1 이 되살아납니다.** 조작 대상을 필드에서 파내면 손끝뿐 아니라 몸통·전완·"
+            "반대팔에게도 사라집니다 — 사과 위로 팔꿈치가 지나가도 아무도 막지 않습니다.\n"
+            "    사용자가 명시한 fallback 입니다. 이름으로 빼는 쪽은 exclude-authorized "
+            "입니다. table·crate 는 어느 쪽에서도 그대로 막습니다.")
+    extents = dict(link_extents or {})
+    if link_scales or extents:
+        # **굵기와 절단을 한 warning 에 같이 찍는다.** 둘은 다른 축이지만 같은 link 에 함께
+        # 걸리는 것이 정상이고 (자르기만 하면 잘린 끝의 구가 여전히 자기 반지름만큼 부푼다),
+        # 따로 찍으면 읽는 사람이 유효 반지름을 손으로 계산해야 한다. 그래서 마지막 줄에
+        # **결과**(link 별 유효 반지름)를 함께 싣는다.
+        bits = []
+        if link_scales:
+            bits.append("    PER-LINK CAPSULE RADIUS SCALE: " + ", ".join(
+                f"{k}={v:g}" for k, v in sorted(link_scales.items())))
+        if extents:
+            bits.append("    CAPSULES CUT SHORT (link frame z, mm): " + ", ".join(
+                f"{k}=[{lo * 1000:+.0f}, "
+                + ("inf" if hi == float("inf") else f"{hi * 1000:+.0f}") + "]"
+                for k, (lo, hi) in sorted(extents.items())))
+        if radius_by_link:
+            bits.append(f"    link 별 유효 반지름: {radius_by_link}")
+        log.warning(
+            "!!! THE CONSTRAINT SPHERE MODEL IS NOT THE DEFAULT ONE !!!\n%s\n"
+            "    URDF capsule 보다 얇거나 짧은 구는 그만큼 로봇을 덮지 못합니다 — 아래 coverage "
+            "report 가 그 수치와 **어느 하위 link 이 풀려났는지**를 적습니다. 자기 필터 모델은 "
+            "손대지 않습니다%s.",
+            "\n".join(bits),
+            "" if filter_spheres is None else f" ({filter_spheres} 구 그대로)")
+
+
 def sphere_options(args) -> dict:
     """`--sphere-*` flag 중 **실제로 준 것만** 담은 dict (T6f).
 
@@ -89,6 +362,12 @@ def sphere_options(args) -> dict:
         "max_spheres_per_capsule": args.max_spheres_per_capsule,
         "capsule_radius_scale": args.capsule_radius_scale,
         "max_sphere_radius": args.max_sphere_radius,
+        # 안 준 flag 는 빈 dict 가 되고, 빈 dict 는 여기서 떨어진다 — `None` 검사와 같은 규약.
+        "capsule_radius_scale_by_link":
+            parse_link_scales(getattr(args, "capsule_radius_scale_link", ())) or None,
+        # 길이 손잡이도 같은 통로로 간다 — 안 준 flag 는 키가 아예 없다.
+        "capsule_extent_by_link":
+            parse_link_extents(getattr(args, "capsule_extent_link", ())) or None,
     }
     return {k: v for k, v in given.items() if v is not None}
 
@@ -120,7 +399,11 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
                attached_sign_threshold: float = 1.5,
                max_field_age_sec: float | None = None,
                exclude_links: Sequence[str] = (),
-               constraint_sphere_options: dict | None = None):
+               constraint_sphere_options: dict | None = None,
+               self_collision: bool = True,
+               target_field_policy: str = "relax",
+               plan_horizon_steps: int | None = None,
+               rows_per_step: int | None = None):
     """서버가 쓸 AG3S. 자기 필터는 전신, 제약은 양팔.
 
     **두 모델은 일부러 다르다.** 자기 필터는 바퀴·베이스까지 있어야 한다 — 머리 카메라가 자기
@@ -138,12 +421,16 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     이유다: 자기 필터가 가늘어지면 그 link 의 점이 장애물로 새고, 그것은 제약을 푸는 것과 반대
     방향의 사고다. 덮지 못하는 capsule 이 생기면 `UrdfSphereChain` 이 경고를 찍고 여기서
     `coverage_report()` 를 한 번 더 찍는다 — 조용히 가늘어진 모델로 떠 있는 것이 가장 나쁘다.
+
+    `links="gripper"` 는 **손가락 넷만** 제약에 남긴다 (T7b 진단). `self_collision=False` 는 쥔
+    물체 대 로봇 구 블록을 끈다 — 이 repo 의 자기 충돌은 그 블록 하나뿐이다. 둘 다 기본값이
+    예전 그대로이고, 기본이 아닐 때는 `announce_diagnostic_scope` 가 시작 로그에 크게 찍는다.
     """
     import mujoco
 
-    from benchmark.ag3s.config import AG3SConfig
+    from benchmark.ag3s.config import DEFAULT_CONTACT_LINKS, AG3SConfig
     from benchmark.ag3s.experiments.reports.grounding_report import (
-        ARM_LINKS, build_constraint_robot_model, build_robot_model)
+        build_constraint_robot_model, build_robot_model)
     from benchmark.ag3s.experiments.sources.mujoco_source import TransportScene
     from benchmark.ag3s.runtime.pipeline import AG3S
 
@@ -152,7 +439,25 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     filter_robot = build_robot_model(scene)
     spheres = dict(constraint_sphere_options or {})
     constraint_robot = build_constraint_robot_model(
-        scene, link_filter=None if links == "all" else ARM_LINKS, sphere_options=spheres)
+        scene, link_filter=constraint_link_filter(links), sphere_options=spheres)
+    # **기본이 아닌 범위·자기충돌·굵기로 떠 있으면 여기서 크게 말한다.** 제약 모델을 만든
+    # 직후에 찍는 이유는, 이 아래의 `--exclude-links` 경고와 coverage report 가 그 뒤에 오면서
+    # 로그가 "무엇을 뺐는가" 순서로 읽히게 하기 위해서다.
+    policy = resolve_target_field_policy(target_field_policy)
+    announce_diagnostic_scope(
+        links=links, self_collision=self_collision,
+        link_scales=dict(spheres.get("capsule_radius_scale_by_link") or {}),
+        constraint_links=sorted(set(constraint_robot.sphere_link_names)),
+        filter_spheres=filter_robot.n_spheres,
+        target_field_policy=policy,
+        link_extents=dict(spheres.get("capsule_extent_by_link") or {}),
+        radius_by_link=constraint_robot.radius_by_link_summary(),
+        # 권한 집합의 정본은 `contact.contact_links` 다. 여기서는 **읽기만** 한다 — 서버가
+        # 자기 목록을 따로 들고 있으면 config 를 고친 날 로그와 실제가 갈라진다. 제약 모델에
+        # 없는 link 은 애초에 질의점이 없으므로 교집합만 찍는다.
+        authorized_links=sorted(
+            {n for names in DEFAULT_CONTACT_LINKS.values() for n in names}
+            & set(constraint_robot.sphere_link_names)))
     # **제약 모델에서만 뺀다.** 자기 필터(`filter_robot`)는 손대지 않는다 — 거기서 빼면 그
     # link 의 점이 필터를 통과해 장애물로 새고, 그것은 제약을 푸는 것과 반대 방향의 사고다.
     links_label = links
@@ -171,6 +476,11 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
             "않는다** — 이 link 가 무엇에 부딪혀도 이제 아무도 막지 않는다. 진단용 flag 다",
             ", ".join(excluded), before, constraint_robot.n_spheres,
             before - constraint_robot.n_spheres, filter_robot.n_spheres)
+    constraint_section: dict = {}
+    if not self_collision:
+        constraint_section["self_collision"] = False
+    if policy != "relax":
+        constraint_section["target_field_policy"] = policy
     esdf = {"voxel_size": voxel, "max_distance": 0.4,
             "exclude_support_surfaces": False,
             "backend": backend,
@@ -185,13 +495,23 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
         "pointcloud": {"range_max": range_max},
         "esdf": esdf,
         **({"timing": timing} if timing else {}),
+        # **기본인 경우에는 키를 아예 넣지 않는다.** 기본값을 여기 다시 적으면
+        # `ConstraintConfig` 와 두 곳이 되고, 갈라지는 날 갈라진 쪽이 안전 판정이다
+        # (`sphere_options` 와 같은 규약). 두 flag 가 같은 section 을 쓰므로 한 dict 로 모은다.
+        **({"constraint": constraint_section} if constraint_section else {}),
     })
     logging.info("AG3S: self-filter %d spheres, constraints %d spheres (%s)",
                  filter_robot.n_spheres, constraint_robot.n_spheres, links_label)
+    # **구 개수와 행 개수를 갈라 찍는다.** 구를 촘촘하게 만들면 구는 늘지만 QP 행은 안 늘고,
+    # 그 구분이 없으면 "구를 늘렸다" 가 "실시간을 잃었다" 로 읽힌다.
+    announce_row_budget(n_constraint_spheres=constraint_robot.n_spheres,
+                        n_filter_spheres=filter_robot.n_spheres,
+                        planned=plan_horizon_steps, rows_per_step=rows_per_step)
     # **구 굵기는 시작할 때 크게 말한다.** 기본값이면 한 줄이고, 덮지 못하는 capsule 이 있으면
     # 여러 줄짜리 경고다 — `--exclude-links` 와 같은 성질의 flag 이므로 같은 크기로 말한다.
     report = constraint_robot.coverage_report()
-    if constraint_robot.coverage_shortfall:
+    if (constraint_robot.coverage_shortfall or constraint_robot.capsule_trims
+            or getattr(constraint_robot, "_spacing_capped", ())):
         logging.warning("constraint sphere model:\n%s", report)
         logging.warning("self-filter model is untouched by --sphere-* (%d spheres) — 거기서 "
                         "가늘어지면 그 link 의 점이 필터를 통과해 장애물로 샌다",
@@ -304,6 +624,17 @@ def wire_reference_key() -> str:
     return wire.ACTIONS_REFERENCE
 
 
+def wire_shadow_key() -> str:
+    """로그에 찍을 **모드** 키 이름. `wire` 에서 가져온다 — 문자열을 두 곳에 박으면 갈라진다.
+
+    `wire_reference_key()` 와 따로 있는 이유가 T9 의 요점이다: 예전에는 그 한 키가 데이터와
+    모드를 겸했고, 그 겸직 때문에 closed loop 이 원본 청크를 실을 수 없었다.
+    """
+    from benchmark.trajopt import wire
+
+    return wire.SHADOW
+
+
 def build_parser() -> argparse.ArgumentParser:
     """CLI. `main()` 과 테스트가 **같은 parser** 를 본다.
 
@@ -320,9 +651,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--default-prompt", default=None)
     ap.add_argument("--voxel", type=float, default=0.020, help="ESDF 복셀 크기 (m)")
     ap.add_argument("--range-max", type=float, default=2.0, help="점군 최대 거리 (m)")
-    ap.add_argument("--links", choices=("arms", "all"), default="arms",
-                    help="제약을 걸 링크. arms 는 양팔과 손끝만 — 바퀴·베이스는 결정 변수가 "
-                         "아니라 고칠 수 없는 위반을 상수로 깔아 실제 신호를 묻는다")
+    ap.add_argument("--links", choices=LINK_GROUPS, default="arms",
+                    help="제약을 걸 링크. arms(기본) 는 양팔과 손끝만 — 바퀴·베이스는 결정 "
+                         "변수가 아니라 고칠 수 없는 위반을 상수로 깔아 실제 신호를 묻는다. "
+                         "gripper 는 **손가락 넷만** (ee_finger_l1/l2/r1/r2, T7b 진단): 팔뚝·"
+                         "손목·몸통·반대팔이 전부 제약에서 빠지므로 무엇이 미는지 한 번에 "
+                         "갈리지만, 빠진 것은 무엇에 부딪혀도 아무도 막지 않는다. all 은 전신")
     ap.add_argument("--exclude-links", nargs="+", default=(), metavar="LINK",
                     help="제약 모델에서 **뺄** link 이름. 예: --exclude-links "
                          "link_left_arm_5 link_right_arm_5. --links 가 고른 집합에서 뺀다. "
@@ -355,10 +689,65 @@ def build_parser() -> argparse.ArgumentParser:
                          "작으면 구가 URDF capsule 을 **덮지 못하고**, 그 사실을 시작 로그에 "
                          "크게 찍는다. RB-Y1 `link_*_arm_5` 는 URDF 75 mm 인데 MJCF mesh "
                          "실측은 65.4~68.4 mm 다 — 그 차이만큼은 근사에서 온 살이다")
+    ap.add_argument("--capsule-radius-scale-link", nargs="+", default=(), metavar="LINK=F",
+                    help="**link 별** capsule 반지름 배율 (T7b). --capsule-radius-scale 는 팔 "
+                         "전체에 걸리므로 손가락을 얇게 하면 팔뚝·반대팔도 같이 얇아진다 — 그 "
+                         "굵기가 필요한 부분이 바로 거기다. 예: --capsule-radius-scale-link "
+                         "gripper=0.35. 키는 link 이름이거나 --links 의 집합 이름(arms·gripper)"
+                         "이고, 집합 이름을 허용하는 것이 손가락 넷을 손으로 적는 오타 위험을 "
+                         "없애기 위한 것이다. 없는 이름이면 서버가 시작하지 않는다. 이름을 안 "
+                         "적은 link 는 --capsule-radius-scale 값을 그대로 쓴다")
+    ap.add_argument("--capsule-extent-link", nargs="+", default=(), metavar="LINK=Z",
+                    help="**link 별 capsule 절단** (T8b). 단위는 미터이고, LINK=Z 는 link "
+                         "frame 에서 z 이상만 남긴다 (RB-Y1 팔의 원위 방향이 −z 이므로 곧 원위 "
+                         "절단면이다). LINK=Zmin:Zmax 로 구간을 줄 수도 있다. 예: "
+                         "--capsule-extent-link link_left_arm_5=-0.10. 그 capsule 은 URDF 에서 "
+                         "r 75 mm · L 250 mm 이고 축이 z ∈ [−0.225, +0.025] 라, 손목(0.0)·"
+                         "FT sensor(−0.1087)·손바닥(−0.1548)·그리퍼 뿌리(−0.2278)를 **하나가 "
+                         "통째로 삼킨다**. 자르면 그 구간에 구가 없어지므로 "
+                         "`--links` 가 손바닥(ee_left/ee_right)을 포함하는지 확인하라 — "
+                         "기본 집합은 포함한다. 굵기 배율과 **함께** 걸 수 있고 그것이 정상이다 "
+                         "(자르기만 하면 잘린 끝의 구가 여전히 자기 반지름만큼 부푼다). 없는 "
+                         "이름·capsule 없는 link·mm 로 적은 값은 서버가 시작하지 않는다")
+    ap.add_argument("--no-self-collision", action="store_true",
+                    help="쥔 물체 대 로봇 구 제약을 끈다 (T7b 진단). **기본은 켠 상태이고 그것이 "
+                         "지금까지의 서버다.** 이 repo 에 로봇-로봇 쌍 검사는 원래 없으므로 "
+                         "(N1), 이 블록이 여기 있는 자기 충돌 전부다 — 끄면 쥔 물체가 팔뚝·"
+                         "토르소·반대팔을 통과해도 아무도 막지 않는다. 행은 남고 mask 만 0 이 "
+                         "되므로 다시 켜는 것은 이 flag 를 빼는 것뿐이다 (행 수·희소성 불변)")
+    ap.add_argument("--target-field-policy", choices=target_field_policy_choices(),
+                    default="relax",
+                    help="아직 **쥐지 않은** target 을 거리장에서 어떻게 다룰지 (T8b). "
+                         "relax(기본) = 지금까지의 서버: target 은 필드에 그대로 있고 권한 있는 "
+                         "link 의 마진만 완화한다. exclude-authorized = 권한 있는 link "
+                         "(contact.contact_links) 의 질의점만 **target 이 빠진 계층**에 거리를 "
+                         "묻는다 — 마진은 0 보다 작아질 수 없는데 성공한 grasp 는 손끝이 사과 "
+                         "표면을 17.96 mm 관통하므로 마진으로는 닿지 않는다 (T7a). "
+                         "exclude-all = 모든 제약 구가 그 계층에 묻는다 — **E1 이 되살아난다** "
+                         "(몸통·전완·반대팔에게도 사과가 사라진다). 어느 쪽이든 table·crate 는 "
+                         "그 계층에도 있으므로 보호가 유지되고, 쥔 뒤에는 정책이 돌지 않는다 "
+                         "(그때 target 은 crate 이고 crate 는 빼면 안 된다)")
     ap.add_argument("--max-sphere-radius", type=float, default=None, metavar="R",
                     help="제약 모델 구 반지름의 **절대 상한** (m). 팽창까지 끝난 값에 걸린다 "
                          "(팔뚝 기본값 81.2 mm). `--capsule-radius-scale` 과 같은 성질이고, "
                          "덮지 못하면 시작 로그에 크게 찍는다")
+    # --- 목적함수 가중치 (T9) ------------------------------------------------------------
+    # **제약이 하나도 활성이 아닌 판에서도 TO 가 청크를 고친다** (실행되는 8 step 안에서 중앙값
+    # 2.6°, 최대 8.8°). 그러면 남은 변형은 전부 이 넷이 만든 것이므로, 훑을 수 있어야 한다.
+    # 지금까지는 CLI 가 없어 코드를 고쳐야만 실험할 수 있었다. **기본값은 여기 적지 않는다** —
+    # `None` 이면 키를 안 넣고 `CostConfig` 의 값이 그대로 쓰인다 (`sphere_options` 와 같은 규약).
+    ap.add_argument("--w-track", type=float, default=None, metavar="W",
+                    help="정책 청크를 따라가는 항의 가중치 (기본 1.0). **내리면 TO 가 청크를 더 "
+                         "자유롭게 바꾼다** — 잡기 동작이 빗나가는 원인을 이 축에서 찾는다")
+    ap.add_argument("--w-smooth", type=float, default=None, metavar="W",
+                    help="2 차 차분(jerk) 항의 가중치 (기본 0.05). 올리면 궤적이 매끄러워지는 "
+                         "대신 청크의 급한 변화(파지 순간의 손목 꺾임)를 깎는다")
+    ap.add_argument("--w-continuity", type=float, default=None, metavar="W",
+                    help="앞 청크의 겹치는 꼬리와의 연속성 항 (기본 0.5). **0 이면 그 항이 "
+                         "아예 없어진다** (`refiner` 가 그때 이전 청크를 안 쓴다)")
+    ap.add_argument("--w-slack", type=float, default=None, metavar="W",
+                    help="제약 위반 slack 의 선형 벌점 (기본 1e3). `w_track` 보다 커야 하고 "
+                         "(안 그러면 최적화기가 위반을 사는 편이 싸다) config 가 그것을 검사한다")
     ap.add_argument("--no-safe", action="store_true",
                     help="AG3S+TO 를 감싸지 않는다. 기존 서빙과 동일")
     ap.add_argument("--shadow", action="store_true",
@@ -419,7 +808,37 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         ap.error("--exclude-links 는 제약 모델을 고치는 flag 입니다 (--no-safe 는 그 모델을 "
                  "아예 안 만듭니다). 그대로 띄우면 flag 가 아무 일도 안 하는데 link 를 뺐다고 "
                  "믿게 됩니다")
-    if args.no_safe and sphere_options(args):
+    weights = cost_overrides(args)
+    if weights and args.no_safe:
+        ap.error("--w-* 는 최적화기의 목적함수를 고치는 flag 입니다 (--no-safe 는 최적화기를 "
+                 "아예 안 돌립니다). 그대로 띄우면 목적함수를 바꿨다고 믿게 되는데, 실은 "
+                 "정책 청크가 그대로 나가는 서버가 뜹니다")
+    if args.target_field_policy != "relax" and args.no_safe:
+        ap.error("--target-field-policy 는 안전 계층의 거리장 질의를 고치는 flag 입니다 "
+                 "(--no-safe 는 그 계층을 아예 안 만듭니다). 그대로 띄우면 target 을 필드에서 "
+                 "뺐다고 믿게 되는데, 실은 어떤 충돌 제약도 없는 서버가 뜹니다")
+    if args.target_field_policy != "relax":
+        # **서버가 뜨기 전에 막는다.** 이 두 조합은 첫 프레임에서 죽는데, 그때는 체크포인트
+        # 두 벌이 이미 GPU 에 올라간 뒤이고 로컬은 이미 붙어 있다.
+        if args.esdf_backend != "curobo":
+            ap.error("--target-field-policy 는 target 없는 계층을 요구하고, 그 계층은 cuRobo "
+                     "backend 만 만듭니다 (--esdf-backend curobo). legacy 로는 정책을 켰다고 "
+                     "믿은 채 아무 일도 일어나지 않습니다")
+        if not args.fine_voxel:
+            ap.error("--target-field-policy 는 미세 계층 한 겹으로 만들어집니다. "
+                     "--fine-voxel 0 은 단일 계층이므로 정책이 아무 일도 하지 않습니다")
+    if args.no_self_collision and args.no_safe:
+        ap.error("--no-self-collision 은 제약 모델을 고치는 flag 입니다 (--no-safe 는 그 모델을 "
+                 "아예 안 만듭니다). 그대로 띄우면 자기 충돌을 껐다고 믿게 되는데, 실은 어떤 "
+                 "충돌 제약도 없는 서버가 뜹니다")
+    # **`--capsule-radius-scale-link` 의 형식 오류는 여기서 죽는다.** `sphere_options` 가
+    # 파싱하므로 아래 호출이 그것을 겸하는데, 그 예외는 argparse 가 아니라 traceback 으로
+    # 나가고 그때는 체크포인트가 이미 올라간 뒤다.
+    try:
+        options = sphere_options(args)
+    except ValueError as exc:
+        ap.error(str(exc))
+    if args.no_safe and options:
         ap.error("--sphere-* 는 제약 모델의 구를 고치는 flag 입니다 (--no-safe 는 그 모델을 "
                  "아예 안 만듭니다). 그대로 띄우면 팔을 가늘게 모델링했다고 믿은 채 안전 계층이 "
                  "꺼진 서버가 뜹니다")
@@ -479,6 +898,14 @@ def main() -> None:
                       **({"shadow": True} if args.shadow else {}),
                       **({"exclude_links": list(args.exclude_links)}
                          if args.exclude_links else {}),
+                      # **끈 경우에만 남긴다.** 켠 실행의 기록을 T0 때와 같은 키 집합으로
+                      # 두면서, 끈 실행은 반드시 기록으로 구별된다 — 자기 충돌이 꺼진 기록을
+                      # 켜진 것과 나란히 읽는 것이 이 flag 의 가장 나쁜 실패다.
+                      **({"self_collision": False} if args.no_self_collision else {}),
+                      # **기본이 아닐 때만 남긴다.** 같은 이유다 — target 이 필드에서 빠진
+                      # 기록을 빠지지 않은 것과 나란히 읽는 것이 이 flag 의 가장 나쁜 실패다.
+                      **({"target_field_policy": args.target_field_policy}
+                         if args.target_field_policy != "relax" else {}),
                       # **다듬는 창은 항상 남긴다.** T6f 에서 기본값이 32 → 실행 창으로
                       # 바뀌었으므로, 안 남기면 T6d 기록과 이 기록이 meta 로 구별되지 않는다 —
                       # 그리고 둘은 서로 다른 것을 재고 있다.
@@ -487,9 +914,13 @@ def main() -> None:
                          if sphere_options(args) else {})})
             logging.info("recording AG3S constraint diagnostics to %s", recorder.run_dir)
 
+        # **준 것만 넣는다.** 빈 dict 면 키가 없고, 그러면 `CostConfig` 기본값이 그대로다 —
+        # 호출이 예전과 글자 그대로 같다는 뜻이다 (`sphere_options` 와 같은 규약).
+        weights = cost_overrides(args)
         to_config = TrajOptConfig.from_dict({
             "collision": {"backend": "esdf", "esdf_margin": args.esdf_margin,
                           "use_support_planes": False},
+            **({"cost": weights} if weights else {}),
             # 기하 인증 요구는 여기 **한 곳**에서만 켜고 끈다.
             "safety": {"require_certified_geometry": not args.allow_uncertified},
             # 다듬는 창. `execution` 이면 `horizon.execution_length` 를 따라가므로 실행 길이가
@@ -506,6 +937,21 @@ def main() -> None:
             "예지력이 생기지만 **회피를 미룰 자리도 생긴다** (T6d)")
         logging.info("TO esdf_margin: %.1f mm (구 반지름과 합쳐야 중심 기준 요구 자유공간이다)",
                      to_config.collision.esdf_margin * 1000)
+        announce_cost_weights(weights)
+        logging.info(
+            "TO objective: w_track=%g w_smooth=%g w_continuity=%g w_slack=%g%s",
+            to_config.cost.w_track, to_config.cost.w_smooth,
+            to_config.cost.w_continuity, to_config.cost.w_slack,
+            "" if weights else " (전부 기본값)")
+        # **응답이 원본 청크를 함께 싣는다** (T9). shadow 모드와 **다른 것**이다 — 이것은
+        # 기록에 싣는 것이고, shadow 는 로컬이 그것을 **실행하는** 모드다. 둘을 헷갈리면
+        # "shadow 라고 적힌 closed loop" 이 남는다.
+        logging.info(
+            "response carries %r on every chunk (T9): the policy's ORIGINAL chunk rides next to "
+            "the refined one so 'how much did TO change it' is measurable in closed loop too. "
+            "This is NOT shadow mode — the robot still executes the refined chunk. Mode is "
+            "declared separately as %r=%s. Cost: a planning record row grows from ~19.8 KB to "
+            "~36.7 KB.", wire_reference_key(), wire_shadow_key(), bool(args.shadow))
 
         served = SafePolicy(
             served_policy,
@@ -517,7 +963,11 @@ def main() -> None:
                             attached_sign_threshold=args.attached_sign_threshold,
                             max_field_age_sec=args.max_field_age_sec,
                             exclude_links=args.exclude_links,
-                            constraint_sphere_options=sphere_options(args)),
+                            constraint_sphere_options=sphere_options(args),
+                            self_collision=not args.no_self_collision,
+                            target_field_policy=args.target_field_policy,
+                            plan_horizon_steps=horizon.planned,
+                            rows_per_step=to_config.reduction.rows_per_step),
             static_geometry=load_static_geometry(args.static_geometry, args.model_xml,
                                                  links=args.links),
             to_config=to_config,

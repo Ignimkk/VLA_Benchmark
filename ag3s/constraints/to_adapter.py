@@ -192,6 +192,38 @@ def build_constraint_set(
             builder.sphere_link_names, [SourceType.TARGET], context=ctx, target_grounded=True,
         )[:, 0]
 
+    # ESDF 쪽 **target 제외** — 마진이 아니라 `d` 자체를 바꾼다 (T8b, 사용자 판정).
+    #
+    # 마진 완화로는 닿지 않는 자리가 있다: 제약은 `d − r ≥ m` 이고 `m ≥ 0` 이므로 표면 안쪽
+    # (음수 여유)을 허용할 수 없는데, 성공한 shadow 궤적의 손끝 구는 사과 표면을 −17.96 mm
+    # 관통한다 (T7a 실측). 그래서 `margin_scale = 0.0` 인 GRASP phase 에서도 그 자세는
+    # **feasible set 안에 없다** — 위반이 아니라 해가 없는 것이다.
+    #
+    # 마스크가 `True` 인 구는 trajopt 의 `_esdf_clearance` 에서 **target 이 빠진 계층**에
+    # 거리를 묻는다. 행을 끄는 것이 아니다: 그 계층도 table·crate 를 그대로 담고 있다.
+    #
+    # 조건이 넷이고 하나라도 어긋나면 `None`(= 지금 동작)이다.
+    # 1. 정책이 `relax`(기본)가 아니다.
+    # 2. **쥔 것이 없다** — 쥔 뒤의 target 은 목적지(crate)이고 그것은 빠지면 안 된다 (규칙 3).
+    # 3. target 이 grounding 됐다.
+    # 4. 필드가 실제로 그 계층을 들고 있다 — 없으면 켰다고 믿은 채 아무 일도 안 일어난다.
+    target_field_policy = str(getattr(builder.constraint_config, "target_field_policy", "relax"))
+    target_field_exclude = None
+    if (target_field_policy != "relax" and attached is None and target is not None
+            and builder.n_robot_spheres and getattr(esdf, "has_target_free", False)):
+        names = [str(n) for n in builder.sphere_link_names]
+        if target_field_policy == "exclude_all":
+            # **E1 이 여기서 되살아난다.** 몸통·전완·반대팔에게도 사과가 사라진다. 사용자가
+            # 명시한 fallback 이고, `ConstraintBuilder` 생성자가 그 사실을 크게 외친다.
+            mask = np.ones(len(names), bool)
+        else:
+            # **이름으로 빼므로 E1 이 재발하지 않는다.** 권한 집합은 `contact.contact_links`
+            # 하나이고 (config 에서 고친다), 마진 완화가 쓰는 것과 **같은** 집합이다 — 두 곳에
+            # 따로 두면 "만져도 되는 link" 와 "사과를 통과할 수 있는 link" 가 갈라진다.
+            authorized = builder.clearance_policy.authorized_links(ctx)
+            mask = np.asarray([n in authorized for n in names], bool)
+        target_field_exclude = mask if mask.any() else None
+
     # **여기가 사유의 마지막 관문이다.** 이 함수가 모든 정상 경로의 `validity` 를 확정하므로,
     # degraded 인데 코드 달린 사유가 하나도 없으면 그 사실 자체를 사유로 남긴다 — 새 DEGRADED
     # 분기가 `degradation.reason()` 을 빠뜨려도 와이어에 빈 사유가 나가지 않는다.
@@ -231,6 +263,8 @@ def build_constraint_set(
         esdf=esdf,
         manipulated_link_margin=manipulated_link_margin,
         manipulated=manipulated,
+        target_field_exclude=target_field_exclude,
+        target_field_policy=target_field_policy,
     )
 
 

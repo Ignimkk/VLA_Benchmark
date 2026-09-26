@@ -49,6 +49,7 @@ from benchmark.ag3s.constraints.to_adapter import build_constraint_set
 from benchmark.ag3s.runtime.degradation import ensure_reason, reason
 from benchmark.ag3s.types import (
     DESTINATION_LABEL,
+    TARGET_LABEL,
     AttachedCollisionGeometry,
     AttentionPointCloud,
     CameraObservation,
@@ -957,6 +958,37 @@ class AG3S:
         labelled = None
         if destination_points is not None and len(destination_points):
             labelled = {DESTINATION_LABEL: np.asarray(destination_points, np.float64)}
+        # **target 도 라벨로 싣는다** (T8b) — `destination` 과 같은 규약이다. 라벨은 target 을
+        # 필드에서 빼지 **않는다.** "지금 가장 가까운 표면이 target 인가" 를 물을 수 있게 할
+        # 뿐이고, 그것은 진단용이다 (어느 로봇 구가 사과 때문에 막혀 있는지 — T8a 가 묻는 질문).
+        # 완화 판정 자체는 라벨에 기대지 않는다: 거친 격자에서 값(삼선형)과 라벨(최근접 격자점)이
+        # 어긋나는 자리가 하필 파지하는 자리다 (`CuroboEsdfField.target_free_distance`).
+        #
+        # **쥔 것이 없을 때만 싣는다.** 쥔 뒤에는 attention 의 target 이 목적지(crate)이고,
+        # crate 는 그 안에 넣어야 하므로 필드에서 빠지면 안 된다.
+        nothing_held = self._attached is None
+        if nothing_held and points is not None and len(points):
+            labelled = dict(labelled or {})
+            labelled[TARGET_LABEL] = np.asarray(points, np.float64)
+        # target 없는 계층은 **정책이 요구할 때만** 만든다. 기본(`relax`)에서는 이 인자가
+        # `None` 이고 프레임 비용이 예전과 같다.
+        policy = self.config.constraint.target_field_policy
+        target_free_points = None
+        if (self.config.constraint.excludes_target_from_field and nothing_held
+                and points is not None and len(points)):
+            if cfg.backend != "curobo":
+                raise ValueError(
+                    f"constraint.target_field_policy={policy!r} 는 target 없는 계층을 요구하고, "
+                    "그 계층은 cuRobo backend 만 만듭니다 (`CuroboFieldBuilder`). legacy "
+                    "EsdfBuilder 로는 정책을 켰다고 믿은 채 아무 일도 일어나지 않으므로 여기서 "
+                    "멈춥니다 — esdf.backend='curobo' 로 두거나 정책을 'relax' 로 두십시오")
+            if not getattr(cfg, "fine_voxel_size", None):
+                raise ValueError(
+                    f"constraint.target_field_policy={policy!r} 는 미세 계층을 요구합니다 "
+                    "(target 없는 계층은 그 한 겹으로 만들어집니다). "
+                    "esdf.fine_voxel_size 가 비어 있어 단일 계층으로 돌고 있으므로, 켠 정책이 "
+                    "아무 일도 하지 않습니다 — 값을 주거나 정책을 'relax' 로 두십시오")
+            target_free_points = np.asarray(points, np.float64)
         # 쥔 물체는 **양쪽에 동시에 있으면 안 된다** (A2). 파지가 닫히는 순간 그 물체는
         # 로봇 쪽 질의점이 되므로 (E3 — 쥔 물체가 optimizer 에 도달하지 않는다), 장애물 쪽에서는
         # 빠져야 한다. 안 빼면 자기 자신에게 부딪히고 그 행은 **어떤 해로도 못 푼다**.
@@ -975,6 +1007,11 @@ class AG3S:
                 robot_state=robot_state)
         field = self._esdf_builder.update(depth_cameras, target_points=points,
                                           exclude_target=False,
+                                          # 파내는 것이 아니라 **한 겹 더 만드는 것**이다 (T8b).
+                                          # 본 계층은 한 복셀도 바뀌지 않는다.
+                                          **({} if target_free_points is None else {
+                                              "target_free_points": target_free_points,
+                                              "target_free_label": TARGET_LABEL}),
                                           support_points=support_points,
                                           attached_points=attached_points,
                                           labelled_points=labelled,

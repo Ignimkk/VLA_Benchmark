@@ -29,7 +29,7 @@ import logging
 import math
 import pathlib
 import xml.etree.ElementTree as ET
-from typing import Any, Iterable, Optional, Sequence
+from typing import Any, Iterable, Mapping, Optional, Sequence
 
 import numpy as np
 
@@ -66,6 +66,93 @@ class CoverageShortfall:
                 f"덮으려면 {self.required_radius * 1000:.1f} mm 필요 "
                 f"({self.shortfall_m * 1000:.1f} mm 부족; URDF capsule "
                 f"r={self.capsule_radius * 1000:.1f} L={self.capsule_length * 1000:.1f} mm)")
+
+@dataclasses.dataclass(frozen=True)
+class CapsuleTrim:
+    """한 link 의 capsule 을 **link frame z 로 잘랐다**는 기록.
+
+    굵기(`capsule_radius_scale_by_link`)와 **다른 축**이다. 굵기는 구를 얇게 하고, 이것은 구를
+    **덜 놓는다** — 원위 쪽 구를 아예 만들지 않는 것이므로 그 구간은 어떤 행에도 안 나타난다.
+
+    RB-Y1 에서 이것이 필요한 이유는 하나다: `link_*_arm_5` 의 URDF capsule 은 r 75 mm ·
+    L 250 mm 이고 축이 link frame 에서 z ∈ [−0.225, +0.025] 인데, 같은 frame 에서 손목
+    (`link_*_arm_6`) 원점이 0.0, `FT_sensor_*` 가 −0.1087, 손바닥(`ee_*`)이 −0.1548,
+    2 지 그리퍼 뿌리가 −0.2278 이다. **이 capsule 하나가 손목·손바닥·그리퍼를 전부 삼킨다.**
+    다른 팔 capsule 은 r 40 / 35 mm 로 얇으므로 이 링크만 튀는 것이다.
+
+    `reach_*` 는 축이 아니라 **구 표면**이 닿는 z 다 (`중심 ± 유효반지름`). 자르는 것만으로는
+    표면이 그만큼 물러나지 않는다 — 반지름이 그대로면 잘린 끝의 구가 여전히 아래로 부푼다.
+    그래서 굵기 손잡이와 함께 쓰는 것이 정상이고, 두 손잡이는 서로 막지 않는다.
+    """
+
+    link: str
+    keep_z_min: float
+    keep_z_max: float
+    axis_z_min: float  # 자르기 전 축이 덮던 z 범위
+    axis_z_max: float
+    n_spheres_before: int
+    n_spheres_after: int
+    reach_z_min_before: float  # 구 **표면**이 닿던 z (중심 − 유효반지름)
+    reach_z_min_after: float
+    #: 이 link 아래에 달린 link 들 중, 잘라낸 구간에 원점이 있는 것. `(이름, z, 자기 구가 있나)`.
+    #: **`False` 인 것이 벌거벗은 쪽이다** — 이 capsule 이 덮어 주던 것이 사라졌는데 자기 구도
+    #: 없으면 그 link 은 무엇에 부딪혀도 아무도 막지 않는다.
+    released_links: tuple[tuple[str, float, bool], ...] = ()
+
+    @property
+    def released_m(self) -> float:
+        """구 표면이 물러난 거리. 0 이면 잘랐는데 **표면은 그대로**라는 뜻이다."""
+        return float(self.reach_z_min_after - self.reach_z_min_before)
+
+    def summary(self) -> str:
+        naked = [n for n, _, covered in self.released_links if not covered]
+        covered = [n for n, _, c in self.released_links if c]
+        parts = [
+            f"{self.link}: 축 z [{self.axis_z_min * 1000:+.1f}, {self.axis_z_max * 1000:+.1f}] "
+            f"→ 유지 [{self.keep_z_min * 1000:+.1f}, {self.keep_z_max * 1000:+.1f}] mm, "
+            f"구 {self.n_spheres_before} → {self.n_spheres_after} 개, "
+            f"표면 도달 z {self.reach_z_min_before * 1000:+.1f} → "
+            f"{self.reach_z_min_after * 1000:+.1f} mm ({self.released_m * 1000:+.1f} mm 물러남)",
+        ]
+        if covered:
+            parts.append(f"        풀려난 하위 link (자기 구 있음): {', '.join(covered)}")
+        if naked:
+            parts.append(f"        **풀려났고 자기 구가 없다**: {', '.join(naked)} "
+                         f"— 이 구간은 어떤 구에도 안 덮인다")
+        return "\n".join(parts)
+
+
+def _parse_extent(link: str, value: Any) -> tuple[float, float]:
+    """`capsule_extent_by_link` 한 항목 → `(z_min, z_max)` (link frame, m).
+
+    받는 형태는 둘이다.
+
+    * **숫자 하나** `z` → `(z, +inf)` = "z 이상만 남긴다". RB-Y1 팔의 **원위 방향이 −z** 이므로
+      (`link_*_arm_5` 축이 z ∈ [−0.225, +0.025], 손바닥이 −0.1548) 숫자 하나는 곧 원위 절단면이다.
+    * **쌍** `(z_min, z_max)` → 그 구간만 남긴다. 축 방향이 다른 link 에도 뜻이 분명하다.
+
+    형식이 아니면 **여기서 죽는다.** 조용히 넘기면 아무것도 안 잘린 채 잘랐다고 믿게 된다.
+    """
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        lo, hi = float(value), math.inf
+    else:
+        try:
+            lo, hi = (float(v) for v in value)
+        except Exception:
+            raise ValueError(
+                f"capsule_extent_by_link[{link!r}] 는 숫자 하나(원위 절단면 z) 이거나 "
+                f"(z_min, z_max) 쌍이어야 합니다: {value!r}") from None
+    if not (lo < hi):
+        raise ValueError(
+            f"capsule_extent_by_link[{link!r}] = ({lo}, {hi}): z_min < z_max 여야 합니다. "
+            f"빈 구간을 주면 그 link 의 구가 전부 사라지는데, 그것은 link 을 제약에서 빼는 것이고 "
+            f"--exclude-links 가 그 일을 합니다 (그쪽은 무엇이 빠졌는지 로그에 남깁니다)")
+    if not math.isfinite(lo) and not math.isfinite(hi):
+        raise ValueError(
+            f"capsule_extent_by_link[{link!r}] 가 양쪽 다 무한합니다 — 아무것도 자르지 않는 "
+            f"설정이므로 키를 빼십시오. 잘랐다고 믿은 채 예전 모델로 도는 것이 더 나쁩니다")
+    return (lo, hi)
+
 
 # --------------------------------------------------------------------------- URDF data model
 
@@ -411,6 +498,20 @@ class UrdfSphereChain:
             protects less than it says.
         max_sphere_radius: metres; caps the **final** (inflated) radius. Same bargain as
             `capsule_radius_scale` — reported, never silent. `None` (default) caps nothing.
+        capsule_radius_scale_by_link: `{link: scale}` — **per-link** override of
+            `capsule_radius_scale`, for links not named it. `None` (default) means there is no
+            override and every capsule uses the global scale, so the model is letter-for-letter the
+            one built before this argument existed.
+
+            It exists because the global scale is the wrong instrument for one question. Thinning
+            the gripper so the fingers can descend beside an object on a table also thins the
+            forearm, the upper arm and the opposite arm by the same factor, and those are the parts
+            whose thickness was the whole point (T7b). A link named here is thinned; every other
+            link keeps the number it had.
+
+            **An unknown link name is an error, not a no-op.** A typo would otherwise leave every
+            capsule at the global scale while the operator believes one link was thinned — the same
+            failure `--exclude-links` had to be guarded against.
     """
 
     def __init__(
@@ -425,6 +526,8 @@ class UrdfSphereChain:
         max_spheres_per_capsule: int = 8,
         capsule_radius_scale: float = 1.0,
         max_sphere_radius: float | None = None,
+        capsule_radius_scale_by_link: Mapping[str, float] | None = None,
+        capsule_extent_by_link: Mapping[str, Any] | None = None,
     ):
         self.model = model
         self.joint_names = tuple(joint_names)
@@ -445,9 +548,40 @@ class UrdfSphereChain:
             raise ValueError(f"capsule_radius_scale must be > 0, got {capsule_radius_scale}")
         if self.max_sphere_radius is not None and self.max_sphere_radius <= 0.0:
             raise ValueError(f"max_sphere_radius must be > 0 or None, got {max_sphere_radius}")
+        #: link 별 배율. **비어 있으면 전역 배율만 쓰인다** — 이 인자가 없던 때와 글자 그대로
+        #: 같은 모델이라는 뜻이다.
+        self.capsule_radius_scale_by_link: dict[str, float] = {
+            str(k): float(v) for k, v in dict(capsule_radius_scale_by_link or {}).items()}
+        #: link 별 **길이/범위** 손잡이. link frame z 의 유지 구간 `(z_min, z_max)` 다.
+        #: **비어 있으면 아무것도 잘리지 않는다** — 이 인자가 없던 때와 글자 그대로 같은 모델.
+        #:
+        #: 굵기 손잡이와 **독립**이다. 한 link 에 둘을 같이 걸 수 있고, 그래야 하는 경우가
+        #: RB-Y1 `link_*_arm_5` 다 (잘라도 반지름이 그대로면 잘린 끝의 구가 아래로 부푼다).
+        self.capsule_extent_by_link: dict[str, tuple[float, float]] = {
+            str(k): _parse_extent(k, v)
+            for k, v in dict(capsule_extent_by_link or {}).items()}
+        bad = {k: v for k, v in self.capsule_radius_scale_by_link.items() if not v > 0.0}
+        if bad:
+            raise ValueError(
+                f"capsule_radius_scale_by_link values must be > 0, got {bad}")
+        unknown_scaled = sorted(set(self.capsule_radius_scale_by_link) - set(model.links))
+        if unknown_scaled:
+            # 조용히 무시하면 **아무 link 도 얇아지지 않은 채 얇게 했다고 믿는다.**
+            raise ValueError(
+                f"capsule_radius_scale_by_link references links not in the URDF: "
+                f"{unknown_scaled}. 조용히 넘기면 아무 link 도 얇아지지 않은 채 얇게 했다고 "
+                f"믿게 되므로 여기서 멈춥니다")
+        unknown_trimmed = sorted(set(self.capsule_extent_by_link) - set(model.links))
+        if unknown_trimmed:
+            # 같은 이유, 같은 규율 — 조용히 넘기면 **아무것도 안 잘린 채 잘랐다고 믿는다.**
+            raise ValueError(
+                f"capsule_extent_by_link references links not in the URDF: {unknown_trimmed}. "
+                f"조용히 넘기면 아무것도 안 잘린 채 잘랐다고 믿게 되므로 여기서 멈춥니다")
         #: 이 설정이 **덮지 못한** capsule 들. `CoverageShortfall` 목록이고, 비어 있으면 구의
         #: 합집합이 URDF capsule 을 그대로 담는다 (예전 동작).
         self.coverage_shortfall: tuple[CoverageShortfall, ...] = ()
+        #: 잘라낸 capsule 들. `CapsuleTrim` 목록이고, 비어 있으면 아무것도 안 잘렸다.
+        self.capsule_trims: tuple[CapsuleTrim, ...] = ()
 
         keep = None if link_filter is None else set(link_filter)
         all_capsules = tuple(model.capsules) + tuple(extra_capsules)
@@ -456,12 +590,30 @@ class UrdfSphereChain:
         unknown = {c.link for c in extra_capsules} - known_links
         if unknown:
             raise ValueError(f"extra_capsules reference links not in the URDF: {sorted(unknown)}")
+        # **이 모델에 capsule 이 없는 link 를 얇게 하라는 요청도 거절한다.** URDF 에는 있지만
+        # `link_filter` 가 이미 빼 버린 link 를 주면 아무 일도 안 일어나는데, 요청한 사람은
+        # 얇아졌다고 믿는다 — `constraint_links_minus` 가 같은 이유로 같은 것을 거절한다.
+        capsule_links = {c.link for c in self.capsules}
+        scaled_without_capsule = sorted(set(self.capsule_radius_scale_by_link) - capsule_links)
+        if scaled_without_capsule:
+            raise ValueError(
+                f"capsule_radius_scale_by_link names link(s) this model has no capsule for: "
+                f"{scaled_without_capsule}. 이 모델의 capsule link: {sorted(capsule_links)}. "
+                f"배율이 아무 데도 안 걸리는데 걸었다고 믿게 되므로 여기서 멈춥니다")
+        trimmed_without_capsule = sorted(set(self.capsule_extent_by_link) - capsule_links)
+        if trimmed_without_capsule:
+            raise ValueError(
+                f"capsule_extent_by_link names link(s) this model has no capsule for: "
+                f"{trimmed_without_capsule}. 이 모델의 capsule link: {sorted(capsule_links)}. "
+                f"자를 것이 아무 데도 없는데 잘랐다고 믿게 되므로 여기서 멈춥니다")
 
         self._q_index = {name: i for i, name in enumerate(self.joint_names)}
         self._parent_joint = {j.child: j for j in model.joints}
         # Precompute, per capsule, the sphere centres in the *link* frame and their radii. These are
         # constant, so the per-call work is one FK chain and one 4x4 * 3 multiply per sphere.
         self._local_spheres: list[tuple[str, np.ndarray, float]] = []
+        #: `(link, 원했던 구 수, 상한에 잘린 구 수)` — `max_spheres_per_capsule` 이 먼저 걸린 곳.
+        self._spacing_capped: list[tuple[str, int, int]] = []
         shortfall: list[CoverageShortfall] = []
         for cap in self.capsules:
             centres, radius, required = self._capsule_sphere_centres(cap)
@@ -473,11 +625,12 @@ class UrdfSphereChain:
                     capsule_length=float(cap.length), sphere_radius=float(radius),
                     required_radius=float(required)))
         self.coverage_shortfall = tuple(shortfall)
+        self.capsule_trims = self._record_trims(model)
         self._chains = {link: self._chain_to(link) for link in {c.link for c in self.capsules}}
         # **조용히 가늘어진 모델로 떠 있는 것이 가장 나쁘다.** 여기서 찍는 이유는 호출자가
         # 여럿이기 때문이다 — 서버·실험 스크립트·테스트가 각자 이 클래스를 짓는데, 경고를
         # 진입점에 두면 한 곳만 안 찍고 그 실행이 기록에 "예전과 같은 모델" 로 남는다.
-        if self.coverage_shortfall:
+        if self.coverage_shortfall or self.capsule_trims or self._spacing_capped:
             logging.getLogger(__name__).warning("%s", self.coverage_report())
 
     # --- introspection ------------------------------------------------------------------
@@ -504,6 +657,15 @@ class UrdfSphereChain:
         """
         return tuple(link for link, _, _ in self._local_spheres)
 
+    def scale_for_link(self, link: str) -> float:
+        """이 link 의 capsule 반지름 배율. 이름이 안 적혀 있으면 전역 배율.
+
+        배율이 나오는 곳을 **한 곳**으로 두려고 메서드로 뺐다. 두 곳에서 읽으면 구를 만드는
+        쪽과 로그에 찍는 쪽이 갈라지고, 갈라진 쪽이 로그면 실제보다 두꺼운 모델로 기록된다.
+        """
+        return float(self.capsule_radius_scale_by_link.get(
+            str(link), self.capsule_radius_scale))
+
     def _capsule_sphere_centres(self, cap: UrdfCapsule):
         """``(centres, radius, required_radius)`` for one capsule, in the link frame.
 
@@ -513,20 +675,144 @@ class UrdfSphereChain:
         """
         if cap.radius <= 0.0:
             return [], 0.0, 0.0
+        # **link frame z 로 자른다** (`capsule_extent_by_link`). 축이 남는 구간만 구를 놓는다 —
+        # 굵기를 줄이는 것과 **다른 축**이고, 한 link 에 둘을 같이 걸 수 있다.
+        t_lo, t_hi = self._kept_axis_span(cap)
+        if t_lo is None:
+            return [], 0.0, 0.0  # 이 capsule 은 통째로 잘려 나갔다
+        span = float(t_hi - t_lo)
         # **간격은 URDF 의 반지름으로 정한다, 줄인 반지름이 아니다.** 줄인 반지름으로 정하면
         # 반지름을 줄일 때마다 구가 자동으로 늘어나 "가늘게" 와 "촘촘하게" 가 한 손잡이에
         # 묶인다 — 둘은 값이 다르고(하나는 덮개를 잃고 하나는 행을 늘린다) 따로 돌려야 한다.
-        n = int(math.ceil(cap.length / max(self.sphere_spacing * cap.radius, 1e-9))) + 1
+        n = int(math.ceil(span / max(self.sphere_spacing * cap.radius, 1e-9))) + 1
+        n_wanted = n
         n = int(np.clip(n, 1, self.max_spheres_per_capsule))
-        ts = np.zeros(1) if n == 1 else np.linspace(-cap.length / 2.0, cap.length / 2.0, n)
+        # **상한에 잘렸으면 기억한다.** `sphere_spacing` 을 내렸는데 이 상한이 먼저 걸리면
+        # 구가 촘촘해지지 않고, 그러면 유효 반지름도 안 내려간다 (`_effective_radius` 의 간격
+        # 항). 조용히 지나가면 얇게 만들었다고 믿는데 안 얇아진다 (A2 T8e 실측).
+        if n_wanted > n:
+            self._spacing_capped.append((cap.link, n_wanted, n))
+        ts = np.zeros(1) + 0.5 * (t_lo + t_hi) if n == 1 else np.linspace(t_lo, t_hi, n)
         R, p = cap.origin[:3, :3], cap.origin[:3, 3]
         centres = [p + R @ np.array([0.0, 0.0, float(t)]) for t in ts]
-        required = self._effective_radius(cap.radius, cap.length, ts)
+        # 덮개 기준은 **URDF capsule 전체**가 아니라 지금 덮기로 한 구간이다. 잘라낸 구간은
+        # 부족이 아니라 **의도**이고, 그 사실은 `CapsuleTrim` 이 따로 말한다 — 두 축을 한
+        # 숫자에 섞으면 "얼마나 얇은가" 와 "어디까지 덮는가" 를 구분할 수 없다.
+        required = self._effective_radius(cap.radius, span, ts)
         radius = self._effective_radius(
-            cap.radius * self.capsule_radius_scale, cap.length, ts)
+            cap.radius * self.scale_for_link(cap.link), span, ts)
         if self.max_sphere_radius is not None:
             radius = min(radius, self.max_sphere_radius)
         return centres, radius, required
+
+    def _kept_axis_span(self, cap: UrdfCapsule):
+        """이 capsule 축에서 **남기는** 파라미터 구간 `(t_lo, t_hi)`. 통째로 잘리면 `(None, None)`.
+
+        축의 z 좌표는 `z(t) = p_z + R[2,2] · t` 다. `R[2,2] != 0` 이면 단조라서 z 구간이 t 구간으로
+        정확히 옮겨진다 (`link_*_arm_5` 는 `R[2,2] = +1.000`, 즉 축이 link z 와 나란하다).
+
+        **`R[2,2] == 0` 인 capsule 은 축이 z 평면 안에 누워 있다** — 손가락 capsule 이 그렇다
+        (실측 `R[2,2] = 0.000`, 축이 x/y 방향). 그 capsule 에는 "z 로 어디를 자른다" 가 없고
+        z 값이 하나뿐이므로, 그 z 가 유지 구간 안이면 **통째로 남기고** 밖이면 **통째로 뺀다.**
+        근사하지 않는다 — 근사하면 어느 구가 남는지 아무도 예측할 수 없다.
+        """
+        window = self.capsule_extent_by_link.get(cap.link)
+        half = float(cap.length) / 2.0
+        if window is None:
+            return -half, half
+        z_min, z_max = window
+        axis_z = float(cap.origin[2, 2])
+        p_z = float(cap.origin[2, 3])
+        if abs(axis_z) <= 1e-9:
+            return (-half, half) if z_min <= p_z <= z_max else (None, None)
+        a = (z_min - p_z) / axis_z
+        b = (z_max - p_z) / axis_z
+        lo, hi = (a, b) if a <= b else (b, a)
+        t_lo, t_hi = max(-half, lo), min(half, hi)
+        if not (t_hi > t_lo - 1e-12):
+            return (None, None)
+        return float(t_lo), float(min(t_hi, half))
+
+    def _record_trims(self, model: UrdfModel) -> tuple[CapsuleTrim, ...]:
+        """자른 link 마다 **무엇이 풀려났는지** 기록한다. 기록이 없으면 로그도 없다.
+
+        `reach` 는 축이 아니라 구 **표면**이 닿는 z 다. 자르는 것만으로 표면이 그만큼 물러나지
+        않는다는 사실이 이 표의 요점이다 — 잘린 끝의 구가 여전히 자기 반지름만큼 부푼다.
+        """
+        if not self.capsule_extent_by_link:
+            return ()
+        by_link: dict[str, list[UrdfCapsule]] = {}
+        for cap in self.capsules:
+            if cap.link in self.capsule_extent_by_link:
+                by_link.setdefault(cap.link, []).append(cap)
+        have_spheres = set(self.sphere_link_names)
+        out: list[CapsuleTrim] = []
+        for link, caps in sorted(by_link.items()):
+            keep = self.capsule_extent_by_link[link]
+            axis_lo, axis_hi = math.inf, -math.inf
+            reach_before, reach_after = math.inf, math.inf
+            n_before = n_after = 0
+            for cap in caps:
+                half = float(cap.length) / 2.0
+                p_z, axis_z = float(cap.origin[2, 3]), float(cap.origin[2, 2])
+                axis_lo = min(axis_lo, p_z - abs(axis_z) * half)
+                axis_hi = max(axis_hi, p_z + abs(axis_z) * half)
+                full = self._sphere_zs(cap, -half, half)
+                n_before += len(full[0])
+                reach_before = min(reach_before, min(full[0]) - full[1])
+                t_lo, t_hi = self._kept_axis_span(cap)
+                if t_lo is None:
+                    continue
+                kept = self._sphere_zs(cap, t_lo, t_hi)
+                n_after += len(kept[0])
+                reach_after = min(reach_after, min(kept[0]) - kept[1])
+            released = tuple(
+                (name, z, name in have_spheres)
+                for name, z in self._descendant_origins_z(model, link)
+                if not (keep[0] <= z <= keep[1]))
+            out.append(CapsuleTrim(
+                link=link, keep_z_min=float(keep[0]), keep_z_max=float(keep[1]),
+                axis_z_min=float(axis_lo), axis_z_max=float(axis_hi),
+                n_spheres_before=n_before, n_spheres_after=n_after,
+                reach_z_min_before=float(reach_before),
+                reach_z_min_after=float(reach_after if n_after else reach_before),
+                released_links=released))
+        return tuple(out)
+
+    def _sphere_zs(self, cap: UrdfCapsule, t_lo: float, t_hi: float):
+        """`(구 중심의 link-frame z 목록, 유효 반지름)` — `_capsule_sphere_centres` 와 같은 규칙."""
+        span = float(t_hi - t_lo)
+        n = int(math.ceil(span / max(self.sphere_spacing * cap.radius, 1e-9))) + 1
+        n = int(np.clip(n, 1, self.max_spheres_per_capsule))
+        ts = (np.zeros(1) + 0.5 * (t_lo + t_hi)) if n == 1 else np.linspace(t_lo, t_hi, n)
+        radius = self._effective_radius(
+            cap.radius * self.scale_for_link(cap.link), span, ts)
+        if self.max_sphere_radius is not None:
+            radius = min(radius, self.max_sphere_radius)
+        zs = [float(cap.origin[2, 3] + (cap.origin[:3, :3] @ np.array([0.0, 0.0, float(t)]))[2])
+              for t in ts]
+        return zs, float(radius)
+
+    @staticmethod
+    def _descendant_origins_z(model: UrdfModel, link: str) -> list[tuple[str, float]]:
+        """`link` 아래에 달린 link 들의 원점 z, **`link` 프레임에서** (관절값 0 기준).
+
+        관절값 0 을 쓰는 것을 로그가 밝힌다. 팔이 접히면 z 는 달라지지만, 여기서 묻는 것은
+        "이 capsule 이 자기 사슬의 어디까지를 덮고 있었나" 라는 **구조적** 질문이고 그것은
+        관절값에 무관하다 — 손바닥은 어느 자세에서도 손목 아래에 있다.
+        """
+        children: dict[str, list[UrdfJoint]] = {}
+        for j in model.joints:
+            children.setdefault(j.parent, []).append(j)
+        out: list[tuple[str, float]] = []
+        stack = [(link, np.eye(4))]
+        while stack:
+            cursor, T = stack.pop()
+            for joint in children.get(cursor, ()):  # 관절값 0 → origin 만
+                T_child = T @ np.asarray(joint.origin, np.float64)
+                out.append((joint.child, float(T_child[2, 3])))
+                stack.append((joint.child, T_child))
+        return out
 
     @staticmethod
     def _effective_radius(radius: float, length: float, ts: np.ndarray) -> float:
@@ -553,18 +839,68 @@ class UrdfSphereChain:
                     f"max_sphere_radius="
                     + ("none" if self.max_sphere_radius is None
                        else f"{self.max_sphere_radius * 1000:.1f} mm"))
-        if not self.coverage_shortfall:
-            return (f"sphere chain covers every capsule ({self.n_spheres} spheres; {settings})")
-        worst = max(s.shortfall_m for s in self.coverage_shortfall)
-        lines = [
-            "!!! THIS SPHERE MODEL DOES NOT COVER THE ROBOT !!!",
-            f"    {len(self.coverage_shortfall)} of {len(self.capsules)} capsule(s) are thinner "
-            f"than the URDF says, worst by {worst * 1000:.1f} mm ({settings}).",
-            "    빼는 것과 같은 성질의 flag 다 — 이 capsule 이 무엇에 부딪혀도 그만큼은 아무도 "
-            "막지 않는다. 기준은 **URDF capsule** 이고, URDF 자체가 mesh 보다 두꺼울 수 있다.",
-        ]
-        lines += [f"    - {s.summary()}" for s in self.coverage_shortfall]
+        if self.capsule_radius_scale_by_link:
+            # **link 별 배율은 반드시 함께 찍는다.** 전역 배율만 보이면 로그를 읽는 사람은
+            # 손가락이 다른 값으로 얇아진 것을 알 방법이 없다.
+            per_link = ", ".join(
+                f"{k}={v:g}" for k, v in sorted(self.capsule_radius_scale_by_link.items()))
+            settings += f", per-link capsule_radius_scale: {per_link}"
+        if self.capsule_extent_by_link:
+            # **길이 손잡이도 반드시 함께 찍는다.** 굵기만 보이면 로그를 읽는 사람은 어느 구간이
+            # 아예 안 덮이는지 알 방법이 없다.
+            per_link = ", ".join(
+                f"{k}=[{v[0] * 1000:+.0f}, "
+                + ("inf" if not math.isfinite(v[1]) else f"{v[1] * 1000:+.0f}") + "]"
+                for k, v in sorted(self.capsule_extent_by_link.items()))
+            settings += f", per-link capsule extent (link-frame z, mm): {per_link}"
+        lines: list[str] = []
+        if self.coverage_shortfall:
+            worst = max(s.shortfall_m for s in self.coverage_shortfall)
+            lines += [
+                "!!! THIS SPHERE MODEL DOES NOT COVER THE ROBOT !!!",
+                f"    {len(self.coverage_shortfall)} of {len(self.capsules)} capsule(s) are "
+                f"thinner than the URDF says, worst by {worst * 1000:.1f} mm ({settings}).",
+                "    빼는 것과 같은 성질의 flag 다 — 이 capsule 이 무엇에 부딪혀도 그만큼은 "
+                "아무도 막지 않는다. 기준은 **URDF capsule** 이고, URDF 자체가 mesh 보다 두꺼울 "
+                "수 있다.",
+            ]
+            lines += [f"    - {s.summary()}" for s in self.coverage_shortfall]
+        if self.capsule_trims:
+            lines += [
+                "!!! CAPSULES ARE CUT SHORT (capsule_extent_by_link) !!!",
+                "    잘린 구간에는 구가 **하나도 없다** — 굵기를 줄이는 것과 다른 축이다. "
+                "z 는 link frame, 하위 link 원점은 관절값 0 기준이다.",
+            ]
+            lines += [f"    - {t.summary()}" for t in self.capsule_trims]
+        if self._spacing_capped:
+            worst_link, wanted, got = max(self._spacing_capped, key=lambda r: r[1] - r[2])
+            lines += [
+                "!!! sphere_spacing IS NOT TAKING EFFECT — max_spheres_per_capsule IS BINDING !!!",
+                f"    {len(self._spacing_capped)} capsule(s) wanted more spheres than the cap "
+                f"({self.max_spheres_per_capsule}); worst {worst_link} wanted {wanted}, got {got}.",
+                "    구가 촘촘해지지 않으면 유효 반지름도 안 내려간다 "
+                "(r_eff = sqrt((r·scale)^2 + (간격/2)^2) 의 간격 항이 안 줄기 때문이다). "
+                "**얇게 만들었다고 믿는데 안 얇아진 상태다** — max_spheres_per_capsule 을 "
+                "올리십시오.",
+            ]
+        if not lines:
+            return f"sphere chain covers every capsule ({self.n_spheres} spheres; {settings})"
+        lines.append(f"    지금 모델: 구 {self.n_spheres} 개 · capsule {len(self.capsules)} 개 "
+                     f"({settings})")
+        lines.append("    link 별 유효 반지름: " + self.radius_by_link_summary())
         return "\n".join(lines)
+
+    def radius_by_link_summary(self) -> str:
+        """`link=구수 × 반지름mm` 한 줄. **굵기·길이·간격의 결과를 한 자리에서 읽는 유일한 곳**이다.
+
+        배율과 절단면과 간격을 따로 찍으면 읽는 사람이 `r_eff` 를 손으로 계산해야 하고, 그 계산이
+        틀리는 순간 "대폭 줄였다" 는 판단이 로그와 어긋난다.
+        """
+        by_link: dict[str, list[float]] = {}
+        for link, _, radius in self._local_spheres:
+            by_link.setdefault(link, []).append(float(radius))
+        return ", ".join(
+            f"{link}={len(rs)}×{max(rs) * 1000:.2f} mm" for link, rs in sorted(by_link.items()))
 
     def _chain_to(self, link: str) -> tuple[UrdfJoint, ...]:
         """Joints from the URDF root down to `link`, root-first."""

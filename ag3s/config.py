@@ -719,6 +719,11 @@ class ContactConfig:
         return tuple(self.contact_links.get(key, ()))
 
 
+#: `ConstraintConfig.target_field_policy` 의 선택지. **첫 항목이 기본값이고 그것이 지금까지의
+#: 동작이다.** 문자열을 두 곳에 박으면 갈라지므로 parser 도 이 목록을 본다.
+TARGET_FIELD_POLICIES: tuple[str, ...] = ("relax", "exclude_authorized", "exclude_all")
+
+
 @dataclasses.dataclass(frozen=True)
 class ConstraintConfig:
     """Constraint emission.
@@ -741,8 +746,55 @@ class ConstraintConfig:
     # Fixed attached-object primitive slots. Reserved whether or not anything is held, so attaching
     # and detaching never rebuilds the graph.
     max_attached_primitives: int = 4
+    #: Whether the held object is constrained against the robot's **own** spheres (§23's opposite
+    #: arm, torso and non-contact same-arm links). `True` is the behaviour every existing result was
+    #: produced with and stays the default.
+    #:
+    #: `False` zeroes `attached_self_mask` for every pair, which switches those rows to the constant
+    #: 1 — **the row count and the Jacobian sparsity do not move**, so turning it back on is a
+    #: parameter change, not a rebuild. That reversibility is the whole reason it is a mask value and
+    #: not a removal.
+    #:
+    #: This is the only self-collision mechanism in the codebase: there is no robot-versus-robot
+    #: pairwise check anywhere (N1). So `False` does not "disable self-collision" in any broader
+    #: sense — it disables the one block that exists, and `ConstraintBuilder` says so out loud at
+    #: construction time, because a silently permissive safety layer is the worst outcome.
+    self_collision: bool = True
+    #: 아직 **쥐지 않은** target 을 거리장에서 어떻게 다루는가. `"relax"` 가 기본이고 그것이
+    #: 지금까지의 동작이다.
+    #:
+    #: | 값 | 뜻 |
+    #: |---|---|
+    #: | `"relax"` | target 은 필드에 그대로 있고 `manipulated_link_margin` 으로 마진만 완화한다 |
+    #: | `"exclude_authorized"` | 접촉 권한이 있는 link 의 구만 **target 이 빠진 계층**에 거리를 묻는다 |
+    #: | `"exclude_all"` | 모든 제약 구가 target 이 빠진 계층에 묻는다 |
+    #:
+    #: **왜 마진으로는 안 되는가.** 제약은 `d − r ≥ m` 이고 `m ≥ 0` 이라 표면 안쪽을 허용할 수
+    #: 없다. 성공한 shadow 궤적의 손끝 구는 사과 표면을 −17.96 mm 관통하므로, `margin = 0`
+    #: (GRASP phase 의 `margin_scale = 0.0`) 에서도 그 자세는 **feasible set 안에 없다**
+    #: (T7a 실측: 위반 0.0 mm · feasible 75/75 인데도 사과에 +89.86 mm 보다 가까워진 적이 없다).
+    #:
+    #: **`"exclude_all"` 은 E1 을 되살린다.** E1 = 조작 대상을 필드에서 통째로 파내면 손끝뿐
+    #: 아니라 몸통·전완·반대팔에게도 사라진다. `"exclude_all"` 에서는 모든 구가 target 없는
+    #: 계층에 묻기 때문에 정확히 그 상태가 된다 — 사과 위로 팔꿈치가 지나가도 아무도 막지
+    #: 않는다. 사용자가 명시한 fallback 이고, 켜면 시작 로그가 크게 말한다.
+    #: `"exclude_authorized"` 는 익명이 아니라 **이름으로** 빼므로 E1 이 재발하지 않는다:
+    #: 권한 없는 link 은 지금 그대로 target 이 든 계층에 묻는다.
+    #:
+    #: 권한 집합은 `contact.contact_links` 다 — 여기 다시 적지 않는다. 어느 link 이 실제로
+    #: 필요한지는 T8a 가 재고 있고, 그 답은 그 dict 를 고치는 것으로 반영된다.
+    target_field_policy: str = TARGET_FIELD_POLICIES[0]
+
+    @property
+    def excludes_target_from_field(self) -> bool:
+        """target 없는 계층이 **필요한가**. 기본 정책에서는 `False` 이고 추가 비용이 0 이다."""
+        return self.target_field_policy != TARGET_FIELD_POLICIES[0]
 
     def validate(self) -> None:
+        if self.target_field_policy not in TARGET_FIELD_POLICIES:
+            raise AG3SConfigError(
+                f"constraint.target_field_policy 는 {list(TARGET_FIELD_POLICIES)} 중 하나여야 "
+                f"합니다: {self.target_field_policy!r}")
         if self.horizon < 1:
             raise AG3SConfigError(f"constraint.horizon must be >= 1, got {self.horizon}")
         if self.reserved_overflow_slots < 0:
@@ -991,5 +1043,6 @@ __all__ = [
     "PointCloudConfig",
     "ProfilingConfig",
     "SupportSurfaceConfig",
+    "TARGET_FIELD_POLICIES",
     "TimingConfig",
 ]

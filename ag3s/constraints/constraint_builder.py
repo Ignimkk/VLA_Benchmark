@@ -41,6 +41,7 @@ AG3S does not own the robot side: the sphere chain arrives through the injected
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence
 
 import numpy as np
@@ -162,6 +163,41 @@ class ConstraintBuilder:
         # §23's "opposite arm", "torso" and "non-contact same-arm links" with one mechanism.
         self.n_attached_rows = self.horizon * a * np_ * (m + k + s)
         self.n_constraints += self.n_attached_rows
+        # **조용히 자기 충돌을 끈 모델로 떠 있는 것이 가장 나쁘다.** 여기서 찍는 이유는
+        # `UrdfSphereChain` 이 덮개 경고를 생성자에서 찍는 것과 같다 — 호출자가 여럿이고
+        # (서버·실험 스크립트·테스트), 경고를 진입점에 두면 한 곳이 빼먹는다.
+        if self.max_attached and not self.constraint_config.self_collision:
+            logging.getLogger(__name__).warning(
+                "!!! SELF-COLLISION IS OFF (constraint.self_collision=False) !!!\n"
+                "    쥔 물체와 로봇 자신의 %d x %d 쌍이 전부 면제됩니다 — 물체가 팔뚝·토르소·"
+                "반대팔을 그대로 통과해도 아무도 막지 않습니다.\n"
+                "    행은 남아 있고 mask 만 0 이므로 다시 켜는 것은 파라미터 변경입니다 "
+                "(행 수·희소성 불변). **진단용입니다.**",
+                a * np_, s)
+        # **target 을 필드에서 빼는 정책도 같은 자리에서 외친다.** 같은 이유다 — 호출자가
+        # 여럿이고, 경고를 서버 진입점에만 두면 실험 스크립트가 조용히 그 설정으로 돈다.
+        policy = str(getattr(self.constraint_config, "target_field_policy", "relax"))
+        if policy == "exclude_all":
+            logging.getLogger(__name__).warning(
+                "!!! TARGET IS EXCLUDED FROM THE FIELD FOR **EVERY** LINK "
+                "(constraint.target_field_policy='exclude_all') !!!\n"
+                "    **E1 이 되살아납니다.** 조작 대상을 필드에서 파내면 손끝뿐 아니라 몸통·"
+                "전완·반대팔에게도 사라집니다 — 사과 위로 팔꿈치가 지나가도 아무도 막지 "
+                "않습니다.\n"
+                "    사용자가 명시한 fallback 이고, 이름으로 빼는 쪽은 "
+                "'exclude_authorized' 입니다 (권한 있는 link 만, E1 재발 없음). "
+                "table·crate 는 어느 쪽에서도 그대로 막습니다.")
+        elif policy == "exclude_authorized":
+            logging.getLogger(__name__).warning(
+                "!!! TARGET IS EXCLUDED FROM THE FIELD FOR AUTHORIZED LINKS "
+                "(constraint.target_field_policy='exclude_authorized') !!!\n"
+                "    권한 있는 link (%s) 의 질의점은 target 이 빠진 계층에 거리를 묻습니다 — "
+                "그 link 은 사과를 통과할 수 있습니다. 권한 없는 link 과 table·crate 에 대한 "
+                "보호는 그대로입니다.\n"
+                "    권한 집합은 contact.contact_links 에서 고칩니다.",
+                ", ".join(sorted(
+                    n for links in self.clearance_policy.contact.contact_links.values()
+                    for n in links)) or "(없음)")
 
     # --- symbolic ------------------------------------------------------------------------
     def _slice(self, name: str) -> Any:
@@ -411,7 +447,8 @@ class ConstraintBuilder:
             )
         parent_index = self.attached_parent_links.index(attached.parent_link)
         spheres = attached_spheres(attached)
-        mask = self_collision_mask(attached, self.sphere_link_names)
+        mask = self_collision_mask(attached, self.sphere_link_names,
+                                   enabled=bool(self.constraint_config.self_collision))
         self._last_attached_dropped = max(0, len(spheres) - a)
 
         for slot, (centre, radius) in enumerate(spheres[:a]):

@@ -291,14 +291,27 @@ def rigid_spheres(
 
 
 def self_collision_mask(
-    attached: AttachedCollisionGeometry, sphere_link_names: Sequence[str]
+    attached: AttachedCollisionGeometry,
+    sphere_link_names: Sequence[str],
+    *,
+    enabled: bool = True,
 ) -> np.ndarray:
     """`(S,)` in {0, 1}: which robot spheres the held object must still be kept away from.
 
     Zero only for links the caller explicitly allowlisted — the fingers actually holding the object.
     Everything else is one, including any link name the allowlist does not mention, which is how an
     unknown or misspelled link fails closed rather than being quietly excused.
+
+    `enabled=False` (`constraint.self_collision = False`, T7b) returns **all zeros**: every pair is
+    excused, so each row becomes the constant 1 and the block stops constraining anything. The rows
+    are not deleted, which is what makes it reversible — switching it back on writes ones into the
+    same parameter slots and the solver object, row count and sparsity are untouched.
+
+    It is a diagnostic. With it off the held object may be driven straight through the forearm, the
+    torso and the opposite arm and nothing reports it.
     """
+    if not enabled:
+        return np.zeros(len(tuple(sphere_link_names)), np.float64)
     allowed = attached.allowed_contact_links
     return np.asarray(
         [0.0 if str(name) in allowed else 1.0 for name in sphere_link_names], np.float64

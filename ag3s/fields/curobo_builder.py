@@ -217,6 +217,8 @@ class CuroboFieldBuilder:
     def update(self, cameras: Sequence[CameraDepth], *,
                target_points: Optional[np.ndarray] = None,
                exclude_target: bool = False,
+               target_free_points: Optional[np.ndarray] = None,
+               target_free_label: Optional[str] = None,
                support_points: Optional[np.ndarray] = None,
                attached_points: Optional[np.ndarray] = None,
                labelled_points: Optional[dict] = None,
@@ -228,7 +230,18 @@ class CuroboFieldBuilder:
         `exclude_target` 는 **지원하지 않는다.** E1 이 그것을 폐기했다 — 필드는 익명이라
         아직 안 쥔 target 을 파내면 손끝뿐 아니라 전신에게 사라진다. 지금 코드는 항상
         `False` 로 부르고, `True` 로 오면 조용히 무시하지 않고 예외를 던진다.
+
+        `target_free_points` 는 그것과 **다른 것**이다. 필드에서 파내는 것이 아니라, 그 점들의
+        seed 를 지운 **미세 계층 한 겹을 따로** 만들어 `field.target_free_layers` 에 실어
+        보낸다. 본 계층(`layers`)은 한 복셀도 바뀌지 않으므로 권한 없는 질의점은 예전과 같은
+        답을 받는다 — 익명으로 파내는 것과 이름으로 되묻는 것의 차이가 정확히 E1 이다.
+        `None`(기본)이면 그 계층을 만들지 않고 비용도 0 이다.
         """
+        # **인자 검증을 torch 앞에 둔다.** 이 계약은 CUDA 를 필요로 하지 않으므로, torch 가 없는
+        # 프로세스(`.venv-ag3s`)의 테스트가 이것을 실제로 받아 볼 수 있어야 한다 (T7b 의
+        # `announce_diagnostic_scope` 를 함수로 뺀 것과 같은 이유).
+        self._check_target_free_request(target_free_points, target_points)
+
         import torch
 
         if exclude_target:
@@ -279,6 +292,24 @@ class CuroboFieldBuilder:
 
         tiers = self._build_tiers(itg, attached, dev, torch)
 
+        # **target 없는 미세 계층.** 본 계층을 다 만든 **뒤에** 따로 만든다 — 같은 버퍼
+        # (`_site_index`, `feature_tensor`)를 재사용하므로 (함정 4) 사이에 끼면 본 계층의 값이
+        # 바뀐다. 미세 계층만 만드는 이유는 비용이다 (권한 있는 link 은 손 근처에 있다).
+        free_tiers: list[_Tier] = []
+        free_ms = 0.0
+        free_points = (None if target_free_points is None
+                       else np.asarray(target_free_points, np.float64).reshape(-1, 3))
+        if free_points is not None and len(free_points):
+            # 위의 `_check_target_free_request` 가 미세 계층을 만들 수 있음을 이미 보장한다 —
+            # 조용히 0 겹으로 지나가는 길이 없다.
+            t0 = time.monotonic()
+            remove = free_points if attached is None or not len(attached) else np.vstack(
+                [np.asarray(attached, np.float64).reshape(-1, 3), free_points])
+            free_tiers = self._build_tiers(itg, remove, dev, torch, only="fine",
+                                           tier_name="fine_no_target")
+            free_ms = (time.monotonic() - t0) * 1e3
+            self._announce_target_free_cost(free_ms, len(free_points), free_tiers)
+
         layers = []
         label_grids = []
         for tier in tiers:
@@ -291,6 +322,10 @@ class CuroboFieldBuilder:
             layer.label_grid = label_grid
             layer.label_names = label_names
             layers.append(layer)
+        # target 없는 계층에는 **라벨을 달지 않는다.** 라벨은 "가장 가까운 표면이 무엇인가" 인데
+        # 이 계층에는 그 판정의 주인공(target)이 없다. 라벨이 필요한 질문은 본 계층이 답한다.
+        free_layers = tuple(layer_from_arrays(t.values, t.origin, t.voxel_size)
+                            for t in free_tiers)
 
         # 격자 밖은 격자 안의 UNKNOWN 과 같은 것이므로 같은 정책을 따른다 (E4).
         outside = (cfg.max_distance if cfg.unknown_policy == "free"
@@ -308,12 +343,26 @@ class CuroboFieldBuilder:
         stats = self._stats(tiers, label_names, per_camera,
                             n_attached=0 if attached is None else int(len(attached)),
                             n_static=len(static_geometry or ()))
+        # **target 없는 계층은 기록에 남는다.** 그 계층이 있었는지 없었는지 모르는 기록은
+        # 정책이 실제로 걸린 프레임인지 알 방법이 없다 — 키를 정책이 꺼져 있을 때도 싣는다.
+        stats["target_free"] = {
+            "n_layers": len(free_tiers),
+            "n_target_points": 0 if free_points is None else int(len(free_points)),
+            "build_ms": round(float(free_ms), 3),
+            "label": target_free_label,
+            "tiers": [{"name": t.name, "voxel_size": t.voxel_size,
+                       "shape": [int(v) for v in t.values.shape],
+                       "n_seeds_excluded": int(t.extra.get("n_attached_seeds_excluded", 0))}
+                      for t in free_tiers],
+        }
         if probe is not None:
             lower, upper = self._bounds
             # 정보용이다 — 인증에 쓰지 않는다. `stride` 를 함께 싣는 것이 추정값임을 밝히는 것.
             stats["frustum_observation"] = probe.observed_volume(
                 lower, upper, voxel_size=self.coarse_voxel, stride=2)
-        field = CuroboEsdfField(tuple(layers), outside_distance=outside, stats=stats)
+        field = CuroboEsdfField(tuple(layers), outside_distance=outside, stats=stats,
+                                target_free_layers=free_layers,
+                                target_label=(target_free_label if free_layers else None))
         field.label_names = label_names
         field.static_shapes = tuple(static_geometry or ())
         field.observation = probe
@@ -332,6 +381,32 @@ class CuroboFieldBuilder:
         return field
 
     # -- 조각들 ------------------------------------------------------------------------
+    def _check_target_free_request(self, target_free_points, target_points) -> None:
+        """target 없는 계층을 **실제로** 만들 수 있는지 미리 본다. 못 만들면 여기서 죽는다.
+
+        조용히 0 겹으로 지나가면 사과를 뺐다고 믿은 채 예전과 같은 필드로 돌고, 그 실행은
+        기록만 보면 정책이 켜진 실행과 구별되지 않는다.
+        """
+        if target_free_points is None:
+            return
+        free = np.asarray(target_free_points, np.float64).reshape(-1, 3)
+        if not len(free):
+            return
+        if not self.fine_voxel:
+            raise ValueError(
+                "target_free_points 가 왔는데 미세 계층이 없습니다 "
+                f"(esdf.fine_voxel_size={getattr(self.config, 'fine_voxel_size', None)!r}). "
+                "target 없는 계층은 미세 계층 한 겹으로 만들어지므로, 이 설정에서는 정책이 "
+                "아무 일도 하지 않습니다 — fine_voxel_size 를 주거나 "
+                "constraint.target_field_policy 를 'relax' 로 두십시오")
+        has_target = (target_points is not None
+                      and len(np.asarray(target_points, np.float64).reshape(-1, 3)) > 0)
+        if not has_target:
+            raise ValueError(
+                "target_free_points 가 왔는데 target_points 가 비었습니다. 미세 창의 중심이 "
+                "target 무게중심이므로 계층을 놓을 자리가 없습니다 — 두 인자는 같은 프레임의 "
+                "같은 target 에서 와야 합니다")
+
     def _integrate(self, mapper, cameras, dev) -> dict:
         import torch
         from curobo._src.types.camera import CameraObservation
@@ -402,22 +477,37 @@ class CuroboFieldBuilder:
                             else int(np.asarray(cam.robot_mask, bool).sum())),
         }
 
-    def _tier_specs(self, target_centre: Optional[np.ndarray]):
-        yield "coarse", None, self.coarse_voxel
+    def _tier_specs(self, target_centre: Optional[np.ndarray], *, only: Optional[str] = None,
+                    tier_name: Optional[str] = None):
+        """어느 계층을 만들 것인가. `only="fine"` 이면 미세 계층 **하나만** 낸다.
+
+        `only` 를 둔 이유는 target 없는 계층의 비용이다 — 거친 계층까지 두 겹 만들면 프레임당
+        비용이 두 배가 되고, 권한 있는 link 은 손 근처(=미세 창 안)에 있으므로 얻는 것이 없다.
+        """
+        if only is None or only == "coarse":
+            yield "coarse", None, self.coarse_voxel
+        if only == "coarse":
+            return
         fine = self.fine_voxel
         if fine and target_centre is not None:
-            yield "fine", np.asarray(target_centre, np.float64), fine
+            yield (tier_name or "fine"), np.asarray(target_centre, np.float64), fine
 
-    def _build_tiers(self, itg, attached, dev, torch) -> list[_Tier]:
+    def _build_tiers(self, itg, attached, dev, torch, *, only: Optional[str] = None,
+                     tier_name: Optional[str] = None) -> list[_Tier]:
         """계층마다 seed -> (쥔 물체 제외) -> propagate -> 복사.
 
         `Mapper.compute_esdf` 를 부르지 않는다 — 그쪽은 CUDA graph 로 seed·propagate·distance
         를 한 덩어리로 실행해서 사이에 끼어들 자리가 없다. 대신 `compute_esdf` 가 하는 부수
         효과(`_esdf_voxel_size` 와 `_last_esdf_origin` 갱신)를 여기서 같이 한다.
+
+        `attached` 로 오는 것이 **반드시 쥔 물체일 필요는 없다** — 여기서 그것은 "seed 에서 뺄
+        점" 이고, target 없는 계층은 같은 길로 target 점을 뺀다 (T8b). 부호 교정도 같은 집합에
+        걸려야 하므로 두 경우가 한 함수인 것이 맞다.
         """
         centre = getattr(self, "_fine_centre", None)  # update() 가 정한다
         tiers: list[_Tier] = []
-        for name, origin_override, vs in self._tier_specs(centre):
+        for name, origin_override, vs in self._tier_specs(centre, only=only,
+                                                          tier_name=tier_name):
             itg._esdf_voxel_size.copy_(
                 torch.tensor([float(vs)], device=dev, dtype=torch.float32))
             origin = (itg._origin if origin_override is None
@@ -451,6 +541,28 @@ class CuroboFieldBuilder:
             tier.extra.update(sign)
             tiers.append(tier)
         return tiers
+
+    def _announce_target_free_cost(self, ms: float, n_points: int, tiers) -> None:
+        """**첫 프레임에 비용을 크게 찍는다.** 그 뒤로는 stats 에만 남는다.
+
+        시작 로그에 ms 가 없으면 "한 겹 더 만든다" 가 프레임 예산에 무엇을 했는지 아무도
+        모른다 — 그리고 이 계층은 조용히 켜져 있으면 안 되는 종류의 것이다 (안전 계층을 한
+        겹 비껴가는 길이므로).
+        """
+        import logging
+
+        if getattr(self, "_announced_target_free", False):
+            return
+        self._announced_target_free = True
+        logging.getLogger(__name__).warning(
+            "!!! TARGET-FREE ESDF LAYER IS ON (constraint.target_field_policy) !!!\n"
+            "    미세 계층 %d 겹을 target 점 %d 개의 seed 를 지우고 한 번 더 만든다 — "
+            "첫 프레임 %.2f ms%s.\n"
+            "    본 계층(coarse+fine)은 한 복셀도 바뀌지 않는다. 이 계층을 읽을 권한이 있는 "
+            "질의점만 사과를 통과할 수 있고, table·crate 는 이 계층에도 그대로 있다.",
+            len(tiers), int(n_points), float(ms),
+            "" if not tiers else f" ({tiers[0].voxel_size * 1000:.0f} mm 복셀, "
+                                 f"seed {tiers[0].extra.get('n_attached_seeds_excluded', 0)} 개 제외)")
 
     @staticmethod
     def _origin_of(itg, shape, voxel_size: float) -> np.ndarray:

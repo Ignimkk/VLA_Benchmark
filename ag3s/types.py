@@ -87,6 +87,19 @@ class SourceType(str, enum.Enum):
 #: 정책 쪽 축과 필드 쪽 라벨이 갈라질 수 없다 — 두 곳에 상수를 따로 두면 언젠가 어긋난다.
 DESTINATION_LABEL = SourceType.DESTINATION.value
 
+#: 거리장의 라벨 층에서 **주목 대상**이 쓰는 이름. `DESTINATION_LABEL` 과 같은 규약
+#: (`SourceType` 의 값과 같은 문자열)이다.
+#:
+#: 라벨이 붙는다고 target 이 필드에서 빠지는 것은 아니다. 라벨은 "가장 가까운 표면이
+#: target 인가" 를 물을 수 있게 할 뿐이고, 그 질문이 `constraint.target_field_policy` 의
+#: `"exclude_*"` 가 **target 없는 계층에 되물어야 하는 점**을 고르는 데 쓰인다
+#: (`CuroboEsdfField.target_free_distance`).
+#:
+#: **쥔 것이 없을 때만 싣는다.** 쥔 뒤에는 attention 의 target 이 목적지(crate)로 옮겨가고
+#: (F11), 목적지는 그 안에 넣어야 하므로 필드에서 빠지면 안 된다 — 빠지면 내부 공간을
+#: 회피하며 들어갈 근거가 사라진다.
+TARGET_LABEL = SourceType.TARGET.value
+
 
 class Manipulator(str, enum.Enum):
     """Which arm/gripper an external caller has authorized to make contact.
@@ -904,6 +917,24 @@ class CollisionConstraintSet:
     #: The consumer needs this to recognise that object in the anonymous field: a point cloud for the
     #: attention target, analytic spheres for a held one.
     manipulated: Any = None
+
+    #: `(n_constraint_spheres,)` bool — 이 구가 **target 이 빠진 계층**에 거리를 묻는가.
+    #: `constraint.target_field_policy` 가 `"relax"`(기본)면 **언제나 `None`** 이고, 그때 이
+    #: 필드가 하는 일은 하나도 없다.
+    #:
+    #: `manipulated_link_margin` 과 같은 자리의 문제를 **다른 방향**으로 푼다. 마진 완화는
+    #: `d − r ≥ m` 의 `m` 을 내리는 것이고 `m ≥ 0` 이므로 표면 안쪽(음수 여유)을 허용할 수
+    #: 없다 — 성공한 shadow 궤적은 손끝 구가 사과 표면을 −17.96 mm 관통하므로 마진으로는
+    #: 닿지 않는다 (T7a 실측). 이 마스크가 `True` 인 구는 `d` 자체를 **target 없는 계층**에서
+    #: 받는다.
+    #:
+    #: **행을 끄는 것이 아니다.** ESDF 의 한 행은 최근접 표면까지의 거리 하나뿐이라 끄면 그
+    #: 질의점은 table 에 대해서도 보호를 잃는다. 여기서 바뀌는 것은 "어느 계층에 묻는가" 뿐이고,
+    #: target 없는 계층도 table·crate 는 그대로 담고 있다.
+    target_field_exclude: Optional[np.ndarray] = None
+    #: 위 마스크를 만든 정책 이름 (`"relax"` · `"exclude_authorized"` · `"exclude_all"`).
+    #: 기록에 남는다 — 어느 정책으로 돈 프레임인지 모르는 기록은 다른 실행과 비교할 수 없다.
+    target_field_policy: str = "relax"
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "robot_state", np.asarray(self.robot_state, np.float64).reshape(-1))

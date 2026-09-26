@@ -83,11 +83,29 @@ def build_robot_model(scene):
                            fixed_joint_values=head)
 
 
-#: 양팔 링크와 손끝. 제약 모델의 기본 범위다.
+#: 손바닥 둘. **URDF 에 collision capsule 이 없다** — geometry 는 MJCF mesh 실측에서 온다
+#: (`gap_filling_capsules` 의 `EE_BODY_L`/`EE_BODY_R`, `UNCOVERED_LINKS`). self-filter 는
+#: 2026-09-25 부터 이미 그것을 쓰고 있었고 (손목 카메라가 자기 손바닥을 매 프레임 보는데
+#: 90,690 / 90,688 px 가 샜던 건), **제약 모델에는 없었다.**
+#:
+#: 없어도 티가 안 난 이유는 `link_*_arm_5` 의 URDF capsule (r 75 mm · L 250 mm, 축이 link
+#: frame 에서 z ∈ [−0.225, +0.025]) 이 손목·손바닥·그리퍼를 통째로 삼키고 있었기 때문이다.
+#: 그 capsule 을 z = −100 mm 에서 자르는 순간 (`--capsule-extent-link`) 손바닥이 제약에서
+#: 사라지므로, 자르는 손잡이와 이 집합은 **같이** 와야 한다 (T8b).
+PALM_LINKS = ("ee_left", "ee_right")
+
+#: 손가락 넷.
+FINGER_LINKS = tuple(f"ee_finger_{s}{i}" for s in ("l", "r") for i in (1, 2))
+
+#: 손바닥 + 손가락. **`--links gripper` 의 정본이다** (T7b) — 이름을 일일이 적으면 오타 하나로
+#: `link_filter` 의 집합 교집합이 그것을 조용히 버린다.
+GRIPPER_LINKS = PALM_LINKS + FINGER_LINKS
+
+#: 양팔 링크와 손끝. 제약 모델의 기본 범위다. 손끝은 `GRIPPER_LINKS` 에서 온다 — 두 곳에 적으면
+#: 갈라지고, 갈라지는 날 `--links gripper` 가 `--links arms` 의 부분집합이 아니게 된다.
 ARM_LINKS = tuple(
     [f"link_{side}_arm_{i}" for side in ("left", "right") for i in range(7)]
-    + [f"ee_finger_{s}{i}" for s in ("l", "r") for i in (1, 2)]
-)
+) + GRIPPER_LINKS
 
 
 def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options=None):
