@@ -88,7 +88,33 @@ class ClusteringConfig:
     # number only to deliberately vary the radius, and report it as a separate axis — a method
     # comparison run at two different radii measures the radius.
     region_growing_radius: float | None = None
-    target_score_threshold: float = 0.25
+    # **0.0 means "never reject on score", and that is the default since T5e (2026-09-25).** The
+    # value was 0.25 and it was rejecting the rank-1 cluster on 35 of 51 chunks of ep1807 while the
+    # rank-1 *identity* was right on every one of them (T5d measured all 51: zero empty chunks when
+    # the score is ignored and only the ranking is read). Those 35 rejections are also why no fine
+    # ESDF layer appeared: the fine window is centred on the grounded target, so "no target" removes
+    # the layer itself (T5c, `one_tier_set_equals_low_score_set: true`).
+    #
+    # The setting stays because the rejection is a real option, not dead weight: set it above 0 and
+    # `ground_target` returns `LOW_SCORE` exactly as before. A score is a *ranking* quantity here —
+    # it mixes mean attention with two exp() decays, so its absolute level moves with the scene's
+    # attention scale and does not transfer across episodes. Ranking does.
+    #
+    # Scores are strictly positive with any `w_geometry > 0`, and the comparison is `<`, so 0.0
+    # rejects nothing even in the degenerate all-zero-attention case.
+    target_score_threshold: float = 0.0
+    #: How many consecutive frames a *different* cluster must lead before the target switches to it
+    #: (T5e). Frame-independent grounding flickered: ep1807 had pear leading for 2 chunks and apple
+    #: for 1 inside an otherwise stable crate run. 3 presses both flickers flat; 2 leaves pear.
+    #: `GraspLatch` already uses 3 for the same reason (`trajopt/grasp_latch.py: confirm_frames`),
+    #: measured there on two records whose leading 7-8 frames were one object.
+    #: 1 restores the old behaviour (whatever leads this frame is the target).
+    target_confirm_frames: int = 3
+    #: How far a cluster centroid may sit from the held target's centroid and still be "the same
+    #: object", in metres. Same value and same evidence as `CentroidIdentity.tolerance`: the centroid
+    #: jumps 307-597 mm when the target changes object (F2, F9), orders of magnitude above the
+    #: frame-to-frame jitter of one object being watched.
+    target_identity_tolerance: float = 0.06
     w_attention: float = 0.7
     w_geometry: float = 0.3
     max_seed_points: int = 4000  # cap on seeds fed to the connectivity search, for latency
@@ -108,6 +134,20 @@ class ClusteringConfig:
             raise AG3SConfigError(f"clustering.eps must be > 0, got {self.eps}")
         if self.min_points < 1:
             raise AG3SConfigError(f"clustering.min_points must be >= 1, got {self.min_points}")
+        if self.target_score_threshold < 0.0:
+            raise AG3SConfigError(
+                f"clustering.target_score_threshold must be >= 0 (0 = never reject on score), "
+                f"got {self.target_score_threshold}"
+            )
+        if self.target_confirm_frames < 1:
+            raise AG3SConfigError(
+                f"clustering.target_confirm_frames must be >= 1 (1 = no hysteresis), "
+                f"got {self.target_confirm_frames}"
+            )
+        if self.target_identity_tolerance <= 0.0:
+            raise AG3SConfigError(
+                f"clustering.target_identity_tolerance must be > 0, got {self.target_identity_tolerance}"
+            )
         if self.w_attention < 0.0 or self.w_geometry < 0.0:
             raise AG3SConfigError("clustering weights must be non-negative")
         if self.w_attention + self.w_geometry <= 0.0:

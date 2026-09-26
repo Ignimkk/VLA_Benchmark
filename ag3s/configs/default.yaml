@@ -22,7 +22,9 @@ clustering:
   min_points: 20
   use_3d_connectivity: true      # false = the "2D attention only" ablation
   region_growing_radius: null    # null = use eps, so "method" stays a one-variable ablation
-  target_score_threshold: 0.25
+  target_score_threshold: 0.0    # 0 = never reject on score; rank 1 is the target (T5e)
+  target_confirm_frames: 3       # a different cluster must lead 3 frames in a row to switch
+  target_identity_tolerance: 0.06  # m; "same object" radius around the held centroid
   w_attention: 0.7
   w_geometry: 0.3
 

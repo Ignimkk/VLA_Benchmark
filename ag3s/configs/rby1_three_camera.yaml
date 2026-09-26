@@ -52,7 +52,9 @@ clustering:
   eps: 0.03              # voxel_size < eps < the smallest inter-object gap
   min_points: 25
   use_3d_connectivity: true
-  target_score_threshold: 0.25
+  target_score_threshold: 0.0    # 0 = never reject on score; rank 1 is the target (T5e)
+  target_confirm_frames: 3       # a different cluster must lead 3 frames in a row to switch
+  target_identity_tolerance: 0.06  # m; "same object" radius around the held centroid
 
 collision_candidate:
   cluster_method: dbscan
