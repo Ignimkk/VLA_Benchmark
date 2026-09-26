@@ -189,6 +189,8 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **completeness** | 기대한 프레임 수와 실제로 기록된 프레임 수가 같은가. 누락 0 · 중복 일련번호 0 · timestamp 역전 0 · 설명 안 되는 `carried`/`stale` 0 을 함께 센다 |
 | **shadow mode** | AG3S · cuRobo · SQP 를 전부 돌리되 **수정된 청크를 로봇에 보내지 않는** 실행. T5 가 이것이고, 실제로 보내는 T6 앞에 두는 이유는 수정이 여유거리를 나쁘게 만드는지를 로봇을 움직이기 전에 보기 위해서다 |
 | **`actions_reference`** | shadow 응답에 실리는 선택 키(`wire.py:93`) — 정책이 낸 **원본** 청크. `actions` 는 shadow 에서도 여전히 refined 다(서버가 거짓말하지 않는다). 무엇을 실행할지는 **로컬**이 이 둘 중 고른다. 키가 없으면 shadow 가 아니라는 뜻이고, `None` 이면 `pack_response` 가 키 자체를 안 싣는다 (T5a) |
+| **closed loop / execute mode** | shadow 의 반대 — 서버가 다듬은(refined) chunk 를 **실제로 실행하는** 실행. T6 이 이것이다. 서버를 `--shadow` 없이 띄우면 응답에 `actions_reference` 가 안 실리고, 로컬도 `--safe-shadow` 를 안 주면 hold gate 가 살아나 unsafe 판정이 로봇을 실제로 멈출 수 있게 된다 |
+| **hold gate** | `pi05_infer.py` 의 `safe_client.should_execute` 검사. execute mode 에서 판정이 unsafe·timeout·오래된 응답·서버 오류면 **그 chunk 를 한 스텝도 실행하지 않고** 현재 관절을 그대로 목표로 유지한다(정지가 아니라 유지 — 제어를 끊으면 팔이 중력으로 떨어진다). shadow 에서는 이 gate 가 항상 통과로 취급된다 — 그래서 shadow 는 계속 움직이고 execute 는 걸리면 멈춘다 |
 | **degradation code** | `ag3s_status != ok` 인 응답의 `ag3s.reasons`(`[{code, detail}]`)에 실리는 짧은 식별자. `degradation.py` 의 `CODES` 등록부에 12 개가 있고(`pointcloud_capped`·`candidate_overflow`·`esdf_unknown_fraction`·`no_robot_model`·`esdf_dead_camera`·`spheres_outside_grid`·`camera_state_stale`·`camera_transform_stale`·`camera_skew`·`camera_missing`·`fused_pointcloud_capped`·`constraint_sphere_overflow`), 등록 안 된 코드는 `reason()`이 거절한다. 코드가 하나도 없이 `degraded` 면 `degraded_without_reason` 이 대신 붙는다 — 그것이 나오면 씬이 아니라 AG3S 의 배선 결함이다 (T5b) |
 | **`openpi-live` venv** | openpi venv 의 복제본에 `warp-lang` 과 `curobo` 를 더한 네 번째 venv. 정책 · MuJoCo · AG3S · cuRobo · SQP 가 **한 프로세스**에서 돌게 하려고 만든다. 원본을 건드리지 않는 것이 요점 |
 | **site (최근접 site)** | 거리 변환이 어떤 복셀의 거리를 답할 때 **그 거리를 만든 표면 복셀**. cuRobo 는 이것을 `site_index` 에 dense int32 로 남긴다 (포장 `(z<<20)` \| `(y<<10)` \| `x`). 그래서 "가장 가까운 표면이 무엇인가" 는 추가 알고리즘이 아니라 **조회 한 번**이다 — 실측 오차 중앙 0.10 mm |
@@ -237,7 +239,7 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **T3** 전 관측 프레임 TSDF/ESDF | 모든 프레임에서 필드가 서나. `max_field_age_sec` 를 정한다 | 대기 — T0 이 근거 수치를 냈다 (필드 나이 P50 2637 ms) |
 | **T4** fail-closed 주입 | 고장을 넣으면 정말 닫히나 | 대기 |
 | **T5** shadow 루프 | 판정만 하고 실행은 안 하는 루프가 서나 | **통과**(`T5f`, 사용자 판정 2026-09-26) — 75 chunk 전부 돌고 target 이 한 번도 엉뚱하게 잡히지 않았고 `violated` 7 건이 진짜 충돌이 아니다. **단 핵심 조건인 refined 대 reference clearance 비교는 미측정**(기록에 `actions` 배열이 없다). 회귀 기준선 `has_target` 9/15 → 15/15 갱신 |
-| **T6** 실기 닫힌 루프 | 예산 안에서 실제로 도나 | 대기 |
+| **T6** 실기 닫힌 루프 | 예산 안에서 실제로 도나 | **실행 완료(execute, closed loop, `ep1807`), 집계는 `T6b` 로 측정 중, 기록기 수정은 `T6a` 로 진행 중(담당 A1)** — 사용자 판정: 멈춘 자리를 재려면 기록기부터 고친다, 과제는 놓는 순간 끝나고 복귀 구간엔 최적화·collision avoidance 가 필요 없다 |
 | — **실시간성** | 청크 예산 533 ms 안에 드나 | **별도 판정 실패** — P50 2519 ms, 24/24 청크가 4.7 배 |
 
 ### 이 국면에서 쓰는 자산
@@ -2441,5 +2443,88 @@ chunk 에서 그 프레임의 1 등이 아닌 것을 붙들고 있었다**는 �
   그래프. frame 축에 target 이름이 바뀌는 띠.
 * [`figures/t5f/t5f-tables-before-after.png`](figures/t5f/t5f-tables-before-after.png) —
   표.
+
+---
+
+## T6 — closed loop 실행 모드 (2026-09-26)
+
+**T5(shadow)** 까지는 서버 판정을 **기록만** 했고 로봇은 늘 정책 원본 chunk 를 실행했다.
+**T6** 은 서버가 다듬은(refined) chunk 를 **실제로 실행한다** — unsafe 판정이 로봇을 실제로
+멈출 수 있는 첫 실행이다.
+
+### 실행 조건
+
+- 서버를 **`--shadow` 없이** 띄웠다. shadow 서버와 다른 점은 응답에 `actions_reference`
+  키가 실리지 않는 것 하나다(`benchmark/trajopt/wire.py` 의 규약 — 이 키의 있음/없음이
+  서버 모드의 유일한 신호). `benchmark/trajopt/serve_safe.py:319` 가 서버 기동 시
+  *"closed-loop mode: the response carries the refined chunk only (no `actions_reference`
+  key). Local `--safe-shadow` will refuse to run against this server."* 를 찍는다.
+- 로컬은 `--safe-remote` 만 주고 **`--safe-shadow` 를 주지 않는다.** 이 둘이 짝이 안 맞으면
+  (서버는 shadow 인데 로컬만 shadow 라거나 그 반대) 로봇이 움직이기 전에 즉시 죽는다
+  (`pi05_infer.py:921-922`, `T5a`). 짝이 맞게 **둘 다 안 주면**, `pi05_infer.py` 의
+  `safe_client.should_execute` 검사(hold gate — `run_execute_ep1807.sh` 주석은
+  `pi05_infer.py:1557` 로 적었으나, `T6a` 가 이 파일에 `actions`·`qpos` 기록 코드를 더하는
+  중이라 줄 번호가 그새 움직였다. 이 세션에서 다시 확인한 자리는 1601 근처다)가 살아나
+  **unsafe 판정이면 로봇이 실제로 멈춘다.**
+- 기동 script 둘 — **`pi05_TO_hybrid/logs/serve_safe_rby1_16d.sh`**(서버) ·
+  **`pi05_TO_hybrid/logs/run_execute_ep1807.sh`**(로컬). **이 script 들이 있는 이유는 T0 를
+  재현하려 했을 때 서버를 어떻게 띄웠는지가 어디에도 없었기 때문이다** — 기록의 manifest
+  `extra.argv` 에는 클라이언트 인자만 있고(`--remote localhost:8000 --safe-remote ...`),
+  서버 쪽 config·backend·voxel 크기는 한 줄도 없어 재구성하면 그 순간 조건이 갈라진다.
+- 같은 `ep1807`, `--max-steps 600` / 75 chunk, `--esdf-backend curobo --voxel 0.020
+  --fine-voxel 0.005 --tsdf-voxel 0.005`(T5f 와 같은 서버 설정). **결과 집계는 `T6b` 로
+  측정 중이다.**
+
+### shadow 와 execute 의 구조적 차이 — 아직 측정이 아니라 코드가 그렇게 짜여 있다는 것
+
+- **shadow** 에서는 unsafe 판정에도 로봇이 **정책 원본 chunk** 를 실행한다(`safe_policy.py`
+  가 shadow 일 때 `actions_reference` 를 함께 실어 로컬이 그것을 고르게 한다). 판정이 무엇이든
+  **계속 움직이므로** 다음 planning frame 은 항상 새 자리에서 관측된다.
+- **execute** 에서는 unsafe 면 hold gate 가 **그 자리에 세운다**(`should_execute=False` →
+  현재 관절을 그대로 목표로 유지 — 정지가 아니라 유지다, 끊으면 팔이 중력으로 떨어진다).
+  다음 chunk 도 **같은 관측 자리에서** 다시 계획되고, 그 자리가 여전히 위반이면 또 멈춘다.
+  **한 번 걸리면 관측이 안 바뀌므로 스스로 빠져나올 길이 코드 구조상 없다** — 판정이 매
+  chunk 새 정보를 안 보기 때문이다.
+- **이것은 구조이지 측정이 아니다.** 실제로 T6 실행이 이 자로 걸려 영구히 멈추는지, 걸리는
+  자리가 과제 구간인지, 위반 폭이 hold 뒤 커지는지는 **`T6b` 가 답한다** — 셋 다 지금은
+  `not_measured` 다.
+
+### 사용자 판정 (2026-09-26)
+
+| 물음 | 판정 |
+|---|---|
+| 실행이 어느 seq 부터 영구히 멈추는 것을 어떻게 접근하나 | **기록기를 먼저 고친다** — 멈춘 자리에 로봇 자세도 물체 자세도 안 실려 있어 측정할 방법 자체가 없다 |
+| 과제의 끝은 어디인가 | **사과가 바구니에 들어간 순간 과제가 끝난다.** 그 뒤는 준비자세로 돌아오는 구간이고 **최적화도 collision avoidance 도 필요 없다** |
+
+**두 번째 판정이 왜 중요한가.** 지금 구조는 과제가 끝난 뒤에도 AG3S 와 TO 가 매 chunk
+그대로 돌며 판정을 계속 낸다 — 복귀 동작 중 field 가 비관적으로 위반을 부르면 hold gate가
+그 복귀를 막을 수 있다는 뜻이다(T5f 의 `violated` 7 건 중 6 건이 field 비관이었던 것과 같은
+성격). `GraspLatch`(`grasp_latch.py`)는 이미 `PLACED` 상태를 갖고 있고, `T2` 에서
+`detach()` 뒤 `latch.phase` 가 `'placed'` 로 **고착**하는 것을 실측으로 확인했다 — 이
+상태 전이를 과제 종료 신호로 재사용할 수 있다. **다만 이것은 아직 판정이 아니라 후보다.**
+`T6b`(멈춤이 과제 구간인지 복귀 구간인지)를 잰 뒤에 정한다.
+
+### 같은 결핍에 네 번 막혔다
+
+기록기에 `actions`(실행/원본 chunk 자체)·`qpos`(로봇 관절)·물체 자세·위반 constraint 의
+신원이 없어서 **네 번 연속** 같은 종류의 측정이 막혔다:
+
+| 언제 | 못 잰 것 |
+|---|---|
+| `T5c` | refined 대 reference clearance (`actions` 배열이 없다) |
+| `T5c` | 과제가 실제로 완결됐나 (`qpos`·물체 자세가 없다) |
+| `T5f` | `violated` 가 어느 constraint 인가 (verdict 가 constraint 의 신원을 안 싣는다) |
+| **`T6`** | **멈춘 자리가 어디인가** (위 셋 전부가 한꺼번에 걸린다) |
+
+**그때마다 로그의 `not_measured` 에 적고 넘어갔고, 같은 결핍이 네 번째로 발목을 잡았다.**
+`T5` 의 핵심 합격 조건 하나(refined 대 reference clearance)가 그래서 미측정으로 닫혔다.
+→ **`T6a`(기록기 수정, 담당 A1)** 로 나갔다: planning record 마다 `actions`·
+`actions_reference`(shadow 일 때만)·`qpos`·`object_poses`·`max_violation_pair`(위반
+constraint 의 신원)를, control record 마다 `qpos` 를 남긴다. **`not_measured` 가 같은
+자리에서 반복되면 그것 자체가 신호다** — 다음에 또 나오면 넘어가지 않고 기록기부터 본다.
+
+**`T6b`(담당 A2)** 가 이번 실행에서 지금 기록으로 잴 수 있는 것(chunk 별 판정 · hold 위치 ·
+위반 폭의 seq 축 추이 · 지연)을 낸다. `T6a` 가 끝난 뒤 재실행에서 위 네 가지(멈춘 자리의
+참값, 과제 완결 여부, constraint 신원)를 다시 잰다.
 
 ---

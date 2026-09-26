@@ -1,0 +1,831 @@
+{
+ "_comment": "ag3s-verifier(A2) 가 쓴다. 해석을 쓰지 않는다 — 숫자와 경로만.",
+ "step": "T6b",
+ "date": "2026-09-26",
+ "record_consumed": {
+  "shadow_threshold_0_25": "outputs/live_test/20260925_t5shadow/shadow_ep1807/",
+  "shadow_rank1_confirm3": "outputs/live_test/20260925_t5e_shadow/shadow_ep1807/",
+  "execute_closed_loop": "outputs/live_test/20260926_t6/execute_ep1807/",
+  "reference_episode_replay_for_the_scene_figure": "outputs/live_test/20260925_ep1807/run_0000 (bare policy, port 8123)",
+  "episode_index": 1807,
+  "prompt": "Pick up the apple and place it in the basket.",
+  "seq_to_t_step": "t_step = (seq - 1) * 8",
+  "chunk_period_ms": 533.3333333333334,
+  "no_new_capture": true,
+  "no_offline_replay_used_as_a_stand_in": true
+ },
+ "runs": [
+  {
+   "id": "baseline",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/T6b/baseline_check.json",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T6b/baseline_check.json",
+   "stdout_log": "outputs/verify/T6b/baseline_check.log"
+  },
+  {
+   "id": "aggregate_three_runs",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T6b/aggregate_T6b.py",
+   "venv": ".venv-ag3s",
+   "script": "outputs/verify/T6b/aggregate_T6b.py",
+   "raw_output": [
+    "outputs/verify/T6b/aggregate_T6b.json",
+    "outputs/verify/T6b/chunks_T6b.json"
+   ],
+   "stdout_log": "outputs/verify/T6b/aggregate_T6b.log",
+   "note": "reads only frames.jsonl / completeness.json / manifest.json of the three recorded runs; nothing is simulated or replayed"
+  },
+  {
+   "id": "figures",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T6b/make_fig1_scene.py ; ... make_fig2_bands.py ; ... make_fig3_table.py",
+   "venv": ".venv-ag3s",
+   "script": [
+    "outputs/verify/T6b/make_fig1_scene.py",
+    "outputs/verify/T6b/make_fig2_bands.py",
+    "outputs/verify/T6b/make_fig3_table.py"
+   ]
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "2b95baf",
+  "workspace_head": "5cd6f42",
+  "dirty_files": [
+   "ag3s/docs/AG3S_REVIEW_PLAN.md",
+   "ag3s/docs/AG3S_T0T6_LOG.md",
+   "ag3s/runtime/frame_record.py",
+   "trajopt/client.py",
+   "trajopt/linearize.py",
+   "trajopt/safe_policy.py",
+   "trajopt/sqp.py",
+   "trajopt/wire.py",
+   "ag3s/runtime/scene_truth.py (untracked)"
+  ],
+  "note": "benchmark/**/*.py 는 이 스텝에서 한 줄도 고치지 않았다. 측정 script 는 outputs/verify/T6b/ 에만 있다. dirty 는 A1 의 T6a 작업이다 — 아래 file:line 은 2026-09-26 작업 트리 기준이라 T6a 뒤 옮겨갈 수 있다",
+  "rule_file_lines_read_2026_09_26": {
+   "server_status_violated": "benchmark/trajopt/sqp.py:275-293",
+   "server_certified_geometry_downgrade": "benchmark/trajopt/sqp.py:286-294",
+   "client_hold_branch": "benchmark/trajopt/client.py:178-180",
+   "hold_chunk_is_current_state_tiled": "benchmark/trajopt/client.py:306-337",
+   "control_record_executed_flag": "pi05_TO_hybrid/rby1_bringup/pi05_infer.py:1629 -> SafePolicyClient.should_execute (benchmark/trajopt/client.py:222-229)"
+  }
+ },
+ "numbers": {
+  "_comment": "로그와 논문에 쓰이는 모든 수치가 여기에만 있다. 여기 없는 숫자는 쓰지 않는다.",
+  "definitions": {
+   "safe": "planning record `safe` == true",
+   "hold": "planning record `safe` == false",
+   "max_violation_mm": "verdict.max_violation_m * 1000",
+   "hold_class": "(verdict.ag3s_status, verdict.trajopt_status)",
+   "percentile": "nearest rank on the sorted values; p50 of the nonzero-hold population is the median of those chunks only",
+   "camera_skew_ms": "observation record camera_skew_sec * 1000 (newest minus oldest camera stamp of the frame)",
+   "control_steps_executed_false": "control records with executed == false; the client did not apply that chunk step to the robot"
+  },
+  "per_run": {
+   "shadow_threshold": {
+    "record_dir": "outputs/live_test/20260925_t5shadow/shadow_ep1807",
+    "mode": "shadow (unsafe verdicts overridden)",
+    "chunks_sent": 75,
+    "safe": 14,
+    "hold": 61,
+    "client_ipc_stats": {
+     "sent": 75,
+     "safe": 14,
+     "unsafe": 61,
+     "timeout": 0,
+     "stale": 0,
+     "error": 0,
+     "shadow_override": 61
+    },
+    "completeness_pass": true,
+    "hold_classes_ag3s_trajopt": {
+     "(ok, violated)": 1,
+     "(degraded, violated)": 6,
+     "(no_target, violated)": 54
+    },
+    "hold_class_by_violation": {
+     "ok / max_violation > 0": {
+      "n": 1,
+      "seqs": [
+       4
+      ]
+     },
+     "degraded / max_violation == 0": {
+      "n": 6,
+      "seqs": [
+       5,
+       45,
+       47,
+       50,
+       54,
+       71
+      ]
+     },
+     "no_target / max_violation == 0": {
+      "n": 54,
+      "seqs": [
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       25,
+       30,
+       31,
+       32,
+       33,
+       34,
+       35,
+       36,
+       37,
+       38,
+       39,
+       40,
+       41,
+       42,
+       43,
+       44,
+       46,
+       48,
+       49,
+       51,
+       52,
+       53,
+       55,
+       56,
+       57,
+       58,
+       59,
+       60,
+       61,
+       62,
+       63,
+       64,
+       65,
+       66,
+       67,
+       68,
+       69,
+       70,
+       72,
+       73,
+       74,
+       75
+      ]
+     }
+    },
+    "hold_seq_ranges": [
+     [
+      4,
+      5
+     ],
+     [
+      10,
+      21
+     ],
+     [
+      25,
+      25
+     ],
+     [
+      30,
+      75
+     ]
+    ],
+    "safe_seq_ranges": [
+     [
+      1,
+      3
+     ],
+     [
+      6,
+      9
+     ],
+     [
+      22,
+      24
+     ],
+     [
+      26,
+      29
+     ]
+    ],
+    "safe_seq_min": 1,
+    "safe_seq_max": 29,
+    "first_hold_seq": 4,
+    "first_unbroken_hold_seq": 30,
+    "max_violation_mm_holds_nonzero": {
+     "n": 1,
+     "min_mm": 3.0030982460759748,
+     "p50_mm": 3.0030982460759748,
+     "p95_mm": 3.0030982460759748,
+     "max_mm": 3.0030982460759748
+    },
+    "max_violation_mm_holds_all": {
+     "n": 61,
+     "min_mm": 0.0,
+     "p50_mm": 0.0,
+     "p95_mm": 0.0,
+     "max_mm": 3.0030982460759748
+    },
+    "hold_chunks_with_zero_violation": 60,
+    "ag3s_status_counts": {
+     "ok": 15,
+     "degraded": 6,
+     "no_target": 54
+    },
+    "trajopt_status_counts": {
+     "feasible": 14,
+     "violated": 61
+    },
+    "ag3s_reason_code_counts": {
+     "camera_transform_stale": 6,
+     "camera_skew": 6
+    },
+    "field_tier_count_per_chunk": {
+     "2": 16,
+     "1": 59
+    },
+    "field_state_counts": {
+     "new": 150,
+     "carried": 525
+    },
+    "timing_ms": {
+     "infer": {
+      "n": 75,
+      "p50_ms": 259.4275511801243,
+      "p95_ms": 275.4731238819659,
+      "max_ms": 42888.48719326779,
+      "seq1_ms": 42888.48719326779,
+      "p50_ms_excl_seq1": 259.288533590734,
+      "p95_ms_excl_seq1": 271.26433001831174,
+      "max_ms_excl_seq1": 330.026684794575
+     },
+     "ag3s": {
+      "n": 75,
+      "p50_ms": 2650.411142036319,
+      "p95_ms": 3068.0862362496555,
+      "max_ms": 7448.587916791439,
+      "seq1_ms": 7448.587916791439,
+      "p50_ms_excl_seq1": 2649.298356845975,
+      "p95_ms_excl_seq1": 2994.221061002463,
+      "max_ms_excl_seq1": 3203.828124795109
+     },
+     "trajopt": {
+      "n": 75,
+      "p50_ms": 224.34797510504723,
+      "p95_ms": 283.51237438619137,
+      "max_ms": 432.9702570103109,
+      "seq1_ms": 261.6221928037703,
+      "p50_ms_excl_seq1": 223.97796623408794,
+      "p95_ms_excl_seq1": 283.51237438619137,
+      "max_ms_excl_seq1": 432.9702570103109
+     },
+     "total": {
+      "n": 75,
+      "p50_ms": 3131.4131962135434,
+      "p95_ms": 3548.511722125113,
+      "max_ms": 50598.83417794481,
+      "seq1_ms": 50598.83417794481,
+      "p50_ms_excl_seq1": 3130.6671579368412,
+      "p95_ms_excl_seq1": 3485.9367408789694,
+      "max_ms_excl_seq1": 3752.323166001588
+     },
+     "policy_infer_client": {
+      "n": 75,
+      "p50_ms": 3349.064588546753,
+      "p95_ms": 3761.121988296509,
+      "max_ms": 51520.188331604004,
+      "seq1_ms": 51520.188331604004,
+      "p50_ms_excl_seq1": 3345.668077468872,
+      "p95_ms_excl_seq1": 3713.5043144226074,
+      "max_ms_excl_seq1": 3969.041585922241
+     }
+    },
+    "camera_skew_ms": {
+     "n": 75,
+     "p50_ms": 93.60517794266343,
+     "p95_ms": 100.5019792355597,
+     "max_ms": 107.22303716465831,
+     "min_ms": 88.33268424496055,
+     "over_100ms_frames": 6
+    },
+    "control_steps_executed_true": 600,
+    "control_steps_executed_false": 0
+   },
+   "shadow_rank1": {
+    "record_dir": "outputs/live_test/20260925_t5e_shadow/shadow_ep1807",
+    "mode": "shadow (unsafe verdicts overridden)",
+    "chunks_sent": 75,
+    "safe": 68,
+    "hold": 7,
+    "client_ipc_stats": {
+     "sent": 75,
+     "safe": 68,
+     "unsafe": 7,
+     "timeout": 0,
+     "stale": 0,
+     "error": 0,
+     "shadow_override": 7
+    },
+    "completeness_pass": true,
+    "hold_classes_ag3s_trajopt": {
+     "(ok, violated)": 7
+    },
+    "hold_class_by_violation": {
+     "ok / max_violation > 0": {
+      "n": 7,
+      "seqs": [
+       4,
+       15,
+       16,
+       32,
+       72,
+       74,
+       75
+      ]
+     }
+    },
+    "hold_seq_ranges": [
+     [
+      4,
+      4
+     ],
+     [
+      15,
+      16
+     ],
+     [
+      32,
+      32
+     ],
+     [
+      72,
+      72
+     ],
+     [
+      74,
+      75
+     ]
+    ],
+    "safe_seq_ranges": [
+     [
+      1,
+      3
+     ],
+     [
+      5,
+      14
+     ],
+     [
+      17,
+      31
+     ],
+     [
+      33,
+      71
+     ],
+     [
+      73,
+      73
+     ]
+    ],
+    "safe_seq_min": 1,
+    "safe_seq_max": 73,
+    "first_hold_seq": 4,
+    "first_unbroken_hold_seq": 74,
+    "max_violation_mm_holds_nonzero": {
+     "n": 7,
+     "min_mm": 0.13502689819003266,
+     "p50_mm": 2.556504194956011,
+     "p95_mm": 5.6894580699436705,
+     "max_mm": 5.6894580699436705
+    },
+    "max_violation_mm_holds_all": {
+     "n": 7,
+     "min_mm": 0.13502689819003266,
+     "p50_mm": 2.556504194956011,
+     "p95_mm": 5.6894580699436705,
+     "max_mm": 5.6894580699436705
+    },
+    "hold_chunks_with_zero_violation": 0,
+    "ag3s_status_counts": {
+     "ok": 75
+    },
+    "trajopt_status_counts": {
+     "feasible": 68,
+     "violated": 7
+    },
+    "ag3s_reason_code_counts": {},
+    "field_tier_count_per_chunk": {
+     "2": 75
+    },
+    "field_state_counts": {
+     "new": 150,
+     "carried": 525
+    },
+    "timing_ms": {
+     "infer": {
+      "n": 75,
+      "p50_ms": 288.98432524874806,
+      "p95_ms": 331.7467710003257,
+      "max_ms": 43893.48548697308,
+      "seq1_ms": 43893.48548697308,
+      "p50_ms_excl_seq1": 288.4885440580547,
+      "p95_ms_excl_seq1": 329.8689010553062,
+      "max_ms_excl_seq1": 341.75627399235964
+     },
+     "ag3s": {
+      "n": 75,
+      "p50_ms": 2714.512379374355,
+      "p95_ms": 3070.088743697852,
+      "max_ms": 7641.561399679631,
+      "seq1_ms": 7641.561399679631,
+      "p50_ms_excl_seq1": 2707.1886570192873,
+      "p95_ms_excl_seq1": 3062.612106092274,
+      "max_ms_excl_seq1": 3360.1183858700097
+     },
+     "trajopt": {
+      "n": 75,
+      "p50_ms": 271.1937068961561,
+      "p95_ms": 389.8117057979107,
+      "max_ms": 485.44974997639656,
+      "seq1_ms": 342.44479006156325,
+      "p50_ms_excl_seq1": 270.91124281287193,
+      "p95_ms_excl_seq1": 389.8117057979107,
+      "max_ms_excl_seq1": 485.44974997639656
+     },
+     "total": {
+      "n": 75,
+      "p50_ms": 3280.2368667908013,
+      "p95_ms": 3584.045604802668,
+      "max_ms": 51877.698321361095,
+      "seq1_ms": 51877.698321361095,
+      "p50_ms_excl_seq1": 3270.0109370052814,
+      "p95_ms_excl_seq1": 3579.0382381528616,
+      "max_ms_excl_seq1": 3953.8077278994024
+     },
+     "policy_infer_client": {
+      "n": 75,
+      "p50_ms": 3461.878538131714,
+      "p95_ms": 3753.9963722229004,
+      "max_ms": 52747.09153175354,
+      "seq1_ms": 52747.09153175354,
+      "p50_ms_excl_seq1": 3461.7371559143066,
+      "p95_ms_excl_seq1": 3750.9605884552,
+      "max_ms_excl_seq1": 4129.088640213013
+     }
+    },
+    "camera_skew_ms": {
+     "n": 75,
+     "p50_ms": 74.93868889287114,
+     "p95_ms": 86.2519359216094,
+     "max_ms": 93.9713092520833,
+     "min_ms": 72.89820211008191,
+     "over_100ms_frames": 0
+    },
+    "control_steps_executed_true": 600,
+    "control_steps_executed_false": 0
+   },
+   "execute": {
+    "record_dir": "outputs/live_test/20260926_t6/execute_ep1807",
+    "mode": "execute (unsafe verdicts held)",
+    "chunks_sent": 75,
+    "safe": 33,
+    "hold": 42,
+    "client_ipc_stats": {
+     "sent": 75,
+     "safe": 33,
+     "unsafe": 42,
+     "timeout": 0,
+     "stale": 0,
+     "error": 0
+    },
+    "completeness_pass": true,
+    "hold_classes_ag3s_trajopt": {
+     "(degraded, violated)": 7,
+     "(ok, violated)": 35
+    },
+    "hold_class_by_violation": {
+     "degraded / max_violation == 0": {
+      "n": 5,
+      "seqs": [
+       3,
+       22,
+       26,
+       28,
+       38
+      ]
+     },
+     "ok / max_violation > 0": {
+      "n": 35,
+      "seqs": [
+       39,
+       40,
+       41,
+       42,
+       43,
+       44,
+       45,
+       46,
+       48,
+       49,
+       50,
+       51,
+       52,
+       53,
+       54,
+       55,
+       56,
+       57,
+       58,
+       59,
+       60,
+       61,
+       62,
+       63,
+       64,
+       65,
+       66,
+       67,
+       68,
+       69,
+       70,
+       72,
+       73,
+       74,
+       75
+      ]
+     },
+     "degraded / max_violation > 0": {
+      "n": 2,
+      "seqs": [
+       47,
+       71
+      ]
+     }
+    },
+    "hold_seq_ranges": [
+     [
+      3,
+      3
+     ],
+     [
+      22,
+      22
+     ],
+     [
+      26,
+      26
+     ],
+     [
+      28,
+      28
+     ],
+     [
+      38,
+      75
+     ]
+    ],
+    "safe_seq_ranges": [
+     [
+      1,
+      2
+     ],
+     [
+      4,
+      21
+     ],
+     [
+      23,
+      25
+     ],
+     [
+      27,
+      27
+     ],
+     [
+      29,
+      37
+     ]
+    ],
+    "safe_seq_min": 1,
+    "safe_seq_max": 37,
+    "first_hold_seq": 3,
+    "first_unbroken_hold_seq": 38,
+    "max_violation_mm_holds_nonzero": {
+     "n": 37,
+     "min_mm": 0.3367303855070225,
+     "p50_mm": 21.824697075709082,
+     "p95_mm": 32.5805061544959,
+     "max_mm": 37.83251340842661
+    },
+    "max_violation_mm_holds_all": {
+     "n": 42,
+     "min_mm": 0.0,
+     "p50_mm": 20.151279721072807,
+     "p95_mm": 32.5805061544959,
+     "max_mm": 37.83251340842661
+    },
+    "hold_chunks_with_zero_violation": 5,
+    "ag3s_status_counts": {
+     "ok": 68,
+     "degraded": 7
+    },
+    "trajopt_status_counts": {
+     "feasible": 33,
+     "violated": 42
+    },
+    "ag3s_reason_code_counts": {
+     "camera_transform_stale": 7,
+     "camera_skew": 7
+    },
+    "field_tier_count_per_chunk": {
+     "2": 75
+    },
+    "field_state_counts": {
+     "new": 150,
+     "carried": 525
+    },
+    "timing_ms": {
+     "infer": {
+      "n": 75,
+      "p50_ms": 280.7001890614629,
+      "p95_ms": 330.1401250064373,
+      "max_ms": 40947.56551273167,
+      "seq1_ms": 40947.56551273167,
+      "p50_ms_excl_seq1": 279.98789492994547,
+      "p95_ms_excl_seq1": 328.9275108836591,
+      "max_ms_excl_seq1": 353.9579841308296
+     },
+     "ag3s": {
+      "n": 75,
+      "p50_ms": 2881.271807011217,
+      "p95_ms": 3558.7006360292435,
+      "max_ms": 6742.872481700033,
+      "seq1_ms": 6742.872481700033,
+      "p50_ms_excl_seq1": 2847.4003272131085,
+      "p95_ms_excl_seq1": 3548.960241023451,
+      "max_ms_excl_seq1": 3770.1857718639076
+     },
+     "trajopt": {
+      "n": 75,
+      "p50_ms": 293.4837038628757,
+      "p95_ms": 338.35065783932805,
+      "max_ms": 381.06056349352,
+      "seq1_ms": 303.9074605330825,
+      "p50_ms_excl_seq1": 292.58023481816053,
+      "p95_ms_excl_seq1": 338.35065783932805,
+      "max_ms_excl_seq1": 381.06056349352
+     },
+     "total": {
+      "n": 75,
+      "p50_ms": 3462.9659838974476,
+      "p95_ms": 4151.406904216856,
+      "max_ms": 47994.4797703065,
+      "seq1_ms": 47994.4797703065,
+      "p50_ms_excl_seq1": 3445.6002260558307,
+      "p95_ms_excl_seq1": 4131.941102910787,
+      "max_ms_excl_seq1": 4347.142456565052
+     },
+     "policy_infer_client": {
+      "n": 75,
+      "p50_ms": 3676.6600608825684,
+      "p95_ms": 4367.535591125488,
+      "max_ms": 48915.45867919922,
+      "seq1_ms": 48915.45867919922,
+      "p50_ms_excl_seq1": 3664.660930633545,
+      "p95_ms_excl_seq1": 4348.186731338501,
+      "max_ms_excl_seq1": 4556.732177734375
+     }
+    },
+    "camera_skew_ms": {
+     "n": 75,
+     "p50_ms": 95.06434435024858,
+     "p95_ms": 101.53367416933179,
+     "max_ms": 112.45432076975703,
+     "min_ms": 83.0703959800303,
+     "over_100ms_frames": 7
+    },
+    "control_steps_executed_true": 264,
+    "control_steps_executed_false": 336
+   }
+  },
+  "violation_trend_execute": {
+   "hold_onset_seq": 38,
+   "before_onset": {
+    "n": 37,
+    "p50_mm": 0.0,
+    "max_mm": 0.0
+   },
+   "from_onset": {
+    "n": 38,
+    "p50_mm": 21.200930017882783,
+    "min_mm": 0.0,
+    "max_mm": 37.83251340842661
+   },
+   "slope_mm_per_chunk_from_onset": 0.35779328951087214,
+   "first10_from_onset_p50_mm": 5.155538593332162,
+   "last10_p50_mm": 20.189893883996966,
+   "argmax_seq": 49
+  },
+  "task_phase_overlay": {
+   "source": "benchmark/ag3s/docs/handoff/T5d.verify.json numbers.task_phase_rule",
+   "measured_on": "offline replay of the reference episode (outputs/live_test/20260925_ep1807/run_0000)",
+   "first_closed_seq": 20,
+   "first_reopen_seq": 33,
+   "execute_hold_onset_seq": 38,
+   "execute_hold_onset_vs_first_reopen": 5,
+   "execute_safe_seq_max": 37,
+   "execute_n_safe_in_seq_1_37": 33,
+   "execute_n_chunks_seq_1_37": 37,
+   "execute_n_hold_in_seq_1_37": 4
+  },
+  "cross_checks": {
+   "execute_hold_chunks_times_8_equals_unexecuted_control_steps": {
+    "hold_chunks": 42,
+    "open_loop_horizon": 8,
+    "control_steps_executed_false": 336
+   },
+   "execute_degraded_holds_equal_frames_with_camera_skew_over_100ms": {
+    "degraded_holds": 7,
+    "frames_with_skew_over_100ms": 7,
+    "chunks_with_camera_skew_reason_code": 7
+   },
+   "lead_hand_count_vs_measured": {
+    "execute_safe_hand_33_measured": 33,
+    "execute_hold_hand_42_measured": 42,
+    "ag3s_ok_violated_hand_35_measured": 35,
+    "degraded_violated_hand_7_measured": 7,
+    "max_violation_mm_hand_min_0_34_p50_21_82_max_37_83_measured_over": "the 37 hold chunks with max_violation > 0 (min 0.3367 / p50 21.8247 / max 37.8325 mm); over all 42 hold chunks the p50 is 20.1513 mm because 5 hold chunks carry 0.0",
+    "hold_positions_hand_3_22_26_28_and_38_to_75_measured": [
+     [
+      3,
+      3
+     ],
+     [
+      22,
+      22
+     ],
+     [
+      26,
+      26
+     ],
+     [
+      28,
+      28
+     ],
+     [
+      38,
+      75
+     ]
+    ],
+    "safe_33_all_within_seq_1_37_measured": true
+   }
+  },
+  "baseline_check_numbers": {
+   "violated_start": 14,
+   "frames": 15,
+   "has_target": 15,
+   "frame0_clearance_before_mm": 0.15718632962849477,
+   "status_counts_not_a_baseline": {
+    "feasible": 14,
+    "violated": 1
+   }
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t6b/t6b-scene-shared-start-and-hold-seqs.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t6b/t6b-chunk-bands-and-violation.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t6b/t6b-three-runs-table-and-rule.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "위반으로 시작 14/15 · has_target 15/15 · frame0 clearance_before 0.15718632962849477 mm — 기준선과 같다. feasible/violated 는 기준이 아니라 적지 않는다"
+ },
+ "verdict": "기준선 일치. 세 실행의 chunk 별 판정을 집계했고 lead 가 눈으로 센 값과 전부 같다 (safe 33 / hold 42 · (ok,violated) 35 · (degraded,violated) 7 · hold seq 3·22·26·28·38-75 · safe 33 이 전부 seq 1-37 안). max_violation min 0.34 / p50 21.82 / max 37.83 mm 는 max_violation > 0 인 hold 37 건 기준이다 — hold 42 건 전체로 보면 5 건이 0.0 이고 p50 은 20.15 mm 다.",
+ "not_measured": [
+  "T6 실행에서 사과가 언제 바구니에 들어갔나 — 기록에 물체 자세가 없다",
+  "seq 38 이후 팔이 실제로 안 움직였나 — 기록에 qpos 가 없다 (control record 의 executed=false 336 개는 client 가 chunk 를 적용하지 않았다는 사실일 뿐 관절이 멈췄다는 측정이 아니다)",
+  "멈춘 자리의 참값 clearance 와 최근접 쌍 — qpos 가 없다",
+  "`violated` 가 어느 제약인가 — verdict 가 제약 신원을 싣지 않는다",
+  "execute 실행 자신의 task phase — first_closed_seq 20 / first_reopen_seq 33 은 reference episode 의 offline replay 에서 잰 값이고 execute 궤적의 값이 아니다",
+  "offline replay 로 대신하지 않았다 — execute 는 첫 hold (seq 3) 에서 reference 궤적을 떠났으므로 원 기록을 재생해도 execute 가 지나간 자세가 아니다",
+  "scene figure 의 seq 1 을 뺀 모든 panel 은 reference episode replay 의 자세다 (T6 자세가 아니다)"
+ ]
+}

@@ -1,0 +1,83 @@
+{
+ "records": "/mnt/dev/work/outputs/live_test/20260925_ep1807/run_0000",
+ "model_xml": "/mnt/dev/work/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+ "picked_seq": [
+  1,
+  3,
+  22,
+  38,
+  49
+ ],
+ "free_camera": {
+  "type": "free",
+  "distance": 2.2,
+  "azimuth": 138.0,
+  "elevation": -26.0,
+  "lookat_body": "crate"
+ },
+ "pose_provenance": {
+  "seq 1": "shared reset state of all three runs (t_step 0)",
+  "other seq": "reference episode replay run_0000; the execute run left this trajectory at its first hold (seq 3)"
+ },
+ "columns": [
+  {
+   "seq": 1,
+   "t_step": 0,
+   "pose_is_t6": true,
+   "t6_safe": true,
+   "t6_ag3s_status": "ok",
+   "t6_trajopt_status": "feasible",
+   "t6_max_violation_mm": 0.0,
+   "t6_ag3s_reason_codes": []
+  },
+  {
+   "seq": 3,
+   "t_step": 16,
+   "pose_is_t6": false,
+   "t6_safe": false,
+   "t6_ag3s_status": "degraded",
+   "t6_trajopt_status": "violated",
+   "t6_max_violation_mm": 0.0,
+   "t6_ag3s_reason_codes": [
+    "camera_transform_stale",
+    "camera_skew"
+   ]
+  },
+  {
+   "seq": 22,
+   "t_step": 168,
+   "pose_is_t6": false,
+   "t6_safe": false,
+   "t6_ag3s_status": "degraded",
+   "t6_trajopt_status": "violated",
+   "t6_max_violation_mm": 0.0,
+   "t6_ag3s_reason_codes": [
+    "camera_transform_stale",
+    "camera_skew"
+   ]
+  },
+  {
+   "seq": 38,
+   "t_step": 296,
+   "pose_is_t6": false,
+   "t6_safe": false,
+   "t6_ag3s_status": "degraded",
+   "t6_trajopt_status": "violated",
+   "t6_max_violation_mm": 0.0,
+   "t6_ag3s_reason_codes": [
+    "camera_transform_stale",
+    "camera_skew"
+   ]
+  },
+  {
+   "seq": 49,
+   "t_step": 384,
+   "pose_is_t6": false,
+   "t6_safe": false,
+   "t6_ag3s_status": "ok",
+   "t6_trajopt_status": "violated",
+   "t6_max_violation_mm": 37.83251340842661,
+   "t6_ag3s_reason_codes": []
+  }
+ ]
+}

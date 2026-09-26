@@ -2227,3 +2227,27 @@ camera timing 이 좋아진 것(capture span p50 93.61→74.94 ms)은 원인을 
 잡았다. **단, T5 핵심 조건인 refined 대 reference clearance 비교는 미측정**(기록에 `actions`
 가 없다). 회귀 기준선 `has_target` 9/15 → **15/15** 로 갱신. 다음은 T6(실행 모드). 상세와
 수치·figure 는 [`AG3S_T0T6_LOG.md`](AG3S_T0T6_LOG.md) 의 **T5** 절.
+
+## T6 — closed loop 실행 모드, 기록기 결핍이 네 번째로 발목을 잡았다 (2026-09-26)
+
+**T5 까지는 판정만 기록했고 로봇은 늘 정책 원본을 실행했다. T6 은 서버가 다듬은 chunk 를
+실제로 실행한다** — 서버를 `--shadow` 없이, 로컬을 `--safe-shadow` 없이 띄워 hold gate 를
+살린다(unsafe 면 로봇이 실제로 멈춘다). 기동 script 를 처음으로 남겼다(`serve_safe_rby1_16d.sh`
+· `run_execute_ep1807.sh`) — T0 재현 때 서버 기동 조건이 어디에도 없어 겪은 것을 반복하지
+않기 위해서다.
+
+**shadow 와 execute 는 구조가 다르다.** shadow 는 unsafe 여도 계속 움직여 다음 chunk 가 항상
+새 관측에서 계획되지만, execute 는 멈추면 다음 chunk 도 같은 자리에서 계획돼 위반이 그대로면
+다시 멈춘다 — 코드 구조상 스스로 빠져나올 길이 없다. **이것은 아직 구조 서술이지 측정이
+아니다**, `T6b` 가 실제로 그런지를 잰다.
+
+**같은 결핍에 네 번째로 막혔다.** `T5c`(refined 대 reference clearance) · `T5c`(과제 완결
+여부) · `T5f`(violated 의 constraint 신원)에 이어 `T6`(멈춘 자리)도 기록기에 `actions`·
+`qpos`·물체 자세·constraint 신원이 없어 잴 수 없었다. → **`T6a`(담당 A1)** 로 기록기 수정을
+먼저 내보냈다. **`T6b`(담당 A2)** 는 지금 기록으로 잴 수 있는 것(chunk 별 판정·hold 위치·
+위반 폭 추이·지연)을 먼저 낸다.
+
+**사용자 판정** — 멈춤 위치는 기록기부터 고쳐서 잰다 · **과제는 사과가 바구니에 들어간
+순간 끝나고, 복귀 구간에는 최적화도 collision avoidance 도 필요 없다**(`GraspLatch` 의
+`PLACED`/`placed` 고착을 종료 신호 후보로 보되, 아직 판정이 아니라 후보). 상세는
+[`AG3S_T0T6_LOG.md`](AG3S_T0T6_LOG.md) 의 **T6** 절.

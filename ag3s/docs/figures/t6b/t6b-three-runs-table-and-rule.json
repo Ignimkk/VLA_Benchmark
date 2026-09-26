@@ -1,0 +1,244 @@
+{
+ "source": "outputs/verify/T6b/aggregate_T6b.json",
+ "columns": [
+  "shadow_threshold",
+  "shadow_rank1",
+  "execute"
+ ],
+ "rows": [
+  [
+   "record",
+   "20260925_t5shadow",
+   "20260925_t5e_shadow",
+   "20260926_t6"
+  ],
+  [
+   "mode",
+   "shadow (override)",
+   "shadow (override)",
+   "execute (hold)"
+  ],
+  [
+   "chunks sent",
+   75,
+   75,
+   75
+  ],
+  [
+   "safe",
+   14,
+   68,
+   33
+  ],
+  [
+   "hold",
+   61,
+   7,
+   42
+  ],
+  [
+   "timeout / stale / error",
+   "0 / 0 / 0",
+   "0 / 0 / 0",
+   "0 / 0 / 0"
+  ],
+  [
+   "completeness pass",
+   "True",
+   "True",
+   "True"
+  ],
+  [
+   "",
+   "",
+   "",
+   ""
+  ],
+  [
+   "hold (ag3s ok, violated)",
+   1,
+   7,
+   35
+  ],
+  [
+   "hold (degraded, violated)",
+   6,
+   0,
+   7
+  ],
+  [
+   "hold (no_target, violated)",
+   54,
+   0,
+   0
+  ],
+  [
+   "hold with max_violation == 0",
+   60,
+   0,
+   5
+  ],
+  [
+   "",
+   "",
+   "",
+   ""
+  ],
+  [
+   "hold seq",
+   "4-5, 10-21, 25, 30-75",
+   "4, 15-16, 32, 72, 74-75",
+   "3, 22, 26, 28, 38-75"
+  ],
+  [
+   "safe seq range",
+   "1..29",
+   "1..73",
+   "1..37"
+  ],
+  [
+   "first unbroken hold seq",
+   "30",
+   "74",
+   "38"
+  ],
+  [
+   "",
+   "",
+   "",
+   ""
+  ],
+  [
+   "max_violation, holds > 0  n",
+   1,
+   7,
+   37
+  ],
+  [
+   "  min / p50 / p95 / max  [mm]",
+   "3.00 / 3.00 / 3.00 / 3.00",
+   "0.14 / 2.56 / 5.69 / 5.69",
+   "0.34 / 21.82 / 32.58 / 37.83"
+  ],
+  [
+   "max_violation, all holds p50 [mm]",
+   "0.00",
+   "2.56",
+   "20.15"
+  ],
+  [
+   "",
+   "",
+   "",
+   ""
+  ],
+  [
+   "field tiers 2 / 1 per chunk",
+   "16 / 59",
+   "75 / 0",
+   "75 / 0"
+  ],
+  [
+   "ag3s_reason_codes  skew / stale [chunks]",
+   "6 / 6",
+   "0 / 0",
+   "7 / 7"
+  ],
+  [
+   "",
+   "",
+   "",
+   ""
+  ],
+  [
+   "timing infer p50/p95/max [ms]",
+   "259.4 / 275.5 / 42888.5",
+   "289.0 / 331.7 / 43893.5",
+   "280.7 / 330.1 / 40947.6"
+  ],
+  [
+   "timing ag3s p50/p95/max [ms]",
+   "2650.4 / 3068.1 / 7448.6",
+   "2714.5 / 3070.1 / 7641.6",
+   "2881.3 / 3558.7 / 6742.9"
+  ],
+  [
+   "timing trajopt p50/p95/max [ms]",
+   "224.3 / 283.5 / 433.0",
+   "271.2 / 389.8 / 485.4",
+   "293.5 / 338.4 / 381.1"
+  ],
+  [
+   "timing total p50/p95/max [ms]",
+   "3131.4 / 3548.5 / 50598.8",
+   "3280.2 / 3584.0 / 51877.7",
+   "3463.0 / 4151.4 / 47994.5"
+  ],
+  [
+   "timing total, seq 1 excluded",
+   "3130.7 / 3485.9 / 3752.3",
+   "3270.0 / 3579.0 / 3953.8",
+   "3445.6 / 4131.9 / 4347.1"
+  ],
+  [
+   "seq 1 total [ms]",
+   "50598.8",
+   "51877.7",
+   "47994.5"
+  ],
+  [
+   "",
+   "",
+   "",
+   ""
+  ],
+  [
+   "camera skew min/p50/p95/max [ms]",
+   "88.3 / 93.6 / 100.5 / 107.2",
+   "72.9 / 74.9 / 86.3 / 94.0",
+   "83.1 / 95.1 / 101.5 / 112.5"
+  ],
+  [
+   "frames with skew > 100 ms",
+   6,
+   0,
+   7
+  ],
+  [
+   "control steps executed / not",
+   "600 / 0",
+   "600 / 0",
+   "264 / 336"
+  ]
+ ],
+ "violation_trend_execute": {
+  "hold_onset_seq": 38,
+  "before_onset": {
+   "n": 37,
+   "p50_mm": 0.0,
+   "max_mm": 0.0
+  },
+  "from_onset": {
+   "n": 38,
+   "p50_mm": 21.200930017882783,
+   "min_mm": 0.0,
+   "max_mm": 37.83251340842661
+  },
+  "slope_mm_per_chunk_from_onset": 0.35779328951087214,
+  "first10_from_onset_p50_mm": 5.155538593332162,
+  "last10_p50_mm": 20.189893883996966,
+  "argmax_seq": 49
+ },
+ "task_phase_overlay": {
+  "source": "benchmark/ag3s/docs/handoff/T5d.verify.json numbers.task_phase_rule",
+  "measured_on": "offline replay of the reference episode (outputs/live_test/20260925_ep1807/run_0000)",
+  "first_closed_seq": 20,
+  "first_reopen_seq": 33,
+  "execute_hold_onset_seq": 38,
+  "execute_hold_onset_vs_first_reopen": 5,
+  "execute_safe_seq_max": 37,
+  "execute_n_safe_in_seq_1_37": 33,
+  "execute_n_chunks_seq_1_37": 37,
+  "execute_n_hold_in_seq_1_37": 4
+ }
+}
