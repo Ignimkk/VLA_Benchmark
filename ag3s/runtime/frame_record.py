@@ -25,6 +25,16 @@
 control frame 은 자기 필드의 상태를 `FieldProvenance.applied_by_client()` 로 채우고,
 `carried`/`stale` 이면 마지막 실제 갱신의 `sequence` · `observed_at` · `age_ms` 를 함께 싣는다.
 
+## 무엇이 없어서 세 번 막혔나 (T6a, 2026-09-26)
+
+`T5c` 는 *"refined 가 reference 보다 여유거리가 좋은가"* 를 **미측정으로 닫았다** — 기록에
+청크가 없었다. `T6` 는 75 chunk 중 42 번 멈춘 자리를 못 찾았다 — 로봇 자세도 물체 자세도
+없었다. 그래서 planning frame 에 `actions` · `actions_reference` · `qpos` · `object_poses` ·
+`max_violation_pair` 를, control frame 에 `qpos` 를 더했다.
+
+**키를 더하는 것이고 바꾸는 것이 아니다.** 옛 키는 하나도 움직이지 않았고 completeness 표의
+항목도 그대로다 (`plot_t0.py` 가 `frames.jsonl` 을 그 형식으로 읽는다).
+
 한도(`timing.max_field_age_sec`)가 `None` 이면 `stale` 판정을 하지 않고
 `staleness_checked: false` 가 실린다 — 검사를 안 한 것이 통과한 것으로 읽히지 않게 하는 것이
 그 필드의 목적이다.
@@ -71,6 +81,30 @@ def environment_versions() -> dict:
     except Exception:  # noqa: BLE001
         out["cuda_available"] = None
     return out
+
+
+def _jsonable(value: Any) -> Any:
+    """`ndarray` 와 numpy 스칼라를 **되읽을 수 있는** 형태로 내린다.
+
+    `json.dumps(..., default=str)` 는 배열을 만나면 예외를 내지 않고 `str()` 을 적는다 —
+    `"[[0.1 0.2 ... 0.9]]"` 처럼 줄임표가 박힌, 되읽을 수 없는 문자열이다. **조용히 통과하는
+    것이 문제다**: 청크 `[50, 16]` 을 그렇게 적으면 기록은 있는데 값은 없다.
+
+    T6a 가 청크와 `qpos` 를 싣기 시작하면서 그 경로가 실제로 열렸으므로, 호출부마다
+    `.tolist()` 를 기억하는 대신 여기서 한 번 내린다. numpy 를 import 하지 않는다 —
+    `tolist`/`item` 이 있으면 쓰고 없으면 그대로 두는 덕분에 이 모듈은 numpy 없이도 돈다.
+    """
+    if isinstance(value, dict):
+        return {k: _jsonable(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(v) for v in value]
+    if isinstance(value, (str, bytes, bool, int, float)) or value is None:
+        return value
+    tolist = getattr(value, "tolist", None)
+    if callable(tolist):
+        # numpy 배열은 리스트로, numpy 스칼라는 `tolist()` 가 파이썬 수를 준다 (0-d 포함).
+        return tolist()
+    return value
 
 
 def _git_commit(path: str) -> Optional[str]:
@@ -145,7 +179,7 @@ class FrameRecorder:
 
     # -- 한 줄 --------------------------------------------------------------------------
     def _write(self, row: dict) -> None:
-        self._fh.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
+        self._fh.write(json.dumps(_jsonable(row), ensure_ascii=False, default=str) + "\n")
         self._fh.flush()
 
     def _check_order(self, kind: str, stamp: Optional[float]) -> bool:
@@ -180,8 +214,30 @@ class FrameRecorder:
         })
 
     def planning(self, *, seq: int, t_step: int, field: Any, verdict: dict,
-                 timing_ms: dict, ipc: str = "ok", extra: Optional[dict] = None) -> None:
-        """청크 하나. `field` 는 `FieldProvenance` 이거나 응답의 `field` dict 다."""
+                 timing_ms: dict, ipc: str = "ok",
+                 actions: Any = None, actions_reference: Any = None,
+                 qpos: Any = None, object_poses: Optional[dict] = None,
+                 max_violation_pair: Optional[dict] = None,
+                 extra: Optional[dict] = None) -> None:
+        """청크 하나. `field` 는 `FieldProvenance` 이거나 응답의 `field` dict 다.
+
+        **T6a 가 더한 다섯 키.** `T5`·`T6` 가 세 번 연속 같은 자리에서 막힌 것이 이유다 —
+        기록에 청크도 자세도 없어 *"수정이 여유거리를 좋게 했나"* 와 *"영구히 멈춘 자리가
+        어디인가"* 를 측정할 방법이 없었다.
+
+        | 인자 | 무엇 | 없을 때 |
+        |---|---|---|
+        | `actions` | 서버가 계산한 **refined** 청크 `[H, ACTION_WIDTH]` | `null` |
+        | `actions_reference` | 정책 **원본** 청크 | **키가 아예 안 실린다** |
+        | `qpos` | 그 planning frame 의 `data.qpos` 전체 | `null` |
+        | `object_poses` | 과일 넷 + crate 의 MuJoCo 참값 | `null` |
+        | `max_violation_pair` | `max_violation_m` 을 만든 **제약의 신원** | `null` |
+
+        **`actions_reference` 만 규칙이 다르다.** 그 키의 있음/없음 자체가 *"이 실행은
+        shadow"* 라는 신호이기 때문이다 — 응답 쪽(`wire.ACTIONS_REFERENCE`)의 규약과 같게
+        둔다. 나머지 넷은 값이 없어도 키를 남긴다: A2 가 프레임을 세로로 세므로 있음/없음이
+        섞이면 파서가 두 갈래로 갈린다.
+        """
         prov = self._as_prov(field)
         duplicate = seq in self._seen_seq
         if duplicate:
@@ -198,15 +254,29 @@ class FrameRecorder:
             "field": None if prov is None else prov.to_dict(),
             "verdict": dict(verdict or {}),
             "timing_ms": {k: float(v) for k, v in (timing_ms or {}).items()},
+            "actions": actions,
+            **({} if actions_reference is None
+               else {"actions_reference": actions_reference}),
+            "qpos": qpos,
+            "object_poses": object_poses,
+            "max_violation_pair": max_violation_pair,
             **(extra or {}),
         })
 
     def control(self, *, t_step: int, chunk_seq: int, step_in_chunk: int, now: float,
-                field: Any, executed: bool, extra: Optional[dict] = None) -> None:
+                field: Any, executed: bool, qpos: Any = None,
+                extra: Optional[dict] = None) -> None:
         """개별 제어 스텝. **여기서 `carried`/`stale` 이 생긴다.**
 
         `step_in_chunk > 0` 이면 이 스텝의 기하는 이번 프레임에 갱신된 것이 아니다. 그것을
         `carried` 로 적고 마지막 실제 갱신을 함께 싣는 것이 프롬프트 공통 원칙 4 다.
+
+        **`qpos` 는 T6a 가 더했다** (없으면 `null`). `executed` 는 *"실행하기로 했나"* 이고
+        `qpos` 는 *"그래서 팔이 어디 있었나"* 다. T6 에서 `seq 38` 부터 38 chunk 가 연속으로
+        멈췄는데 그 자리가 어디인지 알 방법이 없었던 것이 이 키가 없었기 때문이다.
+
+        **`apply_action` 직후, `mj_step` 전의 값이다** — 즉 이 action 이 지령된 순간의 자세다.
+        스텝 뒤 값을 적으면 "지령"과 "결과"가 한 프레임 밀려 기록된다.
         """
         prov = self._as_prov(field)
         applied = (None if prov is None else
@@ -229,6 +299,7 @@ class FrameRecorder:
                 "sequence": applied.sequence, "backend": applied.backend,
                 "frame_id": applied.frame_id, "frame_index": applied.frame_index,
                 "observed_at": applied.observed_at, "age_ms": applied.age_ms}),
+            "qpos": qpos,
             **(extra or {}),
         })
 

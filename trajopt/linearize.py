@@ -620,6 +620,116 @@ class CollisionLinearizer:
             worst = min(worst, float(np.min(esdf)))
         return worst
 
+    def worst_row(
+        self, trajectory: np.ndarray, q_now: np.ndarray, scene: SceneSnapshot, states=None
+    ) -> tuple[float, Optional[dict]]:
+        """`(full_violation 과 같은 값, 그 값을 만든 행의 신원)`.
+
+        `T5f` 가 *"`violated` 가 **어느** 제약인가"* 에서 막혔다. 판정에는 `max_violation_m`
+        한 숫자만 실려 있고, 그 숫자를 만든 행이 어느 link 대 어느 obstacle 인지는 여기 안에만
+        있었다. 그것을 꺼내는 것이 이 메서드의 전부다.
+
+        **`full_violation` 을 대신 부르는 것이 아니라 그것과 같은 일을 한 번 더 한다** — 그래서
+        merit 평가 경로(SQP 안쪽 루프)는 손대지 않았다. `sqp._finish` 는 어차피 마지막에
+        `full_violation` 을 한 번 부르므로, 거기서 이 메서드로 바꾸면 **추가 비용은 argmin
+        세 번**뿐이다. clearance sweep 도 forward kinematics 도 늘지 않는다.
+
+        신원의 키:
+
+        | 키 | 무엇 |
+        |---|---|
+        | `block` | `candidate` · `plane` · `esdf` — 어느 제약 계열인가 |
+        | `step` | chunk 안의 몇 번째 스텝인가 (0-based) |
+        | `query` / `link` | 어느 질의점인가. `link` 는 그 구가 붙은 link 이름 |
+        | `slot` | candidate slot 번호, 또는 plane 번호. ESDF 는 `None` |
+        | `candidate_id` | 그 slot 을 소유한 AG3S candidate. slot 이 비면 `-1` |
+        | `obstacle` | ESDF label 층이 답한 **가장 가까운 물체의 이름**. 없으면 `None` |
+        | `point_m` | 그 질의점의 base frame 좌표 — 그림에 바로 찍을 수 있다 |
+
+        **`None` 을 돌려주는 경우가 있다**: 활성 제약이 하나도 없으면 모든 행이 `+inf` 라
+        argmin 에 뜻이 없다. 그때 첫 값은 `inf` 이고 신원은 `None` 이다 — 없는 신원을
+        지어내지 않는다.
+        """
+        states = states or self.sphere_states(trajectory, q_now)
+        centres = states[0]
+        candidate, plane, _ = self._clearances_from(centres, scene)
+        esdf = self._esdf_clearance(centres, scene)
+
+        worst = np.inf
+        best: Optional[dict] = None
+        for name, block in (("candidate", candidate), ("plane", plane), ("esdf", esdf)):
+            if not block.size:
+                continue
+            flat = int(np.argmin(block))
+            value = float(block.reshape(-1)[flat])
+            # `inf` 는 "그 행이 없다" 는 뜻이므로 신원의 후보가 아니다 (`_clearances_from` 이
+            # 비활성 slot 을 그렇게 표시한다).
+            if not np.isfinite(value) or value >= worst:
+                continue
+            idx = np.unravel_index(flat, block.shape)
+            worst = value
+            best = self._identify(name, idx, centres, scene, value)
+        if best is None:
+            # 신원이 없으면 값도 `full_violation` 과 같아야 한다 — 전부 `inf` 인 경우다.
+            return float(self.full_violation(trajectory, q_now, scene, states)), None
+        return worst, best
+
+    def _identify(self, block: str, idx, centres: np.ndarray, scene: SceneSnapshot,
+                  value: float) -> dict:
+        """`worst_row` 가 고른 인덱스를 **사람이 읽을 이름**으로. 계산은 하지 않는다."""
+        step, query = int(idx[0]), int(idx[1])
+        slot = int(idx[2]) if len(idx) > 2 else None
+        point = np.asarray(centres[step, query], np.float64)
+        out: dict[str, Any] = {
+            "block": block,
+            "clearance_m": float(value),
+            "step": step,
+            "query": query,
+            "link": self._query_name(query),
+            "slot": None if block == "esdf" else slot,
+            "candidate_id": None,
+            "obstacle": None,
+            "point_m": [float(v) for v in point],
+        }
+        if block == "candidate" and slot is not None:
+            ids = np.asarray(scene.candidate_ids, np.int64).reshape(-1)
+            if slot < ids.shape[0]:
+                out["candidate_id"] = int(ids[slot])
+        if block == "esdf":
+            out["obstacle"] = self._esdf_label_name(point, scene)
+        return out
+
+    def _query_name(self, query: int) -> str:
+        """질의점 하나의 이름. 로봇 구는 그 link 이름, 쥔 물체의 점은 `attached:<link>[i]`.
+
+        **구 인덱스를 그대로 적지 않는 이유**는 T5f 가 막힌 지점 그 자체다 — 아무도 해석할 수
+        없는 숫자는 신원이 아니다.
+        """
+        if query >= self.n_spheres:
+            return f"attached:{self._attached_link}[{query - self.n_spheres}]"
+        names = getattr(self.robot_model, "sphere_link_names", ()) or ()
+        if query < len(names):
+            return str(names[query])
+        return f"sphere[{query}]"
+
+    def _esdf_label_name(self, point: np.ndarray, scene: SceneSnapshot) -> Optional[str]:
+        """ESDF label 층이 답하는 **가장 가까운 표면의 물체 이름**, 없으면 `None`.
+
+        점 하나만 묻는다 — 비용이 없다. label 층이 없는 backend(라벨 없이 지은 필드)에서는
+        `None` 이고, 그것은 *"이름을 모른다"* 이지 *"물체가 없다"* 가 아니다.
+        """
+        field = scene.esdf
+        if field is None or not getattr(field, "has_labels", False):
+            return None
+        try:
+            label = int(np.asarray(field.label(point.reshape(1, 3))).reshape(-1)[0])
+            names = tuple(getattr(field, "label_names", ()) or ())
+        except Exception:  # noqa: BLE001 — 이름을 못 읽는 것으로 판정 기록이 죽지 않는다
+            return None
+        if label < 0 or label >= len(names):
+            return None
+        return str(names[label])
+
     # --- selection + linearization -------------------------------------------------------
     def linearize(
         self,

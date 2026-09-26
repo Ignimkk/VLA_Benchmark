@@ -255,7 +255,9 @@ class TrajectoryOptimizer:
             cost=0.0,
             reference_deviation=0.0,
             notes=list(notes),
-            metrics={"n_rows": 0},
+            # 제약이 없었으므로 최악 행도 없다. **키는 둔다** — 없음이 `None` 으로 적히는 것과
+            # 키가 빠지는 것은 읽는 쪽에 다른 뜻이다.
+            metrics={"n_rows": 0, "max_violation_pair": None},
         )
 
     def _chunk_from(self, trajectory: np.ndarray, template: Optional[np.ndarray]) -> np.ndarray:
@@ -269,7 +271,10 @@ class TrajectoryOptimizer:
         timing=None, qp_iterations=0,
     ) -> TrajOptResult:
         cfg = self.config
-        clearance = self.linearizer.full_violation(trajectory, q_now, scene, states)
+        # `full_violation` 이 아니라 `worst_row` 다. **같은 값을 내면서 그 값을 만든 행의 신원까지
+        # 돌려준다** — clearance sweep 도 forward kinematics 도 늘지 않고 argmin 만 더 돈다.
+        # `T5f` 가 *"violated 가 어느 제약인가"* 에서 막힌 것이 이 숫자에 이름이 없었기 때문이다.
+        clearance, worst_pair = self.linearizer.worst_row(trajectory, q_now, scene, states)
         violation = max(0.0, -clearance)
         tolerance = cfg.safety.violation_tolerance
 
@@ -315,6 +320,9 @@ class TrajectoryOptimizer:
             notes=notes,
             metrics={
                 "clearance_m": float(clearance),
+                # **최악 행의 신원.** 활성 제약이 하나도 없으면 `None` 이다 — 없는 신원을
+                # 지어내지 않는다. 키는 항상 있어서 소비 쪽이 `.get` 두 갈래로 갈리지 않는다.
+                "max_violation_pair": worst_pair,
                 "limit_overshoot": limits,
                 "frame_index": self.frame_index,
                 "geometry_certified": bool(geometry_certified),

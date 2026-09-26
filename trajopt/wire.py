@@ -41,6 +41,21 @@
 | `ag3s_status` · `geometry_certified` · `trajopt_status` · `max_violation_m` · `safe` · `notes` | 안전 판정 |
 | `field` | **거리장의 출처** — `sequence` · `backend` · `observed_at` · `state` · 계층. 아래 |
 | `ag3s` | **선택 키.** `ag3s_status` 가 `ok` 가 아닐 때만 실린다 — **왜** 인증이 안 됐나. 아래 |
+| `max_violation_pair` | **선택 키.** `max_violation_m` 을 만든 **행의 신원**. 아래 |
+
+### `max_violation_pair` — `violated` 가 **어느 제약**인가
+
+`T5f` 가 여기서 막혔다: 판정에는 `max_violation_m` 한 숫자만 있고, 그 숫자를 만든 행이 어느
+link 대 어느 obstacle 인지는 **최적화기 안에만** 있었다. 숫자만 보고는 고칠 수 없다 — 팔꿈치가
+탁자를 스친 것과 손끝이 사과를 파고든 것은 전혀 다른 일이고, 대응도 다르다.
+
+`CollisionLinearizer.worst_row` 가 그 신원을 만든다: `block`(candidate · plane · esdf) ·
+`step` · `link` · `slot` · `candidate_id` · `obstacle` · `point_m`. 값은 `clearance_m` 이고
+`max_violation_m` 과 부호만 반대다 (`violation = max(0, -clearance)`).
+
+**활성 제약이 하나도 없던 프레임에는 키가 실리지 않는다.** 없는 신원을 `null` 로 싣는 것보다
+키를 빼는 것이 낫다 — 그래야 *"신원을 낼 수 있는 서버"* 와 옛 서버가 구별된다.
+`actions_reference` · `ag3s` 와 같은 규약이다.
 
 ### `actions_reference` — shadow 실행이 무엇을 실행할지 고를 수 있게 하는 것
 
@@ -109,7 +124,8 @@ __all__ = [
     "ARM_JOINT_DIM", "ACTION_WIDTH", "ACTIONS_REFERENCE",
     "pack_request", "strip_request", "unpack_camera_observations",
     "pack_response", "unpack_field", "unpack_actions_reference", "unpack_ag3s",
-    "SafetyVerdict", "AG3S_BLOCK",
+    "unpack_violation_pair",
+    "SafetyVerdict", "AG3S_BLOCK", "VIOLATION_PAIR",
 ]
 
 PREFIX = "ag3s/"
@@ -124,6 +140,12 @@ ACTIONS_REFERENCE = "actions_reference"
 #: `ag3s/` 접두(요청 쪽)와 글자가 겹치지만 충돌하지 않는다: `strip_request` 는 **요청**만
 #: 가르고 `"ag3s/"`(슬래시 포함)로 시작하는 키만 본다. 응답은 애초에 stripping 을 안 지난다.
 AG3S_BLOCK = "ag3s"
+
+#: 응답의 **선택 키** — `max_violation_m` 을 만든 행의 신원 (`SafetyVerdict.max_violation_pair`).
+#: `T5f` 가 *"`violated` 가 어느 제약인가"* 에서 막힌 것을 여는 키다. 활성 제약이 하나도 없던
+#: 프레임에는 실리지 않는다 — 없는 신원을 `null` 로 싣는 것과 키를 빼는 것 중, 뒤쪽이
+#: *"이 서버는 신원을 낼 수 있다"* 를 잃지 않는다 (옛 서버와 구별된다).
+VIOLATION_PAIR = "max_violation_pair"
 
 #: 머리 하나 + 손목 둘. `CameraID` 에 HEAD 가 하나뿐이라 `zed_right` 는 `zed_left` 와 겹친다.
 DEFAULT_CAMERAS = ("zed_left", "wrist_cam_l", "wrist_cam_r")
@@ -237,16 +259,21 @@ class SafetyVerdict:
     """
 
     def __init__(self, *, ag3s_status: str, geometry_certified: bool, trajopt_status: str,
-                 max_violation_m: float, safe: bool, notes: Sequence[str] = ()):
+                 max_violation_m: float, safe: bool, notes: Sequence[str] = (),
+                 max_violation_pair: Optional[dict[str, Any]] = None):
         self.ag3s_status = ag3s_status
         self.geometry_certified = bool(geometry_certified)
         self.trajopt_status = trajopt_status
         self.max_violation_m = float(max_violation_m)
         self.safe = bool(safe)
         self.notes = list(notes)
+        #: `max_violation_m` 을 만든 **행의 신원** (`CollisionLinearizer.worst_row`), 또는
+        #: `None` — 활성 제약이 없었거나 서버가 이 키를 모르는 버전이다. 위 머리말 참조.
+        self.max_violation_pair = (None if max_violation_pair is None
+                                   else dict(max_violation_pair))
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "ag3s_status": self.ag3s_status,
             "geometry_certified": self.geometry_certified,
             "trajopt_status": self.trajopt_status,
@@ -254,6 +281,12 @@ class SafetyVerdict:
             "safe": self.safe,
             "notes": self.notes,
         }
+        # **없으면 키를 싣지 않는다** — `ag3s` 블록·`actions_reference` 와 같은 규약이다.
+        # 활성 제약이 하나도 없던 프레임의 응답이 T0 때와 한 바이트도 달라지지 않게 두려는 것이고,
+        # 있음/없음이 *"서버가 이 신원을 낼 수 있는 버전인가"* 를 그대로 말해 준다.
+        if self.max_violation_pair is not None:
+            out[VIOLATION_PAIR] = dict(self.max_violation_pair)
+        return out
 
 
 def pack_response(actions: np.ndarray, verdict: SafetyVerdict, *, seq: int,
@@ -332,6 +365,17 @@ def unpack_ag3s(response: dict[str, Any]) -> dict[str, Any]:
     """
     blob = response.get(AG3S_BLOCK)
     return dict(blob) if isinstance(blob, dict) else {}
+
+
+def unpack_violation_pair(response: dict[str, Any]) -> Optional[dict[str, Any]]:
+    """응답의 `max_violation_pair`, 없으면 `None`.
+
+    `unpack_field` 처럼 "없음" 을 상태 객체로 감싸지 않는 이유는 `unpack_ag3s` 와 같다 —
+    같은 응답의 `max_violation_m` 이 이미 숫자를 말하고 있으므로, 이 키의 없음은 판정을
+    바꾸지 않는다. 신원을 못 얻었다는 사실 자체가 기록에 `null` 로 남으면 그것으로 충분하다.
+    """
+    blob = response.get(VIOLATION_PAIR)
+    return dict(blob) if isinstance(blob, dict) else None
 
 
 def unpack_field(response: dict[str, Any]):

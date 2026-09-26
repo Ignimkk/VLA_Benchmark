@@ -92,6 +92,23 @@ class SafeRemoteClient:
         #: **`last_safe` 와 겸하지 않는 이유**: shadow 에서는 `last_safe=False` 인 프레임도
         #: 실행된다. 한 값이 판정과 실행을 겸하면 기록에서 그 둘을 되살릴 수 없다.
         self.last_executed_chunk = "none"
+        #: 서버가 **계산한** 청크 (= 응답의 `actions`, 언제나 refined), 또는 `None` — 읽을
+        #: 응답이 없었다는 뜻이다.
+        #:
+        #: **`infer` 의 반환값과 겸하지 않는 이유**: shadow 에서 그 반환값의 `actions` 는
+        #: reference 로 바뀌어 나간다 (로봇이 실행하는 것이 그쪽이므로). 두 청크를 기록에
+        #: 나란히 남기려면 호출부가 *"이 프레임의 refined 는 무엇이었나"* 를 한 곳에서 물을
+        #: 수 있어야 하고, `result` dict 의 키 이름이 모드마다 다르면 그 질문이 호출부에서
+        #: 두 갈래로 갈린다. `T5c` 가 `refined` 대 `reference` 비교를 미측정으로 닫은 것이
+        #: 바로 그 청크들이 기록에 없었기 때문이다.
+        self.last_actions_refined = None
+        #: 정책 **원본** 청크, 또는 `None` — shadow 가 아니라는 뜻이다 (응답의
+        #: `actions_reference` 있음/없음 그대로).
+        self.last_actions_reference = None
+        #: `max_violation_m` 을 만든 행의 신원, 또는 `None` (`wire.VIOLATION_PAIR`).
+        #: `last_verdict` 에 넣지 않는 것은 그 딕셔너리의 키 집합이 T0 기록의 `verdict` 이고,
+        #: 거기에 키를 더하면 옛 기록과 모양이 갈라지기 때문이다 — `last_ag3s` 와 같은 이유다.
+        self.last_violation_pair = None
         self.stats = {"sent": 0, "safe": 0, "unsafe": 0, "timeout": 0, "stale": 0, "error": 0}
 
         self._trace = None
@@ -175,6 +192,11 @@ class SafeRemoteClient:
                               "max_violation_m", "timing_ms", "notes")}
         self.last_field = wire.unpack_field(result)
         self.last_ag3s = wire.unpack_ag3s(result)
+        # **두 청크와 위반 행의 신원을 붙든다.** 여기서 붙드는 것이 아래 shadow 갈래에서
+        # `actions` 키가 reference 로 바뀌기 **전**이라는 점이 중요하다.
+        self.last_actions_refined = actions
+        self.last_actions_reference = reference
+        self.last_violation_pair = wire.unpack_violation_pair(result)
         safe = bool(result.get("safe", False))
         if not safe and not self.shadow:
             return self._hold(self._explain(result), "unsafe", result)
@@ -319,10 +341,22 @@ class SafeRemoteClient:
         if result is not None:
             self.last_field = wire.unpack_field(result)
             self.last_ag3s = wire.unpack_ag3s(result)
+            # 응답이 왔으니 청크도 신원도 **그 응답이 말한 그대로** 남긴다. hold 여도 서버가
+            # 무엇을 계산했는지는 기록에 남아야 한다 — 왜 거부됐는지는 그것 없이 못 읽는다.
+            # `ipc` 가 `timeout`/`stale` 이면 그 청크가 **지나간 자세를 위한 것**이라는 사실은
+            # 그 값이 따로 말한다.
+            blob = result.get("actions")
+            self.last_actions_refined = (None if blob is None
+                                         else np.asarray(blob))
+            self.last_actions_reference = wire.unpack_actions_reference(result)
+            self.last_violation_pair = wire.unpack_violation_pair(result)
         else:
             # 응답이 아예 없으면 지각 사유도 없다. **지난 프레임 것을 남겨 두지 않는다** —
-            # 남기면 이 프레임이 그 사유로 멈춘 것처럼 읽힌다.
+            # 남기면 이 프레임이 그 사유로 멈춘 것처럼 읽힌다. 청크와 위반 행의 신원도 같다.
             self.last_ag3s = {}
+            self.last_actions_refined = None
+            self.last_actions_reference = None
+            self.last_violation_pair = None
             from benchmark.ag3s.fields.provenance import FieldProvenance
             self.last_field = FieldProvenance.unavailable(
                 f"no response to read a field from ({kind}): {reason}")

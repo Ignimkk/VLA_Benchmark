@@ -516,9 +516,13 @@ class SafePolicy:
 
         status = getattr(result.status, "value", "unknown")
         violation = float(result.max_violation)
+        # **그 위반을 만든 행이 무엇이었나.** 숫자는 줄곧 나갔지만 신원은 최적화기 안에만
+        # 있었고, `T5f` 가 그 때문에 막혔다 (`sqp._finish` → `metrics`).
+        pair = (getattr(result, "metrics", None) or {}).get("max_violation_pair")
         # `TrajOptStatus.safe` 하나가 근거다. 기하 미인증은 이미 그 안에 들어가 있다 —
         # sqp 가 `safety.require_certified_geometry` 를 보고 상태를 내린다.
         safe = bool(getattr(result.status, "safe", False))
         return wire.SafetyVerdict(
             ag3s_status=ag3s_status, geometry_certified=certified, trajopt_status=status,
-            max_violation_m=violation, safe=safe, notes=notes)
+            max_violation_m=violation, safe=safe, notes=notes,
+            max_violation_pair=pair)
