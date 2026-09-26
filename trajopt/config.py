@@ -20,6 +20,14 @@ class TrajOptConfigError(ValueError):
     """Raised when a configuration is malformed or internally inconsistent."""
 
 
+#: `HorizonConfig.plan_horizon` 의 sentinel — **실행되는 창만 계획한다** (`execution_length`).
+#: 숫자로 적지 않는 이유가 있다: 실행 길이는 `pi05_infer.py` 의 `OPEN_LOOP_HORIZON` 에서 오고
+#: 이 패키지에서는 `horizon.execution_length` 하나가 그것을 들고 있다. 같은 8 을 두 번째 자리에
+#: 박으면 한쪽만 바뀌는 날이 오고, 그때 최적화기는 실행되지 않는 스텝을 계획하거나 실행되는
+#: 스텝을 계획하지 않는다 — 둘 다 조용하다.
+PLAN_EXECUTION_WINDOW = "execution"
+
+
 @dataclasses.dataclass(frozen=True)
 class HorizonConfig:
     """Chunk geometry and the control period.
@@ -42,10 +50,19 @@ class HorizonConfig:
     #     time (2 SQP)     -    22.4    20.0    15.0  ms
     #     time (3 SQP)  92.8    29.3    27.4    21.4  ms
     #
-    # 32 keeps 24 steps of lookahead past the executed window — 1.6 s at 15 Hz — which is what stops
-    # the optimizer from painting itself into a corner it can only see once it is too late. None
-    # plans the whole chunk.
-    plan_horizon: int | None = 32
+    # Lookahead past the executed window buys foresight — an optimizer that can only see the window
+    # it is about to run will steer into a corner it cannot get out of. **It also buys somewhere to
+    # hide.** T6d measured what that costs on the real task: the refined chunk avoided the apple in
+    # its leading steps (+89.86 mm from the fingertip) and only approached it in steps that never
+    # execute (−17.61 mm over all 50). Those leading steps are the only ones the executor runs, so
+    # every chunk re-planned the same dodge and the apple never moved (0.0 mm in four closed-loop
+    # runs, against 245.2 mm for the policy's own chunk).
+    #
+    # `PLAN_EXECUTION_WINDOW` — the default since T6f — plans exactly the window that executes, so
+    # there is no unexecuted tail to defer the approach into. An integer or `None` restores the older
+    # behaviour (`None` plans the whole chunk); nothing else in the package reads this field, so the
+    # revert is this one value.
+    plan_horizon: int | str | None = PLAN_EXECUTION_WINDOW
 
     @property
     def dt(self) -> float:
@@ -66,13 +83,20 @@ class HorizonConfig:
             )
         if self.control_hz <= 0.0:
             raise TrajOptConfigError(f"horizon.control_hz must be > 0, got {self.control_hz}")
+        if isinstance(self.plan_horizon, str) and self.plan_horizon != PLAN_EXECUTION_WINDOW:
+            raise TrajOptConfigError(
+                f"horizon.plan_horizon must be an int, None, or {PLAN_EXECUTION_WINDOW!r}; got "
+                f"{self.plan_horizon!r}. A misspelled sentinel that fell through to "
+                "'plan the whole chunk' would be the T6d failure again, silently"
+            )
         if self.plan_horizon is not None:
-            if not 0 < self.plan_horizon <= self.horizon:
+            planned = self.planned
+            if not 0 < planned <= self.horizon:
                 raise TrajOptConfigError(
-                    f"horizon.plan_horizon must satisfy 0 < P <= H; got P={self.plan_horizon}, "
+                    f"horizon.plan_horizon must satisfy 0 < P <= H; got P={planned}, "
                     f"H={self.horizon}"
                 )
-            if self.plan_horizon < self.execution_length:
+            if planned < self.execution_length:
                 raise TrajOptConfigError(
                     f"horizon.plan_horizon ({self.plan_horizon}) is shorter than "
                     f"execution_length ({self.execution_length}): the optimizer would leave part of "
@@ -81,8 +105,25 @@ class HorizonConfig:
 
     @property
     def planned(self) -> int:
-        """Steps the optimizer plans. `horizon` when `plan_horizon` is None."""
-        return self.horizon if self.plan_horizon is None else self.plan_horizon
+        """Steps the optimizer plans — and therefore the steps it refines.
+
+        In this package those are one number, not two: `refiner.refine` slices the reference to
+        `planned`, `trajectory_to_chunk` writes back only those steps, and `sqp._finish` measures
+        `max_violation` over the same span. So "shrink the refined window" and "shrink the plan
+        horizon" are the same edit.
+
+        `horizon` when `plan_horizon` is None; `execution_length` for `PLAN_EXECUTION_WINDOW`.
+        """
+        if self.plan_horizon is None:
+            return self.horizon
+        if self.plan_horizon == PLAN_EXECUTION_WINDOW:
+            return min(int(self.execution_length), int(self.horizon))
+        return int(self.plan_horizon)
+
+    @property
+    def plans_execution_window_only(self) -> bool:
+        """Is the whole planned window executed? Then no step of it can be deferred away."""
+        return self.planned <= self.execution_length
 
 
 @dataclasses.dataclass(frozen=True)
@@ -499,6 +540,7 @@ def _build_section(section_cls: type, name: str, raw: Any) -> Any:
 
 
 __all__ = [
+    "PLAN_EXECUTION_WINDOW",
     "ConstraintReductionConfig",
     "CostConfig",
     "HorizonConfig",

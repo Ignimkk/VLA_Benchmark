@@ -237,9 +237,11 @@ def main() -> None:
 
         # 그리퍼 열이 정책 값 그대로인지 매 프레임 확인한다. 이 두 열이 조용히 바뀌면 손이
         # 엉뚱한 순간에 열리고, 궤적 오차와 달리 눈에 띄지 않는다.
+        # 열은 서버가 쓰는 것과 **같은 자리**에서 온다 (`SafePolicy.gripper_columns`, 레이아웃에서
+        # 유도). 여기서 모듈 상수를 쓰면 14D 재생에서 손목 열을 검사하고 그리퍼는 안 본다.
         grippers_held = all(
             np.allclose(actions[:, c], policy_chunk[:, c], atol=1e-6)
-            for c in wire.GRIPPER_COLUMNS)
+            for c in safe.gripper_columns)
         shape_ok = actions.shape == policy_chunk.shape
 
         v = result["max_violation_m"]

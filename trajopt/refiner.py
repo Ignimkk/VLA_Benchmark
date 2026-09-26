@@ -13,6 +13,14 @@ past the executed window *does* buy is foresight: an optimizer that can only see
 will happily steer into a corner it cannot get out of. The unplanned tail is the policy's own answer,
 returned untouched.
 
+**Since T6f the planned window is the executed window** (`HorizonConfig.plan_horizon` defaults to
+`PLAN_EXECUTION_WINDOW`). The lookahead was not only buying foresight — it was buying the optimizer
+somewhere to put the part of the task it did not want to do now. Measured on the real pick-and-place:
+the refined chunk held the fingertip +89.86 mm off the apple across the eight steps that run and only
+came down to −17.61 mm in steps that are thrown away, so the approach was re-planned and re-discarded
+every chunk and the apple moved 0.0 mm in four closed-loop runs. Planning only what executes removes
+the hiding place; it also removes the foresight, which is the trade this default makes deliberately.
+
 **SEAM never sees the correction.** `seam_policy.py` stores `model_chunk_np` — the *pre*-refinement
 chunk — as the next chunk's prior, and keeps the refined physical chunk only for logging. So the
 policy will propose the same colliding trajectory again next chunk, and this layer will push it away
@@ -182,6 +190,13 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
         `context["previous_physical_chunk"]` is what SEAM already passes. Its first
         `execution_length` steps have executed by now, so the part that overlaps this chunk starts at
         index K — the same alignment SEAM's own prior uses.
+
+        **What the overlap contains changed with T6f, and the alignment did not.** When the plan
+        window is the executed window, the previous chunk was refined only in steps 0..K-1 — all of
+        which have executed — so the overlap this term reads is the policy's own untouched tail. The
+        term then pulls towards what the policy proposed rather than towards a previous correction,
+        which is weaker than it was but still the only correctly-aligned reference there is. Reading
+        from index 0 instead would compare this chunk against steps the robot already ran.
         """
         if self.config.cost.w_continuity <= 0.0:
             return None

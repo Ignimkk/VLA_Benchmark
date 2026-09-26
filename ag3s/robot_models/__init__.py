@@ -8,6 +8,7 @@ hand-written chain — can be injected instead. Nothing here is imported by the 
 from benchmark.ag3s.robot_models.urdf_sphere_chain import (
     DEFAULT_RBY1_JOINTS,
     RBY1_URDF,
+    CoverageShortfall,
     UrdfCapsule,
     UrdfSphereChain,
     load_rby1,
@@ -17,6 +18,7 @@ from benchmark.ag3s.robot_models.urdf_sphere_chain import (
 __all__ = [
     "DEFAULT_RBY1_JOINTS",
     "RBY1_URDF",
+    "CoverageShortfall",
     "UrdfCapsule",
     "UrdfSphereChain",
     "load_rby1",

@@ -115,10 +115,17 @@ class TrajectoryOptimizer:
 
         n_slack = self.block.n_rows
         iterate = reference.copy()
-        if cfg.sqp.warm_start and self._previous is not None:
+        if (cfg.sqp.warm_start and self._previous is not None
+                and cfg.horizon.execution_length < self.horizon):
             # Seed from the previous chunk shifted by the steps that have executed since. The tail is
             # held rather than extrapolated: extrapolating a trajectory past its horizon invents
             # motion the policy never proposed.
+            #
+            # **Skipped when the whole planned window has executed** (`execution_length >= horizon`,
+            # which is what `PLAN_EXECUTION_WINDOW` produces): there is then no overlap between the
+            # last plan and this one, and the shift would blend in `self._previous[:, -1]` held
+            # constant — a pose from before the executed window, pulling the first iterate backwards.
+            # With no overlap the reference *is* the best available start.
             k = min(cfg.horizon.execution_length, self.horizon - 1)
             shifted = np.concatenate(
                 [self._previous[:, k:], np.tile(self._previous[:, -1:], (1, k))], axis=1

@@ -25,12 +25,47 @@ Two things make this worth more than a stopgap:
 from __future__ import annotations
 
 import dataclasses
+import logging
 import math
 import pathlib
 import xml.etree.ElementTree as ET
 from typing import Any, Iterable, Optional, Sequence
 
 import numpy as np
+
+#: 반지름 비교 tolerance (m) — 부동소수 잔재를 "덮지 못한다" 로 읽지 않기 위한 것. 1 μm.
+_COVERAGE_TOL = 1e-6
+
+
+@dataclasses.dataclass(frozen=True)
+class CoverageShortfall:
+    """한 capsule 의 구 사슬이 그 capsule 을 **덜 덮는다**는 기록.
+
+    `UrdfSphereChain` 의 기본값에서는 절대 생기지 않는다 (구는 항상 capsule 을 담도록
+    팽창된다). `capsule_radius_scale < 1` 이나 `max_sphere_radius` 를 준 실행에서만 찬다.
+
+    **이것이 URDF capsule 기준이라는 점이 중요하다.** URDF 의 capsule 자체가 mesh 보다 두꺼울
+    수 있으므로 (RB-Y1 `link_*_arm_5`: URDF 75 mm, MJCF mesh 실측 65.4~68.4 mm), 여기 기록이
+    남는 것이 곧 "실제 팔을 못 덮는다" 는 뜻은 아니다. 이 클래스는 mesh 를 모르므로 아는 것만
+    말한다 — 어느 쪽인지는 읽는 사람이 판단한다.
+    """
+
+    link: str
+    n_spheres: int
+    capsule_radius: float
+    capsule_length: float
+    sphere_radius: float  # 실제로 쓴 반지름
+    required_radius: float  # capsule 을 담으려면 필요했던 반지름
+
+    @property
+    def shortfall_m(self) -> float:
+        return float(self.required_radius - self.sphere_radius)
+
+    def summary(self) -> str:
+        return (f"{self.link}: 구 {self.n_spheres} 개 × {self.sphere_radius * 1000:.1f} mm, "
+                f"덮으려면 {self.required_radius * 1000:.1f} mm 필요 "
+                f"({self.shortfall_m * 1000:.1f} mm 부족; URDF capsule "
+                f"r={self.capsule_radius * 1000:.1f} L={self.capsule_length * 1000:.1f} mm)")
 
 # --------------------------------------------------------------------------- URDF data model
 
@@ -362,8 +397,20 @@ class UrdfSphereChain:
             obstacle welded to the robot. A caller that has another source for those links (a
             simulator's meshes, a hand-measured box) passes them here rather than editing the URDF.
         sphere_spacing: maximum gap between consecutive sphere centres, in units of the capsule
-            radius. 1.0 guarantees coverage; smaller is finer and slower.
+            radius. 1.0 guarantees coverage; smaller is finer and slower. **Finer spacing also makes
+            every sphere thinner** — the inflation term is `(spacing/2)^2` under the root — which is
+            the cheap half of getting the arm down to its real thickness (T6f).
         max_spheres_per_capsule: hard cap, so a long capsule cannot blow up the constraint count.
+            It binds before `sphere_spacing` does on RB-Y1's forearm (250 mm long, 75 mm radius:
+            8 spheres is reached at a spacing of 0.48), so lowering the spacing without raising this
+            changes nothing.
+        capsule_radius_scale: multiplies every capsule radius before inflation. **1.0 is the URDF's
+            own number and the default.** Below 1.0 the spheres are thinner than the URDF capsule
+            and the union no longer contains it; `coverage_shortfall` records that and the
+            constructor logs a warning, because a silently thinner robot is a safety layer that
+            protects less than it says.
+        max_sphere_radius: metres; caps the **final** (inflated) radius. Same bargain as
+            `capsule_radius_scale` — reported, never silent. `None` (default) caps nothing.
     """
 
     def __init__(
@@ -376,6 +423,8 @@ class UrdfSphereChain:
         extra_capsules: Sequence[UrdfCapsule] = (),
         sphere_spacing: float = 1.0,
         max_spheres_per_capsule: int = 8,
+        capsule_radius_scale: float = 1.0,
+        max_sphere_radius: float | None = None,
     ):
         self.model = model
         self.joint_names = tuple(joint_names)
@@ -385,6 +434,20 @@ class UrdfSphereChain:
         self.fixed_joint_values = dict(fixed_joint_values or {})
         self.sphere_spacing = float(sphere_spacing)
         self.max_spheres_per_capsule = int(max_spheres_per_capsule)
+        self.capsule_radius_scale = float(capsule_radius_scale)
+        self.max_sphere_radius = None if max_sphere_radius is None else float(max_sphere_radius)
+        if self.sphere_spacing <= 0.0:
+            raise ValueError(f"sphere_spacing must be > 0, got {sphere_spacing}")
+        if self.max_spheres_per_capsule < 1:
+            raise ValueError(
+                f"max_spheres_per_capsule must be >= 1, got {max_spheres_per_capsule}")
+        if not 0.0 < self.capsule_radius_scale:
+            raise ValueError(f"capsule_radius_scale must be > 0, got {capsule_radius_scale}")
+        if self.max_sphere_radius is not None and self.max_sphere_radius <= 0.0:
+            raise ValueError(f"max_sphere_radius must be > 0 or None, got {max_sphere_radius}")
+        #: 이 설정이 **덮지 못한** capsule 들. `CoverageShortfall` 목록이고, 비어 있으면 구의
+        #: 합집합이 URDF capsule 을 그대로 담는다 (예전 동작).
+        self.coverage_shortfall: tuple[CoverageShortfall, ...] = ()
 
         keep = None if link_filter is None else set(link_filter)
         all_capsules = tuple(model.capsules) + tuple(extra_capsules)
@@ -399,11 +462,23 @@ class UrdfSphereChain:
         # Precompute, per capsule, the sphere centres in the *link* frame and their radii. These are
         # constant, so the per-call work is one FK chain and one 4x4 * 3 multiply per sphere.
         self._local_spheres: list[tuple[str, np.ndarray, float]] = []
+        shortfall: list[CoverageShortfall] = []
         for cap in self.capsules:
-            centres, radius = self._capsule_sphere_centres(cap)
+            centres, radius, required = self._capsule_sphere_centres(cap)
             for centre in centres:
                 self._local_spheres.append((cap.link, centre, radius))
+            if radius < required - _COVERAGE_TOL:
+                shortfall.append(CoverageShortfall(
+                    link=cap.link, n_spheres=len(centres), capsule_radius=float(cap.radius),
+                    capsule_length=float(cap.length), sphere_radius=float(radius),
+                    required_radius=float(required)))
+        self.coverage_shortfall = tuple(shortfall)
         self._chains = {link: self._chain_to(link) for link in {c.link for c in self.capsules}}
+        # **조용히 가늘어진 모델로 떠 있는 것이 가장 나쁘다.** 여기서 찍는 이유는 호출자가
+        # 여럿이기 때문이다 — 서버·실험 스크립트·테스트가 각자 이 클래스를 짓는데, 경고를
+        # 진입점에 두면 한 곳만 안 찍고 그 실행이 기록에 "예전과 같은 모델" 로 남는다.
+        if self.coverage_shortfall:
+            logging.getLogger(__name__).warning("%s", self.coverage_report())
 
     # --- introspection ------------------------------------------------------------------
     @property
@@ -429,27 +504,67 @@ class UrdfSphereChain:
         """
         return tuple(link for link, _, _ in self._local_spheres)
 
-    def _capsule_sphere_centres(self, cap: UrdfCapsule) -> list[np.ndarray]:
-        """Sphere centres along the capsule segment, expressed in the link frame."""
+    def _capsule_sphere_centres(self, cap: UrdfCapsule):
+        """``(centres, radius, required_radius)`` for one capsule, in the link frame.
+
+        `required_radius` is what the chain would need to contain the URDF capsule. It equals
+        `radius` unless a radius scale or cap was asked for, and the difference is what
+        `coverage_shortfall` reports.
+        """
         if cap.radius <= 0.0:
-            return []
+            return [], 0.0, 0.0
+        # **간격은 URDF 의 반지름으로 정한다, 줄인 반지름이 아니다.** 줄인 반지름으로 정하면
+        # 반지름을 줄일 때마다 구가 자동으로 늘어나 "가늘게" 와 "촘촘하게" 가 한 손잡이에
+        # 묶인다 — 둘은 값이 다르고(하나는 덮개를 잃고 하나는 행을 늘린다) 따로 돌려야 한다.
         n = int(math.ceil(cap.length / max(self.sphere_spacing * cap.radius, 1e-9))) + 1
         n = int(np.clip(n, 1, self.max_spheres_per_capsule))
         ts = np.zeros(1) if n == 1 else np.linspace(-cap.length / 2.0, cap.length / 2.0, n)
         R, p = cap.origin[:3, :3], cap.origin[:3, 3]
-        return [p + R @ np.array([0.0, 0.0, float(t)]) for t in ts], self._effective_radius(cap, ts)
+        centres = [p + R @ np.array([0.0, 0.0, float(t)]) for t in ts]
+        required = self._effective_radius(cap.radius, cap.length, ts)
+        radius = self._effective_radius(
+            cap.radius * self.capsule_radius_scale, cap.length, ts)
+        if self.max_sphere_radius is not None:
+            radius = min(radius, self.max_sphere_radius)
+        return centres, radius, required
 
     @staticmethod
-    def _effective_radius(cap: UrdfCapsule, ts: np.ndarray) -> float:
+    def _effective_radius(radius: float, length: float, ts: np.ndarray) -> float:
         """Radius that closes the gap between consecutive spheres — see the class docstring.
 
         A single sphere has to swallow the whole capsule, so it takes the half-length plus the
         radius; a chain only has to reach the midpoint between neighbours.
         """
         if ts.size < 2:
-            return float(cap.radius + cap.length / 2.0)
+            return float(radius + length / 2.0)
         spacing = float(ts[1] - ts[0])
-        return float(math.sqrt(cap.radius**2 + (spacing / 2.0) ** 2))
+        return float(math.sqrt(float(radius) ** 2 + (spacing / 2.0) ** 2))
+
+    # --- coverage -----------------------------------------------------------------------
+    def coverage_report(self) -> str:
+        """덮지 못하는 capsule 이 있으면 **크게** 말하는 한 덩어리 문자열. 없으면 한 줄.
+
+        문장을 여기서 만드는 이유는 서버·실험·테스트가 같은 글을 봐야 하기 때문이다. 진입점마다
+        따로 쓰면 하나는 경고를 빼먹고, 빼먹은 실행이 기록에 "예전과 같은 모델" 로 남는다.
+        """
+        settings = (f"sphere_spacing={self.sphere_spacing:g}, "
+                    f"max_spheres_per_capsule={self.max_spheres_per_capsule}, "
+                    f"capsule_radius_scale={self.capsule_radius_scale:g}, "
+                    f"max_sphere_radius="
+                    + ("none" if self.max_sphere_radius is None
+                       else f"{self.max_sphere_radius * 1000:.1f} mm"))
+        if not self.coverage_shortfall:
+            return (f"sphere chain covers every capsule ({self.n_spheres} spheres; {settings})")
+        worst = max(s.shortfall_m for s in self.coverage_shortfall)
+        lines = [
+            "!!! THIS SPHERE MODEL DOES NOT COVER THE ROBOT !!!",
+            f"    {len(self.coverage_shortfall)} of {len(self.capsules)} capsule(s) are thinner "
+            f"than the URDF says, worst by {worst * 1000:.1f} mm ({settings}).",
+            "    빼는 것과 같은 성질의 flag 다 — 이 capsule 이 무엇에 부딪혀도 그만큼은 아무도 "
+            "막지 않는다. 기준은 **URDF capsule** 이고, URDF 자체가 mesh 보다 두꺼울 수 있다.",
+        ]
+        lines += [f"    - {s.summary()}" for s in self.coverage_shortfall]
+        return "\n".join(lines)
 
     def _chain_to(self, link: str) -> tuple[UrdfJoint, ...]:
         """Joints from the URDF root down to `link`, root-first."""

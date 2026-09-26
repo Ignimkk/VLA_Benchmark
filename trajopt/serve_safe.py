@@ -26,13 +26,101 @@ import argparse
 import logging
 import pathlib
 import sys
+from collections.abc import Sequence
+
+
+def constraint_links_minus(present: Sequence[str], exclude: Sequence[str],
+                           *, known: Sequence[str] = ()) -> tuple[str, ...]:
+    """`present` 에서 `exclude` 를 뺀 link 이름. **없는 이름을 주면 여기서 죽는다.**
+
+    조용히 넘어가면 오타 하나로 **아무것도 안 빠진 채 "뺐다" 고 믿게 된다** — 이 프로젝트가
+    이미 밟은 함정이다 (`EE_BODY_L` 대 `ee_left`, gripper 열 6 대 7). `link_filter` 는
+    집합 교집합이라 모르는 이름을 그냥 버리므로 (`urdf_sphere_chain.py:389`
+    `keep = set(link_filter)`), 검사는 필터를 만드는 이 자리에서 해야 한다.
+
+    Args:
+        present: 지금 제약 모델이 구를 갖고 있는 link 이름 (`sphere_link_names`).
+        exclude: 빼 달라고 받은 이름.
+        known: URDF 의 전체 link 이름. 주면 **"URDF 에 없는 이름"** 과 **"URDF 에는 있지만
+            제약 모델에 구가 없는 link"** 를 갈라 말한다 — 후자는 빼도 아무 일이 안 일어나므로
+            뺐다고 믿는 것이 그대로 위험이다.
+
+    Returns:
+        `link_filter` 에 그대로 넘길 수 있는, 순서를 지킨 link 이름 tuple.
+    """
+    present_order = tuple(dict.fromkeys(present))
+    present_set = set(present_order)
+    asked = tuple(dict.fromkeys(exclude))
+    known_set = set(known)
+
+    missing = [n for n in asked if n not in present_set]
+    if missing:
+        unknown = [n for n in missing if known_set and n not in known_set]
+        sphereless = [n for n in missing if n not in unknown]
+        detail = []
+        if unknown:
+            detail.append(f"URDF 에 없는 이름: {unknown}")
+        if sphereless:
+            detail.append(f"URDF 에는 있지만 제약 모델에 구가 없는 link: {sphereless}")
+        raise ValueError(
+            "--exclude-links 가 제약 모델에 없는 이름을 받았습니다 — "
+            + "; ".join(detail or [f"제약 모델에 없는 이름: {missing}"])
+            + f". 조용히 넘기면 아무것도 안 빠진 채 뺐다고 믿게 되므로 여기서 멈춥니다. "
+              f"지금 제약 모델의 link: {sorted(present_set)}")
+
+    kept = tuple(n for n in present_order if n not in set(asked))
+    if not kept:
+        raise ValueError(
+            f"--exclude-links {list(asked)} 가 제약 모델의 link 를 전부 뺐습니다. 충돌 제약 "
+            "행이 하나도 없는 실행은 안전 계층이 꺼진 것과 같으므로(그런데 켜진 것처럼 "
+            "보입니다) 여기서 멈춥니다 — 그럴 의도면 --no-safe 를 쓰십시오")
+    return kept
+
+
+def sphere_options(args) -> dict:
+    """`--sphere-*` flag 중 **실제로 준 것만** 담은 dict (T6f).
+
+    안 준 flag 는 키가 아예 없다 — 기본값을 여기 적으면 `UrdfSphereChain` 의 기본값과 두 곳이
+    되고, 갈라지는 날 제약 모델의 굵기가 조용히 달라진다. 빈 dict 면 호출이 예전과 글자 그대로
+    같다는 것이 이 함수의 계약이고, 테스트가 그것을 지킨다.
+    """
+    given = {
+        "sphere_spacing": args.sphere_spacing,
+        "max_spheres_per_capsule": args.max_spheres_per_capsule,
+        "capsule_radius_scale": args.capsule_radius_scale,
+        "max_sphere_radius": args.max_sphere_radius,
+    }
+    return {k: v for k, v in given.items() if v is not None}
+
+
+def resolve_plan_horizon(value: str):
+    """`--plan-horizon` 문자열 → `HorizonConfig.plan_horizon` 값.
+
+    `execution`(기본) = 실행되는 창만 계획한다 · `full` = 청크 전체 · 숫자 = 그 스텝 수.
+    `full`/숫자가 T6f 이전 동작으로 되돌리는 길이다 (그때의 기본값은 32 였다).
+    """
+    from benchmark.trajopt.config import PLAN_EXECUTION_WINDOW
+
+    text = str(value).strip().lower()
+    if text in (PLAN_EXECUTION_WINDOW, "exec", "window"):
+        return PLAN_EXECUTION_WINDOW
+    if text in ("full", "chunk", "all", "none"):
+        return None
+    try:
+        return int(text)
+    except ValueError:
+        raise ValueError(
+            f"--plan-horizon 은 {PLAN_EXECUTION_WINDOW!r} · 'full' · 정수 중 하나여야 합니다: "
+            f"{value!r}") from None
 
 
 def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
                backend: str = "legacy", fine_voxel: float | None = None,
                tsdf_voxel: float | None = None,
                attached_sign_threshold: float = 1.5,
-               max_field_age_sec: float | None = None):
+               max_field_age_sec: float | None = None,
+               exclude_links: Sequence[str] = (),
+               constraint_sphere_options: dict | None = None):
     """서버가 쓸 AG3S. 자기 필터는 전신, 제약은 양팔.
 
     **두 모델은 일부러 다르다.** 자기 필터는 바퀴·베이스까지 있어야 한다 — 머리 카메라가 자기
@@ -41,6 +129,15 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
 
     XML 은 **로봇 모델을 만드는 데만** 쓴다. 서버는 시뮬레이션을 돌리지 않고 로컬이 보낸
     관측만 본다 — 서버가 자기 씬을 돌리면 로봇이 있는 곳과 제약이 설명하는 곳이 갈라진다.
+
+    `exclude_links` 는 **제약 모델에서만** 뺀다 (`--exclude-links`, T6e 진단). 자기 필터는
+    그대로 전신이다 — 거기서 빼면 그 link 의 점이 필터를 통과해 장애물로 샌다. 없는 이름은
+    `constraint_links_minus` 가 거절한다.
+
+    `constraint_sphere_options` 도 **제약 모델에서만** 쓴다 (T6f — 팔을 실제 굵기로). 같은
+    이유다: 자기 필터가 가늘어지면 그 link 의 점이 장애물로 새고, 그것은 제약을 푸는 것과 반대
+    방향의 사고다. 덮지 못하는 capsule 이 생기면 `UrdfSphereChain` 이 경고를 찍고 여기서
+    `coverage_report()` 를 한 번 더 찍는다 — 조용히 가늘어진 모델로 떠 있는 것이 가장 나쁘다.
     """
     import mujoco
 
@@ -53,8 +150,27 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     mj_model = mujoco.MjModel.from_xml_path(str(pathlib.Path(model_xml).resolve()))
     scene = TransportScene.attach(mj_model, mujoco.MjData(mj_model))
     filter_robot = build_robot_model(scene)
+    spheres = dict(constraint_sphere_options or {})
     constraint_robot = build_constraint_robot_model(
-        scene, link_filter=None if links == "all" else ARM_LINKS)
+        scene, link_filter=None if links == "all" else ARM_LINKS, sphere_options=spheres)
+    # **제약 모델에서만 뺀다.** 자기 필터(`filter_robot`)는 손대지 않는다 — 거기서 빼면 그
+    # link 의 점이 필터를 통과해 장애물로 새고, 그것은 제약을 푸는 것과 반대 방향의 사고다.
+    links_label = links
+    excluded = tuple(dict.fromkeys(exclude_links or ()))
+    if excluded:
+        before = constraint_robot.n_spheres
+        keep = constraint_links_minus(constraint_robot.sphere_link_names, excluded,
+                                      known=constraint_robot.model.links)
+        constraint_robot = build_constraint_robot_model(scene, link_filter=keep,
+                                                       sphere_options=spheres)
+        links_label = f"{links} minus {','.join(excluded)}"
+        # 조용히 다른 제약으로 떠 있는 것이 가장 나쁘다 — legacy backend 경고와 같은 이유다.
+        logging.warning(
+            "constraint model: EXCLUDING %s — 구 %d → %d (%d 개 빠짐). 자기 필터 모델은 "
+            "그대로 전신이다 (%d 구, 이 link 들도 거기 남아 있다). **빼는 것이 위험을 지우지 "
+            "않는다** — 이 link 가 무엇에 부딪혀도 이제 아무도 막지 않는다. 진단용 flag 다",
+            ", ".join(excluded), before, constraint_robot.n_spheres,
+            before - constraint_robot.n_spheres, filter_robot.n_spheres)
     esdf = {"voxel_size": voxel, "max_distance": 0.4,
             "exclude_support_surfaces": False,
             "backend": backend,
@@ -71,7 +187,17 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
         **({"timing": timing} if timing else {}),
     })
     logging.info("AG3S: self-filter %d spheres, constraints %d spheres (%s)",
-                 filter_robot.n_spheres, constraint_robot.n_spheres, links)
+                 filter_robot.n_spheres, constraint_robot.n_spheres, links_label)
+    # **구 굵기는 시작할 때 크게 말한다.** 기본값이면 한 줄이고, 덮지 못하는 capsule 이 있으면
+    # 여러 줄짜리 경고다 — `--exclude-links` 와 같은 성질의 flag 이므로 같은 크기로 말한다.
+    report = constraint_robot.coverage_report()
+    if constraint_robot.coverage_shortfall:
+        logging.warning("constraint sphere model:\n%s", report)
+        logging.warning("self-filter model is untouched by --sphere-* (%d spheres) — 거기서 "
+                        "가늘어지면 그 link 의 점이 필터를 통과해 장애물로 샌다",
+                        filter_robot.n_spheres)
+    else:
+        logging.info("constraint sphere model: %s", report)
     # **어느 필드 구현이 도는지 시작할 때 크게 말한다.** T0 의 즉시 실패 조건이
     # "legacy backend 호출" 이므로, 서버가 조용히 legacy 로 떠 있는 것이 가장 나쁜 결과다.
     if backend == "curobo":
@@ -178,7 +304,12 @@ def wire_reference_key() -> str:
     return wire.ACTIONS_REFERENCE
 
 
-def main() -> None:
+def build_parser() -> argparse.ArgumentParser:
+    """CLI. `main()` 과 테스트가 **같은 parser** 를 본다.
+
+    따로 만들면 "flag 를 안 주면 지금과 같다" 를 테스트가 확인할 수 없다 — 기본값이 갈리는
+    순간 서버는 조용히 다른 설정으로 뜬다.
+    """
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True, help="openpi train config 이름")
@@ -192,7 +323,42 @@ def main() -> None:
     ap.add_argument("--links", choices=("arms", "all"), default="arms",
                     help="제약을 걸 링크. arms 는 양팔과 손끝만 — 바퀴·베이스는 결정 변수가 "
                          "아니라 고칠 수 없는 위반을 상수로 깔아 실제 신호를 묻는다")
-    ap.add_argument("--esdf-margin", type=float, default=0.05)
+    ap.add_argument("--exclude-links", nargs="+", default=(), metavar="LINK",
+                    help="제약 모델에서 **뺄** link 이름. 예: --exclude-links "
+                         "link_left_arm_5 link_right_arm_5. --links 가 고른 집합에서 뺀다. "
+                         "자기 필터 모델은 손대지 않는다 (거기서 빼면 그 link 의 점이 장애물로 "
+                         "샌다). **진단용이다** — 뺀 link 가 무엇에 부딪혀도 아무도 막지 "
+                         "않는다. 제약 모델에 없는 이름을 주면 서버가 시작하지 않는다")
+    ap.add_argument("--esdf-margin", type=float, default=0.05,
+                    help="구 표면이 장애물에서 떨어져 있어야 하는 거리 (m). 제약은 "
+                         "`d_esdf(p) - 구반지름 - 이 값 >= 0` 이므로, 구 반지름 81 mm 와 합치면 "
+                         "중심에서 131 mm 자유공간을 요구한다 (T6d). **기본값은 안 바꿨다** — "
+                         "이 flag 로 조절한다")
+    ap.add_argument("--plan-horizon", default="execution",
+                    metavar="execution|full|N",
+                    help="최적화기가 **다듬는** 스텝 수. 기본 `execution` = 실행되는 창만 "
+                         "(`horizon.execution_length`, 로컬의 OPEN_LOOP_HORIZON 과 같은 수) — "
+                         "T6f 판정. 그 앞에는 32 였고, 그때 TO 는 회피를 실행되는 앞부분에 "
+                         "몰고 접근을 버려지는 뒷부분으로 미뤘다 (실행 창 +89.86 mm, 50 스텝 "
+                         "−17.61 mm, 사과 이동 0.0 mm). `full` 이나 숫자를 주면 그 동작으로 "
+                         "되돌아간다 — 계획 지평이 길면 예지력이 생기지만 **미룰 자리도 생긴다**")
+    ap.add_argument("--sphere-spacing", type=float, default=None, metavar="S",
+                    help="제약 모델의 구 간격 (capsule 반지름 단위, 기본 1.0). 낮추면 구가 "
+                         "촘촘해지고 팽창이 줄어 반지름이 **내려간다** — 덮개를 잃지 않는 쪽의 "
+                         "손잡이다. `--max-spheres-per-capsule` 이 먼저 걸리므로 (RB-Y1 팔뚝은 "
+                         "0.48 에서 8 개에 닿는다) 둘을 같이 준다. 자기 필터 모델은 안 바뀐다")
+    ap.add_argument("--max-spheres-per-capsule", type=int, default=None, metavar="N",
+                    help="capsule 하나가 가질 수 있는 구 수의 상한 (기본 8). 올리면 "
+                         "`--sphere-spacing` 이 실제로 듣는다. 제약 행 수가 함께 늘어난다")
+    ap.add_argument("--capsule-radius-scale", type=float, default=None, metavar="F",
+                    help="제약 모델 capsule 반지름의 배율 (기본 1.0 = URDF 그대로). 1 보다 "
+                         "작으면 구가 URDF capsule 을 **덮지 못하고**, 그 사실을 시작 로그에 "
+                         "크게 찍는다. RB-Y1 `link_*_arm_5` 는 URDF 75 mm 인데 MJCF mesh "
+                         "실측은 65.4~68.4 mm 다 — 그 차이만큼은 근사에서 온 살이다")
+    ap.add_argument("--max-sphere-radius", type=float, default=None, metavar="R",
+                    help="제약 모델 구 반지름의 **절대 상한** (m). 팽창까지 끝난 값에 걸린다 "
+                         "(팔뚝 기본값 81.2 mm). `--capsule-radius-scale` 과 같은 성질이고, "
+                         "덮지 못하면 시작 로그에 크게 찍는다")
     ap.add_argument("--no-safe", action="store_true",
                     help="AG3S+TO 를 감싸지 않는다. 기존 서빙과 동일")
     ap.add_argument("--shadow", action="store_true",
@@ -237,12 +403,38 @@ def main() -> None:
                          "PATH = benchmark.ag3s.fields.static_scene 이 쓴 JSON(실기 — MuJoCo 불필요). "
                          "주의: --links all 과 함께 쓰면 바닥이 바퀴·베이스에 못 푸는 행을 "
                          "상수로 깐다 (실측 base -342 mm)")
-    args = ap.parse_args()
+    return ap
 
+
+def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
+    """안전 계층을 끈 채 그 계층의 flag 를 준 조합을 시작할 때 막는다.
+
+    아무 일도 안 하는 flag 를 받아 놓고 뜨면, 로그를 읽는 사람은 그것이 효과가 있었다고 믿는다.
+    """
     if args.shadow and args.no_safe:
         ap.error("--shadow 는 안전 계층이 돌아야 뜻이 있습니다 (--no-safe 는 그것을 끕니다). "
                  "shadow 는 '전부 계산하되 수정을 로봇에 보내지 않는' 실행이므로, 계산이 없으면 "
                  "그림자로 둘 것도 없습니다")
+    if args.exclude_links and args.no_safe:
+        ap.error("--exclude-links 는 제약 모델을 고치는 flag 입니다 (--no-safe 는 그 모델을 "
+                 "아예 안 만듭니다). 그대로 띄우면 flag 가 아무 일도 안 하는데 link 를 뺐다고 "
+                 "믿게 됩니다")
+    if args.no_safe and sphere_options(args):
+        ap.error("--sphere-* 는 제약 모델의 구를 고치는 flag 입니다 (--no-safe 는 그 모델을 "
+                 "아예 안 만듭니다). 그대로 띄우면 팔을 가늘게 모델링했다고 믿은 채 안전 계층이 "
+                 "꺼진 서버가 뜹니다")
+    # `--plan-horizon` 은 여기서 한 번 읽어 본다. 잘못된 값이 서버를 띄운 뒤에 죽으면 그때는
+    # 체크포인트 두 벌을 이미 GPU 에 올린 뒤다.
+    try:
+        resolve_plan_horizon(args.plan_horizon)
+    except ValueError as exc:
+        ap.error(str(exc))
+
+
+def main() -> None:
+    ap = build_parser()
+    args = ap.parse_args()
+    reject_bad_flag_combinations(ap, args)
 
     logging.basicConfig(level=logging.INFO, force=True)
     # openpi 는 서브모듈이라 sys.path 에 올려야 한다 (`serve_policy.py` 와 같은 규칙).
@@ -281,9 +473,39 @@ def main() -> None:
                 args.record_constraints, esdf_mode=args.record_constraints_esdf,
                 meta={"config": args.config, "checkpoint": args.checkpoint,
                       "model_xml": args.model_xml, "links": args.links,
-                      # shadow 일 때만 더한다 — 기본 기록을 T0 때와 같은 키 집합으로 둔다.
-                      **({"shadow": True} if args.shadow else {})})
+                      # shadow·exclude 일 때만 더한다 — 기본 기록을 T0 때와 같은 키 집합으로
+                      # 둔다. 준 경우에는 반드시 남긴다: 어느 link 를 뺀 실행인지 모르는 기록은
+                      # 다른 실행과 비교할 수 없다.
+                      **({"shadow": True} if args.shadow else {}),
+                      **({"exclude_links": list(args.exclude_links)}
+                         if args.exclude_links else {}),
+                      # **다듬는 창은 항상 남긴다.** T6f 에서 기본값이 32 → 실행 창으로
+                      # 바뀌었으므로, 안 남기면 T6d 기록과 이 기록이 meta 로 구별되지 않는다 —
+                      # 그리고 둘은 서로 다른 것을 재고 있다.
+                      "plan_horizon": args.plan_horizon,
+                      **({"sphere_options": sphere_options(args)}
+                         if sphere_options(args) else {})})
             logging.info("recording AG3S constraint diagnostics to %s", recorder.run_dir)
+
+        to_config = TrajOptConfig.from_dict({
+            "collision": {"backend": "esdf", "esdf_margin": args.esdf_margin,
+                          "use_support_planes": False},
+            # 기하 인증 요구는 여기 **한 곳**에서만 켜고 끈다.
+            "safety": {"require_certified_geometry": not args.allow_uncertified},
+            # 다듬는 창. `execution` 이면 `horizon.execution_length` 를 따라가므로 실행 길이가
+            # 두 번 적히지 않는다 (`config.PLAN_EXECUTION_WINDOW` 머리말).
+            "horizon": {"plan_horizon": resolve_plan_horizon(args.plan_horizon)},
+        })
+        horizon = to_config.horizon
+        logging.info(
+            "TO plan window: %d of %d chunk steps (execution_length=%d) — %s",
+            horizon.planned, horizon.horizon, horizon.execution_length,
+            "실행되는 창만 다듬는다: 회피를 미룰 뒷부분이 없다"
+            if horizon.plans_execution_window_only else
+            f"실행 창 뒤로 {horizon.planned - horizon.execution_length} 스텝을 더 계획한다 — "
+            "예지력이 생기지만 **회피를 미룰 자리도 생긴다** (T6d)")
+        logging.info("TO esdf_margin: %.1f mm (구 반지름과 합쳐야 중심 기준 요구 자유공간이다)",
+                     to_config.collision.esdf_margin * 1000)
 
         served = SafePolicy(
             served_policy,
@@ -293,15 +515,12 @@ def main() -> None:
                             fine_voxel=args.fine_voxel,
                             tsdf_voxel=args.tsdf_voxel,
                             attached_sign_threshold=args.attached_sign_threshold,
-                            max_field_age_sec=args.max_field_age_sec),
+                            max_field_age_sec=args.max_field_age_sec,
+                            exclude_links=args.exclude_links,
+                            constraint_sphere_options=sphere_options(args)),
             static_geometry=load_static_geometry(args.static_geometry, args.model_xml,
                                                  links=args.links),
-            to_config=TrajOptConfig.from_dict({
-                "collision": {"backend": "esdf", "esdf_margin": args.esdf_margin,
-                              "use_support_planes": False},
-                # 기하 인증 요구는 여기 **한 곳**에서만 켜고 끈다.
-                "safety": {"require_certified_geometry": not args.allow_uncertified},
-            }),
+            to_config=to_config,
             attention_fn=attention_extractor(),
             recorder=recorder,
             shadow=args.shadow,

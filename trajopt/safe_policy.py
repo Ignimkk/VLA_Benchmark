@@ -149,6 +149,12 @@ class SafePolicy:
                 "collision constraints against")
         self.constraint_robot_model = model
         self.layout = ChunkLayout.rby1(model.joint_names)
+        #: 그리퍼가 앉은 두 열, **레이아웃에서 유도한다**. 14D 는 `(6, 13)`, 16D 는 `(7, 15)` 다.
+        #: 박아 두면 차원을 바꿀 때 엉뚱한 열을 그리퍼로 읽는다 — 이 프로젝트가 이미 밟았다:
+        #: `_run_latch` 가 16D 에서 열 6(= `left_arm_6` 손목)을 그리퍼 개도로 읽고 있었고
+        #: (T6f 에서 고쳤다), 손목 각도가 우연히 문턱을 넘으면 잠금이 파지로 오인한다. 증상이
+        #: 궤적 오차가 아니라 **권한이 엉뚱한 물체에 붙는 것**으로 나오므로 조용하다.
+        self.gripper_columns = wire.gripper_columns(self.layout.nq_opt // 2)
         self.linearizer = CollisionLinearizer(model, self.layout, self.to_config.horizon.planned)
         self.refiner = TrajOptChunkRefiner(model, self.layout, self._scene_fn, self.to_config)
 
@@ -408,7 +414,8 @@ class SafePolicy:
         chunk = self._pending.get("chunk")
         gripper = None
         if chunk is not None and len(chunk):
-            column = 6 if str(hand) == "left" else 13
+            left_col, right_col = self.gripper_columns
+            column = left_col if str(hand) == "left" else right_col
             if chunk.shape[1] > column:
                 gripper = float(chunk[0, column])
 
@@ -486,9 +493,13 @@ class SafePolicy:
         `ChunkLayout` 이 이미 그리퍼를 결정 변수에서 빼고 `template` 로 되돌려 놓지만, 여기서
         한 번 더 강제한다. 이 두 열이 조용히 바뀌면 손이 엉뚱한 순간에 열리고, 그것은 궤적
         오차와 달리 눈에 띄지 않는다.
+
+        열은 `self.gripper_columns` — **레이아웃에서 유도한 것**이고 모듈 상수가 아니다.
+        `wire.GRIPPER_COLUMNS` 는 기본 차원(16D)의 편의값이라 14D 레이아웃에서는 손목 열을
+        지키고 그리퍼를 최적화에 내준다.
         """
         out = np.array(refined, np.float64, copy=True)
-        for col in wire.GRIPPER_COLUMNS:
+        for col in self.gripper_columns:
             if col < out.shape[1]:
                 out[:, col] = original[:, col]
         return out

@@ -90,7 +90,7 @@ ARM_LINKS = tuple(
 )
 
 
-def build_constraint_robot_model(scene, link_filter=ARM_LINKS):
+def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options=None):
     """제약에 쓰는 모델. 자기 필터 모델과 **일부러 다르다**.
 
     제약 행은 최적화기가 실제로 움직일 수 있는 구에만 의미가 있다. RB-Y1 의 결정 변수는 양팔
@@ -103,6 +103,13 @@ def build_constraint_robot_model(scene, link_filter=ARM_LINKS):
     최적화 문제로 취급하지 않기로 한 것뿐이다. 베이스가 움직이는 순간 이 가정은 깨진다.
 
     `link_filter=None` 을 주면 전신으로 되돌아간다.
+
+    `sphere_options` 는 `UrdfSphereChain` 의 굵기·촘촘함 인자를 그대로 넘기는 통로다
+    (`sphere_spacing` · `max_spheres_per_capsule` · `capsule_radius_scale` ·
+    `max_sphere_radius`, T6f). **기본값을 여기 다시 적지 않는다** — 적으면 두 곳이 갈라지고,
+    갈라진 쪽이 제약 모델의 굵기다. `None` 이면 `UrdfSphereChain` 의 기본값 그대로이므로
+    호출이 예전과 글자 그대로 같다. 자기 필터 모델(`build_robot_model`)에는 이 통로가 **없다** —
+    거기서 가늘어지면 그 link 의 점이 필터를 통과해 장애물로 샌다.
     """
     from benchmark.ag3s.experiments.sources.mujoco_source import HEAD_JOINTS, gap_filling_capsules
     from benchmark.ag3s.robot_models import RBY1_URDF, UrdfSphereChain, parse_urdf
@@ -110,7 +117,8 @@ def build_constraint_robot_model(scene, link_filter=ARM_LINKS):
     urdf = parse_urdf(RBY1_URDF)
     head = {n: float(scene.data.qpos[scene._qadr[n]]) for n in HEAD_JOINTS if n in scene._qadr}
     return UrdfSphereChain(urdf, extra_capsules=gap_filling_capsules(scene.model),
-                           fixed_joint_values=head, link_filter=link_filter)
+                           fixed_joint_values=head, link_filter=link_filter,
+                           **dict(sphere_options or {}))
 
 
 def majority_body(labels: np.ndarray, names: dict) -> tuple[str, float]:
