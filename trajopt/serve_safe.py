@@ -967,7 +967,31 @@ def main() -> None:
                       "plan_horizon": args.plan_horizon,
                       **({"sphere_options": sphere_options(args)}
                          if sphere_options(args) else {})})
-            logging.info("recording AG3S constraint diagnostics to %s", recorder.run_dir)
+            # **시작할 때 거절한다.** 기록기가 이 backend 의 거리장을 실을 수 없으면 청크마다
+            # 예외가 나고, 예전에는 그것이 `print` 한 줄이라 75 chunk 를 돌리고도 빈 디렉토리가
+            # 남았다 (2026-09-28). 여기서 죽으면 체크포인트를 올리기 전이다.
+            from benchmark.ag3s.experiments.sources.constraint_record import (
+                SUPPORTED_ESDF_BACKENDS)
+
+            if args.esdf_backend not in SUPPORTED_ESDF_BACKENDS:
+                ap_error = f"--record-constraints 는 esdf backend {args.esdf_backend!r} 의 " \
+                           f"거리장을 실을 수 없습니다 (지원: {list(SUPPORTED_ESDF_BACKENDS)}). " \
+                           f"그대로 띄우면 청크마다 기록이 실패하고 끝나고 **빈 디렉토리**가 " \
+                           f"남습니다 — 그러면 실행을 한 번 더 돌려야 합니다"
+                raise SystemExit(ap_error)
+            logging.info("recording AG3S constraint diagnostics to %s (esdf=%s, backend=%s)",
+                         recorder.run_dir, args.record_constraints_esdf, args.esdf_backend)
+            if args.record_constraints_esdf == "occupancy" and args.esdf_backend == "curobo":
+                # 거절하지 않는다 — 격자 메타와 나머지 진단은 그대로 남는다. 다만 **점유 배열이
+                # 안 남는다는 사실**을 시작할 때 말한다. 끝나고 `esdf_occupancy` 를 찾다가 없는
+                # 것을 "점유가 비어 있었다" 로 읽는 것이 이 모드의 조용한 실패다.
+                logging.warning(
+                    "!!! --record-constraints-esdf occupancy 는 cuRobo backend 에서 점유 배열을 "
+                    "남기지 않습니다 !!!\n"
+                    "    block-sparse TSDF 에는 legacy 의 3 상태(FREE/OCCUPIED/UNKNOWN)에 "
+                    "대응하는 배열이 없습니다. 격자 메타·계층 정보는 남고, **거리장 자체를 "
+                    "보려면 `full` 을 쓰십시오** (계층마다 float16 격자를 싣습니다: 주 계층 · "
+                    "coarse · target 없는 계층).")
 
         # **준 것만 넣는다.** 빈 dict 면 키가 없고, 그러면 `CostConfig` 기본값이 그대로다 —
         # 호출이 예전과 글자 그대로 같다는 뜻이다 (`sphere_options` 와 같은 규약).

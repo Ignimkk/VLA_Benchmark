@@ -455,9 +455,31 @@ def bounding_capsules(
 #: the case the warning is for**: the moment someone adds `FT_sensor_L` to `UNCOVERED_LINKS` without
 #: an alias here, the first `gap_filling_capsules` call says so instead of handing back a self-filter
 #: that is quietly one body short.
+#: **왼손가락 둘은 이름이 서로 바뀌어 있다** (2026-09-28, T11). 이름 불일치이고 기하 불일치가
+#: 아니다 — 측정이 그것을 결정했다:
+#:
+#:     URDF ee_finger_l1  vs  MJCF ee_finger_l1 :  6.0000 mm | 180.000 deg
+#:     URDF ee_finger_l1  vs  MJCF ee_finger_l2 :  0.0005 mm |   0.000 deg   <- 정상 잔차
+#:
+#: `link_*_arm_6` 기준으로 URDF 는 양팔 모두 `finger1` 을 `x = +3 mm` · 회전 0° 에 두는데,
+#: MJCF 는 **왼손만** 거울이다 (`l1` 이 `x = −3 mm` · z 축 180°). 6.000 mm 는 `|+3 − (−3)|` 다.
+#: 오른손은 일치하고 손바닥도 일치한다.
+#:
+#: **어느 파일도 틀리지 않았다.** 관절 축·리밋까지 양쪽이 각자 일관되고 (finger1 = axis `−x` ·
+#: `[−0.05, 0]`, finger2 = axis `+x` · `[0, 0.05]`), frame 과 축이 함께 뒤집혀 있어 **물리적 개폐
+#: 동작이 같다.** 그래서 고칠 기하가 없다 — 고칠 것은 두 이름표의 짝이고, 이 표가 정확히 그
+#: 일을 하는 곳이다 (`ee_left → EE_BODY_L` 이 이미 같은 일을 한다).
+#:
+#: URDF 쪽 joint origin 을 MJCF 에 맞추는 길(그쪽이 (B) 였다)을 **안 고른 이유**: vendored robot
+#: description 을 고치면 FK 가 바뀌어 **제약 모델의 구 위치가 전부 움직이고 회귀 기준선이 또
+#: 이동한다.** 이름표 두 줄로 끝나는 일에 그 대가를 낼 이유가 없다.
 MJCF_BODY_ALIASES: dict[str, str] = {
     "ee_left": "EE_BODY_L",
     "ee_right": "EE_BODY_R",
+    # 왼손가락 둘 — 위 주석. **두 줄이 서로를 가리킨다**: URDF l1 의 mesh 는 MJCF l2 에서 재야
+    # 하고, 그 반대도 같다.
+    "ee_finger_l1": "ee_finger_l2",
+    "ee_finger_l2": "ee_finger_l1",
 }
 
 #: Links the RB-Y1 URDF gives no collision capsule for, but which a camera on the robot sees.
@@ -608,13 +630,26 @@ def link_pose_error(scene: "TransportScene", robot_model, links: Sequence[str]) 
     """
     q = scene.robot_state()
     out: dict[str, float] = {}
+    unmeasured: list[str] = []
     for link in links:
+        # **alias 를 여기서도 쓴다** (2026-09-28). 안 쓰면 `ee_left`/`ee_right` 가 `KeyError` 로
+        # 조용히 건너뛰어졌다 — 이 함수가 "frame 이 맞는가" 를 묻는 유일한 도구인데 **손바닥
+        # 둘을 한 번도 안 재고 있었다.** 조용히 건너뛰는 것은 조용히 실패하는 것과 같다.
         try:
-            mujoco_pose = scene.body_pose(link)
+            mujoco_pose = scene.body_pose(MJCF_BODY_ALIASES.get(link, link))
         except KeyError:
+            # 여전히 건너뛴다 (다른 시뮬레이터가 그 link 을 body 로 안 모델링할 수 있다). 다만
+            # **못 쟀다고 말한다** — 반환 dict 에 키가 없는 것과 0 mm 는 완전히 다른 뜻인데,
+            # 읽는 쪽은 둘을 구별할 근거가 없었다. 반환 타입은 그대로 `dict[str, float]` 다.
+            unmeasured.append(link)
             continue
         base = np.linalg.inv(scene.body_pose("base")) @ mujoco_pose
         out[link] = float(np.linalg.norm(robot_model.link_pose(q, link)[:3, 3] - base[:3, 3]))
+    if unmeasured:
+        logging.getLogger(__name__).warning(
+            "link_pose_error: %s 는 MJCF body 를 못 찾아 **재지 않았습니다** (반환 dict 에 키가 "
+            "없습니다 — 0 mm 가 아닙니다). MJCF 이름이 다르면 MJCF_BODY_ALIASES 에 넣으십시오.",
+            ", ".join(unmeasured))
     return out
 
 

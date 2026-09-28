@@ -30,7 +30,18 @@ import numpy as np
 
 from benchmark.trajopt import wire
 
-__all__ = ["SafeRemoteClient"]
+__all__ = ["SafeRemoteClient", "HOLD_GRIPPER_NORM"]
+
+#: hold 청크의 그리퍼 열에 넣을 **정규화** 값 — 씬이 실제 상태를 내놓지 않을 때만 쓴다.
+#:
+#: 로컬이 `ctrl = norm × RBY1_GRIPPER_OPEN(−0.045)` 로 적용하므로 (`pi05_infer.py:535`)
+#: **`1.0` = 열림, `0.0` = 닫힘**이다. 예전 코드는 `0.0` 을 넣고 주석에 "열림" 이라고 적었다 —
+#: 값과 주석이 반대였고, 그 값은 실제로 그리퍼를 **닫는다.**
+#:
+#: **물건을 쥔 채 hold 가 걸리면 이 값은 그것을 놓는다.** 그래서 정상 경로는 씬의
+#: `gripper_norm()` 을 읽는 쪽이고, 이 상수는 읽을 수 없을 때의 마지막 수단이다. 열림을 고른
+#: 이유는 "무엇을 쥐고 있는지 모르는 채 닫는 것" 이 사람·물체 양쪽에 더 나쁜 방향이기 때문이다.
+HOLD_GRIPPER_NORM = 1.0
 
 
 class SafeRemoteClient:
@@ -407,19 +418,80 @@ class SafeRemoteClient:
         레이아웃은 `[왼팔 N, 왼 그리퍼, 오른팔 N, 오른 그리퍼]` 이고 `N = wire.ARM_JOINT_DIM`
         이다. **6 을 박지 않는다** — 박아 두면 16D 에서 그리퍼가 손목 자리에 들어가고 hold
         청크가 엉뚱한 관절을 지령한다.
+
+        **매핑은 이름으로 한다** (2026-09-28 에 고쳤다). 그 전에는 `state[:2N]` 로 **위치를
+        잘랐고**, 씬이 주는 것은 `DEFAULT_RBY1_JOINTS` 순서의 20-vector (torso 6 · 오른팔 7 ·
+        왼팔 7) 이므로 **14 개 열 전부 엉뚱한 관절**이 들어갔다:
+
+        | chunk 열 | 위치로 자르면 들어가던 값 |
+        |---|---|
+        | 왼팔 0~6 | `torso_0..5` + `right_arm_0` |
+        | 오른팔 0~6 | `right_arm_1..6` + `left_arm_0` |
+
+        `ChunkLayout.rby1` 이 이미 이름으로 매핑하므로 **같은 길**을 쓴다 — 매핑이 두 곳에 따로
+        있으면 한쪽이 조용히 한 칸 밀린다.
+
+        **그리퍼는 정규화 값(0~1)이다.** 로컬이 `ctrl = norm × RBY1_GRIPPER_OPEN(−0.045)` 로
+        적용하므로 (`pi05_infer.py:535`) **`1.0` 이 열림이고 `0.0` 이 닫힘**이다. 예전 코드는
+        `0.0` 을 넣으면서 주석에 "열림" 이라고 적었다 — 값과 주석이 반대였다. 씬이 그리퍼 상태를
+        내놓으면 그것을 쓰고(`gripper_norm()`), 못 내놓으면 `HOLD_GRIPPER_NORM` 을 쓴다.
+
+        **읽는 사람이 알아야 할 것**: 물건을 쥔 채 hold 가 걸리면 열림 값은 그것을 **놓는다.**
+        그래서 씬이 실제 상태를 내놓는 쪽이 정상 경로이고, 상수는 마지막 수단이다. 그리고 이
+        경로는 **지금 로봇이 쓰는 경로가 아니다** — `pi05_infer.py:1645` 가 hold 프레임에서 자기
+        `rby1_state()` 를 쓴다. 여기 고친 것은 잠복 버그이고, `{"actions": ...}` 로 나가므로
+        다른 호출부가 실행하면 실제로 팔이 엉뚱한 각도로 지령된다.
         """
         state = np.asarray(self._scene.robot_state(), np.float64)
         if len(state) == wire.ACTION_WIDTH:
             return state
         n = wire.ARM_JOINT_DIM
-        if len(state) < 2 * n:
-            raise ValueError(
-                f"씬이 준 상태가 {len(state)}-D 인데 레이아웃은 팔 관절 {2 * n} 개를 "
-                f"필요로 합니다 (arm_joint_dim={n}). 무엇으로 채워야 할지 추측하지 않습니다")
-        # 씬이 팔 관절만 준다면 그리퍼 자리를 열림(0)으로 채운다. 그리퍼를 임의로 닫으면
-        # 잡고 있던 것을 떨어뜨린다.
-        arms = state[:2 * n]
-        return np.concatenate([arms[:n], [0.0], arms[n:2 * n], [0.0]])
+        grippers = self._gripper_norm()
+        layout = self._chunk_layout()
+        if layout is not None and len(state) == layout.nq_model:
+            out = np.empty(wire.ACTION_WIDTH, np.float64)
+            for column, q in layout.action_to_q:
+                out[column] = state[q]
+            for column, value in zip(wire.gripper_columns(n), grippers):
+                out[column] = value
+            return out
+        if len(state) == 2 * n:
+            # 씬이 **팔 관절만** 준 경우. 그때만 위치로 읽는 것이 맞다 — 그 이상을 받으면
+            # 무엇이 어느 열인지 이름 없이는 알 수 없으므로 추측하지 않는다.
+            return np.concatenate(
+                [state[:n], [grippers[0]], state[n:2 * n], [grippers[1]]])
+        raise ValueError(
+            f"씬이 준 상태가 {len(state)}-D 인데 이 레이아웃이 아는 것은 "
+            f"{wire.ACTION_WIDTH}-D(action) · {2 * n}-D(팔만) · "
+            f"{'모델 q' if layout is None else f'{layout.nq_model}-D(모델 q)'} 입니다. "
+            "무엇이 어느 열인지 추측하지 않습니다 — 추측하면 팔이 엉뚱한 관절로 지령됩니다")
+
+    def _chunk_layout(self):
+        """이 차원의 RB-Y1 레이아웃, 또는 `None` (만들 수 없으면).
+
+        `ChunkLayout.rby1` 을 호출할 뿐이다. **여기서 매핑을 다시 쓰지 않는 것**이 요점이다 —
+        refiner 가 쓰는 것과 같은 표를 써야 hold 청크의 열과 refined 청크의 열이 같은 관절을
+        가리킨다.
+        """
+        try:
+            from benchmark.ag3s.robot_models import DEFAULT_RBY1_JOINTS
+            from benchmark.trajopt.types import ChunkLayout
+
+            return ChunkLayout.rby1(DEFAULT_RBY1_JOINTS, action_dim=wire.ACTION_WIDTH,
+                                    arm_joint_dim=wire.ARM_JOINT_DIM)
+        except Exception:  # noqa: BLE001 — 레이아웃을 못 만들면 아래 길이 검사가 말한다
+            return None
+
+    def _gripper_norm(self) -> tuple[float, float]:
+        """`(왼, 오른)` 정규화 그리퍼 값. 씬이 내놓으면 그것, 아니면 `HOLD_GRIPPER_NORM`."""
+        read = getattr(self._scene, "gripper_norm", None)
+        if callable(read):
+            try:
+                left, right = read()
+                return (float(left), float(right))
+            except Exception:  # noqa: BLE001 — 읽기 실패로 hold 를 못 만들면 안 된다
+                pass
+        return (HOLD_GRIPPER_NORM, HOLD_GRIPPER_NORM)
 
     @staticmethod
     def _explain(result: dict[str, Any]) -> str:

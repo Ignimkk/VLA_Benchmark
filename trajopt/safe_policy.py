@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import logging
 import time
 import traceback
 from typing import Any, Callable, Optional, Sequence
@@ -165,6 +166,9 @@ class SafePolicy:
         self._last_attention_by_camera: dict[str, Any] = {}
         self._last_q_now: Optional[np.ndarray] = None
         self._chunk_index = -1
+        #: 기록 실패 횟수. **첫 실패만 크게 외치고** 그 뒤는 한 줄씩 — 같은 문장을 75 번
+        #: 읽게 하면 읽는 사람이 로그를 건너뛰기 시작한다.
+        self._record_failures = 0
 
     # --- BasePolicy 인터페이스 -----------------------------------------------------------
     @property
@@ -490,7 +494,22 @@ class SafePolicy:
                 occupancy=self._occupancy(),
             )
         except Exception as exc:  # noqa: BLE001
-            print(f"[safe_policy] constraint record failed at seq={seq}: {exc}")
+            # **조용히 넘기지 않는다.** 2026-09-28 에 이 자리가 `print` 한 줄이라 75 chunk 가
+            # 전부 실패하고도 실행이 끝까지 갔고, 끝나고 나온 것은 **빈 디렉토리**였다
+            # (`'CuroboEsdfField' object has no attribute 'max_distance'`). 기록을 남기려고
+            # 켠 flag 가 아무것도 남기지 않는 것은 실행을 한 번 더 돌려야 한다는 뜻이다.
+            self._record_failures += 1
+            log = logging.getLogger(__name__)
+            if self._record_failures == 1:
+                log.warning(
+                    "!!! CONSTRAINT RECORDING IS FAILING — THIS RUN WILL HAVE NO RECORD !!!\n"
+                    "    seq=%d: %s: %s\n"
+                    "    디렉토리는 만들어져 있고 파일은 0 개입니다. 실행을 끝까지 돌려도 볼 "
+                    "것이 없으므로 **지금 멈추고 고치는 편이 낫습니다.**\n%s",
+                    seq, type(exc).__name__, exc, traceback.format_exc())
+            else:
+                log.warning("[safe_policy] constraint record failed at seq=%d (%d 번째): %s: %s",
+                            seq, self._record_failures, type(exc).__name__, exc)
 
     def _occupancy(self):
         """세 상태 점유 배열. `EsdfField` 가 아니라 그것을 만든 builder 안에 있다."""

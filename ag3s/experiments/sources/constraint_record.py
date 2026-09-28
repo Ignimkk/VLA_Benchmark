@@ -30,6 +30,14 @@ __all__ = ["ConstraintRecordWriter", "load_constraint_run", "ESDF_MODES"]
 #:   full      — 거리장까지 float16. 청크당 약 1.1 MB (76x90x80, 20 mm 복셀 실측).
 ESDF_MODES = ("none", "occupancy", "full")
 
+#: 이 기록기가 **거리장을 실을 수 있는** backend. `esdf.backend` 의 값과 같은 문자열이다.
+#:
+#: 목록을 두는 이유는 하나다 — 서버가 **시작할 때** 거절할 수 있어야 한다. 2026-09-28 에
+#: `--record-constraints --record-constraints-esdf occupancy` 로 75 chunk 를 돌렸는데 전부
+#: `'CuroboEsdfField' object has no attribute 'max_distance'` 로 실패했고, 실패가 `print` 한
+#: 줄이라 실행이 끝까지 갔다. 끝나고 **빈 디렉토리**를 본 것이 그 조용함의 대가다.
+SUPPORTED_ESDF_BACKENDS = ("legacy", "curobo")
+
 
 class ConstraintRecordWriter:
     """청크마다 AG3S 의 제약 생성 중간 산출물을 npz 로 쓴다.
@@ -196,28 +204,103 @@ class ConstraintRecordWriter:
         return out
 
     # ----------------------------------------------------------------------------------
+    @staticmethod
+    def field_layers(field) -> list[tuple[str, Any]]:
+        """`[(이름, 단일 계층 필드), ...]` — legacy 든 cuRobo 합성이든 같은 모양으로 본다.
+
+        이름은 기록의 키 접두가 되므로 **규약**이다.
+
+        | 이름 | 무엇 |
+        |---|---|
+        | `""` (빈 문자열) | 질의가 답하는 **주 격자**. legacy 는 그 자체, cuRobo 는 가장 미세한 계층 (`field.grid` 와 같은 격자) |
+        | `"coarse"` … | cuRobo 의 나머지 계층. 거친 것부터 |
+        | `"free"` | **target 이 빠진 계층** (T8b). 손끝이 실제로 묻는 쪽이므로 유령을 찾을 때 이것이 정본이다 |
+
+        지원하지 않는 필드면 **여기서 죽는다.** 조용히 빈 목록을 돌려주면 격자 없는 기록이
+        남고, 그것은 없는 기록보다 나쁘다 (읽는 사람이 "거리장이 없던 프레임" 으로 읽는다).
+        """
+        layers = getattr(field, "layers", None)
+        if layers is None:
+            if not hasattr(field, "distance_grid") or not hasattr(field, "max_distance"):
+                raise TypeError(
+                    f"{type(field).__name__} 은 이 기록기가 아는 거리장 인터페이스가 아닙니다 "
+                    f"(단일 계층은 `distance_grid`·`max_distance`·`grid`, 합성은 `layers`). "
+                    f"지원 backend: {list(SUPPORTED_ESDF_BACKENDS)}")
+            return [("", field)]
+        layers = list(layers)
+        if not layers:
+            raise TypeError(f"{type(field).__name__}.layers 가 비어 있습니다")
+        # `field.grid` 는 **가장 미세한 계층**이다 (`CuroboEsdfField.grid`). 질의의 허용오차가
+        # 그것을 쓰므로 주 격자도 그쪽이어야 한다 — 두 곳이 다르면 기록의 격자와 최적화가 본
+        # 격자가 갈라진다.
+        out: list[tuple[str, Any]] = [("", layers[-1])]
+        for i, layer in enumerate(layers[:-1]):
+            out.append((f"coarse{i}" if len(layers) > 2 else "coarse", layer))
+        for i, layer in enumerate(getattr(field, "target_free_layers", ()) or ()):
+            out.append((f"free{i}" if i else "free", layer))
+        return out
+
+    @classmethod
+    def supports_field(cls, field) -> bool:
+        """이 필드를 실을 수 있나. **시작할 때** 묻기 위한 것이다."""
+        try:
+            cls.field_layers(field)
+        except TypeError:
+            return False
+        return True
+
     def _write_field(self, field, payload: dict[str, Any],
                      occupancy: Optional[np.ndarray]) -> dict[str, Any]:
-        """거리장을 `esdf_mode` 에 맞춰 싣고, 어느 모드에서든 격자 메타는 남긴다."""
-        grid = field.grid
-        payload["esdf_origin"] = np.asarray(grid.origin, np.float64)
-        payload["esdf_shape"] = np.asarray(grid.shape, np.int32)
-        payload["esdf_voxel_size"] = np.float64(grid.voxel_size)
+        """거리장을 `esdf_mode` 에 맞춰 싣고, 어느 모드에서든 격자 메타는 남긴다.
+
+        **계층이 여럿이면 여럿 다 싣는다** (cuRobo 는 coarse + fine, 그리고 정책이 켜져 있으면
+        target 없는 계층 한 겹 더). 주 계층은 접두 없는 예전 키 이름을 그대로 쓰므로 옛 기록을
+        읽는 코드가 그대로 돈다.
+        """
+        layers = self.field_layers(field)
         info: dict[str, Any] = {
-            "esdf_max_distance": float(field.max_distance),
             "esdf_stats": {k: _scalar(v) for k, v in dict(field.stats or {}).items()},
+            "esdf_layers": [],
         }
+        for name, layer in layers:
+            prefix = "esdf_" if not name else f"esdf_{name}_"
+            grid = layer.grid
+            payload[prefix + "origin"] = np.asarray(grid.origin, np.float64)
+            payload[prefix + "shape"] = np.asarray(grid.shape, np.int32)
+            payload[prefix + "voxel_size"] = np.float64(grid.voxel_size)
+            info["esdf_layers"].append({
+                "name": name or "main",
+                "voxel_size": float(grid.voxel_size),
+                "shape": [int(v) for v in grid.shape],
+                "origin": [float(v) for v in np.asarray(grid.origin, np.float64)],
+                "max_distance": float(layer.max_distance),
+            })
+            if name == "":
+                # 옛 기록과 같은 키. 읽는 코드가 이것 하나만 알고 있어도 돈다.
+                info["esdf_max_distance"] = float(layer.max_distance)
+            if self.esdf_mode == "none":
+                continue
+            if self.esdf_mode == "full":
+                values = getattr(layer, "distance_grid", None)
+                if values is not None:
+                    # float16 은 여기서 안전하다. 이 배열은 진단·시각화용이고, 최적화가 읽는 값은
+                    # 언제나 살아 있는 필드에서 float64 로 보간돼 나온다. 0.4 m 범위에서
+                    # float16 의 해상도는 0.25 mm 미만이라 20 mm 복셀의 이산화 오차에 묻힌다.
+                    payload[prefix + "distance"] = np.asarray(values, np.float16)
         if self.esdf_mode == "none":
             return info
         if occupancy is not None:
             payload["esdf_occupancy"] = np.asarray(occupancy, np.uint8)
-        if self.esdf_mode == "full":
-            grid_values = field.distance_grid
-            if grid_values is not None:
-                # float16 은 여기서 안전하다. 이 배열은 진단·시각화용이고, 최적화가 읽는 값은
-                # 언제나 살아 있는 `EsdfField` 에서 float64 로 보간돼 나온다. 0.4 m 범위에서
-                # float16 의 해상도는 0.25 mm 미만이라 20 mm 복셀의 이산화 오차에 묻힌다.
-                payload["esdf_distance"] = np.asarray(grid_values, np.float16)
+        else:
+            # **없다는 사실을 적는다.** `occupancy` 모드로 켰는데 배열이 없으면 읽는 사람은
+            # "점유가 비어 있던 프레임" 으로 읽는다. cuRobo backend 에는 legacy 의 3 상태
+            # (FREE/OCCUPIED/UNKNOWN) 에 대응하는 배열이 **없다** — block-sparse TSDF 에서
+            # "보고 지나간 자유공간" 과 "한 번도 안 본 곳" 이 둘 다 미할당이다
+            # (`CuroboEsdfField.unknown_fraction` 이 같은 이유로 `None` 을 낸다).
+            info["esdf_occupancy_available"] = False
+            info["esdf_occupancy_reason"] = (
+                "이 backend 는 3 상태 점유 배열을 내놓지 않습니다 (block-sparse TSDF). "
+                "거리장 자체를 보려면 --record-constraints-esdf full 을 쓰십시오")
         return info
 
     def _thin(self, arr: np.ndarray) -> np.ndarray:
