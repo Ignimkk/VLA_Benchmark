@@ -1,0 +1,5700 @@
+{
+ "step": "T10a",
+ "date": "2026-09-28",
+ "task": "lead 의 지시 (T10a.task.md 없음 — 지시 본문이 사양이다)",
+ "runs": [
+  {
+   "id": "p1to4",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T10a/p1to4.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T10a/p1to4.json",
+   "extra_output": "outputs/verify/T10a/p1to4_curves.npz",
+   "stdout_log": "outputs/verify/T10a/p1to4.log"
+  },
+  {
+   "id": "fig1_scene",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T10a/fig1_scene.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "benchmark/ag3s/docs/figures/t10a/t10a-scene.json",
+   "stdout_log": "outputs/verify/T10a/fig1.log"
+  },
+  {
+   "id": "fig2_graphs",
+   "command": "PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T10a/fig2_graphs.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "benchmark/ag3s/docs/figures/t10a/t10a-graphs.json",
+   "stdout_log": "outputs/verify/T10a/fig2.log"
+  },
+  {
+   "id": "fig3_tables",
+   "command": "PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T10a/fig3_tables.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "benchmark/ag3s/docs/figures/t10a/t10a-table.json",
+   "stdout_log": "outputs/verify/T10a/fig3.log"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark (nested git repo at /mnt/dev/work/benchmark)",
+  "head": "(코드를 읽기만 했고 커밋 상태를 바꾸지 않았다)",
+  "note": "benchmark/**/*.py 를 고치지 않았다. config.py:286 의 trust_radius 0.15 와 config.py:146-154 의 가중치만 읽었다. 포트 8123 서버를 건드리지 않았다.",
+  "inputs": "outputs/live_test/20260928_t10/execute_ep1807/frames.jsonl 와 outputs/live_test/20260926_t9/execute_ep1807/frames.jsonl 그대로. rollout 없음."
+ },
+ "method": {
+  "offline_rebuild": "기록된 qpos (물체 free joint 포함) + chunk action -> 제약 구 266 개 중심 -> MuJoCo 충돌 geom 표면까지 해석적 거리. mj_geomDistance 미사용. T9a/T9b 와 같은 방법.",
+  "sphere_options": {
+   "sphere_spacing": 0.4,
+   "max_spheres_per_capsule": 32,
+   "capsule_radius_scale": 0.2,
+   "capsule_extent_by_link": {
+    "link_left_arm_5": -0.1,
+    "link_right_arm_5": -0.1
+   }
+  },
+  "n_spheres": 266,
+  "n_capsules": 36,
+  "scene_bodies": [
+   "apple",
+   "banana",
+   "crate",
+   "orange",
+   "pear",
+   "table"
+  ],
+  "clearance_definition": "surface_distance(sphere centre, nearest geom of body) - sphere radius.  PRE-margin — esdf margin 10 mm 은 빼지 않았다 (기록의 max_violation_pair.clearance_m 은 post-margin 이다, T9a 참조)",
+  "exec_window": 8,
+  "approach_window": "t_step <= 200",
+  "gripper_links": [
+   "ee_finger_l1",
+   "ee_finger_l2",
+   "ee_left"
+  ],
+  "trust_radius_rad": 0.15,
+  "trust_radius_source": "benchmark/trajopt/config.py:286"
+ },
+ "numbers": {
+  "_comment": "로그와 논문에 쓰이는 모든 수치가 여기에만 있다.",
+  "setup": {
+   "t10_record": "/mnt/dev/work/outputs/live_test/20260928_t10/execute_ep1807/frames.jsonl",
+   "t9_record": "/mnt/dev/work/outputs/live_test/20260926_t9/execute_ep1807/frames.jsonl",
+   "objective_weights_T10": "w_track 1, w_smooth 0, w_continuity 0, w_slack 1000",
+   "objective_weights_T9": "config.py 기본값 (w_track 1.0, w_smooth 0.05, w_continuity 0.5, w_slack 1e3)",
+   "n_chunks_T10": 66,
+   "n_chunks_T9": 75,
+   "approach_window": "t_step <= 200",
+   "exec_window": 8,
+   "esdf_margin_mm": 10.0,
+   "elapsed_s": 10.0
+  },
+  "p1_what_blocks_the_fingers": {
+   "T10": {
+    "reference__all_bodies": {
+     "nearest_body_counts_per_chunk": {
+      "crate": 19,
+      "apple": 7
+     },
+     "n_chunks": 26,
+     "min_mm_by_body": {
+      "apple": 9.712,
+      "banana": 517.4814,
+      "crate": 32.3123,
+      "orange": 75.8897,
+      "pear": 526.8205,
+      "table": 42.9362
+     },
+     "global_min_mm": 9.712,
+     "global_min_body": "apple",
+     "global_min_chunk_t_step": 96,
+     "per_chunk": [
+      {
+       "t_step": 0,
+       "nearest_body": "crate",
+       "mm": 68.9515,
+       "by_body_mm": {
+        "apple": 143.6055,
+        "banana": 520.951,
+        "crate": 68.9515,
+        "orange": 144.3078,
+        "pear": 526.8205,
+        "table": 184.704
+       }
+      },
+      {
+       "t_step": 8,
+       "nearest_body": "crate",
+       "mm": 72.1264,
+       "by_body_mm": {
+        "apple": 144.974,
+        "banana": 523.504,
+        "crate": 72.1264,
+        "orange": 147.8172,
+        "pear": 529.8108,
+        "table": 187.9737
+       }
+      },
+      {
+       "t_step": 16,
+       "nearest_body": "crate",
+       "mm": 78.9815,
+       "by_body_mm": {
+        "apple": 145.3255,
+        "banana": 531.2256,
+        "crate": 78.9815,
+        "orange": 153.5245,
+        "pear": 538.9124,
+        "table": 193.0152
+       }
+      },
+      {
+       "t_step": 24,
+       "nearest_body": "crate",
+       "mm": 91.0721,
+       "by_body_mm": {
+        "apple": 149.0749,
+        "banana": 542.6655,
+        "crate": 91.0721,
+        "orange": 163.5104,
+        "pear": 552.2104,
+        "table": 201.775
+       }
+      },
+      {
+       "t_step": 32,
+       "nearest_body": "crate",
+       "mm": 108.611,
+       "by_body_mm": {
+        "apple": 159.0625,
+        "banana": 558.1321,
+        "crate": 108.611,
+        "orange": 178.6196,
+        "pear": 569.3297,
+        "table": 215.3482
+       }
+      },
+      {
+       "t_step": 40,
+       "nearest_body": "crate",
+       "mm": 134.4771,
+       "by_body_mm": {
+        "apple": 179.5335,
+        "banana": 580.2561,
+        "crate": 134.4771,
+        "orange": 204.4526,
+        "pear": 592.7784,
+        "table": 238.7294
+       }
+      },
+      {
+       "t_step": 48,
+       "nearest_body": "crate",
+       "mm": 129.7017,
+       "by_body_mm": {
+        "apple": 166.8836,
+        "banana": 583.4102,
+        "crate": 129.7017,
+        "orange": 201.8929,
+        "pear": 598.5173,
+        "table": 226.3598
+       }
+      },
+      {
+       "t_step": 56,
+       "nearest_body": "crate",
+       "mm": 117.0686,
+       "by_body_mm": {
+        "apple": 151.2595,
+        "banana": 578.6488,
+        "crate": 117.0686,
+        "orange": 190.2565,
+        "pear": 594.7025,
+        "table": 210.3408
+       }
+      },
+      {
+       "t_step": 64,
+       "nearest_body": "crate",
+       "mm": 72.8857,
+       "by_body_mm": {
+        "apple": 91.0643,
+        "banana": 558.2126,
+        "crate": 72.8857,
+        "orange": 140.6192,
+        "pear": 574.7697,
+        "table": 150.0206
+       }
+      },
+      {
+       "t_step": 72,
+       "nearest_body": "apple",
+       "mm": 48.7695,
+       "by_body_mm": {
+        "apple": 48.7695,
+        "banana": 544.6877,
+        "crate": 57.1758,
+        "orange": 114.1458,
+        "pear": 561.704,
+        "table": 106.0545
+       }
+      },
+      {
+       "t_step": 80,
+       "nearest_body": "apple",
+       "mm": 23.6361,
+       "by_body_mm": {
+        "apple": 23.6361,
+        "banana": 538.498,
+        "crate": 55.0043,
+        "orange": 95.2335,
+        "pear": 555.702,
+        "table": 77.5958
+       }
+      },
+      {
+       "t_step": 88,
+       "nearest_body": "apple",
+       "mm": 12.9687,
+       "by_body_mm": {
+        "apple": 12.9687,
+        "banana": 533.0881,
+        "crate": 54.0917,
+        "orange": 89.539,
+        "pear": 551.0837,
+        "table": 58.2263
+       }
+      },
+      {
+       "t_step": 96,
+       "nearest_body": "apple",
+       "mm": 9.712,
+       "by_body_mm": {
+        "apple": 9.712,
+        "banana": 527.894,
+        "crate": 48.5699,
+        "orange": 75.8897,
+        "pear": 546.5493,
+        "table": 42.9362
+       }
+      },
+      {
+       "t_step": 104,
+       "nearest_body": "apple",
+       "mm": 24.4942,
+       "by_body_mm": {
+        "apple": 24.4942,
+        "banana": 520.9379,
+        "crate": 37.2779,
+        "orange": 89.6994,
+        "pear": 541.1484,
+        "table": 56.401
+       }
+      },
+      {
+       "t_step": 112,
+       "nearest_body": "crate",
+       "mm": 37.1646,
+       "by_body_mm": {
+        "apple": 37.9527,
+        "banana": 521.4894,
+        "crate": 37.1646,
+        "orange": 103.739,
+        "pear": 542.0389,
+        "table": 71.3013
+       }
+      },
+      {
+       "t_step": 120,
+       "nearest_body": "apple",
+       "mm": 39.2981,
+       "by_body_mm": {
+        "apple": 39.2981,
+        "banana": 522.92,
+        "crate": 40.3943,
+        "orange": 104.8646,
+        "pear": 543.2919,
+        "table": 72.8196
+       }
+      },
+      {
+       "t_step": 128,
+       "nearest_body": "apple",
+       "mm": 37.5166,
+       "by_body_mm": {
+        "apple": 37.5166,
+        "banana": 521.9848,
+        "crate": 39.7957,
+        "orange": 102.4501,
+        "pear": 542.1063,
+        "table": 70.5069
+       }
+      },
+      {
+       "t_step": 136,
+       "nearest_body": "crate",
+       "mm": 33.8408,
+       "by_body_mm": {
+        "apple": 43.4425,
+        "banana": 521.8519,
+        "crate": 33.8408,
+        "orange": 107.4288,
+        "pear": 542.3064,
+        "table": 75.8702
+       }
+      },
+      {
+       "t_step": 144,
+       "nearest_body": "crate",
+       "mm": 39.7332,
+       "by_body_mm": {
+        "apple": 42.0556,
+        "banana": 524.3143,
+        "crate": 39.7332,
+        "orange": 106.8538,
+        "pear": 544.2111,
+        "table": 74.8638
+       }
+      },
+      {
+       "t_step": 152,
+       "nearest_body": "crate",
+       "mm": 32.5798,
+       "by_body_mm": {
+        "apple": 51.3447,
+        "banana": 520.8076,
+        "crate": 32.5798,
+        "orange": 114.6435,
+        "pear": 541.3002,
+        "table": 83.1148
+       }
+      },
+      {
+       "t_step": 160,
+       "nearest_body": "crate",
+       "mm": 35.7277,
+       "by_body_mm": {
+        "apple": 65.1787,
+        "banana": 523.9724,
+        "crate": 35.7277,
+        "orange": 130.6902,
+        "pear": 544.1379,
+        "table": 100.5186
+       }
+      },
+      {
+       "t_step": 168,
+       "nearest_body": "crate",
+       "mm": 37.9365,
+       "by_body_mm": {
+        "apple": 52.4721,
+        "banana": 523.137,
+        "crate": 37.9365,
+        "orange": 113.191,
+        "pear": 542.7877,
+        "table": 83.0726
+       }
+      },
+      {
+       "t_step": 176,
+       "nearest_body": "crate",
+       "mm": 35.8656,
+       "by_body_mm": {
+        "apple": 55.7666,
+        "banana": 521.1557,
+        "crate": 35.8656,
+        "orange": 113.4234,
+        "pear": 541.622,
+        "table": 81.9901
+       }
+      },
+      {
+       "t_step": 184,
+       "nearest_body": "crate",
+       "mm": 33.1958,
+       "by_body_mm": {
+        "apple": 62.1186,
+        "banana": 517.4814,
+        "crate": 33.1958,
+        "orange": 117.4044,
+        "pear": 538.1931,
+        "table": 85.8225
+       }
+      },
+      {
+       "t_step": 192,
+       "nearest_body": "crate",
+       "mm": 32.3123,
+       "by_body_mm": {
+        "apple": 66.117,
+        "banana": 518.0449,
+        "crate": 32.3123,
+        "orange": 121.9004,
+        "pear": 538.9158,
+        "table": 90.6455
+       }
+      },
+      {
+       "t_step": 200,
+       "nearest_body": "crate",
+       "mm": 42.4113,
+       "by_body_mm": {
+        "apple": 114.0309,
+        "banana": 527.552,
+        "crate": 42.4113,
+        "orange": 173.7809,
+        "pear": 547.7327,
+        "table": 148.7922
+       }
+      }
+     ]
+    },
+    "reference__apple_excluded": {
+     "nearest_body_counts_per_chunk": {
+      "crate": 25,
+      "table": 1
+     },
+     "n_chunks": 26,
+     "min_mm_by_body": {
+      "banana": 517.4814,
+      "crate": 32.3123,
+      "orange": 75.8897,
+      "pear": 526.8205,
+      "table": 42.9362
+     },
+     "global_min_mm": 32.3123,
+     "global_min_body": "crate",
+     "global_min_chunk_t_step": 192,
+     "per_chunk": [
+      {
+       "t_step": 0,
+       "nearest_body": "crate",
+       "mm": 68.9515,
+       "by_body_mm": {
+        "banana": 520.951,
+        "crate": 68.9515,
+        "orange": 144.3078,
+        "pear": 526.8205,
+        "table": 184.704
+       }
+      },
+      {
+       "t_step": 8,
+       "nearest_body": "crate",
+       "mm": 72.1264,
+       "by_body_mm": {
+        "banana": 523.504,
+        "crate": 72.1264,
+        "orange": 147.8172,
+        "pear": 529.8108,
+        "table": 187.9737
+       }
+      },
+      {
+       "t_step": 16,
+       "nearest_body": "crate",
+       "mm": 78.9815,
+       "by_body_mm": {
+        "banana": 531.2256,
+        "crate": 78.9815,
+        "orange": 153.5245,
+        "pear": 538.9124,
+        "table": 193.0152
+       }
+      },
+      {
+       "t_step": 24,
+       "nearest_body": "crate",
+       "mm": 91.0721,
+       "by_body_mm": {
+        "banana": 542.6655,
+        "crate": 91.0721,
+        "orange": 163.5104,
+        "pear": 552.2104,
+        "table": 201.775
+       }
+      },
+      {
+       "t_step": 32,
+       "nearest_body": "crate",
+       "mm": 108.611,
+       "by_body_mm": {
+        "banana": 558.1321,
+        "crate": 108.611,
+        "orange": 178.6196,
+        "pear": 569.3297,
+        "table": 215.3482
+       }
+      },
+      {
+       "t_step": 40,
+       "nearest_body": "crate",
+       "mm": 134.4771,
+       "by_body_mm": {
+        "banana": 580.2561,
+        "crate": 134.4771,
+        "orange": 204.4526,
+        "pear": 592.7784,
+        "table": 238.7294
+       }
+      },
+      {
+       "t_step": 48,
+       "nearest_body": "crate",
+       "mm": 129.7017,
+       "by_body_mm": {
+        "banana": 583.4102,
+        "crate": 129.7017,
+        "orange": 201.8929,
+        "pear": 598.5173,
+        "table": 226.3598
+       }
+      },
+      {
+       "t_step": 56,
+       "nearest_body": "crate",
+       "mm": 117.0686,
+       "by_body_mm": {
+        "banana": 578.6488,
+        "crate": 117.0686,
+        "orange": 190.2565,
+        "pear": 594.7025,
+        "table": 210.3408
+       }
+      },
+      {
+       "t_step": 64,
+       "nearest_body": "crate",
+       "mm": 72.8857,
+       "by_body_mm": {
+        "banana": 558.2126,
+        "crate": 72.8857,
+        "orange": 140.6192,
+        "pear": 574.7697,
+        "table": 150.0206
+       }
+      },
+      {
+       "t_step": 72,
+       "nearest_body": "crate",
+       "mm": 57.1758,
+       "by_body_mm": {
+        "banana": 544.6877,
+        "crate": 57.1758,
+        "orange": 114.1458,
+        "pear": 561.704,
+        "table": 106.0545
+       }
+      },
+      {
+       "t_step": 80,
+       "nearest_body": "crate",
+       "mm": 55.0043,
+       "by_body_mm": {
+        "banana": 538.498,
+        "crate": 55.0043,
+        "orange": 95.2335,
+        "pear": 555.702,
+        "table": 77.5958
+       }
+      },
+      {
+       "t_step": 88,
+       "nearest_body": "crate",
+       "mm": 54.0917,
+       "by_body_mm": {
+        "banana": 533.0881,
+        "crate": 54.0917,
+        "orange": 89.539,
+        "pear": 551.0837,
+        "table": 58.2263
+       }
+      },
+      {
+       "t_step": 96,
+       "nearest_body": "table",
+       "mm": 42.9362,
+       "by_body_mm": {
+        "banana": 527.894,
+        "crate": 48.5699,
+        "orange": 75.8897,
+        "pear": 546.5493,
+        "table": 42.9362
+       }
+      },
+      {
+       "t_step": 104,
+       "nearest_body": "crate",
+       "mm": 37.2779,
+       "by_body_mm": {
+        "banana": 520.9379,
+        "crate": 37.2779,
+        "orange": 89.6994,
+        "pear": 541.1484,
+        "table": 56.401
+       }
+      },
+      {
+       "t_step": 112,
+       "nearest_body": "crate",
+       "mm": 37.1646,
+       "by_body_mm": {
+        "banana": 521.4894,
+        "crate": 37.1646,
+        "orange": 103.739,
+        "pear": 542.0389,
+        "table": 71.3013
+       }
+      },
+      {
+       "t_step": 120,
+       "nearest_body": "crate",
+       "mm": 40.3943,
+       "by_body_mm": {
+        "banana": 522.92,
+        "crate": 40.3943,
+        "orange": 104.8646,
+        "pear": 543.2919,
+        "table": 72.8196
+       }
+      },
+      {
+       "t_step": 128,
+       "nearest_body": "crate",
+       "mm": 39.7957,
+       "by_body_mm": {
+        "banana": 521.9848,
+        "crate": 39.7957,
+        "orange": 102.4501,
+        "pear": 542.1063,
+        "table": 70.5069
+       }
+      },
+      {
+       "t_step": 136,
+       "nearest_body": "crate",
+       "mm": 33.8408,
+       "by_body_mm": {
+        "banana": 521.8519,
+        "crate": 33.8408,
+        "orange": 107.4288,
+        "pear": 542.3064,
+        "table": 75.8702
+       }
+      },
+      {
+       "t_step": 144,
+       "nearest_body": "crate",
+       "mm": 39.7332,
+       "by_body_mm": {
+        "banana": 524.3143,
+        "crate": 39.7332,
+        "orange": 106.8538,
+        "pear": 544.2111,
+        "table": 74.8638
+       }
+      },
+      {
+       "t_step": 152,
+       "nearest_body": "crate",
+       "mm": 32.5798,
+       "by_body_mm": {
+        "banana": 520.8076,
+        "crate": 32.5798,
+        "orange": 114.6435,
+        "pear": 541.3002,
+        "table": 83.1148
+       }
+      },
+      {
+       "t_step": 160,
+       "nearest_body": "crate",
+       "mm": 35.7277,
+       "by_body_mm": {
+        "banana": 523.9724,
+        "crate": 35.7277,
+        "orange": 130.6902,
+        "pear": 544.1379,
+        "table": 100.5186
+       }
+      },
+      {
+       "t_step": 168,
+       "nearest_body": "crate",
+       "mm": 37.9365,
+       "by_body_mm": {
+        "banana": 523.137,
+        "crate": 37.9365,
+        "orange": 113.191,
+        "pear": 542.7877,
+        "table": 83.0726
+       }
+      },
+      {
+       "t_step": 176,
+       "nearest_body": "crate",
+       "mm": 35.8656,
+       "by_body_mm": {
+        "banana": 521.1557,
+        "crate": 35.8656,
+        "orange": 113.4234,
+        "pear": 541.622,
+        "table": 81.9901
+       }
+      },
+      {
+       "t_step": 184,
+       "nearest_body": "crate",
+       "mm": 33.1958,
+       "by_body_mm": {
+        "banana": 517.4814,
+        "crate": 33.1958,
+        "orange": 117.4044,
+        "pear": 538.1931,
+        "table": 85.8225
+       }
+      },
+      {
+       "t_step": 192,
+       "nearest_body": "crate",
+       "mm": 32.3123,
+       "by_body_mm": {
+        "banana": 518.0449,
+        "crate": 32.3123,
+        "orange": 121.9004,
+        "pear": 538.9158,
+        "table": 90.6455
+       }
+      },
+      {
+       "t_step": 200,
+       "nearest_body": "crate",
+       "mm": 42.4113,
+       "by_body_mm": {
+        "banana": 527.552,
+        "crate": 42.4113,
+        "orange": 173.7809,
+        "pear": 547.7327,
+        "table": 148.7922
+       }
+      }
+     ]
+    },
+    "refined__all_bodies": {
+     "nearest_body_counts_per_chunk": {
+      "crate": 19,
+      "apple": 7
+     },
+     "n_chunks": 26,
+     "min_mm_by_body": {
+      "apple": 27.584,
+      "banana": 516.5554,
+      "crate": 30.6962,
+      "orange": 91.7063,
+      "pear": 526.5699,
+      "table": 58.2896
+     },
+     "global_min_mm": 27.584,
+     "global_min_body": "apple",
+     "global_min_chunk_t_step": 96,
+     "per_chunk": [
+      {
+       "t_step": 0,
+       "nearest_body": "crate",
+       "mm": 69.5078,
+       "by_body_mm": {
+        "apple": 143.7209,
+        "banana": 520.6045,
+        "crate": 69.5078,
+        "orange": 145.2696,
+        "pear": 526.5699,
+        "table": 185.4265
+       }
+      },
+      {
+       "t_step": 8,
+       "nearest_body": "crate",
+       "mm": 71.1781,
+       "by_body_mm": {
+        "apple": 143.4178,
+        "banana": 522.324,
+        "crate": 71.1781,
+        "orange": 147.0786,
+        "pear": 528.4835,
+        "table": 187.0102
+       }
+      },
+      {
+       "t_step": 16,
+       "nearest_body": "crate",
+       "mm": 75.7097,
+       "by_body_mm": {
+        "apple": 144.5145,
+        "banana": 526.7325,
+        "crate": 75.7097,
+        "orange": 151.4433,
+        "pear": 534.0297,
+        "table": 190.328
+       }
+      },
+      {
+       "t_step": 24,
+       "nearest_body": "crate",
+       "mm": 82.326,
+       "by_body_mm": {
+        "apple": 144.7188,
+        "banana": 532.8823,
+        "crate": 82.326,
+        "orange": 157.4304,
+        "pear": 541.6624,
+        "table": 194.4653
+       }
+      },
+      {
+       "t_step": 32,
+       "nearest_body": "crate",
+       "mm": 105.8591,
+       "by_body_mm": {
+        "apple": 156.9399,
+        "banana": 555.552,
+        "crate": 105.8591,
+        "orange": 176.3932,
+        "pear": 566.6287,
+        "table": 212.8659
+       }
+      },
+      {
+       "t_step": 40,
+       "nearest_body": "crate",
+       "mm": 133.5967,
+       "by_body_mm": {
+        "apple": 179.1603,
+        "banana": 579.4504,
+        "crate": 133.5967,
+        "orange": 204.0486,
+        "pear": 591.9462,
+        "table": 238.2784
+       }
+      },
+      {
+       "t_step": 48,
+       "nearest_body": "crate",
+       "mm": 136.3141,
+       "by_body_mm": {
+        "apple": 174.1308,
+        "banana": 586.6567,
+        "crate": 136.3141,
+        "orange": 207.7268,
+        "pear": 601.3849,
+        "table": 233.7222
+       }
+      },
+      {
+       "t_step": 56,
+       "nearest_body": "crate",
+       "mm": 118.4933,
+       "by_body_mm": {
+        "apple": 152.759,
+        "banana": 579.5262,
+        "crate": 118.4933,
+        "orange": 191.6266,
+        "pear": 595.5582,
+        "table": 211.8431
+       }
+      },
+      {
+       "t_step": 64,
+       "nearest_body": "crate",
+       "mm": 84.0042,
+       "by_body_mm": {
+        "apple": 112.4256,
+        "banana": 563.7905,
+        "crate": 84.0042,
+        "orange": 163.563,
+        "pear": 581.4987,
+        "table": 169.571
+       }
+      },
+      {
+       "t_step": 72,
+       "nearest_body": "crate",
+       "mm": 57.0092,
+       "by_body_mm": {
+        "apple": 70.8375,
+        "banana": 546.3449,
+        "crate": 57.0092,
+        "orange": 135.914,
+        "pear": 564.7045,
+        "table": 124.674
+       }
+      },
+      {
+       "t_step": 80,
+       "nearest_body": "apple",
+       "mm": 33.6626,
+       "by_body_mm": {
+        "apple": 33.6626,
+        "banana": 536.5933,
+        "crate": 53.4584,
+        "orange": 105.2414,
+        "pear": 554.6605,
+        "table": 85.8139
+       }
+      },
+      {
+       "t_step": 88,
+       "nearest_body": "apple",
+       "mm": 28.9836,
+       "by_body_mm": {
+        "apple": 28.9836,
+        "banana": 524.8809,
+        "crate": 43.1333,
+        "orange": 102.3738,
+        "pear": 544.6849,
+        "table": 71.0131
+       }
+      },
+      {
+       "t_step": 96,
+       "nearest_body": "apple",
+       "mm": 27.584,
+       "by_body_mm": {
+        "apple": 27.584,
+        "banana": 521.1766,
+        "crate": 40.4719,
+        "orange": 91.7063,
+        "pear": 541.4945,
+        "table": 58.2896
+       }
+      },
+      {
+       "t_step": 104,
+       "nearest_body": "apple",
+       "mm": 27.8331,
+       "by_body_mm": {
+        "apple": 27.8331,
+        "banana": 521.4122,
+        "crate": 40.8076,
+        "orange": 92.465,
+        "pear": 541.4948,
+        "table": 59.1838
+       }
+      },
+      {
+       "t_step": 112,
+       "nearest_body": "apple",
+       "mm": 32.1318,
+       "by_body_mm": {
+        "apple": 32.1318,
+        "banana": 523.1354,
+        "crate": 38.9912,
+        "orange": 99.4772,
+        "pear": 543.0342,
+        "table": 67.0179
+       }
+      },
+      {
+       "t_step": 120,
+       "nearest_body": "apple",
+       "mm": 34.7925,
+       "by_body_mm": {
+        "apple": 34.7925,
+        "banana": 522.5782,
+        "crate": 39.1914,
+        "orange": 101.8005,
+        "pear": 543.3875,
+        "table": 69.8409
+       }
+      },
+      {
+       "t_step": 128,
+       "nearest_body": "apple",
+       "mm": 35.5018,
+       "by_body_mm": {
+        "apple": 35.5018,
+        "banana": 521.6119,
+        "crate": 38.6722,
+        "orange": 101.2674,
+        "pear": 542.2338,
+        "table": 69.4582
+       }
+      },
+      {
+       "t_step": 136,
+       "nearest_body": "crate",
+       "mm": 32.9582,
+       "by_body_mm": {
+        "apple": 39.0884,
+        "banana": 521.6602,
+        "crate": 32.9582,
+        "orange": 104.5255,
+        "pear": 541.3383,
+        "table": 73.0564
+       }
+      },
+      {
+       "t_step": 144,
+       "nearest_body": "crate",
+       "mm": 33.1098,
+       "by_body_mm": {
+        "apple": 43.6002,
+        "banana": 519.0186,
+        "crate": 33.1098,
+        "orange": 113.8749,
+        "pear": 540.5848,
+        "table": 83.1098
+       }
+      },
+      {
+       "t_step": 152,
+       "nearest_body": "crate",
+       "mm": 34.1259,
+       "by_body_mm": {
+        "apple": 47.0933,
+        "banana": 521.8492,
+        "crate": 34.1259,
+        "orange": 111.8646,
+        "pear": 541.8784,
+        "table": 80.4537
+       }
+      },
+      {
+       "t_step": 160,
+       "nearest_body": "crate",
+       "mm": 32.9459,
+       "by_body_mm": {
+        "apple": 52.8732,
+        "banana": 522.293,
+        "crate": 32.9459,
+        "orange": 121.4305,
+        "pear": 542.4858,
+        "table": 91.1602
+       }
+      },
+      {
+       "t_step": 168,
+       "nearest_body": "crate",
+       "mm": 30.9737,
+       "by_body_mm": {
+        "apple": 58.5386,
+        "banana": 517.0575,
+        "crate": 30.9737,
+        "orange": 125.0306,
+        "pear": 538.5021,
+        "table": 95.4696
+       }
+      },
+      {
+       "t_step": 176,
+       "nearest_body": "crate",
+       "mm": 30.6962,
+       "by_body_mm": {
+        "apple": 61.807,
+        "banana": 516.5554,
+        "crate": 30.6962,
+        "orange": 121.0794,
+        "pear": 538.0128,
+        "table": 90.7099
+       }
+      },
+      {
+       "t_step": 184,
+       "nearest_body": "crate",
+       "mm": 32.0016,
+       "by_body_mm": {
+        "apple": 62.2591,
+        "banana": 517.5686,
+        "crate": 32.0016,
+        "orange": 118.0549,
+        "pear": 538.3979,
+        "table": 86.7624
+       }
+      },
+      {
+       "t_step": 192,
+       "nearest_body": "crate",
+       "mm": 31.2329,
+       "by_body_mm": {
+        "apple": 64.3761,
+        "banana": 519.2747,
+        "crate": 31.2329,
+        "orange": 120.4514,
+        "pear": 539.8839,
+        "table": 89.4572
+       }
+      },
+      {
+       "t_step": 200,
+       "nearest_body": "crate",
+       "mm": 44.4702,
+       "by_body_mm": {
+        "apple": 120.7428,
+        "banana": 527.3848,
+        "crate": 44.4702,
+        "orange": 179.1644,
+        "pear": 547.926,
+        "table": 154.4443
+       }
+      }
+     ]
+    },
+    "refined__apple_excluded": {
+     "nearest_body_counts_per_chunk": {
+      "crate": 26
+     },
+     "n_chunks": 26,
+     "min_mm_by_body": {
+      "banana": 516.5554,
+      "crate": 30.6962,
+      "orange": 91.7063,
+      "pear": 526.5699,
+      "table": 58.2896
+     },
+     "global_min_mm": 30.6962,
+     "global_min_body": "crate",
+     "global_min_chunk_t_step": 176,
+     "per_chunk": [
+      {
+       "t_step": 0,
+       "nearest_body": "crate",
+       "mm": 69.5078,
+       "by_body_mm": {
+        "banana": 520.6045,
+        "crate": 69.5078,
+        "orange": 145.2696,
+        "pear": 526.5699,
+        "table": 185.4265
+       }
+      },
+      {
+       "t_step": 8,
+       "nearest_body": "crate",
+       "mm": 71.1781,
+       "by_body_mm": {
+        "banana": 522.324,
+        "crate": 71.1781,
+        "orange": 147.0786,
+        "pear": 528.4835,
+        "table": 187.0102
+       }
+      },
+      {
+       "t_step": 16,
+       "nearest_body": "crate",
+       "mm": 75.7097,
+       "by_body_mm": {
+        "banana": 526.7325,
+        "crate": 75.7097,
+        "orange": 151.4433,
+        "pear": 534.0297,
+        "table": 190.328
+       }
+      },
+      {
+       "t_step": 24,
+       "nearest_body": "crate",
+       "mm": 82.326,
+       "by_body_mm": {
+        "banana": 532.8823,
+        "crate": 82.326,
+        "orange": 157.4304,
+        "pear": 541.6624,
+        "table": 194.4653
+       }
+      },
+      {
+       "t_step": 32,
+       "nearest_body": "crate",
+       "mm": 105.8591,
+       "by_body_mm": {
+        "banana": 555.552,
+        "crate": 105.8591,
+        "orange": 176.3932,
+        "pear": 566.6287,
+        "table": 212.8659
+       }
+      },
+      {
+       "t_step": 40,
+       "nearest_body": "crate",
+       "mm": 133.5967,
+       "by_body_mm": {
+        "banana": 579.4504,
+        "crate": 133.5967,
+        "orange": 204.0486,
+        "pear": 591.9462,
+        "table": 238.2784
+       }
+      },
+      {
+       "t_step": 48,
+       "nearest_body": "crate",
+       "mm": 136.3141,
+       "by_body_mm": {
+        "banana": 586.6567,
+        "crate": 136.3141,
+        "orange": 207.7268,
+        "pear": 601.3849,
+        "table": 233.7222
+       }
+      },
+      {
+       "t_step": 56,
+       "nearest_body": "crate",
+       "mm": 118.4933,
+       "by_body_mm": {
+        "banana": 579.5262,
+        "crate": 118.4933,
+        "orange": 191.6266,
+        "pear": 595.5582,
+        "table": 211.8431
+       }
+      },
+      {
+       "t_step": 64,
+       "nearest_body": "crate",
+       "mm": 84.0042,
+       "by_body_mm": {
+        "banana": 563.7905,
+        "crate": 84.0042,
+        "orange": 163.563,
+        "pear": 581.4987,
+        "table": 169.571
+       }
+      },
+      {
+       "t_step": 72,
+       "nearest_body": "crate",
+       "mm": 57.0092,
+       "by_body_mm": {
+        "banana": 546.3449,
+        "crate": 57.0092,
+        "orange": 135.914,
+        "pear": 564.7045,
+        "table": 124.674
+       }
+      },
+      {
+       "t_step": 80,
+       "nearest_body": "crate",
+       "mm": 53.4584,
+       "by_body_mm": {
+        "banana": 536.5933,
+        "crate": 53.4584,
+        "orange": 105.2414,
+        "pear": 554.6605,
+        "table": 85.8139
+       }
+      },
+      {
+       "t_step": 88,
+       "nearest_body": "crate",
+       "mm": 43.1333,
+       "by_body_mm": {
+        "banana": 524.8809,
+        "crate": 43.1333,
+        "orange": 102.3738,
+        "pear": 544.6849,
+        "table": 71.0131
+       }
+      },
+      {
+       "t_step": 96,
+       "nearest_body": "crate",
+       "mm": 40.4719,
+       "by_body_mm": {
+        "banana": 521.1766,
+        "crate": 40.4719,
+        "orange": 91.7063,
+        "pear": 541.4945,
+        "table": 58.2896
+       }
+      },
+      {
+       "t_step": 104,
+       "nearest_body": "crate",
+       "mm": 40.8076,
+       "by_body_mm": {
+        "banana": 521.4122,
+        "crate": 40.8076,
+        "orange": 92.465,
+        "pear": 541.4948,
+        "table": 59.1838
+       }
+      },
+      {
+       "t_step": 112,
+       "nearest_body": "crate",
+       "mm": 38.9912,
+       "by_body_mm": {
+        "banana": 523.1354,
+        "crate": 38.9912,
+        "orange": 99.4772,
+        "pear": 543.0342,
+        "table": 67.0179
+       }
+      },
+      {
+       "t_step": 120,
+       "nearest_body": "crate",
+       "mm": 39.1914,
+       "by_body_mm": {
+        "banana": 522.5782,
+        "crate": 39.1914,
+        "orange": 101.8005,
+        "pear": 543.3875,
+        "table": 69.8409
+       }
+      },
+      {
+       "t_step": 128,
+       "nearest_body": "crate",
+       "mm": 38.6722,
+       "by_body_mm": {
+        "banana": 521.6119,
+        "crate": 38.6722,
+        "orange": 101.2674,
+        "pear": 542.2338,
+        "table": 69.4582
+       }
+      },
+      {
+       "t_step": 136,
+       "nearest_body": "crate",
+       "mm": 32.9582,
+       "by_body_mm": {
+        "banana": 521.6602,
+        "crate": 32.9582,
+        "orange": 104.5255,
+        "pear": 541.3383,
+        "table": 73.0564
+       }
+      },
+      {
+       "t_step": 144,
+       "nearest_body": "crate",
+       "mm": 33.1098,
+       "by_body_mm": {
+        "banana": 519.0186,
+        "crate": 33.1098,
+        "orange": 113.8749,
+        "pear": 540.5848,
+        "table": 83.1098
+       }
+      },
+      {
+       "t_step": 152,
+       "nearest_body": "crate",
+       "mm": 34.1259,
+       "by_body_mm": {
+        "banana": 521.8492,
+        "crate": 34.1259,
+        "orange": 111.8646,
+        "pear": 541.8784,
+        "table": 80.4537
+       }
+      },
+      {
+       "t_step": 160,
+       "nearest_body": "crate",
+       "mm": 32.9459,
+       "by_body_mm": {
+        "banana": 522.293,
+        "crate": 32.9459,
+        "orange": 121.4305,
+        "pear": 542.4858,
+        "table": 91.1602
+       }
+      },
+      {
+       "t_step": 168,
+       "nearest_body": "crate",
+       "mm": 30.9737,
+       "by_body_mm": {
+        "banana": 517.0575,
+        "crate": 30.9737,
+        "orange": 125.0306,
+        "pear": 538.5021,
+        "table": 95.4696
+       }
+      },
+      {
+       "t_step": 176,
+       "nearest_body": "crate",
+       "mm": 30.6962,
+       "by_body_mm": {
+        "banana": 516.5554,
+        "crate": 30.6962,
+        "orange": 121.0794,
+        "pear": 538.0128,
+        "table": 90.7099
+       }
+      },
+      {
+       "t_step": 184,
+       "nearest_body": "crate",
+       "mm": 32.0016,
+       "by_body_mm": {
+        "banana": 517.5686,
+        "crate": 32.0016,
+        "orange": 118.0549,
+        "pear": 538.3979,
+        "table": 86.7624
+       }
+      },
+      {
+       "t_step": 192,
+       "nearest_body": "crate",
+       "mm": 31.2329,
+       "by_body_mm": {
+        "banana": 519.2747,
+        "crate": 31.2329,
+        "orange": 120.4514,
+        "pear": 539.8839,
+        "table": 89.4572
+       }
+      },
+      {
+       "t_step": 200,
+       "nearest_body": "crate",
+       "mm": 44.4702,
+       "by_body_mm": {
+        "banana": 527.3848,
+        "crate": 44.4702,
+        "orange": 179.1644,
+        "pear": 547.926,
+        "table": 154.4443
+       }
+      }
+     ]
+    },
+    "recorded_worst_row_named_offline": {
+     "note": "기록의 max_violation_pair 는 obstacle 이 None 이다 (label 층이 destination 과 attached 만 이름 짓는다). 그 행의 query 구를 오프라인 tensor 로 이름 지은 것이다. link 이름이 기록과 같은지도 확인했다.",
+     "n_rows": 26,
+     "n_rows_on_a_robot_sphere": 25,
+     "n_rows_on_an_attached_point": 1,
+     "n_link_name_matches": 25,
+     "nearest_body_counts_all": {
+      "crate": 16,
+      "apple": 9
+     },
+     "nearest_body_counts_apple_excluded": {
+      "crate": 17,
+      "table": 8
+     },
+     "esdf_vs_ground_truth": {
+      "definition": "esdf_d_minus_r = recorded clearance_m + margin 10 mm (clearance_m 은 post-margin, T9a). offline 은 같은 구에서 MuJoCo 참값 body 표면까지의 거리 - 반지름.",
+      "n_rows": 25,
+      "offline_minus_esdf_mm_all_bodies": {
+       "min": -19.1066,
+       "max": 32.2306,
+       "median": 3.2203
+      },
+      "n_rows_offline_further_than_esdf": 18,
+      "note": "두 값이 다르면 그 행을 묶은 표면이 MuJoCo 참값 body 가 아니라는 뜻이다. ESDF 는 카메라 점구름으로 만든 것이라 참값 씬과 같지 않다. 어느 쪽이 옳은지는 여기서 판정하지 않는다."
+     },
+     "rows": [
+      {
+       "t_step": 0,
+       "seq": 1,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 66.1829,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 4,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 57.2554,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 57.2554,
+       "by_body_mm": {
+        "apple": 578.3911,
+        "banana": 154.6186,
+        "crate": 57.2554,
+        "orange": 592.4799,
+        "pear": 134.1053,
+        "table": 192.7957
+       },
+       "esdf_d_minus_r_mm": 76.1829,
+       "offline_minus_esdf_mm_all_bodies": -18.9275,
+       "offline_minus_esdf_mm_apple_excluded": -18.9275
+      },
+      {
+       "t_step": 8,
+       "seq": 2,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 65.1666,
+       "sphere_index": 242,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 0,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 75.2387,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 75.2387,
+       "by_body_mm": {
+        "apple": 156.6122,
+        "banana": 558.928,
+        "crate": 75.2387,
+        "orange": 168.5483,
+        "pear": 573.6332,
+        "table": 201.4877
+       },
+       "esdf_d_minus_r_mm": 75.1666,
+       "offline_minus_esdf_mm_all_bodies": 0.072,
+       "offline_minus_esdf_mm_apple_excluded": 0.072
+      },
+      {
+       "t_step": 16,
+       "seq": 3,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 66.1392,
+       "sphere_index": 242,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 0,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 78.9289,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 78.9289,
+       "by_body_mm": {
+        "apple": 157.1514,
+        "banana": 561.7955,
+        "crate": 78.9289,
+        "orange": 173.0097,
+        "pear": 577.5182,
+        "table": 204.407
+       },
+       "esdf_d_minus_r_mm": 76.1392,
+       "offline_minus_esdf_mm_all_bodies": 2.7897,
+       "offline_minus_esdf_mm_apple_excluded": 2.7897
+      },
+      {
+       "t_step": 24,
+       "seq": 4,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 65.87,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 6,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 57.0745,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 57.0745,
+       "by_body_mm": {
+        "apple": 578.2082,
+        "banana": 154.4904,
+        "crate": 57.0745,
+        "orange": 592.3516,
+        "pear": 134.2037,
+        "table": 192.7157
+       },
+       "esdf_d_minus_r_mm": 75.87,
+       "offline_minus_esdf_mm_all_bodies": -18.7954,
+       "offline_minus_esdf_mm_apple_excluded": -18.7954
+      },
+      {
+       "t_step": 32,
+       "seq": 5,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 65.4066,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 0,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 56.5689,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 56.5689,
+       "by_body_mm": {
+        "apple": 577.8304,
+        "banana": 154.0924,
+        "crate": 56.5689,
+        "orange": 591.9747,
+        "pear": 133.8875,
+        "table": 192.2738
+       },
+       "esdf_d_minus_r_mm": 75.4066,
+       "offline_minus_esdf_mm_all_bodies": -18.8377,
+       "offline_minus_esdf_mm_apple_excluded": -18.8377
+      },
+      {
+       "t_step": 40,
+       "seq": 6,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 64.8949,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 0,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 56.2852,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 56.2852,
+       "by_body_mm": {
+        "apple": 577.7767,
+        "banana": 153.3559,
+        "crate": 56.2852,
+        "orange": 592.0231,
+        "pear": 133.4937,
+        "table": 191.6612
+       },
+       "esdf_d_minus_r_mm": 74.8949,
+       "offline_minus_esdf_mm_all_bodies": -18.6096,
+       "offline_minus_esdf_mm_apple_excluded": -18.6096
+      },
+      {
+       "t_step": 48,
+       "seq": 7,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 64.5197,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 0,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 55.8113,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 55.8113,
+       "by_body_mm": {
+        "apple": 577.4086,
+        "banana": 152.9534,
+        "crate": 55.8113,
+        "orange": 591.6501,
+        "pear": 133.0893,
+        "table": 191.1922
+       },
+       "esdf_d_minus_r_mm": 74.5197,
+       "offline_minus_esdf_mm_all_bodies": -18.7084,
+       "offline_minus_esdf_mm_apple_excluded": -18.7084
+      },
+      {
+       "t_step": 56,
+       "seq": 8,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 64.557,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 0,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 55.7315,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 55.7315,
+       "by_body_mm": {
+        "apple": 577.3669,
+        "banana": 152.9656,
+        "crate": 55.7315,
+        "orange": 591.5987,
+        "pear": 132.9777,
+        "table": 191.1443
+       },
+       "esdf_d_minus_r_mm": 74.557,
+       "offline_minus_esdf_mm_all_bodies": -18.8255,
+       "offline_minus_esdf_mm_apple_excluded": -18.8255
+      },
+      {
+       "t_step": 64,
+       "seq": 9,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 64.6791,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 1,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 55.5726,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 55.5726,
+       "by_body_mm": {
+        "apple": 577.9241,
+        "banana": 151.6584,
+        "crate": 55.5726,
+        "orange": 592.0433,
+        "pear": 131.2465,
+        "table": 189.764
+       },
+       "esdf_d_minus_r_mm": 74.6791,
+       "offline_minus_esdf_mm_all_bodies": -19.1066,
+       "offline_minus_esdf_mm_apple_excluded": -19.1066
+      },
+      {
+       "t_step": 72,
+       "seq": 10,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": "target",
+       "recorded_clearance_mm_post_margin": 28.6069,
+       "sphere_index": 246,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 70.8375,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 105.8488,
+       "by_body_mm": {
+        "apple": 70.8375,
+        "banana": 590.6503,
+        "crate": 105.8488,
+        "orange": 136.4548,
+        "pear": 615.0481,
+        "table": 124.674
+       },
+       "esdf_d_minus_r_mm": 38.6069,
+       "offline_minus_esdf_mm_all_bodies": 32.2306,
+       "offline_minus_esdf_mm_apple_excluded": 67.2419
+      },
+      {
+       "t_step": 80,
+       "seq": 11,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 4.1438,
+       "sphere_index": 246,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 6,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 34.806,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 87.6279,
+       "by_body_mm": {
+        "apple": 34.806,
+        "banana": 586.287,
+        "crate": 105.7479,
+        "orange": 112.8268,
+        "pear": 609.4567,
+        "table": 87.6279
+       },
+       "esdf_d_minus_r_mm": 14.1438,
+       "offline_minus_esdf_mm_all_bodies": 20.6622,
+       "offline_minus_esdf_mm_apple_excluded": 73.4841
+      },
+      {
+       "t_step": 88,
+       "seq": 12,
+       "recorded_link": "ee_finger_l2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 4.4056,
+       "sphere_index": 261,
+       "sphere_link_offline": "ee_finger_l2",
+       "link_name_matches": true,
+       "step": 4,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 32.8545,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 79.7934,
+       "by_body_mm": {
+        "apple": 32.8545,
+        "banana": 588.842,
+        "crate": 109.5456,
+        "orange": 120.7739,
+        "pear": 613.6018,
+        "table": 79.7934
+       },
+       "esdf_d_minus_r_mm": 14.4056,
+       "offline_minus_esdf_mm_all_bodies": 18.4489,
+       "offline_minus_esdf_mm_apple_excluded": 65.3878
+      },
+      {
+       "t_step": 96,
+       "seq": 13,
+       "recorded_link": "ee_finger_l2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 3.4527,
+       "sphere_index": 260,
+       "sphere_link_offline": "ee_finger_l2",
+       "link_name_matches": true,
+       "step": 5,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 32.3163,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 84.3073,
+       "by_body_mm": {
+        "apple": 32.3163,
+        "banana": 587.9771,
+        "crate": 107.8115,
+        "orange": 113.5775,
+        "pear": 611.3555,
+        "table": 84.3073
+       },
+       "esdf_d_minus_r_mm": 13.4527,
+       "offline_minus_esdf_mm_all_bodies": 18.8635,
+       "offline_minus_esdf_mm_apple_excluded": 70.8545
+      },
+      {
+       "t_step": 104,
+       "seq": 14,
+       "recorded_link": "ee_finger_l2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 11.3735,
+       "sphere_index": 260,
+       "sphere_link_offline": "ee_finger_l2",
+       "link_name_matches": true,
+       "step": 0,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 31.4957,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 83.3227,
+       "by_body_mm": {
+        "apple": 31.4957,
+        "banana": 586.8709,
+        "crate": 106.7795,
+        "orange": 113.3204,
+        "pear": 610.2509,
+        "table": 83.3227
+       },
+       "esdf_d_minus_r_mm": 21.3735,
+       "offline_minus_esdf_mm_all_bodies": 10.1222,
+       "offline_minus_esdf_mm_apple_excluded": 61.9492
+      },
+      {
+       "t_step": 112,
+       "seq": 15,
+       "recorded_link": "ee_finger_l2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 7.9827,
+       "sphere_index": 260,
+       "sphere_link_offline": "ee_finger_l2",
+       "link_name_matches": true,
+       "step": 0,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 38.4783,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 91.2886,
+       "by_body_mm": {
+        "apple": 38.4783,
+        "banana": 587.6176,
+        "crate": 106.8395,
+        "orange": 115.4996,
+        "pear": 610.9086,
+        "table": 91.2886
+       },
+       "esdf_d_minus_r_mm": 17.9827,
+       "offline_minus_esdf_mm_all_bodies": 20.4956,
+       "offline_minus_esdf_mm_apple_excluded": 73.3058
+      },
+      {
+       "t_step": 120,
+       "seq": 16,
+       "recorded_link": "ee_finger_l2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 10.5926,
+       "sphere_index": 260,
+       "sphere_link_offline": "ee_finger_l2",
+       "link_name_matches": true,
+       "step": 2,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 41.1911,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 93.8375,
+       "by_body_mm": {
+        "apple": 41.1911,
+        "banana": 588.2479,
+        "crate": 107.2402,
+        "orange": 117.6552,
+        "pear": 611.7361,
+        "table": 93.8375
+       },
+       "esdf_d_minus_r_mm": 20.5926,
+       "offline_minus_esdf_mm_all_bodies": 20.5985,
+       "offline_minus_esdf_mm_apple_excluded": 73.2449
+      },
+      {
+       "t_step": 128,
+       "seq": 17,
+       "recorded_link": "ee_finger_l2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 10.5655,
+       "sphere_index": 260,
+       "sphere_link_offline": "ee_finger_l2",
+       "link_name_matches": true,
+       "step": 2,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 41.0521,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 93.271,
+       "by_body_mm": {
+        "apple": 41.0521,
+        "banana": 586.444,
+        "crate": 105.4934,
+        "orange": 118.3435,
+        "pear": 610.0534,
+        "table": 93.271
+       },
+       "esdf_d_minus_r_mm": 20.5655,
+       "offline_minus_esdf_mm_all_bodies": 20.4866,
+       "offline_minus_esdf_mm_apple_excluded": 72.7055
+      },
+      {
+       "t_step": 136,
+       "seq": 18,
+       "recorded_link": "ee_finger_l2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 14.5662,
+       "sphere_index": 260,
+       "sphere_link_offline": "ee_finger_l2",
+       "link_name_matches": true,
+       "step": 0,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 44.8402,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 96.8423,
+       "by_body_mm": {
+        "apple": 44.8402,
+        "banana": 586.0355,
+        "crate": 104.7569,
+        "orange": 121.1476,
+        "pear": 609.8395,
+        "table": 96.8423
+       },
+       "esdf_d_minus_r_mm": 24.5662,
+       "offline_minus_esdf_mm_all_bodies": 20.274,
+       "offline_minus_esdf_mm_apple_excluded": 72.2761
+      },
+      {
+       "t_step": 144,
+       "seq": 19,
+       "recorded_link": "ee_left",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 20.6902,
+       "sphere_index": 144,
+       "sphere_link_offline": "ee_left",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 33.1098,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 33.1098,
+       "by_body_mm": {
+        "apple": 94.4439,
+        "banana": 519.0186,
+        "crate": 33.1098,
+        "orange": 139.6458,
+        "pear": 540.5848,
+        "table": 125.8573
+       },
+       "esdf_d_minus_r_mm": 30.6902,
+       "offline_minus_esdf_mm_all_bodies": 2.4197,
+       "offline_minus_esdf_mm_apple_excluded": 2.4197
+      },
+      {
+       "t_step": 152,
+       "seq": 20,
+       "recorded_link": "ee_left",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 20.9055,
+       "sphere_index": 144,
+       "sphere_link_offline": "ee_left",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 34.1259,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 34.1259,
+       "by_body_mm": {
+        "apple": 111.2664,
+        "banana": 521.8492,
+        "crate": 34.1259,
+        "orange": 147.3253,
+        "pear": 541.8784,
+        "table": 145.7356
+       },
+       "esdf_d_minus_r_mm": 30.9055,
+       "offline_minus_esdf_mm_all_bodies": 3.2203,
+       "offline_minus_esdf_mm_apple_excluded": 3.2203
+      },
+      {
+       "t_step": 160,
+       "seq": 21,
+       "recorded_link": "ee_left",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 18.5767,
+       "sphere_index": 144,
+       "sphere_link_offline": "ee_left",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 32.9459,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 32.9459,
+       "by_body_mm": {
+        "apple": 123.951,
+        "banana": 522.293,
+        "crate": 32.9459,
+        "orange": 158.8467,
+        "pear": 542.4858,
+        "table": 159.2355
+       },
+       "esdf_d_minus_r_mm": 28.5767,
+       "offline_minus_esdf_mm_all_bodies": 4.3691,
+       "offline_minus_esdf_mm_apple_excluded": 4.3691
+      },
+      {
+       "t_step": 168,
+       "seq": 22,
+       "recorded_link": "ee_left",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 17.3307,
+       "sphere_index": 144,
+       "sphere_link_offline": "ee_left",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 30.9737,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 30.9737,
+       "by_body_mm": {
+        "apple": 104.6444,
+        "banana": 517.0575,
+        "crate": 30.9737,
+        "orange": 147.3019,
+        "pear": 538.5021,
+        "table": 135.7987
+       },
+       "esdf_d_minus_r_mm": 27.3307,
+       "offline_minus_esdf_mm_all_bodies": 3.643,
+       "offline_minus_esdf_mm_apple_excluded": 3.643
+      },
+      {
+       "t_step": 176,
+       "seq": 23,
+       "recorded_link": "ee_left",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 19.2386,
+       "sphere_index": 144,
+       "sphere_link_offline": "ee_left",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 30.6962,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 30.6962,
+       "by_body_mm": {
+        "apple": 95.9067,
+        "banana": 516.5554,
+        "crate": 30.6962,
+        "orange": 140.2546,
+        "pear": 538.0128,
+        "table": 125.6589
+       },
+       "esdf_d_minus_r_mm": 29.2386,
+       "offline_minus_esdf_mm_all_bodies": 1.4576,
+       "offline_minus_esdf_mm_apple_excluded": 1.4576
+      },
+      {
+       "t_step": 184,
+       "seq": 24,
+       "recorded_link": "ee_left",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 19.2802,
+       "sphere_index": 144,
+       "sphere_link_offline": "ee_left",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 32.0016,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 32.0016,
+       "by_body_mm": {
+        "apple": 96.6028,
+        "banana": 517.5686,
+        "crate": 32.0016,
+        "orange": 138.3006,
+        "pear": 538.3979,
+        "table": 127.1391
+       },
+       "esdf_d_minus_r_mm": 29.2802,
+       "offline_minus_esdf_mm_all_bodies": 2.7214,
+       "offline_minus_esdf_mm_apple_excluded": 2.7214
+      },
+      {
+       "t_step": 192,
+       "seq": 25,
+       "recorded_link": "ee_left",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 16.8396,
+       "sphere_index": 144,
+       "sphere_link_offline": "ee_left",
+       "link_name_matches": true,
+       "step": 5,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 31.2329,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 31.2329,
+       "by_body_mm": {
+        "apple": 124.687,
+        "banana": 520.5707,
+        "crate": 31.2329,
+        "orange": 160.3883,
+        "pear": 541.0239,
+        "table": 159.086
+       },
+       "esdf_d_minus_r_mm": 26.8396,
+       "offline_minus_esdf_mm_all_bodies": 4.3933,
+       "offline_minus_esdf_mm_apple_excluded": 4.3933
+      },
+      {
+       "t_step": 200,
+       "seq": 26,
+       "recorded_link": "attached:ee_finger_l1[7]",
+       "recorded_obstacle": "__attached__",
+       "recorded_clearance_mm_post_margin": 3.0909,
+       "sphere_index": 273,
+       "sphere_link_offline": null,
+       "link_name_matches": null,
+       "step": 0,
+       "is_attached_query_point": true,
+       "nearest_body_all": null,
+       "nearest_mm_all": null,
+       "nearest_body_apple_excluded": null,
+       "nearest_mm_apple_excluded": null,
+       "by_body_mm": null,
+       "note": "query 273 >= 266 robot spheres — attached point row"
+      }
+     ]
+    }
+   },
+   "T9": {
+    "reference__all_bodies": {
+     "nearest_body_counts_per_chunk": {
+      "crate": 20,
+      "apple": 6
+     },
+     "n_chunks": 26,
+     "min_mm_by_body": {
+      "apple": 2.1628,
+      "banana": 340.2961,
+      "crate": 40.7976,
+      "orange": 69.5733,
+      "pear": 342.4032,
+      "table": 34.1693
+     },
+     "global_min_mm": 2.1628,
+     "global_min_body": "apple",
+     "global_min_chunk_t_step": 112,
+     "per_chunk": [
+      {
+       "t_step": 0,
+       "nearest_body": "crate",
+       "mm": 67.7824,
+       "by_body_mm": {
+        "apple": 142.2457,
+        "banana": 520.4279,
+        "crate": 67.7824,
+        "orange": 142.3473,
+        "pear": 526.1877,
+        "table": 183.2297
+       }
+      },
+      {
+       "t_step": 8,
+       "nearest_body": "crate",
+       "mm": 68.565,
+       "by_body_mm": {
+        "apple": 143.0128,
+        "banana": 520.6417,
+        "crate": 68.565,
+        "orange": 144.1195,
+        "pear": 526.6196,
+        "table": 184.3303
+       }
+      },
+      {
+       "t_step": 16,
+       "nearest_body": "crate",
+       "mm": 69.9278,
+       "by_body_mm": {
+        "apple": 142.7832,
+        "banana": 522.5083,
+        "crate": 69.9278,
+        "orange": 145.4205,
+        "pear": 528.8274,
+        "table": 185.773
+       }
+      },
+      {
+       "t_step": 24,
+       "nearest_body": "crate",
+       "mm": 71.0814,
+       "by_body_mm": {
+        "apple": 142.7125,
+        "banana": 523.4493,
+        "crate": 71.0814,
+        "orange": 146.8444,
+        "pear": 530.0485,
+        "table": 186.8495
+       }
+      },
+      {
+       "t_step": 32,
+       "nearest_body": "crate",
+       "mm": 72.8669,
+       "by_body_mm": {
+        "apple": 141.7033,
+        "banana": 526.7485,
+        "crate": 72.8669,
+        "orange": 148.2119,
+        "pear": 533.9952,
+        "table": 187.7143
+       }
+      },
+      {
+       "t_step": 40,
+       "nearest_body": "crate",
+       "mm": 83.3262,
+       "by_body_mm": {
+        "apple": 146.2867,
+        "banana": 536.515,
+        "crate": 83.3262,
+        "orange": 157.0783,
+        "pear": 545.0046,
+        "table": 196.4705
+       }
+      },
+      {
+       "t_step": 48,
+       "nearest_body": "crate",
+       "mm": 95.0595,
+       "by_body_mm": {
+        "apple": 150.2364,
+        "banana": 548.2559,
+        "crate": 95.0595,
+        "orange": 166.3285,
+        "pear": 558.3843,
+        "table": 204.5742
+       }
+      },
+      {
+       "t_step": 56,
+       "nearest_body": "crate",
+       "mm": 113.4554,
+       "by_body_mm": {
+        "apple": 162.3092,
+        "banana": 563.493,
+        "crate": 113.4554,
+        "orange": 183.3205,
+        "pear": 575.2062,
+        "table": 219.4946
+       }
+      },
+      {
+       "t_step": 64,
+       "nearest_body": "crate",
+       "mm": 142.4255,
+       "by_body_mm": {
+        "apple": 184.7365,
+        "banana": 587.0197,
+        "crate": 142.4255,
+        "orange": 211.6744,
+        "pear": 600.0974,
+        "table": 244.5114
+       }
+      },
+      {
+       "t_step": 72,
+       "nearest_body": "crate",
+       "mm": 135.8285,
+       "by_body_mm": {
+        "apple": 173.144,
+        "banana": 588.4206,
+        "crate": 135.8285,
+        "orange": 208.3425,
+        "pear": 603.6108,
+        "table": 232.5896
+       }
+      },
+      {
+       "t_step": 80,
+       "nearest_body": "crate",
+       "mm": 79.9067,
+       "by_body_mm": {
+        "apple": 103.6183,
+        "banana": 561.8578,
+        "crate": 79.9067,
+        "orange": 150.631,
+        "pear": 578.5149,
+        "table": 162.666
+       }
+      },
+      {
+       "t_step": 88,
+       "nearest_body": "apple",
+       "mm": 59.9541,
+       "by_body_mm": {
+        "apple": 59.9541,
+        "banana": 549.1823,
+        "crate": 60.1312,
+        "orange": 122.2297,
+        "pear": 566.4933,
+        "table": 117.6585
+       }
+      },
+      {
+       "t_step": 96,
+       "nearest_body": "apple",
+       "mm": 22.5701,
+       "by_body_mm": {
+        "apple": 22.5701,
+        "banana": 540.8184,
+        "crate": 57.413,
+        "orange": 92.9337,
+        "pear": 557.4937,
+        "table": 79.8584
+       }
+      },
+      {
+       "t_step": 104,
+       "nearest_body": "apple",
+       "mm": 12.1127,
+       "by_body_mm": {
+        "apple": 12.1127,
+        "banana": 534.0728,
+        "crate": 56.1773,
+        "orange": 88.9001,
+        "pear": 551.814,
+        "table": 63.3349
+       }
+      },
+      {
+       "t_step": 112,
+       "nearest_body": "apple",
+       "mm": 2.1628,
+       "by_body_mm": {
+        "apple": 2.1628,
+        "banana": 530.8753,
+        "crate": 53.6014,
+        "orange": 72.6072,
+        "pear": 549.0381,
+        "table": 39.42
+       }
+      },
+      {
+       "t_step": 120,
+       "nearest_body": "apple",
+       "mm": 6.1286,
+       "by_body_mm": {
+        "apple": 6.1286,
+        "banana": 524.0618,
+        "crate": 46.1097,
+        "orange": 69.5733,
+        "pear": 543.3183,
+        "table": 34.1693
+       }
+      },
+      {
+       "t_step": 128,
+       "nearest_body": "apple",
+       "mm": 16.2253,
+       "by_body_mm": {
+        "apple": 16.2253,
+        "banana": 523.4661,
+        "crate": 40.7976,
+        "orange": 79.3635,
+        "pear": 543.944,
+        "table": 43.4409
+       }
+      },
+      {
+       "t_step": 136,
+       "nearest_body": "crate",
+       "mm": 40.9242,
+       "by_body_mm": {
+        "apple": 44.2131,
+        "banana": 524.6821,
+        "crate": 40.9242,
+        "orange": 107.1927,
+        "pear": 546.868,
+        "table": 72.189
+       }
+      },
+      {
+       "t_step": 144,
+       "nearest_body": "crate",
+       "mm": 64.012,
+       "by_body_mm": {
+        "apple": 115.3083,
+        "banana": 546.6634,
+        "crate": 64.012,
+        "orange": 181.5236,
+        "pear": 568.8149,
+        "table": 158.6086
+       }
+      },
+      {
+       "t_step": 152,
+       "nearest_body": "crate",
+       "mm": 124.1456,
+       "by_body_mm": {
+        "apple": 182.2665,
+        "banana": 570.9847,
+        "crate": 124.1456,
+        "orange": 229.6649,
+        "pear": 589.431,
+        "table": 234.6197
+       }
+      },
+      {
+       "t_step": 160,
+       "nearest_body": "crate",
+       "mm": 105.1205,
+       "by_body_mm": {
+        "apple": 167.4997,
+        "banana": 550.7199,
+        "crate": 105.1205,
+        "orange": 213.8113,
+        "pear": 568.8255,
+        "table": 219.2479
+       }
+      },
+      {
+       "t_step": 168,
+       "nearest_body": "crate",
+       "mm": 102.1027,
+       "by_body_mm": {
+        "apple": 176.5995,
+        "banana": 540.3218,
+        "crate": 102.1027,
+        "orange": 217.0638,
+        "pear": 556.501,
+        "table": 227.749
+       }
+      },
+      {
+       "t_step": 176,
+       "nearest_body": "crate",
+       "mm": 98.8951,
+       "by_body_mm": {
+        "apple": 183.5762,
+        "banana": 532.9417,
+        "crate": 98.8951,
+        "orange": 219.9761,
+        "pear": 547.1722,
+        "table": 235.8557
+       }
+      },
+      {
+       "t_step": 184,
+       "nearest_body": "crate",
+       "mm": 69.262,
+       "by_body_mm": {
+        "apple": 154.749,
+        "banana": 509.7572,
+        "crate": 69.262,
+        "orange": 198.2735,
+        "pear": 527.1162,
+        "table": 198.9182
+       }
+      },
+      {
+       "t_step": 192,
+       "nearest_body": "crate",
+       "mm": 44.7123,
+       "by_body_mm": {
+        "apple": 181.0155,
+        "banana": 422.4453,
+        "crate": 44.7123,
+        "orange": 220.7668,
+        "pear": 437.8326,
+        "table": 195.5854
+       }
+      },
+      {
+       "t_step": 200,
+       "nearest_body": "crate",
+       "mm": 84.6113,
+       "by_body_mm": {
+        "apple": 241.8266,
+        "banana": 340.2961,
+        "crate": 84.6113,
+        "orange": 279.589,
+        "pear": 342.4032,
+        "table": 220.331
+       }
+      }
+     ]
+    },
+    "reference__apple_excluded": {
+     "nearest_body_counts_per_chunk": {
+      "crate": 24,
+      "table": 2
+     },
+     "n_chunks": 26,
+     "min_mm_by_body": {
+      "banana": 340.2961,
+      "crate": 40.7976,
+      "orange": 69.5733,
+      "pear": 342.4032,
+      "table": 34.1693
+     },
+     "global_min_mm": 34.1693,
+     "global_min_body": "table",
+     "global_min_chunk_t_step": 120,
+     "per_chunk": [
+      {
+       "t_step": 0,
+       "nearest_body": "crate",
+       "mm": 67.7824,
+       "by_body_mm": {
+        "banana": 520.4279,
+        "crate": 67.7824,
+        "orange": 142.3473,
+        "pear": 526.1877,
+        "table": 183.2297
+       }
+      },
+      {
+       "t_step": 8,
+       "nearest_body": "crate",
+       "mm": 68.565,
+       "by_body_mm": {
+        "banana": 520.6417,
+        "crate": 68.565,
+        "orange": 144.1195,
+        "pear": 526.6196,
+        "table": 184.3303
+       }
+      },
+      {
+       "t_step": 16,
+       "nearest_body": "crate",
+       "mm": 69.9278,
+       "by_body_mm": {
+        "banana": 522.5083,
+        "crate": 69.9278,
+        "orange": 145.4205,
+        "pear": 528.8274,
+        "table": 185.773
+       }
+      },
+      {
+       "t_step": 24,
+       "nearest_body": "crate",
+       "mm": 71.0814,
+       "by_body_mm": {
+        "banana": 523.4493,
+        "crate": 71.0814,
+        "orange": 146.8444,
+        "pear": 530.0485,
+        "table": 186.8495
+       }
+      },
+      {
+       "t_step": 32,
+       "nearest_body": "crate",
+       "mm": 72.8669,
+       "by_body_mm": {
+        "banana": 526.7485,
+        "crate": 72.8669,
+        "orange": 148.2119,
+        "pear": 533.9952,
+        "table": 187.7143
+       }
+      },
+      {
+       "t_step": 40,
+       "nearest_body": "crate",
+       "mm": 83.3262,
+       "by_body_mm": {
+        "banana": 536.515,
+        "crate": 83.3262,
+        "orange": 157.0783,
+        "pear": 545.0046,
+        "table": 196.4705
+       }
+      },
+      {
+       "t_step": 48,
+       "nearest_body": "crate",
+       "mm": 95.0595,
+       "by_body_mm": {
+        "banana": 548.2559,
+        "crate": 95.0595,
+        "orange": 166.3285,
+        "pear": 558.3843,
+        "table": 204.5742
+       }
+      },
+      {
+       "t_step": 56,
+       "nearest_body": "crate",
+       "mm": 113.4554,
+       "by_body_mm": {
+        "banana": 563.493,
+        "crate": 113.4554,
+        "orange": 183.3205,
+        "pear": 575.2062,
+        "table": 219.4946
+       }
+      },
+      {
+       "t_step": 64,
+       "nearest_body": "crate",
+       "mm": 142.4255,
+       "by_body_mm": {
+        "banana": 587.0197,
+        "crate": 142.4255,
+        "orange": 211.6744,
+        "pear": 600.0974,
+        "table": 244.5114
+       }
+      },
+      {
+       "t_step": 72,
+       "nearest_body": "crate",
+       "mm": 135.8285,
+       "by_body_mm": {
+        "banana": 588.4206,
+        "crate": 135.8285,
+        "orange": 208.3425,
+        "pear": 603.6108,
+        "table": 232.5896
+       }
+      },
+      {
+       "t_step": 80,
+       "nearest_body": "crate",
+       "mm": 79.9067,
+       "by_body_mm": {
+        "banana": 561.8578,
+        "crate": 79.9067,
+        "orange": 150.631,
+        "pear": 578.5149,
+        "table": 162.666
+       }
+      },
+      {
+       "t_step": 88,
+       "nearest_body": "crate",
+       "mm": 60.1312,
+       "by_body_mm": {
+        "banana": 549.1823,
+        "crate": 60.1312,
+        "orange": 122.2297,
+        "pear": 566.4933,
+        "table": 117.6585
+       }
+      },
+      {
+       "t_step": 96,
+       "nearest_body": "crate",
+       "mm": 57.413,
+       "by_body_mm": {
+        "banana": 540.8184,
+        "crate": 57.413,
+        "orange": 92.9337,
+        "pear": 557.4937,
+        "table": 79.8584
+       }
+      },
+      {
+       "t_step": 104,
+       "nearest_body": "crate",
+       "mm": 56.1773,
+       "by_body_mm": {
+        "banana": 534.0728,
+        "crate": 56.1773,
+        "orange": 88.9001,
+        "pear": 551.814,
+        "table": 63.3349
+       }
+      },
+      {
+       "t_step": 112,
+       "nearest_body": "table",
+       "mm": 39.42,
+       "by_body_mm": {
+        "banana": 530.8753,
+        "crate": 53.6014,
+        "orange": 72.6072,
+        "pear": 549.0381,
+        "table": 39.42
+       }
+      },
+      {
+       "t_step": 120,
+       "nearest_body": "table",
+       "mm": 34.1693,
+       "by_body_mm": {
+        "banana": 524.0618,
+        "crate": 46.1097,
+        "orange": 69.5733,
+        "pear": 543.3183,
+        "table": 34.1693
+       }
+      },
+      {
+       "t_step": 128,
+       "nearest_body": "crate",
+       "mm": 40.7976,
+       "by_body_mm": {
+        "banana": 523.4661,
+        "crate": 40.7976,
+        "orange": 79.3635,
+        "pear": 543.944,
+        "table": 43.4409
+       }
+      },
+      {
+       "t_step": 136,
+       "nearest_body": "crate",
+       "mm": 40.9242,
+       "by_body_mm": {
+        "banana": 524.6821,
+        "crate": 40.9242,
+        "orange": 107.1927,
+        "pear": 546.868,
+        "table": 72.189
+       }
+      },
+      {
+       "t_step": 144,
+       "nearest_body": "crate",
+       "mm": 64.012,
+       "by_body_mm": {
+        "banana": 546.6634,
+        "crate": 64.012,
+        "orange": 181.5236,
+        "pear": 568.8149,
+        "table": 158.6086
+       }
+      },
+      {
+       "t_step": 152,
+       "nearest_body": "crate",
+       "mm": 124.1456,
+       "by_body_mm": {
+        "banana": 570.9847,
+        "crate": 124.1456,
+        "orange": 229.6649,
+        "pear": 589.431,
+        "table": 234.6197
+       }
+      },
+      {
+       "t_step": 160,
+       "nearest_body": "crate",
+       "mm": 105.1205,
+       "by_body_mm": {
+        "banana": 550.7199,
+        "crate": 105.1205,
+        "orange": 213.8113,
+        "pear": 568.8255,
+        "table": 219.2479
+       }
+      },
+      {
+       "t_step": 168,
+       "nearest_body": "crate",
+       "mm": 102.1027,
+       "by_body_mm": {
+        "banana": 540.3218,
+        "crate": 102.1027,
+        "orange": 217.0638,
+        "pear": 556.501,
+        "table": 227.749
+       }
+      },
+      {
+       "t_step": 176,
+       "nearest_body": "crate",
+       "mm": 98.8951,
+       "by_body_mm": {
+        "banana": 532.9417,
+        "crate": 98.8951,
+        "orange": 219.9761,
+        "pear": 547.1722,
+        "table": 235.8557
+       }
+      },
+      {
+       "t_step": 184,
+       "nearest_body": "crate",
+       "mm": 69.262,
+       "by_body_mm": {
+        "banana": 509.7572,
+        "crate": 69.262,
+        "orange": 198.2735,
+        "pear": 527.1162,
+        "table": 198.9182
+       }
+      },
+      {
+       "t_step": 192,
+       "nearest_body": "crate",
+       "mm": 44.7123,
+       "by_body_mm": {
+        "banana": 422.4453,
+        "crate": 44.7123,
+        "orange": 220.7668,
+        "pear": 437.8326,
+        "table": 195.5854
+       }
+      },
+      {
+       "t_step": 200,
+       "nearest_body": "crate",
+       "mm": 84.6113,
+       "by_body_mm": {
+        "banana": 340.2961,
+        "crate": 84.6113,
+        "orange": 279.589,
+        "pear": 342.4032,
+        "table": 220.331
+       }
+      }
+     ]
+    },
+    "refined__all_bodies": {
+     "nearest_body_counts_per_chunk": {
+      "crate": 21,
+      "apple": 5
+     },
+     "n_chunks": 26,
+     "min_mm_by_body": {
+      "apple": 17.5002,
+      "banana": 353.1349,
+      "crate": 40.6026,
+      "orange": 79.6071,
+      "pear": 362.0857,
+      "table": 43.0492
+     },
+     "global_min_mm": 17.5002,
+     "global_min_body": "apple",
+     "global_min_chunk_t_step": 112,
+     "per_chunk": [
+      {
+       "t_step": 0,
+       "nearest_body": "crate",
+       "mm": 68.2695,
+       "by_body_mm": {
+        "apple": 142.7469,
+        "banana": 521.2206,
+        "crate": 68.2695,
+        "orange": 142.8985,
+        "pear": 527.3761,
+        "table": 183.7886
+       }
+      },
+      {
+       "t_step": 8,
+       "nearest_body": "crate",
+       "mm": 69.0754,
+       "by_body_mm": {
+        "apple": 142.9417,
+        "banana": 521.3952,
+        "crate": 69.0754,
+        "orange": 144.3096,
+        "pear": 527.4777,
+        "table": 184.8211
+       }
+      },
+      {
+       "t_step": 16,
+       "nearest_body": "crate",
+       "mm": 69.6788,
+       "by_body_mm": {
+        "apple": 143.4297,
+        "banana": 521.8755,
+        "crate": 69.6788,
+        "orange": 145.2967,
+        "pear": 528.1322,
+        "table": 185.5969
+       }
+      },
+      {
+       "t_step": 24,
+       "nearest_body": "crate",
+       "mm": 71.709,
+       "by_body_mm": {
+        "apple": 142.882,
+        "banana": 524.2446,
+        "crate": 71.709,
+        "orange": 147.3567,
+        "pear": 530.9529,
+        "table": 187.2504
+       }
+      },
+      {
+       "t_step": 32,
+       "nearest_body": "crate",
+       "mm": 73.1155,
+       "by_body_mm": {
+        "apple": 142.7467,
+        "banana": 526.1295,
+        "crate": 73.1155,
+        "orange": 148.6564,
+        "pear": 533.3023,
+        "table": 188.1536
+       }
+      },
+      {
+       "t_step": 40,
+       "nearest_body": "crate",
+       "mm": 78.2479,
+       "by_body_mm": {
+        "apple": 144.1283,
+        "banana": 530.4216,
+        "crate": 78.2479,
+        "orange": 153.7199,
+        "pear": 538.461,
+        "table": 192.2369
+       }
+      },
+      {
+       "t_step": 48,
+       "nearest_body": "crate",
+       "mm": 86.6823,
+       "by_body_mm": {
+        "apple": 145.5885,
+        "banana": 539.421,
+        "crate": 86.6823,
+        "orange": 160.4517,
+        "pear": 549.008,
+        "table": 197.7526
+       }
+      },
+      {
+       "t_step": 56,
+       "nearest_body": "crate",
+       "mm": 115.2218,
+       "by_body_mm": {
+        "apple": 162.9416,
+        "banana": 565.4196,
+        "crate": 115.2218,
+        "orange": 184.3297,
+        "pear": 577.2692,
+        "table": 220.5003
+       }
+      },
+      {
+       "t_step": 64,
+       "nearest_body": "crate",
+       "mm": 140.7343,
+       "by_body_mm": {
+        "apple": 183.7859,
+        "banana": 585.2418,
+        "crate": 140.7343,
+        "orange": 210.824,
+        "pear": 598.3439,
+        "table": 243.4857
+       }
+      },
+      {
+       "t_step": 72,
+       "nearest_body": "crate",
+       "mm": 127.3404,
+       "by_body_mm": {
+        "apple": 163.3613,
+        "banana": 584.4996,
+        "crate": 127.3404,
+        "orange": 199.9963,
+        "pear": 600.0972,
+        "table": 222.737
+       }
+      },
+      {
+       "t_step": 80,
+       "nearest_body": "crate",
+       "mm": 93.382,
+       "by_body_mm": {
+        "apple": 124.724,
+        "banana": 569.209,
+        "crate": 93.382,
+        "orange": 173.1727,
+        "pear": 586.9216,
+        "table": 182.1737
+       }
+      },
+      {
+       "t_step": 88,
+       "nearest_body": "crate",
+       "mm": 59.7353,
+       "by_body_mm": {
+        "apple": 61.3232,
+        "banana": 548.8279,
+        "crate": 59.7353,
+        "orange": 124.1997,
+        "pear": 566.3195,
+        "table": 118.579
+       }
+      },
+      {
+       "t_step": 96,
+       "nearest_body": "apple",
+       "mm": 35.2887,
+       "by_body_mm": {
+        "apple": 35.2887,
+        "banana": 540.8224,
+        "crate": 56.7943,
+        "orange": 105.0774,
+        "pear": 558.4242,
+        "table": 90.1572
+       }
+      },
+      {
+       "t_step": 104,
+       "nearest_body": "apple",
+       "mm": 18.922,
+       "by_body_mm": {
+        "apple": 18.922,
+        "banana": 533.7789,
+        "crate": 54.4167,
+        "orange": 95.3087,
+        "pear": 552.2429,
+        "table": 67.6202
+       }
+      },
+      {
+       "t_step": 112,
+       "nearest_body": "apple",
+       "mm": 17.5002,
+       "by_body_mm": {
+        "apple": 17.5002,
+        "banana": 523.9261,
+        "crate": 43.7866,
+        "orange": 87.2238,
+        "pear": 544.0231,
+        "table": 53.2929
+       }
+      },
+      {
+       "t_step": 120,
+       "nearest_body": "apple",
+       "mm": 18.0596,
+       "by_body_mm": {
+        "apple": 18.0596,
+        "banana": 523.3708,
+        "crate": 43.818,
+        "orange": 79.6071,
+        "pear": 544.0797,
+        "table": 43.0492
+       }
+      },
+      {
+       "t_step": 128,
+       "nearest_body": "apple",
+       "mm": 29.0379,
+       "by_body_mm": {
+        "apple": 29.0379,
+        "banana": 521.1771,
+        "crate": 40.6026,
+        "orange": 89.3991,
+        "pear": 542.7619,
+        "table": 52.8279
+       }
+      },
+      {
+       "t_step": 136,
+       "nearest_body": "crate",
+       "mm": 43.3893,
+       "by_body_mm": {
+        "apple": 48.7585,
+        "banana": 527.6201,
+        "crate": 43.3893,
+        "orange": 114.4312,
+        "pear": 549.8383,
+        "table": 79.8676
+       }
+      },
+      {
+       "t_step": 144,
+       "nearest_body": "crate",
+       "mm": 64.0841,
+       "by_body_mm": {
+        "apple": 116.2038,
+        "banana": 546.2422,
+        "crate": 64.0841,
+        "orange": 182.4215,
+        "pear": 568.4617,
+        "table": 159.2729
+       }
+      },
+      {
+       "t_step": 152,
+       "nearest_body": "crate",
+       "mm": 127.3558,
+       "by_body_mm": {
+        "apple": 185.0075,
+        "banana": 572.0476,
+        "crate": 127.3558,
+        "orange": 231.0532,
+        "pear": 590.0461,
+        "table": 238.052
+       }
+      },
+      {
+       "t_step": 160,
+       "nearest_body": "crate",
+       "mm": 97.3772,
+       "by_body_mm": {
+        "apple": 165.726,
+        "banana": 538.6766,
+        "crate": 97.3772,
+        "orange": 212.4203,
+        "pear": 556.8989,
+        "table": 214.6472
+       }
+      },
+      {
+       "t_step": 168,
+       "nearest_body": "crate",
+       "mm": 85.8181,
+       "by_body_mm": {
+        "apple": 156.1642,
+        "banana": 526.7086,
+        "crate": 85.8181,
+        "orange": 202.0995,
+        "pear": 544.4861,
+        "table": 204.1378
+       }
+      },
+      {
+       "t_step": 176,
+       "nearest_body": "crate",
+       "mm": 75.6401,
+       "by_body_mm": {
+        "apple": 168.0446,
+        "banana": 513.9393,
+        "crate": 75.6401,
+        "orange": 207.373,
+        "pear": 529.7233,
+        "table": 212.7922
+       }
+      },
+      {
+       "t_step": 184,
+       "nearest_body": "crate",
+       "mm": 57.4489,
+       "by_body_mm": {
+        "apple": 175.3917,
+        "banana": 484.2546,
+        "crate": 57.4489,
+        "orange": 216.5495,
+        "pear": 500.4428,
+        "table": 208.2
+       }
+      },
+      {
+       "t_step": 192,
+       "nearest_body": "crate",
+       "mm": 56.5152,
+       "by_body_mm": {
+        "apple": 170.2162,
+        "banana": 427.282,
+        "crate": 56.5152,
+        "orange": 212.3066,
+        "pear": 443.9223,
+        "table": 204.6587
+       }
+      },
+      {
+       "t_step": 200,
+       "nearest_body": "crate",
+       "mm": 74.8154,
+       "by_body_mm": {
+        "apple": 232.2547,
+        "banana": 353.1349,
+        "crate": 74.8154,
+        "orange": 269.8185,
+        "pear": 362.0857,
+        "table": 208.7459
+       }
+      }
+     ]
+    },
+    "refined__apple_excluded": {
+     "nearest_body_counts_per_chunk": {
+      "crate": 25,
+      "table": 1
+     },
+     "n_chunks": 26,
+     "min_mm_by_body": {
+      "banana": 353.1349,
+      "crate": 40.6026,
+      "orange": 79.6071,
+      "pear": 362.0857,
+      "table": 43.0492
+     },
+     "global_min_mm": 40.6026,
+     "global_min_body": "crate",
+     "global_min_chunk_t_step": 128,
+     "per_chunk": [
+      {
+       "t_step": 0,
+       "nearest_body": "crate",
+       "mm": 68.2695,
+       "by_body_mm": {
+        "banana": 521.2206,
+        "crate": 68.2695,
+        "orange": 142.8985,
+        "pear": 527.3761,
+        "table": 183.7886
+       }
+      },
+      {
+       "t_step": 8,
+       "nearest_body": "crate",
+       "mm": 69.0754,
+       "by_body_mm": {
+        "banana": 521.3952,
+        "crate": 69.0754,
+        "orange": 144.3096,
+        "pear": 527.4777,
+        "table": 184.8211
+       }
+      },
+      {
+       "t_step": 16,
+       "nearest_body": "crate",
+       "mm": 69.6788,
+       "by_body_mm": {
+        "banana": 521.8755,
+        "crate": 69.6788,
+        "orange": 145.2967,
+        "pear": 528.1322,
+        "table": 185.5969
+       }
+      },
+      {
+       "t_step": 24,
+       "nearest_body": "crate",
+       "mm": 71.709,
+       "by_body_mm": {
+        "banana": 524.2446,
+        "crate": 71.709,
+        "orange": 147.3567,
+        "pear": 530.9529,
+        "table": 187.2504
+       }
+      },
+      {
+       "t_step": 32,
+       "nearest_body": "crate",
+       "mm": 73.1155,
+       "by_body_mm": {
+        "banana": 526.1295,
+        "crate": 73.1155,
+        "orange": 148.6564,
+        "pear": 533.3023,
+        "table": 188.1536
+       }
+      },
+      {
+       "t_step": 40,
+       "nearest_body": "crate",
+       "mm": 78.2479,
+       "by_body_mm": {
+        "banana": 530.4216,
+        "crate": 78.2479,
+        "orange": 153.7199,
+        "pear": 538.461,
+        "table": 192.2369
+       }
+      },
+      {
+       "t_step": 48,
+       "nearest_body": "crate",
+       "mm": 86.6823,
+       "by_body_mm": {
+        "banana": 539.421,
+        "crate": 86.6823,
+        "orange": 160.4517,
+        "pear": 549.008,
+        "table": 197.7526
+       }
+      },
+      {
+       "t_step": 56,
+       "nearest_body": "crate",
+       "mm": 115.2218,
+       "by_body_mm": {
+        "banana": 565.4196,
+        "crate": 115.2218,
+        "orange": 184.3297,
+        "pear": 577.2692,
+        "table": 220.5003
+       }
+      },
+      {
+       "t_step": 64,
+       "nearest_body": "crate",
+       "mm": 140.7343,
+       "by_body_mm": {
+        "banana": 585.2418,
+        "crate": 140.7343,
+        "orange": 210.824,
+        "pear": 598.3439,
+        "table": 243.4857
+       }
+      },
+      {
+       "t_step": 72,
+       "nearest_body": "crate",
+       "mm": 127.3404,
+       "by_body_mm": {
+        "banana": 584.4996,
+        "crate": 127.3404,
+        "orange": 199.9963,
+        "pear": 600.0972,
+        "table": 222.737
+       }
+      },
+      {
+       "t_step": 80,
+       "nearest_body": "crate",
+       "mm": 93.382,
+       "by_body_mm": {
+        "banana": 569.209,
+        "crate": 93.382,
+        "orange": 173.1727,
+        "pear": 586.9216,
+        "table": 182.1737
+       }
+      },
+      {
+       "t_step": 88,
+       "nearest_body": "crate",
+       "mm": 59.7353,
+       "by_body_mm": {
+        "banana": 548.8279,
+        "crate": 59.7353,
+        "orange": 124.1997,
+        "pear": 566.3195,
+        "table": 118.579
+       }
+      },
+      {
+       "t_step": 96,
+       "nearest_body": "crate",
+       "mm": 56.7943,
+       "by_body_mm": {
+        "banana": 540.8224,
+        "crate": 56.7943,
+        "orange": 105.0774,
+        "pear": 558.4242,
+        "table": 90.1572
+       }
+      },
+      {
+       "t_step": 104,
+       "nearest_body": "crate",
+       "mm": 54.4167,
+       "by_body_mm": {
+        "banana": 533.7789,
+        "crate": 54.4167,
+        "orange": 95.3087,
+        "pear": 552.2429,
+        "table": 67.6202
+       }
+      },
+      {
+       "t_step": 112,
+       "nearest_body": "crate",
+       "mm": 43.7866,
+       "by_body_mm": {
+        "banana": 523.9261,
+        "crate": 43.7866,
+        "orange": 87.2238,
+        "pear": 544.0231,
+        "table": 53.2929
+       }
+      },
+      {
+       "t_step": 120,
+       "nearest_body": "table",
+       "mm": 43.0492,
+       "by_body_mm": {
+        "banana": 523.3708,
+        "crate": 43.818,
+        "orange": 79.6071,
+        "pear": 544.0797,
+        "table": 43.0492
+       }
+      },
+      {
+       "t_step": 128,
+       "nearest_body": "crate",
+       "mm": 40.6026,
+       "by_body_mm": {
+        "banana": 521.1771,
+        "crate": 40.6026,
+        "orange": 89.3991,
+        "pear": 542.7619,
+        "table": 52.8279
+       }
+      },
+      {
+       "t_step": 136,
+       "nearest_body": "crate",
+       "mm": 43.3893,
+       "by_body_mm": {
+        "banana": 527.6201,
+        "crate": 43.3893,
+        "orange": 114.4312,
+        "pear": 549.8383,
+        "table": 79.8676
+       }
+      },
+      {
+       "t_step": 144,
+       "nearest_body": "crate",
+       "mm": 64.0841,
+       "by_body_mm": {
+        "banana": 546.2422,
+        "crate": 64.0841,
+        "orange": 182.4215,
+        "pear": 568.4617,
+        "table": 159.2729
+       }
+      },
+      {
+       "t_step": 152,
+       "nearest_body": "crate",
+       "mm": 127.3558,
+       "by_body_mm": {
+        "banana": 572.0476,
+        "crate": 127.3558,
+        "orange": 231.0532,
+        "pear": 590.0461,
+        "table": 238.052
+       }
+      },
+      {
+       "t_step": 160,
+       "nearest_body": "crate",
+       "mm": 97.3772,
+       "by_body_mm": {
+        "banana": 538.6766,
+        "crate": 97.3772,
+        "orange": 212.4203,
+        "pear": 556.8989,
+        "table": 214.6472
+       }
+      },
+      {
+       "t_step": 168,
+       "nearest_body": "crate",
+       "mm": 85.8181,
+       "by_body_mm": {
+        "banana": 526.7086,
+        "crate": 85.8181,
+        "orange": 202.0995,
+        "pear": 544.4861,
+        "table": 204.1378
+       }
+      },
+      {
+       "t_step": 176,
+       "nearest_body": "crate",
+       "mm": 75.6401,
+       "by_body_mm": {
+        "banana": 513.9393,
+        "crate": 75.6401,
+        "orange": 207.373,
+        "pear": 529.7233,
+        "table": 212.7922
+       }
+      },
+      {
+       "t_step": 184,
+       "nearest_body": "crate",
+       "mm": 57.4489,
+       "by_body_mm": {
+        "banana": 484.2546,
+        "crate": 57.4489,
+        "orange": 216.5495,
+        "pear": 500.4428,
+        "table": 208.2
+       }
+      },
+      {
+       "t_step": 192,
+       "nearest_body": "crate",
+       "mm": 56.5152,
+       "by_body_mm": {
+        "banana": 427.282,
+        "crate": 56.5152,
+        "orange": 212.3066,
+        "pear": 443.9223,
+        "table": 204.6587
+       }
+      },
+      {
+       "t_step": 200,
+       "nearest_body": "crate",
+       "mm": 74.8154,
+       "by_body_mm": {
+        "banana": 353.1349,
+        "crate": 74.8154,
+        "orange": 269.8185,
+        "pear": 362.0857,
+        "table": 208.7459
+       }
+      }
+     ]
+    },
+    "recorded_worst_row_named_offline": {
+     "note": "기록의 max_violation_pair 는 obstacle 이 None 이다 (label 층이 destination 과 attached 만 이름 짓는다). 그 행의 query 구를 오프라인 tensor 로 이름 지은 것이다. link 이름이 기록과 같은지도 확인했다.",
+     "n_rows": 26,
+     "n_rows_on_a_robot_sphere": 19,
+     "n_rows_on_an_attached_point": 7,
+     "n_link_name_matches": 19,
+     "nearest_body_counts_all": {
+      "crate": 12,
+      "apple": 7
+     },
+     "nearest_body_counts_apple_excluded": {
+      "crate": 14,
+      "table": 5
+     },
+     "esdf_vs_ground_truth": {
+      "definition": "esdf_d_minus_r = recorded clearance_m + margin 10 mm (clearance_m 은 post-margin, T9a). offline 은 같은 구에서 MuJoCo 참값 body 표면까지의 거리 - 반지름.",
+      "n_rows": 19,
+      "offline_minus_esdf_mm_all_bodies": {
+       "min": -18.8098,
+       "max": 31.7234,
+       "median": -0.3892
+      },
+      "n_rows_offline_further_than_esdf": 9,
+      "note": "두 값이 다르면 그 행을 묶은 표면이 MuJoCo 참값 body 가 아니라는 뜻이다. ESDF 는 카메라 점구름으로 만든 것이라 참값 씬과 같지 않다. 어느 쪽이 옳은지는 여기서 판정하지 않는다."
+     },
+     "rows": [
+      {
+       "t_step": 0,
+       "seq": 1,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 67.8696,
+       "sphere_index": 242,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 2,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 74.8664,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 74.8664,
+       "by_body_mm": {
+        "apple": 156.8287,
+        "banana": 558.5121,
+        "crate": 74.8664,
+        "orange": 168.5224,
+        "pear": 573.1566,
+        "table": 201.4539
+       },
+       "esdf_d_minus_r_mm": 77.8696,
+       "offline_minus_esdf_mm_all_bodies": -3.0032,
+       "offline_minus_esdf_mm_apple_excluded": -3.0032
+      },
+      {
+       "t_step": 8,
+       "seq": 2,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 63.3648,
+       "sphere_index": 242,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 1,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 74.6252,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 74.6252,
+       "by_body_mm": {
+        "apple": 155.7409,
+        "banana": 558.7315,
+        "crate": 74.6252,
+        "orange": 167.243,
+        "pear": 573.3065,
+        "table": 200.3615
+       },
+       "esdf_d_minus_r_mm": 73.3648,
+       "offline_minus_esdf_mm_all_bodies": 1.2604,
+       "offline_minus_esdf_mm_apple_excluded": 1.2604
+      },
+      {
+       "t_step": 16,
+       "seq": 3,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 66.3565,
+       "sphere_index": 242,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 1,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 75.1356,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 75.1356,
+       "by_body_mm": {
+        "apple": 155.4629,
+        "banana": 559.2641,
+        "crate": 75.1356,
+        "orange": 167.3756,
+        "pear": 573.9982,
+        "table": 200.4584
+       },
+       "esdf_d_minus_r_mm": 76.3565,
+       "offline_minus_esdf_mm_all_bodies": -1.221,
+       "offline_minus_esdf_mm_apple_excluded": -1.221
+      },
+      {
+       "t_step": 24,
+       "seq": 4,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 67.4891,
+       "sphere_index": 242,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 1,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 77.1,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 77.1,
+       "by_body_mm": {
+        "apple": 155.576,
+        "banana": 560.9103,
+        "crate": 77.1,
+        "orange": 169.2335,
+        "pear": 576.0704,
+        "table": 201.7899
+       },
+       "esdf_d_minus_r_mm": 77.4891,
+       "offline_minus_esdf_mm_all_bodies": -0.3892,
+       "offline_minus_esdf_mm_apple_excluded": -0.3892
+      },
+      {
+       "t_step": 32,
+       "seq": 5,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 65.117,
+       "sphere_index": 242,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 1,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 78.79,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 78.79,
+       "by_body_mm": {
+        "apple": 155.3862,
+        "banana": 562.4451,
+        "crate": 78.79,
+        "orange": 170.6516,
+        "pear": 578.0048,
+        "table": 202.6728
+       },
+       "esdf_d_minus_r_mm": 75.117,
+       "offline_minus_esdf_mm_all_bodies": 3.673,
+       "offline_minus_esdf_mm_apple_excluded": 3.673
+      },
+      {
+       "t_step": 40,
+       "seq": 6,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 67.9188,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 3,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 59.716,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 59.716,
+       "by_body_mm": {
+        "apple": 580.6274,
+        "banana": 155.4867,
+        "crate": 59.716,
+        "orange": 595.0734,
+        "pear": 135.3419,
+        "table": 194.1965
+       },
+       "esdf_d_minus_r_mm": 77.9188,
+       "offline_minus_esdf_mm_all_bodies": -18.2027,
+       "offline_minus_esdf_mm_apple_excluded": -18.2027
+      },
+      {
+       "t_step": 48,
+       "seq": 7,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 67.6937,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 3,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 59.4676,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 59.4676,
+       "by_body_mm": {
+        "apple": 580.5524,
+        "banana": 155.0402,
+        "crate": 59.4676,
+        "orange": 594.9746,
+        "pear": 134.9237,
+        "table": 193.7455
+       },
+       "esdf_d_minus_r_mm": 77.6937,
+       "offline_minus_esdf_mm_all_bodies": -18.2261,
+       "offline_minus_esdf_mm_apple_excluded": -18.2261
+      },
+      {
+       "t_step": 56,
+       "seq": 8,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 67.2757,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 59.1966,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 59.1966,
+       "by_body_mm": {
+        "apple": 580.4045,
+        "banana": 154.5411,
+        "crate": 59.1966,
+        "orange": 594.9293,
+        "pear": 134.6808,
+        "table": 193.3189
+       },
+       "esdf_d_minus_r_mm": 77.2757,
+       "offline_minus_esdf_mm_all_bodies": -18.079,
+       "offline_minus_esdf_mm_apple_excluded": -18.079
+      },
+      {
+       "t_step": 64,
+       "seq": 9,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 66.6379,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 58.5423,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 58.5423,
+       "by_body_mm": {
+        "apple": 579.8453,
+        "banana": 154.1167,
+        "crate": 58.5423,
+        "orange": 594.3607,
+        "pear": 134.3964,
+        "table": 192.849
+       },
+       "esdf_d_minus_r_mm": 76.6379,
+       "offline_minus_esdf_mm_all_bodies": -18.0955,
+       "offline_minus_esdf_mm_apple_excluded": -18.0955
+      },
+      {
+       "t_step": 72,
+       "seq": 10,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 66.279,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 4,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 58.2298,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 58.2298,
+       "by_body_mm": {
+        "apple": 579.7414,
+        "banana": 153.5169,
+        "crate": 58.2298,
+        "orange": 594.3552,
+        "pear": 133.9271,
+        "table": 192.2776
+       },
+       "esdf_d_minus_r_mm": 76.279,
+       "offline_minus_esdf_mm_all_bodies": -18.0492,
+       "offline_minus_esdf_mm_apple_excluded": -18.0492
+      },
+      {
+       "t_step": 80,
+       "seq": 11,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 66.0404,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 57.9992,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 57.9992,
+       "by_body_mm": {
+        "apple": 579.4658,
+        "banana": 153.5469,
+        "crate": 57.9992,
+        "orange": 594.0255,
+        "pear": 134.0311,
+        "table": 192.2874
+       },
+       "esdf_d_minus_r_mm": 76.0404,
+       "offline_minus_esdf_mm_all_bodies": -18.0411,
+       "offline_minus_esdf_mm_apple_excluded": -18.0411
+      },
+      {
+       "t_step": 88,
+       "seq": 12,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": "target",
+       "recorded_clearance_mm_post_margin": 19.5998,
+       "sphere_index": 246,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 61.3232,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 110.8921,
+       "by_body_mm": {
+        "apple": 61.3232,
+        "banana": 594.7621,
+        "crate": 110.8921,
+        "orange": 124.1997,
+        "pear": 617.7108,
+        "table": 118.579
+       },
+       "esdf_d_minus_r_mm": 29.5998,
+       "offline_minus_esdf_mm_all_bodies": 31.7234,
+       "offline_minus_esdf_mm_apple_excluded": 81.2924
+      },
+      {
+       "t_step": 96,
+       "seq": 13,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 4.6302,
+       "sphere_index": 246,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 35.2887,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 90.1572,
+       "by_body_mm": {
+        "apple": 35.2887,
+        "banana": 589.2425,
+        "crate": 108.5741,
+        "orange": 109.3398,
+        "pear": 611.7737,
+        "table": 90.1572
+       },
+       "esdf_d_minus_r_mm": 14.6302,
+       "offline_minus_esdf_mm_all_bodies": 20.6585,
+       "offline_minus_esdf_mm_apple_excluded": 75.527
+      },
+      {
+       "t_step": 104,
+       "seq": 14,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 3.6934,
+       "sphere_index": 246,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 7,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 18.922,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 67.6202,
+       "by_body_mm": {
+        "apple": 18.922,
+        "banana": 584.3183,
+        "crate": 105.2172,
+        "orange": 108.6905,
+        "pear": 607.7205,
+        "table": 67.6202
+       },
+       "esdf_d_minus_r_mm": 13.6934,
+       "offline_minus_esdf_mm_all_bodies": 5.2286,
+       "offline_minus_esdf_mm_apple_excluded": 53.9268
+      },
+      {
+       "t_step": 112,
+       "seq": 15,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 3.5016,
+       "sphere_index": 235,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 4,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 25.5091,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 80.858,
+       "by_body_mm": {
+        "apple": 25.5091,
+        "banana": 586.9011,
+        "crate": 107.344,
+        "orange": 100.5861,
+        "pear": 608.4716,
+        "table": 80.858
+       },
+       "esdf_d_minus_r_mm": 13.5016,
+       "offline_minus_esdf_mm_all_bodies": 12.0075,
+       "offline_minus_esdf_mm_apple_excluded": 67.3565
+      },
+      {
+       "t_step": 120,
+       "seq": 16,
+       "recorded_link": "ee_finger_l2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 2.6223,
+       "sphere_index": 260,
+       "sphere_link_offline": "ee_finger_l2",
+       "link_name_matches": true,
+       "step": 6,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 19.0773,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 68.6573,
+       "by_body_mm": {
+        "apple": 19.0773,
+        "banana": 591.7891,
+        "crate": 112.7209,
+        "orange": 109.6923,
+        "pear": 615.2371,
+        "table": 68.6573
+       },
+       "esdf_d_minus_r_mm": 12.6223,
+       "offline_minus_esdf_mm_all_bodies": 6.455,
+       "offline_minus_esdf_mm_apple_excluded": 56.0351
+      },
+      {
+       "t_step": 128,
+       "seq": 17,
+       "recorded_link": "ee_finger_l2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 4.9705,
+       "sphere_index": 253,
+       "sphere_link_offline": "ee_finger_l2",
+       "link_name_matches": true,
+       "step": 1,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 36.685,
+       "nearest_body_apple_excluded": "table",
+       "nearest_mm_apple_excluded": 91.6721,
+       "by_body_mm": {
+        "apple": 36.685,
+        "banana": 593.8508,
+        "crate": 113.0844,
+        "orange": 110.9765,
+        "pear": 616.5306,
+        "table": 91.6721
+       },
+       "esdf_d_minus_r_mm": 14.9705,
+       "offline_minus_esdf_mm_all_bodies": 21.7146,
+       "offline_minus_esdf_mm_apple_excluded": 76.7017
+      },
+      {
+       "t_step": 136,
+       "seq": 18,
+       "recorded_link": "ee_finger_l1",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 23.4601,
+       "sphere_index": 235,
+       "sphere_link_offline": "ee_finger_l1",
+       "link_name_matches": true,
+       "step": 0,
+       "is_attached_query_point": false,
+       "nearest_body_all": "apple",
+       "nearest_mm_all": 52.2518,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 101.1514,
+       "by_body_mm": {
+        "apple": 52.2518,
+        "banana": 582.663,
+        "crate": 101.1514,
+        "orange": 129.7652,
+        "pear": 607.434,
+        "table": 101.902
+       },
+       "esdf_d_minus_r_mm": 33.4601,
+       "offline_minus_esdf_mm_all_bodies": 18.7916,
+       "offline_minus_esdf_mm_apple_excluded": 67.6913
+      },
+      {
+       "t_step": 144,
+       "seq": 19,
+       "recorded_link": "attached:ee_finger_l1[5]",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 26.2093,
+       "sphere_index": 271,
+       "sphere_link_offline": null,
+       "link_name_matches": null,
+       "step": 0,
+       "is_attached_query_point": true,
+       "nearest_body_all": null,
+       "nearest_mm_all": null,
+       "nearest_body_apple_excluded": null,
+       "nearest_mm_apple_excluded": null,
+       "by_body_mm": null,
+       "note": "query 271 >= 266 robot spheres — attached point row"
+      },
+      {
+       "t_step": 152,
+       "seq": 20,
+       "recorded_link": "ee_finger_r2",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 67.1151,
+       "sphere_index": 227,
+       "sphere_link_offline": "ee_finger_r2",
+       "link_name_matches": true,
+       "step": 4,
+       "is_attached_query_point": false,
+       "nearest_body_all": "crate",
+       "nearest_mm_all": 58.3053,
+       "nearest_body_apple_excluded": "crate",
+       "nearest_mm_apple_excluded": 58.3053,
+       "by_body_mm": {
+        "apple": 582.8215,
+        "banana": 147.0996,
+        "crate": 58.3053,
+        "orange": 597.1296,
+        "pear": 125.8233,
+        "table": 185.6413
+       },
+       "esdf_d_minus_r_mm": 77.1151,
+       "offline_minus_esdf_mm_all_bodies": -18.8098,
+       "offline_minus_esdf_mm_apple_excluded": -18.8098
+      },
+      {
+       "t_step": 160,
+       "seq": 21,
+       "recorded_link": "attached:ee_finger_l1[33]",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 64.0533,
+       "sphere_index": 299,
+       "sphere_link_offline": null,
+       "link_name_matches": null,
+       "step": 7,
+       "is_attached_query_point": true,
+       "nearest_body_all": null,
+       "nearest_mm_all": null,
+       "nearest_body_apple_excluded": null,
+       "nearest_mm_apple_excluded": null,
+       "by_body_mm": null,
+       "note": "query 299 >= 266 robot spheres — attached point row"
+      },
+      {
+       "t_step": 168,
+       "seq": 22,
+       "recorded_link": "attached:ee_finger_l1[33]",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 52.2036,
+       "sphere_index": 299,
+       "sphere_link_offline": null,
+       "link_name_matches": null,
+       "step": 7,
+       "is_attached_query_point": true,
+       "nearest_body_all": null,
+       "nearest_mm_all": null,
+       "nearest_body_apple_excluded": null,
+       "nearest_mm_apple_excluded": null,
+       "by_body_mm": null,
+       "note": "query 299 >= 266 robot spheres — attached point row"
+      },
+      {
+       "t_step": 176,
+       "seq": 23,
+       "recorded_link": "attached:ee_finger_l1[28]",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 39.8704,
+       "sphere_index": 294,
+       "sphere_link_offline": null,
+       "link_name_matches": null,
+       "step": 7,
+       "is_attached_query_point": true,
+       "nearest_body_all": null,
+       "nearest_mm_all": null,
+       "nearest_body_apple_excluded": null,
+       "nearest_mm_apple_excluded": null,
+       "by_body_mm": null,
+       "note": "query 294 >= 266 robot spheres — attached point row"
+      },
+      {
+       "t_step": 184,
+       "seq": 24,
+       "recorded_link": "attached:ee_finger_l1[28]",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 11.5549,
+       "sphere_index": 294,
+       "sphere_link_offline": null,
+       "link_name_matches": null,
+       "step": 7,
+       "is_attached_query_point": true,
+       "nearest_body_all": null,
+       "nearest_mm_all": null,
+       "nearest_body_apple_excluded": null,
+       "nearest_mm_apple_excluded": null,
+       "by_body_mm": null,
+       "note": "query 294 >= 266 robot spheres — attached point row"
+      },
+      {
+       "t_step": 192,
+       "seq": 25,
+       "recorded_link": "attached:ee_finger_l1[9]",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 5.354,
+       "sphere_index": 275,
+       "sphere_link_offline": null,
+       "link_name_matches": null,
+       "step": 6,
+       "is_attached_query_point": true,
+       "nearest_body_all": null,
+       "nearest_mm_all": null,
+       "nearest_body_apple_excluded": null,
+       "nearest_mm_apple_excluded": null,
+       "by_body_mm": null,
+       "note": "query 275 >= 266 robot spheres — attached point row"
+      },
+      {
+       "t_step": 200,
+       "seq": 26,
+       "recorded_link": "attached:ee_finger_l1[26]",
+       "recorded_obstacle": null,
+       "recorded_clearance_mm_post_margin": 11.5185,
+       "sphere_index": 292,
+       "sphere_link_offline": null,
+       "link_name_matches": null,
+       "step": 0,
+       "is_attached_query_point": true,
+       "nearest_body_all": null,
+       "nearest_mm_all": null,
+       "nearest_body_apple_excluded": null,
+       "nearest_mm_apple_excluded": null,
+       "by_body_mm": null,
+       "note": "query 292 >= 266 robot spheres — attached point row"
+      }
+     ]
+    }
+   }
+  },
+  "p2_margin_sweep": {
+   "window": "approach chunks (t_step <= 200), 26 chunks x 8 steps, gripper spheres only, POLICY REFERENCE chunk",
+   "clearance_is_pre_margin": true,
+   "sweeps": {
+    "all_bodies": {
+     "10mm": {
+      "n_rows_slack_le0": 1,
+      "n_rows_total": 76128,
+      "n_chunks_with_any": 1,
+      "n_chunks": 26,
+      "min_slack_mm": -0.288,
+      "feasible": false,
+      "rows_by_body": {
+       "apple": 1
+      }
+     },
+     "5mm": {
+      "n_rows_slack_le0": 0,
+      "n_rows_total": 76128,
+      "n_chunks_with_any": 0,
+      "n_chunks": 26,
+      "min_slack_mm": 4.712,
+      "feasible": true,
+      "rows_by_body": {}
+     },
+     "2mm": {
+      "n_rows_slack_le0": 0,
+      "n_rows_total": 76128,
+      "n_chunks_with_any": 0,
+      "n_chunks": 26,
+      "min_slack_mm": 7.712,
+      "feasible": true,
+      "rows_by_body": {}
+     },
+     "1mm": {
+      "n_rows_slack_le0": 0,
+      "n_rows_total": 76128,
+      "n_chunks_with_any": 0,
+      "n_chunks": 26,
+      "min_slack_mm": 8.712,
+      "feasible": true,
+      "rows_by_body": {}
+     },
+     "0mm": {
+      "n_rows_slack_le0": 0,
+      "n_rows_total": 76128,
+      "n_chunks_with_any": 0,
+      "n_chunks": 26,
+      "min_slack_mm": 9.712,
+      "feasible": true,
+      "rows_by_body": {}
+     },
+     "critical_margin_mm": {
+      "value": 9.712,
+      "meaning": "정책 원본 궤적의 gripper 구가 이 body 집합에 대해 가지는 최소 clearance (pre-margin). margin 을 이 값 아래로 내리면 활성 행이 0 이 된다.",
+      "argmin_body": "apple",
+      "argmin_t_step": 96,
+      "argmin_link": "ee_finger_l1"
+     }
+    },
+    "apple_excluded": {
+     "10mm": {
+      "n_rows_slack_le0": 0,
+      "n_rows_total": 63440,
+      "n_chunks_with_any": 0,
+      "n_chunks": 26,
+      "min_slack_mm": 22.3123,
+      "feasible": true,
+      "rows_by_body": {}
+     },
+     "5mm": {
+      "n_rows_slack_le0": 0,
+      "n_rows_total": 63440,
+      "n_chunks_with_any": 0,
+      "n_chunks": 26,
+      "min_slack_mm": 27.3123,
+      "feasible": true,
+      "rows_by_body": {}
+     },
+     "2mm": {
+      "n_rows_slack_le0": 0,
+      "n_rows_total": 63440,
+      "n_chunks_with_any": 0,
+      "n_chunks": 26,
+      "min_slack_mm": 30.3123,
+      "feasible": true,
+      "rows_by_body": {}
+     },
+     "1mm": {
+      "n_rows_slack_le0": 0,
+      "n_rows_total": 63440,
+      "n_chunks_with_any": 0,
+      "n_chunks": 26,
+      "min_slack_mm": 31.3123,
+      "feasible": true,
+      "rows_by_body": {}
+     },
+     "0mm": {
+      "n_rows_slack_le0": 0,
+      "n_rows_total": 63440,
+      "n_chunks_with_any": 0,
+      "n_chunks": 26,
+      "min_slack_mm": 32.3123,
+      "feasible": true,
+      "rows_by_body": {}
+     },
+     "critical_margin_mm": {
+      "value": 32.3123,
+      "meaning": "정책 원본 궤적의 gripper 구가 이 body 집합에 대해 가지는 최소 clearance (pre-margin). margin 을 이 값 아래로 내리면 활성 행이 0 이 된다.",
+      "argmin_body": "crate",
+      "argmin_t_step": 192,
+      "argmin_link": "ee_left"
+     }
+    }
+   }
+  },
+  "p3_trust_region": {
+   "trust_radius_rad": 0.15,
+   "source": "benchmark/trajopt/config.py:286",
+   "runs": {
+    "T10": {
+     "n_chunks": 66,
+     "max_abs_dq_rad_max": 0.15004,
+     "max_abs_dq_deg_max": 8.5966,
+     "argmax_chunk": 35,
+     "argmax_t_step": 280,
+     "ratio_to_trust_radius_max": 1.000264,
+     "n_chunks_ratio_gt_0.95": 1,
+     "n_chunks_ratio_gt_0.50": 2,
+     "n_chunks_ratio_gt_0.10": 25,
+     "median_ratio": 0.067573,
+     "approach_window": {
+      "n_chunks": 26,
+      "max_ratio": 0.233305,
+      "median_ratio": 0.109968,
+      "n_chunks_ratio_gt_0.95": 0,
+      "n_chunks_ratio_gt_0.50": 0,
+      "max_abs_dq_deg": 2.0051
+     },
+     "per_chunk_ratio": [
+      0.01478,
+      0.168827,
+      0.183649,
+      0.233305,
+      0.083002,
+      0.070991,
+      0.154354,
+      0.060922,
+      0.139087,
+      0.140543,
+      0.06537,
+      0.118483,
+      0.172799,
+      0.06923,
+      0.048528,
+      0.030051,
+      0.018128,
+      0.139074,
+      0.128702,
+      0.08781,
+      0.101452,
+      0.153655,
+      0.131299,
+      0.188322,
+      0.082791,
+      0.080123,
+      0.044713,
+      0.162846,
+      0.21808,
+      0.061243,
+      0.15097,
+      0.418532,
+      0.32428,
+      0.130734,
+      0.063746,
+      1.000264,
+      0.681299,
+      0.230203,
+      0.132047,
+      0.120505,
+      0.083843,
+      0.089066,
+      0.065917,
+      0.04686,
+      0.03573,
+      0.049514,
+      0.037431,
+      0.026354,
+      0.021914,
+      0.017359,
+      0.020123,
+      0.020614,
+      0.019026,
+      0.017971,
+      0.016854,
+      0.01784,
+      0.019713,
+      0.018997,
+      0.01977,
+      0.025014,
+      0.01628,
+      0.014561,
+      0.016143,
+      0.023965,
+      0.022688,
+      0.014191
+     ],
+     "per_chunk_max_deg": [
+      0.127,
+      1.451,
+      1.5783,
+      2.0051,
+      0.7134,
+      0.6101,
+      1.3266,
+      0.5236,
+      1.1954,
+      1.2079,
+      0.5618,
+      1.0183,
+      1.4851,
+      0.595,
+      0.4171,
+      0.2583,
+      0.1558,
+      1.1953,
+      1.1061,
+      0.7547,
+      0.8719,
+      1.3206,
+      1.1284,
+      1.6185,
+      0.7115,
+      0.6886,
+      0.3843,
+      1.3996,
+      1.8743,
+      0.5263,
+      1.2975,
+      3.597,
+      2.787,
+      1.1236,
+      0.5479,
+      8.5966,
+      5.8553,
+      1.9785,
+      1.1349,
+      1.0357,
+      0.7206,
+      0.7655,
+      0.5665,
+      0.4027,
+      0.3071,
+      0.4255,
+      0.3217,
+      0.2265,
+      0.1883,
+      0.1492,
+      0.1729,
+      0.1772,
+      0.1635,
+      0.1545,
+      0.1448,
+      0.1533,
+      0.1694,
+      0.1633,
+      0.1699,
+      0.215,
+      0.1399,
+      0.1251,
+      0.1387,
+      0.206,
+      0.195,
+      0.122
+     ]
+    },
+    "T9": {
+     "n_chunks": 75,
+     "max_abs_dq_rad_max": 0.10121,
+     "max_abs_dq_deg_max": 5.7989,
+     "argmax_chunk": 74,
+     "argmax_t_step": 592,
+     "ratio_to_trust_radius_max": 0.674732,
+     "n_chunks_ratio_gt_0.95": 0,
+     "n_chunks_ratio_gt_0.50": 7,
+     "n_chunks_ratio_gt_0.10": 49,
+     "median_ratio": 0.123357,
+     "approach_window": {
+      "n_chunks": 26,
+      "max_ratio": 0.641785,
+      "median_ratio": 0.173997,
+      "n_chunks_ratio_gt_0.95": 0,
+      "n_chunks_ratio_gt_0.50": 3,
+      "max_abs_dq_deg": 5.5157
+     },
+     "per_chunk_ratio": [
+      0.034827,
+      0.097612,
+      0.073257,
+      0.189502,
+      0.076828,
+      0.242647,
+      0.313601,
+      0.078199,
+      0.160172,
+      0.185922,
+      0.162072,
+      0.061727,
+      0.103378,
+      0.07802,
+      0.111353,
+      0.101852,
+      0.534353,
+      0.309539,
+      0.042551,
+      0.291317,
+      0.186131,
+      0.531033,
+      0.420922,
+      0.408851,
+      0.641785,
+      0.399604,
+      0.400205,
+      0.63515,
+      0.453382,
+      0.499495,
+      0.464481,
+      0.488336,
+      0.389046,
+      0.136988,
+      0.052141,
+      0.075796,
+      0.061204,
+      0.507124,
+      0.122036,
+      0.105871,
+      0.08834,
+      0.06768,
+      0.527296,
+      0.108759,
+      0.129611,
+      0.12386,
+      0.096251,
+      0.124358,
+      0.079169,
+      0.115237,
+      0.112867,
+      0.135091,
+      0.071461,
+      0.464718,
+      0.35207,
+      0.111393,
+      0.115641,
+      0.047088,
+      0.133818,
+      0.175459,
+      0.043851,
+      0.082765,
+      0.108343,
+      0.055068,
+      0.058242,
+      0.032501,
+      0.493112,
+      0.123357,
+      0.049152,
+      0.026397,
+      0.405368,
+      0.125248,
+      0.049615,
+      0.045399,
+      0.674732
+     ],
+     "per_chunk_max_deg": [
+      0.2993,
+      0.8389,
+      0.6296,
+      1.6286,
+      0.6603,
+      2.0854,
+      2.6952,
+      0.6721,
+      1.3766,
+      1.5979,
+      1.3929,
+      0.5305,
+      0.8885,
+      0.6705,
+      0.957,
+      0.8754,
+      4.5924,
+      2.6603,
+      0.3657,
+      2.5037,
+      1.5997,
+      4.5639,
+      3.6176,
+      3.5138,
+      5.5157,
+      3.4343,
+      3.4395,
+      5.4587,
+      3.8965,
+      4.2928,
+      3.9919,
+      4.1969,
+      3.3436,
+      1.1773,
+      0.4481,
+      0.6514,
+      0.526,
+      4.3584,
+      1.0488,
+      0.9099,
+      0.7592,
+      0.5817,
+      4.5318,
+      0.9347,
+      1.1139,
+      1.0645,
+      0.8272,
+      1.0688,
+      0.6804,
+      0.9904,
+      0.97,
+      1.161,
+      0.6142,
+      3.994,
+      3.0258,
+      0.9574,
+      0.9939,
+      0.4047,
+      1.1501,
+      1.508,
+      0.3769,
+      0.7113,
+      0.9311,
+      0.4733,
+      0.5006,
+      0.2793,
+      4.238,
+      1.0602,
+      0.4224,
+      0.2269,
+      3.4839,
+      1.0764,
+      0.4264,
+      0.3902,
+      5.7989
+     ]
+    }
+   },
+   "outlier_chunk_detail": {
+    "run": "T10",
+    "chunk": 35,
+    "t_step": 280,
+    "seq": 36,
+    "ratio_to_trust_radius": 1.000264,
+    "per_joint_max_abs_deg": {
+     "left_arm_0": 8.5943,
+     "left_arm_1": 3.7632,
+     "left_arm_2": 8.5959,
+     "left_arm_3": 8.5949,
+     "left_arm_4": 8.5931,
+     "left_arm_5": 8.5966,
+     "left_arm_6": 8.5943
+    },
+    "n_joints_within_0.01deg_of_the_max": 6,
+    "max_deg": 8.5966,
+    "max_rad": 0.150039,
+    "recorded": {
+     "safe": true,
+     "trajopt_status": "feasible",
+     "max_violation_m": 0.0,
+     "notes": [
+      "time budget 50 ms reached after 1 iteration(s); returning the best iterate so far",
+      "reduction.rows_per_step=24 bound on at least one step; some near-active constraints were not shown to the QP (the final check still sees all of them)",
+      "limit overshoot (m or m/step): {'position': 4e-06, 'velocity': 0.0, 'acceleration': 0.000117}"
+     ],
+     "hold_reason": "",
+     "mvp_link": "attached:ee_finger_l1[11]",
+     "mvp_obstacle": null,
+     "mvp_clearance_mm_post_margin": 14.153,
+     "timing_ms": {
+      "policy_infer": 2877.4473667144775
+     }
+    },
+    "tightest_offline_rows": [
+     {
+      "sphere": 189,
+      "link": "ee_right",
+      "min_clearance_mm": 48.5993,
+      "nearest_body": "crate"
+     },
+     {
+      "sphere": 188,
+      "link": "ee_right",
+      "min_clearance_mm": 59.367,
+      "nearest_body": "crate"
+     },
+     {
+      "sphere": 187,
+      "link": "ee_right",
+      "min_clearance_mm": 70.4328,
+      "nearest_body": "crate"
+     },
+     {
+      "sphere": 144,
+      "link": "ee_left",
+      "min_clearance_mm": 72.6545,
+      "nearest_body": "crate"
+     },
+     {
+      "sphere": 227,
+      "link": "ee_finger_r2",
+      "min_clearance_mm": 76.4505,
+      "nearest_body": "crate"
+     },
+     {
+      "sphere": 226,
+      "link": "ee_finger_r2",
+      "min_clearance_mm": 76.9951,
+      "nearest_body": "crate"
+     },
+     {
+      "sphere": 225,
+      "link": "ee_finger_r2",
+      "min_clearance_mm": 77.6973,
+      "nearest_body": "crate"
+     },
+     {
+      "sphere": 224,
+      "link": "ee_finger_r2",
+      "min_clearance_mm": 78.553,
+      "nearest_body": "crate"
+     }
+    ]
+   }
+  },
+  "p4_t9_vs_t10": {
+   "axes": "per chunk: min over the 8 exec steps",
+   "runs": {
+    "T10": {
+     "n_chunks": 66,
+     "t_step": [
+      0,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136,
+      144,
+      152,
+      160,
+      168,
+      176,
+      184,
+      192,
+      200,
+      208,
+      216,
+      224,
+      232,
+      240,
+      248,
+      256,
+      264,
+      272,
+      280,
+      288,
+      296,
+      304,
+      312,
+      320,
+      328,
+      336,
+      344,
+      352,
+      360,
+      368,
+      376,
+      384,
+      392,
+      400,
+      408,
+      416,
+      424,
+      432,
+      440,
+      448,
+      456,
+      464,
+      472,
+      480,
+      488,
+      496,
+      504,
+      512,
+      520
+     ],
+     "tip_to_apple_reference_mm": [
+      143.6055,
+      144.974,
+      145.3255,
+      149.0749,
+      159.0625,
+      179.5335,
+      166.8836,
+      151.2595,
+      91.0643,
+      48.7695,
+      23.6361,
+      12.9687,
+      9.712,
+      24.4942,
+      37.9527,
+      39.2981,
+      37.5166,
+      43.4425,
+      42.0556,
+      51.3447,
+      65.1787,
+      52.4721,
+      55.7666,
+      62.1186,
+      66.117,
+      114.0309,
+      169.1465,
+      198.5358,
+      201.3911,
+      253.5341,
+      332.4192,
+      434.2303,
+      442.9863,
+      416.3644,
+      391.2518,
+      374.9818,
+      423.2133,
+      428.154,
+      432.3517,
+      430.951,
+      434.4731,
+      432.9325,
+      432.336,
+      433.852,
+      435.4979,
+      435.6716,
+      435.3419,
+      439.9356,
+      439.7562,
+      438.9038,
+      439.102,
+      437.9692,
+      438.567,
+      438.1365,
+      437.8646,
+      437.0179,
+      436.5813,
+      437.0233,
+      436.1055,
+      435.3112,
+      435.5417,
+      434.5385,
+      434.65,
+      434.5741,
+      435.4704,
+      434.5604
+     ],
+     "tip_to_apple_refined_mm": [
+      143.7209,
+      143.4178,
+      144.5145,
+      144.7188,
+      156.9399,
+      179.1603,
+      174.1308,
+      152.759,
+      112.4256,
+      70.8375,
+      33.6626,
+      28.9836,
+      27.584,
+      27.8331,
+      32.1318,
+      34.7925,
+      35.5018,
+      39.0884,
+      43.6002,
+      47.0933,
+      52.8732,
+      58.5386,
+      61.807,
+      62.2591,
+      64.3761,
+      120.7428,
+      162.6911,
+      198.9725,
+      207.0072,
+      256.7476,
+      326.0368,
+      413.3689,
+      426.0049,
+      423.7129,
+      394.8595,
+      395.6736,
+      418.1815,
+      422.0288,
+      426.9655,
+      427.6938,
+      434.3312,
+      434.8305,
+      433.3904,
+      435.8443,
+      436.3642,
+      437.6798,
+      439.4146,
+      440.2018,
+      440.7625,
+      439.6319,
+      439.7023,
+      438.8246,
+      439.3246,
+      438.7365,
+      438.7183,
+      437.52,
+      437.4349,
+      437.6878,
+      437.5821,
+      436.2069,
+      435.8429,
+      435.466,
+      435.1723,
+      435.4411,
+      435.9973,
+      434.8833
+     ],
+     "tip_to_apple_reference_min_mm": 9.712,
+     "tip_to_apple_refined_min_mm": 27.584,
+     "tip_to_apple_reference_min_t_step": 96,
+     "tip_to_apple_refined_min_t_step": 96,
+     "nearest_body_refined_apple_excluded": [
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate"
+     ],
+     "nearest_body_counts_approach": {
+      "crate": 26
+     },
+     "to_deviation_deg_per_chunk": [
+      0.127,
+      1.451,
+      1.5783,
+      2.0051,
+      0.7134,
+      0.6101,
+      1.3266,
+      0.5236,
+      1.1954,
+      1.2079,
+      0.5618,
+      1.0183,
+      1.4851,
+      0.595,
+      0.4171,
+      0.2583,
+      0.1558,
+      1.1953,
+      1.1061,
+      0.7547,
+      0.8719,
+      1.3206,
+      1.1284,
+      1.6185,
+      0.7115,
+      0.6886,
+      0.3843,
+      1.3996,
+      1.8743,
+      0.5263,
+      1.2975,
+      3.597,
+      2.787,
+      1.1236,
+      0.5479,
+      8.5966,
+      5.8553,
+      1.9785,
+      1.1349,
+      1.0357,
+      0.7206,
+      0.7655,
+      0.5665,
+      0.4027,
+      0.3071,
+      0.4255,
+      0.3217,
+      0.2265,
+      0.1883,
+      0.1492,
+      0.1729,
+      0.1772,
+      0.1635,
+      0.1545,
+      0.1448,
+      0.1533,
+      0.1694,
+      0.1633,
+      0.1699,
+      0.215,
+      0.1399,
+      0.1251,
+      0.1387,
+      0.206,
+      0.195,
+      0.122
+     ],
+     "to_deviation_deg_median_all": 0.5807,
+     "to_deviation_deg_median_approach": 0.9451
+    },
+    "T9": {
+     "n_chunks": 75,
+     "t_step": [
+      0,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136,
+      144,
+      152,
+      160,
+      168,
+      176,
+      184,
+      192,
+      200,
+      208,
+      216,
+      224,
+      232,
+      240,
+      248,
+      256,
+      264,
+      272,
+      280,
+      288,
+      296,
+      304,
+      312,
+      320,
+      328,
+      336,
+      344,
+      352,
+      360,
+      368,
+      376,
+      384,
+      392,
+      400,
+      408,
+      416,
+      424,
+      432,
+      440,
+      448,
+      456,
+      464,
+      472,
+      480,
+      488,
+      496,
+      504,
+      512,
+      520,
+      528,
+      536,
+      544,
+      552,
+      560,
+      568,
+      576,
+      584,
+      592
+     ],
+     "tip_to_apple_reference_mm": [
+      142.2457,
+      143.0128,
+      142.7832,
+      142.7125,
+      141.7033,
+      146.2867,
+      150.2364,
+      162.3092,
+      184.7365,
+      173.144,
+      103.6183,
+      59.9541,
+      22.5701,
+      12.1127,
+      2.1628,
+      6.1286,
+      16.2253,
+      44.2131,
+      115.3083,
+      182.2665,
+      167.4997,
+      176.5995,
+      183.5762,
+      154.749,
+      181.0155,
+      241.8266,
+      302.0255,
+      414.8064,
+      423.0253,
+      410.3236,
+      400.8891,
+      398.0592,
+      377.3088,
+      363.886,
+      363.4261,
+      363.7856,
+      361.1591,
+      363.6792,
+      364.4533,
+      362.9844,
+      362.6274,
+      363.5898,
+      358.4194,
+      361.2677,
+      358.9989,
+      359.6053,
+      359.4073,
+      357.822,
+      364.9463,
+      361.3236,
+      368.2812,
+      371.2992,
+      381.9384,
+      399.3098,
+      409.9711,
+      414.3989,
+      411.8506,
+      414.0814,
+      414.669,
+      418.0419,
+      423.9581,
+      425.3288,
+      429.8874,
+      431.5727,
+      433.8197,
+      433.3845,
+      435.5652,
+      424.0186,
+      428.0742,
+      426.4658,
+      428.0365,
+      420.513,
+      423.7602,
+      422.994,
+      422.3375
+     ],
+     "tip_to_apple_refined_mm": [
+      142.7469,
+      142.9417,
+      143.4297,
+      142.882,
+      142.7467,
+      144.1283,
+      145.5885,
+      162.9416,
+      183.7859,
+      163.3613,
+      124.724,
+      61.3232,
+      35.2887,
+      18.922,
+      17.5002,
+      18.0596,
+      29.0379,
+      48.7585,
+      116.2038,
+      185.0075,
+      165.726,
+      156.1642,
+      168.0446,
+      175.3917,
+      170.2162,
+      232.2547,
+      316.9106,
+      388.6912,
+      386.353,
+      379.6938,
+      376.1967,
+      373.1649,
+      368.7189,
+      369.0419,
+      365.7653,
+      365.1856,
+      363.9645,
+      364.9754,
+      364.6786,
+      365.6517,
+      364.7817,
+      365.5335,
+      362.9607,
+      360.3563,
+      361.0432,
+      361.6444,
+      361.1593,
+      359.9261,
+      361.2432,
+      362.6381,
+      367.2484,
+      370.4293,
+      381.9993,
+      401.4727,
+      410.2195,
+      413.0653,
+      413.3019,
+      413.9625,
+      414.9221,
+      418.9939,
+      423.4774,
+      425.8329,
+      429.5886,
+      432.7314,
+      433.6806,
+      434.2686,
+      418.307,
+      427.845,
+      426.6753,
+      427.3219,
+      413.2634,
+      423.5037,
+      423.2825,
+      423.3167,
+      401.8866
+     ],
+     "tip_to_apple_reference_min_mm": 2.1628,
+     "tip_to_apple_refined_min_mm": 17.5002,
+     "tip_to_apple_reference_min_t_step": 112,
+     "tip_to_apple_refined_min_t_step": 112,
+     "nearest_body_refined_apple_excluded": [
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "table",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate",
+      "crate"
+     ],
+     "nearest_body_counts_approach": {
+      "crate": 25,
+      "table": 1
+     },
+     "to_deviation_deg_per_chunk": [
+      0.2993,
+      0.8389,
+      0.6296,
+      1.6286,
+      0.6603,
+      2.0854,
+      2.6952,
+      0.6721,
+      1.3766,
+      1.5979,
+      1.3929,
+      0.5305,
+      0.8885,
+      0.6705,
+      0.957,
+      0.8754,
+      4.5924,
+      2.6603,
+      0.3657,
+      2.5037,
+      1.5997,
+      4.5639,
+      3.6176,
+      3.5138,
+      5.5157,
+      3.4343,
+      3.4395,
+      5.4587,
+      3.8965,
+      4.2928,
+      3.9919,
+      4.1969,
+      3.3436,
+      1.1773,
+      0.4481,
+      0.6514,
+      0.526,
+      4.3584,
+      1.0488,
+      0.9099,
+      0.7592,
+      0.5817,
+      4.5318,
+      0.9347,
+      1.1139,
+      1.0645,
+      0.8272,
+      1.0688,
+      0.6804,
+      0.9904,
+      0.97,
+      1.161,
+      0.6142,
+      3.994,
+      3.0258,
+      0.9574,
+      0.9939,
+      0.4047,
+      1.1501,
+      1.508,
+      0.3769,
+      0.7113,
+      0.9311,
+      0.4733,
+      0.5006,
+      0.2793,
+      4.238,
+      1.0602,
+      0.4224,
+      0.2269,
+      3.4839,
+      1.0764,
+      0.4264,
+      0.3902,
+      5.7989
+     ],
+     "to_deviation_deg_median_all": 1.0602,
+     "to_deviation_deg_median_approach": 1.4954
+    }
+   }
+  },
+  "recheck_of_lead_numbers": {
+   "apple_max_lift_mm": 0.002,
+   "apple_max_total_displacement_mm": 0.5431,
+   "n_chunks_safe": 66,
+   "n_chunks": 66,
+   "max_violation_m_max": 0.0,
+   "to_deviation_median_deg_all_T10": 0.5807,
+   "to_deviation_median_deg_approach_T10": 0.9451,
+   "to_deviation_median_deg_all_T9": 1.0602,
+   "to_deviation_median_deg_approach_T9": 1.4954,
+   "note": "lead 가 이미 낸 값의 재확인이다 (들림 0.0200 mm, 변위 0.5431 mm, safe 66/66, 중앙값 1.060 -> 0.581, 접근 구간 1.060 -> 0.945)"
+  },
+  "scene_figure_panels": [
+   {
+    "t_step": 96,
+    "chunk_index": 12,
+    "seq": 13,
+    "exec_step": 6,
+    "nearest_body_all": "apple",
+    "nearest_mm_all": 28.3991,
+    "nearest_link_all": "ee_finger_l1",
+    "nearest_body_apple_excluded": "crate",
+    "nearest_mm_apple_excluded": 40.4719,
+    "nearest_link_apple_excluded": "ee_left",
+    "crate_rim_top_z_m": 0.97699,
+    "table_top_z_m": 0.82,
+    "apple_pos_m": [
+     0.563457,
+     0.320487,
+     0.850001
+    ],
+    "recorded_worst_row": {
+     "t_step": 96,
+     "seq": 13,
+     "recorded_link": "ee_finger_l2",
+     "recorded_obstacle": null,
+     "recorded_clearance_mm_post_margin": 3.4527,
+     "sphere_index": 260,
+     "sphere_link_offline": "ee_finger_l2",
+     "link_name_matches": true,
+     "step": 5,
+     "is_attached_query_point": false,
+     "nearest_body_all": "apple",
+     "nearest_mm_all": 32.3163,
+     "nearest_body_apple_excluded": "table",
+     "nearest_mm_apple_excluded": 84.3073,
+     "by_body_mm": {
+      "apple": 32.3163,
+      "banana": 587.9771,
+      "crate": 107.8115,
+      "orange": 113.5775,
+      "pear": 611.3555,
+      "table": 84.3073
+     },
+     "esdf_d_minus_r_mm": 13.4527,
+     "offline_minus_esdf_mm_all_bodies": 18.8635,
+     "offline_minus_esdf_mm_apple_excluded": 70.8545
+    },
+    "recorded_max_violation_pair": {
+     "block": "esdf",
+     "clearance_m": 0.0034527333673248783,
+     "step": 5,
+     "query": 260,
+     "link": "ee_finger_l2",
+     "slot": null,
+     "candidate_id": null,
+     "obstacle": null,
+     "point_m": [
+      0.5916241156262781,
+      0.3055422747663657,
+      0.9079096401533373
+     ]
+    },
+    "safe": true
+   },
+   {
+    "t_step": 192,
+    "chunk_index": 24,
+    "seq": 25,
+    "exec_step": 5,
+    "nearest_body_all": "crate",
+    "nearest_mm_all": 31.2329,
+    "nearest_link_all": "ee_left",
+    "nearest_body_apple_excluded": "crate",
+    "nearest_mm_apple_excluded": 31.2329,
+    "nearest_link_apple_excluded": "ee_left",
+    "crate_rim_top_z_m": 0.97699,
+    "table_top_z_m": 0.82,
+    "apple_pos_m": [
+     0.563388,
+     0.320561,
+     0.850002
+    ],
+    "recorded_worst_row": {
+     "t_step": 192,
+     "seq": 25,
+     "recorded_link": "ee_left",
+     "recorded_obstacle": null,
+     "recorded_clearance_mm_post_margin": 16.8396,
+     "sphere_index": 144,
+     "sphere_link_offline": "ee_left",
+     "link_name_matches": true,
+     "step": 5,
+     "is_attached_query_point": false,
+     "nearest_body_all": "crate",
+     "nearest_mm_all": 31.2329,
+     "nearest_body_apple_excluded": "crate",
+     "nearest_mm_apple_excluded": 31.2329,
+     "by_body_mm": {
+      "apple": 124.687,
+      "banana": 520.5707,
+      "crate": 31.2329,
+      "orange": 160.3883,
+      "pear": 541.0239,
+      "table": 159.086
+     },
+     "esdf_d_minus_r_mm": 26.8396,
+     "offline_minus_esdf_mm_all_bodies": 4.3933,
+     "offline_minus_esdf_mm_apple_excluded": 4.3933
+    },
+    "recorded_max_violation_pair": {
+     "block": "esdf",
+     "clearance_m": 0.016839636354828144,
+     "step": 5,
+     "query": 144,
+     "link": "ee_left",
+     "slot": null,
+     "candidate_id": null,
+     "obstacle": null,
+     "point_m": [
+      0.5603294910235588,
+      0.2310814019401693,
+      0.9880035303066653
+     ]
+    },
+    "safe": true
+   }
+  ]
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t10a/t10a-scene.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t10a/t10a-scene.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t10a/t10a-graphs.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t10a/t10a-graphs.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t10a/t10a-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t10a/t10a-table.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": null,
+  "note": "regression baseline 을 다시 돌리지 않았다 (기록 분석이다). 구 모델은 T9a 에서 서버 시작 로그와 대조를 마쳤고 (266 구 · 36 capsule · arm_5 19.53 mm · 손가락 4.72 mm · 손바닥 8.92 mm) 이번에 같은 설정으로 다시 세워 같은 값을 받았다."
+ },
+ "verdict": "P1 접근 구간(t<=200, 26 chunk)에서 gripper 구(ee_finger_l1/l2 · ee_left)에 가장 가까운 MuJoCo 참값 body 는 **사과를 빼면 26/26 chunk 전부 crate** 이고 최소 30.6962 mm (t=176) 다. 사과를 포함하면 crate 19 · apple 7 이고 사과 최소는 27.5840 mm (t=96) 다. body 별 접근 구간 최소는 crate 30.70 · table 58.29 · orange 91.71 · banana 516.56 · pear 526.57 mm 다 — **margin 10 mm 안에 들어온 참값 body 는 하나도 없다.** 기록의 가장 빡빡한 행 25 개(로봇 구 위)에 대해 그 구의 참값 최근접을 이름 지으면 crate 16 · apple 9 (사과 제외 시 crate 17 · table 8) 이다. 같은 구에서 기록 ESDF 거리(d-r = clearance_m + margin)와 참값 거리를 견주면 차이가 최소 -19.11 · 중앙값 +3.22 · 최대 +32.23 mm 이고 25 행 중 18 행에서 참값이 더 멀다. t=80~128 구간이 특히 벌어진다 (예: t=96 ESDF 13.45 mm 대 참값 사과 32.32 mm · 사과 제외 table 84.31 mm). 그 25 행의 기록 obstacle 은 전부 None 이다. P2 정책 원본 chunk 의 gripper 구는 사과를 빼면 접근 구간 전체에서 최소 clearance 가 32.3123 mm (crate · ee_left · t=192) 라 **margin 10/5/2/1/0 mm 어디에서도 활성 행이 0** 이다. 사과를 포함하면 임계 margin 이 9.7120 mm (apple · ee_finger_l1 · t=96) 이고, margin 10 mm 에서 1 행(1 chunk)이 활성이며 5 mm 로 내리면 0 이 된다. P3 trust region 은 T10 chunk 35 (t=280) 에서 비율 1.000264 로 한 걸음을 가득 썼다 (8.5966° = 0.15004 rad, trust_radius 0.15 rad, config.py:286). 그 chunk 는 7 관절 중 6 개가 최대값의 0.01° 안에서 함께 움직였고 기록은 safe=True · feasible · max_violation 0.0 · mvp attached:ee_finger_l1[11] 이다. **접근 구간에서는 같은 일이 일어나지 않는다**: 비율 최대가 T10 0.2333 · T9 0.6418 이고 0.95 를 넘는 chunk 는 두 실행 모두 0 개, 0.50 을 넘는 chunk 는 T10 0 개 · T9 3 개다. P4 목적함수를 끄자 TO 편차 중앙값은 전 구간 1.0602° -> 0.5807°, 접근 구간 1.4954° -> 0.9451° 로 줄었고, 손끝-사과 최소 거리는 정책 원본 +2.1628 -> +9.7120 mm, TO 출력 +17.5002 -> +27.5840 mm 로 오히려 늘었다. 접근 구간 최근접 body 분포는 T9 crate 25 · table 1 에서 T10 crate 26 으로 거의 그대로다. 재확인: 사과 들림 0.0020 mm · 최대 변위 0.5431 mm · safe 66/66 · max_violation_m 최대 0.0.",
+ "not_measured": [
+  "rollout — 돌리지 않았다. 모든 수치는 기록된 qpos 와 두 chunk 의 FK 재구성이다.",
+  "ESDF 거리장 자체 — 기록에 거리장이 없다. \"ESDF d-r\" 은 chunk 마다 한 행(max_violation_pair)만 있고, 그 행이 어느 표면을 가리켰는지는 기록에 없다 (obstacle 이 None 이다). 거리장을 저장하거나 행의 obstacle 을 이름 짓는 것은 구현 필요.",
+  "ESDF 와 참값이 갈리는 이유 — 카메라 점구름·voxel 크기·self-filter 잔여·target-free 계층 중 무엇인지 기록만으로 가를 수 없다. 여기서는 두 값을 나란히 냈을 뿐이다.",
+  "QP 가 실제로 본 활성 행 집합 — chunk 마다 한 행만 기록된다. \"위반은 아니지만 활성\" 인 행이 몇 개였는지 셀 수 없다. 구현 필요.",
+  "미래 물체 pose — 기록에 chunk 시점 pose 하나뿐이다. 실행 창 8 step 은 이 가정이 가장 짧게 걸리는 구간이라 그 창만 썼다.",
+  "attached 점의 좌표와 개수 — query index >= 266 인 행은 로봇 구가 아니라 attached 점이고 (T10 접근 구간 25 행 중 1 행) 오프라인 구 tensor 로 이름 지을 수 없다.",
+  "trust region 이 chunk 35 에서 가득 찬 원인 — 그 걸음을 요구한 제약 행이 무엇인지는 기록의 한 행(mvp attached:ee_finger_l1[11])만으로 정할 수 없다."
+ ]
+}

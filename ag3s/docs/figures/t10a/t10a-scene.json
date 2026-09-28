@@ -1,0 +1,129 @@
+{
+ "margin_mm": 10.0,
+ "panels": [
+  {
+   "t_step": 96,
+   "chunk_index": 12,
+   "seq": 13,
+   "exec_step": 6,
+   "nearest_body_all": "apple",
+   "nearest_mm_all": 28.3991,
+   "nearest_link_all": "ee_finger_l1",
+   "nearest_body_apple_excluded": "crate",
+   "nearest_mm_apple_excluded": 40.4719,
+   "nearest_link_apple_excluded": "ee_left",
+   "crate_rim_top_z_m": 0.97699,
+   "table_top_z_m": 0.82,
+   "apple_pos_m": [
+    0.563457,
+    0.320487,
+    0.850001
+   ],
+   "recorded_worst_row": {
+    "t_step": 96,
+    "seq": 13,
+    "recorded_link": "ee_finger_l2",
+    "recorded_obstacle": null,
+    "recorded_clearance_mm_post_margin": 3.4527,
+    "sphere_index": 260,
+    "sphere_link_offline": "ee_finger_l2",
+    "link_name_matches": true,
+    "step": 5,
+    "is_attached_query_point": false,
+    "nearest_body_all": "apple",
+    "nearest_mm_all": 32.3163,
+    "nearest_body_apple_excluded": "table",
+    "nearest_mm_apple_excluded": 84.3073,
+    "by_body_mm": {
+     "apple": 32.3163,
+     "banana": 587.9771,
+     "crate": 107.8115,
+     "orange": 113.5775,
+     "pear": 611.3555,
+     "table": 84.3073
+    },
+    "esdf_d_minus_r_mm": 13.4527,
+    "offline_minus_esdf_mm_all_bodies": 18.8635,
+    "offline_minus_esdf_mm_apple_excluded": 70.8545
+   },
+   "recorded_max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.0034527333673248783,
+    "step": 5,
+    "query": 260,
+    "link": "ee_finger_l2",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": null,
+    "point_m": [
+     0.5916241156262781,
+     0.3055422747663657,
+     0.9079096401533373
+    ]
+   },
+   "safe": true
+  },
+  {
+   "t_step": 192,
+   "chunk_index": 24,
+   "seq": 25,
+   "exec_step": 5,
+   "nearest_body_all": "crate",
+   "nearest_mm_all": 31.2329,
+   "nearest_link_all": "ee_left",
+   "nearest_body_apple_excluded": "crate",
+   "nearest_mm_apple_excluded": 31.2329,
+   "nearest_link_apple_excluded": "ee_left",
+   "crate_rim_top_z_m": 0.97699,
+   "table_top_z_m": 0.82,
+   "apple_pos_m": [
+    0.563388,
+    0.320561,
+    0.850002
+   ],
+   "recorded_worst_row": {
+    "t_step": 192,
+    "seq": 25,
+    "recorded_link": "ee_left",
+    "recorded_obstacle": null,
+    "recorded_clearance_mm_post_margin": 16.8396,
+    "sphere_index": 144,
+    "sphere_link_offline": "ee_left",
+    "link_name_matches": true,
+    "step": 5,
+    "is_attached_query_point": false,
+    "nearest_body_all": "crate",
+    "nearest_mm_all": 31.2329,
+    "nearest_body_apple_excluded": "crate",
+    "nearest_mm_apple_excluded": 31.2329,
+    "by_body_mm": {
+     "apple": 124.687,
+     "banana": 520.5707,
+     "crate": 31.2329,
+     "orange": 160.3883,
+     "pear": 541.0239,
+     "table": 159.086
+    },
+    "esdf_d_minus_r_mm": 26.8396,
+    "offline_minus_esdf_mm_all_bodies": 4.3933,
+    "offline_minus_esdf_mm_apple_excluded": 4.3933
+   },
+   "recorded_max_violation_pair": {
+    "block": "esdf",
+    "clearance_m": 0.016839636354828144,
+    "step": 5,
+    "query": 144,
+    "link": "ee_left",
+    "slot": null,
+    "candidate_id": null,
+    "obstacle": null,
+    "point_m": [
+     0.5603294910235588,
+     0.2310814019401693,
+     0.9880035303066653
+    ]
+   },
+   "safe": true
+  }
+ ]
+}

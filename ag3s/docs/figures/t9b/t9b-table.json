@@ -1,0 +1,429 @@
+{
+ "n1": {
+  "metric": "per link, min over the 8 execution steps of (surface distance to apple - sphere radius) [mm]",
+  "link_axis": [
+   "ee_finger_l1",
+   "ee_finger_l2",
+   "ee_finger_r1",
+   "ee_finger_r2",
+   "ee_left",
+   "ee_right",
+   "link_left_arm_0",
+   "link_left_arm_1",
+   "link_left_arm_2",
+   "link_left_arm_3",
+   "link_left_arm_4",
+   "link_left_arm_5",
+   "link_left_arm_6",
+   "link_right_arm_0",
+   "link_right_arm_1",
+   "link_right_arm_2",
+   "link_right_arm_3",
+   "link_right_arm_4",
+   "link_right_arm_5",
+   "link_right_arm_6"
+  ],
+  "nearest_link_counts_reference": {
+   "ee_finger_l2": 37,
+   "ee_left": 26,
+   "ee_finger_l1": 12
+  },
+  "nearest_link_counts_refined": {
+   "ee_finger_l2": 38,
+   "ee_left": 24,
+   "ee_finger_l1": 13
+  },
+  "n_chunks": 75,
+  "n_chunks_same_nearest_link": 70,
+  "n_chunks_different_nearest_link": 5,
+  "chunks_where_nearest_link_differs": [
+   {
+    "chunk": 7,
+    "t_step": 56,
+    "reference_nearest": "ee_finger_l2",
+    "reference_mm": 162.3092,
+    "refined_nearest": "ee_finger_l1",
+    "refined_mm": 162.9416
+   },
+   {
+    "chunk": 15,
+    "t_step": 120,
+    "reference_nearest": "ee_finger_l2",
+    "reference_mm": 6.1286,
+    "refined_nearest": "ee_finger_l1",
+    "refined_mm": 18.0596
+   },
+   {
+    "chunk": 20,
+    "t_step": 160,
+    "reference_nearest": "ee_finger_l1",
+    "reference_mm": 167.4997,
+    "refined_nearest": "ee_finger_l2",
+    "refined_mm": 165.7259
+   },
+   {
+    "chunk": 27,
+    "t_step": 216,
+    "reference_nearest": "ee_left",
+    "reference_mm": 412.9213,
+    "refined_nearest": "ee_finger_l2",
+    "refined_mm": 388.6912
+   },
+   {
+    "chunk": 37,
+    "t_step": 296,
+    "reference_nearest": "ee_left",
+    "reference_mm": 362.0865,
+    "refined_nearest": "ee_finger_l2",
+    "refined_mm": 364.9754
+   }
+  ],
+  "global_min_mm_reference": 2.1628,
+  "global_min_link_reference": "ee_finger_l1",
+  "global_min_chunk_reference": 14,
+  "global_min_mm_refined": 17.5002,
+  "global_min_link_refined": "ee_finger_l1",
+  "global_min_chunk_refined": 14,
+  "per_link_min_over_all_chunks_mm": {
+   "ee_finger_l1": {
+    "reference": 2.1628,
+    "refined": 17.5002,
+    "refined_minus_reference": 15.3373
+   },
+   "ee_finger_l2": {
+    "reference": 2.2763,
+    "refined": 17.7608,
+    "refined_minus_reference": 15.4844
+   },
+   "ee_finger_r1": {
+    "reference": 586.4465,
+    "refined": 586.8374,
+    "refined_minus_reference": 0.391
+   },
+   "ee_finger_r2": {
+    "reference": 577.9889,
+    "refined": 578.3767,
+    "refined_minus_reference": 0.3879
+   },
+   "ee_left": {
+    "reference": 44.8921,
+    "refined": 52.0203,
+    "refined_minus_reference": 7.1281
+   },
+   "ee_right": {
+    "reference": 543.5315,
+    "refined": 543.8438,
+    "refined_minus_reference": 0.3123
+   },
+   "link_left_arm_0": {
+    "reference": 696.3618,
+    "refined": 696.3566,
+    "refined_minus_reference": -0.0052
+   },
+   "link_left_arm_1": {
+    "reference": 520.157,
+    "refined": 520.5669,
+    "refined_minus_reference": 0.4099
+   },
+   "link_left_arm_2": {
+    "reference": 439.1384,
+    "refined": 438.6357,
+    "refined_minus_reference": -0.5027
+   },
+   "link_left_arm_3": {
+    "reference": 293.0817,
+    "refined": 293.5175,
+    "refined_minus_reference": 0.4358
+   },
+   "link_left_arm_4": {
+    "reference": 204.4142,
+    "refined": 206.6727,
+    "refined_minus_reference": 2.2585
+   },
+   "link_left_arm_5": {
+    "reference": 120.4649,
+    "refined": 124.1416,
+    "refined_minus_reference": 3.6767
+   },
+   "link_left_arm_6": {
+    "reference": 130.1245,
+    "refined": 130.6296,
+    "refined_minus_reference": 0.5051
+   },
+   "link_right_arm_0": {
+    "reference": 852.9788,
+    "refined": 852.981,
+    "refined_minus_reference": 0.0022
+   },
+   "link_right_arm_1": {
+    "reference": 813.6511,
+    "refined": 813.707,
+    "refined_minus_reference": 0.0559
+   },
+   "link_right_arm_2": {
+    "reference": 749.9,
+    "refined": 749.9277,
+    "refined_minus_reference": 0.0277
+   },
+   "link_right_arm_3": {
+    "reference": 721.8326,
+    "refined": 721.9388,
+    "refined_minus_reference": 0.1061
+   },
+   "link_right_arm_4": {
+    "reference": 735.3032,
+    "refined": 735.6892,
+    "refined_minus_reference": 0.386
+   },
+   "link_right_arm_5": {
+    "reference": 642.4969,
+    "refined": 642.771,
+    "refined_minus_reference": 0.2741
+   },
+   "link_right_arm_6": {
+    "reference": 613.7049,
+    "refined": 613.9701,
+    "refined_minus_reference": 0.2652
+   }
+  },
+  "closest_chunk_detail": {
+   "chunk": 14,
+   "t_step": 112,
+   "ranking_reference": [
+    {
+     "link": "ee_finger_l1",
+     "mm": 2.1628
+    },
+    {
+     "link": "ee_finger_l2",
+     "mm": 2.2763
+    },
+    {
+     "link": "ee_left",
+     "mm": 47.5789
+    },
+    {
+     "link": "link_left_arm_5",
+     "mm": 131.0172
+    },
+    {
+     "link": "link_left_arm_6",
+     "mm": 142.5503
+    },
+    {
+     "link": "link_left_arm_4",
+     "mm": 218.9949
+    }
+   ],
+   "ranking_refined": [
+    {
+     "link": "ee_finger_l1",
+     "mm": 17.5002
+    },
+    {
+     "link": "ee_finger_l2",
+     "mm": 17.7608
+    },
+    {
+     "link": "ee_left",
+     "mm": 61.1064
+    },
+    {
+     "link": "link_left_arm_5",
+     "mm": 137.2373
+    },
+    {
+     "link": "link_left_arm_6",
+     "mm": 143.8229
+    },
+    {
+     "link": "link_left_arm_4",
+     "mm": 223.1239
+    }
+   ]
+  }
+ },
+ "n2": {
+  "metric": "ee_finger_l1/l2 body origin, reference minus refined [mm]",
+  "bodies": [
+   "ee_finger_l1",
+   "ee_finger_l2"
+  ],
+  "max_abs_mm": 53.3352,
+  "max_abs_chunk": 27,
+  "max_abs_step": 6,
+  "median_over_chunks_of_max_mm": 6.5408,
+  "mean_mm": 8.5363,
+  "component_max_abs_mm": {
+   "x": 25.8034,
+   "y": 46.3947,
+   "z": 32.2772
+  },
+  "component_mean_signed_mm": {
+   "x": -1.8648,
+   "y": -1.6301,
+   "z": 0.4954
+  },
+  "per_step_mean_mm": [
+   5.0826,
+   6.256,
+   7.417,
+   8.1085,
+   9.208,
+   9.8724,
+   10.8587,
+   11.4872
+  ],
+  "tip_to_apple_mm": {
+   "reference_min": 2.1628,
+   "refined_min": 17.5002,
+   "refined_minus_reference_at_the_reference_min_chunk": 15.3373
+  }
+ },
+ "n3": {
+  "chunk": 14,
+  "t_step": 112,
+  "horizon": 50,
+  "metric": "min over left fingertip spheres of (surface distance to apple - radius)",
+  "reference_min_mm_over_50_steps": -3.2605,
+  "reference_argmin_step": 35,
+  "refined_min_mm_over_50_steps": -3.2605,
+  "refined_argmin_step": 35,
+  "reference_min_mm_in_exec8": 2.1628,
+  "refined_min_mm_in_exec8": 17.5002,
+  "reference_below_0mm_steps": 39,
+  "refined_below_0mm_steps": 39,
+  "note": "물체 pose 는 이 chunk 시점 값으로 50 step 내내 고정된다 (기록에 미래 pose 가 없다)"
+ },
+ "n4": {
+  "metric": "|J_j(q_reference) * (refined_j - reference_j)| at ee_finger_l1, in mm",
+  "jacobian": "mujoco.mj_jacBody translational part at the reference pose of each step",
+  "joints": [
+   "left_arm_0",
+   "left_arm_1",
+   "left_arm_2",
+   "left_arm_3",
+   "left_arm_4",
+   "left_arm_5",
+   "left_arm_6"
+  ],
+  "mean_contribution_mm": {
+   "left_arm_0": 5.2054,
+   "left_arm_1": 4.7142,
+   "left_arm_2": 2.4983,
+   "left_arm_3": 4.5375,
+   "left_arm_4": 1.6922,
+   "left_arm_5": 3.6447,
+   "left_arm_6": 0.3673
+  },
+  "max_contribution_mm": {
+   "left_arm_0": 37.6965,
+   "left_arm_1": 51.2341,
+   "left_arm_2": 23.8114,
+   "left_arm_3": 37.2432,
+   "left_arm_4": 11.0783,
+   "left_arm_5": 21.9304,
+   "left_arm_6": 4.8526
+  },
+  "total_contribution_share": {
+   "left_arm_0": 0.229721,
+   "left_arm_1": 0.208044,
+   "left_arm_2": 0.110253,
+   "left_arm_3": 0.200248,
+   "left_arm_4": 0.074679,
+   "left_arm_5": 0.160847,
+   "left_arm_6": 0.016207
+  },
+  "largest_mean_joint": "left_arm_0",
+  "largest_max_joint": "left_arm_1",
+  "largest_share_joint": "left_arm_0",
+  "degree_vs_mm": {
+   "max_abs_deg_by_joint": {
+    "left_arm_0": 4.339,
+    "left_arm_1": 5.4587,
+    "left_arm_2": 5.5158,
+    "left_arm_3": 4.5924,
+    "left_arm_4": 2.7824,
+    "left_arm_5": 5.5157,
+    "left_arm_6": 5.7989
+   },
+   "mm_per_deg_mean": {
+    "left_arm_0": 9.7367,
+    "left_arm_1": 9.5429,
+    "left_arm_2": 4.6705,
+    "left_arm_3": 6.457,
+    "left_arm_4": 3.8883,
+    "left_arm_5": 3.9991,
+    "left_arm_6": 0.6188
+   },
+   "note": "도 단위 크기와 손끝 mm 기여를 나란히 놓은 것이다 — 같은 1° 라도 어깨와 손목의 손끝 변위가 다르다는 것을 이 두 줄이 보인다"
+  },
+  "linearisation_check": {
+   "mean_predicted_mm": 8.5315,
+   "mean_actual_mm": 8.5504,
+   "max_abs_residual_mm": 1.076,
+   "note": "predicted 는 1차 Jacobian 합, actual 은 두 자세의 실제 FK 차이다"
+  }
+ },
+ "n5": {
+  "column_7": {
+   "n_elements": 3750,
+   "n_bitwise_identical": 3750,
+   "all_identical": true,
+   "max_abs_difference": 0.0,
+   "n_differing_elements": 0,
+   "value_min": -0.009425194934010506,
+   "value_max": 1.022444725036621
+  },
+  "column_15": {
+   "n_elements": 3750,
+   "n_bitwise_identical": 3750,
+   "all_identical": true,
+   "max_abs_difference": 0.0,
+   "n_differing_elements": 0,
+   "value_min": 0.9912607073783875,
+   "value_max": 1.0126667022705078
+  },
+  "window": "all 75 chunks x 50 steps (not just the 8-step execution window)",
+  "comparison": "numpy elementwise == on float64 parsed from the record",
+  "sanity_joint_deltas_deg": {
+   "left_arm_max_abs_deg_exec8": [
+    4.339,
+    5.4587,
+    5.5158,
+    4.5924,
+    2.7824,
+    5.5157,
+    5.7989
+   ],
+   "right_arm_max_abs_deg_exec8": [
+    0.2579,
+    0.0946,
+    0.1061,
+    0.1627,
+    0.143,
+    0.2722,
+    0.2298
+   ],
+   "per_chunk_max_abs_deg_median_exec8": 1.0602,
+   "note": "lead 가 이미 잰 값의 재확인이다 (L0~L6 4.3~5.8°, 중앙값 1.06°, 오른팔 0.04~0.10°)"
+  }
+ },
+ "method": {
+  "offline_rebuild": "기록된 qpos (물체 free joint 포함) + chunk action -> 제약 구 266 개 중심 -> MuJoCo 충돌 geom 표면까지 해석적 거리. mj_geomDistance 미사용. T9a m0_state_tensor.py 와 같은 방법.",
+  "sphere_options": {
+   "sphere_spacing": 0.4,
+   "max_spheres_per_capsule": 32,
+   "capsule_radius_scale": 0.2,
+   "capsule_extent_by_link": {
+    "link_left_arm_5": -0.1,
+    "link_right_arm_5": -0.1
+   }
+  },
+  "n_spheres": 266,
+  "n_capsules": 36,
+  "clearance_definition": "surface_distance(sphere centre, apple geom) - sphere radius (PRE-margin; esdf_margin 10 mm 는 빼지 않았다)",
+  "fingertip_point": "ee_finger_l1 / ee_finger_l2 의 MuJoCo body origin (구 중심이 아니라 link frame 원점)",
+  "action_column_map": "left_arm_0..6 -> col 0..6, left gripper col 7, right_arm_0..6 -> col 8..14, right gripper col 15 (lead 가 types.py:193-198 / :120 / :142 로 확인)"
+ }
+}

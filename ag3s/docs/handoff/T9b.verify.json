@@ -1,0 +1,1674 @@
+{
+ "step": "T9b",
+ "date": "2026-09-26",
+ "task": "benchmark/ag3s/docs/handoff/T9b.task.md",
+ "runs": [
+  {
+   "id": "n1to5",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T9b/n1to5.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T9b/n1to5.json",
+   "extra_output": "outputs/verify/T9b/n1to5_curves.npz",
+   "stdout_log": "outputs/verify/T9b/n1to5.log"
+  },
+  {
+   "id": "fig1_scene",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T9b/fig1_scene.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "benchmark/ag3s/docs/figures/t9b/t9b-scene.json",
+   "stdout_log": "outputs/verify/T9b/fig1.log"
+  },
+  {
+   "id": "fig2_graphs",
+   "command": "PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T9b/fig2_graphs.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "benchmark/ag3s/docs/figures/t9b/t9b-graphs.json",
+   "stdout_log": "outputs/verify/T9b/fig2.log"
+  },
+  {
+   "id": "fig3_tables",
+   "command": "PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -u outputs/verify/T9b/fig3_tables.py",
+   "venv": ".venv-ag3s",
+   "raw_output": "benchmark/ag3s/docs/figures/t9b/t9b-table.json",
+   "stdout_log": "outputs/verify/T9b/fig3.log"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark (nested git repo at /mnt/dev/work/benchmark)",
+  "head": "(A1 작업 중 — 코드를 읽기만 했고 커밋 상태를 바꾸지 않았다)",
+  "note": "benchmark/**/*.py 를 고치지 않았다. 구 모델은 UrdfSphereChain 을 서버와 같은 설정으로 세워 읽었고 266 구 · 36 capsule 로 T9a 에서 서버 로그와 대조를 마쳤다. 포트 8123 서버를 건드리지 않았다.",
+  "inputs": "outputs/live_test/20260926_t9/execute_ep1807/frames.jsonl 그대로. MuJoCo rollout 없음."
+ },
+ "method": {
+  "offline_rebuild": "기록된 qpos (물체 free joint 포함) + chunk action -> 제약 구 266 개 중심 -> MuJoCo 충돌 geom 표면까지 해석적 거리. mj_geomDistance 미사용. T9a m0_state_tensor.py 와 같은 방법.",
+  "sphere_options": {
+   "sphere_spacing": 0.4,
+   "max_spheres_per_capsule": 32,
+   "capsule_radius_scale": 0.2,
+   "capsule_extent_by_link": {
+    "link_left_arm_5": -0.1,
+    "link_right_arm_5": -0.1
+   }
+  },
+  "n_spheres": 266,
+  "n_capsules": 36,
+  "clearance_definition": "surface_distance(sphere centre, apple geom) - sphere radius (PRE-margin; esdf_margin 10 mm 는 빼지 않았다)",
+  "fingertip_point": "ee_finger_l1 / ee_finger_l2 의 MuJoCo body origin (구 중심이 아니라 link frame 원점)",
+  "action_column_map": "left_arm_0..6 -> col 0..6, left gripper col 7, right_arm_0..6 -> col 8..14, right gripper col 15 (lead 가 types.py:193-198 / :120 / :142 로 확인)",
+  "jacobian": "N4 는 mujoco.mj_jacBody 의 translational 행을 각 step 의 reference 자세에서 받아 contribution_j = |J[:, dof_j] * (refined_j - reference_j)| (mm) 로 갈랐다.",
+  "clearance_is_pre_margin": "이 측정의 clearance 는 surface_distance - sphere_radius 로 esdf margin 10 mm 를 빼지 않은 값이다. 기록의 max_violation_pair.clearance_m 은 post-margin 이라 (T9a 참조) 둘을 직접 견주면 안 된다.",
+  "what_the_lead_already_did": "chunk 열 -> 관절 매핑이 이름 기반이고 정·역이 같은 배열을 쓴다는 것(types.py:193-198 / :120 / :142)은 lead 가 코드로 확인했다. 이 측정은 그것을 다시 하지 않고 기록 수치로 재확인만 했다 (n5_gripper_columns.sanity_joint_deltas_deg)."
+ },
+ "numbers": {
+  "_comment": "로그와 논문에 쓰이는 모든 수치가 여기에만 있다.",
+  "setup": {
+   "record": "/mnt/dev/work/outputs/live_test/20260926_t9/execute_ep1807/frames.jsonl",
+   "n_chunks": 75,
+   "horizon": 50,
+   "exec_window": 8,
+   "n_spheres": 266,
+   "n_capsules": 36,
+   "sphere_options": {
+    "sphere_spacing": 0.4,
+    "max_spheres_per_capsule": 32,
+    "capsule_radius_scale": 0.2,
+    "capsule_extent_by_link": {
+     "link_left_arm_5": -0.1,
+     "link_right_arm_5": -0.1
+    }
+   },
+   "esdf_margin_mm": 10.0,
+   "elapsed_s": 5.7
+  },
+  "n1_link_to_apple": {
+   "metric": "per link, min over the 8 execution steps of (surface distance to apple - sphere radius) [mm]",
+   "link_axis": [
+    "ee_finger_l1",
+    "ee_finger_l2",
+    "ee_finger_r1",
+    "ee_finger_r2",
+    "ee_left",
+    "ee_right",
+    "link_left_arm_0",
+    "link_left_arm_1",
+    "link_left_arm_2",
+    "link_left_arm_3",
+    "link_left_arm_4",
+    "link_left_arm_5",
+    "link_left_arm_6",
+    "link_right_arm_0",
+    "link_right_arm_1",
+    "link_right_arm_2",
+    "link_right_arm_3",
+    "link_right_arm_4",
+    "link_right_arm_5",
+    "link_right_arm_6"
+   ],
+   "nearest_link_counts_reference": {
+    "ee_finger_l2": 37,
+    "ee_left": 26,
+    "ee_finger_l1": 12
+   },
+   "nearest_link_counts_refined": {
+    "ee_finger_l2": 38,
+    "ee_left": 24,
+    "ee_finger_l1": 13
+   },
+   "n_chunks": 75,
+   "n_chunks_same_nearest_link": 70,
+   "n_chunks_different_nearest_link": 5,
+   "chunks_where_nearest_link_differs": [
+    {
+     "chunk": 7,
+     "t_step": 56,
+     "reference_nearest": "ee_finger_l2",
+     "reference_mm": 162.3092,
+     "refined_nearest": "ee_finger_l1",
+     "refined_mm": 162.9416
+    },
+    {
+     "chunk": 15,
+     "t_step": 120,
+     "reference_nearest": "ee_finger_l2",
+     "reference_mm": 6.1286,
+     "refined_nearest": "ee_finger_l1",
+     "refined_mm": 18.0596
+    },
+    {
+     "chunk": 20,
+     "t_step": 160,
+     "reference_nearest": "ee_finger_l1",
+     "reference_mm": 167.4997,
+     "refined_nearest": "ee_finger_l2",
+     "refined_mm": 165.7259
+    },
+    {
+     "chunk": 27,
+     "t_step": 216,
+     "reference_nearest": "ee_left",
+     "reference_mm": 412.9213,
+     "refined_nearest": "ee_finger_l2",
+     "refined_mm": 388.6912
+    },
+    {
+     "chunk": 37,
+     "t_step": 296,
+     "reference_nearest": "ee_left",
+     "reference_mm": 362.0865,
+     "refined_nearest": "ee_finger_l2",
+     "refined_mm": 364.9754
+    }
+   ],
+   "global_min_mm_reference": 2.1628,
+   "global_min_link_reference": "ee_finger_l1",
+   "global_min_chunk_reference": 14,
+   "global_min_mm_refined": 17.5002,
+   "global_min_link_refined": "ee_finger_l1",
+   "global_min_chunk_refined": 14,
+   "per_link_min_over_all_chunks_mm": {
+    "ee_finger_l1": {
+     "reference": 2.1628,
+     "refined": 17.5002,
+     "refined_minus_reference": 15.3373
+    },
+    "ee_finger_l2": {
+     "reference": 2.2763,
+     "refined": 17.7608,
+     "refined_minus_reference": 15.4844
+    },
+    "ee_finger_r1": {
+     "reference": 586.4465,
+     "refined": 586.8374,
+     "refined_minus_reference": 0.391
+    },
+    "ee_finger_r2": {
+     "reference": 577.9889,
+     "refined": 578.3767,
+     "refined_minus_reference": 0.3879
+    },
+    "ee_left": {
+     "reference": 44.8921,
+     "refined": 52.0203,
+     "refined_minus_reference": 7.1281
+    },
+    "ee_right": {
+     "reference": 543.5315,
+     "refined": 543.8438,
+     "refined_minus_reference": 0.3123
+    },
+    "link_left_arm_0": {
+     "reference": 696.3618,
+     "refined": 696.3566,
+     "refined_minus_reference": -0.0052
+    },
+    "link_left_arm_1": {
+     "reference": 520.157,
+     "refined": 520.5669,
+     "refined_minus_reference": 0.4099
+    },
+    "link_left_arm_2": {
+     "reference": 439.1384,
+     "refined": 438.6357,
+     "refined_minus_reference": -0.5027
+    },
+    "link_left_arm_3": {
+     "reference": 293.0817,
+     "refined": 293.5175,
+     "refined_minus_reference": 0.4358
+    },
+    "link_left_arm_4": {
+     "reference": 204.4142,
+     "refined": 206.6727,
+     "refined_minus_reference": 2.2585
+    },
+    "link_left_arm_5": {
+     "reference": 120.4649,
+     "refined": 124.1416,
+     "refined_minus_reference": 3.6767
+    },
+    "link_left_arm_6": {
+     "reference": 130.1245,
+     "refined": 130.6296,
+     "refined_minus_reference": 0.5051
+    },
+    "link_right_arm_0": {
+     "reference": 852.9788,
+     "refined": 852.981,
+     "refined_minus_reference": 0.0022
+    },
+    "link_right_arm_1": {
+     "reference": 813.6511,
+     "refined": 813.707,
+     "refined_minus_reference": 0.0559
+    },
+    "link_right_arm_2": {
+     "reference": 749.9,
+     "refined": 749.9277,
+     "refined_minus_reference": 0.0277
+    },
+    "link_right_arm_3": {
+     "reference": 721.8326,
+     "refined": 721.9388,
+     "refined_minus_reference": 0.1061
+    },
+    "link_right_arm_4": {
+     "reference": 735.3032,
+     "refined": 735.6892,
+     "refined_minus_reference": 0.386
+    },
+    "link_right_arm_5": {
+     "reference": 642.4969,
+     "refined": 642.771,
+     "refined_minus_reference": 0.2741
+    },
+    "link_right_arm_6": {
+     "reference": 613.7049,
+     "refined": 613.9701,
+     "refined_minus_reference": 0.2652
+    }
+   },
+   "closest_chunk_detail": {
+    "chunk": 14,
+    "t_step": 112,
+    "ranking_reference": [
+     {
+      "link": "ee_finger_l1",
+      "mm": 2.1628
+     },
+     {
+      "link": "ee_finger_l2",
+      "mm": 2.2763
+     },
+     {
+      "link": "ee_left",
+      "mm": 47.5789
+     },
+     {
+      "link": "link_left_arm_5",
+      "mm": 131.0172
+     },
+     {
+      "link": "link_left_arm_6",
+      "mm": 142.5503
+     },
+     {
+      "link": "link_left_arm_4",
+      "mm": 218.9949
+     }
+    ],
+    "ranking_refined": [
+     {
+      "link": "ee_finger_l1",
+      "mm": 17.5002
+     },
+     {
+      "link": "ee_finger_l2",
+      "mm": 17.7608
+     },
+     {
+      "link": "ee_left",
+      "mm": 61.1064
+     },
+     {
+      "link": "link_left_arm_5",
+      "mm": 137.2373
+     },
+     {
+      "link": "link_left_arm_6",
+      "mm": 143.8229
+     },
+     {
+      "link": "link_left_arm_4",
+      "mm": 223.1239
+     }
+    ]
+   }
+  },
+  "n2_fingertip_divergence": {
+   "metric": "ee_finger_l1/l2 body origin, reference minus refined [mm]",
+   "bodies": [
+    "ee_finger_l1",
+    "ee_finger_l2"
+   ],
+   "max_abs_mm": 53.3352,
+   "max_abs_chunk": 27,
+   "max_abs_step": 6,
+   "median_over_chunks_of_max_mm": 6.5408,
+   "mean_mm": 8.5363,
+   "component_max_abs_mm": {
+    "x": 25.8034,
+    "y": 46.3947,
+    "z": 32.2772
+   },
+   "component_mean_signed_mm": {
+    "x": -1.8648,
+    "y": -1.6301,
+    "z": 0.4954
+   },
+   "per_step_mean_mm": [
+    5.0826,
+    6.256,
+    7.417,
+    8.1085,
+    9.208,
+    9.8724,
+    10.8587,
+    11.4872
+   ],
+   "tip_to_apple_mm": {
+    "reference_min": 2.1628,
+    "refined_min": 17.5002,
+    "refined_minus_reference_at_the_reference_min_chunk": 15.3373
+   }
+  },
+  "n3_reference_full_horizon": {
+   "chunk": 14,
+   "t_step": 112,
+   "horizon": 50,
+   "metric": "min over left fingertip spheres of (surface distance to apple - radius)",
+   "reference_min_mm_over_50_steps": -3.2605,
+   "reference_argmin_step": 35,
+   "refined_min_mm_over_50_steps": -3.2605,
+   "refined_argmin_step": 35,
+   "reference_min_mm_in_exec8": 2.1628,
+   "refined_min_mm_in_exec8": 17.5002,
+   "reference_below_0mm_steps": 39,
+   "refined_below_0mm_steps": 39,
+   "series_reference_mm": [
+    16.2842,
+    15.3547,
+    15.2514,
+    13.3342,
+    10.3837,
+    7.7805,
+    2.7666,
+    2.1628,
+    2.4366,
+    0.4013,
+    -1.0877,
+    -1.0999,
+    -0.5561,
+    -0.1083,
+    -1.9613,
+    -2.5339,
+    -1.8126,
+    -1.8797,
+    -1.7829,
+    -1.7616,
+    -1.1684,
+    -1.2058,
+    -0.9475,
+    -0.8546,
+    -1.0823,
+    -2.3738,
+    -1.7337,
+    -1.9583,
+    -2.6306,
+    -2.4268,
+    -2.3378,
+    -1.9845,
+    -1.3083,
+    -1.108,
+    -2.3467,
+    -3.2605,
+    -0.9928,
+    -2.1977,
+    -2.2021,
+    -2.5594,
+    -0.8707,
+    -2.8982,
+    -1.5052,
+    -2.1429,
+    -2.9897,
+    -2.3661,
+    -2.5286,
+    -2.5568,
+    -2.6911,
+    0.5554
+   ],
+   "series_refined_mm": [
+    24.8892,
+    22.9548,
+    21.3902,
+    19.6834,
+    17.5002,
+    18.143,
+    21.463,
+    20.8156,
+    2.4366,
+    0.4013,
+    -1.0877,
+    -1.0999,
+    -0.5561,
+    -0.1083,
+    -1.9613,
+    -2.5339,
+    -1.8126,
+    -1.8797,
+    -1.7829,
+    -1.7616,
+    -1.1684,
+    -1.2058,
+    -0.9475,
+    -0.8546,
+    -1.0823,
+    -2.3738,
+    -1.7337,
+    -1.9583,
+    -2.6306,
+    -2.4268,
+    -2.3378,
+    -1.9845,
+    -1.3083,
+    -1.108,
+    -2.3467,
+    -3.2605,
+    -0.9928,
+    -2.1977,
+    -2.2021,
+    -2.5594,
+    -0.8707,
+    -2.8982,
+    -1.5052,
+    -2.1429,
+    -2.9897,
+    -2.3661,
+    -2.5286,
+    -2.5568,
+    -2.6911,
+    0.5554
+   ],
+   "note": "물체 pose 는 이 chunk 시점 값으로 50 step 내내 고정된다 (기록에 미래 pose 가 없다)"
+  },
+  "n4_joint_contribution_mm": {
+   "metric": "|J_j(q_reference) * (refined_j - reference_j)| at ee_finger_l1, in mm",
+   "jacobian": "mujoco.mj_jacBody translational part at the reference pose of each step",
+   "joints": [
+    "left_arm_0",
+    "left_arm_1",
+    "left_arm_2",
+    "left_arm_3",
+    "left_arm_4",
+    "left_arm_5",
+    "left_arm_6"
+   ],
+   "mean_contribution_mm": {
+    "left_arm_0": 5.2054,
+    "left_arm_1": 4.7142,
+    "left_arm_2": 2.4983,
+    "left_arm_3": 4.5375,
+    "left_arm_4": 1.6922,
+    "left_arm_5": 3.6447,
+    "left_arm_6": 0.3673
+   },
+   "max_contribution_mm": {
+    "left_arm_0": 37.6965,
+    "left_arm_1": 51.2341,
+    "left_arm_2": 23.8114,
+    "left_arm_3": 37.2432,
+    "left_arm_4": 11.0783,
+    "left_arm_5": 21.9304,
+    "left_arm_6": 4.8526
+   },
+   "total_contribution_share": {
+    "left_arm_0": 0.229721,
+    "left_arm_1": 0.208044,
+    "left_arm_2": 0.110253,
+    "left_arm_3": 0.200248,
+    "left_arm_4": 0.074679,
+    "left_arm_5": 0.160847,
+    "left_arm_6": 0.016207
+   },
+   "largest_mean_joint": "left_arm_0",
+   "largest_max_joint": "left_arm_1",
+   "largest_share_joint": "left_arm_0",
+   "degree_vs_mm": {
+    "max_abs_deg_by_joint": {
+     "left_arm_0": 4.339,
+     "left_arm_1": 5.4587,
+     "left_arm_2": 5.5158,
+     "left_arm_3": 4.5924,
+     "left_arm_4": 2.7824,
+     "left_arm_5": 5.5157,
+     "left_arm_6": 5.7989
+    },
+    "mm_per_deg_mean": {
+     "left_arm_0": 9.7367,
+     "left_arm_1": 9.5429,
+     "left_arm_2": 4.6705,
+     "left_arm_3": 6.457,
+     "left_arm_4": 3.8883,
+     "left_arm_5": 3.9991,
+     "left_arm_6": 0.6188
+    },
+    "note": "도 단위 크기와 손끝 mm 기여를 나란히 놓은 것이다 — 같은 1° 라도 어깨와 손목의 손끝 변위가 다르다는 것을 이 두 줄이 보인다"
+   },
+   "linearisation_check": {
+    "mean_predicted_mm": 8.5315,
+    "mean_actual_mm": 8.5504,
+    "max_abs_residual_mm": 1.076,
+    "note": "predicted 는 1차 Jacobian 합, actual 은 두 자세의 실제 FK 차이다"
+   }
+  },
+  "n5_gripper_columns": {
+   "column_7": {
+    "n_elements": 3750,
+    "n_bitwise_identical": 3750,
+    "all_identical": true,
+    "max_abs_difference": 0.0,
+    "n_differing_elements": 0,
+    "value_min": -0.009425194934010506,
+    "value_max": 1.022444725036621
+   },
+   "column_15": {
+    "n_elements": 3750,
+    "n_bitwise_identical": 3750,
+    "all_identical": true,
+    "max_abs_difference": 0.0,
+    "n_differing_elements": 0,
+    "value_min": 0.9912607073783875,
+    "value_max": 1.0126667022705078
+   },
+   "window": "all 75 chunks x 50 steps (not just the 8-step execution window)",
+   "comparison": "numpy elementwise == on float64 parsed from the record",
+   "sanity_joint_deltas_deg": {
+    "left_arm_max_abs_deg_exec8": [
+     4.339,
+     5.4587,
+     5.5158,
+     4.5924,
+     2.7824,
+     5.5157,
+     5.7989
+    ],
+    "right_arm_max_abs_deg_exec8": [
+     0.2579,
+     0.0946,
+     0.1061,
+     0.1627,
+     0.143,
+     0.2722,
+     0.2298
+    ],
+    "per_chunk_max_abs_deg_median_exec8": 1.0602,
+    "note": "lead 가 이미 잰 값의 재확인이다 (L0~L6 4.3~5.8°, 중앙값 1.06°, 오른팔 0.04~0.10°)"
+   }
+  },
+  "scene_figure_panels": [
+   {
+    "chunk": 14,
+    "seq": 15,
+    "t_step": 112,
+    "apple_pos_m": [
+     0.563455,
+     0.320497,
+     0.850003
+    ],
+    "tip_reference_xyz_m": [
+     [
+      0.5829,
+      0.355723,
+      0.949965
+     ],
+     [
+      0.583787,
+      0.355475,
+      0.947533
+     ],
+     [
+      0.585095,
+      0.354968,
+      0.945348
+     ],
+     [
+      0.585112,
+      0.354443,
+      0.940969
+     ],
+     [
+      0.585476,
+      0.353894,
+      0.936957
+     ],
+     [
+      0.585889,
+      0.354276,
+      0.933434
+     ],
+     [
+      0.584716,
+      0.354032,
+      0.927523
+     ],
+     [
+      0.584794,
+      0.354495,
+      0.923705
+     ],
+     [
+      0.582808,
+      0.354417,
+      0.917513
+     ],
+     [
+      0.582993,
+      0.354754,
+      0.914924
+     ],
+     [
+      0.583166,
+      0.355013,
+      0.912358
+     ],
+     [
+      0.582673,
+      0.354917,
+      0.909179
+     ],
+     [
+      0.582313,
+      0.353813,
+      0.906426
+     ],
+     [
+      0.580766,
+      0.354019,
+      0.902338
+     ],
+     [
+      0.580304,
+      0.35543,
+      0.90034
+     ],
+     [
+      0.580322,
+      0.354795,
+      0.8992
+     ],
+     [
+      0.581475,
+      0.355107,
+      0.899794
+     ],
+     [
+      0.580285,
+      0.355575,
+      0.897931
+     ],
+     [
+      0.580881,
+      0.355696,
+      0.898307
+     ],
+     [
+      0.580449,
+      0.355476,
+      0.897385
+     ],
+     [
+      0.580042,
+      0.355767,
+      0.896723
+     ],
+     [
+      0.580954,
+      0.356695,
+      0.897863
+     ],
+     [
+      0.580681,
+      0.356725,
+      0.897647
+     ],
+     [
+      0.579897,
+      0.356254,
+      0.89665
+     ],
+     [
+      0.580414,
+      0.356289,
+      0.896854
+     ],
+     [
+      0.580776,
+      0.355152,
+      0.897152
+     ],
+     [
+      0.581057,
+      0.355687,
+      0.897286
+     ],
+     [
+      0.581359,
+      0.355357,
+      0.897475
+     ],
+     [
+      0.581618,
+      0.354593,
+      0.89747
+     ],
+     [
+      0.580876,
+      0.3546,
+      0.896543
+     ],
+     [
+      0.580916,
+      0.3548,
+      0.896581
+     ],
+     [
+      0.580787,
+      0.355349,
+      0.896661
+     ],
+     [
+      0.580069,
+      0.355419,
+      0.895827
+     ],
+     [
+      0.580129,
+      0.355547,
+      0.895764
+     ],
+     [
+      0.578714,
+      0.355001,
+      0.893495
+     ],
+     [
+      0.578491,
+      0.35514,
+      0.892973
+     ],
+     [
+      0.579169,
+      0.357592,
+      0.894378
+     ],
+     [
+      0.577645,
+      0.35754,
+      0.892667
+     ],
+     [
+      0.577943,
+      0.357466,
+      0.892782
+     ],
+     [
+      0.577773,
+      0.357112,
+      0.89253
+     ],
+     [
+      0.579905,
+      0.356343,
+      0.894785
+     ],
+     [
+      0.578491,
+      0.35619,
+      0.893126
+     ],
+     [
+      0.579043,
+      0.356318,
+      0.894152
+     ],
+     [
+      0.578163,
+      0.356957,
+      0.894068
+     ],
+     [
+      0.577798,
+      0.355115,
+      0.892817
+     ],
+     [
+      0.577345,
+      0.354767,
+      0.891416
+     ],
+     [
+      0.577448,
+      0.355039,
+      0.8912
+     ],
+     [
+      0.578211,
+      0.354328,
+      0.892179
+     ],
+     [
+      0.5801,
+      0.35452,
+      0.896005
+     ],
+     [
+      0.583306,
+      0.35438,
+      0.901798
+     ]
+    ],
+    "tip_refined_xyz_m": [
+     [
+      0.587985,
+      0.354229,
+      0.956167
+     ],
+     [
+      0.588189,
+      0.354216,
+      0.953192
+     ],
+     [
+      0.588848,
+      0.353858,
+      0.949759
+     ],
+     [
+      0.589243,
+      0.353458,
+      0.945695
+     ],
+     [
+      0.589863,
+      0.352386,
+      0.942156
+     ],
+     [
+      0.592006,
+      0.350471,
+      0.940751
+     ],
+     [
+      0.595254,
+      0.34666,
+      0.94051
+     ],
+     [
+      0.596358,
+      0.34585,
+      0.937149
+     ],
+     [
+      0.582808,
+      0.354417,
+      0.917513
+     ],
+     [
+      0.582993,
+      0.354754,
+      0.914924
+     ],
+     [
+      0.583166,
+      0.355013,
+      0.912358
+     ],
+     [
+      0.582673,
+      0.354917,
+      0.909179
+     ],
+     [
+      0.582313,
+      0.353813,
+      0.906426
+     ],
+     [
+      0.580766,
+      0.354019,
+      0.902338
+     ],
+     [
+      0.580304,
+      0.35543,
+      0.90034
+     ],
+     [
+      0.580322,
+      0.354795,
+      0.8992
+     ],
+     [
+      0.581475,
+      0.355107,
+      0.899794
+     ],
+     [
+      0.580285,
+      0.355575,
+      0.897931
+     ],
+     [
+      0.580881,
+      0.355696,
+      0.898307
+     ],
+     [
+      0.580449,
+      0.355476,
+      0.897385
+     ],
+     [
+      0.580042,
+      0.355767,
+      0.896723
+     ],
+     [
+      0.580954,
+      0.356695,
+      0.897863
+     ],
+     [
+      0.580681,
+      0.356725,
+      0.897647
+     ],
+     [
+      0.579897,
+      0.356254,
+      0.89665
+     ],
+     [
+      0.580414,
+      0.356289,
+      0.896854
+     ],
+     [
+      0.580776,
+      0.355152,
+      0.897152
+     ],
+     [
+      0.581057,
+      0.355687,
+      0.897286
+     ],
+     [
+      0.581359,
+      0.355357,
+      0.897475
+     ],
+     [
+      0.581618,
+      0.354593,
+      0.89747
+     ],
+     [
+      0.580876,
+      0.3546,
+      0.896543
+     ],
+     [
+      0.580916,
+      0.3548,
+      0.896581
+     ],
+     [
+      0.580787,
+      0.355349,
+      0.896661
+     ],
+     [
+      0.580069,
+      0.355419,
+      0.895827
+     ],
+     [
+      0.580129,
+      0.355547,
+      0.895764
+     ],
+     [
+      0.578714,
+      0.355001,
+      0.893495
+     ],
+     [
+      0.578491,
+      0.35514,
+      0.892973
+     ],
+     [
+      0.579169,
+      0.357592,
+      0.894378
+     ],
+     [
+      0.577645,
+      0.35754,
+      0.892667
+     ],
+     [
+      0.577943,
+      0.357466,
+      0.892782
+     ],
+     [
+      0.577773,
+      0.357112,
+      0.89253
+     ],
+     [
+      0.579905,
+      0.356343,
+      0.894785
+     ],
+     [
+      0.578491,
+      0.35619,
+      0.893126
+     ],
+     [
+      0.579043,
+      0.356318,
+      0.894152
+     ],
+     [
+      0.578163,
+      0.356957,
+      0.894068
+     ],
+     [
+      0.577798,
+      0.355115,
+      0.892817
+     ],
+     [
+      0.577345,
+      0.354767,
+      0.891416
+     ],
+     [
+      0.577448,
+      0.355039,
+      0.8912
+     ],
+     [
+      0.578211,
+      0.354328,
+      0.892179
+     ],
+     [
+      0.5801,
+      0.35452,
+      0.896005
+     ],
+     [
+      0.583306,
+      0.35438,
+      0.901798
+     ]
+    ],
+    "gap_at_exec_end_mm": [
+     -11.5642,
+     8.6457,
+     -13.4439
+    ],
+    "gap_norm_at_exec_end_mm": 19.7286,
+    "max_gap_over_exec_mm": 19.7286,
+    "tail_identical_after_exec": true
+   },
+   {
+    "chunk": 15,
+    "seq": 16,
+    "t_step": 120,
+    "apple_pos_m": [
+     0.563431,
+     0.320484,
+     0.850001
+    ],
+    "tip_reference_xyz_m": [
+     [
+      0.593215,
+      0.350389,
+      0.934309
+     ],
+     [
+      0.593758,
+      0.350017,
+      0.932029
+     ],
+     [
+      0.594718,
+      0.348993,
+      0.930179
+     ],
+     [
+      0.594348,
+      0.349512,
+      0.927032
+     ],
+     [
+      0.594417,
+      0.348966,
+      0.92431
+     ],
+     [
+      0.595413,
+      0.34934,
+      0.923531
+     ],
+     [
+      0.594009,
+      0.347378,
+      0.919112
+     ],
+     [
+      0.594412,
+      0.349118,
+      0.918489
+     ],
+     [
+      0.594621,
+      0.349844,
+      0.917424
+     ],
+     [
+      0.595471,
+      0.348017,
+      0.917251
+     ],
+     [
+      0.595938,
+      0.347428,
+      0.917034
+     ],
+     [
+      0.596252,
+      0.347767,
+      0.917148
+     ],
+     [
+      0.597955,
+      0.34821,
+      0.919219
+     ],
+     [
+      0.597947,
+      0.346873,
+      0.919197
+     ],
+     [
+      0.597712,
+      0.346034,
+      0.918405
+     ],
+     [
+      0.600102,
+      0.345403,
+      0.921819
+     ],
+     [
+      0.599572,
+      0.345562,
+      0.921449
+     ],
+     [
+      0.60099,
+      0.345326,
+      0.923301
+     ],
+     [
+      0.601207,
+      0.345372,
+      0.923798
+     ],
+     [
+      0.600877,
+      0.344708,
+      0.923594
+     ],
+     [
+      0.601292,
+      0.343376,
+      0.924009
+     ],
+     [
+      0.602031,
+      0.343484,
+      0.925118
+     ],
+     [
+      0.601476,
+      0.344114,
+      0.924586
+     ],
+     [
+      0.602023,
+      0.342422,
+      0.925048
+     ],
+     [
+      0.601426,
+      0.343127,
+      0.924173
+     ],
+     [
+      0.602277,
+      0.34282,
+      0.925568
+     ],
+     [
+      0.602804,
+      0.343111,
+      0.926522
+     ],
+     [
+      0.602242,
+      0.342785,
+      0.925826
+     ],
+     [
+      0.603106,
+      0.341439,
+      0.9269
+     ],
+     [
+      0.603306,
+      0.341145,
+      0.926855
+     ],
+     [
+      0.600249,
+      0.343121,
+      0.924873
+     ],
+     [
+      0.600303,
+      0.344389,
+      0.924557
+     ],
+     [
+      0.600014,
+      0.345485,
+      0.924201
+     ],
+     [
+      0.600311,
+      0.345683,
+      0.925033
+     ],
+     [
+      0.600453,
+      0.346098,
+      0.926017
+     ],
+     [
+      0.601565,
+      0.344353,
+      0.927073
+     ],
+     [
+      0.602323,
+      0.342497,
+      0.928301
+     ],
+     [
+      0.601129,
+      0.343419,
+      0.926745
+     ],
+     [
+      0.600627,
+      0.343963,
+      0.926214
+     ],
+     [
+      0.605216,
+      0.345745,
+      0.933594
+     ],
+     [
+      0.604504,
+      0.34501,
+      0.932264
+     ],
+     [
+      0.603628,
+      0.345126,
+      0.930691
+     ],
+     [
+      0.605104,
+      0.342982,
+      0.932783
+     ],
+     [
+      0.606259,
+      0.343789,
+      0.935589
+     ],
+     [
+      0.607272,
+      0.344805,
+      0.939194
+     ],
+     [
+      0.610024,
+      0.343753,
+      0.945579
+     ],
+     [
+      0.613227,
+      0.342912,
+      0.955021
+     ],
+     [
+      0.616962,
+      0.341596,
+      0.966103
+     ],
+     [
+      0.619284,
+      0.341462,
+      0.975958
+     ],
+     [
+      0.620682,
+      0.341689,
+      0.984864
+     ]
+    ],
+    "tip_refined_xyz_m": [
+     [
+      0.596303,
+      0.349457,
+      0.936747
+     ],
+     [
+      0.59736,
+      0.349316,
+      0.935949
+     ],
+     [
+      0.599204,
+      0.3493,
+      0.935469
+     ],
+     [
+      0.600152,
+      0.350337,
+      0.934113
+     ],
+     [
+      0.600816,
+      0.349951,
+      0.932389
+     ],
+     [
+      0.601424,
+      0.348933,
+      0.930745
+     ],
+     [
+      0.601682,
+      0.347005,
+      0.928736
+     ],
+     [
+      0.602336,
+      0.345931,
+      0.927147
+     ],
+     [
+      0.594621,
+      0.349844,
+      0.917424
+     ],
+     [
+      0.595471,
+      0.348017,
+      0.917251
+     ],
+     [
+      0.595938,
+      0.347428,
+      0.917034
+     ],
+     [
+      0.596252,
+      0.347767,
+      0.917148
+     ],
+     [
+      0.597955,
+      0.34821,
+      0.919219
+     ],
+     [
+      0.597947,
+      0.346873,
+      0.919197
+     ],
+     [
+      0.597712,
+      0.346034,
+      0.918405
+     ],
+     [
+      0.600102,
+      0.345403,
+      0.921819
+     ],
+     [
+      0.599572,
+      0.345562,
+      0.921449
+     ],
+     [
+      0.60099,
+      0.345326,
+      0.923301
+     ],
+     [
+      0.601207,
+      0.345372,
+      0.923798
+     ],
+     [
+      0.600877,
+      0.344708,
+      0.923594
+     ],
+     [
+      0.601292,
+      0.343376,
+      0.924009
+     ],
+     [
+      0.602031,
+      0.343484,
+      0.925118
+     ],
+     [
+      0.601476,
+      0.344114,
+      0.924586
+     ],
+     [
+      0.602023,
+      0.342422,
+      0.925048
+     ],
+     [
+      0.601426,
+      0.343127,
+      0.924173
+     ],
+     [
+      0.602277,
+      0.34282,
+      0.925568
+     ],
+     [
+      0.602804,
+      0.343111,
+      0.926522
+     ],
+     [
+      0.602242,
+      0.342785,
+      0.925826
+     ],
+     [
+      0.603106,
+      0.341439,
+      0.9269
+     ],
+     [
+      0.603306,
+      0.341145,
+      0.926855
+     ],
+     [
+      0.600249,
+      0.343121,
+      0.924873
+     ],
+     [
+      0.600303,
+      0.344389,
+      0.924557
+     ],
+     [
+      0.600014,
+      0.345485,
+      0.924201
+     ],
+     [
+      0.600311,
+      0.345683,
+      0.925033
+     ],
+     [
+      0.600453,
+      0.346098,
+      0.926017
+     ],
+     [
+      0.601565,
+      0.344353,
+      0.927073
+     ],
+     [
+      0.602323,
+      0.342497,
+      0.928301
+     ],
+     [
+      0.601129,
+      0.343419,
+      0.926745
+     ],
+     [
+      0.600627,
+      0.343963,
+      0.926214
+     ],
+     [
+      0.605216,
+      0.345745,
+      0.933594
+     ],
+     [
+      0.604504,
+      0.34501,
+      0.932264
+     ],
+     [
+      0.603628,
+      0.345126,
+      0.930691
+     ],
+     [
+      0.605104,
+      0.342982,
+      0.932783
+     ],
+     [
+      0.606259,
+      0.343789,
+      0.935589
+     ],
+     [
+      0.607272,
+      0.344805,
+      0.939194
+     ],
+     [
+      0.610024,
+      0.343753,
+      0.945579
+     ],
+     [
+      0.613227,
+      0.342912,
+      0.955021
+     ],
+     [
+      0.616962,
+      0.341596,
+      0.966103
+     ],
+     [
+      0.619284,
+      0.341462,
+      0.975958
+     ],
+     [
+      0.620682,
+      0.341689,
+      0.984864
+     ]
+    ],
+    "gap_at_exec_end_mm": [
+     -7.9239,
+     3.1865,
+     -8.6581
+    ],
+    "gap_norm_at_exec_end_mm": 12.1616,
+    "max_gap_over_exec_mm": 12.3141,
+    "tail_identical_after_exec": true
+   }
+  ]
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t9b/t9b-scene.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t9b/t9b-scene.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t9b/t9b-graphs.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t9b/t9b-graphs.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t9b/t9b-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t9b/t9b-table.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": null,
+  "note": "regression baseline 을 다시 돌리지 않았다 (기록 분석이다). 구 모델은 T9a 에서 서버 시작 로그와 대조를 마쳤고 (266/36, arm_5 19.53 mm, 손가락 4.72 mm, 손바닥 8.92 mm) 이번에 같은 설정으로 다시 세워 같은 값을 받았다."
+ },
+ "verdict": "N1 사과에 가장 가까운 link 은 **두 chunk 모두 75/75 에서 gripper link** 이다 — 정책 원본은 ee_finger_l2 37 · ee_left 26 · ee_finger_l1 12, TO 출력은 ee_finger_l2 38 · ee_left 24 · ee_finger_l1 13. **팔 link(link_*_arm_*)이 최근접이 된 chunk 는 두 경우 모두 0 개**다. 최근접 link 이 갈리는 chunk 는 5/75 이고 그 5 개도 전부 손가락<->손가락 또는 손바닥<->손가락이다. 가장 가까웠던 chunk 14 에서 순위는 두 경우가 같다 (ee_finger_l1 -> ee_finger_l2 -> ee_left -> link_left_arm_5 -> link_left_arm_6 -> link_left_arm_4). 값만 다르다: 원본 +2.1628 / +2.2763 / +47.58 mm, TO +17.5002 / +17.7608 / +61.11 mm. 전 chunk 최소도 둘 다 ee_finger_l1 이고 원본 +2.1628 mm, TO +17.5002 mm 다. N2 손끝(ee_finger_l1/l2 body 원점) 차이는 최대 53.3352 mm (chunk 27 step 6), chunk 별 최대의 중앙값 6.5408 mm, 전 행 평균 8.5363 mm 다. 성분 최대는 x 25.80 · y 46.39 · z 32.28 mm 이고 평균 부호는 x -1.86 · y -1.63 · z +0.50 mm 다. 실행 창을 따라 평균 차이가 5.08 -> 6.26 -> 7.42 -> 8.11 -> 9.21 -> 9.87 -> 10.86 -> 11.49 mm 로 벌어진다. 가장 가까웠던 chunk 에서 TO 는 손끝-사과 거리를 +15.34 mm 늘렸다. N3 정책 원본 chunk 14 를 50 step 끝까지 따라가면 손끝-사과 거리가 step 35 에서 **-3.2605 mm** 이고 50 step 중 **39 step 이 0 mm 이하**다. TO 출력도 같은 -3.2605 mm 인데, TO 가 실행 창 8 step 만 고쳐 나머지 42 step 이 원본과 같기 때문이다 (실행 창 안에서는 원본 +2.1628 mm 대 TO +17.5002 mm). 물체 pose 는 이 chunk 시점 값으로 고정된 값이다. N4 손끝 변위 기여(mm)로 가른 순위는 L0 5.2054 (22.97 %) > L1 4.7142 (20.80 %) > L3 4.5375 (20.02 %) > L5 3.6447 (16.08 %) > L2 2.4983 (11.03 %) > L4 1.6922 (7.47 %) > **L6 0.3673 mm (1.62 %)** 다. 도 단위 편차 최대는 정반대로 L6 이 가장 크다 (5.7989°, L0 는 4.3390°). Jacobian 1 차 근사 확인: 예측 평균 8.5315 mm 대 실제 8.5504 mm, 최대 잔차 1.0760 mm. N5 gripper 열 7 과 15 는 75 x 50 = 3750 원소 전부 bit 단위로 같다 (max |diff| 정확히 0.0). lead 의 도 단위 표도 재확인했다: 왼팔 최대 4.34~5.80°, 오른팔 0.09~0.27°, chunk 별 최대의 중앙값 1.0602°.",
+ "not_measured": [
+  "rollout — 돌리지 않았다. 모든 수치는 기록된 qpos 와 두 chunk 의 FK 재구성이다.",
+  "미래 물체 pose — 기록에 chunk 시점 pose 하나뿐이라 N3 의 50 step 은 그 pose 를 고정한 값이다. 사과는 실제로 잡히면 함께 움직인다.",
+  "TO 가 그 편차를 만든 이유(어느 제약 행이 그것을 요구했는가) — chunk 마다 max_violation_pair 한 행만 기록돼 있어 QP 가 실제로 본 활성 행 집합을 셀 수 없다. 구현 필요.",
+  "실행 창 8 step 밖에서 TO 가 무엇을 하는지 — 이 기록에서는 아무것도 안 한다 (42 step 이 원본과 같다). 왜 그렇게 설계됐는지는 코드 질문이고 여기서 판정하지 않는다.",
+  "이번 실행이 사과를 잡았는지 — T9a 와 같은 M3 형태의 참값 측정은 이 task 의 항목이 아니다. 필요하면 같은 기록의 control 600 행으로 바로 잴 수 있다.",
+  "ee_left 손바닥이 최근접인 26/24 chunk 가 접근 구간인지 이송 구간인지의 구분 — chunk 축 위치만 기록했고 구간 라벨은 기록에 없다."
+ ]
+}
