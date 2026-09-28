@@ -17,7 +17,7 @@
 | T20 조작 대상 정체 | **검증 완료 — 값 판정 대기** (추천 min_score 0.1 · lost_frames 20) | lead/사용자 | `T20.impl.md` · `T20.verify.json` · `figures/t20/` |
 | T22 파지 확인 attach | **검증 완료** — 후속 T22b(settled 를 개도 정지로) · reach 0.08 추천, 판정 대기 | lead/사용자 | `T22.impl.md` · `T22.verify.json` · `figures/t22/` |
 | T23 실행 게이트·HOLD | **구현 완료 → 검증 중** (A2, `T23.verify.partial.json`) | verifier | `T23.impl.md` → `T23.verify.json` 대기 |
-| T21 fine/target-free 창 | **구현 완료 → 검증 중** (A2, `T21.verify.partial.json`) | verifier | `T21.impl.md` → `T21.verify.json` 대기 |
+| T21 fine/target-free 창 | **검증 완료** — execution_path 배선(T21b) 의 이득이 수치로 확인됨 (35.7 → 13.4 mm) | — | `T21.impl.md` · `T21.verify.json` · `figures/t21/` |
 | T25 | 대기 | — | T21·T23 뒤 |
 
 **세 구현자는 파일이 겹치지 않게 나눴다** (각 task.md 의 "손대지 않을 것"). 커밋은 하지 않는다 — lead 가 모은다.
@@ -75,3 +75,4 @@ ls -t ag3s/docs/handoff | head                            # *.progress.md / *.im
 | 2026-09-28 17:40 | **T21 impl 완료** (1232 passed). T21 verifier 착수. 후속(T21b·T22b·config 기본값)은 계획 §5 의 'T26' 표로 모음. **커밋은 T23 impl 뒤** — T23 이 safe_policy/wire/client/pi05_infer 편집 중 |
 | 2026-09-28 18:00 | **T23 impl 완료** (1292 passed). T23 verifier 착수. 구현자 전원 종료 → 최종 tree 로 전체 회귀 배경 실행 → 통과하면 **repo 3 곳에 커밋** (benchmark · pi05_TO_hybrid · 루트 tests/.claude; skill `git-commit` 규칙: 출처 표기 없음, 소유 경로만 add) |
 | 2026-09-28 18:20 | 최종 tree 전체 회귀 **1292 passed** → **커밋**: benchmark `8e8ce6b` (코드+handoff+figures) · pi05_TO_hybrid `dc5e660` (pi05_infer.py) · 루트 `tests:` (테스트 9 파일 + skill). **push 는 사용자가** (컨테이너에 자격증명 없음). 미커밋으로 남긴 것: 루트의 `.claude/agents/*.md`·`CLAUDE.md` (사용자의 이전 변경) · `T21.verify.partial.json`(작성 중). 진행 중: T21·T23 verifier. 다음: T26 마무리 (T21b·T22b·T23b·config 기본값) → T25 |
+| 2026-09-28 18:40 | **T21 verify 완료.** T20(0.1/20)+새 창이면 손 행 100 % 가 fine/target-free 에서 답을 받고 coarse 0; execution_path 를 넘기면 손끝 변위 13.4/90 mm (지금 live 의 q_now 창은 35.7/169). 주의: 옮긴 창의 계층은 stand-in 필드(자유공간 carving 없음) — 실제 cuRobo 재구축은 T25 실행에서 |

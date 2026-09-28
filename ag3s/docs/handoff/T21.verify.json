@@ -1,0 +1,6740 @@
+{
+ "_comment": "ag3s-verifier. 숫자와 경로만. 해석·판정 없음.",
+ "step": "T21",
+ "date": "2026-09-28",
+ "runs": [
+  {
+   "id": "baseline",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/t21/baseline.json",
+   "stdout_log": "outputs/verify/t21/baseline.log",
+   "concurrent_load": "none of mine (run first, alone)"
+  },
+  {
+   "id": "pytest_all",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python -m pytest -q -p no:cacheprovider tests/trajopt tests/ag3s",
+   "venv": "src/openpi/.venv",
+   "stdout_log": "outputs/verify/t21/pytest_openpi.log",
+   "git_status": "outputs/verify/t21/git_status_at_pytest.txt"
+  },
+  {
+   "id": "pytest_t21_files",
+   "command": ".venv-ag3s/bin/python -m pytest -q tests/ag3s/test_fine_window.py tests/trajopt/test_worst_row_tier.py tests/trajopt/test_violation_pair.py",
+   "venv": ".venv-ag3s",
+   "stdout_log": "outputs/verify/t21/pytest_ag3s_t21files.log"
+  },
+  {
+   "id": "manipulated_replay",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python outputs/verify/t21/replay_manip.py",
+   "venv": ".venv-ag3s",
+   "raw_output": [
+    "outputs/verify/t21/manip_t14.npz",
+    "outputs/verify/t21/manip_t14.json",
+    "outputs/verify/t21/manip_t17.npz",
+    "outputs/verify/t21/manip_t17.json"
+   ],
+   "stdout_log": "outputs/verify/t21/replay_manip.log"
+  },
+  {
+   "id": "window_replay",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python outputs/verify/t21/t21_replay.py <t14|t17>",
+   "venv": ".venv-ag3s",
+   "raw_output": [
+    "outputs/verify/t21/replay_t14.json",
+    "outputs/verify/t21/replay_t17.json"
+   ],
+   "stdout_log": [
+    "outputs/verify/t21/replay_t14.log",
+    "outputs/verify/t21/replay_t17.log"
+   ]
+  },
+  {
+   "id": "extraction",
+   "scripts": [
+    "outputs/verify/t21/extract.py",
+    "outputs/verify/t21/write_verify.py",
+    "outputs/verify/t21/make_figures.py"
+   ],
+   "raw_output": [
+    "outputs/verify/t21/summary_t14.json",
+    "outputs/verify/t21/summary_t17.json",
+    "outputs/verify/t21/extract_t14.log",
+    "outputs/verify/t21/extract_t17.log",
+    "outputs/verify/t21/m3_extract.log"
+   ]
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "368d723",
+  "dirty_files_snapshot": "outputs/verify/t21/git_status_at_verify.txt",
+  "md5": "outputs/verify/t21/code_md5.txt",
+  "note": "T23 implementer edits in parallel (safe_policy/wire/client/pi05_infer); pytest snapshot in git_status_at_pytest.txt"
+ },
+ "reproduction_scope": {
+  "records": {
+   "T14": "outputs/live_test/20260928_t14 chunks 11-20 (seq 12-21, t 88-160)",
+   "T17": "outputs/live_test/20260928_t17 chunks 9-15 (t 72-120)"
+  },
+  "window_placement": "exact rule replay: curobo_builder.place_fine_window (working tree), shape 128^3, voxel 5 mm, hand_pad = geometry.safety_margin 0.05 + 2 x 5 mm, manipulated_pad 10 mm; hand = contact-authorized link spheres from robot.sphere_centers_numeric; b1 = q_now only; b2 = q_now + reference_chunk steps 0..7 via layout.full_q (8 rows)",
+  "rules": {
+   "live": "recorded fine window of the server record (T21 before)",
+   "a": "placement=target_centroid",
+   "b1": "hand_swept, execution_path none (live wiring today)",
+   "b2": "hand_swept, execution_path = reference 8 steps"
+  },
+  "manipulated_sources": {
+   "rec": "recorded target_points of the chunk (live grounding)",
+   "t20": "working-tree TargetConfirm replay, target_switch_min_score 0.1, target_lost_frames 20",
+   "default": "working-tree TargetConfirm replay, AG3SConfig defaults (min_score 0.0, lost None)"
+  },
+  "manipulated_per_chunk_n_points_and_centroid_to_apple_mm": {
+   "t14": {
+    "11": {
+     "rec": [
+      1780,
+      352.3
+     ],
+     "t20": [
+      44,
+      13.8
+     ],
+     "default": [
+      44,
+      13.8
+     ]
+    },
+    "12": {
+     "rec": [
+      1740,
+      354.3
+     ],
+     "t20": [
+      44,
+      13.8
+     ],
+     "default": [
+      44,
+      13.8
+     ]
+    },
+    "13": {
+     "rec": [
+      1735,
+      355.2
+     ],
+     "t20": [
+      44,
+      13.8
+     ],
+     "default": [
+      1735,
+      355.2
+     ]
+    },
+    "14": {
+     "rec": [
+      1724,
+      355.4
+     ],
+     "t20": [
+      44,
+      13.8
+     ],
+     "default": [
+      1724,
+      355.4
+     ]
+    },
+    "15": {
+     "rec": [
+      1725,
+      355.4
+     ],
+     "t20": [
+      44,
+      13.8
+     ],
+     "default": [
+      1725,
+      355.4
+     ]
+    },
+    "16": {
+     "rec": [
+      1718,
+      356.0
+     ],
+     "t20": [
+      44,
+      13.8
+     ],
+     "default": [
+      1718,
+      356.0
+     ]
+    },
+    "17": {
+     "rec": [
+      1729,
+      355.5
+     ],
+     "t20": [
+      44,
+      13.8
+     ],
+     "default": [
+      1729,
+      355.5
+     ]
+    },
+    "18": {
+     "rec": [
+      172,
+      635.0
+     ],
+     "t20": [
+      44,
+      13.8
+     ],
+     "default": [
+      172,
+      635.0
+     ]
+    },
+    "19": {
+     "rec": [
+      175,
+      635.4
+     ],
+     "t20": [
+      44,
+      13.8
+     ],
+     "default": [
+      175,
+      635.4
+     ]
+    },
+    "20": {
+     "rec": [
+      1704,
+      355.3
+     ],
+     "t20": [
+      44,
+      13.8
+     ],
+     "default": [
+      175,
+      635.4
+     ]
+    }
+   },
+   "t17": {
+    "9": {
+     "rec": [
+      1736,
+      356.3
+     ],
+     "t20": [
+      71,
+      6.7
+     ],
+     "default": [
+      71,
+      6.7
+     ]
+    },
+    "10": {
+     "rec": [
+      1710,
+      357.9
+     ],
+     "t20": [
+      71,
+      6.7
+     ],
+     "default": [
+      71,
+      6.7
+     ]
+    },
+    "11": {
+     "rec": [
+      1704,
+      358.0
+     ],
+     "t20": [
+      71,
+      6.7
+     ],
+     "default": [
+      1704,
+      358.0
+     ]
+    },
+    "12": {
+     "rec": [
+      1704,
+      357.0
+     ],
+     "t20": [
+      71,
+      6.6
+     ],
+     "default": [
+      1704,
+      357.0
+     ]
+    },
+    "13": {
+     "rec": [
+      1724,
+      356.9
+     ],
+     "t20": [
+      71,
+      6.6
+     ],
+     "default": [
+      1724,
+      356.9
+     ]
+    },
+    "14": {
+     "rec": [
+      1713,
+      357.4
+     ],
+     "t20": [
+      71,
+      6.5
+     ],
+     "default": [
+      1713,
+      357.4
+     ]
+    },
+    "15": {
+     "rec": [
+      1713,
+      345.5
+     ],
+     "t20": [
+      71,
+      14.2
+     ],
+     "default": [
+      1713,
+      345.5
+     ]
+    }
+   }
+  },
+  "tiers_exact": "only for the recorded live window: fixed_input_ablation.build_field (recorded coarse/fine/free grids) -> CuroboEsdfField.answer_tier(target_free=True)",
+  "tiers_proxy": "field NOT rebuilt by cuRobo (no depth in records). proxy = recorded coarse grid (exact) + fine and target-free layers at the replayed window from the union of recorded filtered_cloud of chunks 0..k (2.5 mm dedup), unsigned nearest-point distance on 128^3 x 5 mm, clipped 0.4 m; target-free = same minus cloud points inside the TargetBall (centre=mean, r = max spread + 5 mm, z >= support_plane_z + 5 mm; recorded ball for 'rec'). No TSDF carving, no signed interior.",
+  "collision_variant": "fixed_input_ablation 'collision' (w_smooth 0, w_continuity 0, clock off, max_iterations default), fresh solver per chunk; field+scene swapped; m3 definition of T24 (left fingertip = mean of ee_finger_l1/l2 sphere centres, displacement vs reference, 8 exec steps)",
+  "m3_truth": "MuJoCo model_transport.xml at the planning row qpos (base = world, qpos[0:3] = 0); table/crate collision boxes exact, apple = ellipsoid on geom_size; cloud points labelled by nearest body within 15 mm, else 'other'"
+ },
+ "numbers": {
+  "baseline": {
+   "violated_start": 13,
+   "frames": 15,
+   "has_target": 15,
+   "frame0_clearance_before_mm": 0.18597810857728936
+  },
+  "m5_regression": {
+   "pytest_tests_trajopt_ag3s_openpi_venv": {
+    "passed": 1292,
+    "failed": 0
+   },
+   "pytest_t21_files_venv_ag3s": {
+    "passed": 58,
+    "failed": 0
+   }
+  },
+  "replay_checks": {
+   "fk_sphere_centers_numeric_vs_linearizer_max_mm": {
+    "t14": 7.771561172376096e-13,
+    "t17": 4.440892098500626e-13
+   },
+   "live_window_vs_place_fine_window_target_centroid_recorded_points_max_mm": {
+    "t14": 0.000509094238210217,
+    "t17": 0.00046559715272120883
+   },
+   "collision_exact_field_T17_reproduces_T24_m3": {
+    "pooled_median_mm": 51.033594499171954,
+    "pooled_max_mm": 195.47857252345915,
+    "T24": [
+     51.033594499171954,
+     195.47857252345915
+    ]
+   }
+  },
+  "proxy_fidelity": {
+   "t14": {
+    "tier_agreement_live_window": [
+     0.936247723132969,
+     0.9198542805100182,
+     0.9180327868852459,
+     0.9180327868852459,
+     0.930783242258652,
+     0.9326047358834244,
+     0.9289617486338798,
+     1.0,
+     1.0,
+     0.9180327868852459
+    ],
+    "fine_query_diff_mm_median": [
+     -6.725863263294496,
+     -11.563387836980416,
+     -14.730485928928102,
+     -13.655938516361502,
+     -13.59882076270827,
+     -13.165598500281497,
+     -11.613662582168102,
+     null,
+     null,
+     -12.023444226049826
+    ],
+    "fine_query_diff_mm_max_abs": [
+     20.349919922352065,
+     26.426221298751802,
+     21.043873843350546,
+     23.611664093473497,
+     23.743510840777013,
+     26.880638543649,
+     27.63820054808433,
+     null,
+     null,
+     21.5964925602561
+    ],
+    "free_query_diff_mm_median": [
+     -17.60210270823101,
+     -16.19141936738937,
+     -15.960514369668791,
+     -15.606726597332921,
+     -14.349196007639641,
+     -13.165598500281497,
+     -15.092717301859906,
+     null,
+     null,
+     -13.61047536800783
+    ],
+    "fine_voxel_diff_above_support_mm_median": [
+     3.006052255630493,
+     3.6693177223205566,
+     3.6655609607696533,
+     3.811152696609497,
+     3.808069944381714,
+     3.964759349822998,
+     3.306731700897217,
+     4.866960525512695,
+     5.040634632110596,
+     3.8820793628692627
+    ],
+    "fine_voxel_diff_above_support_mm_p90": [
+     11.65499496459961,
+     11.00466251373291,
+     11.636319160461426,
+     11.474459648132324,
+     10.763253211975098,
+     11.33820629119873,
+     11.155990600585938,
+     10.99683666229248,
+     10.701189041137695,
+     10.79094409942627
+    ],
+    "fine_voxel_diff_all_mm_p90": [
+     64.95921325683594,
+     64.26703643798828,
+     64.37300872802734,
+     64.27189636230469,
+     64.3642807006836,
+     64.30963897705078,
+     65.08966827392578,
+     63.04317092895508,
+     62.85986328125,
+     64.20375061035156
+    ],
+    "collision_control_pooled_mm": {
+     "exact": [
+      0.0,
+      24.162041320251035
+     ],
+     "proxy_same_window": [
+      0.0,
+      24.157181423144998
+     ]
+    }
+   },
+   "t17": {
+    "tier_agreement_live_window": [
+     0.9744990892531876,
+     0.9398907103825137,
+     0.9344262295081968,
+     0.941712204007286,
+     0.9526411657559198,
+     0.9508196721311475,
+     0.9471766848816029
+    ],
+    "fine_query_diff_mm_median": [
+     4.520756337284208,
+     -2.823519988943167,
+     -7.675699127468256,
+     -6.932499892471758,
+     -7.744128940661551,
+     -7.337772085122006,
+     -7.9632619942221865
+    ],
+    "fine_query_diff_mm_max_abs": [
+     9.809847741049884,
+     20.238777578742873,
+     21.639545169897342,
+     21.560949470284115,
+     22.178304447723743,
+     22.325056434232383,
+     25.167343454986316
+    ],
+    "free_query_diff_mm_median": [
+     -16.21541779552281,
+     -11.447401571833618,
+     -9.58559174830842,
+     -9.713674008766105,
+     -10.863489578978948,
+     -13.688632015263616,
+     -9.913819622399036
+    ],
+    "fine_voxel_diff_above_support_mm_median": [
+     2.8054234981536865,
+     2.8279926776885986,
+     3.6904757022857666,
+     3.659494161605835,
+     2.9307174682617188,
+     3.255100965499878,
+     3.4942514896392822
+    ],
+    "fine_voxel_diff_above_support_mm_p90": [
+     10.751908302307129,
+     12.237667083740234,
+     10.853837966918945,
+     10.50031852722168,
+     11.099820137023926,
+     10.581951141357422,
+     10.223752975463867
+    ],
+    "fine_voxel_diff_all_mm_p90": [
+     65.9434585571289,
+     65.09898376464844,
+     64.07777404785156,
+     64.16049194335938,
+     64.89043426513672,
+     64.34024810791016,
+     64.34496307373047
+    ],
+    "collision_control_pooled_mm": {
+     "exact": [
+      51.033594499171954,
+      195.47857252345915
+     ],
+     "proxy_same_window": [
+      64.64814811774194,
+      195.47857252345915
+     ]
+    }
+   }
+  },
+  "m1_window_and_tiers": {
+   "T14": {
+    "chunks": [
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "t_steps": [
+     88,
+     96,
+     104,
+     112,
+     120,
+     128,
+     136,
+     144,
+     152,
+     160
+    ],
+    "rows_per_chunk": 549,
+    "rows_definition": "authorized-link spheres (ee_left, ee_finger_l1, ee_finger_l2; 61) x (q_now + reference steps 1..8) = 549",
+    "rules": {
+     "live_exact": {
+      "field": "exact",
+      "fraction_in_window_per_chunk": [
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.0692167577413479,
+       0.06739526411657559,
+       0.07285974499089254,
+       0.0,
+       0.0,
+       0.08196721311475409
+      ],
+      "fraction_in_window_now_per_chunk": [
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.0,
+       0.0,
+       0.08196721311475409
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 5472,
+       "fine": 17,
+       "target_free": 1,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 3420,
+       "fine": 0,
+       "target_free": 0,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       534,
+       547,
+       549,
+       549,
+       549,
+       549,
+       548,
+       549,
+       549,
+       549
+      ],
+      "n_unresolved_total": 5472,
+      "n_rows_total": 5490,
+      "chunks_finger_rows_all_fine_or_target_free": "0/10",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "0/10"
+     },
+     "live_proxy": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.0692167577413479,
+       0.06739526411657559,
+       0.07285974499089254,
+       0.0,
+       0.0,
+       0.08196721311475409
+      ],
+      "fraction_in_window_now_per_chunk": [
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.0,
+       0.0,
+       0.08196721311475409
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 5155,
+       "fine": 15,
+       "target_free": 320,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 3420,
+       "fine": 0,
+       "target_free": 0,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       509,
+       504,
+       504,
+       504,
+       511,
+       512,
+       509,
+       549,
+       549,
+       504
+      ],
+      "n_unresolved_total": 5155,
+      "n_rows_total": 5490,
+      "chunks_finger_rows_all_fine_or_target_free": "0/10",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "0/10"
+     },
+     "a_rec": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.0692167577413479,
+       0.06739526411657559,
+       0.07285974499089254,
+       0.0,
+       0.0,
+       0.08196721311475409
+      ],
+      "fraction_in_window_now_per_chunk": [
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.0,
+       0.0,
+       0.08196721311475409
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 5155,
+       "fine": 15,
+       "target_free": 320,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 3420,
+       "fine": 0,
+       "target_free": 0,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       509,
+       504,
+       504,
+       504,
+       511,
+       512,
+       509,
+       549,
+       549,
+       504
+      ],
+      "n_unresolved_total": 5155,
+      "n_rows_total": 5490,
+      "chunks_finger_rows_all_fine_or_target_free": "0/10",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "0/10"
+     },
+     "b1_rec": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 37,
+       "fine": 0,
+       "target_free": 5452,
+       "window_edge": 1,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3420,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       1,
+       9,
+       4,
+       1,
+       8,
+       9,
+       5,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 37,
+      "n_rows_total": 5490,
+      "chunks_finger_rows_all_fine_or_target_free": "10/10",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "10/10"
+     },
+     "b2_rec": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 36,
+       "fine": 1,
+       "target_free": 5453,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3420,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       1,
+       7,
+       4,
+       1,
+       9,
+       9,
+       5,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 36,
+      "n_rows_total": 5490,
+      "chunks_finger_rows_all_fine_or_target_free": "10/10",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "10/10"
+     },
+     "a_t20": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 5490,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3420,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 0,
+      "n_rows_total": 5490,
+      "chunks_finger_rows_all_fine_or_target_free": "10/10",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "10/10"
+     },
+     "b1_t20": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 5490,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3420,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 0,
+      "n_rows_total": 5490,
+      "chunks_finger_rows_all_fine_or_target_free": "10/10",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "10/10"
+     },
+     "b2_t20": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 5490,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3420,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 0,
+      "n_rows_total": 5490,
+      "chunks_finger_rows_all_fine_or_target_free": "10/10",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "10/10"
+     },
+     "a_default": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.0692167577413479,
+       0.06739526411657559,
+       0.07285974499089254,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.08196721311475409,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 4187,
+       "fine": 3,
+       "target_free": 1300,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 2736,
+       "fine": 0,
+       "target_free": 684,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       504,
+       504,
+       511,
+       512,
+       509,
+       549,
+       549,
+       549
+      ],
+      "n_unresolved_total": 4187,
+      "n_rows_total": 5490,
+      "chunks_finger_rows_all_fine_or_target_free": "2/10",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "2/10"
+     },
+     "b1_default": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 27,
+       "fine": 0,
+       "target_free": 5463,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3420,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       4,
+       1,
+       8,
+       9,
+       5,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 27,
+      "n_rows_total": 5490,
+      "chunks_finger_rows_all_fine_or_target_free": "10/10",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "10/10"
+     },
+     "b2_default": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 28,
+       "fine": 0,
+       "target_free": 5462,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3420,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       4,
+       1,
+       9,
+       9,
+       5,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 28,
+      "n_rows_total": 5490,
+      "chunks_finger_rows_all_fine_or_target_free": "10/10",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "10/10"
+     }
+    },
+    "TO_side_authorized_rows_exact_field_returned_trajectory": {
+     "source": "linearize worst_row.authorized_rows.by_tier (T21 implementation) of variant 'collision' on the recorded field",
+     "by_tier_total": {
+      "outside": 0,
+      "coarse": 4840,
+      "fine": 40,
+      "target_free": 0,
+      "window_edge": 0,
+      "static": 0
+     },
+     "verifiable_per_chunk": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+     ]
+    }
+   },
+   "T17": {
+    "chunks": [
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15
+    ],
+    "t_steps": [
+     72,
+     80,
+     88,
+     96,
+     104,
+     112,
+     120
+    ],
+    "rows_per_chunk": 549,
+    "rows_definition": "authorized-link spheres (ee_left, ee_finger_l1, ee_finger_l2; 61) x (q_now + reference steps 1..8) = 549",
+    "rules": {
+     "live_exact": {
+      "field": "exact",
+      "fraction_in_window_per_chunk": [
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.10018214936247723,
+       0.09836065573770492
+      ],
+      "fraction_in_window_now_per_chunk": [
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 3776,
+       "fine": 67,
+       "target_free": 0,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 2394,
+       "fine": 0,
+       "target_free": 0,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       495,
+       536,
+       549,
+       549,
+       549,
+       549,
+       549
+      ],
+      "n_unresolved_total": 3776,
+      "n_rows_total": 3843,
+      "chunks_finger_rows_all_fine_or_target_free": "0/7",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "0/7"
+     },
+     "live_proxy": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.10018214936247723,
+       0.09836065573770492
+      ],
+      "fraction_in_window_now_per_chunk": [
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 3629,
+       "fine": 43,
+       "target_free": 171,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 2394,
+       "fine": 0,
+       "target_free": 0,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       509,
+       525,
+       513,
+       517,
+       523,
+       522,
+       520
+      ],
+      "n_unresolved_total": 3629,
+      "n_rows_total": 3843,
+      "chunks_finger_rows_all_fine_or_target_free": "0/7",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "0/7"
+     },
+     "a_rec": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.10018214936247723,
+       0.09836065573770492
+      ],
+      "fraction_in_window_now_per_chunk": [
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 3629,
+       "fine": 43,
+       "target_free": 171,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 2394,
+       "fine": 0,
+       "target_free": 0,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       509,
+       525,
+       513,
+       517,
+       523,
+       522,
+       520
+      ],
+      "n_unresolved_total": 3629,
+      "n_rows_total": 3843,
+      "chunks_finger_rows_all_fine_or_target_free": "0/7",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "0/7"
+     },
+     "b1_rec": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 11,
+       "target_free": 3827,
+       "window_edge": 5,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 2394,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 0,
+      "n_rows_total": 3843,
+      "chunks_finger_rows_all_fine_or_target_free": "7/7",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "7/7"
+     },
+     "b2_rec": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 9,
+       "target_free": 3829,
+       "window_edge": 5,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 2394,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 0,
+      "n_rows_total": 3843,
+      "chunks_finger_rows_all_fine_or_target_free": "7/7",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "7/7"
+     },
+     "a_t20": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3843,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 2394,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 0,
+      "n_rows_total": 3843,
+      "chunks_finger_rows_all_fine_or_target_free": "7/7",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "7/7"
+     },
+     "b1_t20": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3843,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 2394,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 0,
+      "n_rows_total": 3843,
+      "chunks_finger_rows_all_fine_or_target_free": "7/7",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "7/7"
+     },
+     "b2_t20": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3843,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 2394,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 0,
+      "n_rows_total": 3843,
+      "chunks_finger_rows_all_fine_or_target_free": "7/7",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "7/7"
+     },
+     "a_default": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.10018214936247723,
+       0.09836065573770492
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492,
+       0.09836065573770492
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 2595,
+       "fine": 0,
+       "target_free": 1248,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 1710,
+       "fine": 0,
+       "target_free": 684,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       513,
+       517,
+       523,
+       522,
+       520
+      ],
+      "n_unresolved_total": 2595,
+      "n_rows_total": 3843,
+      "chunks_finger_rows_all_fine_or_target_free": "2/7",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "2/7"
+     },
+     "b1_default": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3843,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 2394,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 0,
+      "n_rows_total": 3843,
+      "chunks_finger_rows_all_fine_or_target_free": "7/7",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "7/7"
+     },
+     "b2_default": {
+      "field": "proxy",
+      "fraction_in_window_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "fraction_in_window_now_per_chunk": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 3843,
+       "window_edge": 0,
+       "static": 0
+      },
+      "finger_by_tier_total": {
+       "outside": 0,
+       "coarse": 0,
+       "fine": 0,
+       "target_free": 2394,
+       "window_edge": 0,
+       "static": 0
+      },
+      "coarse_or_outside_rows_per_chunk": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "n_unresolved_total": 0,
+      "n_rows_total": 3843,
+      "chunks_finger_rows_all_fine_or_target_free": "7/7",
+      "chunks_finger_q_now_answered_by_fine_or_target_free": "7/7"
+     }
+    },
+    "TO_side_authorized_rows_exact_field_returned_trajectory": {
+     "source": "linearize worst_row.authorized_rows.by_tier (T21 implementation) of variant 'collision' on the recorded field",
+     "by_tier_total": {
+      "outside": 0,
+      "coarse": 2327,
+      "fine": 747,
+      "target_free": 141,
+      "window_edge": 201,
+      "static": 0
+     },
+     "verifiable_per_chunk": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+     ]
+    }
+   }
+  },
+  "m2_collision_fingertip": {
+   "T14": {
+    "live_exact": {
+     "per_chunk_median_mm": [
+      20.723991333886012,
+      16.869488650280438,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "per_chunk_max_mm": [
+      24.162041320251035,
+      18.401204173985075,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "pooled_median_mm": 0.0,
+     "pooled_max_mm": 24.162041320251035,
+     "returned": [
+      "accepted",
+      "accepted",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse"
+     ]
+    },
+    "live_proxy": {
+     "per_chunk_median_mm": [
+      20.82981678532451,
+      16.07673754068651,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "per_chunk_max_mm": [
+      24.157181423144998,
+      17.513019457447882,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "pooled_median_mm": 0.0,
+     "pooled_max_mm": 24.157181423144998,
+     "returned": [
+      "accepted",
+      "accepted",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse",
+      "coarse"
+     ]
+    },
+    "b1_rec": {
+     "per_chunk_median_mm": [
+      10.172805849969766,
+      16.838106926545453,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "per_chunk_max_mm": [
+      16.96273085043111,
+      19.909479890579576,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "pooled_median_mm": 0.0,
+     "pooled_max_mm": 19.909479890579576,
+     "returned": [
+      "accepted",
+      "accepted",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free"
+     ]
+    },
+    "b2_rec": {
+     "per_chunk_median_mm": [
+      61.96511250692514,
+      16.65709661832475,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "per_chunk_max_mm": [
+      99.85489238365852,
+      19.78873620259279,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "pooled_median_mm": 0.0,
+     "pooled_max_mm": 99.85489238365852,
+     "returned": [
+      "accepted",
+      "accepted",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free"
+     ]
+    },
+    "a_t20": {
+     "per_chunk_median_mm": [
+      27.537944661627805,
+      10.57678003013849,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "per_chunk_max_mm": [
+      33.01103004670594,
+      17.8904561010229,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "pooled_median_mm": 0.0,
+     "pooled_max_mm": 33.01103004670594,
+     "returned": [
+      "accepted",
+      "accepted",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free"
+     ]
+    },
+    "b1_t20": {
+     "per_chunk_median_mm": [
+      28.415743439182812,
+      10.758727062454575,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "per_chunk_max_mm": [
+      31.756078159976152,
+      17.876366420556565,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "pooled_median_mm": 0.0,
+     "pooled_max_mm": 31.756078159976152,
+     "returned": [
+      "accepted",
+      "accepted",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free"
+     ]
+    },
+    "b2_t20": {
+     "per_chunk_median_mm": [
+      22.738753416564197,
+      17.160350571810866,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "per_chunk_max_mm": [
+      30.62619703805053,
+      21.117738137582826,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "pooled_median_mm": 0.0,
+     "pooled_max_mm": 30.62619703805053,
+     "returned": [
+      "accepted",
+      "accepted",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial",
+      "initial"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free"
+     ]
+    }
+   },
+   "T17": {
+    "live_exact": {
+     "per_chunk_median_mm": [
+      20.915446522369024,
+      105.22129350664528,
+      107.85421584751403,
+      49.7439929547173,
+      50.77873279359629,
+      46.729720873181755,
+      121.8470535245383
+     ],
+     "per_chunk_max_mm": [
+      30.619316952040503,
+      117.90013121905565,
+      108.70633898817536,
+      52.11820213554523,
+      51.57193087034532,
+      48.81673955123623,
+      195.47857252345915
+     ],
+     "pooled_median_mm": 51.033594499171954,
+     "pooled_max_mm": 195.47857252345915,
+     "returned": [
+      "accepted",
+      "accepted",
+      "accepted",
+      "accepted",
+      "accepted",
+      "accepted",
+      "accepted"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "coarse",
+      "window_edge",
+      "window_edge",
+      "coarse",
+      "coarse",
+      "coarse",
+      "fine"
+     ]
+    },
+    "live_proxy": {
+     "per_chunk_median_mm": [
+      20.533915879896277,
+      44.95212500046998,
+      61.701896693014874,
+      74.08713881486227,
+      70.04824808664588,
+      66.40103451532372,
+      121.8470535245383
+     ],
+     "per_chunk_max_mm": [
+      30.50273725372329,
+      66.16074996714829,
+      63.42660923396637,
+      83.82277224839119,
+      73.55891388871913,
+      73.40456979948539,
+      195.47857252345915
+     ],
+     "pooled_median_mm": 64.64814811774194,
+     "pooled_max_mm": 195.47857252345915,
+     "returned": [
+      "accepted",
+      "accepted",
+      "accepted",
+      "accepted",
+      "accepted",
+      "accepted",
+      "accepted"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "coarse",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "window_edge"
+     ]
+    },
+    "b1_rec": {
+     "per_chunk_median_mm": [
+      68.07924161342254,
+      53.74529175106008,
+      116.27659097001262,
+      51.853302563674454,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "per_chunk_max_mm": [
+      124.95384710358933,
+      82.46147827440919,
+      232.3186210050966,
+      57.58928614269151,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "pooled_median_mm": 49.56593817790992,
+     "pooled_max_mm": 232.3186210050966,
+     "returned": [
+      "accepted",
+      "accepted",
+      "accepted",
+      "accepted",
+      "initial",
+      "initial",
+      "initial"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free"
+     ]
+    },
+    "b2_rec": {
+     "per_chunk_median_mm": [
+      85.92149290909066,
+      125.13759281769421,
+      0.0,
+      0.0,
+      0.0,
+      56.35940248022721,
+      0.0
+     ],
+     "per_chunk_max_mm": [
+      123.56206999914414,
+      186.7839697413312,
+      0.0,
+      0.0,
+      0.0,
+      73.91569133443785,
+      0.0
+     ],
+     "pooled_median_mm": 0.0,
+     "pooled_max_mm": 186.7839697413312,
+     "returned": [
+      "accepted",
+      "accepted",
+      "initial",
+      "initial",
+      "initial",
+      "accepted",
+      "initial"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free"
+     ]
+    },
+    "a_t20": {
+     "per_chunk_median_mm": [
+      303.0334448165577,
+      0.0,
+      40.60457891973439,
+      36.11514721165895,
+      45.60812555072676,
+      0.0,
+      0.0
+     ],
+     "per_chunk_max_mm": [
+      369.65785850642146,
+      0.0,
+      45.18968762597025,
+      52.12620105951045,
+      52.04194521247475,
+      0.0,
+      0.0
+     ],
+     "pooled_median_mm": 36.11514721165895,
+     "pooled_max_mm": 369.65785850642146,
+     "returned": [
+      "accepted",
+      "initial",
+      "accepted",
+      "accepted",
+      "accepted",
+      "initial",
+      "initial"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free"
+     ]
+    },
+    "b1_t20": {
+     "per_chunk_median_mm": [
+      102.88327476219393,
+      0.0,
+      0.0,
+      37.030091864778676,
+      52.570607299783795,
+      12.331602051649813,
+      49.01133783653796
+     ],
+     "per_chunk_max_mm": [
+      168.60779791076806,
+      0.0,
+      0.0,
+      48.844261277737786,
+      54.78057445316453,
+      13.296122477368627,
+      81.71833994072699
+     ],
+     "pooled_median_mm": 35.657692542636994,
+     "pooled_max_mm": 168.60779791076806,
+     "returned": [
+      "accepted",
+      "initial",
+      "initial",
+      "accepted",
+      "accepted",
+      "accepted",
+      "accepted"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free"
+     ]
+    },
+    "b2_t20": {
+     "per_chunk_median_mm": [
+      47.61363740506613,
+      0.0,
+      12.722053348672555,
+      12.740992997924247,
+      40.00838499821434,
+      16.188536528219863,
+      0.0
+     ],
+     "per_chunk_max_mm": [
+      90.14580516087831,
+      0.0,
+      14.222767797600739,
+      15.447915457560399,
+      50.84139258424582,
+      17.1040051532758,
+      0.0
+     ],
+     "pooled_median_mm": 13.415192569843313,
+     "pooled_max_mm": 90.14580516087831,
+     "returned": [
+      "accepted",
+      "initial",
+      "accepted",
+      "accepted",
+      "accepted",
+      "accepted",
+      "initial"
+     ],
+     "sqp_iterations": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "worst_row_tier": [
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free",
+      "target_free"
+     ]
+    }
+   },
+   "recorded_grid_window_move": "not possible: recorded fine/free grids exist only at the live window; values at moved windows are proxy (see reproduction_scope)"
+  },
+  "m3_table_crate_in_target_free": {
+   "T14": {
+    "ball_removed_cloud_points_by_label": {
+     "11": {
+      "rec": {
+       "table": [
+        0,
+        21199
+       ],
+       "crate": [
+        8693,
+        8729
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        212
+       ],
+       "orange": [
+        0,
+        259
+       ],
+       "pear": [
+        0,
+        383
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        21199
+       ],
+       "crate": [
+        0,
+        8729
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        212
+       ],
+       "orange": [
+        0,
+        259
+       ],
+       "pear": [
+        0,
+        383
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        21199
+       ],
+       "crate": [
+        0,
+        8729
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        212
+       ],
+       "orange": [
+        0,
+        259
+       ],
+       "pear": [
+        0,
+        383
+       ]
+      }
+     },
+     "12": {
+      "rec": {
+       "table": [
+        0,
+        21634
+       ],
+       "crate": [
+        8797,
+        8842
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        215
+       ],
+       "orange": [
+        0,
+        264
+       ],
+       "pear": [
+        0,
+        386
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        21634
+       ],
+       "crate": [
+        0,
+        8842
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        215
+       ],
+       "orange": [
+        0,
+        264
+       ],
+       "pear": [
+        0,
+        386
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        21634
+       ],
+       "crate": [
+        0,
+        8842
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        215
+       ],
+       "orange": [
+        0,
+        264
+       ],
+       "pear": [
+        0,
+        386
+       ]
+      }
+     },
+     "13": {
+      "rec": {
+       "table": [
+        0,
+        22055
+       ],
+       "crate": [
+        8884,
+        8927
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        221
+       ],
+       "orange": [
+        0,
+        267
+       ],
+       "pear": [
+        0,
+        391
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        22055
+       ],
+       "crate": [
+        0,
+        8927
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        221
+       ],
+       "orange": [
+        0,
+        267
+       ],
+       "pear": [
+        0,
+        391
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        22055
+       ],
+       "crate": [
+        8884,
+        8927
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        221
+       ],
+       "orange": [
+        0,
+        267
+       ],
+       "pear": [
+        0,
+        391
+       ]
+      }
+     },
+     "14": {
+      "rec": {
+       "table": [
+        0,
+        22394
+       ],
+       "crate": [
+        8969,
+        9016
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        223
+       ],
+       "orange": [
+        0,
+        270
+       ],
+       "pear": [
+        0,
+        398
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        22394
+       ],
+       "crate": [
+        0,
+        9016
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        223
+       ],
+       "orange": [
+        0,
+        270
+       ],
+       "pear": [
+        0,
+        398
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        22394
+       ],
+       "crate": [
+        8969,
+        9016
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        223
+       ],
+       "orange": [
+        0,
+        270
+       ],
+       "pear": [
+        0,
+        398
+       ]
+      }
+     },
+     "15": {
+      "rec": {
+       "table": [
+        0,
+        22676
+       ],
+       "crate": [
+        9039,
+        9091
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        229
+       ],
+       "orange": [
+        0,
+        270
+       ],
+       "pear": [
+        0,
+        400
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        22676
+       ],
+       "crate": [
+        0,
+        9091
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        229
+       ],
+       "orange": [
+        0,
+        270
+       ],
+       "pear": [
+        0,
+        400
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        22676
+       ],
+       "crate": [
+        9039,
+        9091
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        229
+       ],
+       "orange": [
+        0,
+        270
+       ],
+       "pear": [
+        0,
+        400
+       ]
+      }
+     },
+     "16": {
+      "rec": {
+       "table": [
+        0,
+        22901
+       ],
+       "crate": [
+        9097,
+        9149
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        234
+       ],
+       "orange": [
+        0,
+        271
+       ],
+       "pear": [
+        0,
+        403
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        22901
+       ],
+       "crate": [
+        0,
+        9149
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        234
+       ],
+       "orange": [
+        0,
+        271
+       ],
+       "pear": [
+        0,
+        403
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        22901
+       ],
+       "crate": [
+        9097,
+        9149
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        234
+       ],
+       "orange": [
+        0,
+        271
+       ],
+       "pear": [
+        0,
+        403
+       ]
+      }
+     },
+     "17": {
+      "rec": {
+       "table": [
+        0,
+        23052
+       ],
+       "crate": [
+        9141,
+        9179
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        234
+       ],
+       "orange": [
+        0,
+        274
+       ],
+       "pear": [
+        0,
+        404
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        23052
+       ],
+       "crate": [
+        0,
+        9179
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        234
+       ],
+       "orange": [
+        0,
+        274
+       ],
+       "pear": [
+        0,
+        404
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        23052
+       ],
+       "crate": [
+        9141,
+        9179
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        234
+       ],
+       "orange": [
+        0,
+        274
+       ],
+       "pear": [
+        0,
+        404
+       ]
+      }
+     },
+     "18": {
+      "rec": {
+       "table": [
+        0,
+        23282
+       ],
+       "crate": [
+        0,
+        9232
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        216,
+        235
+       ],
+       "orange": [
+        0,
+        280
+       ],
+       "pear": [
+        399,
+        407
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        23282
+       ],
+       "crate": [
+        0,
+        9232
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        235
+       ],
+       "orange": [
+        0,
+        280
+       ],
+       "pear": [
+        0,
+        407
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        23282
+       ],
+       "crate": [
+        0,
+        9232
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        216,
+        235
+       ],
+       "orange": [
+        0,
+        280
+       ],
+       "pear": [
+        399,
+        407
+       ]
+      }
+     },
+     "19": {
+      "rec": {
+       "table": [
+        0,
+        23424
+       ],
+       "crate": [
+        0,
+        9264
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        216,
+        235
+       ],
+       "orange": [
+        0,
+        279
+       ],
+       "pear": [
+        401,
+        409
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        23424
+       ],
+       "crate": [
+        0,
+        9264
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        235
+       ],
+       "orange": [
+        0,
+        279
+       ],
+       "pear": [
+        0,
+        409
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        23424
+       ],
+       "crate": [
+        0,
+        9264
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        216,
+        235
+       ],
+       "orange": [
+        0,
+        279
+       ],
+       "pear": [
+        401,
+        409
+       ]
+      }
+     },
+     "20": {
+      "rec": {
+       "table": [
+        0,
+        23542
+       ],
+       "crate": [
+        9252,
+        9297
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        0,
+        235
+       ],
+       "orange": [
+        0,
+        280
+       ],
+       "pear": [
+        0,
+        409
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        23542
+       ],
+       "crate": [
+        0,
+        9297
+       ],
+       "apple": [
+        400,
+        418
+       ],
+       "banana": [
+        0,
+        235
+       ],
+       "orange": [
+        0,
+        280
+       ],
+       "pear": [
+        0,
+        409
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        23542
+       ],
+       "crate": [
+        0,
+        9297
+       ],
+       "apple": [
+        0,
+        418
+       ],
+       "banana": [
+        216,
+        235
+       ],
+       "orange": [
+        0,
+        280
+       ],
+       "pear": [
+        401,
+        409
+       ]
+      }
+     }
+    },
+    "finger_rules": {
+     "live_exact": {
+      "target_free_distance_min_mm": [
+       12.674615989288705,
+       5.695715502040753,
+       18.91935321181112,
+       19.16813594971486,
+       18.89378400003731,
+       17.95387633383029,
+       17.749846484237285,
+       19.00584331961507,
+       18.554021217734764,
+       18.304295936805246
+      ],
+      "truth_table_min_mm": [
+       64.74407020260533,
+       54.07977948743083,
+       66.88106256183403,
+       66.74743782320748,
+       66.44949642636612,
+       64.92658097599914,
+       64.47153769730664,
+       66.00336606008973,
+       65.52722079996266,
+       65.10763327640458
+      ],
+      "truth_crate_min_mm": [
+       109.61471631378802,
+       108.15926307956283,
+       108.79001678589545,
+       108.36612690059195,
+       108.05255828886192,
+       109.11066274577726,
+       107.71701724209348,
+       107.75659684970294,
+       105.54541874153718,
+       104.18092908678322
+      ],
+      "truth_apple_min_mm": [
+       14.94988638493407,
+       13.667577217610354,
+       22.780115563293553,
+       23.537171534425433,
+       23.508945413515963,
+       23.24778766993126,
+       23.33418325225857,
+       24.40715007440187,
+       24.27435946689284,
+       24.351937404516967
+      ],
+      "nearest_kept_cloud_point_label_counts": null,
+      "cloud_in_window_kept_in_target_free": null
+     },
+     "b1_rec": {
+      "target_free_distance_min_mm": [
+       3.6981151820553717,
+       4.818332338666088,
+       12.595255257480853,
+       13.056134091791339,
+       12.836612606786794,
+       12.306863154489182,
+       12.259363550119,
+       13.175503285416106,
+       12.816284172574411,
+       12.78907988829831
+      ],
+      "truth_table_min_mm": [
+       64.74407020260533,
+       54.07977948743083,
+       66.88106256183403,
+       66.74743782320748,
+       66.44949642636612,
+       64.92658097599914,
+       64.47153769730664,
+       66.00336606008973,
+       65.52722079996266,
+       65.10763327640458
+      ],
+      "truth_crate_min_mm": [
+       109.61471631378802,
+       108.15926307956283,
+       108.79001678589545,
+       108.36612690059195,
+       108.05255828886192,
+       109.11066274577726,
+       107.71701724209348,
+       107.75659684970294,
+       105.54541874153718,
+       104.18092908678322
+      ],
+      "truth_apple_min_mm": [
+       14.94988638493407,
+       13.667577217610354,
+       22.780115563293553,
+       23.537171534425433,
+       23.508945413515963,
+       23.24778766993126,
+       23.33418325225857,
+       24.40715007440187,
+       24.27435946689284,
+       24.351937404516967
+      ],
+      "nearest_kept_cloud_point_label_counts": [
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 11,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 331
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 1,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 341
+       }
+      ],
+      "cloud_in_window_kept_in_target_free": [
+       {
+        "table": [
+         8902,
+         8902
+        ],
+        "crate": [
+         8283,
+         36
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         9300,
+         9300
+        ],
+        "crate": [
+         8392,
+         45
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         9687,
+         9687
+        ],
+        "crate": [
+         8472,
+         43
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         9796,
+         9796
+        ],
+        "crate": [
+         8555,
+         47
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         9909,
+         9909
+        ],
+        "crate": [
+         8625,
+         52
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         10064,
+         10064
+        ],
+        "crate": [
+         8681,
+         52
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         10158,
+         10158
+        ],
+        "crate": [
+         8709,
+         38
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         10243,
+         10243
+        ],
+        "crate": [
+         4389,
+         4389
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         10333,
+         10333
+        ],
+        "crate": [
+         4451,
+         4451
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         10290,
+         10290
+        ],
+        "crate": [
+         8822,
+         45
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       }
+      ]
+     },
+     "b2_rec": {
+      "target_free_distance_min_mm": [
+       4.477649077167047,
+       4.34848555545717,
+       12.522038607776793,
+       12.981895798792284,
+       12.77195769460076,
+       12.24429740916524,
+       12.198105802820786,
+       13.162828146443378,
+       12.789488375489539,
+       12.834984311797573
+      ],
+      "truth_table_min_mm": [
+       64.74407020260533,
+       54.07977948743083,
+       66.88106256183403,
+       66.74743782320748,
+       66.44949642636612,
+       64.92658097599914,
+       64.47153769730664,
+       66.00336606008973,
+       65.52722079996266,
+       65.10763327640458
+      ],
+      "truth_crate_min_mm": [
+       109.61471631378802,
+       108.15926307956283,
+       108.79001678589545,
+       108.36612690059195,
+       108.05255828886192,
+       109.11066274577726,
+       107.71701724209348,
+       107.75659684970294,
+       105.54541874153718,
+       104.18092908678322
+      ],
+      "truth_apple_min_mm": [
+       14.94988638493407,
+       13.667577217610354,
+       22.780115563293553,
+       23.537171534425433,
+       23.508945413515963,
+       23.24778766993126,
+       23.33418325225857,
+       24.40715007440187,
+       24.27435946689284,
+       24.351937404516967
+      ],
+      "nearest_kept_cloud_point_label_counts": [
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 11,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 331
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 1,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 341
+       }
+      ],
+      "cloud_in_window_kept_in_target_free": [
+       {
+        "table": [
+         9067,
+         9067
+        ],
+        "crate": [
+         8283,
+         36
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         9461,
+         9461
+        ],
+        "crate": [
+         8381,
+         45
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         9746,
+         9746
+        ],
+        "crate": [
+         8472,
+         43
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         9871,
+         9871
+        ],
+        "crate": [
+         8555,
+         47
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         10039,
+         10039
+        ],
+        "crate": [
+         8625,
+         52
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         10162,
+         10162
+        ],
+        "crate": [
+         8681,
+         52
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         10356,
+         10356
+        ],
+        "crate": [
+         8709,
+         38
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         10279,
+         10279
+        ],
+        "crate": [
+         4373,
+         4373
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         10395,
+         10395
+        ],
+        "crate": [
+         4430,
+         4430
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       },
+       {
+        "table": [
+         10425,
+         10425
+        ],
+        "crate": [
+         8822,
+         45
+        ],
+        "apple": [
+         418,
+         418
+        ]
+       }
+      ]
+     },
+     "a_t20": {
+      "target_free_distance_min_mm": [
+       4.581921381152062,
+       4.7667012307189935,
+       12.515105330074531,
+       12.89966430176054,
+       12.602117608624013,
+       12.343434020486352,
+       12.299114611416899,
+       13.139889361047544,
+       12.835350685813193,
+       12.792129038018368
+      ],
+      "truth_table_min_mm": [
+       64.74407020260533,
+       54.07977948743083,
+       66.88106256183403,
+       66.74743782320748,
+       66.44949642636612,
+       64.92658097599914,
+       64.47153769730664,
+       66.00336606008973,
+       65.52722079996266,
+       65.10763327640458
+      ],
+      "truth_crate_min_mm": [
+       109.61471631378802,
+       108.15926307956283,
+       108.79001678589545,
+       108.36612690059195,
+       108.05255828886192,
+       109.11066274577726,
+       107.71701724209348,
+       107.75659684970294,
+       105.54541874153718,
+       104.18092908678322
+      ],
+      "truth_apple_min_mm": [
+       14.94988638493407,
+       13.667577217610354,
+       22.780115563293553,
+       23.537171534425433,
+       23.508945413515963,
+       23.24778766993126,
+       23.33418325225857,
+       24.40715007440187,
+       24.27435946689284,
+       24.351937404516967
+      ],
+      "nearest_kept_cloud_point_label_counts": [
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       }
+      ],
+      "cloud_in_window_kept_in_target_free": [
+       {
+        "table": [
+         9445,
+         9445
+        ],
+        "crate": [
+         4299,
+         4299
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         9698,
+         9698
+        ],
+        "crate": [
+         4381,
+         4381
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         9885,
+         9885
+        ],
+        "crate": [
+         4426,
+         4426
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10014,
+         10014
+        ],
+        "crate": [
+         4475,
+         4475
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10141,
+         10141
+        ],
+        "crate": [
+         4512,
+         4512
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10257,
+         10257
+        ],
+        "crate": [
+         4543,
+         4543
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10344,
+         10344
+        ],
+        "crate": [
+         4560,
+         4560
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10435,
+         10435
+        ],
+        "crate": [
+         4584,
+         4584
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10509,
+         10509
+        ],
+        "crate": [
+         4599,
+         4599
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10578,
+         10578
+        ],
+        "crate": [
+         4620,
+         4620
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       }
+      ]
+     },
+     "b1_t20": {
+      "target_free_distance_min_mm": [
+       4.607462901379359,
+       4.978448501157325,
+       12.618935927612652,
+       12.996612247251052,
+       12.772138904882507,
+       12.24584451204515,
+       12.212634440213465,
+       13.175503285416106,
+       12.816284172574411,
+       12.725149018120497
+      ],
+      "truth_table_min_mm": [
+       64.74407020260533,
+       54.07977948743083,
+       66.88106256183403,
+       66.74743782320748,
+       66.44949642636612,
+       64.92658097599914,
+       64.47153769730664,
+       66.00336606008973,
+       65.52722079996266,
+       65.10763327640458
+      ],
+      "truth_crate_min_mm": [
+       109.61471631378802,
+       108.15926307956283,
+       108.79001678589545,
+       108.36612690059195,
+       108.05255828886192,
+       109.11066274577726,
+       107.71701724209348,
+       107.75659684970294,
+       105.54541874153718,
+       104.18092908678322
+      ],
+      "truth_apple_min_mm": [
+       14.94988638493407,
+       13.667577217610354,
+       22.780115563293553,
+       23.537171534425433,
+       23.508945413515963,
+       23.24778766993126,
+       23.33418325225857,
+       24.40715007440187,
+       24.27435946689284,
+       24.351937404516967
+      ],
+      "nearest_kept_cloud_point_label_counts": [
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       }
+      ],
+      "cloud_in_window_kept_in_target_free": [
+       {
+        "table": [
+         8806,
+         8806
+        ],
+        "crate": [
+         4048,
+         4048
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         9285,
+         9285
+        ],
+        "crate": [
+         4195,
+         4195
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         9658,
+         9658
+        ],
+        "crate": [
+         4196,
+         4196
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         9791,
+         9791
+        ],
+        "crate": [
+         4257,
+         4257
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         9920,
+         9920
+        ],
+        "crate": [
+         4325,
+         4325
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10055,
+         10055
+        ],
+        "crate": [
+         4309,
+         4309
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10142,
+         10142
+        ],
+        "crate": [
+         4325,
+         4325
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10243,
+         10243
+        ],
+        "crate": [
+         4389,
+         4389
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10333,
+         10333
+        ],
+        "crate": [
+         4451,
+         4451
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10428,
+         10428
+        ],
+        "crate": [
+         4498,
+         4498
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       }
+      ]
+     },
+     "b2_t20": {
+      "target_free_distance_min_mm": [
+       4.367972076785122,
+       4.912198504797174,
+       12.557618129296529,
+       13.003440961810933,
+       12.64807105492817,
+       12.202532966954118,
+       12.224647592360823,
+       13.162828146443378,
+       12.789488375489539,
+       12.8422877271408
+      ],
+      "truth_table_min_mm": [
+       64.74407020260533,
+       54.07977948743083,
+       66.88106256183403,
+       66.74743782320748,
+       66.44949642636612,
+       64.92658097599914,
+       64.47153769730664,
+       66.00336606008973,
+       65.52722079996266,
+       65.10763327640458
+      ],
+      "truth_crate_min_mm": [
+       109.61471631378802,
+       108.15926307956283,
+       108.79001678589545,
+       108.36612690059195,
+       108.05255828886192,
+       109.11066274577726,
+       107.71701724209348,
+       107.75659684970294,
+       105.54541874153718,
+       104.18092908678322
+      ],
+      "truth_apple_min_mm": [
+       14.94988638493407,
+       13.667577217610354,
+       22.780115563293553,
+       23.537171534425433,
+       23.508945413515963,
+       23.24778766993126,
+       23.33418325225857,
+       24.40715007440187,
+       24.27435946689284,
+       24.351937404516967
+      ],
+      "nearest_kept_cloud_point_label_counts": [
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       }
+      ],
+      "cloud_in_window_kept_in_target_free": [
+       {
+        "table": [
+         8963,
+         8963
+        ],
+        "crate": [
+         4052,
+         4052
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         9411,
+         9411
+        ],
+        "crate": [
+         4137,
+         4137
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         9690,
+         9690
+        ],
+        "crate": [
+         4191,
+         4191
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         9837,
+         9837
+        ],
+        "crate": [
+         4249,
+         4249
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         9967,
+         9967
+        ],
+        "crate": [
+         4271,
+         4271
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10082,
+         10082
+        ],
+        "crate": [
+         4288,
+         4288
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10263,
+         10263
+        ],
+        "crate": [
+         4326,
+         4326
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10279,
+         10279
+        ],
+        "crate": [
+         4373,
+         4373
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10395,
+         10395
+        ],
+        "crate": [
+         4430,
+         4430
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       },
+       {
+        "table": [
+         10531,
+         10531
+        ],
+        "crate": [
+         4528,
+         4528
+        ],
+        "apple": [
+         418,
+         18
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "T17": {
+    "ball_removed_cloud_points_by_label": {
+     "9": {
+      "rec": {
+       "table": [
+        0,
+        19573
+       ],
+       "crate": [
+        7884,
+        7922
+       ],
+       "apple": [
+        0,
+        379
+       ],
+       "banana": [
+        0,
+        189
+       ],
+       "orange": [
+        0,
+        245
+       ],
+       "pear": [
+        0,
+        352
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        19573
+       ],
+       "crate": [
+        0,
+        7922
+       ],
+       "apple": [
+        372,
+        379
+       ],
+       "banana": [
+        0,
+        189
+       ],
+       "orange": [
+        0,
+        245
+       ],
+       "pear": [
+        0,
+        352
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        19573
+       ],
+       "crate": [
+        0,
+        7922
+       ],
+       "apple": [
+        372,
+        379
+       ],
+       "banana": [
+        0,
+        189
+       ],
+       "orange": [
+        0,
+        245
+       ],
+       "pear": [
+        0,
+        352
+       ]
+      }
+     },
+     "10": {
+      "rec": {
+       "table": [
+        0,
+        20150
+       ],
+       "crate": [
+        7997,
+        8038
+       ],
+       "apple": [
+        0,
+        379
+       ],
+       "banana": [
+        0,
+        191
+       ],
+       "orange": [
+        0,
+        250
+       ],
+       "pear": [
+        0,
+        358
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        20150
+       ],
+       "crate": [
+        0,
+        8038
+       ],
+       "apple": [
+        372,
+        379
+       ],
+       "banana": [
+        0,
+        191
+       ],
+       "orange": [
+        0,
+        250
+       ],
+       "pear": [
+        0,
+        358
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        20150
+       ],
+       "crate": [
+        0,
+        8038
+       ],
+       "apple": [
+        372,
+        379
+       ],
+       "banana": [
+        0,
+        191
+       ],
+       "orange": [
+        0,
+        250
+       ],
+       "pear": [
+        0,
+        358
+       ]
+      }
+     },
+     "11": {
+      "rec": {
+       "table": [
+        0,
+        20700
+       ],
+       "crate": [
+        8115,
+        8168
+       ],
+       "apple": [
+        0,
+        379
+       ],
+       "banana": [
+        0,
+        196
+       ],
+       "orange": [
+        0,
+        250
+       ],
+       "pear": [
+        0,
+        369
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        20700
+       ],
+       "crate": [
+        0,
+        8168
+       ],
+       "apple": [
+        372,
+        379
+       ],
+       "banana": [
+        0,
+        196
+       ],
+       "orange": [
+        0,
+        250
+       ],
+       "pear": [
+        0,
+        369
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        20700
+       ],
+       "crate": [
+        8115,
+        8168
+       ],
+       "apple": [
+        0,
+        379
+       ],
+       "banana": [
+        0,
+        196
+       ],
+       "orange": [
+        0,
+        250
+       ],
+       "pear": [
+        0,
+        369
+       ]
+      }
+     },
+     "12": {
+      "rec": {
+       "table": [
+        0,
+        21290
+       ],
+       "crate": [
+        8183,
+        8234
+       ],
+       "apple": [
+        0,
+        379
+       ],
+       "banana": [
+        0,
+        198
+       ],
+       "orange": [
+        0,
+        250
+       ],
+       "pear": [
+        0,
+        373
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        21290
+       ],
+       "crate": [
+        0,
+        8234
+       ],
+       "apple": [
+        372,
+        379
+       ],
+       "banana": [
+        0,
+        198
+       ],
+       "orange": [
+        0,
+        250
+       ],
+       "pear": [
+        0,
+        373
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        21290
+       ],
+       "crate": [
+        8183,
+        8234
+       ],
+       "apple": [
+        0,
+        379
+       ],
+       "banana": [
+        0,
+        198
+       ],
+       "orange": [
+        0,
+        250
+       ],
+       "pear": [
+        0,
+        373
+       ]
+      }
+     },
+     "13": {
+      "rec": {
+       "table": [
+        0,
+        21660
+       ],
+       "crate": [
+        8236,
+        8279
+       ],
+       "apple": [
+        0,
+        380
+       ],
+       "banana": [
+        0,
+        199
+       ],
+       "orange": [
+        0,
+        249
+       ],
+       "pear": [
+        0,
+        376
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        21660
+       ],
+       "crate": [
+        0,
+        8279
+       ],
+       "apple": [
+        372,
+        380
+       ],
+       "banana": [
+        0,
+        199
+       ],
+       "orange": [
+        0,
+        249
+       ],
+       "pear": [
+        0,
+        376
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        21660
+       ],
+       "crate": [
+        8236,
+        8279
+       ],
+       "apple": [
+        0,
+        380
+       ],
+       "banana": [
+        0,
+        199
+       ],
+       "orange": [
+        0,
+        249
+       ],
+       "pear": [
+        0,
+        376
+       ]
+      }
+     },
+     "14": {
+      "rec": {
+       "table": [
+        0,
+        21886
+       ],
+       "crate": [
+        8269,
+        8312
+       ],
+       "apple": [
+        0,
+        380
+       ],
+       "banana": [
+        0,
+        200
+       ],
+       "orange": [
+        0,
+        249
+       ],
+       "pear": [
+        0,
+        380
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        21886
+       ],
+       "crate": [
+        0,
+        8312
+       ],
+       "apple": [
+        372,
+        380
+       ],
+       "banana": [
+        0,
+        200
+       ],
+       "orange": [
+        0,
+        249
+       ],
+       "pear": [
+        0,
+        380
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        21886
+       ],
+       "crate": [
+        8269,
+        8312
+       ],
+       "apple": [
+        0,
+        380
+       ],
+       "banana": [
+        0,
+        200
+       ],
+       "orange": [
+        0,
+        249
+       ],
+       "pear": [
+        0,
+        380
+       ]
+      }
+     },
+     "15": {
+      "rec": {
+       "table": [
+        0,
+        23654
+       ],
+       "crate": [
+        8672,
+        8716
+       ],
+       "apple": [
+        0,
+        379
+       ],
+       "banana": [
+        0,
+        211
+       ],
+       "orange": [
+        0,
+        249
+       ],
+       "pear": [
+        0,
+        398
+       ]
+      },
+      "t20": {
+       "table": [
+        0,
+        23654
+       ],
+       "crate": [
+        0,
+        8716
+       ],
+       "apple": [
+        359,
+        379
+       ],
+       "banana": [
+        0,
+        211
+       ],
+       "orange": [
+        0,
+        249
+       ],
+       "pear": [
+        0,
+        398
+       ]
+      },
+      "default": {
+       "table": [
+        0,
+        23654
+       ],
+       "crate": [
+        8672,
+        8716
+       ],
+       "apple": [
+        0,
+        379
+       ],
+       "banana": [
+        0,
+        211
+       ],
+       "orange": [
+        0,
+        249
+       ],
+       "pear": [
+        0,
+        398
+       ]
+      }
+     }
+    },
+    "finger_rules": {
+     "live_exact": {
+      "target_free_distance_min_mm": [
+       0.4710744016189936,
+       -20.004272460937507,
+       -20.004272460937504,
+       -20.004272460937504,
+       -20.004272460937504,
+       -20.004272460937504,
+       -20.004272460937504
+      ],
+      "truth_table_min_mm": [
+       52.38249048370493,
+       19.375321823457043,
+       16.245765683716957,
+       13.894371756784336,
+       12.675291903182746,
+       11.858535892804074,
+       13.514614349671955
+      ],
+      "truth_crate_min_mm": [
+       102.39581230689394,
+       102.19731669213743,
+       102.41162825368303,
+       101.63171238009697,
+       102.06056209554002,
+       99.01222921511665,
+       101.07639775416699
+      ],
+      "truth_apple_min_mm": [
+       -4.291175128779743,
+       -22.352808108110327,
+       -22.251787447043295,
+       -20.75852236327225,
+       -20.054160973137726,
+       -19.83286507207879,
+       -18.62348636512315
+      ],
+      "nearest_kept_cloud_point_label_counts": null,
+      "cloud_in_window_kept_in_target_free": null
+     },
+     "b1_rec": {
+      "target_free_distance_min_mm": [
+       2.1212371143230246,
+       2.175587537879704,
+       1.1493797415987934,
+       2.2615247559802785,
+       2.3761397466402245,
+       2.545390432665457,
+       2.3327014920614166
+      ],
+      "truth_table_min_mm": [
+       52.38249048370493,
+       19.375321823457043,
+       16.245765683716957,
+       13.894371756784336,
+       12.675291903182746,
+       11.858535892804074,
+       13.514614349671955
+      ],
+      "truth_crate_min_mm": [
+       102.39581230689394,
+       102.19731669213743,
+       102.41162825368303,
+       101.63171238009697,
+       102.06056209554002,
+       99.01222921511665,
+       101.07639775416699
+      ],
+      "truth_apple_min_mm": [
+       -4.291175128779743,
+       -22.352808108110327,
+       -22.251787447043295,
+       -20.75852236327225,
+       -20.054160973137726,
+       -19.83286507207879,
+       -18.62348636512315
+      ],
+      "nearest_kept_cloud_point_label_counts": [
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 26,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 316
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 231,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 111
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 321,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 21
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 330,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 12
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 332,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 10
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 331,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 11
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 335,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 7
+       }
+      ],
+      "cloud_in_window_kept_in_target_free": [
+       {
+        "table": [
+         7730,
+         7730
+        ],
+        "crate": [
+         7499,
+         38
+        ],
+        "apple": [
+         379,
+         379
+        ]
+       },
+       {
+        "table": [
+         8100,
+         8100
+        ],
+        "crate": [
+         7641,
+         41
+        ],
+        "apple": [
+         379,
+         379
+        ]
+       },
+       {
+        "table": [
+         8286,
+         8286
+        ],
+        "crate": [
+         7764,
+         53
+        ],
+        "apple": [
+         379,
+         379
+        ]
+       },
+       {
+        "table": [
+         8477,
+         8477
+        ],
+        "crate": [
+         7833,
+         51
+        ],
+        "apple": [
+         379,
+         379
+        ]
+       },
+       {
+        "table": [
+         8593,
+         8593
+        ],
+        "crate": [
+         7883,
+         43
+        ],
+        "apple": [
+         380,
+         380
+        ]
+       },
+       {
+        "table": [
+         8698,
+         8698
+        ],
+        "crate": [
+         7914,
+         43
+        ],
+        "apple": [
+         380,
+         380
+        ]
+       },
+       {
+        "table": [
+         9302,
+         9302
+        ],
+        "crate": [
+         8298,
+         44
+        ],
+        "apple": [
+         379,
+         379
+        ]
+       }
+      ]
+     },
+     "b2_rec": {
+      "target_free_distance_min_mm": [
+       2.6718265088463773,
+       1.956628906634177,
+       2.9495489920259073,
+       2.7735163112304355,
+       2.5861156726326193,
+       1.794749324147131,
+       2.2503481956901137
+      ],
+      "truth_table_min_mm": [
+       52.38249048370493,
+       19.375321823457043,
+       16.245765683716957,
+       13.894371756784336,
+       12.675291903182746,
+       11.858535892804074,
+       13.514614349671955
+      ],
+      "truth_crate_min_mm": [
+       102.39581230689394,
+       102.19731669213743,
+       102.41162825368303,
+       101.63171238009697,
+       102.06056209554002,
+       99.01222921511665,
+       101.07639775416699
+      ],
+      "truth_apple_min_mm": [
+       -4.291175128779743,
+       -22.352808108110327,
+       -22.251787447043295,
+       -20.75852236327225,
+       -20.054160973137726,
+       -19.83286507207879,
+       -18.62348636512315
+      ],
+      "nearest_kept_cloud_point_label_counts": [
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 26,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 316
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 231,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 111
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 321,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 21
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 330,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 12
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 332,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 10
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 331,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 11
+       },
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 335,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 7
+       }
+      ],
+      "cloud_in_window_kept_in_target_free": [
+       {
+        "table": [
+         7846,
+         7846
+        ],
+        "crate": [
+         7495,
+         38
+        ],
+        "apple": [
+         379,
+         379
+        ]
+       },
+       {
+        "table": [
+         8164,
+         8164
+        ],
+        "crate": [
+         7606,
+         41
+        ],
+        "apple": [
+         379,
+         379
+        ]
+       },
+       {
+        "table": [
+         8297,
+         8297
+        ],
+        "crate": [
+         7731,
+         53
+        ],
+        "apple": [
+         379,
+         379
+        ]
+       },
+       {
+        "table": [
+         8488,
+         8488
+        ],
+        "crate": [
+         7794,
+         51
+        ],
+        "apple": [
+         379,
+         379
+        ]
+       },
+       {
+        "table": [
+         8656,
+         8656
+        ],
+        "crate": [
+         7851,
+         43
+        ],
+        "apple": [
+         380,
+         380
+        ]
+       },
+       {
+        "table": [
+         8799,
+         8799
+        ],
+        "crate": [
+         7909,
+         43
+        ],
+        "apple": [
+         380,
+         380
+        ]
+       },
+       {
+        "table": [
+         9353,
+         9353
+        ],
+        "crate": [
+         8238,
+         44
+        ],
+        "apple": [
+         379,
+         379
+        ]
+       }
+      ]
+     },
+     "a_t20": {
+      "target_free_distance_min_mm": [
+       3.3614057475033974,
+       12.385342721991284,
+       14.640948387948885,
+       12.30244280278962,
+       11.085969986760851,
+       10.325937659755118,
+       11.858818606868562
+      ],
+      "truth_table_min_mm": [
+       52.38249048370493,
+       19.375321823457043,
+       16.245765683716957,
+       13.894371756784336,
+       12.675291903182746,
+       11.858535892804074,
+       13.514614349671955
+      ],
+      "truth_crate_min_mm": [
+       102.39581230689394,
+       102.19731669213743,
+       102.41162825368303,
+       101.63171238009697,
+       102.06056209554002,
+       99.01222921511665,
+       101.07639775416699
+      ],
+      "truth_apple_min_mm": [
+       -4.291175128779743,
+       -22.352808108110327,
+       -22.251787447043295,
+       -20.75852236327225,
+       -20.054160973137726,
+       -19.83286507207879,
+       -18.62348636512315
+      ],
+      "nearest_kept_cloud_point_label_counts": [
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 34,
+        "crate": 0,
+        "apple": 21,
+        "banana": 0,
+        "orange": 15,
+        "pear": 0,
+        "other": 272
+       },
+       {
+        "table": 70,
+        "crate": 0,
+        "apple": 54,
+        "banana": 0,
+        "orange": 37,
+        "pear": 0,
+        "other": 181
+       },
+       {
+        "table": 67,
+        "crate": 0,
+        "apple": 63,
+        "banana": 0,
+        "orange": 38,
+        "pear": 0,
+        "other": 174
+       },
+       {
+        "table": 67,
+        "crate": 0,
+        "apple": 67,
+        "banana": 0,
+        "orange": 39,
+        "pear": 0,
+        "other": 169
+       },
+       {
+        "table": 73,
+        "crate": 0,
+        "apple": 58,
+        "banana": 0,
+        "orange": 38,
+        "pear": 0,
+        "other": 173
+       },
+       {
+        "table": 53,
+        "crate": 0,
+        "apple": 85,
+        "banana": 0,
+        "orange": 45,
+        "pear": 0,
+        "other": 159
+       }
+      ],
+      "cloud_in_window_kept_in_target_free": [
+       {
+        "table": [
+         8740,
+         8740
+        ],
+        "crate": [
+         3681,
+         3681
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         9140,
+         9140
+        ],
+        "crate": [
+         3760,
+         3760
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         9429,
+         9429
+        ],
+        "crate": [
+         3832,
+         3832
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         9714,
+         9714
+        ],
+        "crate": [
+         3872,
+         3872
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         9880,
+         9880
+        ],
+        "crate": [
+         3888,
+         3888
+        ],
+        "apple": [
+         380,
+         8
+        ]
+       },
+       {
+        "table": [
+         9987,
+         9987
+        ],
+        "crate": [
+         3901,
+         3901
+        ],
+        "apple": [
+         380,
+         8
+        ]
+       },
+       {
+        "table": [
+         10780,
+         10780
+        ],
+        "crate": [
+         4117,
+         4117
+        ],
+        "apple": [
+         379,
+         20
+        ]
+       }
+      ]
+     },
+     "b1_t20": {
+      "target_free_distance_min_mm": [
+       4.665724783908332,
+       12.438489612759538,
+       14.651317191399723,
+       12.282583416159088,
+       11.002293751506606,
+       10.224431308337286,
+       11.82758860591145
+      ],
+      "truth_table_min_mm": [
+       52.38249048370493,
+       19.375321823457043,
+       16.245765683716957,
+       13.894371756784336,
+       12.675291903182746,
+       11.858535892804074,
+       13.514614349671955
+      ],
+      "truth_crate_min_mm": [
+       102.39581230689394,
+       102.19731669213743,
+       102.41162825368303,
+       101.63171238009697,
+       102.06056209554002,
+       99.01222921511665,
+       101.07639775416699
+      ],
+      "truth_apple_min_mm": [
+       -4.291175128779743,
+       -22.352808108110327,
+       -22.251787447043295,
+       -20.75852236327225,
+       -20.054160973137726,
+       -19.83286507207879,
+       -18.62348636512315
+      ],
+      "nearest_kept_cloud_point_label_counts": [
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 34,
+        "crate": 0,
+        "apple": 21,
+        "banana": 0,
+        "orange": 15,
+        "pear": 0,
+        "other": 272
+       },
+       {
+        "table": 70,
+        "crate": 0,
+        "apple": 54,
+        "banana": 0,
+        "orange": 37,
+        "pear": 0,
+        "other": 181
+       },
+       {
+        "table": 67,
+        "crate": 0,
+        "apple": 63,
+        "banana": 0,
+        "orange": 38,
+        "pear": 0,
+        "other": 174
+       },
+       {
+        "table": 67,
+        "crate": 0,
+        "apple": 67,
+        "banana": 0,
+        "orange": 39,
+        "pear": 0,
+        "other": 169
+       },
+       {
+        "table": 73,
+        "crate": 0,
+        "apple": 58,
+        "banana": 0,
+        "orange": 38,
+        "pear": 0,
+        "other": 173
+       },
+       {
+        "table": 53,
+        "crate": 0,
+        "apple": 85,
+        "banana": 0,
+        "orange": 45,
+        "pear": 0,
+        "other": 159
+       }
+      ],
+      "cloud_in_window_kept_in_target_free": [
+       {
+        "table": [
+         7833,
+         7833
+        ],
+        "crate": [
+         3847,
+         3847
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         8293,
+         8293
+        ],
+        "crate": [
+         3941,
+         3941
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         8590,
+         8590
+        ],
+        "crate": [
+         4017,
+         4017
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         8851,
+         8851
+        ],
+        "crate": [
+         4070,
+         4070
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         8986,
+         8986
+        ],
+        "crate": [
+         4097,
+         4097
+        ],
+        "apple": [
+         380,
+         8
+        ]
+       },
+       {
+        "table": [
+         9093,
+         9093
+        ],
+        "crate": [
+         4108,
+         4108
+        ],
+        "apple": [
+         380,
+         8
+        ]
+       },
+       {
+        "table": [
+         9782,
+         9782
+        ],
+        "crate": [
+         4335,
+         4335
+        ],
+        "apple": [
+         379,
+         20
+        ]
+       }
+      ]
+     },
+     "b2_t20": {
+      "target_free_distance_min_mm": [
+       4.258191088621123,
+       12.224074303586585,
+       14.730435369821441,
+       12.367879625732739,
+       11.094655769284568,
+       10.171912780361389,
+       11.793211819101414
+      ],
+      "truth_table_min_mm": [
+       52.38249048370493,
+       19.375321823457043,
+       16.245765683716957,
+       13.894371756784336,
+       12.675291903182746,
+       11.858535892804074,
+       13.514614349671955
+      ],
+      "truth_crate_min_mm": [
+       102.39581230689394,
+       102.19731669213743,
+       102.41162825368303,
+       101.63171238009697,
+       102.06056209554002,
+       99.01222921511665,
+       101.07639775416699
+      ],
+      "truth_apple_min_mm": [
+       -4.291175128779743,
+       -22.352808108110327,
+       -22.251787447043295,
+       -20.75852236327225,
+       -20.054160973137726,
+       -19.83286507207879,
+       -18.62348636512315
+      ],
+      "nearest_kept_cloud_point_label_counts": [
+       {
+        "table": 0,
+        "crate": 0,
+        "apple": 0,
+        "banana": 0,
+        "orange": 0,
+        "pear": 0,
+        "other": 342
+       },
+       {
+        "table": 34,
+        "crate": 0,
+        "apple": 21,
+        "banana": 0,
+        "orange": 15,
+        "pear": 0,
+        "other": 272
+       },
+       {
+        "table": 70,
+        "crate": 0,
+        "apple": 54,
+        "banana": 0,
+        "orange": 37,
+        "pear": 0,
+        "other": 181
+       },
+       {
+        "table": 67,
+        "crate": 0,
+        "apple": 63,
+        "banana": 0,
+        "orange": 38,
+        "pear": 0,
+        "other": 174
+       },
+       {
+        "table": 67,
+        "crate": 0,
+        "apple": 67,
+        "banana": 0,
+        "orange": 39,
+        "pear": 0,
+        "other": 169
+       },
+       {
+        "table": 73,
+        "crate": 0,
+        "apple": 58,
+        "banana": 0,
+        "orange": 38,
+        "pear": 0,
+        "other": 173
+       },
+       {
+        "table": 53,
+        "crate": 0,
+        "apple": 85,
+        "banana": 0,
+        "orange": 45,
+        "pear": 0,
+        "other": 159
+       }
+      ],
+      "cloud_in_window_kept_in_target_free": [
+       {
+        "table": [
+         7975,
+         7975
+        ],
+        "crate": [
+         3842,
+         3842
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         8440,
+         8440
+        ],
+        "crate": [
+         3931,
+         3931
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         8652,
+         8652
+        ],
+        "crate": [
+         4004,
+         4004
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         8928,
+         8928
+        ],
+        "crate": [
+         4055,
+         4055
+        ],
+        "apple": [
+         379,
+         7
+        ]
+       },
+       {
+        "table": [
+         9079,
+         9079
+        ],
+        "crate": [
+         4079,
+         4079
+        ],
+        "apple": [
+         380,
+         8
+        ]
+       },
+       {
+        "table": [
+         9211,
+         9211
+        ],
+        "crate": [
+         4127,
+         4127
+        ],
+        "apple": [
+         380,
+         8
+        ]
+       },
+       {
+        "table": [
+         9871,
+         9871
+        ],
+        "crate": [
+         4303,
+         4303
+        ],
+        "apple": [
+         379,
+         20
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  "m4_overflow": {
+   "T14": {
+    "a_rec": {
+     "basis": {
+      "manipulated": 10
+     },
+     "overflow": {
+      "None": 10
+     }
+    },
+    "b1_rec": {
+     "basis": {
+      "overflow": 10
+     },
+     "overflow": {
+      "manipulated": 10
+     }
+    },
+    "b2_rec": {
+     "basis": {
+      "overflow": 10
+     },
+     "overflow": {
+      "manipulated": 10
+     }
+    },
+    "a_t20": {
+     "basis": {
+      "manipulated": 10
+     },
+     "overflow": {
+      "None": 10
+     }
+    },
+    "b1_t20": {
+     "basis": {
+      "hand_swept": 10
+     },
+     "overflow": {
+      "None": 10
+     }
+    },
+    "b2_t20": {
+     "basis": {
+      "hand_swept": 10
+     },
+     "overflow": {
+      "None": 10
+     }
+    },
+    "a_default": {
+     "basis": {
+      "manipulated": 10
+     },
+     "overflow": {
+      "None": 10
+     }
+    },
+    "b1_default": {
+     "basis": {
+      "hand_swept": 2,
+      "overflow": 8
+     },
+     "overflow": {
+      "None": 2,
+      "manipulated": 8
+     }
+    },
+    "b2_default": {
+     "basis": {
+      "hand_swept": 2,
+      "overflow": 8
+     },
+     "overflow": {
+      "None": 2,
+      "manipulated": 8
+     }
+    }
+   },
+   "T17": {
+    "a_rec": {
+     "basis": {
+      "manipulated": 7
+     },
+     "overflow": {
+      "None": 7
+     }
+    },
+    "b1_rec": {
+     "basis": {
+      "overflow": 7
+     },
+     "overflow": {
+      "manipulated": 7
+     }
+    },
+    "b2_rec": {
+     "basis": {
+      "overflow": 7
+     },
+     "overflow": {
+      "manipulated": 7
+     }
+    },
+    "a_t20": {
+     "basis": {
+      "manipulated": 7
+     },
+     "overflow": {
+      "None": 7
+     }
+    },
+    "b1_t20": {
+     "basis": {
+      "hand_swept": 7
+     },
+     "overflow": {
+      "None": 7
+     }
+    },
+    "b2_t20": {
+     "basis": {
+      "hand_swept": 7
+     },
+     "overflow": {
+      "None": 7
+     }
+    },
+    "a_default": {
+     "basis": {
+      "manipulated": 7
+     },
+     "overflow": {
+      "None": 7
+     }
+    },
+    "b1_default": {
+     "basis": {
+      "hand_swept": 2,
+      "overflow": 5
+     },
+     "overflow": {
+      "None": 2,
+      "manipulated": 5
+     }
+    },
+    "b2_default": {
+     "basis": {
+      "hand_swept": 2,
+      "overflow": 5
+     },
+     "overflow": {
+      "None": 2,
+      "manipulated": 5
+     }
+    }
+   }
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t21/t21-scene.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t21/t21-scene.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t21/t21-graph.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t21/t21-graph.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t21/t21-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t21/t21-table.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "위반으로 시작 13/15 · has_target 15/15 · frame0 clearance_before +0.18597810857728936 mm — skill 기준값과 같다"
+ },
+ "verdict": "기준선 일치. tests 1292 passed / 0 failed. 창 배치·계층 수치는 위 numbers 에만 있다.",
+ "not_measured": [
+  "cuRobo field rebuild at the new windows (no depth in T14/T17 records) — fine/target-free values at b1/b2/a_t20 windows are proxy",
+  "TSDF free-space carving and signed interior in the proxy",
+  "live AG3S stats['window'] / notes from a real run (no new closed-loop run; 8123 untouched)",
+  "T19 guard rule effect on the cloud (records are pre-T19 self-filter output)",
+  "latency of the new window path",
+  "T14 chunks outside 11-20, T17 chunks outside 9-15"
+ ],
+ "process_notes": [
+  "impl.md 는 1-190 행(요약·바뀐 파일·규칙·config·기록 형식·단위 검증·verifier 가 알아야 할 것·재지 않은 것)만 측정 전에 읽었다. '내가 기대하는 결과' 절(191-)은 읽지 않았다.",
+  "proxy 첫 시도(단일 chunk cloud)는 T17 chunk 12 에서 fine voxel diff median 7.5 mm · p90 65 mm 였고 누적 cloud 로 바꿨다 (위 fidelity 는 누적 기준).",
+  "nearest kept point label 'other' 가 T14 finger 에서 342/342: T14 chunk 12 · T17 chunk 12 확인 — 그 점들은 q_now 손 구 표면에서 median 14.0 / 18.0 mm, chunk 0-6 에 처음 나온 점 (누적 proxy 에 carving 없음)."
+ ]
+}
