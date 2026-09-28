@@ -43,6 +43,11 @@ from benchmark.trajopt.qp import QpSolver
 from benchmark.trajopt.types import ChunkLayout, JointLimits, TrajOptResult, TrajOptStatus
 
 
+#: 초기 iterate 가 "한계 안" 인가의 문턱 (rad 또는 rad/step). `_finish` 가 limit overshoot 를
+#: 노트에 적는 문턱과 같다 — 두 곳이 다르면 "한계 안" 의 뜻이 갈라진다.
+_LIMIT_TOLERANCE = 1e-6
+
+
 class TrajectoryOptimizer:
     """Stateful across chunks, because that is where the warm start comes from.
 
@@ -143,12 +148,40 @@ class TrajectoryOptimizer:
         # the linearization and its merit, and an accepted candidate hands its states to the next
         # iteration rather than being recomputed there.
         iterate_states = self.linearizer.sphere_states(iterate, q_now)
-        iterate_merit = self._merit(
+        iterate_merit, iterate_violation = self._merit_terms(
             iterate, reference, previous_chunk, q_now, scene, states=iterate_states
         )
+        # **초기 iterate 도 반환 후보다** (T24, 지침 §7.3). 예전에는 `best_merit = np.inf` 로
+        # 시작해서, 첫 QP 후보가 초기 궤적보다 merit 이 나빠 반복점으로 **거절**되더라도 반환용
+        # best 로는 저장됐다. 예산으로 끝나면 (T14 30/30 · T17 75/75 chunk 가 그랬다) 그 거절된
+        # 후보가 나갔다. 이제 초기 iterate 와 그 merit 이 기준이고, 그보다 나쁜 후보는 반환되지
+        # 않는다.
+        #
+        # **단, 초기 iterate 가 로봇 한계 안에 있을 때만이다.** merit 은 비용 + 충돌 위반이고
+        # **관절 한계를 보지 않는다** — 한계는 QP 의 행(box·anchor 는 hard, 속도·가속도는 soft)이
+        # 지킨다. QP 후보는 그 행을 거쳐 나오지만 초기 iterate 는 정책이 낸 그대로다. 그래서
+        # reference 가 joint box 밖이면 box 안으로 끌어들인 후보가 추적 비용만큼 merit 이 나빠
+        # **언제나 진다** — merit 만으로 고르면 한계를 넘는 reference 가 그대로 나간다. 두 후보의
+        # 적격성이 같지 않은 것이다 (지침 §7.3 "모든 후보의 적격성이 같다고 가정하지 않는다").
+        # 한계를 넘는 초기 iterate 는 비교 대상에서 빠지고 (예전 규칙 그대로), QP 가 하나도 못
+        # 풀었을 때의 마지막 대비로만 남는다.
+        #
+        # 적격한 초기화 아래에서 best 는 언제나 수락된 반복점이다: 후보의 merit 이 `best_merit`
+        # 보다 작으면 `best_merit <= iterate_merit` 이므로 수락 조건도 만족한다. 그래서
+        # `best_unaccepted` 는 **초기 iterate 가 부적격일 때만** 나온다. `returned` 는 이 성질을
+        # 가정하지 않고 후보 기록에서 읽어 싣는다.
+        initial_merit, initial_violation = iterate_merit, iterate_violation
+        initial_overshoot = self._limit_overshoot(iterate, q_now)
+        initial_eligible = max(initial_overshoot.values()) <= _LIMIT_TOLERANCE
         best = iterate
         best_states = iterate_states
-        best_merit = np.inf
+        best_merit = iterate_merit if initial_eligible else np.inf
+        #: `-1` = 초기 iterate. 그 밖은 `candidates` 의 인덱스.
+        best_index = -1
+        #: QP 가 풀린 모든 후보의 `(merit, 위반, 수락)`. 반환된 것이 무엇이었는지와 그 옆에 무엇이
+        #: 있었는지를 기록으로 남긴다 — 후보 선택 규칙을 나중에 다시 실행하지 않고 검산할 수 있다.
+        candidates: list[dict[str, Any]] = []
+        qp_failures = 0
         # Per-stage timing, accumulated rather than sampled. Where the milliseconds go is the single
         # most useful thing to know about a real-time optimizer, and it changes with the scene.
         timing = {"linearize": 0.0, "assemble": 0.0, "qp": 0.0, "check": 0.0}
@@ -194,6 +227,7 @@ class TrajectoryOptimizer:
             qp_iterations += solution.iterations
             if not solution.success:
                 notes.append(f"QP failed at iteration {iterations}: {solution.status}")
+                qp_failures += 1
                 radius *= cfg.sqp.trust_shrink
                 if radius < cfg.sqp.trust_radius_min:
                     break
@@ -202,21 +236,31 @@ class TrajectoryOptimizer:
             mark = time.perf_counter()
             candidate, slack = problem.split(solution.x)
             candidate_states = self.linearizer.sphere_states(candidate, q_now)
-            merit = self._merit(
+            merit, violation = self._merit_terms(
                 candidate, reference, previous_chunk, q_now, scene, states=candidate_states
             )
             timing["check"] += (time.perf_counter() - mark) * 1000.0
             step_size = float(np.abs(candidate - iterate).max())
+            accepted = bool(merit <= iterate_merit)
+            candidates.append({
+                "iteration": int(iterations),
+                "merit": float(merit),
+                "violation_m": None if violation is None else float(violation),
+                "accepted": accepted,
+                "step_size_rad": step_size,
+                "trust_radius_rad": float(radius),
+            })
 
             if merit < best_merit:
                 best, best_merit = candidate, merit
                 best_slack = float(np.sum(np.abs(slack)))
                 best_states = candidate_states
+                best_index = len(candidates) - 1
             # A step that improved the merit earns a wider trust region; one that did not gets a
             # narrower one and another attempt from the same iterate. `iterate_merit` is carried
             # rather than recomputed: it costs a full-resolution clearance sweep, which after the QP
             # became fast is the most expensive thing left in the loop.
-            if merit <= iterate_merit:
+            if accepted:
                 iterate, iterate_merit, iterate_states = candidate, merit, candidate_states
                 radius = min(radius * cfg.sqp.trust_expand, cfg.sqp.trust_radius_max)
             else:
@@ -231,11 +275,24 @@ class TrajectoryOptimizer:
                 "some near-active constraints were not shown to the QP (the final check still sees "
                 "all of them)"
             )
+        selection = {
+            "returned": _returned_label(best_index, candidates),
+            "returned_index": int(best_index),
+            "initial_merit": float(initial_merit),
+            "initial_violation_m": (None if initial_violation is None
+                                    else float(initial_violation)),
+            "initial_eligible": bool(initial_eligible),
+            "initial_limit_overshoot": {k: float(v) for k, v in initial_overshoot.items()},
+            "candidates": candidates,
+            "n_candidates": len(candidates),
+            "n_accepted": int(sum(1 for c in candidates if c["accepted"])),
+            "qp_failures": int(qp_failures),
+        }
         return self._finish(
             best, reference, q_now, scene, template, iterations, best_slack,
             reference_violation, previous_chunk, notes, started, geometry_certified,
             states=best_states, timing=timing, qp_iterations=qp_iterations,
-            time_budget_hit=time_budget_hit,
+            time_budget_hit=time_budget_hit, selection=selection,
         )
 
     # --- helpers --------------------------------------------------------------------------
@@ -247,14 +304,44 @@ class TrajectoryOptimizer:
         re-evaluates the geometry and so can disagree, which is the only way the step-acceptance test
         can catch a bad linearization.
         """
+        return self._merit_terms(trajectory, reference, previous_chunk, q_now, scene, states)[0]
+
+    def _merit_terms(
+        self, trajectory, reference, previous_chunk, q_now, scene, states=None
+    ) -> tuple[float, Optional[float]]:
+        """`(merit, violation_m)` — `_merit` 과 **같은 계산**이고, 위반량을 버리지 않고 돌려줄 뿐이다.
+
+        후보 기록(T24)이 `(merit, 위반, 수락)` 을 싣기 위해 있다. 위반을 따로 한 번 더 재면
+        후보마다 clearance sweep 이 하나 늘고, 그것은 예산 안의 반복 수를 바꾼다 — 기록하려고
+        동작을 바꾸는 것이 된다.
+
+        충돌이 꺼진 판에서는 `violation_m` 이 `None` 이다: merit 이 위반을 **재지 않으므로**
+        (T15), 여기서 재면 역시 루프 비용이 는다. "0" 이 아니라 "재지 않음" 이다. 반환된 궤적의
+        위반은 `_finish` 가 스위치와 무관하게 잰다.
+        """
         cost = objective(trajectory, reference, self.config, previous_chunk=previous_chunk)
         if not self.config.collision.enabled:
             # **꺼진 판에서는 벌점도 없어야 한다** (T15). 행만 비우고 merit 에 위반을 남기면
             # 충돌이 여전히 해를 밀고, 그러면 "충돌을 껐다" 가 거짓이 된다 — QP 가 아니라 step
             # 수락 기준을 통해 미는 것뿐이다. 측정(`worst_row`)은 이것과 무관하게 계속 돈다.
-            return cost
+            return cost, None
         violation = max(0.0, -self.linearizer.full_violation(trajectory, q_now, scene, states))
-        return cost + self.config.cost.w_slack * violation
+        return cost + self.config.cost.w_slack * violation, violation
+
+    def _limit_overshoot(self, trajectory: np.ndarray, q_now: np.ndarray) -> dict[str, float]:
+        """`limit_report` + **anchor** — QP 가 hard 로 지키는 첫 스텝 조건까지.
+
+        `build_problem` 은 ``|Q[:, 0] - q_now| <= max_step`` 을 box 에 넣어 hard 로 지킨다. 초기
+        iterate 가 그것을 넘으면 QP 후보와 같은 자격이 아니므로 여기서 함께 잰다.
+        """
+        report = dict(limit_report(trajectory, self.limits))
+        anchor = 0.0
+        step = np.asarray(self.limits.max_step, np.float64)
+        if trajectory.shape[1] and np.all(np.isfinite(step)):
+            q0 = np.asarray(q_now, np.float64).reshape(-1)[self.layout.q_indices]
+            anchor = float(np.max(np.abs(trajectory[:, 0] - q0) - step, initial=0.0))
+        report["anchor"] = max(anchor, 0.0)
+        return report
 
     def _passthrough(self, reference, q_now, template, status, notes, started) -> TrajOptResult:
         chunk = self._chunk_from(reference, template)
@@ -277,7 +364,10 @@ class TrajectoryOptimizer:
                      "sqp_iterations": 0, "max_iterations": int(self.config.sqp.max_iterations),
                      "time_budget_ms": float(self.config.sqp.time_budget_ms),
                      "time_budget_hit": False, "max_iterations_hit": False,
-                     "collision_enabled": bool(self.config.collision.enabled)},
+                     "collision_enabled": bool(self.config.collision.enabled),
+                     # 후보 선택 키도 같게 둔다 (T24). 풀지 않았으므로 후보는 없고, 나간 것은
+                     # reference 그 자체다.
+                     **_no_selection()},
         )
 
     def _chunk_from(self, trajectory: np.ndarray, template: Optional[np.ndarray]) -> np.ndarray:
@@ -288,7 +378,7 @@ class TrajectoryOptimizer:
     def _finish(
         self, trajectory, reference, q_now, scene, template, iterations, slack_norm,
         reference_violation, previous_chunk, notes, started, geometry_certified, states=None,
-        timing=None, qp_iterations=0, time_budget_hit=False,
+        timing=None, qp_iterations=0, time_budget_hit=False, selection=None,
     ) -> TrajOptResult:
         cfg = self.config
         # `full_violation` 이 아니라 `worst_row` 다. **같은 값을 내면서 그 값을 만든 행의 신원까지
@@ -328,7 +418,7 @@ class TrajectoryOptimizer:
                 "from the real geometry — it is what the trajectory does, not what was enforced."
             )
         limits = limit_report(trajectory, self.limits)
-        if max(limits.values()) > 1e-6:
+        if max(limits.values()) > _LIMIT_TOLERANCE:
             notes.append(
                 f"limit overshoot (m or m/step): {  {k: round(v, 6) for k, v in limits.items()} }"
             )
@@ -368,8 +458,33 @@ class TrajectoryOptimizer:
                 # 충돌이 꺼졌는지. `notes` 와 **둘 다** 싣는다 — 기계가 세는 쪽과 사람이 읽는 쪽.
                 "collision_enabled": bool(cfg.collision.enabled),
                 "timing_ms": {k: round(v, 3) for k, v in (timing or {}).items()},
+                # **무엇이 반환됐나** (T24, 지침 §7.3). `returned` 는 `"initial"` · `"accepted"` ·
+                # `"best_unaccepted"` 중 하나이고, 그 판정의 근거인 후보 목록이 옆에 실린다.
+                # 위의 `clearance_m`·`limit_overshoot`·상태는 **반환된 그 궤적**을 최종 기하와
+                # 실제 한계로 다시 잰 값이다 — 후보의 `violation_m` 은 루프 안의 merit 가 본 값이다.
+                **(selection if selection is not None else _no_selection()),
             },
         )
+
+
+def _returned_label(index: int, candidates: list[dict[str, Any]]) -> str:
+    """`best_index` → `"initial"` · `"accepted"` · `"best_unaccepted"`.
+
+    수락 여부를 **후보 기록에서 읽는다.** 적격한 초기 iterate 로 시작하면 `best_unaccepted` 는
+    나오지 않는다 (`solve` 의 주석) — 나오는 것은 초기 iterate 가 한계 밖이라 비교에서 빠졌을
+    때뿐이다. 그 성질을 여기서 가정하면 그것이 깨진 날 기록이 거짓말을 한다.
+    """
+    if index < 0:
+        return "initial"
+    return "accepted" if candidates[index]["accepted"] else "best_unaccepted"
+
+
+def _no_selection() -> dict[str, Any]:
+    """풀지 않은 결과의 후보 선택 키 — `_finish` 와 키 집합을 같게 둔다."""
+    return {"returned": "initial", "returned_index": -1, "initial_merit": None,
+            "initial_violation_m": None, "initial_eligible": None,
+            "initial_limit_overshoot": None, "candidates": [], "n_candidates": 0,
+            "n_accepted": 0, "qp_failures": 0}
 
 
 __all__ = ["TrajectoryOptimizer"]

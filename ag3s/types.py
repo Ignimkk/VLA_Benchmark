@@ -144,6 +144,11 @@ class GroundingStatus(str, enum.Enum):
     NO_SEED = "no_seed"  # threshold/percentile left no seed point
     NO_CLUSTER = "no_cluster"  # seeds present but no cluster met min_points
     LOW_SCORE = "low_score"  # best cluster scored below target_score_threshold
+    #: The manipulated object has gone unobserved for more than `clustering.target_lost_frames`
+    #: frames and no challenger has earned a switch (T20). Distinct from NO_SEED/NO_CLUSTER on
+    #: purpose: those say "this frame had nothing to name", this says "the object we were
+    #: manipulating is no longer accounted for" — and the leader is *not* substituted for it.
+    LOST = "lost"
 
     @property
     def ok(self) -> bool:

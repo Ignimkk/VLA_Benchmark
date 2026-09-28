@@ -39,6 +39,14 @@ What a score cannot do, a *count* can: `TargetConfirm` makes a different object 
 `target_confirm_frames` consecutive frames of leading. That is the same rule `GraspLatch` uses, and
 it is what actually suppressed the ep1807 flicker (2 chunks of pear, 1 of apple) that a threshold
 never addressed.
+
+**Hidden is not replaced (T20, 2026-09-28).** `TargetConfirm` also carries the *manipulated
+object*: an id we assign, its last observed geometry and an observation state (`visible |
+occluded | lost`). When the held object produces no cluster, the frame's target is that object's
+last observed geometry (`occluded`), not the leader — on T14 seq 12 the leader was a crate at score
+0.015 because the apple was behind the fingers. After `target_lost_frames` it is `lost`: no target,
+`GroundingStatus.LOST`. A switch still happens, on the T5e count, from challengers scoring at least
+`target_switch_min_score` (default 0.0 = every challenger counts, as before).
 """
 
 from __future__ import annotations
@@ -46,7 +54,7 @@ from __future__ import annotations
 import dataclasses
 import time
 from collections.abc import Sequence
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -55,6 +63,8 @@ from benchmark.ag3s.stages.geometry import fit_sphere, rms_radius
 from benchmark.ag3s.types import AttentionPointCloud, GroundingStatus, TargetGeometry
 
 _EPS = 1e-9
+#: "Not given" for `TargetConfirm(lost_frames=...)`, where None already means "never lost".
+_FROM_CONFIG = object()
 
 
 # ----------------------------------------------------------------------------- clustering
@@ -246,46 +256,143 @@ class GroundingResult:
 # --------------------------------------------------------------- cross-frame target confirmation
 
 
+#: Observation states of the manipulated object (T20, guide §4.3 — the names are the guide's
+#: suggestion). `visible`: one of this frame's clusters is it. `occluded`: it produced no cluster
+#: this frame, for at most `clustering.target_lost_frames` frames running; its last observed geometry
+#: stands in. `lost`: unobserved for longer than that; there is no target, and the reason says so.
+VISIBLE, OCCLUDED, LOST = "visible", "occluded", "lost"
+MANIPULATED_STATES = (VISIBLE, OCCLUDED, LOST)
+
+
+@dataclasses.dataclass(frozen=True)
+class ManipulatedIdentity:
+    """The object this grasp is about, as of one frame (T20, guide §4.1).
+
+    Three things used to be one: the **attention target** (what the policy looked at this frame),
+    the **manipulated object** (what this grasp is about) and the destination. `ground_target` is
+    about the first; this is the second. Before a grasp they coincide, so nothing downstream behaves
+    differently — they part exactly when the apple disappears behind the fingers or attention moves
+    to the basket, which is when contact permission and target exclusion must *not* follow attention.
+
+    `id` is ours, assigned by `TargetConfirm` and stable across frames. Cluster indices are not: they
+    are this frame's position in a sorted list and mean nothing one frame later.
+
+    `geometry` is the **last observed** `TargetGeometry` of this object — this frame's when it is
+    `visible`, an older one when `occluded` or `lost`. Its `point_indices` index the cloud of the
+    frame it was observed in, so only `points` / `centroid` / `bounding_geometry` are meaningful
+    across frames. It is `None` only between `select()` and `observe()` of an adoption frame, i.e.
+    never after `ground_target` returns.
+    """
+
+    id: int
+    state: str
+    geometry: Optional[TargetGeometry]
+    #: Where the object was last seen (the held centroid). Follows the object while it is visible.
+    centroid: np.ndarray
+    #: Consecutive frames without an observation. 0 when `visible`.
+    age_frames: int
+    #: Grounding-call index of the last observation (`TargetConfirm` counts calls since `reset()`,
+    #: which inside `AG3S` equals `frame_index`). -1 if it has never been observed.
+    last_seen_frame: int
+    #: `TargetGeometry.timestamp` of that observation, or None.
+    last_seen_time: Optional[float]
+    #: The id this one took over from by a `switch`; None for the episode's first object.
+    switched_from: Optional[int]
+    #: Grounding-call index this snapshot describes.
+    frame: int
+
+    @property
+    def usable(self) -> bool:
+        """True when consumers should treat this object as present: `visible` or `occluded`."""
+        return self.state in (VISIBLE, OCCLUDED) and self.geometry is not None
+
+    @property
+    def points(self) -> np.ndarray:
+        if self.geometry is None:
+            return np.zeros((0, 3), np.float64)
+        return np.asarray(self.geometry.points, np.float64).reshape(-1, 3)
+
+    @property
+    def radius(self) -> float:
+        """Bounding-sphere radius of the last observation (0.0 if none)."""
+        if self.geometry is None:
+            return 0.0
+        return float(np.asarray(self.geometry.bounding_geometry.dimensions, np.float64)[0])
+
+    def record(self) -> dict[str, Any]:
+        """JSON-friendly per-frame record (T20 §3): `metrics["manipulated"]` and the chunk summary."""
+        return {
+            "id": int(self.id),
+            "state": str(self.state),
+            "age_frames": int(self.age_frames),
+            "centroid": [float(v) for v in np.asarray(self.centroid, np.float64).reshape(3)],
+            "radius": float(self.radius),
+            "n_points": int(len(self.points)),
+            "last_seen_frame": int(self.last_seen_frame),
+            "switched_from": None if self.switched_from is None else int(self.switched_from),
+            "frame": int(self.frame),
+        }
+
+
 @dataclasses.dataclass(frozen=True)
 class ConfirmDecision:
-    """Which cluster this frame's target is, and why that one (T5e).
+    """Which object this frame's target is, and why that one (T5e, T20).
 
     Kept as a record rather than a bare return value because the *why* is the observable part: a
     frame where the leader was overruled looks identical to a frame where it won, unless the
     decision says so.
     """
 
-    #: The chosen candidate.
-    cluster: "ClusterInfo"
-    #: Its position in the score-sorted list. 0 means the leader was taken.
+    #: The chosen candidate. **None** when the manipulated object produced no cluster this frame
+    #: (`occluded` / `lost`): the leader is deliberately *not* put here (T20).
+    cluster: Optional["ClusterInfo"]
+    #: Its position in the score-sorted list. 0 means the leader was taken; -1 = not in this frame.
     rank: int
     #: `first` — nothing was held yet, so the leader is taken and becomes the held object.
     #: `keep`  — the leader *is* the held object.
     #: `hold`  — a different cluster leads, but not for long enough yet; the held object is kept.
-    #: `switch` — a different cluster has led `target_confirm_frames` frames running; it takes over.
-    #: `unobserved` — a different cluster leads and the held object is not in this frame at all, so
-    #: there is nothing to hold; the leader is used *without* resetting the switch count. Holding an
-    #: object that no camera can see would mean naming geometry that is not there.
+    #: `switch` — a different cluster has led `target_confirm_frames` frames running, each at
+    #: `target_switch_min_score` or above; it takes over under a new id.
+    #: `occluded` — the held object is not in this frame at all and no switch is due. Until T20 this
+    #: was `unobserved` and handed the frame to the leader; the held object is now kept, with its
+    #: last observed geometry, and the switch count keeps running (T14 seq 12: the leader was a
+    #: crate at score 0.015 because the apple was behind the fingers).
+    #: `lost` — as `occluded`, but for more than `target_lost_frames` frames: no target at all.
     mode: str
     #: How many frames running the current challenger has led. 0 whenever the leader is held.
     streak: int
     #: `target_confirm_frames`, so a reader can see `streak` against its threshold.
     frames: int
+    #: Observation state of the manipulated object after this decision.
+    state: str = VISIBLE
+    #: Its id after this decision.
+    manipulated_id: Optional[int] = None
+    #: Consecutive unobserved frames after this decision (0 when visible).
+    age_frames: int = 0
 
 
 class TargetConfirm:
-    """Hysteresis over *which* object is the target, across frames (T5e).
+    """Hysteresis over *which* object is the target, and the identity of that object (T5e, T20).
 
     `ground_target` is frame-independent by design and stays that way: it ranks this frame's
     clusters and knows nothing about the last one. This object holds the only cross-frame state —
-    the centroid of the object currently being called the target — and is owned by whoever owns the
-    episode (`AG3S` holds one and clears it in `reset()`).
+    the centroid of the object currently being called the target, its id, its last observed geometry
+    and whether it is currently seen — and is owned by whoever owns the episode (`AG3S` holds one
+    and clears it in `reset()`).
 
     **Why hysteresis and not a latch.** `GraspLatch._Confirm` locks a name once and never changes it
-    until `release()`; that is right for "which object is being manipulated", and wrong here, because
+    until `release()`; that is right for "which object is in the hand", and wrong here, because
     the target legitimately changes — on ep1807 it is the apple, then the crate it goes into. What is
     not legitimate is changing on a single frame. So the rule is the latch's counting rule without
-    the lock: a challenger must lead `target_confirm_frames` frames in a row.
+    the lock: a challenger must lead `target_confirm_frames` frames in a row — and, since T20, score at
+    least `target_switch_min_score` on each of them.
+
+    **Unobserved is not a new object (T20).** When the held object produces no cluster, the frame is
+    `occluded`: the held object is returned with its *last observed* geometry, never the leader.
+    The switch count keeps running, so a challenger that earns the switch still takes over on
+    schedule; after `target_lost_frames` unobserved frames the object is `lost` and the frame has no
+    target, with that as the stated reason. Re-appearing within tolerance of the last centroid makes
+    it `visible` again under the same id.
 
     Three further reasons this is not `_Confirm` reused:
       - `_Confirm` gates each frame on `score >= score_ratio * runner_up`, which is a score-based
@@ -293,7 +400,7 @@ class TargetConfirm:
         steady 1.1x margin the target would never switch at all.
       - it compares *names*, and grounding has no names: `TargetGeometry.id` is this frame's cluster
         index and means nothing across frames. Identity here is centroid proximity, same rule and
-        same tolerance as `CentroidIdentity`.
+        same tolerance as `CentroidIdentity`; the id is assigned here.
       - `benchmark/ag3s` does not import `benchmark/trajopt`; the dependency runs the other way
         (`trajopt/safe_policy.py` imports the pipeline). Reaching up would invert it.
 
@@ -301,6 +408,8 @@ class TargetConfirm:
     it was first seen stops matching it within a few frames. `CentroidIdentity` deliberately does not
     update its anchors, but it is feeding a permanent lock, where a drifting anchor can never be
     undone; here the decision is remade every frame, so tracking the object is the safer error.
+    While the object is unobserved the centroid stays where it was last seen — a pushed object is
+    the known limit of that (T20.task "되돌아올 지점").
     """
 
     def __init__(
@@ -309,13 +418,30 @@ class TargetConfirm:
         *,
         frames: Optional[int] = None,
         tolerance: Optional[float] = None,
+        switch_min_score: Optional[float] = None,
+        lost_frames: Any = _FROM_CONFIG,
     ):
         cfg = config or ClusteringConfig()
         self.frames = int(cfg.target_confirm_frames if frames is None else frames)
         self.tolerance = float(cfg.target_identity_tolerance if tolerance is None else tolerance)
+        self.switch_min_score = float(
+            cfg.target_switch_min_score if switch_min_score is None else switch_min_score)
+        # None is a legal value (never lost), so "not given" needs its own sentinel.
+        lost = cfg.target_lost_frames if lost_frames is _FROM_CONFIG else lost_frames
+        self.lost_frames: Optional[int] = None if lost is None else int(lost)
         self._held: Optional[np.ndarray] = None
         self._challenger: Optional[np.ndarray] = None
         self._streak = 0
+        # --- identity (T20) ---
+        self._id: Optional[int] = None
+        self._next_id = 0
+        self._switched_from: Optional[int] = None
+        self._geometry: Optional[TargetGeometry] = None
+        self._age = 0
+        self._last_seen_frame = -1
+        self._last_seen_time: Optional[float] = None
+        #: Index of the current grounding call since `reset()`; -1 before the first.
+        self._frame = -1
         #: The last decision, for logging. `None` before the first frame with a cluster.
         self.last: Optional[ConfirmDecision] = None
 
@@ -329,25 +455,68 @@ class TargetConfirm:
     def streak(self) -> int:
         return self._streak
 
+    @property
+    def state(self) -> Optional[str]:
+        """Observation state of the manipulated object, or None when nothing is held."""
+        if self._held is None:
+            return None
+        if self._age == 0:
+            return VISIBLE
+        if self.lost_frames is not None and self._age > self.lost_frames:
+            return LOST
+        return OCCLUDED
+
+    @property
+    def last_geometry(self) -> Optional[TargetGeometry]:
+        """The manipulated object's last observed geometry (see `ManipulatedIdentity.geometry`)."""
+        return self._geometry
+
+    @property
+    def manipulated(self) -> Optional[ManipulatedIdentity]:
+        """A snapshot of the manipulated object after the latest grounding call, or None."""
+        if self._held is None or self._id is None:
+            return None
+        return ManipulatedIdentity(
+            id=int(self._id),
+            state=str(self.state),
+            geometry=self._geometry,
+            centroid=self._held.copy(),
+            age_frames=int(self._age),
+            last_seen_frame=int(self._last_seen_frame),
+            last_seen_time=self._last_seen_time,
+            switched_from=self._switched_from,
+            frame=int(self._frame),
+        )
+
     def reset(self) -> None:
-        """Episode boundary. The next frame's leader is taken with no argument."""
+        """Episode boundary. The next frame's leader is taken with no argument, under a fresh id."""
         self._held = self._challenger = None
         self._streak = 0
+        self._id = None
+        self._next_id = 0
+        self._switched_from = None
+        self._geometry = None
+        self._age = 0
+        self._last_seen_frame = -1
+        self._last_seen_time = None
+        self._frame = -1
         self.last = None
 
     # --- one frame -------------------------------------------------------------------------
     def select(self, clusters: "Sequence[ClusterInfo]") -> ConfirmDecision:
         """Pick this frame's target from `clusters`, which must be sorted by descending score.
 
-        Never returns None: if there is at least one cluster there is a target. "No cluster" is the
-        only honest way to have no target, and the caller has already handled it.
+        Returns a decision whose `cluster` is None when the manipulated object is `occluded` or
+        `lost` — the caller decides what stands in for it (`ground_target`: the last observed
+        geometry, or no target). It never substitutes the leader for an unobserved object.
         """
         if not clusters:
             raise ValueError("TargetConfirm.select needs at least one cluster")
+        self._frame += 1
         leader = clusters[0]
 
         if self._held is None:
-            self._held = np.asarray(leader.centroid, np.float64).reshape(3)
+            self._adopt(leader, switched_from=None)
             self._challenger, self._streak = None, 0
             return self._record(leader, 0, "first")
 
@@ -355,33 +524,75 @@ class TargetConfirm:
         if held_rank == 0:
             # The leader is the object we are already calling the target. Track it and forget any
             # challenger: leading again after a gap has to start the count over.
-            self._held = np.asarray(leader.centroid, np.float64).reshape(3)
+            self._seen(leader)
             self._challenger, self._streak = None, 0
             return self._record(leader, 0, "keep")
 
-        if self._challenger is not None and self._within(leader.centroid, self._challenger):
-            self._streak += 1
+        if float(leader.target_score) >= self.switch_min_score:
+            if self._challenger is not None and self._within(leader.centroid, self._challenger):
+                self._streak += 1
+            else:
+                self._streak = 1
+            self._challenger = np.asarray(leader.centroid, np.float64).reshape(3)
         else:
-            self._streak = 1
-        self._challenger = np.asarray(leader.centroid, np.float64).reshape(3)
+            # A leader under the minimum does not count, and it breaks the run: "N frames running
+            # at or above the minimum" is the rule, so a sub-minimum frame is a gap.
+            self._challenger, self._streak = None, 0
 
         if self._streak >= self.frames:
-            self._held = np.asarray(leader.centroid, np.float64).reshape(3)
+            self._adopt(leader, switched_from=self._id)
             self._challenger, self._streak = None, 0
             return self._record(leader, 0, "switch")
 
         if held_rank is None:
-            # Nothing to hold — the held object produced no cluster this frame. The count is *not*
-            # reset: if it stays gone the challenger still takes over on schedule.
-            return self._record(leader, 0, "unobserved")
+            # The held object produced no cluster this frame. It is not replaced by the leader —
+            # being hidden by the hand is not being a different object. The count is *not* reset:
+            # if it stays gone, a qualifying challenger still takes over on schedule.
+            self._age += 1
+            state = self.state
+            return self._record(None, -1, LOST if state == LOST else OCCLUDED)
 
         held = clusters[held_rank]
-        self._held = np.asarray(held.centroid, np.float64).reshape(3)
+        self._seen(held)
         return self._record(held, held_rank, "hold")
 
+    def unseen(self) -> Optional[str]:
+        """A grounding call that produced no clusters at all (NO_SEED, NO_CLUSTER, ...).
+
+        The manipulated object was not observed either, so it ages; nothing else moves — the switch
+        count is untouched, as it was before T20 when such a frame never reached `select`. Returns
+        the resulting state (None when nothing is held).
+        """
+        self._frame += 1
+        if self._held is None:
+            return None
+        self._age += 1
+        return self.state
+
+    def observe(self, target: TargetGeometry) -> None:
+        """Record this frame's geometry of the manipulated object (called by `ground_target` right
+        after a `first`/`keep`/`hold`/`switch` decision). This is what `occluded` falls back on."""
+        self._geometry = target
+        self._last_seen_time = float(target.timestamp)
+
     # --- internals -------------------------------------------------------------------------
-    def _record(self, cluster: "ClusterInfo", rank: int, mode: str) -> ConfirmDecision:
-        self.last = ConfirmDecision(cluster, int(rank), mode, self._streak, self.frames)
+    def _adopt(self, cluster: "ClusterInfo", *, switched_from: Optional[int]) -> None:
+        self._id = self._next_id
+        self._next_id += 1
+        self._switched_from = switched_from
+        self._geometry = None  # the previous object's shape must never stand in for this one
+        self._last_seen_time = None
+        self._seen(cluster)
+
+    def _seen(self, cluster: "ClusterInfo") -> None:
+        self._held = np.asarray(cluster.centroid, np.float64).reshape(3)
+        self._age = 0
+        self._last_seen_frame = self._frame
+
+    def _record(self, cluster: Optional["ClusterInfo"], rank: int, mode: str) -> ConfirmDecision:
+        self.last = ConfirmDecision(
+            cluster, int(rank), mode, self._streak, self.frames,
+            state=str(self.state), manipulated_id=self._id, age_frames=int(self._age))
         return self.last
 
     def _within(self, a, b) -> bool:
@@ -475,7 +686,11 @@ def ground_target(
             decides alone, which keeps the function reproducible from a single frame and is what
             every offline caller gets. With it, the target only moves to a different object after
             that object has led `target_confirm_frames` frames in a row; the caller owns the object
-            because the caller owns the episode boundary.
+            because the caller owns the episode boundary. With one, a frame where the held object
+            produced no cluster returns its **last observed** geometry (`occluded`; empty
+            `point_indices`, `metrics["manipulated_occluded"] = 1`) or, once `lost`, no target with
+            `GroundingStatus.LOST` — never the leader (T20). A frame that ends with no cluster at
+            all reports its usual status and only ages the manipulated object (`confirm.unseen()`).
 
     Note the excluded points are excluded from *connectivity and clustering only*. They remain in the
     cloud and go on to become `SUPPORT_SURFACE` candidates in stage 5; nothing is deleted here.
@@ -487,11 +702,13 @@ def ground_target(
     n = len(attention_cloud)
 
     if n == 0:
+        _unseen(confirm)
         return GroundingResult(None, GroundingStatus.NO_GEOMETRY)
 
     if float(attention.max()) - float(attention.min()) <= _EPS:
         # A flat map carries no information about which object is the target. Taking its "top 5%"
         # would return an arbitrary slice of the scene and dress it up as a grounded target.
+        _unseen(confirm)
         return GroundingResult(None, GroundingStatus.NO_ATTENTION)
 
     # The peak comes from the *unclipped* signal. Percentile normalization deliberately saturates its
@@ -510,6 +727,7 @@ def ground_target(
     seed_mask &= usable
     seeds = np.nonzero(seed_mask)[0]
     if seeds.size == 0:
+        _unseen(confirm)
         return GroundingResult(None, GroundingStatus.NO_SEED, seed_indices=seeds,
                                attention_peak_index=peak_index)
 
@@ -525,6 +743,7 @@ def ground_target(
         grown_local = grow_region(points[candidate_idx], local_seed, cfg.eps)
         grown = candidate_idx[grown_local]
         if grown.size == 0:
+            _unseen(confirm)
             return GroundingResult(None, GroundingStatus.NO_CLUSTER, seed_indices=seeds,
                                    attention_peak_index=peak_index)
 
@@ -543,6 +762,7 @@ def ground_target(
         member_points, member_attention = points, attention
 
     if not groups:
+        _unseen(confirm)
         return GroundingResult(None, GroundingStatus.NO_CLUSTER, seed_indices=seeds,
                                attention_peak_index=peak_index)
 
@@ -561,6 +781,7 @@ def ground_target(
     # wants rejection *before* any of the state below moves: a frame we refuse to name must not count
     # toward switching the target either.
     if best.target_score < cfg.target_score_threshold:
+        _unseen(confirm)
         return GroundingResult(
             None, GroundingStatus.LOW_SCORE, tuple(clusters), seeds, peak_index, best.target_score
         )
@@ -569,6 +790,11 @@ def ground_target(
     # what every direct caller gets and what makes this function reproducible from one frame. With
     # one, a challenger has to lead `target_confirm_frames` frames running before the target moves.
     decision = confirm.select(clusters) if confirm is not None else None
+    if decision is not None and decision.cluster is None:
+        # The manipulated object is not among this frame's clusters (T20). The leader is *not*
+        # named in its place: a hand in front of the apple does not make the crate the object.
+        return _unobserved_result(decision, confirm, tuple(clusters), seeds, peak_index,
+                                  best.target_score)
     chosen = clusters[0] if decision is None else decision.cluster
     # The strongest *other* candidate. Identical to `clusters[1]` whenever rank 1 was taken, which is
     # the definition `GraspLatch` was written against; when the held object was kept over a stronger
@@ -616,16 +842,57 @@ def ground_target(
             "runner_up_score": max(others) if others else 0.0,
         },
     )
+    if confirm is not None:
+        # The manipulated object's latest observation — what an `occluded` frame falls back on.
+        confirm.observe(target)
     return GroundingResult(
         target, GroundingStatus.OK, tuple(clusters), seeds, peak_index, best.target_score
     )
+
+
+def _unseen(confirm: Optional["TargetConfirm"]) -> None:
+    """A frame with no clusters: the manipulated object (if any) ages; the result is unchanged."""
+    if confirm is not None:
+        confirm.unseen()
+
+
+def _unobserved_result(decision, confirm, clusters, seeds, peak_index, best_score):
+    """`occluded` → the last observed geometry as this frame's target; `lost` → no target.
+
+    The occluded target is the last observation **as it was**: its points, centroid and bounding
+    sphere, and its `timestamp` (when those were true). Two things are changed so no consumer
+    mistakes it for a fresh cluster: `point_indices` is empty (none of *this* cloud's points are
+    it) and `metrics` carries `manipulated_occluded = 1`, `manipulated_age_frames` and
+    `target_rank = -1`. `runner_up_score` is the best score of this frame — every cluster is a
+    competitor, and `GraspLatch` must see that ambiguity, not a stale one.
+    """
+    last = confirm.last_geometry
+    if decision.state == LOST or last is None:
+        return GroundingResult(None, GroundingStatus.LOST, clusters, seeds, peak_index, best_score)
+    metrics = dict(last.metrics)
+    metrics.update({
+        "target_rank": -1.0,
+        "target_confirm_streak": float(decision.streak),
+        "runner_up_score": max(c.target_score for c in clusters),
+        "manipulated_occluded": 1.0,
+        "manipulated_age_frames": float(decision.age_frames),
+    })
+    target = dataclasses.replace(
+        last, id=-1, point_indices=np.zeros(0, np.int64), metrics=metrics,
+        seed_camera=None, supporting_cameras=())
+    return GroundingResult(target, GroundingStatus.OK, clusters, seeds, peak_index, best_score)
 
 
 __all__ = [
     "ClusterInfo",
     "ConfirmDecision",
     "GroundingResult",
+    "LOST",
+    "MANIPULATED_STATES",
+    "ManipulatedIdentity",
+    "OCCLUDED",
     "TargetConfirm",
+    "VISIBLE",
     "connected_components_3d",
     "dbscan",
     "extract_seeds",

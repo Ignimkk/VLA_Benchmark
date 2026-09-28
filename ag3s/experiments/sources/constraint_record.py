@@ -83,12 +83,17 @@ class ConstraintRecordWriter:
                clearance: Optional[np.ndarray] = None,
                to_result: Optional[Any] = None,
                attention_maps: Optional[dict[str, np.ndarray]] = None,
-               occupancy: Optional[np.ndarray] = None) -> pathlib.Path:
+               occupancy: Optional[np.ndarray] = None,
+               summary_extra: Optional[dict[str, Any]] = None) -> pathlib.Path:
         """한 청크. `debug` 는 `AG3S.process_multi_debug` 가 돌려준 두 번째 값 그대로.
 
         `occupancy` 는 따로 받는다. `EsdfField` 는 거리장만 들고 있고 세 상태 점유 배열은
         `EsdfBuilder` 안에 남기 때문이다 — 그 분리는 의도된 것이라(필드는 TO 가 읽는 것,
         점유는 그것을 만든 재료) 여기서 필드를 파고들어 꺼내오지 않는다.
+
+        `summary_extra` 는 `summary_json` 에 **그대로 더할** JSON 값들이다 (T18 — `SafePolicy` 가
+        `exec_feedback` · `exec_continuity` · `exec_latch_signal` 을 싣는다). 이 기록기가 모르는
+        키를 여기서 해석하지 않는다. 이미 있는 키와 겹치면 기록기 쪽 값이 이긴다.
         """
         payload: dict[str, Any] = {
             "t_step": np.int64(t_step),
@@ -145,6 +150,9 @@ class ConstraintRecordWriter:
             summary["grounding_best_score"] = float(getattr(grounding, "best_score", 0.0))
             summary["n_clusters"] = len(getattr(grounding, "clusters", ()) or ())
             summary["attention_peak_index"] = int(getattr(grounding, "attention_peak_index", -1))
+        # T20: 조작 대상 정체 (`AG3S.manipulated.record()`, 파이프라인이 metrics 에 싣는다).
+        # `state == "occluded"` 인 청크에서 접촉 허용이 살아 있었는지는 이것 없이 알 수 없다.
+        summary["manipulated"] = (getattr(constraint_set, "metrics", None) or {}).get("manipulated")
         target = getattr(constraint_set, "target", None)
         if target is not None:
             payload["target_points"] = np.asarray(target.points, np.float32)
@@ -208,6 +216,8 @@ class ConstraintRecordWriter:
                 "metrics": {k: _scalar(v) for k, v in (getattr(to_result, "metrics", {}) or {}).items()},
             }
 
+        for key, value in (summary_extra or {}).items():
+            summary.setdefault(key, value)
         payload["summary_json"] = np.asarray(json.dumps(summary, ensure_ascii=False))
         out = self.run_dir / f"chunk_{self._count:05d}.npz"
         np.savez_compressed(out, **payload)

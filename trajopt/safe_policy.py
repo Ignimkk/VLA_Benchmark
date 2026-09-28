@@ -24,12 +24,17 @@ import numpy as np
 
 from benchmark.trajopt import wire
 from benchmark.trajopt.config import TrajOptConfig
-from benchmark.trajopt.grasp_latch import CentroidIdentity, GraspLatch, LatchConfig
+from benchmark.trajopt.grasp_latch import (
+    CentroidIdentity,
+    GraspLatch,
+    LatchConfig,
+    grasp_signal_from_feedback,
+)
 from benchmark.trajopt.linearize import CollisionLinearizer, scene_from_constraint_set
 from benchmark.trajopt.refiner import TrajOptChunkRefiner
 from benchmark.trajopt.types import ChunkLayout
 
-__all__ = ["SafePolicy"]
+__all__ = ["SafePolicy", "classify_violations", "VERDICT_POLICIES"]
 
 
 #: 어느 손이 어느 링크로 쥐는가. 로봇마다 다르므로 **주입**이지만, 기본값이 두 곳에서 필요하다 —
@@ -86,8 +91,26 @@ class SafePolicy:
                  grasp_links: Optional[dict] = None,
                  placed_fn: Optional[Callable[[dict, Any], bool]] = None,
                  static_geometry: Optional[Sequence[Any]] = None,
-                 shadow: bool = False):
+                 shadow: bool = False,
+                 verdict_policy: str = "reasons",
+                 allowed_contact_pad_m: float = 0.01,
+                 allow_unresolved_contact_tier: bool = False):
         self._policy = policy
+        #: **`safe` 를 무엇으로 정하나** (T23). `"reasons"`(기본) 는 `verdict_reasons` 에 HOLD 처리인
+        #: 사유가 없을 때 `safe` 다 — 권한 link ↔ manipulated 접촉(`allowed_contact`) · 가려진
+        #: target(`occluded_target`) · 예산 종료(`budget_only`) 는 실행이다. `"legacy"` 는 T23 전
+        #: 그대로 `TrajOptStatus.safe` 다 (사유는 똑같이 계산해 싣는다 — 기록은 같다).
+        if verdict_policy not in VERDICT_POLICIES:
+            raise ValueError(f"verdict_policy must be one of {VERDICT_POLICIES}, "
+                             f"got {verdict_policy!r}")
+        self.verdict_policy = verdict_policy
+        #: `allowed_contact` 판정의 **마지막 fallback** (manipulated 점군·구·라벨이 다 없을 때만)
+        #: 에서 centroid 공에 더하는 여유 (m). 주 판정은 `_esdf_clearance` 와 같은 거리 일치 검사다.
+        self.allowed_contact_pad_m = float(allowed_contact_pad_m)
+        #: True 면 미세 창 밖(`coarse`·`window_edge`·`outside`) 계층이 답한 행도 `allowed_contact`
+        #: 의 근거로 받는다. 기본 False — T21 의 규칙 (`curobo_field.RESOLVED_TIERS`: 창 밖 답은
+        #: 접촉 허용의 근거가 못 된다). 그런 행은 `unverified` (HOLD) 로 간다.
+        self.allow_unresolved_contact_tier = bool(allow_unresolved_contact_tier)
         self.ag3s = ag3s
         self.to_config = to_config or TrajOptConfig.from_dict({
             "collision": {"backend": "esdf", "esdf_margin": 0.05, "use_support_planes": False},
@@ -102,7 +125,19 @@ class SafePolicy:
         #: attention 이 목적지로 넘어가면 권한이 엉뚱한 물체에 붙는다). `attach`/`detach` 를
         #: **언제** 불러야 하는지만 답하고, 부르는 것은 이 클래스다 — AG3S 는 그 결정을 하지
         #: 않는다는 계약(`attached.py` 머리말)이 그대로 남는다.
-        self._latch = GraspLatch(latch)
+        #:
+        #: **T22 — attach 는 파지 확인 뒤에.** 기본(`legacy_gripper_attach=False`)은 evidence 모드다:
+        #: 실행 피드백의 적용 명령 · 측정 개도 · 조작 대상(T20) · reach 가 모두 맞을 때만 attach 하고,
+        #: 그 판단은 **제약을 짓기 전에** 한다 (`_advance_grasp`). 계획값으로 attach 하는 경로는
+        #: `legacy_gripper_attach=True` 로만 켜진다 (옛 기록 재생용).
+        latch_cfg = latch or LatchConfig()
+        self._latch = GraspLatch(latch_cfg, evidence=not latch_cfg.legacy_gripper_attach)
+        #: attach/detach 가 일어날 때마다 +1 (T22). 제약이 어느 버전으로 지어졌는지와 비교해
+        #: 어긋남을 검출한다 (`summary_json.grasp.state_version` / `constraint_version`).
+        self._grasp_state_version = 0
+        self._grasp_constraint_version: Optional[int] = None
+        #: 이번 청크의 파지 판단 기록 (`summary_json.grasp`).
+        self._last_grasp_record: dict[str, Any] = {}
         #: grounding 은 이름표를 주지 않으므로 무게중심으로 같은 물체인지 본다.
         self._identity = CentroidIdentity()
         #: 어느 손이 어느 링크로 쥐는가. 주입이다 — 로봇마다 다르고 추측할 수 없다.
@@ -160,8 +195,23 @@ class SafePolicy:
         self.refiner = TrajOptChunkRefiner(model, self.layout, self._scene_fn, self.to_config)
 
         self._pending: dict[str, Any] = {}
+        #: 연속성 기준의 **기본값** — 피드백이 없을 때 쓰는 "로봇이 실행했으리라 가정하는" 청크
+        #: (closed loop 은 refined, shadow 는 reference). 피드백이 있으면 `_previous_plan` 과
+        #: 피드백으로 다시 고른다 (`_continuity_input`).
         self._previous_chunk: Optional[np.ndarray] = None
+        #: **계획 캐시** (T18) — 마지막으로 **보낸** 계획: `{"seq", "refined", "reference"}`.
+        #: 실행 이력과 분리한다 (지침 §6.4). 무엇이 실행됐는지는 다음 요청의 피드백이 말한다.
+        self._previous_plan: Optional[dict[str, Any]] = None
+        #: 이번 청크가 받은 실행 피드백과 그것으로 한 일 — 기록(`summary_json`)과 응답 `notes` 용.
+        self._last_feedback: dict[str, Any] = wire.no_exec_feedback("no request yet")
+        self._last_continuity: dict[str, Any] = {}
+        self._last_latch_signal: dict[str, Any] = {}
         self._last_constraint_set = None
+        #: 이번 청크의 `SceneSnapshot` — 최적화기가 받은 것 그대로 (T23: 위반 행 분류용).
+        self._last_snapshot = None
+        #: 이번 청크의 판정 사유와 행 분류 (`summary_json.verdict`).
+        self._last_reasons: Optional[list[dict[str, Any]]] = None
+        self._last_classification: dict[str, Any] = {}
         self._last_debug: dict[str, Any] = {}
         self._last_attention_by_camera: dict[str, Any] = {}
         self._last_q_now: Optional[np.ndarray] = None
@@ -200,7 +250,11 @@ class SafePolicy:
             if callable(reset):
                 reset()
         self._previous_chunk = None
+        self._previous_plan = None
         self._last_constraint_set = None
+        self._last_snapshot = None
+        self._last_reasons = None
+        self._last_classification = {}
         # 잠금도 에피소드 상태다. 남기면 다음 과제가 지난 과제의 조작 대상을 물려받는다.
         self._latch.reset()
         self._identity.reset()
@@ -210,6 +264,11 @@ class SafePolicy:
         self._last_attention_by_camera = {}
         self._last_q_now = None
         self._pending = {}
+        self._last_continuity = {}
+        self._last_latch_signal = {}
+        self._grasp_state_version = 0
+        self._grasp_constraint_version = None
+        self._last_grasp_record = {}
 
     # ------------------------------------------------------------------------------------
     def infer(self, obs: dict[str, Any], **kwargs) -> dict[str, Any]:
@@ -233,25 +292,48 @@ class SafePolicy:
             except Exception:  # noqa: BLE001 — attention 실패가 정책을 죽이면 안 된다
                 traceback.print_exc()
 
+        # **직전 청크의 실행 사실** (T18). 없으면 `available=False` 와 이유 — 키가 언제나 있다.
+        feedback = wire.unpack_exec_feedback(scene)
+        self._last_feedback = feedback
+        # latch 가 안 돈 프레임(씬 없음)에 지난 프레임의 신호가 남아 기록되지 않게 먼저 지운다.
+        self._last_latch_signal = {}
+        self._last_grasp_record = {}
+        self._grasp_constraint_version = None
+        # 씬을 못 얻은 청크가 지난 청크의 스냅샷으로 분류되지 않게 (T23).
+        self._last_snapshot = None
+
         # `_scene_fn` 이 읽을 것들. refiner 가 콜백을 부를 때 인자로 넘길 수 없는 값이라
         # 여기 둔다 — 콜백 계약(`context -> (scene, q_now, certified)`)을 바꾸지 않으려는 것이다.
         self._pending = {"scene": scene, "attention": attention, "timing": timing,
-                         "chunk": chunk}
+                         "chunk": chunk, "exec_feedback": feedback}
 
+        previous, executed_steps = self._continuity_input(feedback)
+        context: dict[str, Any] = {"t_step": seq, "previous_physical_chunk": previous}
+        if executed_steps is not None:
+            context["previous_executed_steps"] = executed_steps
         t = time.monotonic()
-        refined = self.refiner.refine(chunk, {"t_step": seq,
-                                              "previous_physical_chunk": self._previous_chunk})
+        refined = self.refiner.refine(chunk, context)
         timing["trajopt"] = (time.monotonic() - t) * 1000.0 - timing.get("ag3s", 0.0)
         refined = np.asarray(refined, np.float64)
+        self._last_continuity.update(
+            {k: v for k, v in (getattr(self.refiner, "last_continuity", None) or {}).items()})
         # 연속성 기준은 **로봇이 실제로 실행한 청크**여야 한다 — `_continuity_reference` 가
         # "앞 execution_length 스텝은 이미 실행됐다" 를 전제로 꼬리를 잘라 쓰기 때문이다
         # (`refiner.py:179-195`). shadow 에서 로봇이 실행하는 것은 reference 이므로 그것을
         # 물려준다. refined 를 물려주면 SQP 가 **날아간 적 없는 궤적**에서 이어지는 것으로
         # 계획하고, 그 오차는 어디에도 안 찍힌다.
+        #
+        # **T18 부터 이것은 피드백이 없을 때의 기본값이다.** 피드백이 오면 다음 요청에서
+        # `_previous_plan` 과 그 피드백으로 다시 고른다 (`_continuity_input`) — 여기서 저장하는
+        # 것은 *"보낸 계획"* 이지 *"실행된 것"* 이 아니다 (지침 §6.4).
         self._previous_chunk = chunk if self.shadow else refined
+        self._previous_plan = {"seq": seq, "refined": refined, "reference": chunk}
 
         refined = self._preserve_grippers(chunk, refined)
         verdict = self._verdict(chunk)
+        # 응답 `notes` 에 **피드백을 받았는가** 한 줄 (T18). 로컬 기록만 보고도 서버가 이 청크를
+        # 계획할 때 무엇을 알았는지 읽을 수 있어야 한다.
+        verdict.notes.extend(self._feedback_notes())
         timing["total"] = (time.monotonic() - started) * 1000.0
 
         if self.recorder is not None:
@@ -269,6 +351,12 @@ class SafePolicy:
                   f"grounding={ag3s_block['grounding_status']}) — "
                   + (degradation.explain(ag3s_block["notes"])
                      or "; ".join(ag3s_block["notes"][:2]) or "no reason recorded"))
+
+        # **판정 사유도 서버 로그에** (T23). `budget_only` 만 있는 청크는 조용히 둔다 — 거의 매
+        # 청크가 예산으로 끝나므로 그 줄은 다른 것을 밀어낸다.
+        if any(r.get("kind") != "budget_only" for r in (self._last_reasons or ())):
+            print(f"[safe_policy] seq={seq} verdict={'execute' if verdict.safe else 'HOLD'} — "
+                  + "; ".join(f"{r['kind']}: {r['detail']}" for r in self._last_reasons))
 
         extra = {k: v for k, v in result.items() if k != "actions"}
         # **`actions` 는 shadow 에서도 refined 다.** 서버는 자기가 계산한 것을 그대로 말하고,
@@ -290,6 +378,78 @@ class SafePolicy:
                                   ag3s=ag3s_block,
                                   to=self._to_block(),
                                   extra=extra)
+
+    def _continuity_input(self, feedback: dict[str, Any]
+                          ) -> tuple[Optional[np.ndarray], Optional[int]]:
+        """연속성 항에 줄 `(이전 청크, 실행된 스텝 수)`. 실행 수가 `None` 이면 refiner 가 K 를 가정한다.
+
+        **계획 캐시와 실행 이력을 여기서 잇는다** (지침 §6.4). 캐시(`_previous_plan`)는 서버가
+        **보낸** 것이고, 피드백은 로컬이 **실행한** 것이다:
+
+        | 피드백 | 이전 청크 | 실행 수 | 결과 |
+        |---|---|---|---|
+        | 없음 (`available=False`) | `_previous_chunk` (예전 기본값) | `None` | K 스텝 실행을 **가정** (예전 그대로) |
+        | seq 가 캐시와 다름 | `None` | — | 어느 계획이 실행됐는지 모른다 → 연속성 항 없음 |
+        | `n_exec == 0` (HOLD) | 캐시 | `0` | refiner 가 `None` 을 낸다 — 날지 않은 궤적의 꼬리를 쓰지 않는다 |
+        | 앞에서부터 `k` 스텝 실행 | 로컬이 **고른** 쪽 (refined/reference) | `k` | 인덱스 `k` 부터 정렬 |
+        | 실행이 앞에서부터가 아니다 | `None` | — | 정렬 기준이 없다 |
+        """
+        plan = self._previous_plan
+        info: dict[str, Any] = {
+            "plan_seq": None if plan is None else int(plan["seq"]),
+            "feedback_seq": feedback.get("seq"),
+            "previous_chunk": None,
+            "n_exec": feedback.get("n_exec"),
+        }
+        self._last_continuity = info
+        if not feedback.get("available"):
+            info["mode"] = "assumed (no feedback)"
+            if self._previous_chunk is not None:
+                info["previous_chunk"] = "reference" if self.shadow else "refined"
+            return self._previous_chunk, None
+        if plan is None:
+            info["mode"] = "no cached plan (first chunk after reset or server restart)"
+            return None, None
+        if int(feedback["seq"]) != int(plan["seq"]):
+            info["mode"] = (f"feedback is about seq {feedback['seq']} but the cached plan is "
+                            f"seq {plan['seq']} — which plan executed is unknown")
+            return None, None
+        flags = list(feedback.get("executed") or ())
+        n_exec = int(feedback["n_exec"])
+        prefix = next((i for i, f in enumerate(flags) if not f), len(flags))
+        if n_exec != prefix:
+            info["mode"] = (f"execution was not a prefix ({flags}); no alignment exists")
+            return None, None
+        which = feedback.get("executed_chunk")
+        if which not in ("refined", "reference"):
+            which = "reference" if self.shadow else "refined"
+        info["mode"] = "feedback"
+        info["previous_chunk"] = which if n_exec > 0 else None
+        return np.asarray(plan[which], np.float64), n_exec
+
+    def _feedback_notes(self) -> list[str]:
+        """응답 `notes` 에 더할 줄. 피드백 한 줄 + (있으면) 연속성·latch 신호 한 줄씩."""
+        fb = self._last_feedback
+        if fb.get("available"):
+            line = f"피드백 수신: seq {fb['seq']}, exec {fb['n_exec']}/{fb['n_steps']}"
+            if fb.get("n_hold"):
+                line += f" (HOLD {fb.get('hold_kind')}: {fb['n_hold']} steps)"
+        else:
+            line = f"피드백 없음: {fb.get('reason', '')}"
+        notes = [line]
+        cont = self._last_continuity or {}
+        if fb.get("available") and cont.get("mode") and cont.get("mode") != "feedback":
+            notes.append(f"continuity reference dropped: {cont['mode']}")
+        elif fb.get("available") and not cont.get("used") and cont.get("aligned_from_step") == 0:
+            notes.append("continuity reference dropped: previous chunk did not execute (n_exec=0)")
+        latch = self._last_latch_signal or {}
+        if latch.get("source") == "planned":
+            notes.append(latch["note"])
+        # T22 — 파지 상태가 **바뀐** 청크(attach · detach · 거절 · 상태 전이)만 한 줄.
+        grasp = self._last_grasp_record or {}
+        if grasp.get("transition") and grasp.get("note"):
+            notes.append(f"grasp: {grasp['note']}")
+        return notes
 
     def _to_block(self) -> Optional[dict[str, Any]]:
         """**최적화기가 몇 번 돌았고 무엇에 걸렸나** (T15). 없으면 `None` — 키가 안 실린다.
@@ -404,10 +564,18 @@ class SafePolicy:
             self._last_constraint_set = None
             raise ValueError("no camera observations in the request")
 
+        manipulators = list(scene.get("active_manipulators", ()) or ())
+        # **파지 상태를 먼저 갱신한다** (T22, 지침 §6.3: 피드백 → 파지 상태 → 기하 → TO).
+        # attach/detach 가 이번 프레임의 거리장(쥔 물체 파내기 · target-free 계층)과 제약(attached
+        # 행 · 접촉 허용)에 바로 들어가야 한다. 뒤에서 하면 한 프레임 늦고, 그 프레임을 다시 지으려면
+        # `process_multi_debug` 를 두 번 불러야 해서 grounding 의 프레임 수·ESDF 증분이 두 번 센다.
+        if self._latch.evidence:
+            self._advance_grasp(observations, manipulators)
+        self._grasp_constraint_version = self._grasp_state_version
+
         t = time.monotonic()
         # `process_multi_debug` 는 `process_multi` 와 **같은 계산**이고 중간 결과를 버리지 않고
         # 돌려줄 뿐이다 (`AG3S.process_multi`는 이 호출의 [0]이다) — 기록기가 없어도 비용이 없다.
-        manipulators = list(scene.get("active_manipulators", ()) or ())
         constraint_set, debug = self.ag3s.process_multi_debug(
             observations,
             phase=scene.get("phase") or self.default_phase,
@@ -421,6 +589,7 @@ class SafePolicy:
         self._last_constraint_set = constraint_set
         self._last_debug = debug
         self._run_latch(constraint_set, observations, manipulators)
+        self._finish_grasp_record(constraint_set)
         self._last_attention_by_camera = {
             o.camera_id: np.asarray(o.attention_map)
             for o in observations if getattr(o, "attention_map", None) is not None
@@ -428,6 +597,8 @@ class SafePolicy:
 
         snapshot = scene_from_constraint_set(
             constraint_set, self.linearizer.robot_radii, self.to_config)
+        # 판정이 위반 행을 **최적화기가 본 것과 같은 씬으로** 다시 분류한다 (T23, `_verdict`).
+        self._last_snapshot = snapshot
         # 촬영 시점 중 **가장 최신** 자세가 TO 가 계획을 시작하는 곳이다. AG3S 도 같은 규칙을
         # 쓰므로 (`process_multi` 의 robot_state 기본값) 둘이 어긋나지 않는다.
         q_now = np.asarray(
@@ -454,16 +625,12 @@ class SafePolicy:
         hand = (manipulators or ["left"])[0]
         parent_link, allowed = self.grasp_links.get(
             str(hand), self.grasp_links.get("left", ("ee_finger_l1", ())))
-        chunk = self._pending.get("chunk")
-        gripper = None
-        if chunk is not None and len(chunk):
-            left_col, right_col = self.gripper_columns
-            column = left_col if str(hand) == "left" else right_col
-            if chunk.shape[1] > column:
-                gripper = float(chunk[0, column])
+        gripper = self._latch_gripper_signal(str(hand))
 
         placed = False
-        if self.placed_fn is not None and self._latch.holding:
+        # evidence 모드에서는 성공 판정도 `_advance_grasp` 가 (측정 개도와 함께) 본다 — 여기서
+        # 다시 부르지 않는다.
+        if self.placed_fn is not None and self._latch.holding and not self._latch.evidence:
             placed = bool(self.placed_fn(self._pending.get("scene", {}), constraint_set))
 
         metrics = getattr(target, "metrics", {}) or {}
@@ -475,19 +642,214 @@ class SafePolicy:
             placed=placed,
         )
 
+        # **evidence 모드(T22 기본)에서는 `update` 가 attach/detach 를 내지 않는다** — 그 판단은
+        # 제약을 짓기 전에 `_advance_grasp` 가 했다. 아래는 `legacy_gripper_attach=True` 의 옛 경로다.
         if event.attach and self._latched_target is not None:
+            from benchmark.ag3s.constraints.attached import AttachRejected
+
             q = np.asarray(
                 max(observations, key=lambda o: o.timestamp).robot_state, np.float64)
-            self.ag3s.attach(self._latched_target, robot_state=q, parent_link=parent_link,
-                             allowed_contact_links=allowed, label="manipulated")
+            try:
+                self.ag3s.attach(self._latched_target, robot_state=q, parent_link=parent_link,
+                                 allowed_contact_links=allowed, label="manipulated",
+                                 reach=self._latch.config.reach)
+                self._grasp_state_version += 1
+                self._last_grasp_record.update({
+                    "mode": "legacy_gripper", "transition": True,
+                    "note": f"legacy: {event.note} (제약은 이 프레임 뒤에 붙는다)"})
+            except AttachRejected as exc:
+                ev = self._latch.revert_attach(exc.reason)
+                self._last_grasp_record.update({
+                    "mode": "legacy_gripper", "transition": True, "note": ev.note,
+                    "rejected": exc.record()})
         elif event.detach:
             self.ag3s.detach()
+            self._grasp_state_version += 1
             # 놓았으니 목적지도 더는 목적지가 아니다. 다음 과제는 새로 잠근다.
             self._destination_points = None
+            if not self._latch.evidence:
+                self._last_grasp_record.update({
+                    "mode": "legacy_gripper", "transition": True,
+                    "note": f"legacy: {event.note}"})
 
         # 목적지 점 — 잠금이 목적지를 확정했고 지금 target 이 그것이면 그 점구름을 쓴다.
         if event.destination is not None and label == event.destination and target is not None:
             self._destination_points = np.asarray(target.points, np.float64)
+
+    def _grasp_hand(self, manipulators) -> tuple[str, str, Any]:
+        hand = str((manipulators or ["left"])[0])
+        parent_link, allowed = self.grasp_links.get(
+            hand, self.grasp_links.get("left", ("ee_finger_l1", ())))
+        return hand, parent_link, allowed
+
+    def _advance_grasp(self, observations, manipulators) -> None:
+        """**제약을 짓기 전에** 파지 상태를 갱신하고, 잠금이 말할 때만 `attach`/`detach` 를 부른다 (T22).
+
+        입력은 셋이고 **계획 청크는 없다**:
+
+        * 직전 청크의 실행 피드백 (T18) — 실제로 적용된 gripper 명령, 촬영 시점 측정 개도.
+          피드백이 없으면(옛 클라이언트) 상태를 바꾸지 않고 이유를 남긴다.
+        * 조작 대상 (T20 `AG3S.manipulated`) — id · 상태 · 마지막 관측 기하. **이번 프레임의
+          grounding 은 아직 안 돌았으므로 직전 프레임까지의 것이다.** 파지 순간 물체는 테이블
+          위에 있거나 손가락 사이라 한 청크 동안 거의 안 움직인다 — 그 가정을 `alignment` 에 남긴다.
+        * 지금 자세 (촬영 시점 중 최신) — parent link 원점 ↔ 조작 대상 centroid 거리 = reach.
+
+        `AG3S.attach` 가 reach 로 거절하면 잠금을 닫힘 시도로 되돌린다 (`revert_attach`).
+        """
+        if self._pending.get("grasp_observed"):
+            return                      # 같은 요청에서 두 번 세지 않는다 (`would_violate` 등)
+        self._pending["grasp_observed"] = True
+        from benchmark.ag3s.constraints.attached import (
+            AttachRejected,
+            _link_pose_numeric,
+            parent_reach,
+        )
+
+        hand, parent_link, allowed = self._grasp_hand(manipulators)
+        cfg = self._latch.config
+        signal = grasp_signal_from_feedback(
+            self._pending.get("exec_feedback"), 0 if hand == "left" else 1,
+            cfg.gripper_closed_below)
+        newest = max(observations, key=lambda o: o.timestamp)
+        q = np.asarray(newest.robot_state, np.float64)
+        manip = getattr(self.ag3s, "manipulated", None)
+        usable = bool(manip is not None and getattr(manip, "usable", False))
+
+        model = self.constraint_robot_model
+        reach = None
+        alignment: dict[str, Any] = {
+            "q_stamp": float(newest.timestamp),
+            "pipeline_frame": int(getattr(self.ag3s, "frame_index", -1)),
+            "geometry_frame": None if manip is None else int(manip.last_seen_frame),
+            "geometry_time": None if manip is None else manip.last_seen_time,
+            "geometry_age_frames": None if manip is None else int(manip.age_frames),
+            "hand_shift_mm": None,
+        }
+        if manip is not None:
+            try:
+                reach = parent_reach(model, q, parent_link, manip.centroid)
+                if self._last_q_now is not None and len(self._last_q_now) == len(q):
+                    # 직전 요청 이후 parent link 원점이 움직인 거리 — 조작 대상 기하(직전 프레임
+                    # 관측)와 지금 자세 사이의 시점 차이가 얼마나 비싼가.
+                    origin_now = _link_pose_numeric(model, q, parent_link)[:3, 3]
+                    alignment["hand_shift_mm"] = round(parent_reach(
+                        model, self._last_q_now, parent_link, origin_now) * 1000.0, 2)
+            except Exception as exc:  # noqa: BLE001 — FK 실패는 "reach 모름" 이다, 파지 확인 불가
+                alignment["reach_error"] = f"{type(exc).__name__}: {exc}"
+                reach = None
+
+        placed = False
+        if (self.placed_fn is not None and self._latch.holding
+                and self._last_constraint_set is not None):
+            # 직전 프레임의 제약 집합으로 판정한다 — 이번 것은 아직 없다. 측정 개도가 열렸을 때만
+            # 쓰인다 (`observe_grasp`).
+            placed = bool(self.placed_fn(self._pending.get("scene", {}),
+                                         self._last_constraint_set))
+
+        phase_before = self._latch.phase
+        event = self._latch.observe_grasp(
+            signal, reach_m=reach,
+            manipulated_id=None if manip is None else int(manip.id),
+            manipulated_state=None if manip is None else str(manip.state),
+            placed=placed)
+        rejected = None
+        if event.attach:
+            try:
+                if not usable:
+                    raise AttachRejected("manipulated object has no usable geometry",
+                                         parent_link=parent_link)
+                self.ag3s.attach(manip.geometry, robot_state=q, parent_link=parent_link,
+                                 allowed_contact_links=allowed, label="manipulated",
+                                 reach=cfg.reach)
+                self._grasp_state_version += 1
+            except AttachRejected as exc:
+                rejected = exc.record()
+                event = self._latch.revert_attach(exc.reason)
+        elif event.detach:
+            self.ag3s.detach()
+            self._grasp_state_version += 1
+            # 놓았으니 목적지도 더는 목적지가 아니다. 다음 과제는 새로 잠근다.
+            self._destination_points = None
+
+        self._last_grasp_record = {
+            "mode": "evidence",
+            "hand": hand,
+            "parent_link": parent_link,
+            "state": self._latch.phase.value,
+            "state_before": phase_before.value,
+            "transition": bool(event.attach or event.detach or rejected is not None
+                               or self._latch.phase is not phase_before),
+            "attach": bool(event.attach),
+            "detach": bool(event.detach),
+            "rejected": rejected,
+            "note": event.note,
+            "evidence": dict(event.evidence or {}),
+            "alignment": alignment,
+        }
+        if self._last_grasp_record["transition"]:
+            print(f"[safe_policy] grasp {phase_before.value} -> {self._latch.phase.value}: "
+                  f"{event.note}")
+
+    def _finish_grasp_record(self, constraint_set) -> None:
+        """제약을 지은 뒤 — 이번 제약이 어느 파지 상태로 지어졌는지 기록에 싣는다 (T22).
+
+        `constraint_version` 은 `process_multi_debug` 를 부르기 **직전**의 상태 버전이고,
+        `state_version` 은 지금 것이다. 둘이 다르면 이 청크의 제약은 낡은 파지 상태로 지어졌다
+        (legacy 경로의 attach 가 그렇다).
+        """
+        rec = self._last_grasp_record
+        if not rec:
+            rec = {"mode": "evidence" if self._latch.evidence else "legacy_gripper",
+                   "state": self._latch.phase.value, "transition": False}
+            self._last_grasp_record = rec
+        rec["state"] = self._latch.phase.value
+        rec["state_version"] = int(self._grasp_state_version)
+        rec["constraint_version"] = (None if self._grasp_constraint_version is None
+                                     else int(self._grasp_constraint_version))
+        attached = getattr(self.ag3s, "attached", None)
+        in_cs = getattr(constraint_set, "attached", None)
+        rec["attached_in_constraints"] = in_cs is not None
+        rec["constraints_match_state"] = (in_cs is attached
+                                          and rec["constraint_version"] == rec["state_version"])
+        rec["attached"] = None if attached is None else {
+            "label": getattr(attached, "label", None),
+            "parent_link": getattr(attached, "parent_link", None),
+            "source_candidate_id": getattr(attached, "source_candidate_id", None),
+            "attached_at": getattr(attached, "attached_at", None),
+            "n_points": (0 if getattr(attached, "points", None) is None
+                         else int(len(attached.points))),
+        }
+
+    def _latch_gripper_signal(self, hand: str) -> Optional[float]:
+        """latch 가 볼 gripper 값. **측정 개도(피드백)가 먼저**, 없으면 계획 첫 행 (T18).
+
+        예전에는 언제나 계획 청크의 첫 행이었다 — TO 판정과 클라이언트 실행 **전**의 값이다.
+        T16 에서 닫힘이 제안됐지만 HOLD 로 실행되지 않았을 때 latch 는 그 제안을 닫힘으로 읽을 수
+        있었다 (지침 §6.1). 측정 개도는 **이번 요청의 촬영 시점**에 잰 값이므로 직전 청크가 실제로
+        손을 닫았는지를 말한다.
+
+        **latch 의 판단 규칙은 바꾸지 않는다** (문턱 `gripper_closed_below` 그대로, T22 의 일).
+        바뀌는 것은 입력의 출처이고, 그 출처를 `_last_latch_signal` 에 남긴다.
+        """
+        chunk = self._pending.get("chunk")
+        planned = None
+        if chunk is not None and len(chunk):
+            left_col, right_col = self.gripper_columns
+            column = left_col if hand == "left" else right_col
+            if chunk.shape[1] > column:
+                planned = float(chunk[0, column])
+        fb = self._pending.get("exec_feedback") or {}
+        if fb.get("available"):
+            measured = np.asarray(fb["measured_gripper"], np.float64)
+            value = float(measured[0 if hand == "left" else 1])
+            self._last_latch_signal = {
+                "hand": hand, "source": "measured", "value": value, "planned_first_row": planned,
+                "note": f"gripper signal = measured (feedback seq {fb['seq']}, {hand} {value:.3f})"}
+            return value
+        self._last_latch_signal = {
+            "hand": hand, "source": "planned", "value": planned, "planned_first_row": planned,
+            "note": "gripper signal = planned (no feedback)"}
+        return planned
 
     def _record(self, seq: int, reference: np.ndarray, refined: np.ndarray) -> None:
         """진단 기록. `bringup.LivePipeline._record`와 같은 계약 — 예외가 정책을 죽이면 안 된다.
@@ -521,6 +883,7 @@ class SafePolicy:
                 clearance=clearance, to_result=result,
                 attention_maps=self._last_attention_by_camera,
                 occupancy=self._occupancy(),
+                summary_extra=self._exec_summary(),
             )
         except Exception as exc:  # noqa: BLE001
             # **조용히 넘기지 않는다.** 2026-09-28 에 이 자리가 `print` 한 줄이라 75 chunk 가
@@ -539,6 +902,29 @@ class SafePolicy:
             else:
                 log.warning("[safe_policy] constraint record failed at seq=%d (%d 번째): %s: %s",
                             seq, self._record_failures, type(exc).__name__, exc)
+
+    def _exec_summary(self) -> dict[str, Any]:
+        """`summary_json` 에 실을 `exec_feedback` 계열 세 키 (T18). **셋 다 언제나 실린다.**
+
+        | 키 | 무엇 |
+        |---|---|
+        | `exec_feedback` | 이 요청이 실어 온 직전 청크의 실행 사실. 없으면 `{"available": false, "reason"}` |
+        | `exec_continuity` | 연속성 항이 무엇을 근거로 정렬했나 (`previous_chunk` 가 `null` 이면 항 없음) |
+        | `exec_latch_signal` | latch 가 본 gripper 값과 그 출처 (`measured` / `planned`) |
+        """
+        return {
+            "exec_feedback": wire.exec_feedback_jsonable(self._last_feedback),
+            "exec_continuity": dict(self._last_continuity or {}),
+            "exec_latch_signal": dict(self._last_latch_signal or {}),
+            # T22 — 파지 상태 · 근거 · 상태/제약 버전. 씬이 없어 latch 가 안 돈 청크는 `{}`.
+            "grasp": _jsonable(self._last_grasp_record or {}),
+            # T23 — 판정 사유와 위반 행 분류. `reasons` 가 `None` 이면 판정 전(기록 순서상 없음).
+            "verdict": _jsonable({
+                "policy": self.verdict_policy,
+                "reasons": self._last_reasons,
+                "classification": self._last_classification or {},
+            }),
+        }
 
     def _occupancy(self):
         """세 상태 점유 배열. `EsdfField` 가 아니라 그것을 만든 builder 안에 있다."""
@@ -568,6 +954,8 @@ class SafePolicy:
         ag3s_status = getattr(getattr(cs, "status", None), "value", "no_geometry")
         certified = bool(cs is not None and ag3s_status == "ok")
         notes = list(getattr(result, "notes", ()) or ())
+        self._last_reasons = None
+        self._last_classification = {}
 
         if result is None:
             # 씬을 못 얻었다. 정책 청크가 그대로 나가고, 그것은 검증된 적이 없다.
@@ -576,7 +964,14 @@ class SafePolicy:
             # 파지 다음 프레임부터 파이프라인이 통째로 멈춘 것을 14 프레임 동안 아무도 몰랐다
             # (2026-09-18, 원인은 `attached_parent_links` 미예약). 원인 문자열이 여기 있으면
             # 응답만 보고도 알 수 있다.
+            #
+            # **`verdict_reasons` 를 싣지 않는다** (T23). 최적화기가 돌지 않았으니 나눌 사유가
+            # 없고, 이 응답의 모양은 T23 전과 같다 — 로컬은 `safe=False` · `geometry_certified=False`
+            # 에서 `uncertified` 를 유도한다 (`wire.derive_verdict_reasons`). 기록에는 남긴다.
             why = getattr(self.refiner, "last_failure", None)
+            self._last_reasons = [wire.make_reason(
+                "uncertified", "no scene: the optimizer did not run"
+                + (f" — {why}" if why else ""), carried_on_wire=False)]
             return wire.SafetyVerdict(
                 ag3s_status=ag3s_status, geometry_certified=False,
                 trajopt_status="no_solution", max_violation_m=float("inf"), safe=False,
@@ -588,10 +983,430 @@ class SafePolicy:
         # **그 위반을 만든 행이 무엇이었나.** 숫자는 줄곧 나갔지만 신원은 최적화기 안에만
         # 있었고, `T5f` 가 그 때문에 막혔다 (`sqp._finish` → `metrics`).
         pair = (getattr(result, "metrics", None) or {}).get("max_violation_pair")
-        # `TrajOptStatus.safe` 하나가 근거다. 기하 미인증은 이미 그 안에 들어가 있다 —
-        # sqp 가 `safety.require_certified_geometry` 를 보고 상태를 내린다.
-        safe = bool(getattr(result.status, "safe", False))
+        # **사유를 나눈다** (T23, 지침 §8.3 · §9). `TrajOptStatus.safe` 는 `violated` 하나에 파지
+        # 접촉 · 가려진 target · 진짜 충돌을 섞는다 — T16 의 25/34 HOLD 가 그것이었다.
+        reasons = self._reasons(result, cs, certified, violation, pair)
+        action, holding = wire.gate_decision(reasons)
+        if self.verdict_policy == "legacy":
+            # T23 전 그대로. 기하 미인증은 이미 그 안에 들어가 있다 — sqp 가
+            # `safety.require_certified_geometry` 를 보고 상태를 내린다.
+            safe = bool(getattr(result.status, "safe", False))
+        else:
+            safe = action == "execute"
+        self._last_reasons = reasons
+        if reasons:
+            notes.append(_reasons_note(reasons, safe=safe, policy=self.verdict_policy))
         return wire.SafetyVerdict(
             ag3s_status=ag3s_status, geometry_certified=certified, trajopt_status=status,
             max_violation_m=violation, safe=safe, notes=notes,
-            max_violation_pair=pair)
+            max_violation_pair=pair, verdict_reasons=reasons)
+
+    # --- 판정 사유 (T23) ------------------------------------------------------------------
+    def _reasons(self, result, cs, certified: bool, violation: float,
+                 pair: Optional[dict]) -> list[dict[str, Any]]:
+        """`verdict_reasons` — 기하 인증 · 최적화기 종료 · 위반 행 · 예산을 각각 본다.
+
+        순서는 기록을 읽는 순서다 (지각 → 최적화기 → 궤적). 판정은 `wire.gate_decision` 이
+        사유 **전부**를 보고 내린다 — 하나라도 HOLD 면 HOLD 다.
+        """
+        reasons: list[dict[str, Any]] = []
+        status = getattr(result.status, "value", "unknown")
+        metrics = dict(getattr(result, "metrics", None) or {})
+        tolerance = float(self.to_config.safety.violation_tolerance)
+
+        if not certified:
+            reasons.append(self._certification_reason(cs))
+        if status in ("solver_failed", "unconstrained"):
+            reasons.append(wire.make_reason(
+                "unverified", f"trajopt_status={status}: the returned chunk was not checked "
+                "against the scene", trajopt_status=status))
+        elif violation > tolerance:
+            reasons.extend(self._violation_reasons(result, cs, pair, tolerance))
+        budget = bool(metrics.get("time_budget_hit") or metrics.get("max_iterations_hit")
+                      or status == "feasible")
+        if budget and status not in ("solver_failed", "unconstrained") and not any(
+                r["kind"] in ("collision", "unverified") for r in reasons):
+            reasons.append(wire.make_reason(
+                "budget_only", f"the solve stopped on its "
+                f"{'time budget' if metrics.get('time_budget_hit') else 'iteration cap'} "
+                f"({metrics.get('sqp_iterations')} iteration(s)); the final check passed",
+                time_budget_hit=bool(metrics.get("time_budget_hit")),
+                max_iterations_hit=bool(metrics.get("max_iterations_hit")),
+                sqp_iterations=metrics.get("sqp_iterations")))
+        return reasons
+
+    def _manipulated_record(self, cs) -> dict[str, Any]:
+        """이 프레임의 조작 대상 기록 (T20 `ManipulatedIdentity.record()`), 없으면 `{}`.
+
+        제약 집합의 `metrics["manipulated"]` 가 먼저다 — **이 프레임의** 스냅샷이다. 없으면
+        `ag3s.manipulated` (같은 객체의 지금 값).
+        """
+        record = (getattr(cs, "metrics", None) or {}).get("manipulated")
+        if isinstance(record, dict):
+            return dict(record)
+        live = getattr(self.ag3s, "manipulated", None)
+        rec = getattr(live, "record", None)
+        try:
+            return dict(rec()) if callable(rec) else {}
+        except Exception:  # noqa: BLE001 — 기록을 못 읽는 것으로 판정이 죽지 않는다
+            return {}
+
+    def _certification_reason(self, cs) -> dict[str, Any]:
+        """기하 미인증을 `occluded_target` · `uncertified_waived` · `uncertified` 로 가른다.
+
+        **`occluded` 인 것만으로는 미인증이 아니다** (T20, T14 seq 22): 상태가 `no_target` 이고
+        (= 나머지 기하는 인증됐다, `validity` 가 VALID) manipulated 가 `occluded` 로 살아 있으며
+        그 접촉 권한(`cs.manipulated`)이 이번 제약에 실려 있으면 `occluded_target` 이다.
+        `lost` · 대상 없음 · degraded · incomplete 는 `uncertified` 다.
+        """
+        if cs is None:
+            return wire.make_reason("uncertified", "AG3S produced no constraint set")
+        status = getattr(getattr(cs, "status", None), "value", "unknown")
+        grounding = getattr(getattr(cs, "grounding_status", None), "value", "unknown")
+        validity = getattr(getattr(cs, "validity", None), "value", "unknown")
+        man = self._manipulated_record(cs)
+        evidence = {"ag3s_status": status, "grounding_status": grounding, "validity": validity,
+                    "manipulated_id": man.get("id"), "manipulated_state": man.get("state"),
+                    "manipulated_age_frames": man.get("age_frames")}
+        geometry_ok = bool(getattr(cs, "geometry_certified", False))
+        if (status == "no_target" and geometry_ok and man.get("state") == "occluded"
+                and getattr(cs, "manipulated", None) is not None):
+            return wire.make_reason(
+                "occluded_target",
+                f"no target this frame ({grounding}) but manipulated id={man.get('id')} is "
+                f"occluded (unseen {man.get('age_frames')} frame(s)); its last geometry keeps the "
+                "contact permission and the rest of the geometry is certified", **evidence)
+        if not bool(self.to_config.safety.require_certified_geometry):
+            return wire.make_reason(
+                "uncertified_waived", f"geometry not certified (status={status}) but the server "
+                "runs with safety.require_certified_geometry=False", **evidence)
+        return wire.make_reason(
+            "uncertified", f"AG3S could not certify the geometry (status={status}, "
+            f"grounding={grounding}, validity={validity}"
+            + (f", manipulated {man.get('state')}" if man.get("state") else "") + ")", **evidence)
+
+    def _authorized_links(self, cs) -> frozenset:
+        """접촉 권한이 있는 link — 제약을 지을 때 쓴 **같은** 집합 (`ClearancePolicy.authorized_links`)."""
+        ctx = getattr(cs, "contact_context", None)
+        policy = getattr(getattr(self.ag3s, "builder", None), "clearance_policy", None)
+        if ctx is None or policy is None:
+            return frozenset()
+        return frozenset(str(n) for n in policy.authorized_links(ctx))
+
+    def _violation_reasons(self, result, cs, pair: Optional[dict],
+                           tolerance: float) -> list[dict[str, Any]]:
+        """위반 행 **전부**를 분류해 `allowed_contact` / `unverified` / `collision` 사유로.
+
+        최악 행 하나만 보지 않는다: 손가락이 사과를 −10 mm 파고들고(허용) 팔꿈치가 테이블을
+        −3 mm 스치면(비허용), 최악 행만 보면 팔꿈치가 가려진다. 분류는 `classify_violations`.
+        """
+        scene = self._last_snapshot
+        q_now = self._last_q_now
+        trajectory = getattr(result, "trajectory", None)
+        optimizer = getattr(self.refiner, "optimizer", None)
+        linearizer = getattr(optimizer, "linearizer", None)
+        if scene is None or q_now is None or trajectory is None or linearizer is None:
+            return [wire.make_reason(
+                "collision", f"{float(result.max_violation) * 1000:.1f} mm of penetration and the "
+                "rows could not be classified (no scene snapshot on the server)",
+                max_violation_pair=_jsonable(pair))]
+        cls = classify_violations(
+            linearizer, np.asarray(trajectory, np.float64), q_now, scene,
+            authorized_links=self._authorized_links(cs), tolerance=tolerance,
+            manipulated=self._manipulated_record(cs),
+            candidate_sources={int(getattr(c, "id", -1)): getattr(
+                getattr(c, "source_type", None), "value", str(getattr(c, "source_type", "")))
+                for c in (getattr(cs, "candidates", None) or ())},
+            pad_m=self.allowed_contact_pad_m,
+            allow_unresolved_tier=self.allow_unresolved_contact_tier)
+        self._last_classification = cls
+        out: list[dict[str, Any]] = []
+        summary = {k: cls[k] for k in ("n_violating", "n_allowed", "n_unresolved", "n_collision",
+                                       "allowed_by_tier", "allowed_by_evidence",
+                                       "residual_violation_m")}
+        if cls["n_allowed"]:
+            row = cls["allowed_worst"]
+            out.append(wire.make_reason(
+                "allowed_contact",
+                f"{cls['n_allowed']} row(s): authorized {row['link']} ↔ manipulated "
+                f"id={cls['manipulated_id']}, worst {row['clearance_m'] * 1000:.1f} mm "
+                f"(tier {row['tier']}, by {row['evidence']})",
+                row=row, manipulated_id=cls["manipulated_id"], **summary))
+        if cls["n_unresolved"]:
+            row = cls["unresolved_worst"]
+            out.append(wire.make_reason(
+                "unverified",
+                f"{cls['n_unresolved']} authorized-link row(s) on the manipulated object were "
+                f"answered by an unresolved tier ({row['tier']}), worst "
+                f"{row['clearance_m'] * 1000:.1f} mm at {row['link']} — neither free space nor a "
+                "verified contact (T21)", row=row, **summary))
+        if cls["n_collision"]:
+            row = cls["collision_worst"]
+            out.append(wire.make_reason(
+                "collision",
+                f"{cls['n_collision']} row(s): {row['link']} ↔ "
+                f"{row.get('label') or row['block']} {row['clearance_m'] * 1000:.1f} mm "
+                f"({row['why']})", row=row, **summary))
+        if not out:
+            # `max_violation` 은 넘었는데 행 분류에서 위반이 안 나왔다 = 두 계산이 어긋났다.
+            # 실행 쪽으로 읽지 않는다.
+            out.append(wire.make_reason(
+                "collision", f"{float(result.max_violation) * 1000:.1f} mm reported but no row "
+                "re-measured above tolerance — the classification disagrees with the optimizer",
+                max_violation_pair=_jsonable(pair), **summary))
+        return out
+
+
+#: `SafePolicy(verdict_policy=)` 의 선택지. 첫 항목이 기본이다.
+VERDICT_POLICIES = ("reasons", "legacy")
+
+#: 행 분류가 `allowed_contact` 로 받는 계층 — T21 `curobo_field.RESOLVED_TIERS` 중 조작 대상이
+#: **들어 있는** 것 (`fine`). `target_free` 는 대상을 뺀 답이고 `static` 은 해석적 정적 기하라,
+#: 그 답이 만든 위반은 정의상 대상과의 접촉이 아니다. `None` 은 계층을 말하지 못하는 필드
+#: (단일 격자 — 계층이 하나뿐이다).
+_CONTACT_TIERS = ("fine", None)
+_NOT_TARGET_TIERS = ("target_free", "static")
+
+
+def classify_violations(linearizer, trajectory: np.ndarray, q_now: np.ndarray, scene, *,
+                        authorized_links, tolerance: float,
+                        manipulated: Optional[dict] = None,
+                        candidate_sources: Optional[dict] = None,
+                        pad_m: float = 0.01,
+                        allow_unresolved_tier: bool = False,
+                        keep_rows: bool = False) -> dict[str, Any]:
+    """위반 행(`clearance < −tolerance`) 을 하나씩 **허용 접촉 · 미해결 · 충돌** 로 가른다 (T23).
+
+    값은 다시 계산하지 않는다 — `linearizer.clearances` / `esdf_clearance` 가 최적화기가 본 것과
+    같은 행을 낸다 (`sqp._finish` 의 `worst_row` 와 같은 씬 · 같은 attached 상태).
+
+    ESDF 행 하나가 `allowed_contact` 인 조건 (전부):
+
+    1. 질의점이 로봇 구이고 그 link 가 `authorized_links` 에 있다 (쥔 물체의 점은 권한 대상이 아니다).
+    2. 답한 계층이 조작 대상을 뺀 것이 아니다 (`target_free` · `static` 이면 대상이 아닌 무엇과의 위반).
+    3. **그 행의 최근접 장애물이 조작 대상이다.** 판정 근거는 있는 것 중 첫째:
+       `distance` — `_esdf_clearance` 와 같은 검사 (`|d_field − d_object| ≤ voxel`, 대상 점군/구로),
+       `label` — 라벨 층이 `TARGET_LABEL`, `centroid` — T20 기록의 centroid 공
+       (반지름 + 구 반지름 + 그 link 의 대상 마진 + `pad_m`).
+    4. 계층이 풀린 것(`fine`)이다. 미세 창 밖(`coarse` · `window_edge` · `outside`) 이면 1–3 이
+       맞아도 **미해결** (`unverified`) 로 따로 센다 — `allow_unresolved_tier` 면 허용으로.
+
+    후보(primitive) 행은 1 과 "그 slot 의 후보가 `target` 이다" 로, 평면 행은 언제나 충돌이다.
+
+    `keep_rows` 면 분류한 행 전부를 `rows` 로 싣는다 (분석·테스트용 — 기록에는 싣지 않는다,
+    위반 행이 수백 개일 수 있다).
+    """
+    from benchmark.ag3s.types import TARGET_LABEL
+
+    tol = float(tolerance)
+    authorized = frozenset(str(a) for a in (authorized_links or ()))
+    manipulated = dict(manipulated or {})
+    sources = dict(candidate_sources or {})
+    n_spheres = int(linearizer.n_spheres)
+    states = linearizer.sphere_states(trajectory, q_now)
+    centres = states[0]
+    candidate, plane, _ = linearizer.clearances(trajectory, q_now, scene, states)
+    esdf = linearizer.esdf_clearance(trajectory, q_now, scene, states)
+    radii = np.asarray(linearizer.query_radii, np.float64).reshape(-1)
+
+    def name(query: int) -> str:
+        return str(linearizer._query_name(int(query)))
+
+    rows: list[dict[str, Any]] = []
+
+    # --- primitive 후보 행 ------------------------------------------------------------------
+    if candidate.size:
+        ids = np.asarray(scene.candidate_ids, np.int64).reshape(-1)
+        for s, q, m in np.argwhere(candidate < -tol):
+            cid = int(ids[m]) if m < ids.shape[0] else -1
+            link = name(q)
+            ok_link = q < n_spheres and link in authorized
+            is_target = sources.get(cid) == "target"
+            rows.append({"block": "candidate", "step": int(s), "query": int(q), "link": link,
+                         "clearance_m": float(candidate[s, q, m]),
+                         "point_m": [float(v) for v in centres[s, q]], "tier": None,
+                         "label": sources.get(cid), "candidate_id": cid,
+                         "evidence": "candidate_source" if ok_link else None,
+                         "class": "allowed" if (ok_link and is_target) else "collision",
+                         "why": ("authorized link on the target candidate" if ok_link and is_target
+                                 else "unauthorized_link" if not ok_link
+                                 else "not_target_candidate")})
+    # --- 평면 행 — 테이블 · 바닥은 누구에게도 허용 접촉이 아니다 ---------------------------------
+    if plane.size:
+        for s, q, k in np.argwhere(plane < -tol):
+            rows.append({"block": "plane", "step": int(s), "query": int(q), "link": name(q),
+                         "clearance_m": float(plane[s, q, k]),
+                         "point_m": [float(v) for v in centres[s, q]], "tier": None,
+                         "label": f"plane[{int(k)}]", "evidence": None, "class": "collision",
+                         "why": "plane"})
+    # --- ESDF 행 ---------------------------------------------------------------------------
+    if esdf.size:
+        values = esdf[..., 0]
+        hits = np.argwhere(values < -tol)
+        if len(hits):
+            rows.extend(_classify_esdf_rows(
+                hits, values, centres, radii, scene, name, n_spheres, authorized, manipulated,
+                pad_m=float(pad_m), target_label=TARGET_LABEL,
+                allow_unresolved_tier=bool(allow_unresolved_tier)))
+
+    def worst(cls: str) -> Optional[dict]:
+        pick = [r for r in rows if r["class"] == cls]
+        return min(pick, key=lambda r: r["clearance_m"]) if pick else None
+
+    allowed = [r for r in rows if r["class"] == "allowed"]
+    unresolved = [r for r in rows if r["class"] == "unresolved"]
+    collision = [r for r in rows if r["class"] == "collision"]
+    counts = lambda key, pick: {str(k): sum(1 for r in pick if r[key] == k)  # noqa: E731
+                                for k in sorted({r[key] for r in pick}, key=str)}
+    residual = [r["clearance_m"] for r in unresolved + collision]
+    extra = {"rows": rows} if keep_rows else {}
+    return {
+        **extra,
+        "tolerance_m": tol,
+        "n_violating": len(rows),
+        "n_allowed": len(allowed),
+        "n_unresolved": len(unresolved),
+        "n_collision": len(collision),
+        "allowed_worst": worst("allowed"),
+        "unresolved_worst": worst("unresolved"),
+        "collision_worst": worst("collision"),
+        "allowed_by_tier": counts("tier", allowed),
+        "allowed_by_evidence": counts("evidence", allowed),
+        "collision_by_why": counts("why", collision),
+        # 허용 접촉을 빼고 남은 최악 위반 (m, 양수). 0 이면 남은 것이 없다.
+        "residual_violation_m": float(max(0.0, -min(residual))) if residual else 0.0,
+        "manipulated_id": manipulated.get("id"),
+        "manipulated_state": manipulated.get("state"),
+        "authorized_links": sorted(authorized),
+    }
+
+
+def _classify_esdf_rows(hits, values, centres, radii, scene, name, n_spheres, authorized,
+                        manipulated, *, pad_m, target_label, allow_unresolved_tier) -> list[dict]:
+    """`classify_violations` 의 ESDF 부분 — 위반 행만 모아 한 번에 묻는다."""
+    field = scene.esdf
+    steps, queries = hits[:, 0], hits[:, 1]
+    pts = np.asarray(centres[steps, queries], np.float64).reshape(-1, 3)
+    n = len(pts)
+    mask = None
+    if scene.target_free_mask is not None:
+        full = np.asarray(scene.target_free_mask, bool).reshape(-1)
+        mask = np.zeros(max(int(queries.max()) + 1, full.shape[0]), bool)
+        mask[:full.shape[0]] = full
+        mask = mask[queries]
+    free_flags = np.zeros(n, bool) if mask is None else mask
+
+    # 어느 계층이 답했나 (T21). 못 말하는 필드면 None.
+    tiers: list[Optional[str]] = [None] * n
+    tier_of = getattr(field, "answer_tier", None)
+    if tier_of is not None:
+        try:
+            tiers = [str(t) for t in np.asarray(tier_of(pts, target_free=free_flags)).reshape(-1)]
+        except Exception:  # noqa: BLE001 — 계층을 못 읽으면 None 으로 (기록만 비는 것)
+            tiers = [None] * n
+
+    # 그 행이 쓴 거리 — `_esdf_clearance` 와 같은 합성 (권한 행은 target 없는 계층에 되묻는다).
+    d_row = None
+    try:
+        d_row = np.asarray(field.distance(pts), np.float64).reshape(-1)
+        if free_flags.any():
+            free = getattr(field, "target_free_distance", None)
+            if free is not None:
+                d_free = np.asarray(free(pts[free_flags]), np.float64).reshape(-1)
+                d_row[free_flags] = d_free
+    except Exception:  # noqa: BLE001
+        d_row = None
+
+    # 조작 대상까지의 거리 — `_esdf_clearance` 와 같은 두 형식.
+    d_obj = None
+    if scene.manipulated_spheres is not None and len(scene.manipulated_spheres):
+        delta = pts[:, None, :] - np.asarray(scene.manipulated_spheres)[None, :, :]
+        d_obj = (np.linalg.norm(delta, axis=2)
+                 - np.asarray(scene.manipulated_sphere_radii)[None, :]).min(axis=1)
+    elif scene.manipulated_points is not None and len(scene.manipulated_points):
+        from scipy.spatial import cKDTree
+
+        d_obj = cKDTree(np.asarray(scene.manipulated_points, np.float64)).query(pts)[0]
+    voxel = float(getattr(getattr(field, "grid", None), "voxel_size", 0.0) or 0.0)
+
+    labels: list[Optional[str]] = [None] * n
+    if getattr(field, "has_labels", False):
+        try:
+            idx = np.asarray(field.label(pts)).reshape(-1)
+            names = tuple(getattr(field, "label_names", ()) or ())
+            labels = [str(names[int(i)]) if 0 <= int(i) < len(names) else None for i in idx]
+        except Exception:  # noqa: BLE001
+            labels = [None] * n
+
+    per_link = (None if scene.manipulated_link_margin is None
+                else np.asarray(scene.manipulated_link_margin, np.float64).reshape(-1))
+    centroid = manipulated.get("centroid")
+    centroid = None if centroid is None else np.asarray(centroid, np.float64).reshape(3)
+    ball = float(manipulated.get("radius") or 0.0)
+    # **이번 제약이 권한을 싣고 있어야 한다** — `manipulated_link_margin` 이 곧 그 권한이다
+    # (T20: visible/occluded 면 있고 lost 면 없다). 기록에 centroid 가 남아 있어도 권한이 없는
+    # 프레임에서는 아무것도 허용하지 않는다.
+    has_object = per_link is not None
+
+    out = []
+    for i in range(n):
+        s, q = int(steps[i]), int(queries[i])
+        link = name(q)
+        tier = tiers[i]
+        row = {"block": "esdf", "step": s, "query": q, "link": link,
+               "clearance_m": float(values[s, q]),
+               "point_m": [float(v) for v in pts[i]], "tier": tier, "label": labels[i],
+               "object_distance_m": None if d_obj is None else float(d_obj[i]),
+               "evidence": None}
+        if q >= n_spheres:
+            row.update({"class": "collision", "why": "attached_point"})
+        elif link not in authorized:
+            row.update({"class": "collision", "why": "unauthorized_link"})
+        elif not has_object:
+            row.update({"class": "collision", "why": "no_manipulated"})
+        elif tier in _NOT_TARGET_TIERS:
+            row.update({"class": "collision",
+                        "why": ("answer_excludes_target" if tier == "target_free"
+                                else "static_geometry")})
+        else:
+            if d_obj is not None and d_row is not None and voxel > 0.0:
+                on_object = bool(abs(d_row[i] - d_obj[i]) <= voxel)
+                row["evidence"] = "distance"
+            elif labels[i] is not None:
+                on_object = labels[i] == target_label
+                row["evidence"] = "label"
+            elif centroid is not None:
+                margin = float(per_link[q]) if per_link is not None and q < per_link.shape[0] else 0.0
+                reach = ball + float(radii[q]) + margin + float(pad_m)
+                on_object = bool(np.linalg.norm(pts[i] - centroid) <= reach)
+                row["evidence"] = "centroid"
+            else:
+                on_object = False
+            if not on_object:
+                row.update({"class": "collision", "why": "nearest_is_not_manipulated"})
+            elif tier in _CONTACT_TIERS or allow_unresolved_tier:
+                row.update({"class": "allowed", "why": "authorized link on the manipulated object"})
+            else:
+                row.update({"class": "unresolved", "why": f"unresolved_tier:{tier}"})
+        out.append(row)
+    return out
+
+
+def _reasons_note(reasons: Sequence[dict], *, safe: bool, policy: str) -> str:
+    """응답 `notes` 의 한 줄 — `verdict: allowed_contact, budget_only → execute`."""
+    kinds = ", ".join(str(r.get("kind")) for r in reasons)
+    tail = "" if policy == "reasons" else f" (verdict_policy={policy})"
+    return f"verdict: {kinds} → {'execute' if safe else 'HOLD'}{tail}"
+
+
+def _jsonable(value):
+    """기록용 — numpy 스칼라·배열을 파이썬 값으로 (T22 `grasp` 블록)."""
+    if isinstance(value, dict):
+        return {str(k): _jsonable(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(v) for v in value]
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    return value

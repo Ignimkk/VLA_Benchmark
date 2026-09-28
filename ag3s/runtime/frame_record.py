@@ -35,6 +35,18 @@ control frame 은 자기 필드의 상태를 `FieldProvenance.applied_by_client(
 **키를 더하는 것이고 바꾸는 것이 아니다.** 옛 키는 하나도 움직이지 않았고 completeness 표의
 항목도 그대로다 (`plot_t0.py` 가 `frames.jsonl` 을 그 형식으로 읽는다).
 
+## 계획과 실행을 나란히 (T18, 2026-09-28)
+
+T16 에서 t=176 · 208 의 gripper 닫힘이 **제안됐지만 HOLD 로 실행되지 않았다.** 기록에는 제안
+(`actions`)만 있고 `d.ctrl` 에 실제로 들어간 값은 없어서, 둘을 가르려면 HOLD 규칙을 머리로
+재현해야 했다. 그래서 둘을 더했다 — **값이 주어졌을 때만** 키가 생긴다 (`actions_reference` 와
+같은 규약. 옛 기록과 이 기록기를 쓰는 다른 경로의 키 집합이 그대로 남는다):
+
+| 프레임 | 키 | 무엇 |
+|---|---|---|
+| planning | `exec_feedback` | 이 요청이 서버에 실어 보낸 **직전 청크의 실행 사실** (`wire.make_exec_feedback`) |
+| control | `applied_ctrl` | 이 스텝에 **실제 `d.ctrl` 에 들어간** `{"arm": [2N], "gripper": [왼, 오른]}` (gripper 는 정규화, 1 = 열림) |
+
 한도(`timing.max_field_age_sec`)가 `None` 이면 `stale` 판정을 하지 않고
 `staleness_checked: false` 가 실린다 — 검사를 안 한 것이 통과한 것으로 읽히지 않게 하는 것이
 그 필드의 목적이다.
@@ -218,6 +230,7 @@ class FrameRecorder:
                  actions: Any = None, actions_reference: Any = None,
                  qpos: Any = None, object_poses: Optional[dict] = None,
                  max_violation_pair: Optional[dict] = None,
+                 exec_feedback: Optional[dict] = None,
                  extra: Optional[dict] = None) -> None:
         """청크 하나. `field` 는 `FieldProvenance` 이거나 응답의 `field` dict 다.
 
@@ -265,11 +278,15 @@ class FrameRecorder:
             "qpos": qpos,
             "object_poses": object_poses,
             "max_violation_pair": max_violation_pair,
+            # T18 — 주어졌을 때만. 머리말의 "계획과 실행을 나란히" 절.
+            **({} if exec_feedback is None else {"exec_feedback": exec_feedback}),
             **(extra or {}),
         })
 
     def control(self, *, t_step: int, chunk_seq: int, step_in_chunk: int, now: float,
                 field: Any, executed: bool, qpos: Any = None,
+                applied_ctrl: Optional[dict] = None,
+                hold: Optional[dict] = None,
                 extra: Optional[dict] = None) -> None:
         """개별 제어 스텝. **여기서 `carried`/`stale` 이 생긴다.**
 
@@ -282,6 +299,14 @@ class FrameRecorder:
 
         **`apply_action` 직후, `mj_step` 전의 값이다** — 즉 이 action 이 지령된 순간의 자세다.
         스텝 뒤 값을 적으면 "지령"과 "결과"가 한 프레임 밀려 기록된다.
+
+        **`applied_ctrl` 은 T18 이 더했다** (주어졌을 때만 키가 생긴다). `executed` 가 *"청크를
+        실행하기로 했나"* 이면 `applied_ctrl` 은 *"그래서 `d.ctrl` 에 무엇이 들어갔나"* 다 — HOLD
+        스텝에서는 청크가 아니라 HOLD 목표가 들어간다 (지침 §8.1).
+
+        **`hold` 는 T23 이 더했다** (주어졌을 때만 = HOLD 스텝에만 키가 생긴다).
+        `client.HoldController.record()` — `{mode, source, entry_reason, entry_kinds, reason, kinds,
+        q_hold, gripper_hold, age, hold_chunks, max_abs_dev_rad}`. 측정 자세는 같은 줄의 `qpos` 다.
         """
         prov = self._as_prov(field)
         applied = (None if prov is None else
@@ -305,6 +330,9 @@ class FrameRecorder:
                 "frame_id": applied.frame_id, "frame_index": applied.frame_index,
                 "observed_at": applied.observed_at, "age_ms": applied.age_ms}),
             "qpos": qpos,
+            **({} if applied_ctrl is None else {"applied_ctrl": applied_ctrl}),
+            # T23 — HOLD 스텝에만.
+            **({} if hold is None else {"hold": hold}),
             **(extra or {}),
         })
 

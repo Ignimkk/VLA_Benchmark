@@ -1,0 +1,4622 @@
+{
+ "_comment": "ag3s-verifier. 숫자와 경로만. 프레임별 전체 값: outputs/verify/T20/T20.verify.programmatic.json (write_verify.py) 및 numbers.*.full 경로",
+ "step": "T20",
+ "date": "2026-09-28",
+ "runs": [
+  {
+   "id": "baseline",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/T20/baseline.json",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T20/baseline.json",
+   "stdout_log": "outputs/verify/T20/baseline.log",
+   "concurrent_load": "another session's benchmark.trajopt.experiments.fixed_input_ablation (pid 4141313, ~350% CPU) was running during this baseline; feasible/violated counts are therefore not comparable"
+  },
+  {
+   "id": "pytest_ag3s",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m pytest -q -p no:cacheprovider tests/ag3s",
+   "venv": ".venv-ag3s",
+   "stdout_log": "outputs/verify/T20/pytest_ag3s.log"
+  },
+  {
+   "id": "t14_fidelity",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python outputs/verify/T20/replay_t14.py fidelity",
+   "venv": "src/openpi/.venv",
+   "raw_output": "outputs/verify/T20/t14_fidelity.json",
+   "stdout_log": "outputs/verify/T20/t14_fidelity.log",
+   "what": "ground_target without confirm on every chunk; seeds / status / n_clusters / best score compared with the chunk's recorded seed_indices and summary_json"
+  },
+  {
+   "id": "t14_replay_sweep",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python outputs/verify/T20/replay_t14.py sweep <min_score> <lost_frames>  (12 settings)",
+   "venv": "src/openpi/.venv",
+   "raw_output": "outputs/verify/T20/t14_replay_min{m}_lost{l}.json; summary outputs/verify/T20/t14_sweep_summary.json (summarize_t14.py); per-frame lines in handoff/T20.verify.partial.json (kind=t14_replay)",
+   "stdout_log": "outputs/verify/T20/t14_sweep_lost{None,10,20}.log"
+  },
+  {
+   "id": "synthetic",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python outputs/verify/T20/synth_t20.py run",
+   "venv": "src/openpi/.venv",
+   "raw_output": "outputs/verify/T20/synth_rows.json; summary outputs/verify/T20/synth_summary.json (summarize_synth.py); calibration outputs/verify/T20/synth_calib.log; per-frame lines in handoff/T20.verify.partial.json (kind=synthetic)"
+  },
+  {
+   "id": "figures",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python outputs/verify/T20/fig_t20.py",
+   "venv": "src/openpi/.venv"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "368d723",
+  "dirty_files": [
+   "ag3s/config.py",
+   "ag3s/configs/default.yaml",
+   "ag3s/configs/rby1_three_camera.yaml",
+   "ag3s/constraints/to_adapter.py",
+   "ag3s/experiments/sources/constraint_record.py",
+   "ag3s/runtime/frame_record.py",
+   "ag3s/runtime/multiview.py",
+   "ag3s/runtime/pipeline.py",
+   "ag3s/stages/robot_filter.py",
+   "ag3s/stages/target_grounding.py",
+   "ag3s/types.py",
+   "trajopt/README.md",
+   "trajopt/client.py",
+   "trajopt/config.py",
+   "trajopt/problem.py",
+   "trajopt/refiner.py",
+   "trajopt/safe_policy.py",
+   "trajopt/serve_safe.py",
+   "trajopt/sqp.py",
+   "trajopt/wire.py"
+  ],
+  "workspace_untracked_tests": [
+   "tests/ag3s/test_manipulated_identity.py",
+   "tests/ag3s/test_self_filter_target_guard.py"
+  ]
+ },
+ "numbers": {
+  "baseline_working_tree": {
+   "frames": 15,
+   "violated_start": 13,
+   "has_target": 15,
+   "frame0_clearance_before_mm": 0.18597810857728936,
+   "n_filter_spheres": 218,
+   "planned_horizon": 8,
+   "status_counts_not_baseline": {
+    "feasible": 13,
+    "violated": 2
+   }
+  },
+  "baseline_reference_HEAD_from_T19": {
+   "violated_start": 13,
+   "has_target": 15,
+   "frame0_clearance_before_mm": 0.18597810857728936
+  },
+  "pytest_tests_ag3s": "673 passed, 14 warnings in 150.07s (0:02:30)",
+  "t14_replay_inputs": {
+   "source": "outputs/live_test/20260928_t14/server_constraints/run_0000/chunk_{k:05d}.npz, seq = k+1, k = 0..30 replayed in order",
+   "attention_cloud": "attention_cloud (float32 -> float64); equal to filtered_cloud in 31/31 chunks",
+   "attention": "attention_values",
+   "raw_attention": "attention_raw",
+   "exclude_mask": "support_mask",
+   "config": "AG3SConfig() defaults: clustering (dbscan eps 0.03 min_points 20, target_confirm_frames 3, tolerance 0.06), attention.seed_percentile 95 / seed_threshold None, geometry.min_radius 0.005 (serve_safe builds AG3SConfig.from_dict without clustering/attention/geometry sections)",
+   "timestamp": "chunk t_step",
+   "differences_from_live": [
+    "point coordinates recorded as float32 (live used float64)",
+    "camera provenance (_with_camera_provenance) not applied",
+    "live ran the pre-T20 TargetConfirm; replay runs the working-tree one",
+    "cloud is the old self-filter output (apple erased for seq 12-21, T14.audit)"
+   ],
+   "chunk_21_missing_keys": [
+    "seed_indices",
+    "target_centroid"
+   ]
+  },
+  "t14_replay_fidelity": {
+   "seeds_equal": 31,
+   "status_equal": 31,
+   "n_clusters_equal": 31,
+   "frames": 31,
+   "best_score_max_abs_diff": 3.027372386110727e-08
+  },
+  "t14_leader_seq12_21": {
+   "12": [
+    "crate",
+    0.014814647021757487
+   ],
+   "13": [
+    "crate",
+    0.015945486424000652
+   ],
+   "14": [
+    "crate",
+    0.027798090179375567
+   ],
+   "15": [
+    "crate",
+    0.01849110010835453
+   ],
+   "16": [
+    "crate",
+    0.022962345442691136
+   ],
+   "17": [
+    "pear",
+    0.02676707152612598
+   ],
+   "18": [
+    "pear",
+    0.04662228054723641
+   ],
+   "19": [
+    "pear",
+    0.026367554966693952
+   ],
+   "20": [
+    "pear",
+    0.029085209338485248
+   ],
+   "21": [
+    "crate",
+    0.013661613113975613
+   ]
+  },
+  "t14_leader_seq12_21_max_score": 0.04662228054723641,
+  "t14_leader_seq23_25": {
+   "23": [
+    "crate",
+    0.057512742334968725
+   ],
+   "24": [
+    "orange",
+    0.19582912726773594
+   ],
+   "25": [
+    "orange",
+    0.2111004885679741
+   ]
+  },
+  "t14_live_target_nearest_object_mm_seq10_22": {
+   "10": [
+    "apple",
+    17.122030502747563
+   ],
+   "11": [
+    "apple",
+    13.76110617939734
+   ],
+   "12": [
+    "crate",
+    28.56962784865128
+   ],
+   "13": [
+    "crate",
+    29.547369236359717
+   ],
+   "14": [
+    "crate",
+    29.685137618186747
+   ],
+   "15": [
+    "crate",
+    29.82449379424342
+   ],
+   "16": [
+    "crate",
+    29.80862677879877
+   ],
+   "17": [
+    "crate",
+    30.22528303712594
+   ],
+   "18": [
+    "crate",
+    29.54512996522456
+   ],
+   "19": [
+    "pear",
+    34.88912739148197
+   ],
+   "20": [
+    "pear",
+    34.281286749576694
+   ],
+   "21": [
+    "crate",
+    29.992706632060145
+   ],
+   "22": null
+  },
+  "t14_sweep": {
+   "full": "outputs/verify/T20/t14_sweep_summary.json",
+   "rows": [
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "seq12_21_all_id0": false,
+     "seq12_21_occluded": 3,
+     "switches_seq_to": [
+      [
+       14,
+       "crate"
+      ],
+      [
+       19,
+       "pear"
+      ],
+      [
+       30,
+       "apple"
+      ]
+     ],
+     "max_occluded_age": 2,
+     "lost_seqs": [],
+     "grounding_status_lost_seqs": [],
+     "seq22": [
+      "no_seed",
+      "occluded",
+      2
+     ],
+     "seq31_id": 3,
+     "seq31_to_apple_mm": 17.16
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "seq12_21_all_id0": true,
+     "seq12_21_occluded": 10,
+     "switches_seq_to": [],
+     "max_occluded_age": 14,
+     "lost_seqs": [],
+     "grounding_status_lost_seqs": [],
+     "seq22": [
+      "no_seed",
+      "occluded",
+      11
+     ],
+     "seq31_id": 0,
+     "seq31_to_apple_mm": 17.16
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "seq12_21_all_id0": true,
+     "seq12_21_occluded": 10,
+     "switches_seq_to": [],
+     "max_occluded_age": 14,
+     "lost_seqs": [],
+     "grounding_status_lost_seqs": [],
+     "seq22": [
+      "no_seed",
+      "occluded",
+      11
+     ],
+     "seq31_id": 0,
+     "seq31_to_apple_mm": 17.16
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "seq12_21_all_id0": true,
+     "seq12_21_occluded": 10,
+     "switches_seq_to": [],
+     "max_occluded_age": 14,
+     "lost_seqs": [],
+     "grounding_status_lost_seqs": [],
+     "seq22": [
+      "no_seed",
+      "occluded",
+      11
+     ],
+     "seq31_id": 0,
+     "seq31_to_apple_mm": 17.16
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "seq12_21_all_id0": false,
+     "seq12_21_occluded": 3,
+     "switches_seq_to": [
+      [
+       14,
+       "crate"
+      ],
+      [
+       19,
+       "pear"
+      ],
+      [
+       30,
+       "apple"
+      ]
+     ],
+     "max_occluded_age": 2,
+     "lost_seqs": [],
+     "grounding_status_lost_seqs": [],
+     "seq22": [
+      "no_seed",
+      "occluded",
+      2
+     ],
+     "seq31_id": 3,
+     "seq31_to_apple_mm": 17.16
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "seq12_21_all_id0": true,
+     "seq12_21_occluded": 10,
+     "switches_seq_to": [],
+     "max_occluded_age": 10,
+     "lost_seqs": [
+      22,
+      23,
+      24,
+      25
+     ],
+     "grounding_status_lost_seqs": [
+      23,
+      24,
+      25
+     ],
+     "seq22": [
+      "no_seed",
+      "lost",
+      11
+     ],
+     "seq31_id": 0,
+     "seq31_to_apple_mm": 17.16
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "seq12_21_all_id0": true,
+     "seq12_21_occluded": 10,
+     "switches_seq_to": [],
+     "max_occluded_age": 10,
+     "lost_seqs": [
+      22,
+      23,
+      24,
+      25
+     ],
+     "grounding_status_lost_seqs": [
+      23,
+      24,
+      25
+     ],
+     "seq22": [
+      "no_seed",
+      "lost",
+      11
+     ],
+     "seq31_id": 0,
+     "seq31_to_apple_mm": 17.16
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "seq12_21_all_id0": true,
+     "seq12_21_occluded": 10,
+     "switches_seq_to": [],
+     "max_occluded_age": 10,
+     "lost_seqs": [
+      22,
+      23,
+      24,
+      25
+     ],
+     "grounding_status_lost_seqs": [
+      23,
+      24,
+      25
+     ],
+     "seq22": [
+      "no_seed",
+      "lost",
+      11
+     ],
+     "seq31_id": 0,
+     "seq31_to_apple_mm": 17.16
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "seq12_21_all_id0": false,
+     "seq12_21_occluded": 3,
+     "switches_seq_to": [
+      [
+       14,
+       "crate"
+      ],
+      [
+       19,
+       "pear"
+      ],
+      [
+       30,
+       "apple"
+      ]
+     ],
+     "max_occluded_age": 2,
+     "lost_seqs": [],
+     "grounding_status_lost_seqs": [],
+     "seq22": [
+      "no_seed",
+      "occluded",
+      2
+     ],
+     "seq31_id": 3,
+     "seq31_to_apple_mm": 17.16
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "seq12_21_all_id0": true,
+     "seq12_21_occluded": 10,
+     "switches_seq_to": [],
+     "max_occluded_age": 14,
+     "lost_seqs": [],
+     "grounding_status_lost_seqs": [],
+     "seq22": [
+      "no_seed",
+      "occluded",
+      11
+     ],
+     "seq31_id": 0,
+     "seq31_to_apple_mm": 17.16
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "seq12_21_all_id0": true,
+     "seq12_21_occluded": 10,
+     "switches_seq_to": [],
+     "max_occluded_age": 14,
+     "lost_seqs": [],
+     "grounding_status_lost_seqs": [],
+     "seq22": [
+      "no_seed",
+      "occluded",
+      11
+     ],
+     "seq31_id": 0,
+     "seq31_to_apple_mm": 17.16
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "seq12_21_all_id0": true,
+     "seq12_21_occluded": 10,
+     "switches_seq_to": [],
+     "max_occluded_age": 14,
+     "lost_seqs": [],
+     "grounding_status_lost_seqs": [],
+     "seq22": [
+      "no_seed",
+      "occluded",
+      11
+     ],
+     "seq31_id": 0,
+     "seq31_to_apple_mm": 17.16
+    }
+   ],
+   "min_ge_0.05_identical_across_0.05_0.1_0.3": true
+  },
+  "t14_min0.05_lostNone_occluded_frames": {
+   "target_to_apple_mm_seq12_21": [
+    13.567771
+   ],
+   "manipulated_occluded_metric_seq12_21": [
+    1.0
+   ],
+   "last_geometry_n_points": 44,
+   "last_seen_frame": 10,
+   "streak_seq23_25": [
+    1,
+    1,
+    2
+   ]
+  },
+  "t14_smallest_min_score_in_sweep_holding_apple_seq12_21": 0.05,
+  "t14_max_occluded_age": {
+   "min0.0_lostNone": 2,
+   "min0.0_lost10": 2,
+   "min0.0_lost20": 2,
+   "min0.05_lostNone": 14,
+   "min0.05_lost10": 10,
+   "min0.05_lost20": 14,
+   "min0.1_lostNone": 14,
+   "min0.1_lost10": 10,
+   "min0.1_lost20": 14,
+   "min0.3_lostNone": 14,
+   "min0.3_lost10": 10,
+   "min0.3_lost20": 14
+  },
+  "synthetic_fixture": "blobs = tests/ag3s/test_manipulated_identity._lattice (27 pts, 8 mm), CFG = ClusteringConfig(min_points=10), seed_threshold 0.005, plus 2 support-excluded points at z=2 m carrying the raw-attention peak; APPLE (0.5,0,0.8), CRATE (0.5,0.5,0.8) from the test module; frames 0-2: apple 0.8 + crate 0.02 (apple score 0.5604)",
+  "synthetic_crate_scores": [
+   0.0143,
+   0.0493,
+   0.0528,
+   0.1004,
+   0.3013,
+   0.7003
+  ],
+  "synthetic_A_B_switch_after_n_attention_frames": {
+   "A": {
+    "min0.0": {
+     "0.0143": null,
+     "0.0493": 3,
+     "0.0528": 3,
+     "0.1004": 3,
+     "0.3013": 3,
+     "0.7003": 3
+    },
+    "min0.05": {
+     "0.0143": null,
+     "0.0493": null,
+     "0.0528": 3,
+     "0.1004": 3,
+     "0.3013": 3,
+     "0.7003": 3
+    },
+    "min0.1": {
+     "0.0143": null,
+     "0.0493": null,
+     "0.0528": null,
+     "0.1004": 3,
+     "0.3013": 3,
+     "0.7003": 3
+    },
+    "min0.3": {
+     "0.0143": null,
+     "0.0493": null,
+     "0.0528": null,
+     "0.1004": null,
+     "0.3013": 3,
+     "0.7003": 3
+    }
+   },
+   "B": {
+    "min0.0": {
+     "0.0143": 3,
+     "0.0493": 3,
+     "0.0528": 3,
+     "0.1004": 3,
+     "0.3013": 3,
+     "0.7003": 3
+    },
+    "min0.05": {
+     "0.0143": null,
+     "0.0493": null,
+     "0.0528": 3,
+     "0.1004": 3,
+     "0.3013": 3,
+     "0.7003": 3
+    },
+    "min0.1": {
+     "0.0143": null,
+     "0.0493": null,
+     "0.0528": null,
+     "0.1004": 3,
+     "0.3013": 3,
+     "0.7003": 3
+    },
+    "min0.3": {
+     "0.0143": null,
+     "0.0493": null,
+     "0.0528": null,
+     "0.1004": null,
+     "0.3013": 3,
+     "0.7003": 3
+    }
+   }
+  },
+  "synthetic_A_B_same_for_lost_10_20": true,
+  "synthetic_A_B_legend": "A = apple kept in cloud at attention 0.05 (score 0.0354); B = apple absent. crate leads 10 frames; value = crate-attention frames until switch, null = none in 10",
+  "synthetic_C_occlusion_then_reobserve": {
+   "_what": "3 frames apple visible, K in {5,15,25} occluded frames, 3 frames apple back at offset {0,30,80} mm; occluder crate_low = crate alone at score 0.0143, no_cluster = status no_attention. ids: before / first return frame / third return frame",
+   "rows": [
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 1,
+     "id_final": 2,
+     "state_on_return": "visible",
+     "mode_on_return": "hold",
+     "switch_frames": [
+      5,
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded",
+      "visible"
+     ],
+     "max_age": 2
+    },
+    {
+     "min_score": 0.0,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.05,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.1,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": null,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 10,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 5
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 5,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      10
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 7
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 15
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 15,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "occluded",
+     "mode_on_return": "occluded",
+     "switch_frames": [
+      20
+     ],
+     "occluded_phase_states": [
+      "occluded"
+     ],
+     "max_age": 17
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 0,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 30,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 0,
+     "state_on_return": "visible",
+     "mode_on_return": "keep",
+     "switch_frames": [],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 25
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "crate_low",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    },
+    {
+     "min_score": 0.3,
+     "lost_frames": 20,
+     "occluder": "no_cluster",
+     "K": 25,
+     "reobserve_offset_mm": 80,
+     "id_before": 0,
+     "id_on_return": 0,
+     "id_final": 1,
+     "state_on_return": "lost",
+     "mode_on_return": "lost",
+     "switch_frames": [
+      30
+     ],
+     "occluded_phase_states": [
+      "lost",
+      "occluded"
+     ],
+     "max_age": 27
+    }
+   ],
+   "full": "outputs/verify/T20/synth_summary.json"
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t20/t20-t14-topview.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t20/t20-t14-topview.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t20/t20-t14-replay-state.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t20/t20-t14-replay-state.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t20/t20-switch-rule-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t20/t20-switch-rule-table.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": false,
+  "matched_HEAD": true,
+  "note": "13/15 · has_target 15/15 · frame0 +0.18597810857728936 mm — equal to the HEAD value in T19.verify.json; skill reference (14/15 · +0.15718632962849477) not reproduced, as in T19"
+ },
+ "verdict": "기준선: HEAD 값과 일치, skill 기준값과는 어긋남 (T19 와 같음). tests/ag3s: 673 passed, 14 warnings in 150.07s (0:02:30)",
+ "not_measured": [
+  "pipeline-level replay (AG3S.step on T14 depth: fine window / target_field_exclude / guard centre with the manipulated object) — only ground_target + TargetConfirm were replayed",
+  "T14 replay with the T19 self-filter (apple kept in cloud) — cloud is the recorded old-filter one",
+  "tests/trajopt (not requested)"
+ ],
+ "process_note": "verifier read T20.impl.md in full, including the section '내가 기대하는 결과', before measuring"
+}

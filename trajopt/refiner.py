@@ -92,6 +92,11 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
         #: 연속 실패 수. 한 프레임 드롭과 **영구 고장**을 가르는 것이 이 숫자다.
         self._failure_count = 0
         self._previous: Optional[np.ndarray] = None
+        #: 마지막 `_continuity_reference` 가 **무엇을 근거로** 정렬했나 (T18). 기록용이다 —
+        #: `{"used": bool, "aligned_from_step": int | None, "source": "feedback" | "assumed" | ...}`.
+        #: 연속성 항이 실제로 무엇을 끌어당겼는지가 기록에 없으면 HOLD 뒤의 편차를 해석할 수 없다.
+        self.last_continuity: dict[str, Any] = {"used": False, "source": "none",
+                                                "aligned_from_step": None}
 
     def reset(self) -> None:
         """Between episodes. Drops the warm start and the continuity reference."""
@@ -100,6 +105,7 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
         self.last_failure = None
         self._failure_count = 0
         self._previous = None
+        self.last_continuity = {"used": False, "source": "none", "aligned_from_step": None}
 
     # ------------------------------------------------------------------------------------
     def refine(self, physical_chunk, context: dict[str, Any] | None = None):
@@ -111,6 +117,9 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
         """
         chunk = np.asarray(physical_chunk, np.float64)
         planned = min(self.config.horizon.planned, chunk.shape[0])
+        # 이번 프레임에 연속성 항을 계산하지 못하면 **지난 프레임 값이 남지 않게** 먼저 지운다.
+        self.last_continuity = {"used": False, "aligned_from_step": None,
+                                "source": "not computed (scene unavailable)"}
 
         try:
             scene, q_now, certified = self.scene_fn(context)
@@ -197,17 +206,48 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
         term then pulls towards what the policy proposed rather than towards a previous correction,
         which is weaker than it was but still the only correctly-aligned reference there is. Reading
         from index 0 instead would compare this chunk against steps the robot already ran.
+
+        **T18 — "K 스텝이 실행됐다" 는 이제 가정이 아니라 사실로 받는다.**
+        `context["previous_executed_steps"]` 가 있으면 그 수 `k` 로 정렬한다 (로컬이 보낸 실행
+        피드백의 `n_exec`):
+
+        | `k` | 무엇을 돌려주나 | 왜 |
+        |---|---|---|
+        | 키 없음 / `None` | 인덱스 K 부터 (예전 그대로) | 피드백이 없다 — 가정만 남는다 |
+        | `0` (HOLD) | `None` | 이전 계획은 한 스텝도 날지 않았다. 그 꼬리는 로봇이 있는 곳과 무관하다 |
+        | `0 < k` | 인덱스 `k` 부터 | 로봇이 `k` 행까지 따라갔다 |
+
+        HOLD 뒤에 K 로 자르면 **날지 않은 궤적의 8 스텝 뒤**를 이어 붙이라고 SQP 를 끌어당긴다 —
+        로봇은 그 궤적의 0 행에도 가지 않았는데.
         """
+        self.last_continuity = {"used": False, "source": "none", "aligned_from_step": None}
         if self.config.cost.w_continuity <= 0.0:
+            self.last_continuity["source"] = "disabled (w_continuity <= 0)"
             return None
         previous = None if context is None else context.get("previous_physical_chunk")
         if previous is None:
+            self.last_continuity["source"] = "no previous chunk"
             return None
         previous = np.asarray(previous, np.float64)
         if previous.ndim != 2 or previous.shape[1] < self.layout.n_valid:
+            self.last_continuity["source"] = f"previous chunk has shape {previous.shape}"
             return None
-        tail = self.layout.chunk_to_trajectory(previous)[:, self.config.horizon.execution_length :]
-        return tail[:, :planned] if tail.shape[1] else None
+        executed = None if context is None else context.get("previous_executed_steps")
+        if executed is None:
+            start, source = int(self.config.horizon.execution_length), "assumed"
+        else:
+            start, source = int(executed), "feedback"
+            if start <= 0:
+                self.last_continuity.update(
+                    source="feedback: previous chunk did not execute (n_exec=0)",
+                    aligned_from_step=0)
+                return None
+        tail = self.layout.chunk_to_trajectory(previous)[:, start:]
+        self.last_continuity.update(source=source, aligned_from_step=start)
+        if not tail.shape[1]:
+            return None
+        self.last_continuity["used"] = True
+        return tail[:, :planned]
 
     def _note_failure(self, message: str) -> None:
         if self.on_result is not None:

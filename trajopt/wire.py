@@ -22,11 +22,49 @@
 | `ag3s/active_manipulators` | 접촉이 허용된 매니퓰레이터 |
 | `ag3s/reset` | True 면 SEAM·AG3S·TO 의 내부 상태와 warm-start 를 모두 버린다 |
 | `ag3s/seq` | 요청 일련번호. 응답에 그대로 돌아오고, 오래된 응답을 버리는 근거가 된다 |
+| `ag3s/exec_feedback` | **직전 청크의 실행 사실** (T18). 아래 |
 
 카메라마다 `robot_state` 를 따로 싣는 것이 이 형식의 핵심이다. 손목 카메라는 팔과 함께
 움직이므로 80 ms 전 프레임은 80 ms 전 자세에 놓여야 한다. 하나의 `q_now` 로 세 대를 변환하면
 손목 클라우드가 번지고, 더 나쁘게는 자기 필터가 어긋나 로봇 점이 씬에 남아 그리퍼에 용접된
 유령 장애물로 뭉친다.
+
+### `ag3s/exec_feedback` — 서버가 "제안" 이 아니라 "실행된 것" 을 안다 (T18)
+
+T16 에서 정책이 t=176 · t=208 에 gripper 닫힘을 제안했지만 그 청크는 HOLD 로 실행되지 않았고,
+**서버는 그것을 몰랐다.** 서버가 가진 것은 자기가 **보낸** 청크뿐이었다 — latch 는 계획 청크의 첫
+행을 gripper 신호로 읽었고, 연속성 참조는 이전 청크의 앞 K 스텝이 실행됐다고 **가정**했다.
+HOLD·부분 실행이면 셋 다 틀린다 (지침 §6.4).
+
+그래서 로컬이 다음 요청에 **직전 청크의 사실**을 싣는다. 하나의 딕셔너리이고, 소유자는 로컬
+제어 루프다 (`client.ExecutionLog` 가 `apply_action` 직후에 모은다). 갱신 시점은 **청크 경계**다
+— 요청 하나에 청크 하나의 사실이 실린다.
+
+| 안쪽 키 | 형 | 뜻 |
+|---|---|---|
+| `available` | bool | 사실이 실렸나. `False` 면 `reason` 만 있다 (에피소드 첫 청크 등) |
+| `reason` | str | `available=False` 의 이유 |
+| `seq` | int | **어느 계획에 대한 사실인가** — 그 청크를 받은 요청의 `ag3s/seq` |
+| `t_step_start` | int | 그 청크의 첫 제어 스텝 (로컬 `t_step`) |
+| `n_steps` | int | 그 계획이 걸려 있는 동안 돈 제어 스텝 수 (보통 8) |
+| `n_exec` | int | 그중 **계획 청크의 행**을 적용한 스텝 수 |
+| `n_hold` | int | `n_steps - n_exec` — 계획 행 대신 HOLD 목표를 적용한 스텝 수 (T23: `q_hold` 고정, `legacy` 면 현재 자세) |
+| `executed` | list[bool] `[n_steps]` | 스텝별 실행 여부. 부분 실행의 **모양**까지 남긴다 |
+| `executed_chunk` | str | 로컬이 고른 청크: `refined` · `reference` · `none`(= HOLD) |
+| `ipc` | str | 그 왕복의 결과: `ok` · `unsafe` · `timeout` · `stale` · `error` |
+| `hold_kind` | str \| None | HOLD 사유 종류 (`HOLD_KINDS`). 실행했으면 `None` |
+| `hold_reason` | str \| None | HOLD 사유 문장 (`SafeRemoteClient.last_reason`) |
+| `planned_gripper` | float32 `[n_steps, 2]` | 그 스텝에 **계획 청크가 말한** (왼, 오른) gripper, 정규화 |
+| `applied_gripper` | float32 `[n_steps, 2]` | **실제 `d.ctrl` 에 들어간** (왼, 오른) gripper, `ctrl / RBY1_GRIPPER_OPEN` 로 정규화 (1 = 열림). HOLD 면 HOLD 목표 — T23 기본(`fixed`)은 **마지막으로 명령한** gripper, `legacy` 는 `rby1_state()` 의 측정값 |
+| `applied_arm` | float32 `[n_steps, 2N]` | 실제 `d.ctrl` 의 팔 목표 `[왼 N, 오른 N]` — drift 평가용 (지침 §8.2) |
+| `measured_gripper` | float32 `[2]` | **이번 요청의 촬영 시점** `qpos` 로 잰 (왼, 오른) 개도. `build_obs` 와 같은 규약 (`|q| / |RBY1_GRIPPER_OPEN|`, 1 = 열림) |
+
+**키가 없음과 `available=False` 는 다르다.** 키가 없으면 이 계약을 모르는 **옛 클라이언트**이고,
+`available=False` 는 사실을 낼 수 없었던 새 클라이언트다 (`unpack_exec_feedback` 이 둘을 `reason`
+으로 가른다). `ag3s` 블록 · `shadow` 와 같은 규약이다 — 있음/없음 자체가 신호다.
+
+**크기.** 8 스텝이면 배열 넷이 합쳐 1 KB 미만이다 (`[8, 2] + [8, 2] + [8, 14] + [2]` float32 =
+584 B). T9 가 감수한 응답 17 KB 증가에 비하면 무시할 만해서 스텝별 `applied_arm` 까지 와이어에 싣는다.
 
 ## 응답
 
@@ -43,6 +81,38 @@
 | `field` | **거리장의 출처** — `sequence` · `backend` · `observed_at` · `state` · 계층. 아래 |
 | `ag3s` | **선택 키.** `ag3s_status` 가 `ok` 가 아닐 때만 실린다 — **왜** 인증이 안 됐나. 아래 |
 | `max_violation_pair` | **선택 키.** `max_violation_m` 을 만든 **행의 신원**. 아래 |
+| `verdict_reasons` | **선택 키** (T23). `safe` 의 **사유 목록** `[{kind, action, detail, evidence}]`. 아래 |
+
+### `verdict_reasons` — `safe` 를 bool 하나로 축약하지 않는다 (T23, 지침 §8.3 · §9)
+
+T16 에서 `--no-collision` 인데도 34 청크 중 25 개가 HOLD 였다. 이유는 하나로 뭉쳐 있었다 —
+`TrajOptStatus.safe` 가 아니면 HOLD. 그 안에는 **파지에 필요한 접촉**(손가락이 사과를 파고든다),
+**가려진 target**(`no_seed` 인데 manipulated 는 살아 있다), 진짜 충돌이 같은 `violated` 로 섞여
+있었다. 그래서 서버가 사유를 나눠 싣고, 로컬 게이트가 사유별로 처리한다.
+
+| kind | 뜻 | 기본 처리 (`GATE_DEFAULT`) |
+|---|---|---|
+| `allowed_contact` | 위반 행이 전부 **권한 있는 link ↔ manipulated 물체** 다 (T20 manipulated, `contact.contact_links`) | 실행 |
+| `budget_only` | 예산/반복 상한으로 끝났지만 최종 검사 통과 | 실행 |
+| `occluded_target` | 미인증의 이유가 target 없음(`no_target`) 하나뿐이고 manipulated 가 `occluded` 다 (T20) | 실행 |
+| `uncertified_waived` | 기하 미인증이지만 서버가 `require_certified_geometry=False` 로 떠 있다 | 실행 |
+| `collision` | 권한 없는 link, 또는 manipulated 가 아닌 물체와의 관통 (> tolerance) | HOLD |
+| `uncertified` | `geometry_certified=False` (위 `occluded_target` 이 아닌 것 전부) | HOLD |
+| `unverified` | 최적화기가 검사하지 못했다 (`solver_failed` · `unconstrained`) | HOLD |
+| `comms` | **클라이언트가 만든다** — `timeout` · `stale` · `dimension` · `error` (`evidence.ipc`) | HOLD |
+
+**모르는 kind 는 HOLD 다** (fail closed). `action` 은 서버가 이 표로 붙인 값이고 읽기 편의용이다 —
+로컬 게이트는 자기 표(`gate_decision`)로 다시 정한다.
+
+**`safe` 는 그대로 실린다: `safe = (HOLD 처리인 사유가 없다)`.** 옛 클라이언트는 `safe` 만 읽으므로
+그대로 동작한다. 새 클라이언트는 `safe` **와** 자기 게이트가 둘 다 실행이라고 할 때만 실행한다 —
+로컬은 서버보다 **엄격해질 수만** 있다 (서버가 `legacy` 판정으로 떠 있으면 그것이 이긴다).
+`trajopt_status` 는 최적화기의 상태 그대로다: `violated` 인데 `safe=True` 인 청크(= `allowed_contact`)
+가 있다.
+
+**키가 없으면** 옛 서버이거나, 서버가 씬을 못 얻어 최적화기가 돌지 않은 청크다(그 응답의 모양은
+T23 전과 같다). `unpack_verdict_reasons` 가 그때 `safe` · `geometry_certified` 로 사유를 **유도**하고
+`source="derived"` 로 표시한다 — 유도한 사유는 언제나 옛 `safe` 와 같은 결정을 낸다.
 
 ### `max_violation_pair` — `violated` 가 **어느 제약**인가
 
@@ -156,6 +226,11 @@ __all__ = [
     "pack_response", "unpack_field", "unpack_actions_reference", "unpack_ag3s",
     "unpack_violation_pair", "unpack_shadow", "unpack_to",
     "SafetyVerdict", "AG3S_BLOCK", "VIOLATION_PAIR",
+    "EXEC_FEEDBACK", "HOLD_KINDS", "EXECUTED_CHUNKS",
+    "make_exec_feedback", "no_exec_feedback", "unpack_exec_feedback",
+    "exec_feedback_jsonable",
+    "VERDICT_REASONS", "REASON_KINDS", "GATE_DEFAULT", "GATE_ACTIONS", "COMMS_KINDS",
+    "make_reason", "gate_decision", "unpack_verdict_reasons", "derive_verdict_reasons",
 ]
 
 PREFIX = "ag3s/"
@@ -189,6 +264,43 @@ TO_BLOCK = "to"
 #: 프레임에는 실리지 않는다 — 없는 신원을 `null` 로 싣는 것과 키를 빼는 것 중, 뒤쪽이
 #: *"이 서버는 신원을 낼 수 있다"* 를 잃지 않는다 (옛 서버와 구별된다).
 VIOLATION_PAIR = "max_violation_pair"
+
+#: 요청 키 (`ag3s/` 접두 뒤) — **직전 청크의 실행 사실** (T18). 위 머리말의 표가 안쪽 키의 정의다.
+EXEC_FEEDBACK = "exec_feedback"
+
+#: HOLD 사유의 종류. `SafeRemoteClient.last_ipc` 의 값 중 `ok` 를 뺀 것과 같다 — 사유를 새로
+#: 지어내지 않고 로컬이 이미 쓰는 이름을 그대로 싣는다.
+HOLD_KINDS = ("unsafe", "timeout", "stale", "error")
+
+#: 로컬이 고른 청크 (`SafeRemoteClient.last_executed_chunk`). `none` 이 HOLD 다.
+EXECUTED_CHUNKS = ("refined", "reference", "none")
+
+#: 응답의 **선택 키** — `safe` 의 사유 목록 (T23). 머리말의 `verdict_reasons` 절.
+VERDICT_REASONS = "verdict_reasons"
+
+#: 사유의 종류. 머리말 표의 순서 그대로 — 앞 넷이 실행, 뒤 넷이 HOLD 다 (`GATE_DEFAULT`).
+REASON_KINDS = ("allowed_contact", "budget_only", "occluded_target", "uncertified_waived",
+                "collision", "uncertified", "unverified", "comms")
+
+#: 게이트의 처리 두 가지. **정지(abort)는 여기 없다** — 한 청크의 사유가 아니라 연속 HOLD 수가
+#: 정하는 것이고 (`--safe-max-hold-chunks`), 그것은 제어 루프의 일이다.
+GATE_ACTIONS = ("execute", "hold")
+
+#: 사유 → 기본 처리 (지침 §8.4). **여기 없는 kind 는 HOLD 다** (`gate_decision`).
+GATE_DEFAULT: dict[str, str] = {
+    "allowed_contact": "execute",
+    "budget_only": "execute",
+    "occluded_target": "execute",
+    "uncertified_waived": "execute",
+    "collision": "hold",
+    "uncertified": "hold",
+    "unverified": "hold",
+    "comms": "hold",
+}
+
+#: `comms` 사유의 하위 종류 (`evidence.ipc`). `dimension` 은 `last_ipc` 로는 `error` 로 남는다 —
+#: T18 의 `HOLD_KINDS` 를 바꾸지 않으려는 것이고, 구별은 이 사유가 한다.
+COMMS_KINDS = ("timeout", "stale", "dimension", "error")
 
 #: 머리 하나 + 손목 둘. `CameraID` 에 HEAD 가 하나뿐이라 `zed_right` 는 `zed_left` 와 겹친다.
 DEFAULT_CAMERAS = ("zed_left", "wrist_cam_l", "wrist_cam_r")
@@ -231,9 +343,17 @@ def pack_request(obs: dict[str, Any], *, cameras: Sequence[str],
                  extrinsics: dict[str, np.ndarray], robot_state: dict[str, np.ndarray],
                  stamps: dict[str, float], phase: str,
                  active_manipulators: Sequence[str] = (),
-                 reset: bool = False, seq: int = 0) -> dict[str, Any]:
-    """정책 관측에 AG3S 가 필요한 것을 더한다. `obs` 는 제자리에서 바뀌지 않는다."""
+                 reset: bool = False, seq: int = 0,
+                 exec_feedback: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """정책 관측에 AG3S 가 필요한 것을 더한다. `obs` 는 제자리에서 바뀌지 않는다.
+
+    `exec_feedback` 은 `make_exec_feedback` / `no_exec_feedback` 의 결과다. **`None` 이면 키를
+    싣지 않는다** — 서버는 그것을 "이 계약을 모르는 옛 클라이언트" 로 읽는다. 새 클라이언트는
+    낼 사실이 없어도 `no_exec_feedback(reason)` 을 실어 그 둘을 구별되게 한다.
+    """
     out = dict(obs)
+    if exec_feedback is not None:
+        out[PREFIX + EXEC_FEEDBACK] = dict(exec_feedback)
     out[PREFIX + "cameras"] = list(cameras)
     out[PREFIX + "phase"] = str(phase)
     out[PREFIX + "active_manipulators"] = list(active_manipulators)
@@ -303,7 +423,8 @@ class SafetyVerdict:
 
     def __init__(self, *, ag3s_status: str, geometry_certified: bool, trajopt_status: str,
                  max_violation_m: float, safe: bool, notes: Sequence[str] = (),
-                 max_violation_pair: Optional[dict[str, Any]] = None):
+                 max_violation_pair: Optional[dict[str, Any]] = None,
+                 verdict_reasons: Optional[Sequence[dict[str, Any]]] = None):
         self.ag3s_status = ag3s_status
         self.geometry_certified = bool(geometry_certified)
         self.trajopt_status = trajopt_status
@@ -314,6 +435,10 @@ class SafetyVerdict:
         #: `None` — 활성 제약이 없었거나 서버가 이 키를 모르는 버전이다. 위 머리말 참조.
         self.max_violation_pair = (None if max_violation_pair is None
                                    else dict(max_violation_pair))
+        #: `safe` 의 사유 목록 (T23), 또는 `None` — 최적화기가 돌지 않은 청크이거나 옛 서버.
+        #: `[]` 은 "사유 없음 = 깨끗하다" 이고 `None` 과 다르다 (머리말 `verdict_reasons` 절).
+        self.verdict_reasons = (None if verdict_reasons is None
+                                else [dict(r) for r in verdict_reasons])
 
     def to_dict(self) -> dict[str, Any]:
         out = {
@@ -329,6 +454,9 @@ class SafetyVerdict:
         # 있음/없음이 *"서버가 이 신원을 낼 수 있는 버전인가"* 를 그대로 말해 준다.
         if self.max_violation_pair is not None:
             out[VIOLATION_PAIR] = dict(self.max_violation_pair)
+        # T23 — 같은 규약. `None` 이면 키가 없다 (씬이 없어 풀지 못한 청크 · 옛 서버).
+        if self.verdict_reasons is not None:
+            out[VERDICT_REASONS] = [dict(r) for r in self.verdict_reasons]
         return out
 
 
@@ -465,3 +593,206 @@ def unpack_field(response: dict[str, Any]):
             "the response carried no `field` block — the server predates field provenance; "
             "staleness cannot be judged for this chunk")
     return FieldProvenance.from_dict(blob)
+
+
+# --- 실행 피드백 (T18) -------------------------------------------------------------------------
+
+
+def no_exec_feedback(reason: str) -> dict[str, Any]:
+    """낼 사실이 없는 요청의 피드백. **키를 빼는 대신 이것을 싣는다** — 옛 클라이언트와 구별된다."""
+    return {"available": False, "reason": str(reason)}
+
+
+def make_exec_feedback(*, seq: int, t_step_start: int, executed: Sequence[bool],
+                       executed_chunk: str, ipc: str, hold_kind: Optional[str],
+                       hold_reason: Optional[str], planned_gripper, applied_gripper,
+                       applied_arm, measured_gripper) -> dict[str, Any]:
+    """직전 청크의 실행 사실을 와이어 형식으로. 표는 머리말의 `ag3s/exec_feedback` 절.
+
+    **여기서 모양을 검사한다** — 스텝 수가 배열마다 다르면 "몇 번째 스텝에 무엇이 들어갔나" 가
+    어긋난 채 서버 기록에 남고, 그것은 틀린 사실이다. 없는 것보다 나쁘다.
+
+    Raises:
+        ValueError: 배열의 스텝 수가 `executed` 와 다르거나, `executed_chunk` · `hold_kind` 가
+            등록되지 않은 값일 때.
+    """
+    flags = [bool(v) for v in executed]
+    n = len(flags)
+    planned = _rows(planned_gripper, n, 2, "planned_gripper")
+    applied = _rows(applied_gripper, n, 2, "applied_gripper")
+    arm = np.asarray(applied_arm, np.float32)
+    if arm.ndim != 2 or arm.shape[0] != n:
+        raise ValueError(f"applied_arm must be [n_steps={n}, 2N], got {arm.shape}")
+    measured = np.asarray(measured_gripper, np.float32).reshape(-1)
+    if measured.shape != (2,):
+        raise ValueError(f"measured_gripper must be (left, right), got {measured.shape}")
+    if executed_chunk not in EXECUTED_CHUNKS:
+        raise ValueError(f"executed_chunk {executed_chunk!r} is not one of {EXECUTED_CHUNKS}")
+    if hold_kind is not None and hold_kind not in HOLD_KINDS:
+        raise ValueError(f"hold_kind {hold_kind!r} is not one of {HOLD_KINDS} (or None)")
+    n_exec = int(sum(flags))
+    return {
+        "available": True,
+        "seq": int(seq),
+        "t_step_start": int(t_step_start),
+        "n_steps": n,
+        "n_exec": n_exec,
+        "n_hold": n - n_exec,
+        "executed": flags,
+        "executed_chunk": str(executed_chunk),
+        "ipc": str(ipc),
+        "hold_kind": None if hold_kind is None else str(hold_kind),
+        "hold_reason": None if hold_reason is None else str(hold_reason),
+        "planned_gripper": planned,
+        "applied_gripper": applied,
+        "applied_arm": arm,
+        "measured_gripper": measured,
+    }
+
+
+def unpack_exec_feedback(scene: dict[str, Any]) -> dict[str, Any]:
+    """`strip_request` 의 `scene` 에서 실행 피드백. **언제나 `available` 키가 있다.**
+
+    세 경우를 `reason` 으로 가른다:
+
+    * 키 없음 → 옛 클라이언트 (`"the request carried no exec_feedback ..."`)
+    * `available=False` → 새 클라이언트가 낼 사실이 없었다 (그 `reason` 을 그대로)
+    * 모양이 틀림 → **예외를 내지 않고** `available=False` + `malformed ...` — 피드백이 틀렸다고
+      정책을 죽이면 안 된다. 틀린 사실을 쓰는 것보다 "없다" 로 물러나는 것이 낫다.
+
+    배열은 `np.float64` 로 돌려준다. 전송(msgpack_numpy)을 지난 배열은 읽기 전용이다.
+    """
+    blob = scene.get(EXEC_FEEDBACK)
+    if blob is None:
+        return no_exec_feedback(
+            "the request carried no exec_feedback — the client predates T18")
+    if not isinstance(blob, dict):
+        return no_exec_feedback(f"malformed exec_feedback: expected a dict, got "
+                                f"{type(blob).__name__}")
+    if not blob.get("available", False):
+        return no_exec_feedback(str(blob.get("reason") or "the client reported no facts"))
+    try:
+        flags = [bool(v) for v in blob["executed"]]
+        n = len(flags)
+        out = {
+            "available": True,
+            "seq": int(blob["seq"]),
+            "t_step_start": int(blob.get("t_step_start", -1)),
+            "n_steps": n,
+            "n_exec": int(sum(flags)),
+            "n_hold": n - int(sum(flags)),
+            "executed": flags,
+            "executed_chunk": str(blob.get("executed_chunk", "none")),
+            "ipc": str(blob.get("ipc", "")),
+            "hold_kind": (None if blob.get("hold_kind") is None
+                          else str(blob["hold_kind"])),
+            "hold_reason": (None if blob.get("hold_reason") is None
+                            else str(blob["hold_reason"])),
+            "planned_gripper": np.asarray(
+                _rows(blob["planned_gripper"], n, 2, "planned_gripper"), np.float64),
+            "applied_gripper": np.asarray(
+                _rows(blob["applied_gripper"], n, 2, "applied_gripper"), np.float64),
+            "applied_arm": np.asarray(blob.get("applied_arm", np.zeros((n, 0))), np.float64),
+            "measured_gripper": np.asarray(blob["measured_gripper"], np.float64).reshape(-1),
+        }
+        if out["measured_gripper"].shape != (2,):
+            raise ValueError(f"measured_gripper has shape {out['measured_gripper'].shape}")
+        if out["applied_arm"].ndim != 2 or out["applied_arm"].shape[0] != n:
+            raise ValueError(f"applied_arm has shape {out['applied_arm'].shape}")
+        # 로컬이 센 값과 `executed` 에서 다시 센 값이 다르면 둘 중 하나가 거짓이다.
+        for key in ("n_exec", "n_hold", "n_steps"):
+            if key in blob and int(blob[key]) != out[key]:
+                raise ValueError(f"{key}={blob[key]} disagrees with `executed` ({out[key]})")
+    except (KeyError, TypeError, ValueError) as exc:
+        return no_exec_feedback(f"malformed exec_feedback: {type(exc).__name__}: {exc}")
+    return out
+
+
+def exec_feedback_jsonable(feedback: dict[str, Any]) -> dict[str, Any]:
+    """기록(`summary_json`)용 — 배열을 리스트로. 값은 바꾸지 않는다."""
+    out = {}
+    for key, value in feedback.items():
+        tolist = getattr(value, "tolist", None)
+        out[key] = tolist() if callable(tolist) else value
+    return out
+
+
+def _rows(value, n: int, width: int, name: str) -> np.ndarray:
+    arr = np.asarray(value, np.float32)
+    if n == 0 and arr.size == 0:
+        return np.zeros((0, width), np.float32)
+    if arr.shape != (n, width):
+        raise ValueError(f"{name} must be [n_steps={n}, {width}], got {arr.shape}")
+    return arr
+
+
+# --- 판정 사유 (T23) ---------------------------------------------------------------------------
+
+
+def make_reason(kind: str, detail: str = "", **evidence: Any) -> dict[str, Any]:
+    """사유 하나. `action` 은 `GATE_DEFAULT` 로 붙인다 (모르는 kind 는 `hold`).
+
+    `evidence` 는 기계가 읽는 근거다 (행의 신원, 거리, tier …). 값은 JSON 으로 옮길 수 있어야
+    한다 — 기록(`summary_json` · `frames.jsonl`)에 그대로 들어간다.
+
+    Raises:
+        ValueError: 등록되지 않은 kind. 서버·클라이언트가 같은 문자열을 써야 하므로 오타는 여기서
+            죽는다 — 조용히 지나가면 게이트가 그 사유를 "모르는 것" 으로 HOLD 한다.
+    """
+    if kind not in REASON_KINDS:
+        raise ValueError(f"reason kind {kind!r} is not one of {REASON_KINDS}")
+    out: dict[str, Any] = {"kind": str(kind), "action": GATE_DEFAULT.get(kind, "hold"),
+                           "detail": str(detail)}
+    if evidence:
+        out["evidence"] = dict(evidence)
+    return out
+
+
+def gate_decision(reasons: Sequence[dict[str, Any]],
+                  table: Optional[dict[str, str]] = None) -> tuple[str, list[dict[str, Any]]]:
+    """`(처리, HOLD 로 만든 사유들)`. 처리는 `execute` 또는 `hold`.
+
+    **사유가 하나라도 HOLD 면 HOLD 다.** 모르는 kind · kind 가 없는 항목도 HOLD 다 — 서버가 새
+    사유를 더했는데 로컬이 모르면, 그것을 실행 쪽으로 읽는 것은 fail open 이다.
+    """
+    table = GATE_DEFAULT if table is None else table
+    holding = []
+    for r in reasons:
+        if not isinstance(r, dict):
+            holding.append({"kind": "malformed", "action": "hold", "detail": repr(r)})
+        elif table.get(str(r.get("kind")), "hold") != "execute":
+            holding.append(dict(r))
+    return ("hold" if holding else "execute"), holding
+
+
+def derive_verdict_reasons(response: dict[str, Any]) -> list[dict[str, Any]]:
+    """`verdict_reasons` 가 없는 응답 (옛 서버 · 씬 없는 청크) 에서 사유를 **유도**한다.
+
+    유도 규칙은 옛 `safe` 와 같은 결정을 내도록 고른다: `safe` 면 사유 없음, 아니면
+    기하 미인증 → `uncertified`, 그 밖 → `collision`. 어느 쪽이든 HOLD 다.
+    """
+    if bool(response.get("safe", False)):
+        return []
+    if not bool(response.get("geometry_certified", False)):
+        return [make_reason("uncertified",
+                            f"derived: geometry not certified (ag3s_status="
+                            f"{response.get('ag3s_status')})", derived=True)]
+    return [make_reason("collision",
+                        f"derived: trajopt_status={response.get('trajopt_status')}, "
+                        f"max_violation_m={response.get('max_violation_m')}", derived=True)]
+
+
+def unpack_verdict_reasons(response: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
+    """`(사유 목록, 출처)`. 출처는 `server` (키가 있었다) 또는 `derived` (`derive_verdict_reasons`).
+
+    키가 있는데 목록이 아니면 **HOLD 사유 하나로** 읽는다 — 틀린 모양을 "사유 없음" 으로 읽으면
+    fail open 이다.
+    """
+    if VERDICT_REASONS not in response:
+        return derive_verdict_reasons(response), "derived"
+    blob = response.get(VERDICT_REASONS)
+    if not isinstance(blob, (list, tuple)):
+        return [{"kind": "malformed", "action": "hold",
+                 "detail": f"verdict_reasons is {type(blob).__name__}, not a list"}], "server"
+    return [dict(r) if isinstance(r, dict) else {"kind": "malformed", "action": "hold",
+                                                 "detail": repr(r)} for r in blob], "server"

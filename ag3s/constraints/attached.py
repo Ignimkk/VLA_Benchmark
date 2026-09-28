@@ -39,6 +39,69 @@ from benchmark.ag3s.types import (
 )
 
 
+#: `AG3S.attach` 의 마지막 관문 — parent link 원점 ↔ 붙일 물체 centroid 거리 상한 (m, T22).
+#: **잠정값**: T17 MuJoCo FK 로 `ee_finger_l1` body 원점 ↔ 사과 body 55 mm (파지 뒤 t=117–160),
+#: grounding centroid 편차 중앙 17.6 mm (T17a) — 여유를 둔 값이다. verifier 가 재서 정한다.
+#: T14 seq 26 의 636 mm phantom 은 어떤 값으로도 거절돼야 한다. `LatchConfig.reach` 와 같은 값.
+#: **손가락 parent link 기준이다** — `AG3S.attach(reach=)` 의 기본은 `None`(검사 안 함)이고
+#: `SafePolicy` 가 이 값을 넘긴다. 손목(`link_left_arm_6`) 원점은 사과에서 ~270 mm 라 이 값으로
+#: 막으면 `grasp_damage.py` 가 깨진다.
+DEFAULT_ATTACH_REACH_M = 0.12
+
+
+class AttachRejected(ValueError):
+    """`attach()` 가 붙이기를 **거절**했다 (T22). 이유와 잰 값을 싣는다.
+
+    `ValueError` 의 하위형이라 예전처럼 `ValueError` 를 잡는 호출자도 놓치지 않는다. 잡는 쪽은
+    `reason` 을 기록에 남기고 잠금을 되돌려야 한다 (`GraspLatch.revert_attach`).
+    """
+
+    def __init__(self, reason: str, *, reach_m: Optional[float] = None,
+                 limit_m: Optional[float] = None, parent_link: Optional[str] = None):
+        super().__init__(reason)
+        self.reason = str(reason)
+        self.reach_m = None if reach_m is None else float(reach_m)
+        self.limit_m = None if limit_m is None else float(limit_m)
+        self.parent_link = parent_link
+
+    def record(self) -> dict:
+        return {
+            "reason": self.reason,
+            "reach_mm": None if self.reach_m is None else round(self.reach_m * 1000.0, 2),
+            "limit_mm": None if self.limit_m is None else round(self.limit_m * 1000.0, 2),
+            "parent_link": self.parent_link,
+        }
+
+
+def parent_reach(robot_model: RobotCollisionModel, robot_state: np.ndarray, parent_link: str,
+                 centroid) -> float:
+    """parent link **원점**(지금 자세의 FK) ↔ `centroid`(base) 거리 (m). T22 의 reach 검사.
+
+    원점을 쓰는 이유: 손가락 link 의 원점은 개도와 함께 움직이지만 그 범위가 ±50 mm 라 거절할
+    거리(수백 mm)와 자릿수가 다르다. 판단이 섬세해야 하는 쪽은 잠금의 개도 증거다.
+    """
+    T = _link_pose_numeric(robot_model, robot_state, parent_link)
+    c = np.asarray(centroid, np.float64).reshape(3)
+    return float(np.linalg.norm(c - T[:3, 3]))
+
+
+def attached_reach(attached: AttachedCollisionGeometry) -> Optional[float]:
+    """이미 parent 프레임에 있는 기하의 centroid 가 parent 원점에서 얼마나 먼가 (m). 기하가 없으면 `None`.
+
+    점이 있으면 점의 평균, 없으면 primitive 중심의 평균 — 둘 다 `T_parent_object` 를 지나서.
+    """
+    R = np.asarray(attached.T_parent_object, np.float64)[:3, :3]
+    t = np.asarray(attached.T_parent_object, np.float64)[:3, 3]
+    pts = getattr(attached, "points", None)
+    if pts is not None and len(pts):
+        local = np.asarray(pts, np.float64).reshape(-1, 3)
+    elif attached.primitives:
+        local = np.asarray([p.center for p in attached.primitives], np.float64).reshape(-1, 3)
+    else:
+        return None
+    return float(np.linalg.norm(local.mean(axis=0) @ R.T + t))
+
+
 def _link_pose_numeric(robot_model: RobotCollisionModel, q: np.ndarray, link: str) -> np.ndarray:
     pose_fn = getattr(robot_model, "link_pose", None) or getattr(
         robot_model, "link_pose_numeric", None
@@ -319,10 +382,14 @@ def self_collision_mask(
 
 
 __all__ = [
+    "DEFAULT_ATTACH_REACH_M",
+    "AttachRejected",
     "attach_from_target",
+    "attached_reach",
     "attached_spheres",
     "base_frame_points",
     "base_frame_spheres",
+    "parent_reach",
     "rigid_spheres",
     "self_collision_mask",
     "trim_outliers",

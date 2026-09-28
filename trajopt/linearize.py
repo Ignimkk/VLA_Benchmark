@@ -699,6 +699,13 @@ class CollisionLinearizer:
         | `candidate_id` | 그 slot 을 소유한 AG3S candidate. slot 이 비면 `-1` |
         | `obstacle` | ESDF label 층이 답한 **가장 가까운 물체의 이름**. 없으면 `None` |
         | `point_m` | 그 질의점의 base frame 좌표 — 그림에 바로 찍을 수 있다 |
+        | `tier` | ESDF 행이면 **그 답을 낸 계층** (`coarse`·`fine`·`target_free`·`window_edge`·`outside`·`static`, T21). 아니면 `None` |
+        | `authorized_rows` | 권한 link 행 **전부**(모든 step)가 어느 계층에서 답을 받았나 — `{n, by_tier, n_unresolved, n_bounded, verifiable, reads_target_free, note}`. 권한 행이 없거나 필드가 계층을 못 말하면 `None` |
+
+        `authorized_rows.verifiable = False` 는 **검증 불가의 명시**다 (지침 §5.3-4, T21): 권한 link
+        의 질의가 미세 창 밖(coarse · outside) 이거나 창 경계 하한(`window_edge`)으로 답을 받았다.
+        그 행의 여유는 창 밖을 자유 공간으로 읽은 것도, 접촉 허용이 성립한 것도 아니다.
+        재계산·재배치는 이 STEP 의 일이 아니다 (T25 뒤).
 
         **`None` 을 돌려주는 경우가 있다**: 활성 제약이 하나도 없으면 모든 행이 `+inf` 라
         argmin 에 뜻이 없다. 그때 첫 값은 `inf` 이고 신원은 `None` 이다 — 없는 신원을
@@ -722,14 +729,14 @@ class CollisionLinearizer:
                 continue
             idx = np.unravel_index(flat, block.shape)
             worst = value
-            best = self._identify(name, idx, centres, scene, value)
+            best = self._identify(name, idx, centres, scene, value, esdf_block=esdf)
         if best is None:
             # 신원이 없으면 값도 `full_violation` 과 같아야 한다 — 전부 `inf` 인 경우다.
             return float(self.full_violation(trajectory, q_now, scene, states)), None
         return worst, best
 
     def _identify(self, block: str, idx, centres: np.ndarray, scene: SceneSnapshot,
-                  value: float) -> dict:
+                  value: float, esdf_block: Optional[np.ndarray] = None) -> dict:
         """`worst_row` 가 고른 인덱스를 **사람이 읽을 이름**으로. 계산은 하지 않는다."""
         step, query = int(idx[0]), int(idx[1])
         slot = int(idx[2]) if len(idx) > 2 else None
@@ -744,6 +751,8 @@ class CollisionLinearizer:
             "candidate_id": None,
             "obstacle": None,
             "point_m": [float(v) for v in point],
+            "tier": None,
+            "authorized_rows": self._authorized_rows(centres, scene, esdf_block),
         }
         if block == "candidate" and slot is not None:
             ids = np.asarray(scene.candidate_ids, np.int64).reshape(-1)
@@ -751,7 +760,82 @@ class CollisionLinearizer:
                 out["candidate_id"] = int(ids[slot])
         if block == "esdf":
             out["obstacle"] = self._esdf_label_name(point, scene)
+            mask = self._target_free_rows(scene, centres.shape[1])
+            out["tier"] = self._esdf_tier(point.reshape(1, 3), scene,
+                                          bool(mask is not None and mask[query]))
         return out
+
+    @staticmethod
+    def _esdf_tier(points: np.ndarray, scene: SceneSnapshot, target_free) -> Optional[str]:
+        """ESDF 가 그 점을 **어느 계층으로** 답했나 (T21). 계층을 못 말하는 필드면 `None`.
+
+        기록 전용이다 — 값은 `_esdf_clearance` 가 이미 냈고, 이것은 그 값의 출처에 이름을 붙인다.
+        """
+        tier_of = getattr(scene.esdf, "answer_tier", None)
+        if tier_of is None:
+            return None
+        try:
+            return str(np.asarray(tier_of(points, target_free=target_free)).reshape(-1)[0])
+        except Exception:  # noqa: BLE001 — 이름을 못 읽는 것으로 판정 기록이 죽지 않는다
+            return None
+
+    @staticmethod
+    def _target_free_rows(scene: SceneSnapshot, n_query: int) -> Optional[np.ndarray]:
+        """`(n_query,)` — target 없는 계층에 묻는 행. `_esdf_clearance` 와 같은 패딩 규칙."""
+        if scene.target_free_mask is None:
+            return None
+        mask = np.asarray(scene.target_free_mask, bool).reshape(-1)
+        if mask.shape[0] < n_query:
+            mask = np.concatenate([mask, np.zeros(n_query - mask.shape[0], bool)])
+        return mask[:n_query]
+
+    def _authorized_rows(self, centres: np.ndarray, scene: SceneSnapshot,
+                         esdf_block: Optional[np.ndarray] = None) -> Optional[dict]:
+        """권한 link 행 전부의 계층별 수 (T21 §2). **검증 불가를 명시**하는 곳이다.
+
+        권한 행 = `target_free_mask` (정책이 켜져 있으면), 아니면 `manipulated_link_margin` 이
+        전역 마진보다 작은 행 (접촉 허용이 완화한 link). 쥔 물체의 점은 권한 대상이 아니다.
+
+        미해결의 정의는 `curobo_field.unresolved_rows` 하나다 — `coarse`·`outside` 는 언제나,
+        `window_edge` 는 그 하한만으로 행이 풀리지 않을 때 (`esdf_block` 의 여유 < 0).
+        """
+        if scene.esdf is None or getattr(scene.esdf, "answer_tier", None) is None:
+            return None
+        n_query = centres.shape[1]
+        free_rows = self._target_free_rows(scene, n_query)
+        if free_rows is not None:
+            mask = free_rows.copy()
+        elif scene.manipulated_link_margin is not None:
+            per_link = np.asarray(scene.manipulated_link_margin, np.float64).reshape(-1)[:n_query]
+            mask = np.zeros(n_query, bool)
+            mask[:per_link.shape[0]] = per_link < float(scene.esdf_margin) - 1e-12
+        else:
+            return None
+        mask[self.n_spheres:] = False
+        if not mask.any():
+            return None
+        from benchmark.ag3s.fields.curobo_field import count_tiers, unresolved_rows
+
+        pts = np.asarray(centres, np.float64)[:, mask].reshape(-1, 3)
+        try:
+            tiers = np.asarray(scene.esdf.answer_tier(pts, target_free=free_rows is not None))
+        except Exception:  # noqa: BLE001 — 기록이 판정을 죽이지 않는다
+            return None
+        if esdf_block is None or not np.size(esdf_block):
+            esdf_block = self._esdf_clearance(centres, scene)
+        clearance = np.asarray(esdf_block, np.float64)[..., 0][:, mask].reshape(-1)
+        unresolved, bounded = unresolved_rows(tiers, clearance)
+        n_bad = int(unresolved.sum())
+        by = count_tiers(tiers)
+        note = None
+        if n_bad:
+            bad = {k: v for k, v in count_tiers(tiers[unresolved]).items() if v}
+            note = (f"{n_bad}/{len(tiers)} authorized-link row(s) answered by {bad} — outside the "
+                    "fine window: unverified (not free space, not a contact permission)")
+        return {"n": int(len(tiers)), "by_tier": by, "n_unresolved": n_bad,
+                "n_bounded": int(bounded.sum()),
+                "verifiable": n_bad == 0, "reads_target_free": free_rows is not None,
+                "note": note}
 
     def _query_name(self, query: int) -> str:
         """질의점 하나의 이름. 로봇 구는 그 link 이름, 쥔 물체의 점은 `attached:<link>[i]`.

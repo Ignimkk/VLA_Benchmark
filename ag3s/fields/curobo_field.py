@@ -39,7 +39,46 @@ import numpy as np
 
 from benchmark.ag3s.fields.esdf import EsdfField, VoxelGrid
 
-__all__ = ["layer_from_curobo", "layer_from_arrays", "CuroboEsdfField", "RolloutFields"]
+__all__ = ["layer_from_curobo", "layer_from_arrays", "CuroboEsdfField", "RolloutFields",
+           "ANSWER_TIERS", "RESOLVED_TIERS", "count_tiers", "unresolved_rows"]
+
+#: `CuroboEsdfField.answer_tier` 의 값 — **그 질의의 답을 무엇이 냈나** (T21).
+#:
+#: | 값 | 뜻 |
+#: |---|---|
+#: | `outside` | 거친 계층의 격자 밖 — `outside_distance` 가 답했다 (관측이 아니다) |
+#: | `coarse` | 거친 계층 (예: 20 mm) — 미세 창 밖이거나, 창 안인데 거친 값이 더 작았다 |
+#: | `fine` | 미세 계층 (예: 5 mm) |
+#: | `target_free` | target 없는 미세 계층 — 조작 대상을 뺀 답 |
+#: | `window_edge` | target 없는 창 **안**이지만 창 경계까지의 거리 `b` 가 답했다 (하한 — 안전 쪽이나 미해결) |
+#: | `static` | 해석적 정적 기하 |
+ANSWER_TIERS = ("outside", "coarse", "fine", "target_free", "window_edge", "static")
+#: 미세 해상도(또는 해석적)로 **풀린** 답. 이 밖의 답은 접촉 허용 판정의 근거가 못 된다 —
+#: 창 밖을 자유 공간으로 읽거나 coarse fallback 을 성공한 접촉 허용으로 기록하지 않는다 (지침 §5.3).
+RESOLVED_TIERS = ("fine", "target_free", "static")
+
+
+def unresolved_rows(tiers, clearance) -> tuple[np.ndarray, np.ndarray]:
+    """`(unresolved, bounded)` — 둘 다 `(N,)` bool. **검증 불가의 정의가 여기 하나다** (T21).
+
+    * `coarse` · `outside` → 언제나 미해결. 창 밖 답은 자유 공간도 접촉 허용도 아니다 (지침 §5.3).
+    * `window_edge` → 답은 창 경계 거리 `b` (참값의 하한). 그 하한만으로 `clearance ≥ 0`
+      (= `b − r − margin ≥ 0`) 이면 **그 행은 풀린 것이다** (`bounded`) — 참 거리가 그보다 크다.
+      음수면 위반이 창 경계가 만든 것일 수 있으므로 미해결이다.
+    * 나머지(`RESOLVED_TIERS`) → 풀렸다.
+    """
+    t = np.asarray(tiers).reshape(-1)
+    c = np.broadcast_to(np.asarray(clearance, np.float64).reshape(-1), t.shape)
+    edge = t == "window_edge"
+    bounded = edge & (c >= 0.0)
+    unresolved = np.isin(t, ("coarse", "outside")) | (edge & ~bounded)
+    return unresolved, bounded
+
+
+def count_tiers(tiers) -> dict:
+    """`answer_tier` 결과 → `{tier: 수}`. **모든 키가 항상 있다** (기록을 세로로 셀 수 있게)."""
+    arr = np.asarray(tiers).reshape(-1)
+    return {t: int(np.count_nonzero(arr == t)) for t in ANSWER_TIERS}
 
 
 def layer_from_arrays(distance_grid: np.ndarray, origin: np.ndarray, voxel_size: float,
@@ -280,8 +319,10 @@ class CuroboEsdfField:
         **왜 `b` 가 필요한가.** `f` 는 창 안의 표면만 안다. 창 **밖**의 표면은 정의상 `b` 보다
         멀고, 동시에 `d` 보다 멀다 (`d` 는 target 까지 포함한 최소값이므로). 그래서 창 밖
         표면까지의 거리는 `max(d, b)` 이상이고, 위 식은 참값의 **하한**이다 — 즉 안전한 쪽으로
-        틀린다. 실제로는 창이 target 을 중심으로 120 mm 씩 열려 있어 손끝 근처에서 `b` 가
-        `f` 보다 훨씬 크고, 그때 답은 정확히 `f` 다.
+        틀린다. T21 부터 창은 권한 link 구의 swept AABB 를 `반지름 + 마진 + 보간 여유` 만큼 감싸도록
+        놓이므로 (`curobo_builder.place_fine_window`) 손끝 근처에서 `b` 가 마진보다 크고, 그때 답은
+        정확히 `f` 다. 창이 넘친 프레임에는 `b` 가 답하는 점이 생기고 `answer_tier` 가
+        `window_edge` 로 적는다.
 
         **그리고 이 식은 지금 동작보다 더 보수적이 되지 않는다.** `f >= d`(표면을 빼면 거리가
         줄지 않는다)이므로 `min(f, max(d, b)) >= d` 다. 그래서 이 경로가 켜져서 **없던 위반이
@@ -312,6 +353,56 @@ class CuroboEsdfField:
             bound = self._boundary_distance(layer.grid, here)
             d[inside] = np.minimum(free, np.maximum(d[inside], bound))
         return d
+
+    def answer_tier(self, points: np.ndarray, *, target_free=False) -> np.ndarray:
+        """`(N,)` str — 그 질의점의 답을 **어느 계층이** 냈나 (`ANSWER_TIERS`, T21).
+
+        `target_free` 는 bool 하나 또는 `(N,)` — 그 점이 `target_free_distance` 로 묻는가
+        (trajopt 의 `target_free_mask`). `distance()` · `target_free_distance()` 와 **같은 합성**을
+        그대로 따라가며 이긴 쪽의 이름을 적는다 — 값은 다시 계산하지만 판정에는 쓰지 않는다.
+        기록 전용이다 (지침 §5.3: 어느 계층이 답했는가, 창 밖/미관측 여부).
+        """
+        pts = np.asarray(points, np.float64).reshape(-1, 3)
+        n = len(pts)
+        out = np.full(n, "coarse", dtype="<U11")
+        if not n:
+            return out
+        voxel, winner, _ = self._evaluate(pts, want_winner=True)
+        out[winner > 0] = "fine"
+        out[~self._covers(self.layers[0].grid, pts)] = "outside"
+        d = np.asarray(voxel, np.float64).copy()
+        analytic = None
+        if self.static_shapes:
+            from benchmark.ag3s.fields.esdf import analytic_distance
+            analytic = np.asarray(analytic_distance(pts, self.static_shapes), np.float64)
+            # `gradient` 과 같은 승자 규칙 (동률이면 해석적).
+            out[analytic <= voxel + 1e-12] = "static"
+            d = np.minimum(d, analytic)
+        flags = np.broadcast_to(np.asarray(target_free, bool), (n,))
+        if not flags.any() or not self.target_free_layers:
+            return out
+        for layer in self.target_free_layers:
+            inside = flags & self._covers(layer.grid, pts)
+            if not inside.any():
+                continue
+            here = pts[inside]
+            free_vox = np.asarray(layer.distance(here), np.float64)
+            free = free_vox
+            static_wins = np.zeros(len(here), bool)
+            if analytic is not None:
+                free = np.minimum(free_vox, analytic[inside])
+                static_wins = analytic[inside] <= free_vox + 1e-12
+            bound = self._boundary_distance(layer.grid, here)
+            base = d[inside]
+            alt = np.maximum(base, bound)
+            use_free = free <= alt
+            tier = out[inside].copy()
+            tier[~use_free & (bound > base)] = "window_edge"
+            tier[use_free] = "target_free"
+            tier[use_free & static_wins] = "static"
+            out[inside] = tier
+            d[inside] = np.minimum(free, alt)
+        return out
 
     @staticmethod
     def _boundary_distance(grid: VoxelGrid, pts: np.ndarray) -> np.ndarray:

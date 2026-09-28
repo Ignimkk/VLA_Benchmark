@@ -1,0 +1,9046 @@
+{
+ "rule": [
+  [
+   "first",
+   "\uc7a1\uc740 \uac83\uc774 \uc5c6\uc74c",
+   "1\ub4f1\uc744 \uc0c8 id \ub85c \ucc44\ud0dd",
+   "visible"
+  ],
+  [
+   "keep",
+   "\uc7a1\uc740 \ubb3c\uccb4\uac00 1\ub4f1 (tolerance 60 mm \uc548)",
+   "centroid \uac31\uc2e0, \ub3c4\uc804\uc790 \ucd08\uae30\ud654",
+   "visible"
+  ],
+  [
+   "hold",
+   "\ub2e4\ub978 \ubb3c\uccb4\uac00 1\ub4f1, \uc7a1\uc740 \ubb3c\uccb4\ub3c4 cluster \uc788\uc74c",
+   "\uc7a1\uc740 \ubb3c\uccb4 \uc720\uc9c0, \ub3c4\uc804\uc790 streak \uacc4\uc0b0",
+   "visible"
+  ],
+  [
+   "occluded",
+   "\uc7a1\uc740 \ubb3c\uccb4\uc758 cluster \uc5c6\uc74c, age \u2264 lost_frames",
+   "\ub9c8\uc9c0\ub9c9 \uad00\uce21 \uae30\ud558\ub97c target \uc73c\ub85c (leader \uc544\ub2d8)",
+   "occluded"
+  ],
+  [
+   "lost",
+   "age > target_lost_frames",
+   "target \uc5c6\uc74c, GroundingStatus.LOST",
+   "lost"
+  ],
+  [
+   "switch",
+   "\ub3c4\uc804\uc790\uac00 target_confirm_frames(3) \uc5f0\uc18d 1\ub4f1\uc774\uace0 \ub9e4 \ud504\ub808\uc784 score \u2265 target_switch_min_score",
+   "\ub3c4\uc804\uc790\ub97c \uc0c8 id \ub85c, switched_from = \uc774\uc804 id",
+   "visible"
+  ],
+  [
+   "(unseen)",
+   "cluster \uac00 \ud558\ub098\ub3c4 \uc5c6\uc74c (NO_SEED \ub4f1)",
+   "age +1, streak \ubd88\ubcc0, status \uadf8\ub300\ub85c",
+   "occluded / lost"
+  ]
+ ],
+ "t14_sweep": {
+  "min0.0_lostNone": {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "occluded",
+    "occluded"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    2
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "switch",
+    "keep",
+    "keep",
+    "hold",
+    "hold",
+    "switch",
+    "keep",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    354.81326210374567,
+    354.96244563576255,
+    354.9742098225904,
+    355.5662753882123,
+    355.0571473557759,
+    634.5236480800687,
+    634.9402938151924,
+    634.9402938151924,
+    634.9402938151924
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "crate",
+    "crate",
+    "crate",
+    "crate",
+    "crate",
+    "pear",
+    "pear",
+    "pear",
+    "pear"
+   ],
+   "seq12_21_all_id0": false,
+   "seq12_21_all_occluded": false,
+   "seq12_21_n_occluded": 3,
+   "seq12_21_max_manip_to_apple_mm": 634.9402938151924,
+   "switches_all_seq": [
+    [
+     14,
+     0,
+     1,
+     "crate"
+    ],
+    [
+     19,
+     1,
+     2,
+     "pear"
+    ],
+    [
+     30,
+     2,
+     3,
+     "apple"
+    ]
+   ],
+   "first_switch_seq": 14,
+   "max_occluded_age_all": 2,
+   "max_age_all": 2,
+   "lost_seqs": [],
+   "lost_status_seqs": [],
+   "seq22": {
+    "status": "no_seed",
+    "state": "occluded",
+    "age": 2,
+    "id": 2
+   },
+   "seq23_31": [
+    [
+     23,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.0
+    ],
+    [
+     24,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.4
+    ],
+    [
+     25,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.5
+    ],
+    [
+     26,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.4
+    ],
+    [
+     27,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.9
+    ],
+    [
+     28,
+     2,
+     "visible",
+     0,
+     "hold",
+     636.0
+    ],
+    [
+     29,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.5
+    ],
+    [
+     30,
+     3,
+     "visible",
+     0,
+     "switch",
+     17.1
+    ],
+    [
+     31,
+     3,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 3,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  },
+  "min0.0_lost10": {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "occluded",
+    "occluded"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    2
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "switch",
+    "keep",
+    "keep",
+    "hold",
+    "hold",
+    "switch",
+    "keep",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    354.81326210374567,
+    354.96244563576255,
+    354.9742098225904,
+    355.5662753882123,
+    355.0571473557759,
+    634.5236480800687,
+    634.9402938151924,
+    634.9402938151924,
+    634.9402938151924
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "crate",
+    "crate",
+    "crate",
+    "crate",
+    "crate",
+    "pear",
+    "pear",
+    "pear",
+    "pear"
+   ],
+   "seq12_21_all_id0": false,
+   "seq12_21_all_occluded": false,
+   "seq12_21_n_occluded": 3,
+   "seq12_21_max_manip_to_apple_mm": 634.9402938151924,
+   "switches_all_seq": [
+    [
+     14,
+     0,
+     1,
+     "crate"
+    ],
+    [
+     19,
+     1,
+     2,
+     "pear"
+    ],
+    [
+     30,
+     2,
+     3,
+     "apple"
+    ]
+   ],
+   "first_switch_seq": 14,
+   "max_occluded_age_all": 2,
+   "max_age_all": 2,
+   "lost_seqs": [],
+   "lost_status_seqs": [],
+   "seq22": {
+    "status": "no_seed",
+    "state": "occluded",
+    "age": 2,
+    "id": 2
+   },
+   "seq23_31": [
+    [
+     23,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.0
+    ],
+    [
+     24,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.4
+    ],
+    [
+     25,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.5
+    ],
+    [
+     26,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.4
+    ],
+    [
+     27,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.9
+    ],
+    [
+     28,
+     2,
+     "visible",
+     0,
+     "hold",
+     636.0
+    ],
+    [
+     29,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.5
+    ],
+    [
+     30,
+     3,
+     "visible",
+     0,
+     "switch",
+     17.1
+    ],
+    [
+     31,
+     3,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 3,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  },
+  "min0.0_lost20": {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "visible",
+    "occluded",
+    "occluded"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    2
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "switch",
+    "keep",
+    "keep",
+    "hold",
+    "hold",
+    "switch",
+    "keep",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    354.81326210374567,
+    354.96244563576255,
+    354.9742098225904,
+    355.5662753882123,
+    355.0571473557759,
+    634.5236480800687,
+    634.9402938151924,
+    634.9402938151924,
+    634.9402938151924
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "crate",
+    "crate",
+    "crate",
+    "crate",
+    "crate",
+    "pear",
+    "pear",
+    "pear",
+    "pear"
+   ],
+   "seq12_21_all_id0": false,
+   "seq12_21_all_occluded": false,
+   "seq12_21_n_occluded": 3,
+   "seq12_21_max_manip_to_apple_mm": 634.9402938151924,
+   "switches_all_seq": [
+    [
+     14,
+     0,
+     1,
+     "crate"
+    ],
+    [
+     19,
+     1,
+     2,
+     "pear"
+    ],
+    [
+     30,
+     2,
+     3,
+     "apple"
+    ]
+   ],
+   "first_switch_seq": 14,
+   "max_occluded_age_all": 2,
+   "max_age_all": 2,
+   "lost_seqs": [],
+   "lost_status_seqs": [],
+   "seq22": {
+    "status": "no_seed",
+    "state": "occluded",
+    "age": 2,
+    "id": 2
+   },
+   "seq23_31": [
+    [
+     23,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.0
+    ],
+    [
+     24,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.4
+    ],
+    [
+     25,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.5
+    ],
+    [
+     26,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.4
+    ],
+    [
+     27,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.9
+    ],
+    [
+     28,
+     2,
+     "visible",
+     0,
+     "hold",
+     636.0
+    ],
+    [
+     29,
+     2,
+     "visible",
+     0,
+     "hold",
+     635.5
+    ],
+    [
+     30,
+     3,
+     "visible",
+     0,
+     "switch",
+     17.1
+    ],
+    [
+     31,
+     3,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 3,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  },
+  "min0.05_lostNone": {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple"
+   ],
+   "seq12_21_all_id0": true,
+   "seq12_21_all_occluded": true,
+   "seq12_21_n_occluded": 10,
+   "seq12_21_max_manip_to_apple_mm": 13.56777104086647,
+   "switches_all_seq": [],
+   "first_switch_seq": null,
+   "max_occluded_age_all": 14,
+   "max_age_all": 14,
+   "lost_seqs": [],
+   "lost_status_seqs": [],
+   "seq22": {
+    "status": "no_seed",
+    "state": "occluded",
+    "age": 11,
+    "id": 0
+   },
+   "seq23_31": [
+    [
+     23,
+     0,
+     "occluded",
+     12,
+     "occluded",
+     13.6
+    ],
+    [
+     24,
+     0,
+     "occluded",
+     13,
+     "occluded",
+     13.6
+    ],
+    [
+     25,
+     0,
+     "occluded",
+     14,
+     "occluded",
+     13.6
+    ],
+    [
+     26,
+     0,
+     "visible",
+     0,
+     "keep",
+     22.7
+    ],
+    [
+     27,
+     0,
+     "occluded",
+     1,
+     "occluded",
+     22.7
+    ],
+    [
+     28,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     29,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     30,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.1
+    ],
+    [
+     31,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 0,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  },
+  "min0.05_lost10": {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "lost"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple"
+   ],
+   "seq12_21_all_id0": true,
+   "seq12_21_all_occluded": true,
+   "seq12_21_n_occluded": 10,
+   "seq12_21_max_manip_to_apple_mm": 13.56777104086647,
+   "switches_all_seq": [],
+   "first_switch_seq": null,
+   "max_occluded_age_all": 10,
+   "max_age_all": 14,
+   "lost_seqs": [
+    22,
+    23,
+    24,
+    25
+   ],
+   "lost_status_seqs": [
+    23,
+    24,
+    25
+   ],
+   "seq22": {
+    "status": "no_seed",
+    "state": "lost",
+    "age": 11,
+    "id": 0
+   },
+   "seq23_31": [
+    [
+     23,
+     0,
+     "lost",
+     12,
+     "lost",
+     13.6
+    ],
+    [
+     24,
+     0,
+     "lost",
+     13,
+     "lost",
+     13.6
+    ],
+    [
+     25,
+     0,
+     "lost",
+     14,
+     "lost",
+     13.6
+    ],
+    [
+     26,
+     0,
+     "visible",
+     0,
+     "keep",
+     22.7
+    ],
+    [
+     27,
+     0,
+     "occluded",
+     1,
+     "occluded",
+     22.7
+    ],
+    [
+     28,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     29,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     30,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.1
+    ],
+    [
+     31,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 0,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  },
+  "min0.05_lost20": {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple"
+   ],
+   "seq12_21_all_id0": true,
+   "seq12_21_all_occluded": true,
+   "seq12_21_n_occluded": 10,
+   "seq12_21_max_manip_to_apple_mm": 13.56777104086647,
+   "switches_all_seq": [],
+   "first_switch_seq": null,
+   "max_occluded_age_all": 14,
+   "max_age_all": 14,
+   "lost_seqs": [],
+   "lost_status_seqs": [],
+   "seq22": {
+    "status": "no_seed",
+    "state": "occluded",
+    "age": 11,
+    "id": 0
+   },
+   "seq23_31": [
+    [
+     23,
+     0,
+     "occluded",
+     12,
+     "occluded",
+     13.6
+    ],
+    [
+     24,
+     0,
+     "occluded",
+     13,
+     "occluded",
+     13.6
+    ],
+    [
+     25,
+     0,
+     "occluded",
+     14,
+     "occluded",
+     13.6
+    ],
+    [
+     26,
+     0,
+     "visible",
+     0,
+     "keep",
+     22.7
+    ],
+    [
+     27,
+     0,
+     "occluded",
+     1,
+     "occluded",
+     22.7
+    ],
+    [
+     28,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     29,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     30,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.1
+    ],
+    [
+     31,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 0,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  },
+  "min0.1_lostNone": {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple"
+   ],
+   "seq12_21_all_id0": true,
+   "seq12_21_all_occluded": true,
+   "seq12_21_n_occluded": 10,
+   "seq12_21_max_manip_to_apple_mm": 13.56777104086647,
+   "switches_all_seq": [],
+   "first_switch_seq": null,
+   "max_occluded_age_all": 14,
+   "max_age_all": 14,
+   "lost_seqs": [],
+   "lost_status_seqs": [],
+   "seq22": {
+    "status": "no_seed",
+    "state": "occluded",
+    "age": 11,
+    "id": 0
+   },
+   "seq23_31": [
+    [
+     23,
+     0,
+     "occluded",
+     12,
+     "occluded",
+     13.6
+    ],
+    [
+     24,
+     0,
+     "occluded",
+     13,
+     "occluded",
+     13.6
+    ],
+    [
+     25,
+     0,
+     "occluded",
+     14,
+     "occluded",
+     13.6
+    ],
+    [
+     26,
+     0,
+     "visible",
+     0,
+     "keep",
+     22.7
+    ],
+    [
+     27,
+     0,
+     "occluded",
+     1,
+     "occluded",
+     22.7
+    ],
+    [
+     28,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     29,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     30,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.1
+    ],
+    [
+     31,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 0,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  },
+  "min0.1_lost10": {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "lost"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple"
+   ],
+   "seq12_21_all_id0": true,
+   "seq12_21_all_occluded": true,
+   "seq12_21_n_occluded": 10,
+   "seq12_21_max_manip_to_apple_mm": 13.56777104086647,
+   "switches_all_seq": [],
+   "first_switch_seq": null,
+   "max_occluded_age_all": 10,
+   "max_age_all": 14,
+   "lost_seqs": [
+    22,
+    23,
+    24,
+    25
+   ],
+   "lost_status_seqs": [
+    23,
+    24,
+    25
+   ],
+   "seq22": {
+    "status": "no_seed",
+    "state": "lost",
+    "age": 11,
+    "id": 0
+   },
+   "seq23_31": [
+    [
+     23,
+     0,
+     "lost",
+     12,
+     "lost",
+     13.6
+    ],
+    [
+     24,
+     0,
+     "lost",
+     13,
+     "lost",
+     13.6
+    ],
+    [
+     25,
+     0,
+     "lost",
+     14,
+     "lost",
+     13.6
+    ],
+    [
+     26,
+     0,
+     "visible",
+     0,
+     "keep",
+     22.7
+    ],
+    [
+     27,
+     0,
+     "occluded",
+     1,
+     "occluded",
+     22.7
+    ],
+    [
+     28,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     29,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     30,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.1
+    ],
+    [
+     31,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 0,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  },
+  "min0.1_lost20": {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple"
+   ],
+   "seq12_21_all_id0": true,
+   "seq12_21_all_occluded": true,
+   "seq12_21_n_occluded": 10,
+   "seq12_21_max_manip_to_apple_mm": 13.56777104086647,
+   "switches_all_seq": [],
+   "first_switch_seq": null,
+   "max_occluded_age_all": 14,
+   "max_age_all": 14,
+   "lost_seqs": [],
+   "lost_status_seqs": [],
+   "seq22": {
+    "status": "no_seed",
+    "state": "occluded",
+    "age": 11,
+    "id": 0
+   },
+   "seq23_31": [
+    [
+     23,
+     0,
+     "occluded",
+     12,
+     "occluded",
+     13.6
+    ],
+    [
+     24,
+     0,
+     "occluded",
+     13,
+     "occluded",
+     13.6
+    ],
+    [
+     25,
+     0,
+     "occluded",
+     14,
+     "occluded",
+     13.6
+    ],
+    [
+     26,
+     0,
+     "visible",
+     0,
+     "keep",
+     22.7
+    ],
+    [
+     27,
+     0,
+     "occluded",
+     1,
+     "occluded",
+     22.7
+    ],
+    [
+     28,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     29,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     30,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.1
+    ],
+    [
+     31,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 0,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  },
+  "min0.3_lostNone": {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple"
+   ],
+   "seq12_21_all_id0": true,
+   "seq12_21_all_occluded": true,
+   "seq12_21_n_occluded": 10,
+   "seq12_21_max_manip_to_apple_mm": 13.56777104086647,
+   "switches_all_seq": [],
+   "first_switch_seq": null,
+   "max_occluded_age_all": 14,
+   "max_age_all": 14,
+   "lost_seqs": [],
+   "lost_status_seqs": [],
+   "seq22": {
+    "status": "no_seed",
+    "state": "occluded",
+    "age": 11,
+    "id": 0
+   },
+   "seq23_31": [
+    [
+     23,
+     0,
+     "occluded",
+     12,
+     "occluded",
+     13.6
+    ],
+    [
+     24,
+     0,
+     "occluded",
+     13,
+     "occluded",
+     13.6
+    ],
+    [
+     25,
+     0,
+     "occluded",
+     14,
+     "occluded",
+     13.6
+    ],
+    [
+     26,
+     0,
+     "visible",
+     0,
+     "keep",
+     22.7
+    ],
+    [
+     27,
+     0,
+     "occluded",
+     1,
+     "occluded",
+     22.7
+    ],
+    [
+     28,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     29,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     30,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.1
+    ],
+    [
+     31,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 0,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  },
+  "min0.3_lost10": {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "lost"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple"
+   ],
+   "seq12_21_all_id0": true,
+   "seq12_21_all_occluded": true,
+   "seq12_21_n_occluded": 10,
+   "seq12_21_max_manip_to_apple_mm": 13.56777104086647,
+   "switches_all_seq": [],
+   "first_switch_seq": null,
+   "max_occluded_age_all": 10,
+   "max_age_all": 14,
+   "lost_seqs": [
+    22,
+    23,
+    24,
+    25
+   ],
+   "lost_status_seqs": [
+    23,
+    24,
+    25
+   ],
+   "seq22": {
+    "status": "no_seed",
+    "state": "lost",
+    "age": 11,
+    "id": 0
+   },
+   "seq23_31": [
+    [
+     23,
+     0,
+     "lost",
+     12,
+     "lost",
+     13.6
+    ],
+    [
+     24,
+     0,
+     "lost",
+     13,
+     "lost",
+     13.6
+    ],
+    [
+     25,
+     0,
+     "lost",
+     14,
+     "lost",
+     13.6
+    ],
+    [
+     26,
+     0,
+     "visible",
+     0,
+     "keep",
+     22.7
+    ],
+    [
+     27,
+     0,
+     "occluded",
+     1,
+     "occluded",
+     22.7
+    ],
+    [
+     28,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     29,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     30,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.1
+    ],
+    [
+     31,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 0,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  },
+  "min0.3_lost20": {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "ids_seq10_22": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "states_seq10_22": [
+    "visible",
+    "visible",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "ages_seq10_22": [
+    0,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "modes_seq10_22": [
+    "keep",
+    "keep",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded",
+    "occluded"
+   ],
+   "status_seq10_22": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "no_seed"
+   ],
+   "manip_to_apple_mm_seq10_22": [
+    17.048119806465557,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647,
+    13.56777104086647
+   ],
+   "manip_nearest_seq10_22": [
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple",
+    "apple"
+   ],
+   "seq12_21_all_id0": true,
+   "seq12_21_all_occluded": true,
+   "seq12_21_n_occluded": 10,
+   "seq12_21_max_manip_to_apple_mm": 13.56777104086647,
+   "switches_all_seq": [],
+   "first_switch_seq": null,
+   "max_occluded_age_all": 14,
+   "max_age_all": 14,
+   "lost_seqs": [],
+   "lost_status_seqs": [],
+   "seq22": {
+    "status": "no_seed",
+    "state": "occluded",
+    "age": 11,
+    "id": 0
+   },
+   "seq23_31": [
+    [
+     23,
+     0,
+     "occluded",
+     12,
+     "occluded",
+     13.6
+    ],
+    [
+     24,
+     0,
+     "occluded",
+     13,
+     "occluded",
+     13.6
+    ],
+    [
+     25,
+     0,
+     "occluded",
+     14,
+     "occluded",
+     13.6
+    ],
+    [
+     26,
+     0,
+     "visible",
+     0,
+     "keep",
+     22.7
+    ],
+    [
+     27,
+     0,
+     "occluded",
+     1,
+     "occluded",
+     22.7
+    ],
+    [
+     28,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     29,
+     0,
+     "visible",
+     0,
+     "keep",
+     19.2
+    ],
+    [
+     30,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.1
+    ],
+    [
+     31,
+     0,
+     "visible",
+     0,
+     "keep",
+     17.2
+    ]
+   ],
+   "final_id": 0,
+   "final_state": "visible",
+   "final_to_apple_mm": 17.158066931751545,
+   "n_frames": 31
+  }
+ },
+ "synth_AB": [
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 0.02,
+   "crate_score": 0.014288207075470903,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 0.07,
+   "crate_score": 0.04928820238160512,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 0.075,
+   "crate_score": 0.05278820947455785,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 0.143,
+   "crate_score": 0.10038821727680586,
+   "switch_frames": [],
+   "switch_after_n_attention_frames": null,
+   "final_id": 0,
+   "final_state": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 0.43,
+   "crate_score": 0.3012882176105918,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "crate_level": 1.0,
+   "crate_score": 0.7002880874340476,
+   "switch_frames": [
+    5
+   ],
+   "switch_after_n_attention_frames": 3,
+   "final_id": 1,
+   "final_state": "visible"
+  }
+ ],
+ "synth_C": [
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    5,
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded",
+    "visible"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 2,
+   "id_before": 0,
+   "id_on_return": 1,
+   "id_final": 2,
+   "same_id_on_return": false,
+   "state_on_return": "visible",
+   "mode_on_return": "hold"
+  },
+  {
+   "min_score": 0.0,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.05,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.1,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": null,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 10,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 5,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 5,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    10
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 7,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 15,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "ok"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 15,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    20
+   ],
+   "occluded_phase_states": [
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 17,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "occluded",
+   "mode_on_return": "occluded"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 0,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "crate_low",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 30,
+   "occluder": "no_cluster",
+   "switch_frames": [],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 25,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 0,
+   "same_id_on_return": true,
+   "state_on_return": "visible",
+   "mode_on_return": "keep"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "crate_low",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "lost",
+    "ok"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  },
+  {
+   "min_score": 0.3,
+   "lost_frames": 20,
+   "K": 25,
+   "reobserve_offset_mm": 80,
+   "occluder": "no_cluster",
+   "switch_frames": [
+    30
+   ],
+   "occluded_phase_states": [
+    "lost",
+    "occluded"
+   ],
+   "occluded_phase_status": [
+    "no_attention"
+   ],
+   "max_age": 27,
+   "id_before": 0,
+   "id_on_return": 0,
+   "id_final": 1,
+   "same_id_on_return": true,
+   "state_on_return": "lost",
+   "mode_on_return": "lost"
+  }
+ ]
+}

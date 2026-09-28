@@ -1,0 +1,2288 @@
+{
+ "_comment": "ag3s-verifier 가 쓴다. 숫자와 경로만.",
+ "step": "T22",
+ "date": "2026-09-28",
+ "written_at": "2026-09-28T15:40+00:00",
+ "runs": [
+  {
+   "id": "baseline",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/T22/baseline.json",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T22/baseline.json",
+   "stdout_log": "outputs/verify/T22/baseline.log",
+   "note": "단독 실행 (다른 작업 없음)"
+  },
+  {
+   "id": "pytest",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python -m pytest tests -q -x -p no:cacheprovider",
+   "venv": "src/openpi/.venv",
+   "stdout_log": "outputs/verify/T22/pytest_all.log",
+   "note": "baseline 뒤에 실행 (겹치지 않음)"
+  },
+  {
+   "id": "replay_1_3",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python outputs/verify/T22/replay_t22.py --run {t17,t16,t14} --source {apple,server_prev} --out outputs/verify/T22/replay_<run>_<source>.json",
+   "venv": "src/openpi/.venv",
+   "raw_output": "outputs/verify/T22/replay_*.json",
+   "stdout_log": "outputs/verify/T22/replay_*.log",
+   "script": "outputs/verify/T22/replay_t22.py"
+  },
+  {
+   "id": "scenarios_4_5_gate_sweep",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python outputs/verify/T22/scenarios_t22.py",
+   "venv": "src/openpi/.venv",
+   "raw_output": "outputs/verify/T22/scenarios_t22.json",
+   "stdout_log": "outputs/verify/T22/scenarios_t22.log",
+   "script": "outputs/verify/T22/scenarios_t22.py"
+  },
+  {
+   "id": "empty_close_sweep",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python outputs/verify/T22/empty_sweep_t22.py",
+   "venv": "src/openpi/.venv",
+   "raw_output": "outputs/verify/T22/empty_sweep_t22.json",
+   "stdout_log": "outputs/verify/T22/empty_sweep_t22.log",
+   "script": "outputs/verify/T22/empty_sweep_t22.py"
+  },
+  {
+   "id": "reach_stats",
+   "raw_output": "outputs/verify/T22/reach_stats.json",
+   "stdout_log": "outputs/verify/T22/reach_stats.log"
+  },
+  {
+   "id": "figures",
+   "scripts": [
+    "outputs/verify/T22/fig_timeline.py",
+    "outputs/verify/T22/fig_table.py",
+    "outputs/verify/T22/fig_scene.py"
+   ]
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "368d723",
+  "dirty_files_T22": [
+   "trajopt/grasp_latch.py",
+   "trajopt/safe_policy.py",
+   "ag3s/constraints/attached.py",
+   "ag3s/runtime/pipeline.py"
+  ],
+  "note": "benchmark 작업트리에 T18~T24 미커밋 변경이 함께 있다 (git status 23 파일 M). workspace repo head eb33c1f, tests/trajopt/test_grasp_evidence.py 미추적"
+ },
+ "method": {
+  "replay_mode": "기록 재생 — 옛 기록에서 재구성한 피드백을 GraspLatch(LatchConfig(), evidence=True).observe_grasp 에 직접 넣었다. SafePolicy/AG3S 파이프라인·closed-loop 새 실행이 아니다 (T18 이 말한 '머리로 재현').",
+  "records": {
+   "t17": "outputs/live_test/20260928_t17/shadow_ep1807/frames.jsonl (shadow, executed_chunk=reference, 75 요청, HOLD 0)",
+   "t16": "outputs/live_test/20260928_t16/execute_ep1807/frames.jsonl (34 요청, HOLD step 200)",
+   "t14": "outputs/live_test/20260928_t14/execute_ep1807/frames.jsonl (30 요청, HOLD step 16)"
+  },
+  "feedback_reconstruction": {
+   "request_k_uses": "chunk seq k-1 의 control 프레임 8 개 (chunk_seq == k-1, step_in_chunk 순)",
+   "executed[i]": "control.executed",
+   "applied_gripper[i]": "executed 면 planning(seq k-1).actions_reference[step_in_chunk][7 (왼) / 15 (오른)], HOLD(executed=False) 면 그 control 프레임 qpos 의 |qpos[27]|/0.045 (왼) · |qpos[18]|/0.045 (오른)",
+   "planned_gripper[i]": "planning(seq k-1).actions_reference[step_in_chunk][7/15]",
+   "measured_gripper": "|planning(seq k).qpos[27]|/0.045 (왼) — build_obs 규약, 1 = 열림",
+   "seq_1": "available=False, reason 'first chunk'",
+   "packing": "wire.make_exec_feedback → wire.unpack_exec_feedback → grasp_signal_from_feedback(fb, hand=0, 0.85)",
+   "qpos_adr": {
+    "gripper_finger_l1": 27,
+    "gripper_finger_r1": 18,
+    "source": "pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml jnt_qposadr"
+   },
+   "actions_vs_actions_reference_gripper_cols_max_abs_diff": {
+    "t17": 0.0,
+    "t16": 0.0,
+    "t14": 0.0
+   },
+   "control_qpos_timing": "control 프레임 qpos 는 그 step 명령 적용 전 상태 (T17 t=115 명령 0.000, 측정 1.013; t=116 0.904; t=117 0.712)"
+  },
+  "lock": "대상 확정은 매 요청 observe_grasp 뒤 latch.update(label='manipulated', score=1, runner_up=0) — seq 3 (t=16) 에 latched. T20 manipulated 가 한 물체를 계속 붙든다는 가정 (manipulated_id=0, state='visible' 고정)",
+  "centroid_sources": {
+   "apple": "object_poses.apple.pos (MuJoCo 참값) 을 base 프레임으로 변환 — T20 이 사과를 붙든다는 가정",
+   "server_prev": "서버 기록 chunk_(k-2).npz 의 target_centroid (= seq k-1 의 grounding; 순서 (a) 에서 이번 요청 전 마지막 기하). chunk_j ↔ seq j+1 (T14.audit §1)"
+  },
+  "reach": "benchmark.ag3s.constraints.attached.parent_reach(load_rby1(), q20, 'ee_finger_l1', centroid) — URDF FK 원점, q20 = planning qpos 의 DEFAULT_RBY1_JOINTS (qpos adr 5-17, 20-26)",
+  "last_gate": "latch 가 attach 를 내면 pipeline.AG3S.attach 를 constraint_robot_model 만 가진 stub self 로 호출 (reach=0.12). apple 소스는 사과 중심 + N(0, 10 mm) 60 점, server 소스는 그 chunk 의 target_points",
+  "legacy_column": "GraspLatch(evidence=False).update(gripper=planning(seq k).actions_reference[0][7]) — T22 전 계획 첫 행 경로의 재현"
+ },
+ "numbers": {
+  "baseline": {
+   "violated_start": "13/15",
+   "has_target": "15/15",
+   "frame0_clearance_before_mm": 0.18597810857728936,
+   "feasible": 15
+  },
+  "pytest": {
+   "passed": 1188,
+   "failed": 0,
+   "skipped": 0,
+   "warnings": 348,
+   "wall_s": 257.78
+  },
+  "#1_t17": {
+   "apple": {
+    "n_requests": 75,
+    "n_attach": 1,
+    "attach_t": [
+     120
+    ],
+    "n_detach": 1,
+    "detach_t": [
+     232
+    ],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {},
+    "n_hold_chunks": 0,
+    "legacy_attach_t": [
+     120
+    ],
+    "phases_visited": [
+     "held",
+     "latched",
+     "placed",
+     "searching"
+    ],
+    "transitions": [
+     {
+      "t_step": 16,
+      "from": "searching",
+      "to": "latched",
+      "note": ""
+     },
+     {
+      "t_step": 120,
+      "from": "latched",
+      "to": "held",
+      "note": "파지 확인 — attach(manipulated id=0): 개도 1.009→0.715, 명령 0.005, reach 42.1 mm ≤ 120 mm, feedback seq 15"
+     },
+     {
+      "t_step": 232,
+      "from": "held",
+      "to": "placed",
+      "note": "개도가 2 프레임 열려 있다 (1.000) — detach() (feedback seq 29)"
+     }
+    ]
+   },
+   "server_prev": {
+    "n_requests": 75,
+    "n_attach": 0,
+    "attach_t": [],
+    "n_detach": 0,
+    "detach_t": [],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {
+     "reach": 13
+    },
+    "n_hold_chunks": 0,
+    "legacy_attach_t": [
+     120
+    ],
+    "phases_visited": [
+     "closing",
+     "latched",
+     "searching"
+    ],
+    "transitions": [
+     {
+      "t_step": 16,
+      "from": "searching",
+      "to": "latched",
+      "note": ""
+     },
+     {
+      "t_step": 120,
+      "from": "latched",
+      "to": "closing",
+      "note": "닫힘 시도: 실행된 닫힘 명령 5 스텝 (feedback seq 15); 닫힘 시도 — 파지 미확인: reach"
+     },
+     {
+      "t_step": 224,
+      "from": "closing",
+      "to": "latched",
+      "note": "닫힘 시도 포기: 명령 1.000 · 개도 0.954 가 다시 열렸다 — attach 없음"
+     }
+    ]
+   },
+   "attach_row_apple": {
+    "t_step": 120,
+    "seq": 16,
+    "reach_mm": 42.09,
+    "opening_before": 1.0092028379440308,
+    "opening_after": 0.7152931690216064,
+    "last_command": 0.0051311771385371685,
+    "closing_steps_in_feedback": 5,
+    "settled_steps": 5,
+    "checks": {
+     "settled": true,
+     "closed": true,
+     "dropped": true,
+     "not_empty": true,
+     "blocked": true,
+     "manipulated": true,
+     "reach": true
+    },
+    "mj_l1_body_apple_mm": 54.84
+   },
+   "server_prev_reach_mm_at_t120": 338.94,
+   "server_n_attached_points_from_t128": 46
+  },
+  "#2_t16": {
+   "apple": {
+    "n_requests": 34,
+    "n_attach": 0,
+    "attach_t": [],
+    "n_detach": 0,
+    "detach_t": [],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {},
+    "n_hold_chunks": 24,
+    "legacy_attach_t": [
+     176
+    ],
+    "phases_visited": [
+     "latched",
+     "searching"
+    ],
+    "transitions": [
+     {
+      "t_step": 16,
+      "from": "searching",
+      "to": "latched",
+      "note": ""
+     }
+    ]
+   },
+   "server_prev": {
+    "n_requests": 34,
+    "n_attach": 0,
+    "attach_t": [],
+    "n_detach": 0,
+    "detach_t": [],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {},
+    "n_hold_chunks": 24,
+    "legacy_attach_t": [
+     176
+    ],
+    "phases_visited": [
+     "latched",
+     "searching"
+    ],
+    "transitions": [
+     {
+      "t_step": 16,
+      "from": "searching",
+      "to": "latched",
+      "note": ""
+     }
+    ]
+   },
+   "closing_steps_total_over_run": 0,
+   "n_requests_with_n_exec_0": 24,
+   "server_recorded_attach": "n_attached_points 51 from chunk 23 (seq 24, t=184)"
+  },
+  "#3_t14": {
+   "apple": {
+    "n_requests": 30,
+    "n_attach": 0,
+    "attach_t": [],
+    "n_detach": 0,
+    "detach_t": [],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {
+     "blocked": 5,
+     "reach": 4
+    },
+    "n_hold_chunks": 2,
+    "legacy_attach_t": [
+     192
+    ],
+    "phases_visited": [
+     "closing",
+     "latched",
+     "searching"
+    ],
+    "transitions": [
+     {
+      "t_step": 16,
+      "from": "searching",
+      "to": "latched",
+      "note": ""
+     },
+     {
+      "t_step": 200,
+      "from": "latched",
+      "to": "closing",
+      "note": "닫힘 시도: 실행된 닫힘 명령 8 스텝 (feedback seq 25); 닫힘 시도 — 파지 미확인: blocked, reach (빈손 닫힘으로 보인다)"
+     }
+    ]
+   },
+   "server_prev": {
+    "n_requests": 30,
+    "n_attach": 0,
+    "attach_t": [],
+    "n_detach": 0,
+    "detach_t": [],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {
+     "blocked": 5,
+     "reach": 5
+    },
+    "n_hold_chunks": 2,
+    "legacy_attach_t": [
+     192
+    ],
+    "phases_visited": [
+     "closing",
+     "latched",
+     "searching"
+    ],
+    "transitions": [
+     {
+      "t_step": 16,
+      "from": "searching",
+      "to": "latched",
+      "note": ""
+     },
+     {
+      "t_step": 200,
+      "from": "latched",
+      "to": "closing",
+      "note": "닫힘 시도: 실행된 닫힘 명령 8 스텝 (feedback seq 25); 닫힘 시도 — 파지 미확인: blocked, reach (빈손 닫힘으로 보인다)"
+     }
+    ]
+   },
+   "closing_rows_apple": [
+    {
+     "t_step": 200,
+     "n_exec": 8,
+     "closing_steps": 8,
+     "last_command": 0.5946518778800964,
+     "measured": 0.598080039024353,
+     "reach_mm": 131.01,
+     "state_before": "latched",
+     "state": "closing",
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": false
+     }
+    },
+    {
+     "t_step": 208,
+     "n_exec": 0,
+     "closing_steps": 0,
+     "last_command": null,
+     "measured": 0.593814492225647,
+     "reach_mm": 111.08,
+     "state_before": "closing",
+     "state": "closing",
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "t_step": 216,
+     "n_exec": 8,
+     "closing_steps": 8,
+     "last_command": 0.48287180066108704,
+     "measured": 0.48186033964157104,
+     "reach_mm": 191.44,
+     "state_before": "closing",
+     "state": "closing",
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": false
+     }
+    },
+    {
+     "t_step": 224,
+     "n_exec": 8,
+     "closing_steps": 8,
+     "last_command": 0.4341832399368286,
+     "measured": 0.43308746814727783,
+     "reach_mm": 255.78,
+     "state_before": "closing",
+     "state": "closing",
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": false
+     }
+    },
+    {
+     "t_step": 232,
+     "n_exec": 8,
+     "closing_steps": 8,
+     "last_command": 0.4328496754169464,
+     "measured": 0.4333956241607666,
+     "reach_mm": 289.96,
+     "state_before": "closing",
+     "state": "closing",
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": false
+     }
+    }
+   ],
+   "closing_rows_server_prev": [
+    {
+     "t_step": 200,
+     "n_exec": 8,
+     "closing_steps": 8,
+     "last_command": 0.5946518778800964,
+     "measured": 0.598080039024353,
+     "reach_mm": 623.96,
+     "state_before": "latched",
+     "state": "closing",
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": false
+     }
+    },
+    {
+     "t_step": 208,
+     "n_exec": 0,
+     "closing_steps": 0,
+     "last_command": null,
+     "measured": 0.593814492225647,
+     "reach_mm": 615.32,
+     "state_before": "closing",
+     "state": "closing",
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": false
+     }
+    },
+    {
+     "t_step": 216,
+     "n_exec": 8,
+     "closing_steps": 8,
+     "last_command": 0.48287180066108704,
+     "measured": 0.48186033964157104,
+     "reach_mm": 636.69,
+     "state_before": "closing",
+     "state": "closing",
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": false
+     }
+    },
+    {
+     "t_step": 224,
+     "n_exec": 8,
+     "closing_steps": 8,
+     "last_command": 0.4341832399368286,
+     "measured": 0.43308746814727783,
+     "reach_mm": 653.84,
+     "state_before": "closing",
+     "state": "closing",
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": false
+     }
+    },
+    {
+     "t_step": 232,
+     "n_exec": 8,
+     "closing_steps": 8,
+     "last_command": 0.4328496754169464,
+     "measured": 0.4333956241607666,
+     "reach_mm": 671.43,
+     "state_before": "closing",
+     "state": "closing",
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": false
+     }
+    }
+   ],
+   "server_recorded_attach": "n_attached_points 29 from chunk 25 (seq 26, t=200)",
+   "server_target_centroid_to_apple_max_mm": 636.55
+  },
+  "#4_empty_hand": [
+   {
+    "name": "4a synthetic: cmd 0.0 x8, opening -> 0.004 (full close), stays 0.0",
+    "n_attach": 0,
+    "attach_req": [],
+    "rows": [
+     {
+      "req": 0,
+      "measured": 1.0,
+      "state": "latched",
+      "checks": {},
+      "note": ""
+     },
+     {
+      "req": 1,
+      "measured": 0.004,
+      "state": "closing",
+      "checks": {
+       "settled": true,
+       "closed": true,
+       "dropped": true,
+       "not_empty": false,
+       "blocked": false,
+       "manipulated": true,
+       "reach": true
+      },
+      "note": "닫힘 시도: 실행된 닫힘 명령 5 스텝 (feedback seq 2); 닫힘 시도 — 파지 미확인: not_empty, blocked (빈손 닫힘으로 보인다)"
+     },
+     {
+      "req": 2,
+      "measured": 0.003,
+      "state": "closing",
+      "checks": {
+       "settled": true,
+       "closed": true,
+       "dropped": true,
+       "not_empty": false,
+       "blocked": false,
+       "manipulated": true,
+       "reach": true
+      },
+      "note": "닫힘 시도 — 파지 미확인: not_empty, blocked (빈손 닫힘으로 보인다)"
+     },
+     {
+      "req": 3,
+      "measured": 0.003,
+      "state": "closing",
+      "checks": {
+       "settled": true,
+       "closed": true,
+       "dropped": true,
+       "not_empty": false,
+       "blocked": false,
+       "manipulated": true,
+       "reach": true
+      },
+      "note": "닫힘 시도 — 파지 미확인: not_empty, blocked (빈손 닫힘으로 보인다)"
+     }
+    ]
+   },
+   {
+    "name": "4b synthetic: T17 command sequence, empty hand (opening follows command)",
+    "n_attach": 0,
+    "attach_req": [],
+    "rows": [
+     {
+      "req": 0,
+      "measured": 1.0,
+      "state": "latched",
+      "checks": {},
+      "note": ""
+     },
+     {
+      "req": 1,
+      "measured": 0.01,
+      "state": "closing",
+      "checks": {
+       "settled": true,
+       "closed": true,
+       "dropped": true,
+       "not_empty": false,
+       "blocked": false,
+       "manipulated": true,
+       "reach": true
+      },
+      "note": "닫힘 시도: 실행된 닫힘 명령 5 스텝 (feedback seq 2); 닫힘 시도 — 파지 미확인: not_empty, blocked (빈손 닫힘으로 보인다)"
+     },
+     {
+      "req": 2,
+      "measured": 0.575,
+      "state": "closing",
+      "checks": {
+       "settled": true,
+       "closed": true,
+       "dropped": true,
+       "not_empty": true,
+       "blocked": false,
+       "manipulated": true,
+       "reach": true
+      },
+      "note": "닫힘 시도 — 파지 미확인: blocked (빈손 닫힘으로 보인다)"
+     },
+     {
+      "req": 3,
+      "measured": 0.571,
+      "state": "closing",
+      "checks": {
+       "settled": true,
+       "closed": true,
+       "dropped": true,
+       "not_empty": true,
+       "blocked": false,
+       "manipulated": true,
+       "reach": true
+      },
+      "note": "닫힘 시도 — 파지 미확인: blocked (빈손 닫힘으로 보인다)"
+     },
+     {
+      "req": 4,
+      "measured": 0.58,
+      "state": "closing",
+      "checks": {
+       "settled": true,
+       "closed": true,
+       "dropped": true,
+       "not_empty": true,
+       "blocked": false,
+       "manipulated": true,
+       "reach": true
+      },
+      "note": "닫힘 시도 — 파지 미확인: blocked (빈손 닫힘으로 보인다)"
+     }
+    ]
+   },
+   {
+    "name": "4c synthetic: cmd 0.0, opening stops at 0.03 (below empty_below)",
+    "n_attach": 0,
+    "attach_req": [],
+    "rows": [
+     {
+      "req": 0,
+      "measured": 1.0,
+      "state": "latched",
+      "checks": {},
+      "note": ""
+     },
+     {
+      "req": 1,
+      "measured": 0.03,
+      "state": "closing",
+      "checks": {
+       "settled": true,
+       "closed": true,
+       "dropped": true,
+       "not_empty": false,
+       "blocked": false,
+       "manipulated": true,
+       "reach": true
+      },
+      "note": "닫힘 시도: 실행된 닫힘 명령 8 스텝 (feedback seq 2); 닫힘 시도 — 파지 미확인: not_empty, blocked (빈손 닫힘으로 보인다)"
+     },
+     {
+      "req": 2,
+      "measured": 0.03,
+      "state": "closing",
+      "checks": {
+       "settled": true,
+       "closed": true,
+       "dropped": true,
+       "not_empty": false,
+       "blocked": false,
+       "manipulated": true,
+       "reach": true
+      },
+      "note": "닫힘 시도 — 파지 미확인: not_empty, blocked (빈손 닫힘으로 보인다)"
+     }
+    ]
+   },
+   {
+    "name": "4d MuJoCo-sim empty close (T17 seq2 pose, arm held, T17 command pattern); reach forced 0.042 m",
+    "n_attach": 1,
+    "attach_req": [
+     1
+    ],
+    "rows": [
+     {
+      "req": 0,
+      "measured": 1.0,
+      "state": "latched",
+      "checks": {},
+      "note": ""
+     },
+     {
+      "req": 1,
+      "measured": 0.163,
+      "state": "held",
+      "checks": {
+       "settled": true,
+       "closed": true,
+       "dropped": true,
+       "not_empty": true,
+       "blocked": true,
+       "manipulated": true,
+       "reach": true
+      },
+      "note": "파지 확인 — attach(manipulated id=0): 개도 1.000→0.163, 명령 0.000, reach 42.0 mm ≤ 120 mm, feedback seq 2"
+     },
+     {
+      "req": 2,
+      "measured": 0.3176,
+      "state": "held",
+      "checks": {},
+      "note": ""
+     },
+     {
+      "req": 3,
+      "measured": 0.5715,
+      "state": "held",
+      "checks": {},
+      "note": ""
+     },
+     {
+      "req": 4,
+      "measured": 0.57,
+      "state": "held",
+      "checks": {},
+      "note": ""
+     }
+    ]
+   }
+  ],
+  "#4d_sim": {
+   "start_pose": "T17 planning seq 2 qpos",
+   "sim_steps_per_action": 33,
+   "timestep": 0.002,
+   "urdf_l1_to_apple_mm_at_pose": 234.35,
+   "opening_trace": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.8787,
+    0.6594,
+    0.4472,
+    0.2801,
+    0.163,
+    0.0877,
+    0.0427,
+    0.0178,
+    0.0052,
+    0.002,
+    0.07,
+    0.1948,
+    0.3176,
+    0.4138,
+    0.4801,
+    0.5223,
+    0.5473,
+    0.5609,
+    0.5676,
+    0.5706,
+    0.5715,
+    0.5716,
+    0.5713,
+    0.5709,
+    0.5706,
+    0.5703,
+    0.5702,
+    0.5701,
+    0.57
+   ],
+   "cmd_trace": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.02,
+    0.56,
+    0.58,
+    0.58,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57,
+    0.57
+   ]
+  },
+  "#4e_empty_close_sweep": {
+   "n_configs": 24,
+   "n_attach": 10,
+   "configs": [
+    {
+     "close_target": 0.0,
+     "start_step_in_chunk": 0,
+     "opening_at_boundaries": [
+      1.0,
+      0.0178,
+      0.0001,
+      0.0
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "not_empty",
+       "blocked"
+      ],
+      [
+       "not_empty",
+       "blocked"
+      ],
+      [
+       "not_empty",
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.0,
+     "start_step_in_chunk": 1,
+     "opening_at_boundaries": [
+      1.0,
+      0.0427,
+      0.0001,
+      0.0
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "not_empty",
+       "blocked"
+      ],
+      [
+       "not_empty",
+       "blocked"
+      ],
+      [
+       "not_empty",
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.0,
+     "start_step_in_chunk": 2,
+     "opening_at_boundaries": [
+      1.0,
+      0.0877,
+      0.0001,
+      0.0
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "not_empty"
+      ],
+      [
+       "not_empty",
+       "blocked"
+      ],
+      [
+       "not_empty",
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.0,
+     "start_step_in_chunk": 3,
+     "opening_at_boundaries": [
+      1.0,
+      0.163,
+      0.0001,
+      0.0
+     ],
+     "attach_req": [
+      1
+     ],
+     "attach_opening": 0.163,
+     "failed_checks": [
+      [],
+      [],
+      [],
+      []
+     ]
+    },
+    {
+     "close_target": 0.0,
+     "start_step_in_chunk": 4,
+     "opening_at_boundaries": [
+      1.0,
+      0.2801,
+      0.0001,
+      0.0
+     ],
+     "attach_req": [
+      1
+     ],
+     "attach_opening": 0.2801,
+     "failed_checks": [
+      [],
+      [],
+      [],
+      []
+     ]
+    },
+    {
+     "close_target": 0.0,
+     "start_step_in_chunk": 5,
+     "opening_at_boundaries": [
+      1.0,
+      0.4472,
+      0.0001,
+      0.0
+     ],
+     "attach_req": [
+      1
+     ],
+     "attach_opening": 0.4472,
+     "failed_checks": [
+      [],
+      [],
+      [],
+      []
+     ]
+    },
+    {
+     "close_target": 0.0,
+     "start_step_in_chunk": 6,
+     "opening_at_boundaries": [
+      1.0,
+      0.6594,
+      0.0003,
+      0.0
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "settled"
+      ],
+      [
+       "not_empty",
+       "blocked"
+      ],
+      [
+       "not_empty",
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.0,
+     "start_step_in_chunk": 7,
+     "opening_at_boundaries": [
+      1.0,
+      0.8787,
+      0.0052,
+      0.0
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "settled",
+       "closed"
+      ],
+      [
+       "not_empty",
+       "blocked"
+      ],
+      [
+       "not_empty",
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.3,
+     "start_step_in_chunk": 0,
+     "opening_at_boundaries": [
+      1.0,
+      0.3125,
+      0.2996,
+      0.3
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.3,
+     "start_step_in_chunk": 1,
+     "opening_at_boundaries": [
+      1.0,
+      0.3299,
+      0.2993,
+      0.3
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.3,
+     "start_step_in_chunk": 2,
+     "opening_at_boundaries": [
+      1.0,
+      0.3614,
+      0.2989,
+      0.3
+     ],
+     "attach_req": [
+      1
+     ],
+     "attach_opening": 0.3614,
+     "failed_checks": [
+      [],
+      [],
+      [],
+      []
+     ]
+    },
+    {
+     "close_target": 0.3,
+     "start_step_in_chunk": 3,
+     "opening_at_boundaries": [
+      1.0,
+      0.4141,
+      0.2985,
+      0.3
+     ],
+     "attach_req": [
+      1
+     ],
+     "attach_opening": 0.4141,
+     "failed_checks": [
+      [],
+      [],
+      [],
+      []
+     ]
+    },
+    {
+     "close_target": 0.3,
+     "start_step_in_chunk": 4,
+     "opening_at_boundaries": [
+      1.0,
+      0.4961,
+      0.2982,
+      0.3
+     ],
+     "attach_req": [
+      1
+     ],
+     "attach_opening": 0.4961,
+     "failed_checks": [
+      [],
+      [],
+      [],
+      []
+     ]
+    },
+    {
+     "close_target": 0.3,
+     "start_step_in_chunk": 5,
+     "opening_at_boundaries": [
+      1.0,
+      0.613,
+      0.2983,
+      0.2999
+     ],
+     "attach_req": [
+      1
+     ],
+     "attach_opening": 0.613,
+     "failed_checks": [
+      [],
+      [],
+      [],
+      []
+     ]
+    },
+    {
+     "close_target": 0.3,
+     "start_step_in_chunk": 6,
+     "opening_at_boundaries": [
+      1.0,
+      0.7616,
+      0.2997,
+      0.2999
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "settled"
+      ],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.3,
+     "start_step_in_chunk": 7,
+     "opening_at_boundaries": [
+      1.0,
+      0.915,
+      0.3036,
+      0.2997
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "settled",
+       "closed"
+      ],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.57,
+     "start_step_in_chunk": 0,
+     "opening_at_boundaries": [
+      1.0,
+      0.5777,
+      0.5697,
+      0.57
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.57,
+     "start_step_in_chunk": 1,
+     "opening_at_boundaries": [
+      1.0,
+      0.5884,
+      0.5696,
+      0.57
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.57,
+     "start_step_in_chunk": 2,
+     "opening_at_boundaries": [
+      1.0,
+      0.6077,
+      0.5693,
+      0.57
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.57,
+     "start_step_in_chunk": 3,
+     "opening_at_boundaries": [
+      1.0,
+      0.6401,
+      0.5691,
+      0.57
+     ],
+     "attach_req": [
+      1
+     ],
+     "attach_opening": 0.6401,
+     "failed_checks": [
+      [],
+      [],
+      [],
+      []
+     ]
+    },
+    {
+     "close_target": 0.57,
+     "start_step_in_chunk": 4,
+     "opening_at_boundaries": [
+      1.0,
+      0.6905,
+      0.5689,
+      0.57
+     ],
+     "attach_req": [
+      1
+     ],
+     "attach_opening": 0.6905,
+     "failed_checks": [
+      [],
+      [],
+      [],
+      []
+     ]
+    },
+    {
+     "close_target": 0.57,
+     "start_step_in_chunk": 5,
+     "opening_at_boundaries": [
+      1.0,
+      0.7623,
+      0.569,
+      0.57
+     ],
+     "attach_req": [
+      1
+     ],
+     "attach_opening": 0.7623,
+     "failed_checks": [
+      [],
+      [],
+      [],
+      []
+     ]
+    },
+    {
+     "close_target": 0.57,
+     "start_step_in_chunk": 6,
+     "opening_at_boundaries": [
+      1.0,
+      0.8535,
+      0.5698,
+      0.5699
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "settled",
+       "closed"
+      ],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ]
+     ]
+    },
+    {
+     "close_target": 0.57,
+     "start_step_in_chunk": 7,
+     "opening_at_boundaries": [
+      1.0,
+      0.9478,
+      0.5722,
+      0.5698
+     ],
+     "attach_req": [],
+     "attach_opening": null,
+     "failed_checks": [
+      [],
+      [
+       "settled",
+       "closed"
+      ],
+      [
+       "blocked"
+      ],
+      [
+       "blocked"
+      ]
+     ]
+    }
+   ],
+   "setup": "MuJoCo model_transport.xml, T17 planning seq 2 qpos (URDF l1↔사과 234.35 mm), 모든 actuator ctrl = 현재 관절값 고정, gripper_l_act = cmd × −0.045, 33 mj_step/step (dt 0.002), 청크 [1.0×8] → [1.0×s, target×(8−s)] → [target×8] ×2, reach_m=0.042 강제"
+  },
+  "#5_hold_release": [
+   {
+    "name": "5a grasp then 4 HOLD chunks (opening kept 0.72) then 2 open chunks",
+    "attach_req": [
+     1
+    ],
+    "detach_req": [
+     8
+    ],
+    "rows": [
+     {
+      "req": 0,
+      "executed": null,
+      "measured": 1.009,
+      "placed_in": false,
+      "state": "latched",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 1,
+      "executed": null,
+      "measured": 0.715,
+      "placed_in": false,
+      "state": "held",
+      "attach": true,
+      "detach": false,
+      "note": "파지 확인 — attach(manipulated id=0): 개도 1.009→0.715, 명령 0.005, reach 42.0 mm ≤ 120 mm, feedback seq 2"
+     },
+     {
+      "req": 2,
+      "executed": null,
+      "measured": 0.72,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 3,
+      "executed": [
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false
+      ],
+      "measured": 0.72,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 4,
+      "executed": [
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false
+      ],
+      "measured": 0.72,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 5,
+      "executed": [
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false
+      ],
+      "measured": 0.72,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 6,
+      "executed": [
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false
+      ],
+      "measured": 0.72,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 7,
+      "executed": null,
+      "measured": 1.0,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 8,
+      "executed": null,
+      "measured": 1.0,
+      "placed_in": false,
+      "state": "placed",
+      "attach": false,
+      "detach": true,
+      "note": "개도가 2 프레임 열려 있다 (1.000) — detach() (feedback seq 9)"
+     }
+    ]
+   },
+   {
+    "name": "5b grasp, HOLD, one open glitch then closed again, then open x2",
+    "attach_req": [
+     1
+    ],
+    "detach_req": [
+     7
+    ],
+    "rows": [
+     {
+      "req": 0,
+      "executed": null,
+      "measured": 1.009,
+      "placed_in": false,
+      "state": "latched",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 1,
+      "executed": null,
+      "measured": 0.715,
+      "placed_in": false,
+      "state": "held",
+      "attach": true,
+      "detach": false,
+      "note": "파지 확인 — attach(manipulated id=0): 개도 1.009→0.715, 명령 0.005, reach 42.0 mm ≤ 120 mm, feedback seq 2"
+     },
+     {
+      "req": 2,
+      "executed": null,
+      "measured": 0.72,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 3,
+      "executed": [
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false
+      ],
+      "measured": 0.72,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 4,
+      "executed": null,
+      "measured": 1.0,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 5,
+      "executed": null,
+      "measured": 0.72,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 6,
+      "executed": null,
+      "measured": 1.0,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 7,
+      "executed": null,
+      "measured": 1.0,
+      "placed_in": false,
+      "state": "placed",
+      "attach": false,
+      "detach": true,
+      "note": "개도가 2 프레임 열려 있다 (1.000) — detach() (feedback seq 8)"
+     }
+    ]
+   },
+   {
+    "name": "5c placed_fn=True while closed (HOLD), then placed & open",
+    "attach_req": [
+     1
+    ],
+    "detach_req": [
+     5
+    ],
+    "rows": [
+     {
+      "req": 0,
+      "executed": null,
+      "measured": 1.009,
+      "placed_in": false,
+      "state": "latched",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 1,
+      "executed": null,
+      "measured": 0.715,
+      "placed_in": false,
+      "state": "held",
+      "attach": true,
+      "detach": false,
+      "note": "파지 확인 — attach(manipulated id=0): 개도 1.009→0.715, 명령 0.005, reach 42.0 mm ≤ 120 mm, feedback seq 2"
+     },
+     {
+      "req": 2,
+      "executed": null,
+      "measured": 0.72,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 3,
+      "executed": [
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false
+      ],
+      "measured": 0.72,
+      "placed_in": true,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 4,
+      "executed": [
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false,
+       false
+      ],
+      "measured": 0.72,
+      "placed_in": true,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 5,
+      "executed": null,
+      "measured": 1.0,
+      "placed_in": true,
+      "state": "placed",
+      "attach": false,
+      "detach": true,
+      "note": "성공 판정 + 개도 1.000 열림 — detach() (feedback seq 6)"
+     }
+    ]
+   },
+   {
+    "name": "5d HOLD chunk whose re-command (0.72) reads below 0.85 — partial HOLD 3/8 exec",
+    "attach_req": [
+     1
+    ],
+    "detach_req": [
+     5
+    ],
+    "rows": [
+     {
+      "req": 0,
+      "executed": null,
+      "measured": 1.009,
+      "placed_in": false,
+      "state": "latched",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 1,
+      "executed": null,
+      "measured": 0.715,
+      "placed_in": false,
+      "state": "held",
+      "attach": true,
+      "detach": false,
+      "note": "파지 확인 — attach(manipulated id=0): 개도 1.009→0.715, 명령 0.005, reach 42.0 mm ≤ 120 mm, feedback seq 2"
+     },
+     {
+      "req": 2,
+      "executed": null,
+      "measured": 0.72,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 3,
+      "executed": [
+       true,
+       true,
+       true,
+       false,
+       false,
+       false,
+       false,
+       false
+      ],
+      "measured": 0.72,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 4,
+      "executed": null,
+      "measured": 1.0,
+      "placed_in": false,
+      "state": "held",
+      "attach": false,
+      "detach": false,
+      "note": ""
+     },
+     {
+      "req": 5,
+      "executed": null,
+      "measured": 1.0,
+      "placed_in": false,
+      "state": "placed",
+      "attach": false,
+      "detach": true,
+      "note": "개도가 2 프레임 열려 있다 (1.000) — detach() (feedback seq 6)"
+     }
+    ]
+   }
+  ],
+  "#1_t17_real_detach": {
+   "t_step": 232,
+   "openings_at_224_232": [
+    0.954,
+    1.0
+   ]
+  },
+  "last_gate_on_server_targets": [
+   {
+    "run": "t17",
+    "seq": 16,
+    "t_step": 120,
+    "n_target_points": 1713,
+    "reach_mm": 338.8,
+    "gate": "rejected",
+    "rejection": {
+     "reason": "reach: target centroid is 338.8 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+     "reach_mm": 338.8,
+     "limit_mm": 120.0,
+     "parent_link": "ee_finger_l1"
+    },
+    "gate_reach_None": "accepted"
+   },
+   {
+    "run": "t17",
+    "seq": 17,
+    "t_step": 128,
+    "n_target_points": 1726,
+    "reach_mm": 339.63,
+    "gate": "rejected",
+    "rejection": {
+     "reason": "reach: target centroid is 339.6 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+     "reach_mm": 339.63,
+     "limit_mm": 120.0,
+     "parent_link": "ee_finger_l1"
+    },
+    "gate_reach_None": "accepted"
+   },
+   {
+    "run": "t16",
+    "seq": 23,
+    "t_step": 176,
+    "n_target_points": 1519,
+    "reach_mm": 306.13,
+    "gate": "rejected",
+    "rejection": {
+     "reason": "reach: target centroid is 306.1 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+     "reach_mm": 306.13,
+     "limit_mm": 120.0,
+     "parent_link": "ee_finger_l1"
+    },
+    "gate_reach_None": "accepted"
+   },
+   {
+    "run": "t16",
+    "seq": 24,
+    "t_step": 184,
+    "n_target_points": 62,
+    "reach_mm": 588.62,
+    "gate": "rejected",
+    "rejection": {
+     "reason": "reach: target centroid is 588.6 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+     "reach_mm": 588.62,
+     "limit_mm": 120.0,
+     "parent_link": "ee_finger_l1"
+    },
+    "gate_reach_None": "accepted"
+   },
+   {
+    "run": "t14",
+    "seq": 25,
+    "t_step": 192,
+    "n_target_points": 177,
+    "reach_mm": 622.21,
+    "gate": "rejected",
+    "rejection": {
+     "reason": "reach: target centroid is 622.2 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+     "reach_mm": 622.21,
+     "limit_mm": 120.0,
+     "parent_link": "ee_finger_l1"
+    },
+    "gate_reach_None": "accepted"
+   },
+   {
+    "run": "t14",
+    "seq": 26,
+    "t_step": 200,
+    "n_target_points": 175,
+    "reach_mm": 623.96,
+    "gate": "rejected",
+    "rejection": {
+     "reason": "reach: target centroid is 624.0 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+     "reach_mm": 623.96,
+     "limit_mm": 120.0,
+     "parent_link": "ee_finger_l1"
+    },
+    "gate_reach_None": "accepted"
+   }
+  ],
+  "reach_sweep_n_attach": {
+   "t17/apple": {
+    "0.03": 0,
+    "0.04": 0,
+    "0.042": 1,
+    "0.045": 1,
+    "0.05": 1,
+    "0.06": 1,
+    "0.08": 1,
+    "0.1": 1,
+    "0.12": 1,
+    "0.15": 1,
+    "0.2": 1,
+    "0.3": 1,
+    "0.4": 1,
+    "0.6": 1,
+    "0.62": 1,
+    "0.65": 1,
+    "0.7": 1,
+    "1.0": 1
+   },
+   "t17/server_prev": {
+    "0.03": 0,
+    "0.04": 0,
+    "0.042": 0,
+    "0.045": 0,
+    "0.05": 0,
+    "0.06": 0,
+    "0.08": 0,
+    "0.1": 0,
+    "0.12": 0,
+    "0.15": 1,
+    "0.2": 1,
+    "0.3": 1,
+    "0.4": 1,
+    "0.6": 1,
+    "0.62": 1,
+    "0.65": 1,
+    "0.7": 1,
+    "1.0": 1
+   },
+   "t16/apple": {
+    "0.03": 0,
+    "0.04": 0,
+    "0.042": 0,
+    "0.045": 0,
+    "0.05": 0,
+    "0.06": 0,
+    "0.08": 0,
+    "0.1": 0,
+    "0.12": 0,
+    "0.15": 0,
+    "0.2": 0,
+    "0.3": 0,
+    "0.4": 0,
+    "0.6": 0,
+    "0.62": 0,
+    "0.65": 0,
+    "0.7": 0,
+    "1.0": 0
+   },
+   "t16/server_prev": {
+    "0.03": 0,
+    "0.04": 0,
+    "0.042": 0,
+    "0.045": 0,
+    "0.05": 0,
+    "0.06": 0,
+    "0.08": 0,
+    "0.1": 0,
+    "0.12": 0,
+    "0.15": 0,
+    "0.2": 0,
+    "0.3": 0,
+    "0.4": 0,
+    "0.6": 0,
+    "0.62": 0,
+    "0.65": 0,
+    "0.7": 0,
+    "1.0": 0
+   },
+   "t14/apple": {
+    "0.03": 0,
+    "0.04": 0,
+    "0.042": 0,
+    "0.045": 0,
+    "0.05": 0,
+    "0.06": 0,
+    "0.08": 0,
+    "0.1": 0,
+    "0.12": 0,
+    "0.15": 0,
+    "0.2": 0,
+    "0.3": 0,
+    "0.4": 0,
+    "0.6": 0,
+    "0.62": 0,
+    "0.65": 0,
+    "0.7": 0,
+    "1.0": 0
+   },
+   "t14/server_prev": {
+    "0.03": 0,
+    "0.04": 0,
+    "0.042": 0,
+    "0.045": 0,
+    "0.05": 0,
+    "0.06": 0,
+    "0.08": 0,
+    "0.1": 0,
+    "0.12": 0,
+    "0.15": 0,
+    "0.2": 0,
+    "0.3": 0,
+    "0.4": 0,
+    "0.6": 0,
+    "0.62": 0,
+    "0.65": 0,
+    "0.7": 0,
+    "1.0": 0
+   }
+  },
+  "reach_measurements": {
+   "t17 t=116-136": {
+    "urdf_l1_origin_apple_mm": {
+     "n": 21,
+     "min": 41.21,
+     "median": 41.69,
+     "max": 44.74
+    },
+    "mj_l1_body_apple_mm": {
+     "n": 21,
+     "min": 54.26,
+     "median": 54.59,
+     "max": 56.02
+    },
+    "opening": {
+     "n": 21,
+     "min": 0.71,
+     "median": 0.72,
+     "max": 0.9
+    }
+   },
+   "t17 t=96-160": {
+    "urdf_l1_origin_apple_mm": {
+     "n": 65,
+     "min": 41.21,
+     "median": 43.18,
+     "max": 48.25
+    },
+    "mj_l1_body_apple_mm": {
+     "n": 65,
+     "min": 54.26,
+     "median": 55.81,
+     "max": 57.59
+    },
+    "opening": {
+     "n": 65,
+     "min": 0.71,
+     "median": 0.72,
+     "max": 1.01
+    }
+   },
+   "t16 t=72-240": {
+    "urdf_l1_origin_apple_mm": {
+     "n": 169,
+     "min": 85.89,
+     "median": 99.81,
+     "max": 113.84
+    },
+    "mj_l1_body_apple_mm": {
+     "n": 169,
+     "min": 76.19,
+     "median": 80.46,
+     "max": 122.74
+    },
+    "opening": {
+     "n": 169,
+     "min": 0.83,
+     "median": 1.0,
+     "max": 1.11
+    }
+   },
+   "t16 t=176-216": {
+    "urdf_l1_origin_apple_mm": {
+     "n": 41,
+     "min": 101.22,
+     "median": 103.99,
+     "max": 108.25
+    },
+    "mj_l1_body_apple_mm": {
+     "n": 41,
+     "min": 76.19,
+     "median": 76.94,
+     "max": 78.53
+    },
+    "opening": {
+     "n": 41,
+     "min": 0.96,
+     "median": 0.99,
+     "max": 1.0
+    }
+   },
+   "t14 t=184-232": {
+    "urdf_l1_origin_apple_mm": {
+     "n": 49,
+     "min": 82.68,
+     "median": 130.02,
+     "max": 289.96
+    },
+    "mj_l1_body_apple_mm": {
+     "n": 49,
+     "min": 99.64,
+     "median": 138.95,
+     "max": 295.05
+    },
+    "opening": {
+     "n": 49,
+     "min": 0.43,
+     "median": 0.59,
+     "max": 1.0
+    }
+   },
+   "t14 t=192-208": {
+    "urdf_l1_origin_apple_mm": {
+     "n": 17,
+     "min": 86.14,
+     "median": 114.12,
+     "max": 133.02
+    },
+    "mj_l1_body_apple_mm": {
+     "n": 17,
+     "min": 99.64,
+     "median": 123.66,
+     "max": 142.29
+    },
+    "opening": {
+     "n": 17,
+     "min": 0.59,
+     "median": 0.6,
+     "max": 0.91
+    }
+   },
+   "t16 global min urdf_l1_origin_apple": {
+    "t": 101,
+    "mm": 85.89,
+    "opening": 1.11
+   },
+   "t14 global min urdf_l1_origin_apple": {
+    "t": 176,
+    "mm": 67.34,
+    "opening": 0.979
+   },
+   "t17 global min urdf_l1_origin_apple": {
+    "t": 125,
+    "mm": 41.21,
+    "opening": 0.714
+   },
+   "t17 server target_centroid(prev) - apple": {
+    "n": 74,
+    "n_below_60mm": 9,
+    "median_below_60mm": 17.27,
+    "max": 374.37
+   },
+   "t16 server target_centroid(prev) - apple": {
+    "n": 33,
+    "n_below_60mm": 9,
+    "median_below_60mm": 16.97,
+    "max": 642.35
+   },
+   "t14 server target_centroid(prev) - apple": {
+    "n": 28,
+    "n_below_60mm": 11,
+    "median_below_60mm": 17.1,
+    "max": 636.55
+   },
+   "t14 closing-window reach to server_prev centroid": [
+    [
+     200,
+     623.96
+    ],
+    [
+     208,
+     615.32
+    ],
+    [
+     216,
+     636.69
+    ],
+    [
+     224,
+     653.84
+    ],
+    [
+     232,
+     671.43
+    ]
+   ],
+   "t14 reach_server_same at seq26(t=200)": [
+    623.96
+   ]
+  },
+  "reach_margin_facts": {
+   "limit_mm": 120.0,
+   "t17_attach_frame_reach_urdf_mm": 42.09,
+   "limit_minus_t17_attach_reach_mm": 77.91,
+   "t17_t116_136_urdf_max_mm": 44.74,
+   "limit_minus_t17_window_max_mm": 75.26,
+   "t14_closing_window_min_server_prev_reach_mm": 615.32,
+   "t14_min_server_prev_reach_minus_limit_mm": 495.32,
+   "t17_min_limit_that_attaches_apple_source_m": 0.042,
+   "t17_server_prev_attaches_from_limit_m": 0.15,
+   "server_centroid_minus_apple_median_when_below_60mm": {
+    "t17": 17.27,
+    "t16": 16.97,
+    "t14": 17.1
+   }
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t22/t22-grasp-scene.png",
+   "sidecar": "benchmark/ag3s/docs/figures/t22/t22-grasp-scene.json",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t22/t22-grasp-timeline.png",
+   "sidecar": "benchmark/ag3s/docs/figures/t22/t22-grasp-timeline.json",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t22/t22-scenario-table.png",
+   "sidecar": "benchmark/ag3s/docs/figures/t22/t22-scenario-table.json",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "위반으로 시작 13/15 · has_target 15/15 · frame0 clearance_before +0.18597810857728936 mm — 기준값과 같다. tests 1188 passed."
+ },
+ "verdict": "기준선 일치. 표의 통과 기준 대비 사실: #1 apple 소스 attach 1 (t=120, reach 42.09 mm), server 소스 attach 0 (reach 338.94 mm); #2 attach 0 (두 소스); #3 attach 0 (두 소스), 첫 closing 판정에서 거짓인 검사 = blocked·reach; #4 합성 4a-4c attach 0, MuJoCo 빈손 4d attach 1, sweep 10/24 attach; #5 detach 는 열림 2 프레임째 또는 placed∧열림 에서만.",
+ "not_measured": [
+  "SafePolicy._advance_grasp / serve_safe 경로 (AG3S·TargetConfirm·manipulated 실물) — latch 와 AG3S.attach 만 직접 호출",
+  "closed-loop 새 실행 (8123 금지)",
+  "T20 manipulated identity 가 실제 T14/T16/T17 에서 무엇을 붙들었을지 — 사과 참값/서버 centroid 두 가정으로 대신",
+  "state_version / constraint_version 기록",
+  "피드백 누락 청크(카메라 0 대) 경로",
+  "오른손 경로"
+ ],
+ "process_note": "impl.md 를 cat 으로 읽을 때 '내가 기대하는 결과' 절이 같은 출력에 포함되어 측정 전에 보였다 (2026-09-28 15:2x). 측정 스크립트·판정 기준은 task.md 와 코드에서 정했다."
+}

@@ -45,6 +45,10 @@ from benchmark.ag3s.types import (
     TargetGeometry,
 )
 
+#: `build_constraint_set(manipulated_geometry=...)` not given: the manipulated object is `target`,
+#: which is what every direct caller got before T20 and what they still get.
+_SAME_AS_TARGET = object()
+
 
 def to_casadi(spec: ConstraintSpec, Q: Any) -> dict[str, Any]:
     """Materialize the constraint fragment against a TO's own decision variables.
@@ -107,6 +111,7 @@ def build_constraint_set(
     destination_label: Any = None,
     destination_margin: Any = None,
     build_spec: bool = True,
+    manipulated_geometry: Any = _SAME_AS_TARGET,
 ) -> CollisionConstraintSet:
     """Assemble the final AG3S output.
 
@@ -124,7 +129,14 @@ def build_constraint_set(
     downgraded: a frame that reached this function already incomplete stays incomplete. The rule that
     matters is at the bottom — an incomplete frame is **never** reported as `OK`, because "I could
     not account for everything I saw" and "there is nothing there" must not look the same to a TO.
+
+    `manipulated_geometry` (T20) is the object contact permission and target exclusion are about —
+    `AG3S` passes its manipulated identity's geometry (`None` when there is none or it is `lost`,
+    the last observed shape when it is `occluded`). Not given, it is `target`, as before. Only the
+    two consumers below read it; `target` still drives the status and the primitive margins.
     """
+    if manipulated_geometry is _SAME_AS_TARGET:
+        manipulated_geometry = target
     notes = list(notes or [])
     ctx = contact_context or ContactPolicyContext.make(phase)
     # An ESDF-only frame has no candidates by construction, and an empty candidate list must not be
@@ -184,7 +196,7 @@ def build_constraint_set(
     # 동작이 예전과 완전히 같고, `attach()` 가 불린 뒤부터 갈린다 — 실측에서 정책의 attention 은
     # 파지 착수 순간 목적지로 옮겨가므로, 주목 대상에 걸면 쥔 물체가 장애물로 남는다.
     manipulated = manipulated_object(
-        target, attached, robot_model=builder.robot_model, robot_state=robot_state
+        manipulated_geometry, attached, robot_model=builder.robot_model, robot_state=robot_state
     )
     manipulated_link_margin = None
     if manipulated is not None and builder.n_robot_spheres:
@@ -205,11 +217,12 @@ def build_constraint_set(
     # 조건이 넷이고 하나라도 어긋나면 `None`(= 지금 동작)이다.
     # 1. 정책이 `relax`(기본)가 아니다.
     # 2. **쥔 것이 없다** — 쥔 뒤의 target 은 목적지(crate)이고 그것은 빠지면 안 된다 (규칙 3).
-    # 3. target 이 grounding 됐다.
+    # 3. 조작 대상이 있다 (`visible` 또는 `occluded` — T20. 예전엔 "target 이 grounding 됐다").
+    #    사과가 손가락에 가려진 프레임에도 사과의 제외는 살아 있어야 한다.
     # 4. 필드가 실제로 그 계층을 들고 있다 — 없으면 켰다고 믿은 채 아무 일도 안 일어난다.
     target_field_policy = str(getattr(builder.constraint_config, "target_field_policy", "relax"))
     target_field_exclude = None
-    if (target_field_policy != "relax" and attached is None and target is not None
+    if (target_field_policy != "relax" and attached is None and manipulated_geometry is not None
             and builder.n_robot_spheres and getattr(esdf, "has_target_free", False)):
         names = [str(n) for n in builder.sphere_link_names]
         if target_field_policy == "exclude_all":

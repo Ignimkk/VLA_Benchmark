@@ -442,6 +442,101 @@ def sphere_options(args) -> dict:
     return {k: v for k, v in given.items() if v is not None}
 
 
+def parse_self_filter_inflation(pairs: Sequence[str]) -> dict[str, float]:
+    """`["gripper=0.01"]` → `{"gripper": 0.01}` (T19). 빈 입력이면 빈 dict (예전과 같은 필터).
+
+    키는 **link 이름이거나 집합 이름** (`arms` · `gripper`) 이고 **펼치지 않고 그대로** config 로
+    넘긴다 — 집합을 펼치고 우선순위(`arms` < `gripper` < link)를 매기고 모르는 이름을 거절하는
+    것은 `robot_filter.resolve_self_filter_inflation` 한 곳이다. 여기서 한 번 더 펼치면 두 곳이
+    되고, 갈라지는 날 로그가 말하는 필터와 실제 필터가 달라진다.
+
+    `all` 은 받지 않는다: 전신 값은 `pointcloud.self_filter_inflation` 그 자체다
+    (`--capsule-radius-scale-link` 와 같은 규약). **단위는 미터다.** 형식이 아니거나 음수면 여기서
+    죽는다 — 조용히 버리면 손가락 여유를 줄였다고 믿은 채 50 mm 로 뜬다.
+    """
+    out: dict[str, float] = {}
+    for item in pairs or ():
+        text = str(item)
+        if "=" not in text:
+            raise ValueError(
+                f"--self-filter-inflation-link 는 LINK_OR_GROUP=미터 형식입니다: {text!r} "
+                f"(예: gripper=0.01, link_left_arm_6=0.03)")
+        name, _, value = text.partition("=")
+        name = name.strip()
+        if not name:
+            raise ValueError(f"--self-filter-inflation-link {text!r}: link 이름이 비었습니다")
+        if name == "all":
+            raise ValueError(
+                "--self-filter-inflation-link all=... 은 받지 않습니다. 전신 값은 "
+                "pointcloud.self_filter_inflation 그 자체입니다")
+        try:
+            margin = float(value)
+        except ValueError:
+            raise ValueError(
+                f"--self-filter-inflation-link {text!r} 의 값이 숫자가 아닙니다 (미터)") from None
+        if not margin >= 0.0:
+            raise ValueError(
+                f"--self-filter-inflation-link {text!r}: inflation 은 0 이상이어야 합니다 (미터)")
+        out[name] = margin
+    return out
+
+
+def self_filter_options(args) -> dict:
+    """self-filter flag 중 **실제로 준 것만** 담은 `pointcloud` 조각 (T19).
+
+    `sphere_options` 와 같은 계약이다 — 안 준 flag 는 키가 아예 없고, 빈 dict 면
+    `AG3SConfig.from_dict` 호출이 예전과 글자 그대로 같다. 기본값(0.05 · 빈 표 · guard 0)을 여기
+    다시 적으면 `PointCloudConfig` 와 두 곳이 된다.
+    """
+    given = {
+        "self_filter_inflation_by_link":
+            parse_self_filter_inflation(getattr(args, "self_filter_inflation_link", ())) or None,
+        "self_filter_target_guard_radius": getattr(args, "self_filter_target_guard", None),
+    }
+    out = {k: v for k, v in given.items() if v is not None}
+    guard = out.get("self_filter_target_guard_radius")
+    if guard is not None and not float(guard) >= 0.0:
+        raise ValueError(
+            f"--self-filter-target-guard 는 0 이상이어야 합니다 (미터, 0 = 끔): {guard!r}")
+    return out
+
+
+def announce_self_filter(settings: dict, *, cli: dict | None = None) -> None:
+    """**자기 필터가 실제로 쓰는 값을 시작 로그에 찍는다** (T19, 지침 §3.2).
+
+    `settings` 는 `AG3S.self_filter_settings()` — 집합을 펼치고 우선순위를 매긴 **뒤의** link 별
+    표다. 지침 §3.2 가 짚은 것은 `rby1_three_camera.yaml` 의 0.02 가 이 서버에 **닿지 않는다**는
+    사실이 어디에도 안 보였다는 것이므로, 그 문장을 여기서 말한다.
+
+    기본(재정의 없음 · guard 끔)이면 info 한 줄, 아니면 warning 여러 줄이다 — `--sphere-*` 와 같은
+    수위다. MuJoCo 없이 테스트할 수 있게 `build_ag3s` 밖에 둔다.
+    """
+    log = logging.getLogger(__name__)
+    cli = dict(cli or {})
+    table = dict(settings.get("inflation_effective") or {})
+    base = float(settings.get("inflation_default", 0.0))
+    guard = float(settings.get("target_guard_radius", 0.0))
+    by_value: dict[float, list[str]] = {}
+    for link, value in table.items():
+        by_value.setdefault(float(value), []).append(str(link))
+    rows = "\n".join(
+        f"      {value * 1000:6.1f} mm : {len(links):2d} link — {', '.join(links)}"
+        for value, links in sorted(by_value.items()))
+    source = ("CLI " + ", ".join(f"{k}={v}" for k, v in sorted(cli.items()))
+              if cli else "코드 기본값 (PointCloudConfig)")
+    head = (f"self-filter: {settings.get('n_spheres')} 구 · 기본 inflation "
+            f"{base * 1000:.1f} mm · target guard "
+            + (f"{guard * 1000:.1f} mm (확정 target centroid 근방은 inflation 0 — 로봇 구 "
+               "내부는 여전히 지운다)" if guard > 0.0 else "끔")
+            + f" · 출처: {source}. configs/*.yaml 의 pointcloud 값은 이 서버에 닿지 않는다 "
+              "(build_ag3s 가 config 를 직접 만든다)")
+    if not settings.get("inflation_by_link") and guard <= 0.0:
+        log.info("%s", head)
+        return
+    log.warning("!!! SELF-FILTER IS NOT THE SINGLE-VALUE DEFAULT !!!\n    %s\n"
+                "    실제 유효 inflation (link 별, 집합 펼친 뒤):\n%s", head, rows)
+
+
 def resolve_plan_horizon(value: str):
     """`--plan-horizon` 문자열 → `HorizonConfig.plan_horizon` 값.
 
@@ -473,7 +568,8 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
                self_collision: bool = True,
                target_field_policy: str = "relax",
                plan_horizon_steps: int | None = None,
-               rows_per_step: int | None = None):
+               rows_per_step: int | None = None,
+               self_filter: dict | None = None):
     """서버가 쓸 AG3S. 자기 필터는 전신, 제약은 양팔.
 
     **두 모델은 일부러 다르다.** 자기 필터는 바퀴·베이스까지 있어야 한다 — 머리 카메라가 자기
@@ -495,6 +591,10 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     `links="gripper"` 는 **손가락 넷만** 제약에 남긴다 (T7b 진단). `self_collision=False` 는 쥔
     물체 대 로봇 구 블록을 끈다 — 이 repo 의 자기 충돌은 그 블록 하나뿐이다. 둘 다 기본값이
     예전 그대로이고, 기본이 아닐 때는 `announce_diagnostic_scope` 가 시작 로그에 크게 찍는다.
+
+    `self_filter` 는 `self_filter_options(args)` — **준 것만** `pointcloud` 에 얹는다 (T19). 비면
+    `pointcloud` 는 예전과 글자 그대로 `{"range_max": ...}` 이다. 실제 유효 inflation 표는
+    `announce_self_filter` 가 찍는다.
     """
     import mujoco
 
@@ -562,7 +662,8 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
         "max_field_age_sec": max_field_age_sec}
     config = AG3SConfig.from_dict({
         "collision_backend": "esdf",
-        "pointcloud": {"range_max": range_max},
+        # self-filter 재정의는 **준 것만** 얹는다 (T19) — 안 주면 이 dict 는 예전 그대로다.
+        "pointcloud": {"range_max": range_max, **dict(self_filter or {})},
         "esdf": esdf,
         **({"timing": timing} if timing else {}),
         # **기본인 경우에는 키를 아예 넣지 않는다.** 기본값을 여기 다시 적으면
@@ -617,8 +718,12 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
 
     parents = grasp_parent_links()
     logging.info("AG3S attached slots: %s", ", ".join(parents))
-    return AG3S(config, robot_model=filter_robot, constraint_robot_model=constraint_robot,
+    ag3s = AG3S(config, robot_model=filter_robot, constraint_robot_model=constraint_robot,
                 attached_parent_links=parents)
+    # 생성 **뒤에** 찍는다 — 모르는 link 이름은 생성자가 거절하므로, 여기 도달한 표는 실제로
+    # `robot_sphere_mask` 에 들어가는 값이다.
+    announce_self_filter(ag3s.self_filter_settings(), cli=dict(self_filter or {}))
+    return ag3s
 
 
 def load_static_geometry(spec: str, model_xml: str, *, links: str):
@@ -869,6 +974,17 @@ def build_parser() -> argparse.ArgumentParser:
                     help="거리장이 몇 초까지 쓸 만한가. **기본값은 미정(None)** 이고 그때는 "
                          "stale 판정을 하지 않고 응답에 staleness_checked=false 를 싣는다. "
                          "추측으로 정하지 않는다 (F14)")
+    ap.add_argument("--self-filter-inflation-link", nargs="+", default=(),
+                    metavar="LINK_OR_GROUP=M",
+                    help="**자기 필터** 의 link 별 inflation (미터, T19). 키는 link 이름 또는 "
+                         "arms · gripper (우선순위 arms < gripper < link). 적지 않은 link 는 "
+                         "pointcloud.self_filter_inflation (코드 기본 0.05) 을 쓴다. 안 주면 "
+                         "지금과 같다. 제약 모델의 --sphere-* 와 다른 모델이다. 예: "
+                         "--self-filter-inflation-link gripper=0.01")
+    ap.add_argument("--self-filter-target-guard", type=float, default=None, metavar="R",
+                    help="직전 프레임에 확정한 target centroid 반경 R (미터) 안에서는 자기 필터가 "
+                         "inflation 0 (구 실제 반지름) 으로만 지운다 — 예외가 아니다, 로봇 구 "
+                         "내부 점은 여전히 지운다 (T19). 안 주면 코드 기본값 (0 = 끔)")
     ap.add_argument("--static-geometry", default="none", metavar="none|auto|PATH",
                     help="아는 고정 기하(벽·선반·테이블·바닥)를 해석적 채널에 싣는다 — 거리장이 "
                          "min(복셀, 해석적) 을 답해 미관측·격자 밖의 낙관을 없앤다 (E4·N2). "
@@ -931,6 +1047,16 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         ap.error("--sphere-* 는 제약 모델의 구를 고치는 flag 입니다 (--no-safe 는 그 모델을 "
                  "아예 안 만듭니다). 그대로 띄우면 팔을 가늘게 모델링했다고 믿은 채 안전 계층이 "
                  "꺼진 서버가 뜹니다")
+    # **self-filter flag 의 형식 오류도 여기서 죽는다** (T19). 모르는 link 이름은 모델이 있어야
+    # 가를 수 있으므로 `AG3S` 생성자가 거절한다 — 그것도 체크포인트를 올리기 전이다.
+    try:
+        filter_options = self_filter_options(args)
+    except ValueError as exc:
+        ap.error(str(exc))
+    if args.no_safe and filter_options:
+        ap.error("--self-filter-* 는 AG3S 의 자기 필터를 고치는 flag 입니다 (--no-safe 는 AG3S 를 "
+                 "아예 안 만듭니다). 그대로 띄우면 사과를 보존했다고 믿은 채 필터 자체가 없는 "
+                 "서버가 뜹니다")
     # `--plan-horizon` 은 여기서 한 번 읽어 본다. 잘못된 값이 서버를 띄운 뒤에 죽으면 그때는
     # 체크포인트 두 벌을 이미 GPU 에 올린 뒤다.
     try:
@@ -1003,7 +1129,9 @@ def main() -> None:
                       # 그리고 둘은 서로 다른 것을 재고 있다.
                       "plan_horizon": args.plan_horizon,
                       **({"sphere_options": sphere_options(args)}
-                         if sphere_options(args) else {})})
+                         if sphere_options(args) else {}),
+                      **({"self_filter": self_filter_options(args)}
+                         if self_filter_options(args) else {})})
             # **시작할 때 거절한다.** 기록기가 이 backend 의 거리장을 실을 수 없으면 청크마다
             # 예외가 나고, 예전에는 그것이 `print` 한 줄이라 75 chunk 를 돌리고도 빈 디렉토리가
             # 남았다 (2026-09-28). 여기서 죽으면 체크포인트를 올리기 전이다.
@@ -1078,7 +1206,8 @@ def main() -> None:
                             self_collision=not args.no_self_collision,
                             target_field_policy=args.target_field_policy,
                             plan_horizon_steps=horizon.planned,
-                            rows_per_step=to_config.reduction.rows_per_step),
+                            rows_per_step=to_config.reduction.rows_per_step,
+                            self_filter=self_filter_options(args)),
             static_geometry=load_static_geometry(args.static_geometry, args.model_xml,
                                                  links=args.links),
             to_config=to_config,

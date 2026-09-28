@@ -19,8 +19,11 @@ Four things enter the cost, and only the first is about the task:
 * **tracking** — SEAM's chunk is the answer the policy wants; the optimizer's job is to change it as
   little as collision avoidance permits. A tracking weight that is too small yields a safe
   trajectory that no longer performs the task, and no collision metric will notice.
-* **smoothness** — second differences, i.e. jerk. This is the quantity SEAM exists to control, and
-  an optimizer that ignored it would hand back exactly the discontinuities SEAM removed.
+* **smoothness** — second differences of position, ``Q[:, k+2] - 2 Q[:, k+1] + Q[:, k]``, i.e.
+  **acceleration** in step units (divide by ``dt**2`` for rad/s^2). It is *not* jerk: jerk would be
+  the third difference. (Earlier docs and comments called this term "jerk"; the code has always been
+  `np.diff(Q, n=2)` — the name was wrong, not the maths. T24, guide §7.1.) An optimizer that ignored
+  it would hand back exactly the discontinuities SEAM removed.
 * **continuity** — against the previously refined chunk. See `config.CostConfig`: SEAM's next-chunk
   prior is built from the *pre-refinement* chunk, so without this term the two layers pull in
   opposite directions every chunk.

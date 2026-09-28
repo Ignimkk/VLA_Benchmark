@@ -98,12 +98,18 @@ def process_observation(
     *,
     robot_model: Optional[RobotCollisionModel] = None,
     attention_adapter: Any = None,
+    self_filter_inflation: Any = None,
+    self_filter_guard_centre: Optional[np.ndarray] = None,
 ) -> CameraResult:
     """Reconstruct, self-filter and lift attention for one camera, in its own capture instant.
 
     The self-filter is given `observation.robot_state`, not some global current state. On a wrist
     camera those are different poses, and using the wrong one deletes free space while leaving the
     arm behind — the two failure directions at once.
+
+    `self_filter_inflation` / `self_filter_guard_centre` are handed through to
+    `filter_robot_points` untouched (T19). `AG3S` passes the same inflation object and the same guard
+    centroid to its depth robot mask, so the cloud and the TSDF remove the same robot.
     """
     T_base_cam = observation.resolve_T_base_cam(robot_model)
     cloud, recon_stats = reconstruct(
@@ -116,7 +122,8 @@ def process_observation(
         frame_id=config.frame_id,
     )
     cloud, filter_stats = filter_robot_points(
-        cloud, robot_model, observation.robot_state, config.pointcloud
+        cloud, robot_model, observation.robot_state, config.pointcloud,
+        inflation=self_filter_inflation, guard_centre=self_filter_guard_centre,
     )
 
     notes: list[str] = []
@@ -159,7 +166,8 @@ def process_observation(
         timestamp=float(observation.timestamp),
         T_base_cam=T_base_cam,
         had_attention=observation.has_attention,
-        stats={**recon_stats, "n_self_filtered": filter_stats["n_removed"]},
+        stats={**recon_stats, "n_self_filtered": filter_stats["n_removed"],
+               "n_self_filter_guard_protected": filter_stats["n_guard_protected"]},
         notes=notes,
     )
 
@@ -340,12 +348,16 @@ def fuse_observations(
     robot_model: Optional[RobotCollisionModel] = None,
     attention_adapter: Any = None,
     now: Optional[float] = None,
+    self_filter_inflation: Any = None,
+    self_filter_guard_centre: Optional[np.ndarray] = None,
 ) -> FusionResult:
     """The whole multi-camera front end: per-camera processing, freshness checks, fusion."""
     validity, notes, metrics = check_freshness(observations, config, now=now)
     results = [
         process_observation(
-            obs, config, robot_model=robot_model, attention_adapter=attention_adapter
+            obs, config, robot_model=robot_model, attention_adapter=attention_adapter,
+            self_filter_inflation=self_filter_inflation,
+            self_filter_guard_centre=self_filter_guard_centre,
         )
         for obs in observations
     ]
@@ -371,6 +383,9 @@ def fuse_observations(
             r.camera_id.value for r in results if r.had_attention
         ),
         "n_self_filtered": sum(int(r.stats.get("n_self_filtered", 0)) for r in results),
+        "n_self_filter_guard_protected": {
+            r.camera_id.value: int(r.stats.get("n_self_filter_guard_protected", 0))
+            for r in results},
     })
 
     if any(not r.stats.get("covered", True) for r in results):

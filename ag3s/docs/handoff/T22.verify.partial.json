@@ -1,0 +1,1240 @@
+{
+ "step": "T22",
+ "writer": "ag3s-verifier",
+ "entries": [
+  {
+   "at": "2026-09-28T15:31:11",
+   "item": "#6a regression-baseline",
+   "numbers": {
+    "violated_start": "13/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": 0.18597810857728936
+   },
+   "raw": "outputs/verify/T22/baseline.json",
+   "log": "outputs/verify/T22/baseline.log"
+  },
+  {
+   "at": "2026-09-28T15:31:11",
+   "item": "#6b pytest tests (src/openpi/.venv)",
+   "numbers": {
+    "passed": 1188,
+    "failed": 0
+   },
+   "raw": "outputs/verify/T22/pytest_all.log"
+  },
+  {
+   "at": "2026-09-28T15:31:11",
+   "item": "#1 replay t17 centroid=apple",
+   "numbers": {
+    "n_requests": 75,
+    "n_attach": 1,
+    "attach_t": [
+     120
+    ],
+    "n_detach": 1,
+    "detach_t": [
+     232
+    ],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {},
+    "legacy_attach_t": [
+     120
+    ],
+    "n_hold_chunks": 0
+   },
+   "attach_rows": [
+    {
+     "seq": 16,
+     "t_step": 120,
+     "reach_mm": 42.09,
+     "measured": 0.7152931690216064,
+     "last_command": 0.0051311771385371685,
+     "opening_before": 1.0092028379440308,
+     "settled_steps": 5,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": true,
+      "manipulated": true,
+      "reach": true
+     },
+     "note": "파지 확인 — attach(manipulated id=0): 개도 1.009→0.715, 명령 0.005, reach 42.1 mm ≤ 120 mm, feedback seq 15"
+    }
+   ],
+   "transitions": [
+    {
+     "t_step": 16,
+     "from": "searching",
+     "to": "latched",
+     "note": ""
+    },
+    {
+     "t_step": 120,
+     "from": "latched",
+     "to": "held",
+     "note": "파지 확인 — attach(manipulated id=0): 개도 1.009→0.715, 명령 0.005, reach 42.1 mm ≤ 120 mm, feedback seq 15"
+    },
+    {
+     "t_step": 232,
+     "from": "held",
+     "to": "placed",
+     "note": "개도가 2 프레임 열려 있다 (1.000) — detach() (feedback seq 29)"
+    }
+   ],
+   "raw": "outputs/verify/T22/replay_t17_apple.json"
+  },
+  {
+   "at": "2026-09-28T15:31:11",
+   "item": "#1 replay t17 centroid=server_prev",
+   "numbers": {
+    "n_requests": 75,
+    "n_attach": 0,
+    "attach_t": [],
+    "n_detach": 0,
+    "detach_t": [],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {
+     "reach": 13
+    },
+    "legacy_attach_t": [
+     120
+    ],
+    "n_hold_chunks": 0
+   },
+   "attach_rows": [],
+   "transitions": [
+    {
+     "t_step": 16,
+     "from": "searching",
+     "to": "latched",
+     "note": ""
+    },
+    {
+     "t_step": 120,
+     "from": "latched",
+     "to": "closing",
+     "note": "닫힘 시도: 실행된 닫힘 명령 5 스텝 (feedback seq 15); 닫힘 시도 — 파지 미확인: reach"
+    },
+    {
+     "t_step": 224,
+     "from": "closing",
+     "to": "latched",
+     "note": "닫힘 시도 포기: 명령 1.000 · 개도 0.954 가 다시 열렸다 — attach 없음"
+    }
+   ],
+   "raw": "outputs/verify/T22/replay_t17_server_prev.json"
+  },
+  {
+   "at": "2026-09-28T15:31:11",
+   "item": "#2 replay t16 centroid=apple",
+   "numbers": {
+    "n_requests": 34,
+    "n_attach": 0,
+    "attach_t": [],
+    "n_detach": 0,
+    "detach_t": [],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {},
+    "legacy_attach_t": [
+     176
+    ],
+    "n_hold_chunks": 24
+   },
+   "attach_rows": [],
+   "transitions": [
+    {
+     "t_step": 16,
+     "from": "searching",
+     "to": "latched",
+     "note": ""
+    }
+   ],
+   "raw": "outputs/verify/T22/replay_t16_apple.json"
+  },
+  {
+   "at": "2026-09-28T15:31:11",
+   "item": "#2 replay t16 centroid=server_prev",
+   "numbers": {
+    "n_requests": 34,
+    "n_attach": 0,
+    "attach_t": [],
+    "n_detach": 0,
+    "detach_t": [],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {},
+    "legacy_attach_t": [
+     176
+    ],
+    "n_hold_chunks": 24
+   },
+   "attach_rows": [],
+   "transitions": [
+    {
+     "t_step": 16,
+     "from": "searching",
+     "to": "latched",
+     "note": ""
+    }
+   ],
+   "raw": "outputs/verify/T22/replay_t16_server_prev.json"
+  },
+  {
+   "at": "2026-09-28T15:31:11",
+   "item": "#3 replay t14 centroid=apple",
+   "numbers": {
+    "n_requests": 30,
+    "n_attach": 0,
+    "attach_t": [],
+    "n_detach": 0,
+    "detach_t": [],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {
+     "blocked": 5,
+     "reach": 4
+    },
+    "legacy_attach_t": [
+     192
+    ],
+    "n_hold_chunks": 2
+   },
+   "attach_rows": [],
+   "transitions": [
+    {
+     "t_step": 16,
+     "from": "searching",
+     "to": "latched",
+     "note": ""
+    },
+    {
+     "t_step": 200,
+     "from": "latched",
+     "to": "closing",
+     "note": "닫힘 시도: 실행된 닫힘 명령 8 스텝 (feedback seq 25); 닫힘 시도 — 파지 미확인: blocked, reach (빈손 닫힘으로 보인다)"
+    }
+   ],
+   "raw": "outputs/verify/T22/replay_t14_apple.json"
+  },
+  {
+   "at": "2026-09-28T15:31:11",
+   "item": "#3 replay t14 centroid=server_prev",
+   "numbers": {
+    "n_requests": 30,
+    "n_attach": 0,
+    "attach_t": [],
+    "n_detach": 0,
+    "detach_t": [],
+    "n_gate_rejected": 0,
+    "failed_check_counts_in_closing": {
+     "blocked": 5,
+     "reach": 5
+    },
+    "legacy_attach_t": [
+     192
+    ],
+    "n_hold_chunks": 2
+   },
+   "attach_rows": [],
+   "transitions": [
+    {
+     "t_step": 16,
+     "from": "searching",
+     "to": "latched",
+     "note": ""
+    },
+    {
+     "t_step": 200,
+     "from": "latched",
+     "to": "closing",
+     "note": "닫힘 시도: 실행된 닫힘 명령 8 스텝 (feedback seq 25); 닫힘 시도 — 파지 미확인: blocked, reach (빈손 닫힘으로 보인다)"
+    }
+   ],
+   "raw": "outputs/verify/T22/replay_t14_server_prev.json"
+  },
+  {
+   "at": "2026-09-28T15:33:33",
+   "item": "#4 4a synthetic: cmd 0.0 x8, opening -> 0.004 (full close), stays 0.0",
+   "numbers": {
+    "n_attach": 0,
+    "attach_req": [],
+    "detach_req": []
+   },
+   "rows": [
+    {
+     "req": 0,
+     "measured": 1.0,
+     "state_before": "latched",
+     "state": "latched",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 1,
+     "measured": 0.004,
+     "state_before": "latched",
+     "state": "closing",
+     "attach": false,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": false,
+      "blocked": false,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "req": 2,
+     "measured": 0.003,
+     "state_before": "closing",
+     "state": "closing",
+     "attach": false,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": false,
+      "blocked": false,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "req": 3,
+     "measured": 0.003,
+     "state_before": "closing",
+     "state": "closing",
+     "attach": false,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": false,
+      "blocked": false,
+      "manipulated": true,
+      "reach": true
+     }
+    }
+   ],
+   "raw": "outputs/verify/T22/scenarios_t22.json"
+  },
+  {
+   "at": "2026-09-28T15:33:33",
+   "item": "#4 4b synthetic: T17 command sequence, empty hand (opening follows command)",
+   "numbers": {
+    "n_attach": 0,
+    "attach_req": [],
+    "detach_req": []
+   },
+   "rows": [
+    {
+     "req": 0,
+     "measured": 1.0,
+     "state_before": "latched",
+     "state": "latched",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 1,
+     "measured": 0.01,
+     "state_before": "latched",
+     "state": "closing",
+     "attach": false,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": false,
+      "blocked": false,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "req": 2,
+     "measured": 0.575,
+     "state_before": "closing",
+     "state": "closing",
+     "attach": false,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "req": 3,
+     "measured": 0.571,
+     "state_before": "closing",
+     "state": "closing",
+     "attach": false,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "req": 4,
+     "measured": 0.58,
+     "state_before": "closing",
+     "state": "closing",
+     "attach": false,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": false,
+      "manipulated": true,
+      "reach": true
+     }
+    }
+   ],
+   "raw": "outputs/verify/T22/scenarios_t22.json"
+  },
+  {
+   "at": "2026-09-28T15:33:33",
+   "item": "#4 4c synthetic: cmd 0.0, opening stops at 0.03 (below empty_below)",
+   "numbers": {
+    "n_attach": 0,
+    "attach_req": [],
+    "detach_req": []
+   },
+   "rows": [
+    {
+     "req": 0,
+     "measured": 1.0,
+     "state_before": "latched",
+     "state": "latched",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 1,
+     "measured": 0.03,
+     "state_before": "latched",
+     "state": "closing",
+     "attach": false,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": false,
+      "blocked": false,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "req": 2,
+     "measured": 0.03,
+     "state_before": "closing",
+     "state": "closing",
+     "attach": false,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": false,
+      "blocked": false,
+      "manipulated": true,
+      "reach": true
+     }
+    }
+   ],
+   "raw": "outputs/verify/T22/scenarios_t22.json"
+  },
+  {
+   "at": "2026-09-28T15:33:33",
+   "item": "#4 4d MuJoCo-sim empty close (T17 seq2 pose, arm held, T17 command pattern); reach forced 0.042 m",
+   "numbers": {
+    "n_attach": 1,
+    "attach_req": [
+     1
+    ],
+    "detach_req": []
+   },
+   "rows": [
+    {
+     "req": 0,
+     "measured": 1.0,
+     "state_before": "latched",
+     "state": "latched",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 1,
+     "measured": 0.163,
+     "state_before": "latched",
+     "state": "held",
+     "attach": true,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": true,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "req": 2,
+     "measured": 0.3176,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 3,
+     "measured": 0.5715,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 4,
+     "measured": 0.57,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    }
+   ],
+   "raw": "outputs/verify/T22/scenarios_t22.json"
+  },
+  {
+   "at": "2026-09-28T15:33:33",
+   "item": "#5 5a grasp then 4 HOLD chunks (opening kept 0.72) then 2 open chunks",
+   "numbers": {
+    "n_attach": 1,
+    "attach_req": [
+     1
+    ],
+    "detach_req": [
+     8
+    ]
+   },
+   "rows": [
+    {
+     "req": 0,
+     "measured": 1.009,
+     "state_before": "latched",
+     "state": "latched",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 1,
+     "measured": 0.715,
+     "state_before": "latched",
+     "state": "held",
+     "attach": true,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": true,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "req": 2,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 3,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 4,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 5,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 6,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 7,
+     "measured": 1.0,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 8,
+     "measured": 1.0,
+     "state_before": "held",
+     "state": "placed",
+     "attach": false,
+     "detach": true,
+     "checks": {}
+    }
+   ],
+   "raw": "outputs/verify/T22/scenarios_t22.json"
+  },
+  {
+   "at": "2026-09-28T15:33:33",
+   "item": "#5 5b grasp, HOLD, one open glitch then closed again, then open x2",
+   "numbers": {
+    "n_attach": 1,
+    "attach_req": [
+     1
+    ],
+    "detach_req": [
+     7
+    ]
+   },
+   "rows": [
+    {
+     "req": 0,
+     "measured": 1.009,
+     "state_before": "latched",
+     "state": "latched",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 1,
+     "measured": 0.715,
+     "state_before": "latched",
+     "state": "held",
+     "attach": true,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": true,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "req": 2,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 3,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 4,
+     "measured": 1.0,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 5,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 6,
+     "measured": 1.0,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 7,
+     "measured": 1.0,
+     "state_before": "held",
+     "state": "placed",
+     "attach": false,
+     "detach": true,
+     "checks": {}
+    }
+   ],
+   "raw": "outputs/verify/T22/scenarios_t22.json"
+  },
+  {
+   "at": "2026-09-28T15:33:33",
+   "item": "#5 5c placed_fn=True while closed (HOLD), then placed & open",
+   "numbers": {
+    "n_attach": 1,
+    "attach_req": [
+     1
+    ],
+    "detach_req": [
+     5
+    ]
+   },
+   "rows": [
+    {
+     "req": 0,
+     "measured": 1.009,
+     "state_before": "latched",
+     "state": "latched",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 1,
+     "measured": 0.715,
+     "state_before": "latched",
+     "state": "held",
+     "attach": true,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": true,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "req": 2,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 3,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 4,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 5,
+     "measured": 1.0,
+     "state_before": "held",
+     "state": "placed",
+     "attach": false,
+     "detach": true,
+     "checks": {}
+    }
+   ],
+   "raw": "outputs/verify/T22/scenarios_t22.json"
+  },
+  {
+   "at": "2026-09-28T15:33:33",
+   "item": "#5 5d HOLD chunk whose re-command (0.72) reads below 0.85 — partial HOLD 3/8 exec",
+   "numbers": {
+    "n_attach": 1,
+    "attach_req": [
+     1
+    ],
+    "detach_req": [
+     5
+    ]
+   },
+   "rows": [
+    {
+     "req": 0,
+     "measured": 1.009,
+     "state_before": "latched",
+     "state": "latched",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 1,
+     "measured": 0.715,
+     "state_before": "latched",
+     "state": "held",
+     "attach": true,
+     "detach": false,
+     "checks": {
+      "settled": true,
+      "closed": true,
+      "dropped": true,
+      "not_empty": true,
+      "blocked": true,
+      "manipulated": true,
+      "reach": true
+     }
+    },
+    {
+     "req": 2,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 3,
+     "measured": 0.72,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 4,
+     "measured": 1.0,
+     "state_before": "held",
+     "state": "held",
+     "attach": false,
+     "detach": false,
+     "checks": {}
+    },
+    {
+     "req": 5,
+     "measured": 1.0,
+     "state_before": "held",
+     "state": "placed",
+     "attach": false,
+     "detach": true,
+     "checks": {}
+    }
+   ],
+   "raw": "outputs/verify/T22/scenarios_t22.json"
+  },
+  {
+   "at": "2026-09-28T15:33:33",
+   "item": "last gate AG3S.attach(reach=0.12) on server target geometry at legacy attach frames",
+   "numbers": [
+    {
+     "run": "t17",
+     "seq": 16,
+     "t_step": 120,
+     "n_target_points": 1713,
+     "reach_mm": 338.8,
+     "gate": "rejected",
+     "rejection": {
+      "reason": "reach: target centroid is 338.8 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+      "reach_mm": 338.8,
+      "limit_mm": 120.0,
+      "parent_link": "ee_finger_l1"
+     },
+     "gate_reach_None": "accepted"
+    },
+    {
+     "run": "t17",
+     "seq": 17,
+     "t_step": 128,
+     "n_target_points": 1726,
+     "reach_mm": 339.63,
+     "gate": "rejected",
+     "rejection": {
+      "reason": "reach: target centroid is 339.6 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+      "reach_mm": 339.63,
+      "limit_mm": 120.0,
+      "parent_link": "ee_finger_l1"
+     },
+     "gate_reach_None": "accepted"
+    },
+    {
+     "run": "t16",
+     "seq": 23,
+     "t_step": 176,
+     "n_target_points": 1519,
+     "reach_mm": 306.13,
+     "gate": "rejected",
+     "rejection": {
+      "reason": "reach: target centroid is 306.1 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+      "reach_mm": 306.13,
+      "limit_mm": 120.0,
+      "parent_link": "ee_finger_l1"
+     },
+     "gate_reach_None": "accepted"
+    },
+    {
+     "run": "t16",
+     "seq": 24,
+     "t_step": 184,
+     "n_target_points": 62,
+     "reach_mm": 588.62,
+     "gate": "rejected",
+     "rejection": {
+      "reason": "reach: target centroid is 588.6 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+      "reach_mm": 588.62,
+      "limit_mm": 120.0,
+      "parent_link": "ee_finger_l1"
+     },
+     "gate_reach_None": "accepted"
+    },
+    {
+     "run": "t14",
+     "seq": 25,
+     "t_step": 192,
+     "n_target_points": 177,
+     "reach_mm": 622.21,
+     "gate": "rejected",
+     "rejection": {
+      "reason": "reach: target centroid is 622.2 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+      "reach_mm": 622.21,
+      "limit_mm": 120.0,
+      "parent_link": "ee_finger_l1"
+     },
+     "gate_reach_None": "accepted"
+    },
+    {
+     "run": "t14",
+     "seq": 26,
+     "t_step": 200,
+     "n_target_points": 175,
+     "reach_mm": 623.96,
+     "gate": "rejected",
+     "rejection": {
+      "reason": "reach: target centroid is 624.0 mm from 'ee_finger_l1''s origin, over the 120 mm limit",
+      "reach_mm": 623.96,
+      "limit_mm": 120.0,
+      "parent_link": "ee_finger_l1"
+     },
+     "gate_reach_None": "accepted"
+    }
+   ],
+   "raw": "outputs/verify/T22/scenarios_t22.json"
+  },
+  {
+   "at": "2026-09-28T15:33:33",
+   "item": "#4e MuJoCo-sim empty close sweep (start step x target)",
+   "numbers": {
+    "n_configs": 24,
+    "n_attach": 10,
+    "attach_configs": [
+     [
+      0.0,
+      3,
+      0.163
+     ],
+     [
+      0.0,
+      4,
+      0.2801
+     ],
+     [
+      0.0,
+      5,
+      0.4472
+     ],
+     [
+      0.3,
+      2,
+      0.3614
+     ],
+     [
+      0.3,
+      3,
+      0.4141
+     ],
+     [
+      0.3,
+      4,
+      0.4961
+     ],
+     [
+      0.3,
+      5,
+      0.613
+     ],
+     [
+      0.57,
+      3,
+      0.6401
+     ],
+     [
+      0.57,
+      4,
+      0.6905
+     ],
+     [
+      0.57,
+      5,
+      0.7623
+     ]
+    ]
+   },
+   "raw": "outputs/verify/T22/empty_sweep_t22.json"
+  },
+  {
+   "at": "2026-09-28T15:33:33",
+   "item": "reach stats",
+   "numbers": {
+    "t17 t=116-136": {
+     "urdf_l1_origin_apple_mm": {
+      "n": 21,
+      "min": 41.21,
+      "median": 41.69,
+      "max": 44.74
+     },
+     "mj_l1_body_apple_mm": {
+      "n": 21,
+      "min": 54.26,
+      "median": 54.59,
+      "max": 56.02
+     },
+     "opening": {
+      "n": 21,
+      "min": 0.71,
+      "median": 0.72,
+      "max": 0.9
+     }
+    },
+    "t17 t=96-160": {
+     "urdf_l1_origin_apple_mm": {
+      "n": 65,
+      "min": 41.21,
+      "median": 43.18,
+      "max": 48.25
+     },
+     "mj_l1_body_apple_mm": {
+      "n": 65,
+      "min": 54.26,
+      "median": 55.81,
+      "max": 57.59
+     },
+     "opening": {
+      "n": 65,
+      "min": 0.71,
+      "median": 0.72,
+      "max": 1.01
+     }
+    },
+    "t16 t=72-240": {
+     "urdf_l1_origin_apple_mm": {
+      "n": 169,
+      "min": 85.89,
+      "median": 99.81,
+      "max": 113.84
+     },
+     "mj_l1_body_apple_mm": {
+      "n": 169,
+      "min": 76.19,
+      "median": 80.46,
+      "max": 122.74
+     },
+     "opening": {
+      "n": 169,
+      "min": 0.83,
+      "median": 1.0,
+      "max": 1.11
+     }
+    },
+    "t16 t=176-216": {
+     "urdf_l1_origin_apple_mm": {
+      "n": 41,
+      "min": 101.22,
+      "median": 103.99,
+      "max": 108.25
+     },
+     "mj_l1_body_apple_mm": {
+      "n": 41,
+      "min": 76.19,
+      "median": 76.94,
+      "max": 78.53
+     },
+     "opening": {
+      "n": 41,
+      "min": 0.96,
+      "median": 0.99,
+      "max": 1.0
+     }
+    },
+    "t14 t=184-232": {
+     "urdf_l1_origin_apple_mm": {
+      "n": 49,
+      "min": 82.68,
+      "median": 130.02,
+      "max": 289.96
+     },
+     "mj_l1_body_apple_mm": {
+      "n": 49,
+      "min": 99.64,
+      "median": 138.95,
+      "max": 295.05
+     },
+     "opening": {
+      "n": 49,
+      "min": 0.43,
+      "median": 0.59,
+      "max": 1.0
+     }
+    },
+    "t14 t=192-208": {
+     "urdf_l1_origin_apple_mm": {
+      "n": 17,
+      "min": 86.14,
+      "median": 114.12,
+      "max": 133.02
+     },
+     "mj_l1_body_apple_mm": {
+      "n": 17,
+      "min": 99.64,
+      "median": 123.66,
+      "max": 142.29
+     },
+     "opening": {
+      "n": 17,
+      "min": 0.59,
+      "median": 0.6,
+      "max": 0.91
+     }
+    },
+    "t16 global min urdf_l1_origin_apple": {
+     "t": 101,
+     "mm": 85.89,
+     "opening": 1.11
+    },
+    "t14 global min urdf_l1_origin_apple": {
+     "t": 176,
+     "mm": 67.34,
+     "opening": 0.979
+    },
+    "t17 global min urdf_l1_origin_apple": {
+     "t": 125,
+     "mm": 41.21,
+     "opening": 0.714
+    },
+    "t17 server target_centroid(prev) - apple": {
+     "n": 74,
+     "n_below_60mm": 9,
+     "median_below_60mm": 17.27,
+     "max": 374.37
+    },
+    "t16 server target_centroid(prev) - apple": {
+     "n": 33,
+     "n_below_60mm": 9,
+     "median_below_60mm": 16.97,
+     "max": 642.35
+    },
+    "t14 server target_centroid(prev) - apple": {
+     "n": 28,
+     "n_below_60mm": 11,
+     "median_below_60mm": 17.1,
+     "max": 636.55
+    },
+    "t14 closing-window reach to server_prev centroid": [
+     [
+      200,
+      623.96
+     ],
+     [
+      208,
+      615.32
+     ],
+     [
+      216,
+      636.69
+     ],
+     [
+      224,
+      653.84
+     ],
+     [
+      232,
+      671.43
+     ]
+    ],
+    "t14 reach_server_same at seq26(t=200)": [
+     623.96
+    ]
+   },
+   "raw": "outputs/verify/T22/reach_stats.json"
+  }
+ ],
+ "finalized_into": "T22.verify.json"
+}

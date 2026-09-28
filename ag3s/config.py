@@ -115,6 +115,20 @@ class ClusteringConfig:
     #: jumps 307-597 mm when the target changes object (F2, F9), orders of magnitude above the
     #: frame-to-frame jitter of one object being watched.
     target_identity_tolerance: float = 0.06
+    #: Minimum score a challenger must reach **on every frame of its run** for that frame to count
+    #: toward `target_confirm_frames` (T20). A frame where the leader scores below it breaks the run
+    #: (the count starts over), exactly like a frame where a different object led. 0.0 = "never
+    #: filter on score" and is the default, because scores are strictly positive: the switch rule is
+    #: then the T5e rule unchanged. No number is baked in here — T14 seq 12 had the crate leading at
+    #: 0.015 while the apple was hidden by the hand, and the value that separates that from a real
+    #: re-selection is for the T19/T20 measurements to decide.
+    target_switch_min_score: float = 0.0
+    #: How many consecutive frames the manipulated object may go unobserved (`occluded`) before it
+    #: is `lost` (T20). Lost means "no target, reason lost(id, age)" — never "the leader instead".
+    #: `None` = never lost, which is the pre-T20 behaviour of the held centroid (it was only ever
+    #: replaced by a switch, never dropped by time). An object that re-appears within tolerance of its
+    #: last centroid is `visible` again under the same id, lost or not.
+    target_lost_frames: int | None = None
     w_attention: float = 0.7
     w_geometry: float = 0.3
     max_seed_points: int = 4000  # cap on seeds fed to the connectivity search, for latency
@@ -147,6 +161,19 @@ class ClusteringConfig:
         if self.target_identity_tolerance <= 0.0:
             raise AG3SConfigError(
                 f"clustering.target_identity_tolerance must be > 0, got {self.target_identity_tolerance}"
+            )
+        if not (self.target_switch_min_score >= 0.0):  # also rejects NaN
+            raise AG3SConfigError(
+                f"clustering.target_switch_min_score must be >= 0 (0 = never filter on score), "
+                f"got {self.target_switch_min_score}"
+            )
+        lost = self.target_lost_frames
+        if lost is not None and (
+                isinstance(lost, bool) or not isinstance(lost, (int, float))
+                or not float(lost).is_integer() or lost < 0):
+            raise AG3SConfigError(
+                f"clustering.target_lost_frames must be null (never lost) or an integer >= 0, "
+                f"got {self.target_lost_frames!r}"
             )
         if self.w_attention < 0.0 or self.w_geometry < 0.0:
             raise AG3SConfigError("clustering weights must be non-negative")
@@ -209,6 +236,29 @@ class PointCloudConfig:
     # What leaks is precisely what `robot_sphere_mask` already names as the reason to inflate:
     # "the gap between the capsule chain and the real mesh".
     self_filter_inflation: float = 0.05
+    # **Per-link override of `self_filter_inflation`** (T19). Keys are link names from the
+    # self-filter model's `sphere_link_names`, or the group names `arms` / `gripper` that
+    # `serve_safe --links` uses (the canonical member lists are `grounding_report.ARM_LINKS` /
+    # `GRIPPER_LINKS`; they are not copied here). Precedence is by specificity, not by dict order:
+    # `arms` < `gripper` < a single link name. `all` is refused — the whole-body value is
+    # `self_filter_inflation` itself. A key that names neither a model link nor a group is an
+    # **error at AG3S construction** (same discipline as `capsule_radius_scale_by_link`): a typo that
+    # silently fell back to the global value is a filter you believe you tuned and did not.
+    #
+    # Why it exists: the one global value is a trade-off with two sides, and T1 only measured one.
+    # 50 mm stops the `base` leak (above), and the same 50 mm around the finger spheres deletes the
+    # object being grasped once the hand is within 50 mm of it — T14 t >= 88: 2,497 apple pixels in
+    # `wrist_cam_l`, 0 survived (`docs/handoff/T14.audit.md` §4.1). The base and the fingers need
+    # different margins. **Empty (the default) is exactly the old single-value filter.**
+    self_filter_inflation_by_link: dict[str, float] = dataclasses.field(default_factory=dict)
+    # Metres around the **previously confirmed target centroid** (`TargetConfirm.held_centroid`)
+    # inside which the self-filter uses **inflation 0** — the bare sphere radius. It is not an
+    # exemption: a point inside a robot sphere is still deleted there, only the margin is dropped,
+    # so the robot's own surface is still removed while the object surface next to it survives
+    # (guide §3.3 warns that an unconditional exemption would leave the robot surface behind).
+    # The centroid is the one held *before* this frame's grounding, and the same centroid is used
+    # for the cloud filter and for the depth robot mask. **0 (the default) switches it off.**
+    self_filter_target_guard_radius: float = 0.0
     subsample_seed: int = 0  # only used by the deterministic stride/permutation
     # How `max_points` is enforced. "voxel" grows the voxel size until the cloud fits, so every
     # occupied voxel still contributes a representative and no region larger than the final voxel
@@ -222,8 +272,50 @@ class PointCloudConfig:
     cap_max_iterations: int = 12
 
     CAP_STRATEGIES = ("voxel", "stride")
+    #: Group names `self_filter_inflation_by_link` accepts besides link names. `all` is not one of
+    #: them on purpose (see the field comment).
+    INFLATION_GROUPS = ("arms", "gripper")
+
+    def __post_init__(self) -> None:
+        # Normalise once so YAML ints, numpy floats and a `None` all compare and serialise the same.
+        raw = self.self_filter_inflation_by_link
+        if raw is None:
+            raw = {}
+        if not isinstance(raw, Mapping):
+            raise AG3SConfigError(
+                "pointcloud.self_filter_inflation_by_link must be a mapping {link_or_group: metres}, "
+                f"got {type(raw).__name__}")
+        out: dict[str, float] = {}
+        for key, value in raw.items():
+            try:
+                out[str(key).strip()] = float(value)
+            except (TypeError, ValueError):
+                raise AG3SConfigError(
+                    f"pointcloud.self_filter_inflation_by_link[{key!r}] is not a number: {value!r}"
+                ) from None
+        object.__setattr__(self, "self_filter_inflation_by_link", out)
 
     def validate(self) -> None:
+        import math
+
+        # `self_filter_inflation` itself keeps its old (absent) validation: T19 must not change
+        # what an existing config is allowed to say.
+        for key, value in self.self_filter_inflation_by_link.items():
+            if not key:
+                raise AG3SConfigError("pointcloud.self_filter_inflation_by_link has an empty key")
+            if key == "all":
+                raise AG3SConfigError(
+                    "pointcloud.self_filter_inflation_by_link: 'all' is not accepted — the "
+                    "whole-body value is pointcloud.self_filter_inflation itself")
+            if not (math.isfinite(value) and value >= 0.0):
+                raise AG3SConfigError(
+                    f"pointcloud.self_filter_inflation_by_link[{key!r}] must be finite and >= 0, "
+                    f"got {value}")
+        radius = float(self.self_filter_target_guard_radius)
+        if not (math.isfinite(radius) and radius >= 0.0):
+            raise AG3SConfigError(
+                f"pointcloud.self_filter_target_guard_radius must be finite and >= 0 (0 = off), "
+                f"got {self.self_filter_target_guard_radius}")
         if self.voxel_size < 0.0:
             raise AG3SConfigError(f"pointcloud.voxel_size must be >= 0, got {self.voxel_size}")
         if self.max_points < 1:
@@ -549,8 +641,7 @@ class EsdfConfig:
     #: legacy 로 흐르는 것이 가장 나쁜 결과다.
     backend: str = "legacy"
     #: 미세 계층의 복셀 크기. `None`/0 이면 단일 계층. `backend: curobo` 에서만 쓰인다 —
-    #: numpy 구현은 계층이 하나다. 창의 중심은 지금 grounding 의 target 무게중심이고,
-    #: swept volume 으로 옮기는 짝 비교는 T3 에 있다.
+    #: numpy 구현은 계층이 하나다. 창을 **어디에** 놓는지는 `fine_window_placement` (T21).
     fine_voxel_size: float | None = None
     #: cuRobo TSDF 의 복셀 크기. `None`/0 이면 `voxel_size` 를 쓴다. ESDF 계층과 분리된 것은
     #: cuRobo 가 하나의 TSDF 에서 해상도가 다른 ESDF 를 여러 번 뽑기 때문이다.
@@ -599,7 +690,27 @@ class EsdfConfig:
     #: 걸쳐 남는 것을 줄이고, 절단면 쪽에서는 **지원면 상판의 seed 를 지키는 쪽**으로 작용한다.
     target_ball_pad_voxels: float = 1.0
 
+    #: 미세 창(과 target 없는 창)을 **어디에** 놓나 (T21, 지침 §5.1). cuRobo 의 ESDF 격자 shape 이
+    #: 계층마다 같아서 창의 **크기**는 고정이다 (128³ × `fine_voxel_size`) — 정하는 것은 위치다.
+    #:
+    #: | 값 | 규칙 |
+    #: |---|---|
+    #: | `"hand_swept"` (기본) | 권한 link 구가 **지금**(`q_now`) 있는 곳과 실행 구간 동안 지나갈 곳의 AABB (구마다 `반지름 + fine_window_margin + fine_window_pad_voxels × 미세 복셀`) ∪ manipulated 물체 AABB. 안 들어가면 지금 손 → 실행 구간 → 물체 순으로 담고 넘친 것을 `stats["window"]` 에 적는다. 손 정보가 없으면 물체 중심 |
+    #: | `"target_centroid"` | T21 이전 규칙 — manipulated(T20 전에는 attention target) 점 평균 |
+    #:
+    #: T14 seq 12–21 에서 창이 target 을 따라 crate 로 가자 손가락 질의점이 창 안에 든 chunk 가
+    #: 0/8 이었고, T17 접근 구간의 QP 행은 전부 20 mm coarse 계층이 답했다 (T24).
+    fine_window_placement: str = "hand_swept"
+    #: 권한 link 구 둘레에 창이 확보할 충돌 마진 (m). `None` 이면 `geometry.safety_margin` —
+    #: 숫자를 두 곳에 박지 않는다. 이 거리 안의 표면이 창 안에 있어야 미세 계층이 그것을 본다.
+    fine_window_margin: float | None = None
+    #: 보간·기울기 계산에 필요한 여유 (미세 복셀 단위). 삼선형 보간과 중심차분은 이웃 복셀을
+    #: 읽고, 창 경계 근처에서는 경계 거리 `b` 가 답한다 (`CuroboEsdfField.target_free_distance`).
+    #: 물체 AABB 에도 같은 여유를 준다.
+    fine_window_pad_voxels: float = 2.0
+
     UNKNOWN_POLICIES = ("free", "occupied")
+    FINE_WINDOW_PLACEMENTS = ("hand_swept", "target_centroid")
     EXCLUDE_TARGET = ("auto", "always", "never")
     BACKENDS = ("legacy", "curobo")
 
@@ -611,6 +722,17 @@ class EsdfConfig:
             raise AG3SConfigError(
                 "esdf.target_ball_quantile 는 (0, 1] 이어야 합니다 (1 = 최대값): "
                 f"{self.target_ball_quantile}")
+        if self.fine_window_placement not in self.FINE_WINDOW_PLACEMENTS:
+            raise AG3SConfigError(
+                f"esdf.fine_window_placement 는 {self.FINE_WINDOW_PLACEMENTS} 중 하나여야 합니다: "
+                f"{self.fine_window_placement!r}")
+        if self.fine_window_margin is not None and not float(self.fine_window_margin) >= 0.0:
+            raise AG3SConfigError(
+                "esdf.fine_window_margin 은 0 이상이거나 null(= geometry.safety_margin) 이어야 "
+                f"합니다: {self.fine_window_margin}")
+        if not float(self.fine_window_pad_voxels) >= 0.0:
+            raise AG3SConfigError(
+                f"esdf.fine_window_pad_voxels 는 0 이상이어야 합니다: {self.fine_window_pad_voxels}")
         if float(self.target_ball_pad_voxels) < 0.0:
             raise AG3SConfigError(
                 "esdf.target_ball_pad_voxels 는 0 이상이어야 합니다: "

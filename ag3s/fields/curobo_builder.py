@@ -83,12 +83,15 @@ from typing import Any, Optional, Sequence
 
 import numpy as np
 
+from benchmark.ag3s.config import EsdfConfig
 from benchmark.ag3s.fields.curobo_field import CuroboEsdfField, layer_from_arrays
 from benchmark.ag3s.fields.esdf import CameraDepth, VoxelGrid, default_bounds
 from benchmark.ag3s.fields.observation import probe_from_cameras
 from benchmark.ag3s.fields.provenance import FieldProvenance
 
-__all__ = ["CuroboFieldBuilder", "TargetBall", "ATTACHED_LABEL", "unpack_site_linear"]
+__all__ = ["CuroboFieldBuilder", "TargetBall", "ATTACHED_LABEL", "unpack_site_linear",
+           "FineWindowRequest", "FineWindow", "place_fine_window", "WINDOW_BASES",
+           "WINDOW_PLACEMENTS"]
 
 #: 쥔 물체에 붙이는 내부 라벨. 호출자의 `labelled_points` 이름과 겹치면 안 되므로 밑줄로 감싼다.
 ATTACHED_LABEL = "__attached__"
@@ -154,6 +157,257 @@ class TargetBall:
                 "radius_mm": round(float(self.radius) * 1000.0, 3),
                 "z_min_m": float(self.z_min),
                 **{k: v for k, v in self.provenance.items()}}
+
+
+#: `stats["window"]["basis"]` 의 값. 창이 **무엇을 근거로** 놓였나 (T21).
+#:
+#: | 값 | 뜻 |
+#: |---|---|
+#: | `hand_swept` | 권한 link 구의 swept AABB (지금 자세 + 실행 구간) ∪ manipulated AABB 가 창에 들어갔다 |
+#: | `manipulated` | 손 정보가 없거나 (`q_now`·모델·권한 link 없음) 옛 규칙(`target_centroid`)이다 — 물체 중심 |
+#: | `overflow` | 들어가지 않았다. 지금 손 → 실행 구간 → 물체 순으로 담고 **넘친 것을 기록**했다 |
+WINDOW_BASES = ("hand_swept", "manipulated", "overflow")
+#: `esdf.fine_window_placement` 의 선택지 — config 의 목록을 그대로 쓴다 (두 곳에 박지 않는다).
+WINDOW_PLACEMENTS = EsdfConfig.FINE_WINDOW_PLACEMENTS
+
+
+@dataclasses.dataclass(frozen=True)
+class FineWindowRequest:
+    """pipeline → builder: 미세 창을 **어디에** 놓을지 정하는 재료 (T21, 지침 §5.1).
+
+    배치 자체는 builder 가 한다 — 창의 크기(격자 shape × 미세 복셀)를 아는 쪽이 builder 이기 때문이다.
+    pipeline 은 "권한 있는 link 의 구가 지금 어디 있고 실행 창 동안 어디를 지나가는가" 와 "제외할
+    물체가 어디 있는가" 를 넘긴다. **둘은 다른 결정이다** — 창의 배치는 손이 정하고, 제외 기하
+    (`TargetBall`)는 manipulated 물체만 정한다. 창을 넓히는 것과 제외 영역을 넓히는 것을 섞지 않는다
+    (지침 §5.3-3).
+
+    | 필드 | 무엇 |
+    |---|---|
+    | `hand_centres` | `(T, S, 3)` — 권한 link 구 중심. **step 0 = `q_now`**, 그 뒤가 실행 구간 (우선순위 순서) |
+    | `hand_radii` | `(S,)` 구 반지름 |
+    | `hand_pad` | 구마다 반지름 **밖에** 더할 여유 (m) = 충돌 마진 + 보간·기울기 여유 |
+    | `manipulated_points` | 제외할 물체의 점군 (T20 manipulated 기하). 없으면 `None` |
+    | `manipulated_pad` | 물체 AABB 에 더할 보간 여유 (m) |
+    | `placement` | `hand_swept` (기본) · `target_centroid` (T21 이전 규칙 — 물체 점 평균) |
+    | `hand_source` | 기록용 — `q_now` / `q_now+path` / `none` |
+    | `links` | 기록용 — 권한 link 이름 |
+    """
+
+    hand_centres: Optional[np.ndarray] = None
+    hand_radii: Optional[np.ndarray] = None
+    hand_pad: float = 0.0
+    manipulated_points: Optional[np.ndarray] = None
+    manipulated_pad: float = 0.0
+    placement: str = "hand_swept"
+    hand_source: str = "none"
+    links: tuple = ()
+
+    def __post_init__(self) -> None:
+        if self.placement not in WINDOW_PLACEMENTS:
+            raise ValueError(f"placement 는 {WINDOW_PLACEMENTS} 중 하나여야 합니다: "
+                             f"{self.placement!r}")
+        hc = self.hand_centres
+        if hc is not None:
+            hc = np.asarray(hc, np.float64)
+            if hc.ndim == 2:
+                hc = hc[None]
+            if hc.ndim != 3 or hc.shape[-1] != 3:
+                raise ValueError(f"hand_centres 는 (T, S, 3) 이어야 합니다: {hc.shape}")
+            radii = np.asarray(self.hand_radii if self.hand_radii is not None
+                               else np.zeros(hc.shape[1]), np.float64).reshape(-1)
+            if radii.shape[0] != hc.shape[1]:
+                raise ValueError(f"hand_radii {radii.shape[0]} 개 ≠ 구 {hc.shape[1]} 개")
+            if hc.shape[0] == 0 or hc.shape[1] == 0:
+                hc, radii = None, None
+            object.__setattr__(self, "hand_centres", hc)
+            object.__setattr__(self, "hand_radii", radii)
+        mp = self.manipulated_points
+        if mp is not None:
+            mp = np.asarray(mp, np.float64).reshape(-1, 3)
+            object.__setattr__(self, "manipulated_points", mp if len(mp) else None)
+        if float(self.hand_pad) < 0.0 or float(self.manipulated_pad) < 0.0:
+            raise ValueError("pad 는 0 이상이어야 합니다")
+
+    @property
+    def has_hand(self) -> bool:
+        return self.hand_centres is not None
+
+    def step_boxes(self) -> list[tuple[np.ndarray, np.ndarray]]:
+        """step 마다 `(lo, hi)` — 구 중심 ± (반지름 + `hand_pad`). step 0 = 지금 자세."""
+        if self.hand_centres is None:
+            return []
+        grow = (self.hand_radii + float(self.hand_pad))[None, :, None]
+        lo = (self.hand_centres - grow).min(axis=1)
+        hi = (self.hand_centres + grow).max(axis=1)
+        return [(lo[t], hi[t]) for t in range(lo.shape[0])]
+
+    def manipulated_box(self) -> Optional[tuple[np.ndarray, np.ndarray]]:
+        if self.manipulated_points is None:
+            return None
+        p = self.manipulated_points
+        return (p.min(axis=0) - float(self.manipulated_pad),
+                p.max(axis=0) + float(self.manipulated_pad))
+
+
+@dataclasses.dataclass(frozen=True)
+class FineWindow:
+    """놓인 미세 창 한 개. `lower`·`upper` 는 **보간 격자 경계**다 — 첫/마지막 복셀 중심.
+
+    `CuroboEsdfField._covers` 와 같은 경계를 쓴다. 두 곳이 다르면 "창 안" 의 뜻이 갈라진다.
+    """
+
+    centre: np.ndarray
+    lower: np.ndarray
+    upper: np.ndarray
+    voxel_size: float
+    shape: tuple
+    basis: str
+    placement: str
+    #: 넘친 것 — `None` 이면 요구한 것을 다 담았다. `hand_now` · `hand_path` · `manipulated`.
+    overflow: Optional[str] = None
+    n_steps: int = 0
+    #: 패딩한 step AABB 가 창 안에 **통째로** 든 step 수 (앞에서부터 연속일 필요는 없다).
+    n_steps_covered: int = 0
+    manipulated_covered: Optional[bool] = None
+    required_lower: Optional[np.ndarray] = None
+    required_upper: Optional[np.ndarray] = None
+    hand_source: str = "none"
+    links: tuple = ()
+
+    def contains(self, points: np.ndarray) -> np.ndarray:
+        p = np.asarray(points, np.float64).reshape(-1, 3)
+        return np.all((p >= self.lower) & (p <= self.upper), axis=1)
+
+    def contains_box(self, lo: np.ndarray, hi: np.ndarray) -> bool:
+        tol = 1e-9
+        return bool(np.all(lo >= self.lower - tol) and np.all(hi <= self.upper + tol))
+
+    def summary(self) -> dict:
+        def _v(x):
+            return None if x is None else [round(float(v), 6) for v in np.asarray(x).reshape(-1)]
+        return {
+            "placement": self.placement,
+            "basis": self.basis,
+            "overflow": self.overflow,
+            "centre_m": _v(self.centre),
+            "lower_m": _v(self.lower),
+            "upper_m": _v(self.upper),
+            "extent_m": _v(np.asarray(self.upper) - np.asarray(self.lower)),
+            "voxel_size": float(self.voxel_size),
+            "shape": [int(v) for v in self.shape],
+            "required_lower_m": _v(self.required_lower),
+            "required_upper_m": _v(self.required_upper),
+            "hand_source": self.hand_source,
+            "links": [str(n) for n in self.links],
+            "n_steps": int(self.n_steps),
+            "n_steps_covered": int(self.n_steps_covered),
+            "manipulated_covered": self.manipulated_covered,
+        }
+
+
+def _union(boxes):
+    boxes = [b for b in boxes if b is not None]
+    if not boxes:
+        return None
+    return (np.min([b[0] for b in boxes], axis=0), np.max([b[1] for b in boxes], axis=0))
+
+
+def _cover_1d(s: float, length: float, lo: float, hi: float) -> float:
+    """창 `[s, s+length]` 가 구간 `[lo, hi]` 를 덮는 길이."""
+    return max(0.0, min(s + length, hi) - max(s, lo))
+
+
+def _slide_axis(must_lo: float, must_hi: float, length: float, wants) -> float:
+    """`[must_lo, must_hi]` 를 **반드시** 담으면서 `wants` (우선순위 순 구간 목록)를 사전식으로 가장
+    많이 덮는 창의 시작점. 덮는 길이는 `s` 에 대해 조각별 선형이므로 꺾이는 점만 보면 된다."""
+    s_min, s_max = must_hi - length, must_lo
+    mid = 0.5 * (must_lo + must_hi) - 0.5 * length
+    cands = {s_min, s_max, mid}
+    for lo, hi in wants:
+        cands.update((lo, hi - length, 0.5 * (lo + hi) - 0.5 * length))
+    best, best_key = None, None
+    for s in sorted(cands):
+        s = min(max(s, s_min), s_max)
+        key = tuple(round(_cover_1d(s, length, lo, hi), 12) for lo, hi in wants) \
+            + (-abs(s - mid),)
+        if best_key is None or key > best_key:
+            best, best_key = s, key
+    return float(best)
+
+
+def place_fine_window(request: FineWindowRequest, *, shape: Sequence[int],
+                      voxel_size: float) -> Optional[FineWindow]:
+    """미세 창 하나를 놓는다 (T21). **규칙은 하나다:**
+
+        창 = 손 swept AABB ∪ manipulated AABB 가 들어가면 그것 (가운데 정렬)
+             안 들어가면 **지금 손 → 실행 구간 (step 순) → 물체** 순으로 담고, 넘친 것을 기록
+
+    손 swept AABB 는 권한 link 구마다 `중심 ± (반지름 + hand_pad)` 의 합집합이다. `hand_pad` 는
+    충돌 마진 + 보간·기울기 여유(복셀 몇 칸)이고 pipeline 이 config 에서 정한다.
+
+    창의 보간 범위는 축마다 `(n − 1) × voxel` 이다 (첫/마지막 복셀 **중심** 사이 — `_covers` 와 같은
+    경계). cuRobo 의 ESDF 격자 shape 이 계층마다 같으므로 미세 창의 크기는 **고정**이다 (128³ ×
+    5 mm = 0.635 m 보간 범위) — 크기를 늘리는 대신 **어디에** 놓을지를 정하는 것이 이 함수다.
+
+    손 정보가 없으면 (`q_now`·모델·권한 link 중 하나라도 없으면) 물체 점 평균에 놓는다 —
+    `basis="manipulated"`. 물체도 없으면 `None` (미세 계층을 만들지 않는다 — T21 이전과 같다).
+    `placement="target_centroid"` 는 T21 이전 규칙 그대로다 (물체 점 평균, 손 무시).
+    """
+    shape = tuple(int(v) for v in shape)
+    vs = float(voxel_size)
+    length = (np.asarray(shape, np.float64) - 1.0) * vs
+    steps = request.step_boxes()
+    manip = request.manipulated_box()
+    tol = 1e-9
+
+    def fits(box) -> bool:
+        return box is not None and bool(np.all(box[1] - box[0] <= length + tol))
+
+    def make(centre, basis, overflow, required):
+        centre = np.asarray(centre, np.float64).reshape(3)
+        lower = centre - 0.5 * length
+        upper = centre + 0.5 * length
+        win = FineWindow(centre=centre, lower=lower, upper=upper, voxel_size=vs, shape=shape,
+                         basis=basis, placement=request.placement, overflow=overflow,
+                         n_steps=len(steps),
+                         required_lower=None if required is None else required[0],
+                         required_upper=None if required is None else required[1],
+                         hand_source=request.hand_source, links=tuple(request.links))
+        covered = sum(1 for lo, hi in steps if win.contains_box(lo, hi))
+        m_cov = None if manip is None else win.contains_box(*manip)
+        object.__setattr__(win, "n_steps_covered", int(covered))
+        object.__setattr__(win, "manipulated_covered", m_cov)
+        return win
+
+    if request.placement == "target_centroid" or not steps:
+        if request.manipulated_points is None:
+            return None
+        return make(request.manipulated_points.mean(axis=0), "manipulated", None, manip)
+
+    hand_all = _union(steps)
+    required = _union([hand_all, manip])
+    if fits(required):
+        return make(0.5 * (required[0] + required[1]), "hand_swept", None, required)
+
+    # 넘친다. 지금 손 → 실행 구간을 step 순으로, 들어가는 데까지 담는다.
+    k = 0
+    for t in range(1, len(steps) + 1):
+        if fits(_union(steps[:t])):
+            k = t
+        else:
+            break
+    if k == 0:
+        # 지금 자세의 손 하나도 안 들어간다 — 손 가운데에 놓고 넘친 것을 기록한다.
+        lo, hi = steps[0]
+        return make(0.5 * (lo + hi), "overflow", "hand_now", required)
+    must = _union(steps[:k])
+    overflow = "hand_path" if k < len(steps) else "manipulated"
+    wants = [hand_all] + ([manip] if manip is not None else [])
+    start = np.array([
+        _slide_axis(float(must[0][i]), float(must[1][i]), float(length[i]),
+                    [(float(w[0][i]), float(w[1][i])) for w in wants])
+        for i in range(3)])
+    return make(start + 0.5 * length, "overflow", overflow, required)
 
 
 @dataclasses.dataclass
@@ -272,7 +526,8 @@ class CuroboFieldBuilder:
                labelled_points: Optional[dict] = None,
                static_geometry: Optional[Sequence[Any]] = None,
                observed_at: Optional[float] = None,
-               frame_id: str = "", frame_index: int = -1) -> CuroboEsdfField:
+               frame_id: str = "", frame_index: int = -1,
+               fine_window: Optional["FineWindowRequest"] = None) -> CuroboEsdfField:
         """`EsdfBuilder.update` 와 같은 계약. 돌려주는 것은 `CuroboEsdfField` 다.
 
         `exclude_target` 는 **지원하지 않는다.** E1 이 그것을 폐기했다 — 필드는 익명이라
@@ -284,6 +539,10 @@ class CuroboFieldBuilder:
         보낸다. 본 계층(`layers`)은 한 복셀도 바뀌지 않으므로 권한 없는 질의점은 예전과 같은
         답을 받는다 — 익명으로 파내는 것과 이름으로 되묻는 것의 차이가 정확히 E1 이다.
         `None`(기본)이면 그 계층을 만들지 않고 비용도 0 이다.
+
+        `fine_window` (T21) 는 미세 창(과 target 없는 창)을 **어디에** 놓을지의 재료다 —
+        `place_fine_window` 가 권한 link 의 swept AABB 와 manipulated AABB 로 놓는다. `None` 이면
+        T21 이전 규칙(`target_points` 평균)이다. 어느 쪽이든 결과는 `stats["window"]` 에 실린다.
         """
         # **인자 검증을 torch 앞에 둔다.** 이 계약은 CUDA 를 필요로 하지 않으므로, torch 가 없는
         # 프로세스(`.venv-ag3s`)의 테스트가 이것을 실제로 받아 볼 수 있어야 한다 (T7b 의
@@ -316,14 +575,24 @@ class CuroboFieldBuilder:
 
         per_camera = self._integrate(mapper, cameras, dev)
 
-        # 미세 계층 창의 중심. 지금은 **grounding 의 target 무게중심**이다 — 기존
-        # `build_rollout_fields.py:110` 과 같은 규칙이라 두 backend 를 같은 조건에서 견준다.
-        # 계획된 방향은 action chunk 의 swept volume 이고, 짝 비교는 T3 에서 한다
-        # (F11 — 파지 순간 attention 이 목적지로 넘어가 창이 따라가는 것 — 과 같은 자리).
+        # 미세 계층 창의 배치 (T21, 지침 §5.1). **창의 배치는 손이 정하고, 제외할 물체는
+        # manipulated 가 정한다** — 둘을 한 점(attention centroid)에 묶지 않는다. T14 seq 12–21 에서
+        # 창이 target 을 따라 crate 로 가자 손가락 질의점이 창 안에 든 chunk 가 0/8 이었고, T17
+        # 접근 구간의 QP 행은 전부 20 mm coarse 계층이 답했다 (T24).
+        #
+        # `fine_window` 가 없으면 T21 이전 규칙 — target 점 평균 — 이다 (직접 호출자, legacy 비교).
         tgt = (None if target_points is None
                else np.asarray(target_points, np.float64).reshape(-1, 3))
-        self._fine_centre = (None if tgt is None or not len(tgt)
-                             else tgt.mean(axis=0))
+        request = fine_window if fine_window is not None else FineWindowRequest(
+            manipulated_points=tgt, placement="target_centroid")
+        window = None
+        if self.fine_voxel:
+            # 격자 shape 은 cuRobo 가 정한다 (`esdf_grid_shape`, 계층마다 같다) — 그래서 창의
+            # **크기**는 고정이고 이 함수가 정하는 것은 위치뿐이다.
+            window = place_fine_window(request, shape=tuple(int(v) for v in itg._site_index.shape),
+                                       voxel_size=self.fine_voxel)
+        self._fine_window = window
+        self._fine_centre = None if window is None else window.centre
 
         # 라벨 씨앗. 쥔 물체는 내부 라벨로 함께 들고 간다 — seed 제외에도, 진단에도 쓴다.
         seeds: dict[str, np.ndarray] = {}
@@ -397,6 +666,12 @@ class CuroboFieldBuilder:
         stats = self._stats(tiers, label_names, per_camera,
                             n_attached=0 if attached is None else int(len(attached)),
                             n_static=len(static_geometry or ()))
+        # **창이 어디에, 왜 놓였나** (T21 §3). 미세 계층이 없으면 `basis=None` 으로 싣는다 —
+        # 키가 프레임마다 있어야 "창이 없었다" 와 "기록이 없다" 가 구별된다. 권한 link 질의점의
+        # 계층별 수는 필드가 다 만들어진 뒤 pipeline 이 더한다 (`authorized_query`).
+        stats["window"] = (window.summary() if window is not None
+                           else {"placement": request.placement, "basis": None,
+                                 "overflow": None, "hand_source": request.hand_source})
         # **target 없는 계층은 기록에 남는다.** 그 계층이 있었는지 없었는지 모르는 기록은
         # 정책이 실제로 걸린 프레임인지 알 방법이 없다 — 키를 정책이 꺼져 있을 때도 싣는다.
         stats["target_free"] = {
@@ -464,9 +739,9 @@ class CuroboFieldBuilder:
                       and len(np.asarray(target_points, np.float64).reshape(-1, 3)) > 0)
         if not has_target:
             raise ValueError(
-                "target_free_points 가 왔는데 target_points 가 비었습니다. 미세 창의 중심이 "
-                "target 무게중심이므로 계층을 놓을 자리가 없습니다 — 두 인자는 같은 프레임의 "
-                "같은 target 에서 와야 합니다")
+                "target_free_points 가 왔는데 target_points 가 비었습니다. target 없는 계층은 "
+                "manipulated 물체를 빼는 계층이므로 그 물체가 없으면 뺄 것이 없습니다 — 두 인자는 "
+                "같은 프레임의 같은 manipulated 기하에서 와야 합니다")
 
     def _integrate(self, mapper, cameras, dev) -> dict:
         import torch

@@ -36,6 +36,8 @@ pointcloud:
   depth_max: 3.0
   depth_scale: 1.0
   self_filter_inflation: 0.05  # cuRobo RobotSegmenter distance_threshold default; see config.py
+  self_filter_inflation_by_link: {}  # {link_or_group: m}; arms < gripper < link. {} = one global value (T19)
+  self_filter_target_guard_radius: 0.0  # m around the held target centroid filtered at inflation 0; 0 = off (T19)
 
 support_surface:
   enabled: true

@@ -1,0 +1,6672 @@
+{
+ "step": "T19",
+ "date": "2026-09-28",
+ "runs": [
+  {
+   "id": "baseline",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-ag3s/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T19/baseline.json",
+   "stdout_log": "outputs/verify/T19/baseline.log",
+   "code": "working tree (dirty)"
+  },
+  {
+   "id": "baseline_HEAD",
+   "command": "same, PYTHONPATH=<scratchpad>/head_ws:/mnt/dev/work, cwd=<scratchpad>/head_ws, benchmark = `git archive HEAD` (no uncommitted changes)",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T19/baseline_HEAD.json",
+   "stdout_log": "outputs/verify/T19/baseline_HEAD.log",
+   "code": "benchmark HEAD 368d723"
+  },
+  {
+   "id": "selffilter_replay",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python outputs/verify/T19/measure_t19.py",
+   "venv": "src/openpi/.venv",
+   "raw_output": "benchmark/ag3s/docs/handoff/T19.verify.partial.json (1 line per setting x seq x camera)",
+   "stdout_log": "outputs/verify/T19/measure_t19.log",
+   "code_path": "benchmark.ag3s.stages.robot_filter.filter_robot_points -> self_filter_mask -> robot_sphere_mask; inflation from resolve_self_filter_inflation(PointCloudConfig)",
+   "robot_model": "load_rby1(extra_capsules=gap_filling_capsules(model_transport), fixed_joint_values={head_0:0, head_1:0}) — 218 spheres",
+   "scene": "MuJoCo model_transport.xml, qpos from outputs/live_test/20260928_t14/execute_ep1807/frames.jsonl planning seq 10-14; ground truth = TransportScene.capture(cam).body_ids; every valid pixel back-projected (no downsampling)"
+  },
+  {
+   "id": "attribution",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python outputs/verify/T19/attribute_t19.py",
+   "venv": "src/openpi/.venv",
+   "raw_output": "outputs/verify/T19/attribution.json",
+   "stdout_log": "outputs/verify/T19/attribute_t19.log",
+   "what": "setting B: apple px removed per link (robot_sphere_mask called on that link's spheres only) and apple px inside a bare (inflation 0) sphere"
+  },
+  {
+   "id": "figures",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python outputs/verify/T19/fig_t19.py",
+   "venv": "src/openpi/.venv"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "368d723",
+  "dirty_files": [
+   "ag3s/config.py",
+   "ag3s/configs/default.yaml",
+   "ag3s/configs/rby1_three_camera.yaml",
+   "ag3s/constraints/to_adapter.py",
+   "ag3s/experiments/sources/constraint_record.py",
+   "ag3s/runtime/frame_record.py",
+   "ag3s/runtime/multiview.py",
+   "ag3s/runtime/pipeline.py",
+   "ag3s/stages/robot_filter.py",
+   "ag3s/stages/target_grounding.py",
+   "ag3s/types.py",
+   "trajopt/README.md",
+   "trajopt/client.py",
+   "trajopt/config.py",
+   "trajopt/problem.py",
+   "trajopt/refiner.py",
+   "trajopt/safe_policy.py",
+   "trajopt/serve_safe.py",
+   "trajopt/sqp.py",
+   "trajopt/wire.py"
+  ]
+ },
+ "numbers": {
+  "settings": {
+   "A": {
+    "self_filter_inflation_by_link": {},
+    "self_filter_target_guard_radius": 0.0
+   },
+   "B": {
+    "self_filter_inflation_by_link": {
+     "gripper": 0.01
+    },
+    "self_filter_target_guard_radius": 0.0,
+    "other_links": 0.05
+   },
+   "C": {
+    "self_filter_inflation_by_link": {
+     "gripper": 0.01
+    },
+    "self_filter_target_guard_radius": 0.06,
+    "guard_centre": "chunk_{seq-1}.npz target_centroid (server record)"
+   },
+   "C2": {
+    "self_filter_inflation_by_link": {
+     "gripper": 0.01
+    },
+    "self_filter_target_guard_radius": 0.06,
+    "guard_centre": "chunk_{seq-2}.npz target_centroid (supplementary, not requested)"
+   },
+   "D": {
+    "self_filter_inflation_by_link": {
+     "gripper": 0.01
+    },
+    "self_filter_target_guard_radius": 0.06,
+    "guard_centre": "object_poses.apple.pos"
+   }
+  },
+  "gripper_group_links": [
+   "ee_left",
+   "ee_right",
+   "ee_finger_l1",
+   "ee_finger_l2",
+   "ee_finger_r1",
+   "ee_finger_r2"
+  ],
+  "poses": {
+   "seq10": 72,
+   "seq11": 80,
+   "seq12": 88,
+   "seq13": 96,
+   "seq14": 104
+  },
+  "apple_pos_m": [
+   0.5634585736517317,
+   0.32049040612047036,
+   0.8500008763818973
+  ],
+  "table": {
+   "A": {
+    "seq10_t72": {
+     "zed_left": {
+      "apple_px_visible": 419,
+      "apple_px_passed": 419,
+      "robot_px_visible": 66819,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3824,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4142,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8174,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 679,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 193,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 466,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 773,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 103,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 8605,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12618,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 2303,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 4623,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 342,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 466,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 150,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 292,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 76,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 613,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 194,
+       "apple": 419
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 238630,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 4667,
+      "apple_px_passed": 4667,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 5502,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 835,
+       "apple": 4667
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 290965,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287405,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     }
+    },
+    "seq11_t80": {
+     "zed_left": {
+      "apple_px_visible": 417,
+      "apple_px_passed": 114,
+      "robot_px_visible": 64266,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3807,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4170,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8166,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 536,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 685,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 201,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 460,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 770,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 104,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 7691,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12368,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1893,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3940,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 268,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 421,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 127,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 215,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 475,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 55,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 309,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 114
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 240803,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 5259,
+      "apple_px_passed": 607,
+      "robot_px_visible": 16028,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 4991,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 4991,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 1593,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 986,
+       "apple": 607
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 285460,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287285,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     }
+    },
+    "seq12_t88": {
+     "zed_left": {
+      "apple_px_visible": 397,
+      "apple_px_passed": 6,
+      "robot_px_visible": 63098,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3781,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4186,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8142,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 672,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 198,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 467,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 777,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 106,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 7635,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12042,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1636,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3573,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 234,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 403,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 115,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 182,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 449,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 48,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 201,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 6
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 241867,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 4531,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16090,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5022,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5022,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 1069,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 1069
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 283838,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16039,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4997,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287116,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     }
+    },
+    "seq13_t96": {
+     "zed_left": {
+      "apple_px_visible": 378,
+      "apple_px_passed": 0,
+      "robot_px_visible": 63034,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17913,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3780,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4208,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8132,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 546,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 678,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 198,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 464,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 775,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 106,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 8768,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 11493,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1358,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3295,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 210,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 386,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 109,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 152,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 421,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 42,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 171,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 171
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 241880,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 2497,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16086,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5020,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5020,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 1271,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 1271
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 285827,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287003,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     }
+    },
+    "seq14_t104": {
+     "zed_left": {
+      "apple_px_visible": 376,
+      "apple_px_passed": 0,
+      "robot_px_visible": 63327,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3756,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4201,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8120,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 544,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 678,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 202,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 465,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 773,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 104,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 10110,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 10928,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1161,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3097,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 200,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 379,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 105,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 141,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 409,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 40,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 241248,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 792,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16068,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5011,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5011,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 282026,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16026,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4990,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4990,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 286929,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     }
+    }
+   },
+   "B": {
+    "seq10_t72": {
+     "zed_left": {
+      "apple_px_visible": 419,
+      "apple_px_passed": 419,
+      "robot_px_visible": 66819,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3824,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4142,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8174,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 679,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 193,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 466,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 773,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 103,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 8605,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12618,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 2303,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 4623,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 342,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 466,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 150,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 292,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 76,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 613,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 194,
+       "apple": 419
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 238643,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 4667,
+      "apple_px_passed": 4667,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 5502,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 835,
+       "apple": 4667
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 291162,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287405,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     }
+    },
+    "seq11_t80": {
+     "zed_left": {
+      "apple_px_visible": 417,
+      "apple_px_passed": 114,
+      "robot_px_visible": 64266,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3807,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4170,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8166,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 536,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 685,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 201,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 460,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 770,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 104,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 7691,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12368,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1893,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3940,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 268,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 421,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 127,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 215,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 475,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 55,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 309,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 114
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 240882,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 5259,
+      "apple_px_passed": 607,
+      "robot_px_visible": 16028,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 4991,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 4991,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 1593,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 986,
+       "apple": 607
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 286344,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287285,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     }
+    },
+    "seq12_t88": {
+     "zed_left": {
+      "apple_px_visible": 397,
+      "apple_px_passed": 6,
+      "robot_px_visible": 63098,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3781,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4186,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8142,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 672,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 198,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 467,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 777,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 106,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 7635,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12042,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1636,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3573,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 234,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 403,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 115,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 182,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 449,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 48,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 201,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 6
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 241913,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 4531,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16090,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5022,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5022,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 1069,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 1069
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 284739,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16039,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4997,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287116,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     }
+    },
+    "seq13_t96": {
+     "zed_left": {
+      "apple_px_visible": 378,
+      "apple_px_passed": 0,
+      "robot_px_visible": 63034,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17913,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3780,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4208,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8132,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 546,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 678,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 198,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 464,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 775,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 106,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 8768,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 11493,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1358,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3295,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 210,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 386,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 109,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 152,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 421,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 42,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 171,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 171
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 241916,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 2497,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16086,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5020,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5020,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 1271,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 1271
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 286748,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287003,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     }
+    },
+    "seq14_t104": {
+     "zed_left": {
+      "apple_px_visible": 376,
+      "apple_px_passed": 0,
+      "robot_px_visible": 63327,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3756,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4201,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8120,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 544,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 678,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 202,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 465,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 773,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 104,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 10110,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 10928,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1161,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3097,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 200,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 379,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 105,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 141,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 409,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 40,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 241278,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 792,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16068,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5011,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5011,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 282402,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16026,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4990,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4990,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 286929,
+      "guard_centre": null,
+      "guard_source": null,
+      "guard_centre_to_apple_mm": null,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": false
+     }
+    }
+   },
+   "C": {
+    "seq10_t72": {
+     "zed_left": {
+      "apple_px_visible": 419,
+      "apple_px_passed": 419,
+      "robot_px_visible": 66819,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3824,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4142,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8174,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 679,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 193,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 466,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 773,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 103,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 8605,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12618,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 2303,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 4623,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 342,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 466,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 150,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 292,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 76,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 613,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 194,
+       "apple": 419
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 238643,
+      "guard_centre": [
+       0.565093612887019,
+       0.3186602421375351,
+       0.8669601702520523
+      ],
+      "guard_source": "chunk_00009.target_centroid",
+      "guard_centre_to_apple_mm": 17.133104402885404,
+      "guard_chunk_target_n_points": 119,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 4667,
+      "apple_px_passed": 4667,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 5502,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 835,
+       "apple": 4667
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 291162,
+      "guard_centre": [
+       0.565093612887019,
+       0.3186602421375351,
+       0.8669601702520523
+      ],
+      "guard_source": "chunk_00009.target_centroid",
+      "guard_centre_to_apple_mm": 17.133104402885404,
+      "guard_chunk_target_n_points": 119,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287405,
+      "guard_centre": [
+       0.565093612887019,
+       0.3186602421375351,
+       0.8669601702520523
+      ],
+      "guard_source": "chunk_00009.target_centroid",
+      "guard_centre_to_apple_mm": 17.133104402885404,
+      "guard_chunk_target_n_points": 119,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq11_t80": {
+     "zed_left": {
+      "apple_px_visible": 417,
+      "apple_px_passed": 417,
+      "robot_px_visible": 64266,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3807,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4170,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8166,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 536,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 685,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 201,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 460,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 770,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 104,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 7691,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12368,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1893,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3940,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 268,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 421,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 127,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 215,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 475,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 55,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 612,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 417
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 241185,
+      "guard_centre": [
+       0.5588131343448919,
+       0.3078364190634846,
+       0.8530377916031825
+      ],
+      "guard_source": "chunk_00010.target_centroid",
+      "guard_centre_to_apple_mm": 13.827982261884674,
+      "guard_chunk_target_n_points": 44,
+      "n_guard_protected": 303,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 5259,
+      "apple_px_passed": 5259,
+      "robot_px_visible": 16028,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 4991,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 4991,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 6245,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 986,
+       "apple": 5259
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 290996,
+      "guard_centre": [
+       0.5588131343448919,
+       0.3078364190634846,
+       0.8530377916031825
+      ],
+      "guard_source": "chunk_00010.target_centroid",
+      "guard_centre_to_apple_mm": 13.827982261884674,
+      "guard_chunk_target_n_points": 44,
+      "n_guard_protected": 4652,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287285,
+      "guard_centre": [
+       0.5588131343448919,
+       0.3078364190634846,
+       0.8530377916031825
+      ],
+      "guard_source": "chunk_00010.target_centroid",
+      "guard_centre_to_apple_mm": 13.827982261884674,
+      "guard_chunk_target_n_points": 44,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq12_t88": {
+     "zed_left": {
+      "apple_px_visible": 397,
+      "apple_px_passed": 6,
+      "robot_px_visible": 63098,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3781,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4186,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8142,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 672,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 198,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 467,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 777,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 106,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 7635,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12042,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1636,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3573,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 234,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 403,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 115,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 182,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 449,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 48,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 201,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 6
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 241913,
+      "guard_centre": [
+       0.5299989469436033,
+       -0.02623850127836242,
+       0.903022704740203
+      ],
+      "guard_source": "chunk_00011.target_centroid",
+      "guard_centre_to_apple_mm": 352.34596042604034,
+      "guard_chunk_target_n_points": 1780,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 4531,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16090,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5022,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5022,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 1069,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 1069
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 284739,
+      "guard_centre": [
+       0.5299989469436033,
+       -0.02623850127836242,
+       0.903022704740203
+      ],
+      "guard_source": "chunk_00011.target_centroid",
+      "guard_centre_to_apple_mm": 352.34596042604034,
+      "guard_chunk_target_n_points": 1780,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16039,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4997,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287116,
+      "guard_centre": [
+       0.5299989469436033,
+       -0.02623850127836242,
+       0.903022704740203
+      ],
+      "guard_source": "chunk_00011.target_centroid",
+      "guard_centre_to_apple_mm": 352.34596042604034,
+      "guard_chunk_target_n_points": 1780,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq13_t96": {
+     "zed_left": {
+      "apple_px_visible": 378,
+      "apple_px_passed": 0,
+      "robot_px_visible": 63034,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17913,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3780,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4208,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8132,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 546,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 678,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 198,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 464,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 775,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 106,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 8768,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 11493,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1358,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3295,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 210,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 386,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 109,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 152,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 421,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 42,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 171,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 171
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 241916,
+      "guard_centre": [
+       0.5292257056059124,
+       -0.028019224365005844,
+       0.9037738975073187
+      ],
+      "guard_source": "chunk_00012.target_centroid",
+      "guard_centre_to_apple_mm": 354.2913908024307,
+      "guard_chunk_target_n_points": 1740,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 2497,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16086,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5020,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5020,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 1271,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 1271
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 286748,
+      "guard_centre": [
+       0.5292257056059124,
+       -0.028019224365005844,
+       0.9037738975073187
+      ],
+      "guard_source": "chunk_00012.target_centroid",
+      "guard_centre_to_apple_mm": 354.2913908024307,
+      "guard_chunk_target_n_points": 1740,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287003,
+      "guard_centre": [
+       0.5292257056059124,
+       -0.028019224365005844,
+       0.9037738975073187
+      ],
+      "guard_source": "chunk_00012.target_centroid",
+      "guard_centre_to_apple_mm": 354.2913908024307,
+      "guard_chunk_target_n_points": 1740,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq14_t104": {
+     "zed_left": {
+      "apple_px_visible": 376,
+      "apple_px_passed": 0,
+      "robot_px_visible": 63327,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3756,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4201,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8120,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 544,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 678,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 202,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 465,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 773,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 104,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 10110,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 10928,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1161,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3097,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 200,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 379,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 105,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 141,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 409,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 40,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 241278,
+      "guard_centre": [
+       0.5286920087971637,
+       -0.028942241415098567,
+       0.9037132097604387
+      ],
+      "guard_source": "chunk_00013.target_centroid",
+      "guard_centre_to_apple_mm": 355.24499270124124,
+      "guard_chunk_target_n_points": 1735,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 792,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16068,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5011,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5011,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 282402,
+      "guard_centre": [
+       0.5286920087971637,
+       -0.028942241415098567,
+       0.9037132097604387
+      ],
+      "guard_source": "chunk_00013.target_centroid",
+      "guard_centre_to_apple_mm": 355.24499270124124,
+      "guard_chunk_target_n_points": 1735,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16026,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4990,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4990,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 286929,
+      "guard_centre": [
+       0.5286920087971637,
+       -0.028942241415098567,
+       0.9037132097604387
+      ],
+      "guard_source": "chunk_00013.target_centroid",
+      "guard_centre_to_apple_mm": 355.24499270124124,
+      "guard_chunk_target_n_points": 1735,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    }
+   },
+   "C2": {
+    "seq10_t72": {
+     "zed_left": {
+      "apple_px_visible": 419,
+      "apple_px_passed": 419,
+      "robot_px_visible": 66819,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3824,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4142,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8174,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 679,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 193,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 466,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 773,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 103,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 8605,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12618,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 2303,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 4623,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 342,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 466,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 150,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 292,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 76,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 613,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 194,
+       "apple": 419
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 238643,
+      "guard_centre": [
+       0.5648373461225266,
+       0.3192606657451172,
+       0.8670041746833339
+      ],
+      "guard_source": "chunk_00008.target_centroid",
+      "guard_centre_to_apple_mm": 17.10099672702909,
+      "guard_chunk_target_n_points": 122,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 4667,
+      "apple_px_passed": 4667,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 5502,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 835,
+       "apple": 4667
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 291162,
+      "guard_centre": [
+       0.5648373461225266,
+       0.3192606657451172,
+       0.8670041746833339
+      ],
+      "guard_source": "chunk_00008.target_centroid",
+      "guard_centre_to_apple_mm": 17.10099672702909,
+      "guard_chunk_target_n_points": 122,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287405,
+      "guard_centre": [
+       0.5648373461225266,
+       0.3192606657451172,
+       0.8670041746833339
+      ],
+      "guard_source": "chunk_00008.target_centroid",
+      "guard_centre_to_apple_mm": 17.10099672702909,
+      "guard_chunk_target_n_points": 122,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq11_t80": {
+     "zed_left": {
+      "apple_px_visible": 417,
+      "apple_px_passed": 417,
+      "robot_px_visible": 64266,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3807,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4170,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8166,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 536,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 685,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 201,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 460,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 770,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 104,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 7691,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12368,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1893,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3940,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 268,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 421,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 127,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 215,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 475,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 55,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 612,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 417
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 241185,
+      "guard_centre": [
+       0.565093612887019,
+       0.3186602421375351,
+       0.8669601702520523
+      ],
+      "guard_source": "chunk_00009.target_centroid",
+      "guard_centre_to_apple_mm": 17.134588223155657,
+      "guard_chunk_target_n_points": 119,
+      "n_guard_protected": 303,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 5259,
+      "apple_px_passed": 5259,
+      "robot_px_visible": 16028,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 4991,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 4991,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 6245,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 986,
+       "apple": 5259
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 290996,
+      "guard_centre": [
+       0.565093612887019,
+       0.3186602421375351,
+       0.8669601702520523
+      ],
+      "guard_source": "chunk_00009.target_centroid",
+      "guard_centre_to_apple_mm": 17.134588223155657,
+      "guard_chunk_target_n_points": 119,
+      "n_guard_protected": 4652,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287285,
+      "guard_centre": [
+       0.565093612887019,
+       0.3186602421375351,
+       0.8669601702520523
+      ],
+      "guard_source": "chunk_00009.target_centroid",
+      "guard_centre_to_apple_mm": 17.134588223155657,
+      "guard_chunk_target_n_points": 119,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq12_t88": {
+     "zed_left": {
+      "apple_px_visible": 397,
+      "apple_px_passed": 394,
+      "robot_px_visible": 63098,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3781,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4186,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8142,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 672,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 198,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 467,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 777,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 106,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 7635,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12042,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1636,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3573,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 234,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 403,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 115,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 182,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 449,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 48,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 589,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 394
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 242301,
+      "guard_centre": [
+       0.5588131343448919,
+       0.3078364190634846,
+       0.8530377916031825
+      ],
+      "guard_source": "chunk_00010.target_centroid",
+      "guard_centre_to_apple_mm": 13.816065248602554,
+      "guard_chunk_target_n_points": 44,
+      "n_guard_protected": 388,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 4531,
+      "apple_px_passed": 4298,
+      "robot_px_visible": 16090,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5022,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5022,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 5367,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 1069,
+       "apple": 4298
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 289037,
+      "guard_centre": [
+       0.5588131343448919,
+       0.3078364190634846,
+       0.8530377916031825
+      ],
+      "guard_source": "chunk_00010.target_centroid",
+      "guard_centre_to_apple_mm": 13.816065248602554,
+      "guard_chunk_target_n_points": 44,
+      "n_guard_protected": 4298,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16039,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4997,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287116,
+      "guard_centre": [
+       0.5588131343448919,
+       0.3078364190634846,
+       0.8530377916031825
+      ],
+      "guard_source": "chunk_00010.target_centroid",
+      "guard_centre_to_apple_mm": 13.816065248602554,
+      "guard_chunk_target_n_points": 44,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq13_t96": {
+     "zed_left": {
+      "apple_px_visible": 378,
+      "apple_px_passed": 0,
+      "robot_px_visible": 63034,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17913,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3780,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4208,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8132,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 546,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 678,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 198,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 464,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 775,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 106,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 8768,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 11493,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1358,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3295,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 210,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 386,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 109,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 152,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 421,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 42,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 171,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 171
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 241916,
+      "guard_centre": [
+       0.5299989469436033,
+       -0.02623850127836242,
+       0.903022704740203
+      ],
+      "guard_source": "chunk_00011.target_centroid",
+      "guard_centre_to_apple_mm": 352.3518073288305,
+      "guard_chunk_target_n_points": 1780,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 2497,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16086,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5020,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5020,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 1271,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 1271
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 286748,
+      "guard_centre": [
+       0.5299989469436033,
+       -0.02623850127836242,
+       0.903022704740203
+      ],
+      "guard_source": "chunk_00011.target_centroid",
+      "guard_centre_to_apple_mm": 352.3518073288305,
+      "guard_chunk_target_n_points": 1780,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287003,
+      "guard_centre": [
+       0.5299989469436033,
+       -0.02623850127836242,
+       0.903022704740203
+      ],
+      "guard_source": "chunk_00011.target_centroid",
+      "guard_centre_to_apple_mm": 352.3518073288305,
+      "guard_chunk_target_n_points": 1780,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq14_t104": {
+     "zed_left": {
+      "apple_px_visible": 376,
+      "apple_px_passed": 0,
+      "robot_px_visible": 63327,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3756,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4201,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8120,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 544,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 678,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 202,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 465,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 773,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 104,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 10110,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 10928,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1161,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3097,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 200,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 379,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 105,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 141,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 409,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 40,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 241278,
+      "guard_centre": [
+       0.5292257056059124,
+       -0.028019224365005844,
+       0.9037738975073187
+      ],
+      "guard_source": "chunk_00012.target_centroid",
+      "guard_centre_to_apple_mm": 354.29434756046146,
+      "guard_chunk_target_n_points": 1740,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 792,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16068,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5011,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5011,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 282402,
+      "guard_centre": [
+       0.5292257056059124,
+       -0.028019224365005844,
+       0.9037738975073187
+      ],
+      "guard_source": "chunk_00012.target_centroid",
+      "guard_centre_to_apple_mm": 354.29434756046146,
+      "guard_chunk_target_n_points": 1740,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16026,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4990,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4990,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 286929,
+      "guard_centre": [
+       0.5292257056059124,
+       -0.028019224365005844,
+       0.9037738975073187
+      ],
+      "guard_source": "chunk_00012.target_centroid",
+      "guard_centre_to_apple_mm": 354.29434756046146,
+      "guard_chunk_target_n_points": 1740,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    }
+   },
+   "D": {
+    "seq10_t72": {
+     "zed_left": {
+      "apple_px_visible": 419,
+      "apple_px_passed": 419,
+      "robot_px_visible": 66819,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3824,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4142,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8174,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 679,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 193,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 466,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 773,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 103,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 8605,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12618,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 2303,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 4623,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 342,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 466,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 150,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 292,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 76,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 613,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 194,
+       "apple": 419
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 238643,
+      "guard_centre": [
+       0.5634772707422185,
+       0.32048511146145126,
+       0.8500013803040123
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 4667,
+      "apple_px_passed": 4667,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 5502,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 835,
+       "apple": 4667
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 291162,
+      "guard_centre": [
+       0.5634772707422185,
+       0.32048511146145126,
+       0.8500013803040123
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287405,
+      "guard_centre": [
+       0.5634772707422185,
+       0.32048511146145126,
+       0.8500013803040123
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq11_t80": {
+     "zed_left": {
+      "apple_px_visible": 417,
+      "apple_px_passed": 417,
+      "robot_px_visible": 64266,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3807,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4170,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8166,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 536,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 685,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 201,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 460,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 770,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 104,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 7691,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12368,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1893,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3940,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 268,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 421,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 127,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 215,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 475,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 55,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 612,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 417
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 241185,
+      "guard_centre": [
+       0.5634753282331284,
+       0.3204956519308796,
+       0.8500012039142538
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 303,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 5259,
+      "apple_px_passed": 5259,
+      "robot_px_visible": 16028,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 4991,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 4991,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 6245,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 986,
+       "apple": 5259
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 290996,
+      "guard_centre": [
+       0.5634753282331284,
+       0.3204956519308796,
+       0.8500012039142538
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 4652,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287285,
+      "guard_centre": [
+       0.5634753282331284,
+       0.3204956519308796,
+       0.8500012039142538
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq12_t88": {
+     "zed_left": {
+      "apple_px_visible": 397,
+      "apple_px_passed": 394,
+      "robot_px_visible": 63098,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3781,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4186,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8142,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 538,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 672,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 198,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 467,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 777,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 106,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 7635,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 12042,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1636,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3573,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 234,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 403,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 115,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 182,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 449,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 48,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 589,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 394
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 242301,
+      "guard_centre": [
+       0.5634748496503463,
+       0.3204831775335397,
+       0.8500027348385365
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 388,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 4531,
+      "apple_px_passed": 4298,
+      "robot_px_visible": 16090,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5022,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5022,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 5367,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 1069,
+       "apple": 4298
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 289037,
+      "guard_centre": [
+       0.5634748496503463,
+       0.3204831775335397,
+       0.8500027348385365
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 4298,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16039,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4997,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287116,
+      "guard_centre": [
+       0.5634748496503463,
+       0.3204831775335397,
+       0.8500027348385365
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq13_t96": {
+     "zed_left": {
+      "apple_px_visible": 378,
+      "apple_px_passed": 241,
+      "robot_px_visible": 63034,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17913,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3780,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4208,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8132,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 546,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 678,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 198,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 464,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 775,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 106,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 8768,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 11493,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1358,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3295,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 210,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 386,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 109,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 152,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 421,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 42,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 436,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 241
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 242181,
+      "guard_centre": [
+       0.5634585736517317,
+       0.32049040612047036,
+       0.8500008763818973
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 265,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 2497,
+      "apple_px_passed": 1963,
+      "robot_px_visible": 16086,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5020,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5020,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 3234,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 1271,
+       "apple": 1963
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 288711,
+      "guard_centre": [
+       0.5634585736517317,
+       0.32049040612047036,
+       0.8500008763818973
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 1963,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16038,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4996,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 287003,
+      "guard_centre": [
+       0.5634585736517317,
+       0.32049040612047036,
+       0.8500008763818973
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    },
+    "seq14_t104": {
+     "zed_left": {
+      "apple_px_visible": 376,
+      "apple_px_passed": 177,
+      "robot_px_visible": 63327,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "link_torso_5": {
+        "visible": 17914,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_3": {
+        "visible": 3756,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_4": {
+        "visible": 4201,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_5": {
+        "visible": 8120,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_right_arm_6": {
+        "visible": 544,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_r": {
+        "visible": 678,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_r": {
+        "visible": 202,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_R": {
+        "visible": 465,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_R": {
+        "visible": 773,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 104,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_2": {
+        "visible": 10110,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_3": {
+        "visible": 10928,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_4": {
+        "visible": 1161,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_5": {
+        "visible": 3097,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "link_left_arm_6": {
+        "visible": 200,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "wrist_bracket_l": {
+        "visible": 379,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "d435i_body_l": {
+        "visible": 105,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "FT_SENSOR_L": {
+        "visible": 141,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "EE_BODY_L": {
+        "visible": 409,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 40,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 372,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 195,
+       "apple": 177
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 241780,
+      "guard_centre": [
+       0.5634583991909534,
+       0.32049357189274086,
+       0.8500018020691448
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 502,
+      "guard_active": true
+     },
+     "wrist_cam_l": {
+      "apple_px_visible": 792,
+      "apple_px_passed": 536,
+      "robot_px_visible": 16068,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_L": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l1": {
+        "visible": 5011,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_l2": {
+        "visible": 5011,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 1825,
+      "cloud_passed_within_50mm_by_body": {
+       "table": 1289,
+       "apple": 536
+      },
+      "cloud_total": 307200,
+      "cloud_passed": 287621,
+      "guard_centre": [
+       0.5634583991909534,
+       0.32049357189274086,
+       0.8500018020691448
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 5219,
+      "guard_active": true
+     },
+     "wrist_cam_r": {
+      "apple_px_visible": 0,
+      "apple_px_passed": 0,
+      "robot_px_visible": 16026,
+      "robot_px_passed": 0,
+      "robot_px_passed_in_guard": 0,
+      "robot_by_body": {
+       "EE_BODY_R": {
+        "visible": 6046,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r1": {
+        "visible": 4990,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       },
+       "ee_finger_r2": {
+        "visible": 4990,
+        "passed": 0,
+        "passed_in_guard": 0,
+        "passed_out_guard": 0
+       }
+      },
+      "cloud_passed_within_50mm_of_apple": 0,
+      "cloud_passed_within_50mm_by_body": {},
+      "cloud_total": 307200,
+      "cloud_passed": 286929,
+      "guard_centre": [
+       0.5634583991909534,
+       0.32049357189274086,
+       0.8500018020691448
+      ],
+      "guard_source": "object_poses.apple.pos (ground truth)",
+      "guard_centre_to_apple_mm": 0.0,
+      "guard_chunk_target_n_points": null,
+      "n_guard_protected": 0,
+      "guard_active": true
+     }
+    }
+   }
+  },
+  "robot_px_by_body_total_over_poses_and_cameras_visible_passed": {
+   "A": {
+    "link_torso_5": [
+     89569,
+     0
+    ],
+    "link_right_arm_3": [
+     18948,
+     0
+    ],
+    "link_right_arm_4": [
+     20907,
+     0
+    ],
+    "link_right_arm_5": [
+     40734,
+     0
+    ],
+    "link_right_arm_6": [
+     2702,
+     0
+    ],
+    "wrist_bracket_r": [
+     3392,
+     0
+    ],
+    "d435i_body_r": [
+     992,
+     0
+    ],
+    "FT_SENSOR_R": [
+     2322,
+     0
+    ],
+    "EE_BODY_R": [
+     34098,
+     0
+    ],
+    "ee_finger_r2": [
+     25497,
+     0
+    ],
+    "link_left_arm_2": [
+     42809,
+     0
+    ],
+    "link_left_arm_3": [
+     59449,
+     0
+    ],
+    "link_left_arm_4": [
+     8351,
+     0
+    ],
+    "link_left_arm_5": [
+     18528,
+     0
+    ],
+    "link_left_arm_6": [
+     1254,
+     0
+    ],
+    "wrist_bracket_l": [
+     2055,
+     0
+    ],
+    "d435i_body_l": [
+     606,
+     0
+    ],
+    "FT_SENSOR_L": [
+     982,
+     0
+    ],
+    "EE_BODY_L": [
+     32522,
+     0
+    ],
+    "ee_finger_l2": [
+     25301,
+     0
+    ],
+    "ee_finger_l1": [
+     25040,
+     0
+    ],
+    "ee_finger_r1": [
+     24975,
+     0
+    ]
+   },
+   "B": {
+    "link_torso_5": [
+     89569,
+     0
+    ],
+    "link_right_arm_3": [
+     18948,
+     0
+    ],
+    "link_right_arm_4": [
+     20907,
+     0
+    ],
+    "link_right_arm_5": [
+     40734,
+     0
+    ],
+    "link_right_arm_6": [
+     2702,
+     0
+    ],
+    "wrist_bracket_r": [
+     3392,
+     0
+    ],
+    "d435i_body_r": [
+     992,
+     0
+    ],
+    "FT_SENSOR_R": [
+     2322,
+     0
+    ],
+    "EE_BODY_R": [
+     34098,
+     0
+    ],
+    "ee_finger_r2": [
+     25497,
+     0
+    ],
+    "link_left_arm_2": [
+     42809,
+     0
+    ],
+    "link_left_arm_3": [
+     59449,
+     0
+    ],
+    "link_left_arm_4": [
+     8351,
+     0
+    ],
+    "link_left_arm_5": [
+     18528,
+     0
+    ],
+    "link_left_arm_6": [
+     1254,
+     0
+    ],
+    "wrist_bracket_l": [
+     2055,
+     0
+    ],
+    "d435i_body_l": [
+     606,
+     0
+    ],
+    "FT_SENSOR_L": [
+     982,
+     0
+    ],
+    "EE_BODY_L": [
+     32522,
+     0
+    ],
+    "ee_finger_l2": [
+     25301,
+     0
+    ],
+    "ee_finger_l1": [
+     25040,
+     0
+    ],
+    "ee_finger_r1": [
+     24975,
+     0
+    ]
+   },
+   "C": {
+    "link_torso_5": [
+     89569,
+     0
+    ],
+    "link_right_arm_3": [
+     18948,
+     0
+    ],
+    "link_right_arm_4": [
+     20907,
+     0
+    ],
+    "link_right_arm_5": [
+     40734,
+     0
+    ],
+    "link_right_arm_6": [
+     2702,
+     0
+    ],
+    "wrist_bracket_r": [
+     3392,
+     0
+    ],
+    "d435i_body_r": [
+     992,
+     0
+    ],
+    "FT_SENSOR_R": [
+     2322,
+     0
+    ],
+    "EE_BODY_R": [
+     34098,
+     0
+    ],
+    "ee_finger_r2": [
+     25497,
+     0
+    ],
+    "link_left_arm_2": [
+     42809,
+     0
+    ],
+    "link_left_arm_3": [
+     59449,
+     0
+    ],
+    "link_left_arm_4": [
+     8351,
+     0
+    ],
+    "link_left_arm_5": [
+     18528,
+     0
+    ],
+    "link_left_arm_6": [
+     1254,
+     0
+    ],
+    "wrist_bracket_l": [
+     2055,
+     0
+    ],
+    "d435i_body_l": [
+     606,
+     0
+    ],
+    "FT_SENSOR_L": [
+     982,
+     0
+    ],
+    "EE_BODY_L": [
+     32522,
+     0
+    ],
+    "ee_finger_l2": [
+     25301,
+     0
+    ],
+    "ee_finger_l1": [
+     25040,
+     0
+    ],
+    "ee_finger_r1": [
+     24975,
+     0
+    ]
+   },
+   "C2": {
+    "link_torso_5": [
+     89569,
+     0
+    ],
+    "link_right_arm_3": [
+     18948,
+     0
+    ],
+    "link_right_arm_4": [
+     20907,
+     0
+    ],
+    "link_right_arm_5": [
+     40734,
+     0
+    ],
+    "link_right_arm_6": [
+     2702,
+     0
+    ],
+    "wrist_bracket_r": [
+     3392,
+     0
+    ],
+    "d435i_body_r": [
+     992,
+     0
+    ],
+    "FT_SENSOR_R": [
+     2322,
+     0
+    ],
+    "EE_BODY_R": [
+     34098,
+     0
+    ],
+    "ee_finger_r2": [
+     25497,
+     0
+    ],
+    "link_left_arm_2": [
+     42809,
+     0
+    ],
+    "link_left_arm_3": [
+     59449,
+     0
+    ],
+    "link_left_arm_4": [
+     8351,
+     0
+    ],
+    "link_left_arm_5": [
+     18528,
+     0
+    ],
+    "link_left_arm_6": [
+     1254,
+     0
+    ],
+    "wrist_bracket_l": [
+     2055,
+     0
+    ],
+    "d435i_body_l": [
+     606,
+     0
+    ],
+    "FT_SENSOR_L": [
+     982,
+     0
+    ],
+    "EE_BODY_L": [
+     32522,
+     0
+    ],
+    "ee_finger_l2": [
+     25301,
+     0
+    ],
+    "ee_finger_l1": [
+     25040,
+     0
+    ],
+    "ee_finger_r1": [
+     24975,
+     0
+    ]
+   },
+   "D": {
+    "link_torso_5": [
+     89569,
+     0
+    ],
+    "link_right_arm_3": [
+     18948,
+     0
+    ],
+    "link_right_arm_4": [
+     20907,
+     0
+    ],
+    "link_right_arm_5": [
+     40734,
+     0
+    ],
+    "link_right_arm_6": [
+     2702,
+     0
+    ],
+    "wrist_bracket_r": [
+     3392,
+     0
+    ],
+    "d435i_body_r": [
+     992,
+     0
+    ],
+    "FT_SENSOR_R": [
+     2322,
+     0
+    ],
+    "EE_BODY_R": [
+     34098,
+     0
+    ],
+    "ee_finger_r2": [
+     25497,
+     0
+    ],
+    "link_left_arm_2": [
+     42809,
+     0
+    ],
+    "link_left_arm_3": [
+     59449,
+     0
+    ],
+    "link_left_arm_4": [
+     8351,
+     0
+    ],
+    "link_left_arm_5": [
+     18528,
+     0
+    ],
+    "link_left_arm_6": [
+     1254,
+     0
+    ],
+    "wrist_bracket_l": [
+     2055,
+     0
+    ],
+    "d435i_body_l": [
+     606,
+     0
+    ],
+    "FT_SENSOR_L": [
+     982,
+     0
+    ],
+    "EE_BODY_L": [
+     32522,
+     0
+    ],
+    "ee_finger_l2": [
+     25301,
+     0
+    ],
+    "ee_finger_l1": [
+     25040,
+     0
+    ],
+    "ee_finger_r1": [
+     24975,
+     0
+    ]
+   }
+  },
+  "attribution_setting_B": {
+   "seq11_t80_zed_left": {
+    "apple_px": 417,
+    "erased_px_B": 303,
+    "erased_B_by_link": {
+     "link_left_arm_5": {
+      "erased_px_B": 303,
+      "inflation_m": 0.05
+     }
+    },
+    "inside_bare_sphere_by_link": {},
+    "inside_any_bare_sphere": 0,
+    "apple_px_farther_than_60mm_from_apple_pos": 0,
+    "apple_px_dist_to_apple_pos_mm_min_max": [
+     30.483944899744394,
+     49.05661603656706
+    ]
+   },
+   "seq11_t80_wrist_cam_l": {
+    "apple_px": 5259,
+    "erased_px_B": 4652,
+    "erased_B_by_link": {
+     "link_left_arm_5": {
+      "erased_px_B": 4652,
+      "inflation_m": 0.05
+     }
+    },
+    "inside_bare_sphere_by_link": {},
+    "inside_any_bare_sphere": 0,
+    "apple_px_farther_than_60mm_from_apple_pos": 0,
+    "apple_px_dist_to_apple_pos_mm_min_max": [
+     30.66585880894355,
+     48.967844055331426
+    ]
+   },
+   "seq12_t88_zed_left": {
+    "apple_px": 397,
+    "erased_px_B": 391,
+    "erased_B_by_link": {
+     "link_left_arm_5": {
+      "erased_px_B": 391,
+      "inflation_m": 0.05
+     },
+     "ee_finger_l1": {
+      "erased_px_B": 2,
+      "inflation_m": 0.01
+     }
+    },
+    "inside_bare_sphere_by_link": {
+     "link_left_arm_5": 3
+    },
+    "inside_any_bare_sphere": 3,
+    "apple_px_farther_than_60mm_from_apple_pos": 0,
+    "apple_px_dist_to_apple_pos_mm_min_max": [
+     30.484275784595752,
+     39.59407281503401
+    ]
+   },
+   "seq12_t88_wrist_cam_l": {
+    "apple_px": 4531,
+    "erased_px_B": 4531,
+    "erased_B_by_link": {
+     "link_left_arm_5": {
+      "erased_px_B": 4531,
+      "inflation_m": 0.05
+     },
+     "ee_finger_l1": {
+      "erased_px_B": 946,
+      "inflation_m": 0.01
+     },
+     "ee_finger_l2": {
+      "erased_px_B": 761,
+      "inflation_m": 0.01
+     }
+    },
+    "inside_bare_sphere_by_link": {
+     "link_left_arm_5": 233,
+     "ee_finger_l1": 32
+    },
+    "inside_any_bare_sphere": 233,
+    "apple_px_farther_than_60mm_from_apple_pos": 0,
+    "apple_px_dist_to_apple_pos_mm_min_max": [
+     30.898173999253395,
+     48.78192853524434
+    ]
+   },
+   "seq13_t96_zed_left": {
+    "apple_px": 378,
+    "erased_px_B": 378,
+    "erased_B_by_link": {
+     "link_left_arm_5": {
+      "erased_px_B": 378,
+      "inflation_m": 0.05
+     },
+     "ee_finger_l1": {
+      "erased_px_B": 1,
+      "inflation_m": 0.01
+     }
+    },
+    "inside_bare_sphere_by_link": {
+     "link_left_arm_5": 137
+    },
+    "inside_any_bare_sphere": 137,
+    "apple_px_farther_than_60mm_from_apple_pos": 0,
+    "apple_px_dist_to_apple_pos_mm_min_max": [
+     30.458775395879616,
+     35.76728867644346
+    ]
+   },
+   "seq13_t96_wrist_cam_l": {
+    "apple_px": 2497,
+    "erased_px_B": 2497,
+    "erased_B_by_link": {
+     "link_left_arm_5": {
+      "erased_px_B": 2497,
+      "inflation_m": 0.05
+     },
+     "ee_finger_l1": {
+      "erased_px_B": 814,
+      "inflation_m": 0.01
+     },
+     "ee_finger_l2": {
+      "erased_px_B": 386,
+      "inflation_m": 0.01
+     }
+    },
+    "inside_bare_sphere_by_link": {
+     "link_left_arm_5": 534,
+     "ee_finger_l1": 286,
+     "ee_finger_l2": 286
+    },
+    "inside_any_bare_sphere": 534,
+    "apple_px_farther_than_60mm_from_apple_pos": 0,
+    "apple_px_dist_to_apple_pos_mm_min_max": [
+     31.39084590086365,
+     47.806577088630355
+    ]
+   },
+   "seq14_t104_zed_left": {
+    "apple_px": 376,
+    "erased_px_B": 376,
+    "erased_B_by_link": {
+     "link_left_arm_5": {
+      "erased_px_B": 376,
+      "inflation_m": 0.05
+     }
+    },
+    "inside_bare_sphere_by_link": {
+     "link_left_arm_5": 199
+    },
+    "inside_any_bare_sphere": 199,
+    "apple_px_farther_than_60mm_from_apple_pos": 0,
+    "apple_px_dist_to_apple_pos_mm_min_max": [
+     30.46791267046602,
+     35.70895213377203
+    ]
+   },
+   "seq14_t104_wrist_cam_l": {
+    "apple_px": 792,
+    "erased_px_B": 792,
+    "erased_B_by_link": {
+     "link_left_arm_5": {
+      "erased_px_B": 792,
+      "inflation_m": 0.05
+     },
+     "ee_finger_l1": {
+      "erased_px_B": 330,
+      "inflation_m": 0.01
+     },
+     "ee_finger_l2": {
+      "erased_px_B": 105,
+      "inflation_m": 0.01
+     }
+    },
+    "inside_bare_sphere_by_link": {
+     "link_left_arm_5": 256
+    },
+    "inside_any_bare_sphere": 256,
+    "apple_px_farther_than_60mm_from_apple_pos": 0,
+    "apple_px_dist_to_apple_pos_mm_min_max": [
+     32.22072221153675,
+     35.30167558062384
+    ]
+   }
+  },
+  "inflation_tables": {
+   "n_spheres": 218,
+   "tables": {
+    "A": {
+     "link_torso_0": 0.05,
+     "link_torso_1": 0.05,
+     "link_torso_2": 0.05,
+     "link_torso_4": 0.05,
+     "link_torso_5": 0.05,
+     "link_right_arm_0": 0.05,
+     "link_right_arm_1": 0.05,
+     "link_right_arm_2": 0.05,
+     "link_right_arm_3": 0.05,
+     "link_right_arm_4": 0.05,
+     "link_right_arm_5": 0.05,
+     "link_left_arm_0": 0.05,
+     "link_left_arm_1": 0.05,
+     "link_left_arm_2": 0.05,
+     "link_left_arm_3": 0.05,
+     "link_left_arm_4": 0.05,
+     "link_left_arm_5": 0.05,
+     "base": 0.05,
+     "wheel_r": 0.05,
+     "wheel_l": 0.05,
+     "link_torso_3": 0.05,
+     "link_right_arm_6": 0.05,
+     "link_left_arm_6": 0.05,
+     "ee_left": 0.05,
+     "ee_right": 0.05,
+     "ee_finger_r1": 0.05,
+     "ee_finger_r2": 0.05,
+     "ee_finger_l1": 0.05,
+     "ee_finger_l2": 0.05
+    },
+    "B": {
+     "link_torso_0": 0.05,
+     "link_torso_1": 0.05,
+     "link_torso_2": 0.05,
+     "link_torso_4": 0.05,
+     "link_torso_5": 0.05,
+     "link_right_arm_0": 0.05,
+     "link_right_arm_1": 0.05,
+     "link_right_arm_2": 0.05,
+     "link_right_arm_3": 0.05,
+     "link_right_arm_4": 0.05,
+     "link_right_arm_5": 0.05,
+     "link_left_arm_0": 0.05,
+     "link_left_arm_1": 0.05,
+     "link_left_arm_2": 0.05,
+     "link_left_arm_3": 0.05,
+     "link_left_arm_4": 0.05,
+     "link_left_arm_5": 0.05,
+     "base": 0.05,
+     "wheel_r": 0.05,
+     "wheel_l": 0.05,
+     "link_torso_3": 0.05,
+     "link_right_arm_6": 0.05,
+     "link_left_arm_6": 0.05,
+     "ee_left": 0.01,
+     "ee_right": 0.01,
+     "ee_finger_r1": 0.01,
+     "ee_finger_r2": 0.01,
+     "ee_finger_l1": 0.01,
+     "ee_finger_l2": 0.01
+    },
+    "C": {
+     "link_torso_0": 0.05,
+     "link_torso_1": 0.05,
+     "link_torso_2": 0.05,
+     "link_torso_4": 0.05,
+     "link_torso_5": 0.05,
+     "link_right_arm_0": 0.05,
+     "link_right_arm_1": 0.05,
+     "link_right_arm_2": 0.05,
+     "link_right_arm_3": 0.05,
+     "link_right_arm_4": 0.05,
+     "link_right_arm_5": 0.05,
+     "link_left_arm_0": 0.05,
+     "link_left_arm_1": 0.05,
+     "link_left_arm_2": 0.05,
+     "link_left_arm_3": 0.05,
+     "link_left_arm_4": 0.05,
+     "link_left_arm_5": 0.05,
+     "base": 0.05,
+     "wheel_r": 0.05,
+     "wheel_l": 0.05,
+     "link_torso_3": 0.05,
+     "link_right_arm_6": 0.05,
+     "link_left_arm_6": 0.05,
+     "ee_left": 0.01,
+     "ee_right": 0.01,
+     "ee_finger_r1": 0.01,
+     "ee_finger_r2": 0.01,
+     "ee_finger_l1": 0.01,
+     "ee_finger_l2": 0.01
+    },
+    "C2": {
+     "link_torso_0": 0.05,
+     "link_torso_1": 0.05,
+     "link_torso_2": 0.05,
+     "link_torso_4": 0.05,
+     "link_torso_5": 0.05,
+     "link_right_arm_0": 0.05,
+     "link_right_arm_1": 0.05,
+     "link_right_arm_2": 0.05,
+     "link_right_arm_3": 0.05,
+     "link_right_arm_4": 0.05,
+     "link_right_arm_5": 0.05,
+     "link_left_arm_0": 0.05,
+     "link_left_arm_1": 0.05,
+     "link_left_arm_2": 0.05,
+     "link_left_arm_3": 0.05,
+     "link_left_arm_4": 0.05,
+     "link_left_arm_5": 0.05,
+     "base": 0.05,
+     "wheel_r": 0.05,
+     "wheel_l": 0.05,
+     "link_torso_3": 0.05,
+     "link_right_arm_6": 0.05,
+     "link_left_arm_6": 0.05,
+     "ee_left": 0.01,
+     "ee_right": 0.01,
+     "ee_finger_r1": 0.01,
+     "ee_finger_r2": 0.01,
+     "ee_finger_l1": 0.01,
+     "ee_finger_l2": 0.01
+    },
+    "D": {
+     "link_torso_0": 0.05,
+     "link_torso_1": 0.05,
+     "link_torso_2": 0.05,
+     "link_torso_4": 0.05,
+     "link_torso_5": 0.05,
+     "link_right_arm_0": 0.05,
+     "link_right_arm_1": 0.05,
+     "link_right_arm_2": 0.05,
+     "link_right_arm_3": 0.05,
+     "link_right_arm_4": 0.05,
+     "link_right_arm_5": 0.05,
+     "link_left_arm_0": 0.05,
+     "link_left_arm_1": 0.05,
+     "link_left_arm_2": 0.05,
+     "link_left_arm_3": 0.05,
+     "link_left_arm_4": 0.05,
+     "link_left_arm_5": 0.05,
+     "base": 0.05,
+     "wheel_r": 0.05,
+     "wheel_l": 0.05,
+     "link_torso_3": 0.05,
+     "link_right_arm_6": 0.05,
+     "link_left_arm_6": 0.05,
+     "ee_left": 0.01,
+     "ee_right": 0.01,
+     "ee_finger_r1": 0.01,
+     "ee_finger_r2": 0.01,
+     "ee_finger_l1": 0.01,
+     "ee_finger_l2": 0.01
+    }
+   }
+  },
+  "baseline_working_tree": {
+   "frames": 15,
+   "violated_start": 13,
+   "has_target": 15,
+   "frame0_clearance_before_mm": 0.18597810857728936,
+   "n_filter_spheres": 218,
+   "planned_horizon": 8,
+   "status_counts_not_baseline": {
+    "feasible": 15
+   }
+  },
+  "baseline_HEAD_368d723": {
+   "frames": 15,
+   "violated_start": 13,
+   "has_target": 15,
+   "frame0_clearance_before_mm": 0.18597810857728936,
+   "n_filter_spheres": 218,
+   "planned_horizon": 8,
+   "status_counts_not_baseline": {
+    "feasible": 14,
+    "violated": 1
+   }
+  },
+  "baseline_skill_reference": {
+   "violated_start": 14,
+   "has_target": 15,
+   "frame0_clearance_before_mm": 0.15718632962849477,
+   "note": "T7a.verify.json: this value reproduces at 5c5291e^ (planned_horizon 32); HEAD since 8d70cdd gives 13/15 · 0.18597810857728936 (planned_horizon 8)"
+  },
+  "pytest_tests_ag3s": {
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python -m pytest -q -p no:cacheprovider tests/ag3s",
+   "passed": 641,
+   "failed": 0,
+   "log": "outputs/verify/T19/pytest_ag3s.log",
+   "note": "ran concurrently with another session's pytest + esdf_rollout"
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t19/t19-selffilter-scene-t96.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t19/t19-selffilter-scene-t96.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t19/t19-selffilter-per-pose.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t19/t19-selffilter-per-pose.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t19/t19-selffilter-settings-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t19/t19-selffilter-settings-table.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": false,
+  "matched_HEAD": true,
+  "note": "working tree = HEAD 368d723 (git archive, no uncommitted changes): 13/15 · has_target 15/15 · frame0 +0.18597810857728936 mm — identical to each other and to T7a's HEAD value; skill reference 14/15 · +0.15718632962849477 mm not reproduced by either"
+ },
+ "verdict": "baseline: working tree == HEAD (pre-SQP numbers identical to the last digit); != skill reference value (same as T7a). Setting A reproduces T14.audit t=96 counts (wrist_cam_l 2497 visible / 0 passed, zed_left 378 / 0).",
+ "not_measured": [
+  "base body: 0 px visible in zed_left / wrist_cam_l / wrist_cam_r at seq 10-14 (not in robot_by_body) -> base leak not measurable at these poses",
+  "T1 gripper leak reference value (task #2 comparison) — not looked up",
+  "depth-noise / real-sensor case: MuJoCo depth is exact",
+  "server downsampling / range cut: every pixel back-projected",
+  "latency of self_filter with per-sphere inflation"
+ ]
+}
