@@ -1,7 +1,7 @@
 # 세션 상태 — 끊겨도 여기서 이어 간다
 
 > writer: lead (A0). **매 turn 끝에 갱신한다.** 새 세션은 이 파일을 먼저 읽고, 아래 "이어 가는 절차" 를 따른다.
-> 마지막 갱신: 2026-09-28 18:00 (T23 impl 완료 → 검증; 구현자 전부 종료, 전체 회귀 배경 실행 중, 그 뒤 커밋)
+> 마지막 갱신: 2026-09-28 18:20 (T18–T24 커밋 완료 — benchmark 8e8ce6b · pi05_TO_hybrid dc5e660 · 루트 tests; push 는 사용자)
 
 ## 1. 지금 무엇을 하고 있나
 
@@ -74,3 +74,4 @@ ls -t ag3s/docs/handoff | head                            # *.progress.md / *.im
 | 2026-09-28 17:10 | **T22 verify 완료** (재생 #1–#3·#5 통과, 빈손 MuJoCo sweep 10/24 attach → T22b 필요, reach 0.08 추천). **T23 착수** (T21 과 파일 겹침 없음). **커밋은 T21 impl 이 닫히면** — T21 이 pipeline.py·config.py·linearize.py 를 편집 중이라 지금 커밋하면 반쪽이 섞인다 |
 | 2026-09-28 17:40 | **T21 impl 완료** (1232 passed). T21 verifier 착수. 후속(T21b·T22b·config 기본값)은 계획 §5 의 'T26' 표로 모음. **커밋은 T23 impl 뒤** — T23 이 safe_policy/wire/client/pi05_infer 편집 중 |
 | 2026-09-28 18:00 | **T23 impl 완료** (1292 passed). T23 verifier 착수. 구현자 전원 종료 → 최종 tree 로 전체 회귀 배경 실행 → 통과하면 **repo 3 곳에 커밋** (benchmark · pi05_TO_hybrid · 루트 tests/.claude; skill `git-commit` 규칙: 출처 표기 없음, 소유 경로만 add) |
+| 2026-09-28 18:20 | 최종 tree 전체 회귀 **1292 passed** → **커밋**: benchmark `8e8ce6b` (코드+handoff+figures) · pi05_TO_hybrid `dc5e660` (pi05_infer.py) · 루트 `tests:` (테스트 9 파일 + skill). **push 는 사용자가** (컨테이너에 자격증명 없음). 미커밋으로 남긴 것: 루트의 `.claude/agents/*.md`·`CLAUDE.md` (사용자의 이전 변경) · `T21.verify.partial.json`(작성 중). 진행 중: T21·T23 verifier. 다음: T26 마무리 (T21b·T22b·T23b·config 기본값) → T25 |
