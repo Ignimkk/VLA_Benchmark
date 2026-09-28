@@ -1,0 +1,124 @@
+{
+ "action_dim": 32,
+ "n_valid": 16,
+ "nq_opt": 14,
+ "nq_model": 20,
+ "arm_joint_dim": 7,
+ "gripper_columns": [
+  7,
+  15
+ ],
+ "action_to_q": [
+  [
+   0,
+   13,
+   "left_arm_0",
+   "left_arm_1_act"
+  ],
+  [
+   1,
+   14,
+   "left_arm_1",
+   "left_arm_2_act"
+  ],
+  [
+   2,
+   15,
+   "left_arm_2",
+   "left_arm_3_act"
+  ],
+  [
+   3,
+   16,
+   "left_arm_3",
+   "left_arm_4_act"
+  ],
+  [
+   4,
+   17,
+   "left_arm_4",
+   "left_arm_5_act"
+  ],
+  [
+   5,
+   18,
+   "left_arm_5",
+   "left_arm_6_act"
+  ],
+  [
+   6,
+   19,
+   "left_arm_6",
+   "left_arm_7_act"
+  ],
+  [
+   8,
+   6,
+   "right_arm_0",
+   "right_arm_1_act"
+  ],
+  [
+   9,
+   7,
+   "right_arm_1",
+   "right_arm_2_act"
+  ],
+  [
+   10,
+   8,
+   "right_arm_2",
+   "right_arm_3_act"
+  ],
+  [
+   11,
+   9,
+   "right_arm_3",
+   "right_arm_4_act"
+  ],
+  [
+   12,
+   10,
+   "right_arm_4",
+   "right_arm_5_act"
+  ],
+  [
+   13,
+   11,
+   "right_arm_5",
+   "right_arm_6_act"
+  ],
+  [
+   14,
+   12,
+   "right_arm_6",
+   "right_arm_7_act"
+  ]
+ ],
+ "fixed_q": [
+  [
+   0,
+   "torso_0"
+  ],
+  [
+   1,
+   "torso_1"
+  ],
+  [
+   2,
+   "torso_2"
+  ],
+  [
+   3,
+   "torso_3"
+  ],
+  [
+   4,
+   "torso_4"
+  ],
+  [
+   5,
+   "torso_5"
+  ]
+ ],
+ "current_state_columns_wrong": 18
+}

@@ -1,0 +1,798 @@
+{
+ "approach_t": [
+  0,
+  120
+ ],
+ "panels": {
+  "r2_distances": [
+   {
+    "t_step": 0,
+    "mvp_link": "ee_finger_l1",
+    "clearance_mm_post_margin": 64.1381,
+    "esdf_distance_mm": 78.853,
+    "gt_nearest_body": "crate",
+    "gt_nearest_mm": 78.398,
+    "gt_apple_mm": 161.586,
+    "cloud_point_body": "crate",
+    "cloud_nearest_distance_mm": 84.798,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "crate",
+    "esdf_gradient_tier": "fine",
+    "point_in_fine_window": true,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 6.574,
+    "esdf_gradient_surface_mm": [
+     545.06,
+     199.03,
+     977.31
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 161.586,
+     "banana": 562.058,
+     "orange": 172.926,
+     "pear": 576.617,
+     "crate": 78.398,
+     "table": 205.65
+    }
+   },
+   {
+    "t_step": 8,
+    "mvp_link": "ee_finger_l1",
+    "clearance_mm_post_margin": 63.8716,
+    "esdf_distance_mm": 78.587,
+    "gt_nearest_body": "crate",
+    "gt_nearest_mm": 79.943,
+    "gt_apple_mm": 160.947,
+    "cloud_point_body": "crate",
+    "cloud_nearest_distance_mm": 85.315,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "crate",
+    "esdf_gradient_tier": "fine",
+    "point_in_fine_window": true,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 9.183,
+    "esdf_gradient_surface_mm": [
+     546.82,
+     200.9,
+     980.62
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 160.947,
+     "banana": 563.822,
+     "orange": 172.7,
+     "pear": 578.499,
+     "crate": 79.943,
+     "table": 205.811
+    }
+   },
+   {
+    "t_step": 16,
+    "mvp_link": "ee_finger_l1",
+    "clearance_mm_post_margin": 66.3298,
+    "esdf_distance_mm": 81.045,
+    "gt_nearest_body": "crate",
+    "gt_nearest_mm": 85.756,
+    "gt_apple_mm": 158.284,
+    "cloud_point_body": "crate",
+    "cloud_nearest_distance_mm": 86.195,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "crate",
+    "esdf_gradient_tier": "fine",
+    "point_in_fine_window": true,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 6.699,
+    "esdf_gradient_surface_mm": [
+     543.2,
+     197.6,
+     981.3
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 158.284,
+     "banana": 570.199,
+     "orange": 173.331,
+     "pear": 585.697,
+     "crate": 85.756,
+     "table": 206.514
+    }
+   },
+   {
+    "t_step": 24,
+    "mvp_link": "ee_finger_r2",
+    "clearance_mm_post_margin": 66.9674,
+    "esdf_distance_mm": 81.683,
+    "gt_nearest_body": "crate",
+    "gt_nearest_mm": 62.705,
+    "gt_apple_mm": 584.365,
+    "cloud_point_body": "crate",
+    "cloud_nearest_distance_mm": 77.663,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "crate",
+    "esdf_gradient_tier": "coarse",
+    "point_in_fine_window": false,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 20.049,
+    "esdf_gradient_surface_mm": [
+     543.89,
+     -187.48,
+     975.08
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 584.365,
+     "banana": 158.608,
+     "orange": 598.493,
+     "pear": 137.819,
+     "crate": 62.705,
+     "table": 196.895
+    }
+   },
+   {
+    "t_step": 32,
+    "mvp_link": "ee_finger_r2",
+    "clearance_mm_post_margin": 66.4844,
+    "esdf_distance_mm": 81.2,
+    "gt_nearest_body": "crate",
+    "gt_nearest_mm": 62.367,
+    "gt_apple_mm": 584.016,
+    "cloud_point_body": "crate",
+    "cloud_nearest_distance_mm": 79.176,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "crate",
+    "esdf_gradient_tier": "coarse",
+    "point_in_fine_window": false,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 20.355,
+    "esdf_gradient_surface_mm": [
+     544.29,
+     -187.18,
+     974.92
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 584.016,
+     "banana": 158.399,
+     "orange": 598.204,
+     "pear": 137.902,
+     "crate": 62.367,
+     "table": 196.735
+    }
+   },
+   {
+    "t_step": 40,
+    "mvp_link": "ee_finger_r2",
+    "clearance_mm_post_margin": 66.1662,
+    "esdf_distance_mm": 80.881,
+    "gt_nearest_body": "crate",
+    "gt_nearest_mm": 62.069,
+    "gt_apple_mm": 583.937,
+    "cloud_point_body": "crate",
+    "cloud_nearest_distance_mm": 79.255,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "crate",
+    "esdf_gradient_tier": "coarse",
+    "point_in_fine_window": false,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 20.287,
+    "esdf_gradient_surface_mm": [
+     544.39,
+     -187.24,
+     974.37
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 583.937,
+     "banana": 157.831,
+     "orange": 598.133,
+     "pear": 137.401,
+     "crate": 62.069,
+     "table": 196.18
+    }
+   },
+   {
+    "t_step": 48,
+    "mvp_link": "ee_finger_r2",
+    "clearance_mm_post_margin": 65.9542,
+    "esdf_distance_mm": 80.669,
+    "gt_nearest_body": "crate",
+    "gt_nearest_mm": 61.871,
+    "gt_apple_mm": 583.977,
+    "cloud_point_body": "crate",
+    "cloud_nearest_distance_mm": 77.122,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "crate",
+    "esdf_gradient_tier": "coarse",
+    "point_in_fine_window": false,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 20.031,
+    "esdf_gradient_surface_mm": [
+     544.49,
+     -187.5,
+     973.73
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 583.977,
+     "banana": 157.172,
+     "orange": 598.215,
+     "pear": 136.786,
+     "crate": 61.871,
+     "table": 195.546
+    }
+   },
+   {
+    "t_step": 56,
+    "mvp_link": "ee_left",
+    "clearance_mm_post_margin": 50.2729,
+    "esdf_distance_mm": 69.19,
+    "gt_nearest_body": "crate",
+    "gt_nearest_mm": 69.874,
+    "gt_apple_mm": 126.664,
+    "cloud_point_body": "crate",
+    "cloud_nearest_distance_mm": 68.836,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "crate",
+    "esdf_gradient_tier": "fine",
+    "point_in_fine_window": true,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 3.33,
+    "esdf_gradient_surface_mm": [
+     541.94,
+     195.3,
+     978.74
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 126.664,
+     "banana": 559.208,
+     "orange": 151.665,
+     "pear": 576.788,
+     "crate": 69.874,
+     "table": 173.819
+    }
+   },
+   {
+    "t_step": 64,
+    "mvp_link": "ee_left",
+    "clearance_mm_post_margin": 39.683,
+    "esdf_distance_mm": 58.601,
+    "gt_nearest_body": "crate",
+    "gt_nearest_mm": 61.913,
+    "gt_apple_mm": 103.135,
+    "cloud_point_body": "crate",
+    "cloud_nearest_distance_mm": 72.982,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "crate",
+    "esdf_gradient_tier": "fine",
+    "point_in_fine_window": true,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 6.937,
+    "esdf_gradient_surface_mm": [
+     537.13,
+     199.41,
+     965.13
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 103.135,
+     "banana": 547.129,
+     "orange": 128.972,
+     "pear": 564.377,
+     "crate": 61.913,
+     "table": 143.792
+    }
+   },
+   {
+    "t_step": 72,
+    "mvp_link": "ee_finger_l2",
+    "clearance_mm_post_margin": -5.9948,
+    "esdf_distance_mm": 8.72,
+    "gt_nearest_body": "apple",
+    "gt_nearest_mm": 17.721,
+    "gt_apple_mm": 17.721,
+    "cloud_point_body": "table",
+    "cloud_nearest_distance_mm": 69.196,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "apple",
+    "esdf_gradient_tier": "coarse",
+    "point_in_fine_window": false,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 17.721,
+    "esdf_gradient_surface_mm": [
+     588.33,
+     309.48,
+     889.97
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 17.721,
+     "banana": 594.163,
+     "orange": 106.649,
+     "pear": 616.736,
+     "crate": 115.175,
+     "table": 69.972
+    }
+   },
+   {
+    "t_step": 80,
+    "mvp_link": "ee_finger_l1",
+    "clearance_mm_post_margin": 1.4621,
+    "esdf_distance_mm": 16.177,
+    "gt_nearest_body": "apple",
+    "gt_nearest_mm": 19.07,
+    "gt_apple_mm": 19.07,
+    "cloud_point_body": "table",
+    "cloud_nearest_distance_mm": 58.262,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "apple",
+    "esdf_gradient_tier": "coarse",
+    "point_in_fine_window": true,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 9.18,
+    "esdf_gradient_surface_mm": [
+     587.94,
+     308.51,
+     871.97
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 19.07,
+     "banana": 573.751,
+     "orange": 112.439,
+     "pear": 596.895,
+     "crate": 96.79,
+     "table": 55.945
+    }
+   },
+   {
+    "t_step": 88,
+    "mvp_link": "ee_finger_l2",
+    "clearance_mm_post_margin": 5.1587,
+    "esdf_distance_mm": 18.761,
+    "gt_nearest_body": "apple",
+    "gt_nearest_mm": 29.356,
+    "gt_apple_mm": 29.356,
+    "cloud_point_body": "table",
+    "cloud_nearest_distance_mm": 106.057,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "apple",
+    "esdf_gradient_tier": "coarse",
+    "point_in_fine_window": false,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 14.239,
+    "esdf_gradient_surface_mm": [
+     584.04,
+     314.44,
+     889.05
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 29.356,
+     "banana": 585.64,
+     "orange": 106.157,
+     "pear": 607.473,
+     "crate": 106.127,
+     "table": 82.904
+    }
+   },
+   {
+    "t_step": 96,
+    "mvp_link": "ee_finger_l2",
+    "clearance_mm_post_margin": 13.5242,
+    "esdf_distance_mm": 27.127,
+    "gt_nearest_body": "apple",
+    "gt_nearest_mm": 36.125,
+    "gt_apple_mm": 36.125,
+    "cloud_point_body": "table",
+    "cloud_nearest_distance_mm": 104.919,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "apple",
+    "esdf_gradient_tier": "coarse",
+    "point_in_fine_window": false,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 18.969,
+    "esdf_gradient_surface_mm": [
+     581.78,
+     308.08,
+     893.26
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 36.125,
+     "banana": 579.913,
+     "orange": 114.472,
+     "pear": 602.713,
+     "crate": 99.8,
+     "table": 87.115
+    }
+   },
+   {
+    "t_step": 104,
+    "mvp_link": "ee_left",
+    "clearance_mm_post_margin": 17.7781,
+    "esdf_distance_mm": 36.696,
+    "gt_nearest_body": "crate",
+    "gt_nearest_mm": 49.929,
+    "gt_apple_mm": 109.635,
+    "cloud_point_body": "crate",
+    "cloud_nearest_distance_mm": 51.224,
+    "cloud_point_is_a_target_point": true,
+    "esdf_surface_body": "crate",
+    "esdf_gradient_tier": "fine",
+    "point_in_fine_window": true,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 4.916,
+    "esdf_gradient_surface_mm": [
+     550.25,
+     197.39,
+     966.8
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 109.635,
+     "banana": 535.892,
+     "orange": 143.896,
+     "pear": 554.93,
+     "crate": 49.929,
+     "table": 146.805
+    }
+   },
+   {
+    "t_step": 112,
+    "mvp_link": "ee_left",
+    "clearance_mm_post_margin": 17.8544,
+    "esdf_distance_mm": 36.772,
+    "gt_nearest_body": "crate",
+    "gt_nearest_mm": 49.257,
+    "gt_apple_mm": 111.643,
+    "cloud_point_body": "crate",
+    "cloud_nearest_distance_mm": 50.193,
+    "cloud_point_is_a_target_point": true,
+    "esdf_surface_body": "crate",
+    "esdf_gradient_tier": "fine",
+    "point_in_fine_window": true,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 4.243,
+    "esdf_gradient_surface_mm": [
+     541.43,
+     196.72,
+     967.81
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 111.643,
+     "banana": 535.445,
+     "orange": 140.104,
+     "pear": 553.305,
+     "crate": 49.257,
+     "table": 147.813
+    }
+   },
+   {
+    "t_step": 120,
+    "mvp_link": "ee_finger_l2",
+    "clearance_mm_post_margin": 13.4222,
+    "esdf_distance_mm": 27.025,
+    "gt_nearest_body": "apple",
+    "gt_nearest_mm": 38.037,
+    "gt_apple_mm": 38.037,
+    "cloud_point_body": "table",
+    "cloud_nearest_distance_mm": 108.18,
+    "cloud_point_is_a_target_point": false,
+    "esdf_surface_body": "apple",
+    "esdf_gradient_tier": "coarse",
+    "point_in_fine_window": false,
+    "point_in_coarse_window": true,
+    "esdf_surface_body_distance_mm": 21.297,
+    "esdf_gradient_surface_mm": [
+     582.52,
+     320.81,
+     890.93
+    ],
+    "gt_distance_by_body_mm": {
+     "apple": 38.037,
+     "banana": 587.16,
+     "orange": 115.943,
+     "pear": 610.144,
+     "crate": 106.75,
+     "table": 90.614
+    }
+   }
+  ],
+  "r2_grounding": [
+   {
+    "t_step": 0,
+    "centroid_to_apple_mm": 17.71,
+    "centroid_nearest_object": "apple",
+    "ball_centre_to_apple_mm": 17.71,
+    "ball_radius_mm": 50.195,
+    "ball_contains_apple_centre": true,
+    "apple_in_fine_window": true
+   },
+   {
+    "t_step": 8,
+    "centroid_to_apple_mm": 17.3,
+    "centroid_nearest_object": "apple",
+    "ball_centre_to_apple_mm": 17.3,
+    "ball_radius_mm": 49.686,
+    "ball_contains_apple_centre": true,
+    "apple_in_fine_window": true
+   },
+   {
+    "t_step": 16,
+    "centroid_to_apple_mm": 17.37,
+    "centroid_nearest_object": "apple",
+    "ball_centre_to_apple_mm": 17.37,
+    "ball_radius_mm": 50.735,
+    "ball_contains_apple_centre": true,
+    "apple_in_fine_window": true
+   },
+   {
+    "t_step": 24,
+    "centroid_to_apple_mm": 17.29,
+    "centroid_nearest_object": "apple",
+    "ball_centre_to_apple_mm": 17.29,
+    "ball_radius_mm": 49.42,
+    "ball_contains_apple_centre": true,
+    "apple_in_fine_window": true
+   },
+   {
+    "t_step": 32,
+    "centroid_to_apple_mm": 16.98,
+    "centroid_nearest_object": "apple",
+    "ball_centre_to_apple_mm": 16.98,
+    "ball_radius_mm": 48.221,
+    "ball_contains_apple_centre": true,
+    "apple_in_fine_window": true
+   },
+   {
+    "t_step": 40,
+    "centroid_to_apple_mm": 15.92,
+    "centroid_nearest_object": "apple",
+    "ball_centre_to_apple_mm": 15.92,
+    "ball_radius_mm": 53.059,
+    "ball_contains_apple_centre": true,
+    "apple_in_fine_window": true
+   },
+   {
+    "t_step": 48,
+    "centroid_to_apple_mm": 17.38,
+    "centroid_nearest_object": "apple",
+    "ball_centre_to_apple_mm": 17.38,
+    "ball_radius_mm": 49.977,
+    "ball_contains_apple_centre": true,
+    "apple_in_fine_window": true
+   },
+   {
+    "t_step": 56,
+    "centroid_to_apple_mm": 15.78,
+    "centroid_nearest_object": "apple",
+    "ball_centre_to_apple_mm": 15.78,
+    "ball_radius_mm": 48.373,
+    "ball_contains_apple_centre": true,
+    "apple_in_fine_window": true
+   },
+   {
+    "t_step": 64,
+    "centroid_to_apple_mm": 6.74,
+    "centroid_nearest_object": "apple",
+    "ball_centre_to_apple_mm": 6.74,
+    "ball_radius_mm": 49.562,
+    "ball_contains_apple_centre": true,
+    "apple_in_fine_window": true
+   },
+   {
+    "t_step": 72,
+    "centroid_to_apple_mm": 356.27,
+    "centroid_nearest_object": "crate",
+    "ball_centre_to_apple_mm": 356.27,
+    "ball_radius_mm": 247.885,
+    "ball_contains_apple_centre": false,
+    "apple_in_fine_window": false
+   },
+   {
+    "t_step": 80,
+    "centroid_to_apple_mm": 357.89,
+    "centroid_nearest_object": "crate",
+    "ball_centre_to_apple_mm": 357.89,
+    "ball_radius_mm": 249.53,
+    "ball_contains_apple_centre": false,
+    "apple_in_fine_window": false
+   },
+   {
+    "t_step": 88,
+    "centroid_to_apple_mm": 358.02,
+    "centroid_nearest_object": "crate",
+    "ball_centre_to_apple_mm": 358.02,
+    "ball_radius_mm": 246.635,
+    "ball_contains_apple_centre": false,
+    "apple_in_fine_window": false
+   },
+   {
+    "t_step": 96,
+    "centroid_to_apple_mm": 356.99,
+    "centroid_nearest_object": "crate",
+    "ball_centre_to_apple_mm": 356.99,
+    "ball_radius_mm": 245.211,
+    "ball_contains_apple_centre": false,
+    "apple_in_fine_window": false
+   },
+   {
+    "t_step": 104,
+    "centroid_to_apple_mm": 356.88,
+    "centroid_nearest_object": "crate",
+    "ball_centre_to_apple_mm": 356.88,
+    "ball_radius_mm": 246.107,
+    "ball_contains_apple_centre": false,
+    "apple_in_fine_window": false
+   },
+   {
+    "t_step": 112,
+    "centroid_to_apple_mm": 357.36,
+    "centroid_nearest_object": "crate",
+    "ball_centre_to_apple_mm": 357.36,
+    "ball_radius_mm": 246.496,
+    "ball_contains_apple_centre": false,
+    "apple_in_fine_window": false
+   },
+   {
+    "t_step": 120,
+    "centroid_to_apple_mm": 345.54,
+    "centroid_nearest_object": "crate",
+    "ball_centre_to_apple_mm": 345.54,
+    "ball_radius_mm": 244.721,
+    "ball_contains_apple_centre": false,
+    "apple_in_fine_window": false
+   }
+  ],
+  "r1": [
+   {
+    "t_step": 0,
+    "to_max_abs_deg": 0.16294,
+    "to_largest_joint": "left_arm_0",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 1.9796
+   },
+   {
+    "t_step": 8,
+    "to_max_abs_deg": 1.02008,
+    "to_largest_joint": "left_arm_3",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 10.5007
+   },
+   {
+    "t_step": 16,
+    "to_max_abs_deg": 1.74041,
+    "to_largest_joint": "left_arm_0",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 18.1822
+   },
+   {
+    "t_step": 24,
+    "to_max_abs_deg": 1.97218,
+    "to_largest_joint": "left_arm_3",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 13.5289
+   },
+   {
+    "t_step": 32,
+    "to_max_abs_deg": 0.23057,
+    "to_largest_joint": "left_arm_3",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 1.4934
+   },
+   {
+    "t_step": 40,
+    "to_max_abs_deg": 0.45169,
+    "to_largest_joint": "left_arm_3",
+    "to_largest_contrib_joint": "left_arm_3",
+    "to_tip_displacement_mm_max": 2.3238
+   },
+   {
+    "t_step": 48,
+    "to_max_abs_deg": 0.59406,
+    "to_largest_joint": "left_arm_3",
+    "to_largest_contrib_joint": "left_arm_1",
+    "to_tip_displacement_mm_max": 10.1534
+   },
+   {
+    "t_step": 56,
+    "to_max_abs_deg": 1.19724,
+    "to_largest_joint": "left_arm_0",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 24.2385
+   },
+   {
+    "t_step": 64,
+    "to_max_abs_deg": 0.80657,
+    "to_largest_joint": "left_arm_0",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 15.6711
+   },
+   {
+    "t_step": 72,
+    "to_max_abs_deg": 1.11613,
+    "to_largest_joint": "left_arm_0",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 20.9159
+   },
+   {
+    "t_step": 80,
+    "to_max_abs_deg": 3.40001,
+    "to_largest_joint": "left_arm_0",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 69.3366
+   },
+   {
+    "t_step": 88,
+    "to_max_abs_deg": 3.43637,
+    "to_largest_joint": "left_arm_0",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 69.7621
+   },
+   {
+    "t_step": 96,
+    "to_max_abs_deg": 4.06357,
+    "to_largest_joint": "left_arm_0",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 81.1001
+   },
+   {
+    "t_step": 104,
+    "to_max_abs_deg": 4.43943,
+    "to_largest_joint": "left_arm_0",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 91.4317
+   },
+   {
+    "t_step": 112,
+    "to_max_abs_deg": 3.71448,
+    "to_largest_joint": "left_arm_0",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 74.214
+   },
+   {
+    "t_step": 120,
+    "to_max_abs_deg": 8.59403,
+    "to_largest_joint": "left_arm_4",
+    "to_largest_contrib_joint": "left_arm_0",
+    "to_tip_displacement_mm_max": 210.3335
+   }
+  ],
+  "r1_per_joint": {
+   "deg": {
+    "left_arm_0": 8.35883,
+    "left_arm_1": 8.04544,
+    "left_arm_2": 3.04907,
+    "left_arm_3": 8.59319,
+    "left_arm_4": 8.59403,
+    "left_arm_5": 8.59341,
+    "left_arm_6": 2.79064
+   },
+   "mm": {
+    "left_arm_0": 106.3758,
+    "left_arm_1": 96.2062,
+    "left_arm_2": 13.6209,
+    "left_arm_3": 69.5448,
+    "left_arm_4": 22.7521,
+    "left_arm_5": 34.2752,
+    "left_arm_6": 1.7139
+   }
+  },
+  "r4": {
+   "t_step": 120,
+   "gripper_ref_col7": 0.00268,
+   "gripper_before": 0.99727,
+   "tip_to_apple_surface_mm": 56.0589,
+   "tip_centre_to_apple_surface_mm": 60.0283,
+   "reference_value_T7a_mm": -17.9552,
+   "difference_from_T7a_mm": 74.0141,
+   "min_over_all_chunks_mm": -3.188,
+   "min_over_all_chunks_t_step": 160,
+   "note": "제약 구 모델이 이 실행은 122 개다 (손끝 반지름이 T7a 와 다르면 clearance = d - r 도 달라진다). 중심-표면 거리도 함께 낸다. 위 두 값은 서버가 chunk 와 함께 저장한 한 자세의 것이고, 'at_the_closing_step' 이 실제로 닫히는 step 의 값이다.",
+   "at_the_closing_step": {
+    "window": "execution window only (steps 0..7)",
+    "t_step_of_chunk": 112,
+    "seq": 15,
+    "step_in_chunk": 3,
+    "t_step_of_the_step": 115,
+    "gripper_value": 0.000318,
+    "gripper_value_previous_step": 0.991802,
+    "ee_finger_l1_origin_to_apple_surface_mm": 30.4527,
+    "offset_tip_minus_apple_centre_mm": [
+     -4.597,
+     35.463,
+     49.6
+    ],
+    "note": "ee_finger_l1 body 원점에서 사과 표면까지의 해석적 거리다 (구 반지름을 빼지 않은 값). 제약 구로 재려면 반지름을 더 빼야 한다."
+   }
+  }
+ }
+}

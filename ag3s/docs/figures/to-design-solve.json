@@ -1,0 +1,71 @@
+{
+ "planned": 8,
+ "horizon": 50,
+ "execution_length": 8,
+ "status": "feasible",
+ "iterations": 1,
+ "solve_time_ms": 63.2276451215148,
+ "wall_ms": 63.278155867010355,
+ "steady_state_ms": 20.60174010694027,
+ "repeat_ms": [
+  21.419944241642952,
+  24.737454019486904,
+  19.783535972237587,
+  19.044762942939997,
+  18.975835759192705,
+  23.31414306536317
+ ],
+ "timing_ms": {
+  "linearize": 0.222,
+  "assemble": 2.741,
+  "qp": 58.176,
+  "check": 0.728
+ },
+ "reference_violation_m": 0.19124999999999998,
+ "max_violation_m": 0.0,
+ "reference_deviation_rad": 0.6094367398008329,
+ "slack_l1": 0.3525719025493812,
+ "cost_to": 0.37233874107581205,
+ "cost_ref": 4.16000867987643e-33,
+ "clearance_reference_mm": [
+  122.39378462532325,
+  82.72719816173412,
+  42.041141457041356,
+  0.44242641413316797,
+  -45.88151342200239,
+  -93.35995014815285,
+  -141.86121057771913,
+  -191.24999999999997
+ ],
+ "clearance_to_mm": [
+  165.12742336951862,
+  123.85617129834692,
+  80.18736487127292,
+  43.58284666414566,
+  23.884077244376662,
+  30.08335695561029,
+  37.97751752392092,
+  37.41179850887411
+ ],
+ "max_violation_pair": {
+  "block": "candidate",
+  "clearance_m": 0.02388407724437666,
+  "step": 4,
+  "query": 33,
+  "link": "link_right_arm_5",
+  "slot": 0,
+  "candidate_id": 7,
+  "obstacle": null,
+  "point_m": [
+   0.29945850547027003,
+   -0.5154698384458525,
+   0.7924810380206784
+  ]
+ },
+ "n_spheres": 61,
+ "rows_per_step": 24,
+ "notes": [
+  "time budget 50 ms reached after 1 iteration(s); returning the best iterate so far",
+  "limit overshoot (m or m/step): {'position': 0.0, 'velocity': 0.0, 'acceleration': 6.5e-05}"
+ ]
+}
