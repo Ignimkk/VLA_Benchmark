@@ -151,10 +151,10 @@ import numpy as np
 
 __all__ = [
     "PREFIX", "DEFAULT_CAMERAS", "GRIPPER_COLUMNS", "gripper_columns",
-    "ARM_JOINT_DIM", "ACTION_WIDTH", "ACTIONS_REFERENCE", "SHADOW",
+    "ARM_JOINT_DIM", "ACTION_WIDTH", "ACTIONS_REFERENCE", "SHADOW", "TO_BLOCK",
     "pack_request", "strip_request", "unpack_camera_observations",
     "pack_response", "unpack_field", "unpack_actions_reference", "unpack_ag3s",
-    "unpack_violation_pair", "unpack_shadow",
+    "unpack_violation_pair", "unpack_shadow", "unpack_to",
     "SafetyVerdict", "AG3S_BLOCK", "VIOLATION_PAIR",
 ]
 
@@ -176,6 +176,13 @@ SHADOW = "shadow"
 #: `ag3s/` 접두(요청 쪽)와 글자가 겹치지만 충돌하지 않는다: `strip_request` 는 **요청**만
 #: 가르고 `"ag3s/"`(슬래시 포함)로 시작하는 키만 본다. 응답은 애초에 stripping 을 안 지난다.
 AG3S_BLOCK = "ag3s"
+
+#: 응답 키 — **최적화기가 실제로 몇 번 돌았나** (T15). `ag3s` 블록과 같은 규약이다.
+#:
+#: 예전에는 이 값이 `notes` 의 문장 (`"time budget 50 ms reached after 1 iteration(s)"`) 뿐이라
+#: **셀 수 없었다.** *"편차가 0 이 아니면 몇 번 돌았나"* 가 언제나 다음 질문인데, 그때마다 기록이
+#: 없어 실행을 다시 해야 했다. 구조화된 값으로 싣는다.
+TO_BLOCK = "to"
 
 #: 응답의 **선택 키** — `max_violation_m` 을 만든 행의 신원 (`SafetyVerdict.max_violation_pair`).
 #: `T5f` 가 *"`violated` 가 어느 제약인가"* 에서 막힌 것을 여는 키다. 활성 제약이 하나도 없던
@@ -330,6 +337,7 @@ def pack_response(actions: np.ndarray, verdict: SafetyVerdict, *, seq: int,
                   actions_reference: Optional[np.ndarray] = None,
                   shadow: bool = False,
                   ag3s: Optional[dict[str, Any]] = None,
+                  to: Optional[dict[str, Any]] = None,
                   extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """응답. `actions` 는 `[H, ACTION_WIDTH]` 이고, 안전하지 않아도 실린다.
 
@@ -379,6 +387,8 @@ def pack_response(actions: np.ndarray, verdict: SafetyVerdict, *, seq: int,
         out[ACTIONS_REFERENCE] = reference
     if ag3s:
         out[AG3S_BLOCK] = dict(ag3s)
+    if to:
+        out[TO_BLOCK] = dict(to)
     if extra:
         out.update(extra)
     return out
@@ -393,6 +403,16 @@ def unpack_actions_reference(response: dict[str, Any]) -> Optional[np.ndarray]:
     """
     blob = response.get(ACTIONS_REFERENCE)
     return None if blob is None else np.asarray(blob)
+
+
+def unpack_to(response: dict[str, Any]) -> dict[str, Any]:
+    """응답의 `to` 블록, 없으면 **빈 딕셔너리** (이 블록을 모르는 옛 서버).
+
+    `unpack_ag3s` 와 같은 규약이다 — 없음을 상태 객체로 감싸지 않는다. 판정을 바꾸는 값이 아니고
+    **셀 수 있게 하는** 값이기 때문이다.
+    """
+    block = response.get(TO_BLOCK)
+    return dict(block) if isinstance(block, dict) else {}
 
 
 def unpack_shadow(response: dict[str, Any]) -> Optional[bool]:

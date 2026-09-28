@@ -242,6 +242,27 @@ class LinearizedRows:
     def capacity(self) -> int:
         return int(self.value.size)
 
+    @classmethod
+    def all_unused(cls, horizon: int, rows_per_step: int, nq_opt: int) -> "LinearizedRows":
+        """**같은 모양, 전부 비활성.** `collision.enabled=False` 가 내는 것이다 (T15).
+
+        이 클래스가 애초에 정의한 padding 상태 그대로다 — 기울기 0, 여유거리 `+inf`,
+        `used=False`. 즉 *"근접 제약이 하나도 없는 프레임"* 과 **글자 그대로 같은 배열**이고,
+        그 프레임은 지금도 매 실행에 나온다. 그래서 KKT 희소성이 한 칸도 안 움직이고 QP 의
+        인수분해 재사용도 그대로다 — `attached_self_mask` 를 0 으로 두고 행을 남긴 것과 같은
+        규율이고, 같은 이유다 (되돌리는 것이 값 하나).
+        """
+        shape = (int(horizon), int(rows_per_step))
+        return cls(
+            value=np.full(shape, np.inf),
+            gradient=np.zeros((shape[0], shape[1], int(nq_opt))),
+            used=np.zeros(shape, bool),
+            slot=np.full(shape, -999, np.int64),
+            sphere=np.zeros(shape, np.int64),
+            n_considered=0,
+            budget_bound_steps=(),
+        )
+
 
 class CollisionBlock:
     """The fixed sparsity pattern of the collision rows, built once and refilled every iteration.
@@ -777,7 +798,23 @@ class CollisionLinearizer:
         Fully vectorized. An earlier version looped over the selected rows in Python and cost 13 ms
         at H=50 — half the budget for the entire optimization — for arithmetic numpy does in
         microseconds.
+
+        **`collision.enabled=False` 면 행이 하나도 안 나온다** (사용자 ablation, T15). 여기가
+        QP 가 충돌을 보는 **유일한** 자리이므로, 여기서 비우면 추적·jerk·연속성·limit·trust
+        region 은 그대로 돌면서 충돌만 없다 — `--no-safe`(TO 를 아예 안 돌림)와 다른 점이다.
+
+        **여유거리 측정은 이 스위치와 무관하다.** `full_violation` 과 `worst_row` 는 이 함수를
+        거치지 않고 기하를 직접 다시 재므로, 꺼도 `max_violation_m` 은 참값이 나온다. 꺼진 것은
+        *최적화기가 보는 것*뿐이고 **기록은 거짓말하지 않는다.**
+
+        **행을 지우지 않는다 — 전부 비활성으로 남긴다** (`LinearizedRows.all_unused`). 이 클래스의
+        희소성이 QP 인수분해 재사용의 전제이므로 (그것이 193 ms → 25 ms 의 차이였다), 행 수를
+        줄이는 것은 그 전제를 깨는 것이다. 비활성 행은 기울기 0 · 여유거리 `+inf` 이고, 그것은
+        "근접 제약이 하나도 없는 프레임" 과 같은 배열이다 — 되돌리는 것이 값 하나다.
         """
+        if not getattr(config.collision, "enabled", True):
+            return LinearizedRows.all_unused(
+                trajectory.shape[1], config.reduction.rows_per_step, self.nq_opt)
         reduction = config.reduction
         budget = reduction.rows_per_step
         centres, jac = states or self.sphere_states(trajectory, q_now)

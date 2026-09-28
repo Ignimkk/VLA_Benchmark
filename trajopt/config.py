@@ -399,6 +399,26 @@ class CollisionBackendConfig:
     #: `scene_from_constraint_set` refuses the combination that constrains a support surface with
     #: nothing (carved out of the field *and* no plane row).
     use_support_planes: bool = False
+    #: **충돌 제약을 최적화기에 보이는가.** `True` 가 기본이고 그것이 지금까지의 TO 다.
+    #:
+    #: `False` 는 사용자가 요청한 ablation 이다 (*"TO 에 가장 기본적인 jerk 목적함수만 포함하고
+    #: 나머지 제약을 모두 제거해 봐. 충돌 제약을 제거한 후에도 사과를 못 집으면 이건
+    #: 궤적최적화의 문제로 볼 수 있지 않나?"*). 그 판정표가 이것이다:
+    #:
+    #: | `w_smooth` | 충돌 | 최적해가 무엇이어야 하나 | 아니면 |
+    #: |---|---|---|---|
+    #: | 0 | 없음 | **reference 그 자체** | optimizer 자체의 문제 (SQP 수렴·limit) |
+    #: | 0.05 | 없음 | jerk 가 미는 만큼만 다름 | jerk 항의 기여를 격리 |
+    #:
+    #: **`--no-safe` 와 다르다.** 그쪽은 TO 를 아예 안 돌린다 (정책 청크가 그대로 나간다).
+    #: 이것은 TO 가 **그대로 돌면서** 충돌 행만 없는 것이다 — 추적·jerk·연속성·limit·SQP·trust
+    #: region 이 전부 그대로다.
+    #:
+    #: **판정은 거짓말하지 않는다.** 여유거리 측정(`worst_row`)은 이 값과 무관하게 돌아가므로
+    #: `max_violation_m` 은 여전히 참값이다. 꺼진 것은 **최적화기가 보는 것**이고, 그 사실은
+    #: `notes` 와 `metrics["collision_enabled"]` 에 실린다 — 이 설정으로 돈 기록이 나중에
+    #: "위반 0" 으로 읽히면 안 된다.
+    enabled: bool = True
 
     BACKENDS = ("primitive", "esdf", "both")
 

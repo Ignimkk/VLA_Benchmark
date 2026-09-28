@@ -1,0 +1,102 @@
+{
+ "panels": [
+  {
+   "label": "apple INSIDE the fine window",
+   "chunk_index": 6,
+   "local_t_step": 48,
+   "server_seq": 7,
+   "grounding_status": "ok",
+   "has_target": true,
+   "fine_origin_mm": [
+    246.28,
+    2.38,
+    548.96
+   ],
+   "fine_max_mm": [
+    886.28,
+    642.38,
+    1188.96
+   ],
+   "fine_voxel_mm": 5.0,
+   "coarse_origin_mm": [
+    -820.0,
+    -1270.0,
+    -470.0
+   ],
+   "coarse_voxel_mm": 20.0,
+   "apple_mm": [
+    563.49,
+    320.46,
+    850.0
+   ],
+   "apple_in_fine_window": true,
+   "apple_distance_outside_fine_mm": 0.0,
+   "target_centroid_mm": [
+    563.78,
+    319.88,
+    866.46
+   ],
+   "centroid_minus_apple_mm": [
+    0.29,
+    -0.58,
+    16.46
+   ],
+   "tip_mm": [
+    564.06,
+    309.56,
+    1107.79
+   ],
+   "tip_in_fine_window": true,
+   "n_target_points": 123
+  },
+  {
+   "label": "apple OUTSIDE the fine window",
+   "chunk_index": 11,
+   "local_t_step": 88,
+   "server_seq": 12,
+   "grounding_status": "ok",
+   "has_target": true,
+   "fine_origin_mm": [
+    212.5,
+    -343.74,
+    585.52
+   ],
+   "fine_max_mm": [
+    852.5,
+    296.26,
+    1225.52
+   ],
+   "fine_voxel_mm": 5.0,
+   "coarse_origin_mm": [
+    -820.0,
+    -1270.0,
+    -470.0
+   ],
+   "coarse_voxel_mm": 20.0,
+   "apple_mm": [
+    563.47,
+    320.48,
+    850.0
+   ],
+   "apple_in_fine_window": false,
+   "apple_distance_outside_fine_mm": 24.22,
+   "target_centroid_mm": [
+    530.0,
+    -26.24,
+    903.02
+   ],
+   "centroid_minus_apple_mm": [
+    -33.48,
+    -346.72,
+    53.02
+   ],
+   "tip_mm": [
+    592.68,
+    315.52,
+    955.56
+   ],
+   "tip_in_fine_window": false,
+   "n_target_points": 1780
+  }
+ ]
+}

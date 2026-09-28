@@ -157,6 +157,7 @@ class TrajectoryOptimizer:
         qp_iterations = 0
         radius = cfg.sqp.trust_radius
         budget_bound = False
+        time_budget_hit = False
 
         while iterations < cfg.sqp.max_iterations:
             # Checked *after* the first iteration, never before it. A budget so tight that the
@@ -168,6 +169,7 @@ class TrajectoryOptimizer:
                     f"time budget {cfg.sqp.time_budget_ms:.0f} ms reached after {iterations} "
                     "iteration(s); returning the best iterate so far"
                 )
+                time_budget_hit = True
                 break
             iterations += 1
 
@@ -233,6 +235,7 @@ class TrajectoryOptimizer:
             best, reference, q_now, scene, template, iterations, best_slack,
             reference_violation, previous_chunk, notes, started, geometry_certified,
             states=best_states, timing=timing, qp_iterations=qp_iterations,
+            time_budget_hit=time_budget_hit,
         )
 
     # --- helpers --------------------------------------------------------------------------
@@ -244,8 +247,13 @@ class TrajectoryOptimizer:
         re-evaluates the geometry and so can disagree, which is the only way the step-acceptance test
         can catch a bad linearization.
         """
-        violation = max(0.0, -self.linearizer.full_violation(trajectory, q_now, scene, states))
         cost = objective(trajectory, reference, self.config, previous_chunk=previous_chunk)
+        if not self.config.collision.enabled:
+            # **꺼진 판에서는 벌점도 없어야 한다** (T15). 행만 비우고 merit 에 위반을 남기면
+            # 충돌이 여전히 해를 밀고, 그러면 "충돌을 껐다" 가 거짓이 된다 — QP 가 아니라 step
+            # 수락 기준을 통해 미는 것뿐이다. 측정(`worst_row`)은 이것과 무관하게 계속 돈다.
+            return cost
+        violation = max(0.0, -self.linearizer.full_violation(trajectory, q_now, scene, states))
         return cost + self.config.cost.w_slack * violation
 
     def _passthrough(self, reference, q_now, template, status, notes, started) -> TrajOptResult:
@@ -264,7 +272,12 @@ class TrajectoryOptimizer:
             notes=list(notes),
             # 제약이 없었으므로 최악 행도 없다. **키는 둔다** — 없음이 `None` 으로 적히는 것과
             # 키가 빠지는 것은 읽는 쪽에 다른 뜻이다.
-            metrics={"n_rows": 0, "max_violation_pair": None},
+            metrics={"n_rows": 0, "max_violation_pair": None,
+                     # 키 집합을 `_finish` 와 같게 둔다 — 읽는 쪽이 `.get` 두 갈래로 갈리지 않는다.
+                     "sqp_iterations": 0, "max_iterations": int(self.config.sqp.max_iterations),
+                     "time_budget_ms": float(self.config.sqp.time_budget_ms),
+                     "time_budget_hit": False, "max_iterations_hit": False,
+                     "collision_enabled": bool(self.config.collision.enabled)},
         )
 
     def _chunk_from(self, trajectory: np.ndarray, template: Optional[np.ndarray]) -> np.ndarray:
@@ -275,7 +288,7 @@ class TrajectoryOptimizer:
     def _finish(
         self, trajectory, reference, q_now, scene, template, iterations, slack_norm,
         reference_violation, previous_chunk, notes, started, geometry_certified, states=None,
-        timing=None, qp_iterations=0,
+        timing=None, qp_iterations=0, time_budget_hit=False,
     ) -> TrajOptResult:
         cfg = self.config
         # `full_violation` 이 아니라 `worst_row` 다. **같은 값을 내면서 그 값을 만든 행의 신원까지
@@ -305,6 +318,15 @@ class TrajectoryOptimizer:
                 "behind them; safety cannot be claimed for a scene that was not fully accounted for"
             )
 
+        if not cfg.collision.enabled:
+            # **이 기록이 "위반 0" 으로 읽히면 안 된다.** 위 `violation` 은 여전히 참값이지만
+            # (측정은 이 스위치와 무관하다), 최적화기는 그것을 보지 않았다. 그 구별이 기록에
+            # 없으면 이 실행의 궤적이 "충돌을 피한 궤적" 으로 읽힌다.
+            notes.append(
+                "COLLISION CONSTRAINTS WERE OFF (collision.enabled=False): the optimizer saw no "
+                "collision rows and no violation penalty. max_violation below is still measured "
+                "from the real geometry — it is what the trajectory does, not what was enforced."
+            )
         limits = limit_report(trajectory, self.limits)
         if max(limits.values()) > 1e-6:
             notes.append(
@@ -335,6 +357,16 @@ class TrajectoryOptimizer:
                 "geometry_certified": bool(geometry_certified),
                 "qp_solver": cfg.qp.solver,
                 "qp_iterations": int(qp_iterations),
+                # **구조화된 값으로 싣는다** (T15). 예전에는 `notes` 의 문장
+                # (`"time budget 50 ms reached after 1 iteration(s)"`) 뿐이라 **셀 수 없었다** —
+                # "몇 번 돌았나" 가 다음 질문인데 그때마다 실행을 다시 해야 했다.
+                "sqp_iterations": int(iterations),
+                "max_iterations": int(cfg.sqp.max_iterations),
+                "time_budget_ms": float(cfg.sqp.time_budget_ms),
+                "time_budget_hit": bool(time_budget_hit),
+                "max_iterations_hit": bool(iterations >= cfg.sqp.max_iterations),
+                # 충돌이 꺼졌는지. `notes` 와 **둘 다** 싣는다 — 기계가 세는 쪽과 사람이 읽는 쪽.
+                "collision_enabled": bool(cfg.collision.enabled),
                 "timing_ms": {k: round(v, 3) for k, v in (timing or {}).items()},
             },
         )

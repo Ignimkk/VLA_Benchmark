@@ -288,7 +288,36 @@ class SafePolicy:
                                   actions_reference=chunk,
                                   shadow=self.shadow,
                                   ag3s=ag3s_block,
+                                  to=self._to_block(),
                                   extra=extra)
+
+    def _to_block(self) -> Optional[dict[str, Any]]:
+        """**최적화기가 몇 번 돌았고 무엇에 걸렸나** (T15). 없으면 `None` — 키가 안 실린다.
+
+        `notes` 의 문장으로는 셀 수 없었다. *"청크가 바뀌었다면 몇 번 돌았나"* 가 언제나 다음
+        질문이고, 그때 기록이 없으면 실행을 한 번 더 해야 한다 — 같은 결핍에 여섯 번 막혔다.
+
+        `collision_enabled` 를 여기 함께 싣는다. 이 설정으로 돈 기록이 *"위반 0"* 으로 읽히면 안
+        되고, `notes` 는 사람이 읽는 쪽이라 기계가 세려면 값이 있어야 한다.
+        """
+        result = self.refiner.last_result
+        metrics = dict(getattr(result, "metrics", None) or {}) if result is not None else {}
+        if result is None:
+            return None
+        return {
+            "status": getattr(getattr(result, "status", None), "value", None),
+            "iterations": int(getattr(result, "iterations", 0) or 0),
+            "solve_ms": round(float(getattr(result, "solve_time_ms", 0.0) or 0.0), 3),
+            "sqp_iterations": int(metrics.get("sqp_iterations", 0) or 0),
+            "qp_iterations": int(metrics.get("qp_iterations", 0) or 0),
+            "max_iterations": int(metrics.get("max_iterations", 0) or 0),
+            "time_budget_ms": float(metrics.get("time_budget_ms", 0.0) or 0.0),
+            "time_budget_hit": bool(metrics.get("time_budget_hit", False)),
+            "max_iterations_hit": bool(metrics.get("max_iterations_hit", False)),
+            "collision_enabled": bool(metrics.get("collision_enabled", True)),
+            "reference_deviation": round(
+                float(getattr(result, "reference_deviation", 0.0) or 0.0), 6),
+        }
 
     def _ag3s_block(self, verdict: wire.SafetyVerdict) -> Optional[dict[str, Any]]:
         """`ag3s_status` 가 `ok` 가 아닐 때의 **사유**. `ok` 면 `None` — 키가 안 실린다.

@@ -124,6 +124,9 @@ class SafeRemoteClient:
         #: `last_verdict` 에 넣지 않는 것은 그 딕셔너리의 키 집합이 T0 기록의 `verdict` 이고,
         #: 거기에 키를 더하면 옛 기록과 모양이 갈라지기 때문이다 — `last_ag3s` 와 같은 이유다.
         self.last_violation_pair = None
+        #: 응답의 `to` 블록 (`wire.unpack_to`) — SQP 반복 수 · 시간 예산에 걸렸나 · 충돌 on/off.
+        #: 빈 dict 면 이 블록을 모르는 옛 서버다. `last_verdict` 에 넣지 않는 이유는 위와 같다.
+        self.last_to: dict = {}
         self.stats = {"sent": 0, "safe": 0, "unsafe": 0, "timeout": 0, "stale": 0, "error": 0}
 
         self._trace = None
@@ -212,6 +215,8 @@ class SafeRemoteClient:
         self.last_actions_refined = actions
         self.last_actions_reference = reference
         self.last_violation_pair = wire.unpack_violation_pair(result)
+        # **최적화기가 몇 번 돌았나** (T15). 빈 dict 는 이 블록을 모르는 옛 서버다.
+        self.last_to = wire.unpack_to(result)
         safe = bool(result.get("safe", False))
         if not safe and not self.shadow:
             return self._hold(self._explain(result), "unsafe", result)
@@ -392,6 +397,7 @@ class SafeRemoteClient:
                                          else np.asarray(blob))
             self.last_actions_reference = wire.unpack_actions_reference(result)
             self.last_violation_pair = wire.unpack_violation_pair(result)
+            self.last_to = wire.unpack_to(result)
         else:
             # 응답이 아예 없으면 지각 사유도 없다. **지난 프레임 것을 남겨 두지 않는다** —
             # 남기면 이 프레임이 그 사유로 멈춘 것처럼 읽힌다. 청크와 위반 행의 신원도 같다.
@@ -399,6 +405,7 @@ class SafeRemoteClient:
             self.last_actions_refined = None
             self.last_actions_reference = None
             self.last_violation_pair = None
+            self.last_to = {}
             from benchmark.ag3s.fields.provenance import FieldProvenance
             self.last_field = FieldProvenance.unavailable(
                 f"no response to read a field from ({kind}): {reason}")

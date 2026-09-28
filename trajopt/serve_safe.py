@@ -235,6 +235,25 @@ def cost_overrides(args) -> dict[str, float]:
     return {k: float(v) for k, v in given.items() if v is not None}
 
 
+def announce_collision_switch(enabled: bool) -> None:
+    """**충돌 제약이 꺼져 있으면 크게 말한다.** `--no-self-collision` 과 같은 수위다.
+
+    그쪽은 쥔 물체 대 로봇 한 블록을 껐고, 이쪽은 **충돌 제약 전부**다. 조용히 이 설정으로 떠
+    있는 것은 안전 계층이 꺼진 서버를 켜진 것처럼 보이게 하는 것이다.
+    """
+    if enabled:
+        return
+    logging.getLogger(__name__).warning(
+        "!!! COLLISION CONSTRAINTS ARE OFF (--no-collision) !!!\n"
+        "    최적화기는 충돌 행을 **하나도** 보지 않습니다 — 로봇이 무엇에 부딪혀도 아무도 막지 "
+        "않습니다. 테이블·crate·사과·자기 자신 전부입니다.\n"
+        "    TO 는 그대로 돕니다 (추적·jerk·연속성·limit·SQP). `--no-safe` 와 다릅니다.\n"
+        "    **여유거리 측정은 계속 돕니다** — max_violation_m 은 참값이고, 궤적이 실제로 무엇을 "
+        "했는지 말합니다. 다만 그것을 **강제하지 않았습니다.** 그 사실이 응답 notes 와 "
+        "metrics['collision_enabled'] 에 실립니다.\n"
+        "    **진단용입니다.** 되돌리는 방법은 이 flag 를 빼는 것뿐입니다.")
+
+
 def announce_cost_weights(overrides: dict) -> None:
     """**기본이 아닌 목적함수로 떠 있으면 크게 말한다.**
 
@@ -764,6 +783,16 @@ def build_parser() -> argparse.ArgumentParser:
                          "기본 집합은 포함한다. 굵기 배율과 **함께** 걸 수 있고 그것이 정상이다 "
                          "(자르기만 하면 잘린 끝의 구가 여전히 자기 반지름만큼 부푼다). 없는 "
                          "이름·capsule 없는 link·mm 로 적은 값은 서버가 시작하지 않는다")
+    ap.add_argument("--no-collision", action="store_true",
+                    help="**충돌 제약 행만 끈다** (사용자 ablation, T15). TO 는 그대로 돈다 — "
+                         "추적·jerk(w_smooth)·연속성·limit·SQP·trust region 전부. `--no-safe` 와 "
+                         "**다르다**: 그쪽은 TO 를 아예 안 돌려 정책 청크가 그대로 나간다. "
+                         "판정하려는 것은 '충돌을 다 빼도 못 잡으면 궤적최적화의 문제인가' 이고, "
+                         "`--w-smooth 0` 과 함께 주면 최적해가 **reference 그 자체**여야 한다 — "
+                         "아니면 optimizer 자체(SQP 수렴·limit)의 문제다. "
+                         "**이 설정에서는 로봇이 무엇에 부딪혀도 아무도 막지 않는다.** "
+                         "여유거리 측정은 계속 돌아가므로 max_violation_m 은 참값이고, 충돌이 "
+                         "꺼졌다는 사실이 notes 와 기록에 실린다")
     ap.add_argument("--no-self-collision", action="store_true",
                     help="쥔 물체 대 로봇 구 제약을 끈다 (T7b 진단). **기본은 켠 상태이고 그것이 "
                          "지금까지의 서버다.** 이 repo 에 로봇-로봇 쌍 검사는 원래 없으므로 "
@@ -863,6 +892,11 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         ap.error("--exclude-links 는 제약 모델을 고치는 flag 입니다 (--no-safe 는 그 모델을 "
                  "아예 안 만듭니다). 그대로 띄우면 flag 가 아무 일도 안 하는데 link 를 뺐다고 "
                  "믿게 됩니다")
+    if args.no_collision and args.no_safe:
+        ap.error("--no-collision 은 **최적화기의 충돌 행만** 끄는 flag 입니다 (--no-safe 는 "
+                 "최적화기를 아예 안 돌립니다). 둘을 같이 주면 뜻이 없습니다 — TO 가 안 도는데 "
+                 "TO 의 제약을 끄는 것이므로, 그대로 띄우면 ablation 을 했다고 믿게 되는데 실은 "
+                 "정책 청크가 그대로 나가는 서버가 뜹니다")
     weights = cost_overrides(args)
     if weights and args.no_safe:
         ap.error("--w-* 는 최적화기의 목적함수를 고치는 flag 입니다 (--no-safe 는 최적화기를 "
@@ -961,6 +995,9 @@ def main() -> None:
                       # 기록을 빠지지 않은 것과 나란히 읽는 것이 이 flag 의 가장 나쁜 실패다.
                       **({"target_field_policy": args.target_field_policy}
                          if args.target_field_policy != "relax" else {}),
+                      # **끈 경우에만 남긴다.** 충돌이 꺼진 기록을 켜진 것과 나란히 읽는 것이
+                      # 이 flag 의 가장 나쁜 실패다 (`self_collision` 과 같은 규약).
+                      **({"collision": "off"} if args.no_collision else {}),
                       # **다듬는 창은 항상 남긴다.** T6f 에서 기본값이 32 → 실행 창으로
                       # 바뀌었으므로, 안 남기면 T6d 기록과 이 기록이 meta 로 구별되지 않는다 —
                       # 그리고 둘은 서로 다른 것을 재고 있다.
@@ -998,7 +1035,9 @@ def main() -> None:
         weights = cost_overrides(args)
         to_config = TrajOptConfig.from_dict({
             "collision": {"backend": "esdf", "esdf_margin": args.esdf_margin,
-                          "use_support_planes": False},
+                          "use_support_planes": False,
+                          # **기본값을 여기 다시 적지 않는다.** 켠 경우에는 키가 아예 없다.
+                          **({"enabled": False} if args.no_collision else {})},
             **({"cost": weights} if weights else {}),
             # 기하 인증 요구는 여기 **한 곳**에서만 켜고 끈다.
             "safety": {"require_certified_geometry": not args.allow_uncertified},
@@ -1016,6 +1055,7 @@ def main() -> None:
             "예지력이 생기지만 **회피를 미룰 자리도 생긴다** (T6d)")
         logging.info("TO esdf_margin: %.1f mm (구 반지름과 합쳐야 중심 기준 요구 자유공간이다)",
                      to_config.collision.esdf_margin * 1000)
+        announce_collision_switch(to_config.collision.enabled)
         announce_cost_weights(weights)
         logging.info(
             "TO objective: w_track=%g w_smooth=%g w_continuity=%g w_slack=%g%s",

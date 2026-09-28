@@ -186,10 +186,21 @@ class ConstraintRecordWriter:
         if refined_chunk is not None:
             payload["refined_chunk"] = np.asarray(refined_chunk, np.float32)
         if to_result is not None:
+            metrics = dict(getattr(to_result, "metrics", None) or {})
             summary["to"] = {
                 "status": getattr(getattr(to_result, "status", None), "value", None),
                 "iterations": int(getattr(to_result, "iterations", 0) or 0),
-                "solve_ms": float(getattr(to_result, "solve_ms", 0.0) or 0.0),
+                "solve_ms": float(getattr(to_result, "solve_time_ms",
+                                          getattr(to_result, "solve_ms", 0.0)) or 0.0),
+                # **구조화된 값** (T15). `notes` 의 문장으로는 "몇 번 돌았나" 를 셀 수 없었다.
+                "sqp_iterations": int(metrics.get("sqp_iterations", 0) or 0),
+                "qp_iterations": int(metrics.get("qp_iterations", 0) or 0),
+                "max_iterations": int(metrics.get("max_iterations", 0) or 0),
+                "time_budget_ms": float(metrics.get("time_budget_ms", 0.0) or 0.0),
+                "time_budget_hit": bool(metrics.get("time_budget_hit", False)),
+                "max_iterations_hit": bool(metrics.get("max_iterations_hit", False)),
+                # 충돌이 꺼진 기록이 "위반 0" 으로 읽히면 안 된다.
+                "collision_enabled": bool(metrics.get("collision_enabled", True)),
                 # 노트가 상태를 해석하는 유일한 근거다. `VIOLATED` 에는 두 갈래가 있다 —
                 # 실제로 관통이 남은 경우와, 제약은 전부 통과했지만 AG3S 가 기하를 인증하지
                 # 못한 경우. 둘은 완전히 다른 문제이고 상태값만으로는 구분되지 않는다.

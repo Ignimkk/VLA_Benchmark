@@ -1,0 +1,27 @@
+{
+ "self_filter_inflation_m": 0.05,
+ "self_filter_spheres": 218,
+ "panels": {
+  "T14_t72_wrist_cam_l": {
+   "apple_px": 4667,
+   "erased_px": 0,
+   "kept_px": 4667
+  },
+  "T14_t96_wrist_cam_l": {
+   "apple_px": 2497,
+   "erased_px": 2497,
+   "kept_px": 0
+  },
+  "T14_t96_zed_left": {
+   "apple_px": 378,
+   "erased_px": 378,
+   "kept_px": 0
+  },
+  "T12_t96_wrist_cam_l": {
+   "apple_px": 1762,
+   "erased_px": 1762,
+   "kept_px": 0
+  }
+ },
+ "criterion": "point erased iff min_over_spheres(|p-c| - r) <= inflation  (stages/robot_filter.py:robot_sphere_mask)"
+}
