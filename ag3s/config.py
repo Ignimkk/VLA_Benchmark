@@ -587,6 +587,18 @@ class EsdfConfig:
     #: 않는 가장 큰 값을 고르는 것이 맞다.
     attached_sign_threshold_voxels: float = 1.5
 
+    #: `target_free` 계층에서 지울 **공의 반지름**을, centroid 까지 거리의 몇 분위수로 잡을지
+    #: (T13). `1.0` = 최대값 = 점구름 전체를 담는 가장 작은 공.
+    #:
+    #: **이 값은 `target_field_policy` 가 `relax` 가 아닐 때만 쓰인다.** 기본 실행에서는 읽히지도
+    #: 않는다. 1 보다 작게 두는 것은 관측 이상점(반사·잎사귀)이 공을 부풀리는 씬을 위한
+    #: 손잡이이고, 그때는 공이 물체보다 작아져 **일부 표면이 남는다** — 남은 표면은 손끝을
+    #: 그만큼 다시 밀어낸다. 무엇을 썼는지는 기록의 `target_free.ball` 에 남는다.
+    target_ball_quantile: float = 1.0
+    #: 공의 반지름과 절단면 z 에 각각 더할 여유 (voxel 단위). 표면 voxel 이 공 껍질에 반 칸
+    #: 걸쳐 남는 것을 줄이고, 절단면 쪽에서는 **지원면 상판의 seed 를 지키는 쪽**으로 작용한다.
+    target_ball_pad_voxels: float = 1.0
+
     UNKNOWN_POLICIES = ("free", "occupied")
     EXCLUDE_TARGET = ("auto", "always", "never")
     BACKENDS = ("legacy", "curobo")
@@ -595,6 +607,14 @@ class EsdfConfig:
         if self.backend not in self.BACKENDS:
             raise AG3SConfigError(
                 f"esdf.backend 는 {self.BACKENDS} 중 하나여야 합니다: {self.backend!r}")
+        if not 0.0 < float(self.target_ball_quantile) <= 1.0:
+            raise AG3SConfigError(
+                "esdf.target_ball_quantile 는 (0, 1] 이어야 합니다 (1 = 최대값): "
+                f"{self.target_ball_quantile}")
+        if float(self.target_ball_pad_voxels) < 0.0:
+            raise AG3SConfigError(
+                "esdf.target_ball_pad_voxels 는 0 이상이어야 합니다: "
+                f"{self.target_ball_pad_voxels}")
         if float(self.attached_sign_threshold_voxels) < 0.0:
             raise AG3SConfigError(
                 "esdf.attached_sign_threshold_voxels 는 0 이상이어야 합니다: "

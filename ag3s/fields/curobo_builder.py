@@ -77,6 +77,7 @@ occupancy 를 거치지 않는다는 것뿐이고, 그래서 (2) 가 필요하�
 from __future__ import annotations
 
 import dataclasses
+import logging
 import time
 from typing import Any, Optional, Sequence
 
@@ -87,7 +88,7 @@ from benchmark.ag3s.fields.esdf import CameraDepth, VoxelGrid, default_bounds
 from benchmark.ag3s.fields.observation import probe_from_cameras
 from benchmark.ag3s.fields.provenance import FieldProvenance
 
-__all__ = ["CuroboFieldBuilder", "ATTACHED_LABEL", "unpack_site_linear"]
+__all__ = ["CuroboFieldBuilder", "TargetBall", "ATTACHED_LABEL", "unpack_site_linear"]
 
 #: 쥔 물체에 붙이는 내부 라벨. 호출자의 `labelled_points` 이름과 겹치면 안 되므로 밑줄로 감싼다.
 ATTACHED_LABEL = "__attached__"
@@ -107,6 +108,52 @@ def unpack_site_linear(site_index: np.ndarray, shape: Sequence[int]) -> np.ndarr
     z = (packed >> 20) & 0x3FF
     lin = (x * ny + y) * nz + z
     return np.where(packed < 0, -1, lin)
+
+
+@dataclasses.dataclass(frozen=True)
+class TargetBall:
+    """`target_free` 계층에서 **기하 범위로** 지울 공. 테이블 면 위만 지운다 (T13).
+
+    **왜 점이 아니라 공인가.** 점으로 지우는 길(`_exclude_seed_points`, 쥔 물체가 쓰는 쪽)은
+    `target_free` 에서 **한 voxel도 지우지 못했다.** 실측 (`chunk_00014.npz`, `t=104`):
+
+    | | voxel |
+    |---|---|
+    | 사과 표면 (중심 45 mm 안) | **2,203** |
+    | 두 계층(`esdf` · `esdf_free`)이 다른 voxel | 578 |
+    | 그중 사과 45 mm 안 | **0** |
+
+    손끝 질의점에서 두 계층이 `17.319 mm` 로 **같았다.** 원인 셋이 겹쳤다 — grounding 표본점이
+    112 개뿐이고(그중 seed 72 개), 제외가 팽창하지 않고(그 결정에는 이유가 있다,
+    `_exclude_seed_points` 참고), **거리장이 성긴 제거에 꿈쩍하지 않는다** (2,203 중 72 를 지워도
+    지워진 자리마다 5 mm 옆에 이웃 seed 가 살아 있다).
+
+    쥔 물체 경로는 멀쩡하다 — 그때 주는 점들이 물체 **전체**를 덮기 때문이다. 같은 함수를 두
+    용도로 쓴 것이 문제였고, 그래서 이름으로 갈랐다.
+
+    `z_min` 은 **지원면 위로만 지우기 위한 것**이다. 사과 밑면은 테이블에 닿아 있어 그 아래까지
+    지우면 **테이블에 구멍**이 난다 — 팔이 테이블을 통과하고 아무도 막지 않는다. 그래서 이 값은
+    추측하지 않고 AG3S 가 뽑은 평면에서 온다. 못 얻으면 호출자가 **공을 만들지 않는다.**
+    """
+
+    centre: np.ndarray
+    radius: float
+    #: 이 z **이상**만 지운다. 지원면(테이블 상판) + 여유.
+    z_min: float
+    #: 진단용 — 무엇을 재서 이 값이 나왔나. 기록과 시작 로그에 그대로 실린다.
+    provenance: dict = dataclasses.field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "centre",
+                           np.asarray(self.centre, np.float64).reshape(3))
+        if not float(self.radius) > 0.0:
+            raise ValueError(f"TargetBall.radius 는 양수여야 합니다: {self.radius}")
+
+    def summary(self) -> dict:
+        return {"centre_m": [float(v) for v in self.centre],
+                "radius_mm": round(float(self.radius) * 1000.0, 3),
+                "z_min_m": float(self.z_min),
+                **{k: v for k, v in self.provenance.items()}}
 
 
 @dataclasses.dataclass
@@ -219,6 +266,7 @@ class CuroboFieldBuilder:
                exclude_target: bool = False,
                target_free_points: Optional[np.ndarray] = None,
                target_free_label: Optional[str] = None,
+               target_free_ball: Optional["TargetBall"] = None,
                support_points: Optional[np.ndarray] = None,
                attached_points: Optional[np.ndarray] = None,
                labelled_points: Optional[dict] = None,
@@ -303,12 +351,18 @@ class CuroboFieldBuilder:
             # 위의 `_check_target_free_request` 가 미세 계층을 만들 수 있음을 이미 보장한다 —
             # 조용히 0 겹으로 지나가는 길이 없다.
             t0 = time.monotonic()
-            remove = free_points if attached is None or not len(attached) else np.vstack(
-                [np.asarray(attached, np.float64).reshape(-1, 3), free_points])
+            # **공이 오면 점은 안 쓴다** (T13). 점으로는 한 voxel도 안 지워졌다 (`TargetBall`).
+            # 쥔 물체 점은 공과 **함께** 지운다 — 그쪽은 점이 물체 전체를 덮으므로 맞는 길이다.
+            held = (None if attached is None or not len(attached)
+                    else np.asarray(attached, np.float64).reshape(-1, 3))
+            remove = held if target_free_ball is not None else (
+                free_points if held is None else np.vstack([held, free_points]))
             free_tiers = self._build_tiers(itg, remove, dev, torch, only="fine",
-                                           tier_name="fine_no_target")
+                                           tier_name="fine_no_target",
+                                           ball=target_free_ball)
             free_ms = (time.monotonic() - t0) * 1e3
-            self._announce_target_free_cost(free_ms, len(free_points), free_tiers)
+            self._announce_target_free_cost(free_ms, len(free_points), free_tiers,
+                                            ball=target_free_ball)
 
         layers = []
         label_grids = []
@@ -350,6 +404,13 @@ class CuroboFieldBuilder:
             "n_target_points": 0 if free_points is None else int(len(free_points)),
             "build_ms": round(float(free_ms), 3),
             "label": target_free_label,
+            # **무엇으로 지웠는지 기록에 남긴다** (T13). `"points"` 로 남은 프레임은 사과가
+            # 안 지워진 프레임이다 — 그 구별이 없으면 두 실행을 나란히 읽을 수 없다.
+            "mode": ("ball" if target_free_ball is not None
+                     else ("points" if free_points is not None and len(free_points) else "none")),
+            "ball": None if target_free_ball is None else target_free_ball.summary(),
+            "n_ball_seeds_excluded": sum(
+                int(t.extra.get("n_ball_seeds_excluded", 0)) for t in free_tiers),
             "tiers": [{"name": t.name, "voxel_size": t.voxel_size,
                        "shape": [int(v) for v in t.values.shape],
                        "n_seeds_excluded": int(t.extra.get("n_attached_seeds_excluded", 0))}
@@ -493,16 +554,25 @@ class CuroboFieldBuilder:
             yield (tier_name or "fine"), np.asarray(target_centre, np.float64), fine
 
     def _build_tiers(self, itg, attached, dev, torch, *, only: Optional[str] = None,
-                     tier_name: Optional[str] = None) -> list[_Tier]:
-        """계층마다 seed -> (쥔 물체 제외) -> propagate -> 복사.
+                     tier_name: Optional[str] = None,
+                     ball: Optional["TargetBall"] = None) -> list[_Tier]:
+        """계층마다 seed -> (제외) -> propagate -> 복사.
 
         `Mapper.compute_esdf` 를 부르지 않는다 — 그쪽은 CUDA graph 로 seed·propagate·distance
         를 한 덩어리로 실행해서 사이에 끼어들 자리가 없다. 대신 `compute_esdf` 가 하는 부수
         효과(`_esdf_voxel_size` 와 `_last_esdf_origin` 갱신)를 여기서 같이 한다.
 
-        `attached` 로 오는 것이 **반드시 쥔 물체일 필요는 없다** — 여기서 그것은 "seed 에서 뺄
-        점" 이고, target 없는 계층은 같은 길로 target 점을 뺀다 (T8b). 부호 교정도 같은 집합에
-        걸려야 하므로 두 경우가 한 함수인 것이 맞다.
+        **제외 경로가 둘이고, 용도가 다르다** (T13 에서 갈랐다).
+
+        | 인자 | 어떻게 지우나 | 누구 |
+        |---|---|---|
+        | `attached` | 점이 차지한 복셀 (`_exclude_seed_points`) | 쥔 물체 — 점이 물체 전체를 덮는다 |
+        | `ball` | 공 안, **테이블 위만** (`_exclude_ball_seeds`) | target — 표본점 112 개로는 못 지웠다 |
+
+        둘을 같은 함수로 쓰다가 `target_free` 가 **한 voxel도 안 지워졌다** (`TargetBall` 의 표).
+        `ball` 은 `target_free` 계층에서만 오므로 **주 계층은 한 복셀도 안 바뀐다.**
+
+        부호 교정은 **지운 복셀 집합 전체**에 걸린다 — 두 경로의 인덱스를 합쳐 넘긴다.
         """
         centre = getattr(self, "_fine_centre", None)  # update() 가 정한다
         tiers: list[_Tier] = []
@@ -521,8 +591,16 @@ class CuroboFieldBuilder:
             n_excluded = 0
             att_idx = None
             if attached is not None and len(attached):
-                n_excluded, att_idx = self._exclude_attached_seeds(
+                n_excluded, att_idx = self._exclude_seed_points(
                     itg, attached, org, vs, shape)
+            n_ball = 0
+            if ball is not None:
+                n_ball, ball_idx = self._exclude_ball_seeds(itg, ball, org, vs, shape)
+                # 부호 교정은 **지운 복셀 전체**에 걸려야 한다. 한쪽만 넘기면 나머지 복셀의
+                # 음수 부호가 그대로 남고, 그것이 `_force_sign_on_pure_voxels` 가 막는 실패다.
+                if ball_idx is not None:
+                    att_idx = (ball_idx if att_idx is None
+                               else np.unique(np.vstack([att_idx, ball_idx]), axis=0))
 
             itg._propagate_and_distance_impl(origin, itg._esdf_voxel_size)
             vg = itg.get_voxel_grid()
@@ -538,19 +616,21 @@ class CuroboFieldBuilder:
                          site_linear=unpack_site_linear(site, values.shape),
                          origin=org, voxel_size=float(vs))
             tier.extra["n_attached_seeds_excluded"] = n_excluded
+            tier.extra["n_ball_seeds_excluded"] = n_ball
+            if ball is not None:
+                tier.extra["ball"] = ball.summary()
             tier.extra.update(sign)
             tiers.append(tier)
         return tiers
 
-    def _announce_target_free_cost(self, ms: float, n_points: int, tiers) -> None:
+    def _announce_target_free_cost(self, ms: float, n_points: int, tiers, *,
+                                   ball: Optional["TargetBall"] = None) -> None:
         """**첫 프레임에 비용을 크게 찍는다.** 그 뒤로는 stats 에만 남는다.
 
         시작 로그에 ms 가 없으면 "한 겹 더 만든다" 가 프레임 예산에 무엇을 했는지 아무도
         모른다 — 그리고 이 계층은 조용히 켜져 있으면 안 되는 종류의 것이다 (안전 계층을 한
         겹 비껴가는 길이므로).
         """
-        import logging
-
         if getattr(self, "_announced_target_free", False):
             return
         self._announced_target_free = True
@@ -563,6 +643,19 @@ class CuroboFieldBuilder:
             len(tiers), int(n_points), float(ms),
             "" if not tiers else f" ({tiers[0].voxel_size * 1000:.0f} mm 복셀, "
                                  f"seed {tiers[0].extra.get('n_attached_seeds_excluded', 0)} 개 제외)")
+        # **무엇으로 지웠는지, 어떤 수를 재서 그렇게 정했는지 크게 적는다** (T13). 점으로 지운
+        # 판은 사과를 한 voxel도 못 지웠으므로, 이 한 줄이 두 판을 가르는 유일한 표지다.
+        log = logging.getLogger(__name__)
+        if ball is None:
+            log.warning(
+                "    제외 방식 = **점** (표본점 %d 개). T13 실측에서 이 방식은 사과를 한 voxel도 "
+                "지우지 못했다 (표면 2,203 중 0). 공(중심+반지름)을 주려면 pipeline 이 "
+                "target_free_ball 을 실어야 한다 — 지원면 z 를 못 얻으면 여기로 물러난다.",
+                int(n_points))
+        else:
+            log.warning("    제외 방식 = **공** %s · seed %d 개 제외 (테이블 면 z 위만).",
+                        ball.summary(),
+                        sum(int(t.extra.get("n_ball_seeds_excluded", 0)) for t in tiers))
 
     @staticmethod
     def _origin_of(itg, shape, voxel_size: float) -> np.ndarray:
@@ -604,9 +697,14 @@ class CuroboFieldBuilder:
                 "threshold_voxels": float(threshold_voxels),
                 "threshold_m": thr}
 
-    def _exclude_attached_seeds(self, itg, attached: np.ndarray, origin: np.ndarray,
-                                voxel_size: float, shape):
-        """쥔 물체가 차지한 복셀의 seed 를 지운다. **propagate 앞**이어야 한다.
+    def _exclude_seed_points(self, itg, points: np.ndarray, origin: np.ndarray,
+                             voxel_size: float, shape):
+        """**점이 실제로 차지한** 복셀의 seed 를 지운다. 쥔 물체(attached)가 쓰는 길이다.
+
+        T13 에서 이름을 바꿨다 (`_exclude_attached_seeds` → 이것). 이름이 용도를 말해야 하는
+        이유가 이 STEP 의 요지다 — 같은 함수를 `target_free` 에도 썼다가 **한 voxel도 지우지
+        못했다** (`TargetBall` docstring 의 표). 점이 물체 **전체**를 덮는 쥔 물체에는 이 길이
+        맞고, 표본점 112 개뿐인 target 에는 맞지 않는다. target 은 `_exclude_ball_seeds` 를 쓴다.
 
         지우는 것은 `site_index` 의 seed 뿐이고 TSDF 는 건드리지 않는다. 그래서 다음 프레임에
         물체를 놓으면 그 표면이 그대로 살아 있고, 쥔 물체 **뒤에** 있는 다른 장애물의 거리도
@@ -622,9 +720,55 @@ class CuroboFieldBuilder:
         # 보고돼 판정 B 가 A 로 퇴화했다.
         #
         # 환경 증거를 지우는 것은 **위험한 방향**이므로 물체가 실제로 차지한 복셀만 건드린다.
-        idx = np.floor((attached - origin) / float(voxel_size) + 0.5).astype(np.int64)
-        nx, ny, nz = (int(v) for v in shape)
+        idx = np.floor((points - origin) / float(voxel_size) + 0.5).astype(np.int64)
         cand = np.unique(idx, axis=0)
+        return self._clear_seeds(itg, cand, shape)
+
+    def _exclude_ball_seeds(self, itg, ball: "TargetBall", origin: np.ndarray,
+                            voxel_size: float, shape):
+        """**공 안의** 복셀 seed 를 지운다 — `z >= ball.z_min` 인 것만. target 이 쓰는 길이다.
+
+        점이 아니라 범위로 지우는 이유는 `TargetBall` 의 표에 있다. 여기서 중요한 것은 두 가지다.
+
+        **(1) 테이블에 구멍을 내지 않는다.** `z_min` 아래 복셀은 손대지 않으므로 지원면 상판의
+        seed 가 그대로 남는다. 사과 밑면이 테이블에 닿아 있어 공을 그냥 지우면 그 접촉면의
+        table seed 까지 사라지고, 그러면 팔이 테이블을 통과해도 아무도 막지 않는다.
+
+        **(2) 주 계층은 한 복셀도 안 바뀐다.** 이 함수는 `target_free` 계층을 만들 때만 불린다
+        (`_build_tiers(..., ball=...)`). 그래서 권한 없는 link 의 보호는 그대로다 — 그것이
+        E1 과 다른 점이고, 이 변경이 `_exclude_seed_points` 의 경고를 키우면서도 안전한 이유다.
+
+        범위를 **복셀 중심**으로 판정한다 (`floor(...+0.5)` 와 같은 규약). 중심이 공 안이면 그
+        복셀의 seed 를 지운다 — 표면 복셀이 공 껍질에 걸쳐 있을 때 반 칸의 차이로 남는 것을 줄인다.
+        """
+        nx, ny, nz = (int(v) for v in shape)
+        r = float(ball.radius)
+        lo = np.floor((ball.centre - r - origin) / float(voxel_size) + 0.5).astype(np.int64)
+        hi = np.ceil((ball.centre + r - origin) / float(voxel_size) + 0.5).astype(np.int64)
+        lo = np.maximum(lo, 0)
+        hi = np.minimum(hi + 1, np.array([nx, ny, nz]))
+        if np.any(hi <= lo):
+            return 0, None
+        # AABB 안만 본다 — 격자 전체를 훑으면 2 백만 복셀이고 프레임 예산에 들어오지 않는다.
+        ax = [np.arange(int(lo[i]), int(hi[i]), dtype=np.int64) for i in range(3)]
+        grid = np.stack(np.meshgrid(*ax, indexing="ij"), axis=-1).reshape(-1, 3)
+        centres = origin[None, :] + grid.astype(np.float64) * float(voxel_size)
+        inside = np.linalg.norm(centres - ball.centre[None, :], axis=1) <= r
+        inside &= centres[:, 2] >= float(ball.z_min)   # **테이블 위만**
+        cand = grid[inside]
+        if not len(cand):
+            return 0, None
+        return self._clear_seeds(itg, cand, shape)
+
+    def _clear_seeds(self, itg, cand: np.ndarray, shape):
+        """`site_index` 의 seed 를 지우고 `(지운 수, 복셀 인덱스)` 를 돌려준다.
+
+        두 경로(점·공)가 이 한 곳을 쓴다. 부호 교정이 **같은 복셀 집합**에 걸려야 하므로
+        인덱스를 함께 돌려주는 것이 계약이다.
+        """
+        import torch
+
+        nx, ny, nz = (int(v) for v in shape)
         inside = np.all((cand >= 0) & (cand < np.array([nx, ny, nz])), axis=1)
         cand = cand[inside]
         if not len(cand):
@@ -632,7 +776,6 @@ class CuroboFieldBuilder:
         t = torch.as_tensor(cand, device=itg._site_index.device, dtype=torch.long)
         before = int((itg._site_index[t[:, 0], t[:, 1], t[:, 2]] >= 0).sum().item())
         itg._site_index[t[:, 0], t[:, 1], t[:, 2]] = -1
-        # 마스크를 함께 돌려준다 — 부호 교정이 **같은 복셀 집합**에 걸려야 한다.
         return before, cand
 
     @staticmethod

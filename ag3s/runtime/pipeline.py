@@ -484,6 +484,9 @@ class AG3S:
                 with profiler.stage("esdf"):
                     esdf_field, esdf_notes = self._build_esdf(
                         cameras, grounding.target,
+                        # 지원면은 **테이블에 구멍을 내지 않기 위해** 필요하다 (T13). AG3S 가
+                        # 이미 뽑아 둔 평면을 쓴다 — 여기서 z 를 추측하지 않는다.
+                        support_surfaces=surfaces,
                         support_points=(cloud.points[support_mask]
                                         if cfg.esdf.exclude_support_surfaces
                                         and support_mask is not None else None),
@@ -904,7 +907,7 @@ class AG3S:
                                    robot_mask=self._robot_mask_for(d, K, T, robot_state)))
         return out
 
-    def _build_esdf(self, depth_cameras, target, *, support_points=None,
+    def _build_esdf(self, depth_cameras, target, *, support_surfaces=(), support_points=None,
                     destination_points=None, static_geometry=None, robot_state=None,
                     observed_at=None, frame_id="", frame_index=-1):
         """Integrate this frame into the ESDF and return `(field, notes)`.
@@ -989,6 +992,12 @@ class AG3S:
                     "esdf.fine_voxel_size 가 비어 있어 단일 계층으로 돌고 있으므로, 켠 정책이 "
                     "아무 일도 하지 않습니다 — 값을 주거나 정책을 'relax' 로 두십시오")
             target_free_points = np.asarray(points, np.float64)
+            # **점이 아니라 기하 범위로 지운다** (T13, 사용자 판정 "중심 + 반지름, 다만 테이블 면
+            # 위로만"). 점으로는 사과를 **한 voxel도 지우지 못했다** — 표본점 112 개(그중 seed
+            # 72 개)에 표면이 2,203 voxel 이고, 거리장은 성긴 제거에 꿈쩍하지 않는다.
+            target_free_ball = self._target_ball(
+                target_free_points, support_surfaces,
+                voxel=float(getattr(cfg, "fine_voxel_size", 0.0) or cfg.voxel_size))
         # 쥔 물체는 **양쪽에 동시에 있으면 안 된다** (A2). 파지가 닫히는 순간 그 물체는
         # 로봇 쪽 질의점이 되므로 (E3 — 쥔 물체가 optimizer 에 도달하지 않는다), 장애물 쪽에서는
         # 빠져야 한다. 안 빼면 자기 자신에게 부딪히고 그 행은 **어떤 해로도 못 푼다**.
@@ -1011,7 +1020,8 @@ class AG3S:
                                           # 본 계층은 한 복셀도 바뀌지 않는다.
                                           **({} if target_free_points is None else {
                                               "target_free_points": target_free_points,
-                                              "target_free_label": TARGET_LABEL}),
+                                              "target_free_label": TARGET_LABEL,
+                                              "target_free_ball": target_free_ball}),
                                           support_points=support_points,
                                           attached_points=attached_points,
                                           labelled_points=labelled,
@@ -1024,6 +1034,81 @@ class AG3S:
                                           observed_at=observed_at,
                                           frame_id=frame_id, frame_index=frame_index)
         return field, []
+
+    def _target_ball(self, points, support_surfaces, *, voxel: float):
+        """target 점구름 → `TargetBall`, 또는 **`None`** (안전하게 물러난다).
+
+        사용자 판정이 *"중심 + 반지름, 다만 테이블 면 위로만"* 이다. 이 함수는 그 셋을 **재서**
+        정한다 — 숫자를 박지 않는다. 사과·오렌지·배가 다 다르고, 무엇을 썼는지는 시작 로그와
+        기록(`stats["target_free"]["ball"]`)에 그대로 실린다.
+
+        | 값 | 어떻게 |
+        |---|---|
+        | 중심 | 점구름의 centroid |
+        | 반지름 | centroid 까지 거리의 `esdf.target_ball_quantile` 분위수 + 여유 `pad × voxel` |
+        | `z_min` | **지원면** 평면 z (centroid 의 x·y 에서) + 여유 `pad × voxel` |
+
+        **`z_min` 을 못 얻으면 `None` 을 돌려준다.** 그러면 호출자는 지금 동작(점 제외)으로
+        물러난다 — 사과는 안 지워지지만 **테이블에 구멍이 나지 않는다.** 조용히 물러나지 않는다:
+        builder 의 시작 로그가 "제외 방식 = 점" 을 크게 적고, 기록의 `mode` 가 `"points"` 로 남는다.
+        테이블을 지우는 쪽이 최악이기 때문에 이 방향으로 닫는다 — 팔이 테이블을 통과해도 아무도
+        막지 않는 것보다, 사과를 못 잡는 것이 낫다.
+
+        지원면을 **평면으로** 읽는 이유: AG3S 는 테이블을 반평면으로 뽑는다 (`SupportSurface`,
+        `n · p = d`). 점구름의 최소 z 를 쓰면 사과 밑면의 관측 노이즈가 그대로 절단면이 된다.
+        """
+        from benchmark.ag3s.fields.curobo_builder import TargetBall
+
+        pts = np.asarray(points, np.float64).reshape(-1, 3)
+        if not len(pts):
+            return None
+        centre = pts.mean(axis=0)
+        cfg = self.config.esdf
+        quantile = float(getattr(cfg, "target_ball_quantile", 1.0))
+        pad = float(getattr(cfg, "target_ball_pad_voxels", 1.0)) * float(voxel)
+        spread = np.linalg.norm(pts - centre[None, :], axis=1)
+        radius = float(np.quantile(spread, np.clip(quantile, 0.0, 1.0))) + pad
+        plane_z = self._support_plane_z(support_surfaces, centre)
+        if plane_z is None or not np.isfinite(radius) or radius <= 0.0:
+            return None
+        if plane_z >= centre[2] + radius:
+            # 평면이 공보다 위에 있다 = 그 평면은 이 target 의 받침이 아니다. 지울 것이 없으므로
+            # 물러난다 — 엉뚱한 평면으로 자르면 공 전체가 살거나 전체가 지워진다.
+            return None
+        return TargetBall(
+            centre=centre, radius=radius, z_min=float(plane_z) + pad,
+            provenance={
+                "n_points": int(len(pts)),
+                "radius_quantile": quantile,
+                "radius_raw_mm": round(float(np.quantile(spread, np.clip(quantile, 0.0, 1.0)))
+                                       * 1000.0, 3),
+                "pad_mm": round(pad * 1000.0, 3),
+                "support_plane_z_m": float(plane_z),
+                "voxel_mm": round(float(voxel) * 1000.0, 3),
+            })
+
+    @staticmethod
+    def _support_plane_z(support_surfaces, point) -> Optional[float]:
+        """`point` 의 x·y 에서 **그 점 아래** 가장 높은 수평 지원면의 z. 없으면 `None`.
+
+        수평 판정은 법선의 z 성분으로 한다 (`|n_z| > 0.9`) — 벽이나 선반 옆면을 받침으로 쓰면
+        절단면이 엉뚱한 곳에 생긴다. 여러 개면 **가장 높은 것**을 고른다: 테이블 위에 놓인
+        물건의 받침은 바닥이 아니라 테이블이다.
+        """
+        p = np.asarray(point, np.float64).reshape(3)
+        best = None
+        for surface in support_surfaces or ():
+            n = np.asarray(getattr(surface, "normal", ()), np.float64).reshape(-1)
+            if n.size != 3 or abs(float(n[2])) <= 0.9:
+                continue
+            nz = float(n[2])
+            # `n · p = d` 를 z 로 풀어 (x, y) 에서의 평면 높이를 얻는다.
+            z = (float(getattr(surface, "offset", 0.0)) - float(n[0]) * p[0]
+                 - float(n[1]) * p[1]) / nz
+            if not np.isfinite(z) or z > p[2]:
+                continue  # 점 위에 있는 면은 받침이 아니다
+            best = z if best is None else max(best, z)
+        return best
 
     @staticmethod
     def _with_camera_provenance(target, fusion, attention_cloud):
