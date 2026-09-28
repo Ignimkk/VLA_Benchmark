@@ -1,0 +1,677 @@
+{
+ "step": "T23",
+ "writer": "ag3s-verifier",
+ "entries": [
+  {
+   "run": "baseline",
+   "raw": "outputs/verify/T23/baseline.json",
+   "written": "2026-09-28T16:24:31",
+   "summary": {
+    "command": ".venv-ag3s esdf_rollout --records run_16d_ep1800 --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms (단독 실행)",
+    "violated_start": 13,
+    "frames": 15,
+    "has_target": 15,
+    "frame0_clearance_before_mm": 0.18597810857728936,
+    "status_counts": {
+     "feasible": 13,
+     "violated": 2
+    },
+    "matched": true
+   }
+  },
+  {
+   "run": "pytest",
+   "raw": "outputs/verify/T23/pytest_all.log",
+   "written": "2026-09-28T16:32:06",
+   "summary": {
+    "command": "src/openpi/.venv python -m pytest -q tests (전체, 단독)",
+    "passed": 1292,
+    "failed": 0,
+    "skipped": 0,
+    "wall_s": 398.77,
+    "t23_files": {
+     "files": [
+      "tests/trajopt/test_verdict_reasons.py",
+      "tests/trajopt/test_hold_gate.py"
+     ],
+     "passed": 60,
+     "failed": 0,
+     "log": "outputs/verify/T23/pytest_t23.log"
+    }
+   }
+  },
+  {
+   "run": "m1_t16_reasons",
+   "raw": "outputs/verify/T23/m1/t16_reasons.json",
+   "written": "2026-09-28T16:33:17",
+   "summary": {
+    "script": "outputs/verify/T23/m1/replay_t16_reasons.py",
+    "summary_file": "outputs/verify/T23/m1/t16_reasons_summary.json",
+    "assumption": "manipulated centroid = object_poses.apple.pos (world→base), radius 0.045 m, state visible; authorized = contact.contact_links['left'] = ee_left, ee_finger_l1, ee_finger_l2",
+    "n_unsafe_chunks": 25,
+    "per_variant": {
+     "main|allow_unresolved=False": {
+      "chunks_with_kind": {
+       "unverified": 23,
+       "collision": 21
+      },
+      "n_execute": 0,
+      "execute_chunks": [],
+      "n_hold": 25,
+      "collision_chunks": [
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33
+      ],
+      "n_collision_chunks": 21,
+      "unverified_only_chunks": [
+       9,
+       10,
+       11,
+       12
+      ],
+      "n_unverified_only": 4,
+      "grasp_window_t72_176": {
+       "n": 14,
+       "n_execute": 0
+      }
+     },
+     "main|allow_unresolved=True": {
+      "chunks_with_kind": {
+       "allowed_contact": 23,
+       "collision": 21
+      },
+      "n_execute": 4,
+      "execute_chunks": [
+       9,
+       10,
+       11,
+       12
+      ],
+      "n_hold": 21,
+      "collision_chunks": [
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33
+      ],
+      "n_collision_chunks": 21,
+      "unverified_only_chunks": [],
+      "n_unverified_only": 0,
+      "grasp_window_t72_176": {
+       "n": 14,
+       "n_execute": 4
+      }
+     },
+     "distance|allow_unresolved=False": {
+      "chunks_with_kind": {
+       "collision": 25,
+       "unverified": 23
+      },
+      "n_execute": 0,
+      "execute_chunks": [],
+      "n_hold": 25,
+      "collision_chunks": [
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33
+      ],
+      "n_collision_chunks": 25,
+      "unverified_only_chunks": [],
+      "n_unverified_only": 0,
+      "grasp_window_t72_176": {
+       "n": 14,
+       "n_execute": 0
+      }
+     },
+     "distance|allow_unresolved=True": {
+      "chunks_with_kind": {
+       "allowed_contact": 23,
+       "collision": 25
+      },
+      "n_execute": 0,
+      "execute_chunks": [],
+      "n_hold": 25,
+      "collision_chunks": [
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33
+      ],
+      "n_collision_chunks": 25,
+      "unverified_only_chunks": [],
+      "n_unverified_only": 0,
+      "grasp_window_t72_176": {
+       "n": 14,
+       "n_execute": 0
+      }
+     },
+     "nomask|allow_unresolved=False": {
+      "chunks_with_kind": {
+       "unverified": 24,
+       "allowed_contact": 2,
+       "collision": 20
+      },
+      "n_execute": 0,
+      "execute_chunks": [],
+      "n_hold": 25,
+      "collision_chunks": [
+       13,
+       14,
+       15,
+       16,
+       17,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33
+      ],
+      "n_collision_chunks": 20,
+      "unverified_only_chunks": [
+       9,
+       10,
+       11,
+       12,
+       18
+      ],
+      "n_unverified_only": 5,
+      "grasp_window_t72_176": {
+       "n": 14,
+       "n_execute": 0
+      }
+     },
+     "nomask|allow_unresolved=True": {
+      "chunks_with_kind": {
+       "allowed_contact": 24,
+       "collision": 20
+      },
+      "n_execute": 5,
+      "execute_chunks": [
+       9,
+       10,
+       11,
+       12,
+       18
+      ],
+      "n_hold": 20,
+      "collision_chunks": [
+       13,
+       14,
+       15,
+       16,
+       17,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33
+      ],
+      "n_collision_chunks": 20,
+      "unverified_only_chunks": [],
+      "n_unverified_only": 0,
+      "grasp_window_t72_176": {
+       "n": 14,
+       "n_execute": 5
+      }
+     }
+    },
+    "kinds_main": {
+     "9": [
+      "unverified"
+     ],
+     "10": [
+      "unverified"
+     ],
+     "11": [
+      "unverified"
+     ],
+     "12": [
+      "unverified"
+     ],
+     "13": [
+      "unverified",
+      "collision"
+     ],
+     "14": [
+      "unverified",
+      "collision"
+     ],
+     "15": [
+      "unverified",
+      "collision"
+     ],
+     "16": [
+      "unverified",
+      "collision"
+     ],
+     "17": [
+      "unverified",
+      "collision"
+     ],
+     "18": [
+      "unverified",
+      "collision"
+     ],
+     "19": [
+      "unverified",
+      "collision"
+     ],
+     "20": [
+      "unverified",
+      "collision"
+     ],
+     "21": [
+      "unverified",
+      "collision"
+     ],
+     "22": [
+      "collision"
+     ],
+     "23": [
+      "unverified",
+      "collision"
+     ],
+     "24": [
+      "unverified",
+      "collision"
+     ],
+     "25": [
+      "unverified",
+      "collision"
+     ],
+     "26": [
+      "unverified",
+      "collision"
+     ],
+     "27": [
+      "unverified",
+      "collision"
+     ],
+     "28": [
+      "unverified",
+      "collision"
+     ],
+     "29": [
+      "unverified",
+      "collision"
+     ],
+     "30": [
+      "unverified",
+      "collision"
+     ],
+     "31": [
+      "collision"
+     ],
+     "32": [
+      "unverified",
+      "collision"
+     ],
+     "33": [
+      "unverified",
+      "collision"
+     ]
+    },
+    "fidelity_record_clearance_max_mm": 4.852385388810776e-05
+   }
+  },
+  {
+   "run": "m2_t14_seq22",
+   "raw": "outputs/verify/T23/m2/t14_seq22_verdict.json",
+   "written": "2026-09-28T16:34:49",
+   "summary": {
+    "record": "T14 chunk 21 (seq 22): ag3s_status no_target, validity valid, grounding no_seed, TO status violated (uncertified downgrade), clearance +13.55 mm",
+    "path": "SafePolicy._verdict on stub (refiner.last_result + _last_constraint_set)",
+    "cases": {
+     "min_score0.0 occluded id2 age2, budget_hit True": [
+      "occluded_target",
+      "budget_only"
+     ],
+     "min_score0.0 budget_hit False": [
+      "occluded_target"
+     ],
+     "min_score0.05 occluded id0 age11, budget_hit True": [
+      "occluded_target",
+      "budget_only"
+     ],
+     "min_score0.05 budget_hit False": [
+      "occluded_target"
+     ],
+     "control state=lost": [
+      "uncertified",
+      "budget_only"
+     ],
+     "control no manipulated": [
+      "uncertified",
+      "budget_only"
+     ]
+    },
+    "safe": {
+     "occluded": true,
+     "lost": false,
+     "none": false
+    }
+   }
+  },
+  {
+   "run": "m3_m4_hold_drift",
+   "raw": "outputs/verify/T23/m3/hold_drift.json",
+   "written": "2026-09-28T16:36:34",
+   "summary": {
+    "script": "outputs/verify/T23/m3/hold_drift.py (+analyze.py)",
+    "interpreter": ".venv-openpi-live (mujoco 3.11.0, mink 있음; src/openpi/.venv 에는 mink 가 없어 pi05_infer import 불가)",
+    "summary_file": "outputs/verify/T23/m3/hold_drift_summary.json",
+    "runs": {
+     "record|legacy|hold": {
+      "hold_source": "measured",
+      "finger_drift_from_entry_mm@t80": 24.004506015964978,
+      "finger_dist_to_fk_q_hold_mm@t80": 24.004506015964978,
+      "arm_max_abs_dev_from_q_hold_deg@t80": 1.31463810064831,
+      "finger_drift_from_entry_mm@t96": 63.438296309457925,
+      "finger_dist_to_fk_q_hold_mm@t96": 63.438296309457925,
+      "arm_max_abs_dev_from_q_hold_deg@t96": 3.6742946574565116,
+      "finger_drift_from_entry_mm@t135": 105.82026740839542,
+      "finger_dist_to_fk_q_hold_mm@t135": 105.82026740839542,
+      "arm_max_abs_dev_from_q_hold_deg@t135": 8.408960735801607,
+      "finger_step_mm_mean_t80_135": 1.6746246878000717,
+      "arm_step_max_deg_mean_t80_135": 0.14069756354868845,
+      "ctrl_left_grip_first_last": [
+       -0.044974843956355606,
+       -0.04497489832444675,
+       -0.04498336168392371
+      ],
+      "applied_gripper_left_first_last": [
+       0.9994409768079024,
+       0.9994421849877057,
+       0.9996302596427491
+      ],
+      "measured_gripper_left_last": 0.9996302596427491,
+      "apple_world_disp_max_mm": 8.940179471795085,
+      "sim_vs_t16_finger_mm_max": 2.0391464465954052,
+      "sim_vs_t16_arm_deg_max": 0.3057276448874283,
+      "t16_recorded_finger_drift_from_t72_mm@t80,92,96,135": [
+       24.849828673645323,
+       56.72938488340276,
+       63.67615149233137,
+       105.01089530237634
+      ],
+      "t16_recorded_arm_step_max_deg_mean_t73_135": 0.14712016163532635
+     },
+     "record|fixed|hold": {
+      "hold_source": "command",
+      "finger_drift_from_entry_mm@t80": 5.945779317245201,
+      "finger_dist_to_fk_q_hold_mm@t80": 9.68518170970631,
+      "arm_max_abs_dev_from_q_hold_deg@t80": 0.5293348298582657,
+      "finger_drift_from_entry_mm@t96": 5.950904662950577,
+      "finger_dist_to_fk_q_hold_mm@t96": 9.619470750337575,
+      "arm_max_abs_dev_from_q_hold_deg@t96": 0.5234313106777427,
+      "finger_drift_from_entry_mm@t135": 5.950414688430448,
+      "finger_dist_to_fk_q_hold_mm@t135": 9.619127960331706,
+      "arm_max_abs_dev_from_q_hold_deg@t135": 0.5234310240795571,
+      "finger_step_mm_mean_t80_135": 0.0023619925153645304,
+      "arm_step_max_deg_mean_t80_135": 0.0008621128364171791,
+      "ctrl_left_grip_first_last": [
+       -0.04493032157421112,
+       -0.04493032157421112,
+       -0.04493032157421112
+      ],
+      "applied_gripper_left_first_last": [
+       0.9984515905380249,
+       0.9984515905380249,
+       0.9984515905380249
+      ],
+      "measured_gripper_left_last": 0.9984515905382685,
+      "apple_world_disp_max_mm": 0.11153748568095598,
+      "sim_vs_t16_finger_mm_max": 101.85057151531423,
+      "sim_vs_t16_arm_deg_max": 8.391638207218834,
+      "t16_recorded_finger_drift_from_t72_mm@t80,92,96,135": [
+       24.849828673645323,
+       56.72938488340276,
+       63.67615149233137,
+       105.01089530237634
+      ],
+      "t16_recorded_arm_step_max_deg_mean_t73_135": 0.14712016163532635
+     },
+     "replay|legacy|hold": {
+      "hold_source": "measured",
+      "finger_drift_from_entry_mm@t80": 24.849828725836154,
+      "finger_dist_to_fk_q_hold_mm@t80": 24.849828725836154,
+      "arm_max_abs_dev_from_q_hold_deg@t80": 1.2894120789211923,
+      "finger_drift_from_entry_mm@t96": 63.68523185965165,
+      "finger_dist_to_fk_q_hold_mm@t96": 63.68523185965165,
+      "arm_max_abs_dev_from_q_hold_deg@t96": 3.6277719810832925,
+      "finger_drift_from_entry_mm@t135": 105.08175245568646,
+      "finger_dist_to_fk_q_hold_mm@t135": 105.08175245568646,
+      "arm_max_abs_dev_from_q_hold_deg@t135": 8.41396268147933,
+      "finger_step_mm_mean_t80_135": 1.6493166923798486,
+      "arm_step_max_deg_mean_t80_135": 0.14065053973149838,
+      "ctrl_left_grip_first_last": [
+       -0.044974843956350236,
+       -0.04496918695274408,
+       -0.04499147509432043
+      ],
+      "applied_gripper_left_first_last": [
+       0.9994409768077831,
+       0.9993152656165352,
+       0.9998105576515651
+      ],
+      "measured_gripper_left_last": 0.9998105576515651,
+      "apple_world_disp_max_mm": 7.206737264870592,
+      "sim_vs_t16_finger_mm_max": 1.2727471092914773,
+      "sim_vs_t16_arm_deg_max": 0.03687471001665541,
+      "t16_recorded_finger_drift_from_t72_mm@t80,92,96,135": [
+       24.849828673645323,
+       56.72938488340276,
+       63.67615149233137,
+       105.01089530237634
+      ],
+      "t16_recorded_arm_step_max_deg_mean_t73_135": 0.14712016163532635
+     },
+     "replay|fixed|hold": {
+      "hold_source": "command",
+      "finger_drift_from_entry_mm@t80": 5.968826017674764,
+      "finger_dist_to_fk_q_hold_mm@t80": 9.681995527998335,
+      "arm_max_abs_dev_from_q_hold_deg@t80": 0.5281660139052822,
+      "finger_drift_from_entry_mm@t96": 5.950927606016696,
+      "finger_dist_to_fk_q_hold_mm@t96": 9.619467799600642,
+      "arm_max_abs_dev_from_q_hold_deg@t96": 0.5234309560617986,
+      "finger_drift_from_entry_mm@t135": 5.950414696514129,
+      "finger_dist_to_fk_q_hold_mm@t135": 9.61912796568546,
+      "arm_max_abs_dev_from_q_hold_deg@t135": 0.5234310240866242,
+      "finger_step_mm_mean_t80_135": 0.0019115879474403824,
+      "arm_step_max_deg_mean_t80_135": 0.0006077624615425959,
+      "ctrl_left_grip_first_last": [
+       -0.04493032157421112,
+       -0.04493032157421112,
+       -0.04493032157421112
+      ],
+      "applied_gripper_left_first_last": [
+       0.9984515905380249,
+       0.9984515905380249,
+       0.9984515905380249
+      ],
+      "measured_gripper_left_last": 0.9984515905382679,
+      "apple_world_disp_max_mm": 0.09978125122403547,
+      "sim_vs_t16_finger_mm_max": 101.85057151220656,
+      "sim_vs_t16_arm_deg_max": 8.391638207196866,
+      "t16_recorded_finger_drift_from_t72_mm@t80,92,96,135": [
+       24.849828673645323,
+       56.72938488340276,
+       63.67615149233137,
+       105.01089530237634
+      ],
+      "t16_recorded_arm_step_max_deg_mean_t73_135": 0.14712016163532635
+     },
+     "record|legacy|close_then_hold": {
+      "hold_source": "measured",
+      "finger_drift_from_entry_mm@t80": 22.566002643801735,
+      "finger_dist_to_fk_q_hold_mm@t80": 21.491235836860156,
+      "arm_max_abs_dev_from_q_hold_deg@t80": 1.1251267006458654,
+      "finger_drift_from_entry_mm@t96": 55.097592900598,
+      "finger_dist_to_fk_q_hold_mm@t96": 54.16335713065934,
+      "arm_max_abs_dev_from_q_hold_deg@t96": 3.211535905604778,
+      "finger_drift_from_entry_mm@t135": 103.1415346907125,
+      "finger_dist_to_fk_q_hold_mm@t135": 102.2228853308135,
+      "arm_max_abs_dev_from_q_hold_deg@t135": 8.259211914461606,
+      "finger_step_mm_mean_t80_135": 1.6341440685156194,
+      "arm_step_max_deg_mean_t80_135": 0.13861395151729913,
+      "ctrl_left_grip_first_last": [
+       -0.0,
+       -0.0395172121742546,
+       -0.04498368548377819
+      ],
+      "applied_gripper_left_first_last": [
+       0.0,
+       0.8781602705389912,
+       0.9996374551950709
+      ],
+      "measured_gripper_left_last": 0.9996374551950709,
+      "apple_world_disp_max_mm": 11.927894895993738,
+      "sim_vs_t16_finger_mm_max": 24.638524276644198,
+      "sim_vs_t16_arm_deg_max": 1.093310719039627,
+      "t16_recorded_finger_drift_from_t72_mm@t80,92,96,135": [
+       24.849828673645323,
+       56.72938488340276,
+       63.67615149233137,
+       105.01089530237634
+      ],
+      "t16_recorded_arm_step_max_deg_mean_t73_135": 0.14712016163532635
+     },
+     "record|fixed|close_then_hold": {
+      "hold_source": "command",
+      "finger_drift_from_entry_mm@t80": 5.945775886957087,
+      "finger_dist_to_fk_q_hold_mm@t80": 9.73402312306692,
+      "arm_max_abs_dev_from_q_hold_deg@t80": 0.5293348466973087,
+      "finger_drift_from_entry_mm@t96": 5.9509046709211155,
+      "finger_dist_to_fk_q_hold_mm@t96": 9.668690918826355,
+      "arm_max_abs_dev_from_q_hold_deg@t96": 0.5234313106628037,
+      "finger_drift_from_entry_mm@t135": 5.950414684661673,
+      "finger_dist_to_fk_q_hold_mm@t135": 9.668344388290492,
+      "arm_max_abs_dev_from_q_hold_deg@t135": 0.5234310240266103,
+      "finger_step_mm_mean_t80_135": 0.002362161911538477,
+      "arm_step_max_deg_mean_t80_135": 0.0008621108282278489,
+      "ctrl_left_grip_first_last": [
+       -0.0,
+       -0.0,
+       -0.0
+      ],
+      "applied_gripper_left_first_last": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "measured_gripper_left_last": 2.4406887081988483e-13,
+      "apple_world_disp_max_mm": 0.11153748568095598,
+      "sim_vs_t16_finger_mm_max": 101.85057151841805,
+      "sim_vs_t16_arm_deg_max": 8.391638207217143,
+      "t16_recorded_finger_drift_from_t72_mm@t80,92,96,135": [
+       24.849828673645323,
+       56.72938488340276,
+       63.67615149233137,
+       105.01089530237634
+      ],
+      "t16_recorded_arm_step_max_deg_mean_t73_135": 0.14712016163532635
+     }
+    }
+   }
+  }
+ ]
+}

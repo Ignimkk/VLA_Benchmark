@@ -1,7 +1,7 @@
 # 세션 상태 — 끊겨도 여기서 이어 간다
 
 > writer: lead (A0). **매 turn 끝에 갱신한다.** 새 세션은 이 파일을 먼저 읽고, 아래 "이어 가는 절차" 를 따른다.
-> 마지막 갱신: 2026-09-28 18:20 (T18–T24 커밋 완료 — benchmark 8e8ce6b · pi05_TO_hybrid dc5e660 · 루트 tests; push 는 사용자)
+> 마지막 갱신: 2026-09-28 19:00 (T18–T24 전부 구현·검증·커밋 완료. 다음: T26 마무리 → T25 N 회 실행)
 
 ## 1. 지금 무엇을 하고 있나
 
@@ -16,7 +16,7 @@
 | T24 TO 고정입력 ablation | **검증 완료 — 사용자 판정 대기** (sqp 후보 선택 수정 유지 여부) | lead/사용자 | `T24.impl.md` · `T24.verify.json` · `figures/t24/` |
 | T20 조작 대상 정체 | **검증 완료 — 값 판정 대기** (추천 min_score 0.1 · lost_frames 20) | lead/사용자 | `T20.impl.md` · `T20.verify.json` · `figures/t20/` |
 | T22 파지 확인 attach | **검증 완료** — 후속 T22b(settled 를 개도 정지로) · reach 0.08 추천, 판정 대기 | lead/사용자 | `T22.impl.md` · `T22.verify.json` · `figures/t22/` |
-| T23 실행 게이트·HOLD | **구현 완료 → 검증 중** (A2, `T23.verify.partial.json`) | verifier | `T23.impl.md` → `T23.verify.json` 대기 |
+| T23 실행 게이트·HOLD | **검증 완료** (HOLD 드리프트 105 → 6 mm; 게이트 이득은 새 실행에서) | — | `T23.impl.md` · `T23.verify.json` · `figures/t23/` |
 | T21 fine/target-free 창 | **검증 완료** — execution_path 배선(T21b) 의 이득이 수치로 확인됨 (35.7 → 13.4 mm) | — | `T21.impl.md` · `T21.verify.json` · `figures/t21/` |
 | T25 | 대기 | — | T21·T23 뒤 |
 
@@ -76,3 +76,4 @@ ls -t ag3s/docs/handoff | head                            # *.progress.md / *.im
 | 2026-09-28 18:00 | **T23 impl 완료** (1292 passed). T23 verifier 착수. 구현자 전원 종료 → 최종 tree 로 전체 회귀 배경 실행 → 통과하면 **repo 3 곳에 커밋** (benchmark · pi05_TO_hybrid · 루트 tests/.claude; skill `git-commit` 규칙: 출처 표기 없음, 소유 경로만 add) |
 | 2026-09-28 18:20 | 최종 tree 전체 회귀 **1292 passed** → **커밋**: benchmark `8e8ce6b` (코드+handoff+figures) · pi05_TO_hybrid `dc5e660` (pi05_infer.py) · 루트 `tests:` (테스트 9 파일 + skill). **push 는 사용자가** (컨테이너에 자격증명 없음). 미커밋으로 남긴 것: 루트의 `.claude/agents/*.md`·`CLAUDE.md` (사용자의 이전 변경) · `T21.verify.partial.json`(작성 중). 진행 중: T21·T23 verifier. 다음: T26 마무리 (T21b·T22b·T23b·config 기본값) → T25 |
 | 2026-09-28 18:40 | **T21 verify 완료.** T20(0.1/20)+새 창이면 손 행 100 % 가 fine/target-free 에서 답을 받고 coarse 0; execution_path 를 넘기면 손끝 변위 13.4/90 mm (지금 live 의 q_now 창은 35.7/169). 주의: 옮긴 창의 계층은 stand-in 필드(자유공간 carving 없음) — 실제 cuRobo 재구축은 T25 실행에서 |
+| 2026-09-28 19:00 | **T23 verify 완료** — T18–T24 전 STEP 구현·검증 끝. 사용자 승인 대기: 항목 2 (0.1/20) · A (T22b settled) · B (reach 0.08) → 승인되면 T26 task 발행 |

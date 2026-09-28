@@ -1,0 +1,1653 @@
+{
+ "_comment": "ag3s-verifier. 숫자와 경로만. 해석 없음.",
+ "step": "T23",
+ "date": "2026-09-28",
+ "runs": [
+  {
+   "id": "baseline",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-ag3s/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms (단독)",
+   "venv": ".venv-ag3s",
+   "raw_output": "outputs/verify/T23/baseline.json",
+   "stdout_log": "outputs/verify/T23/baseline.log"
+  },
+  {
+   "id": "pytest_all",
+   "command": "src/openpi/.venv/bin/python -m pytest -q -p no:cacheprovider tests (단독)",
+   "venv": "src/openpi/.venv",
+   "stdout_log": "outputs/verify/T23/pytest_all.log"
+  },
+  {
+   "id": "pytest_t23",
+   "command": "... pytest tests/trajopt/test_verdict_reasons.py tests/trajopt/test_hold_gate.py",
+   "stdout_log": "outputs/verify/T23/pytest_t23.log"
+  },
+  {
+   "id": "m1_t16_reasons",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python outputs/verify/T23/m1/replay_t16_reasons.py; .../m1/summarize.py",
+   "venv": "src/openpi/.venv",
+   "raw_output": "outputs/verify/T23/m1/t16_reasons.json",
+   "summary": "outputs/verify/T23/m1/t16_reasons_summary.json",
+   "stdout_log": "outputs/verify/T23/m1/replay.log"
+  },
+  {
+   "id": "m2_t14_seq22",
+   "command": "src/openpi/.venv/bin/python outputs/verify/T23/m2/replay_t14_seq22.py",
+   "raw_output": "outputs/verify/T23/m2/t14_seq22_verdict.json",
+   "stdout_log": "outputs/verify/T23/m2/replay.log"
+  },
+  {
+   "id": "m3_m4_hold_drift",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-openpi-live/bin/python outputs/verify/T23/m3/hold_drift.py; .../m3/analyze.py",
+   "venv": ".venv-openpi-live (src/openpi/.venv 에 mink 가 없어 pi05_infer import 실패 → mink 가 있는 이 venv 로 돌렸다; mujoco 3.11.0)",
+   "raw_output": "outputs/verify/T23/m3/hold_drift.json",
+   "analysis": "outputs/verify/T23/m3/hold_drift_analysis.json",
+   "summary": "outputs/verify/T23/m3/hold_drift_summary.json",
+   "stdout_log": "outputs/verify/T23/m3/hold_drift.log"
+  }
+ ],
+ "code_state": {
+  "benchmark": {
+   "head": "bb668b3",
+   "dirty_files": []
+  },
+  "pi05_TO_hybrid": {
+   "head": "dc5e660",
+   "dirty_files": []
+  },
+  "work(tests)": {
+   "head": "7c16a86",
+   "dirty_files": []
+  },
+  "note": "세 repo 모두 측정 시점 working tree clean (T23 변경 커밋 포함)"
+ },
+ "numbers": {
+  "baseline": {
+   "violated_start": 13,
+   "frames": 15,
+   "has_target": 15,
+   "frame0_clearance_before_mm": 0.18597810857728936,
+   "status_counts_not_baseline": {
+    "feasible": 13,
+    "violated": 2
+   }
+  },
+  "tests": {
+   "passed": 1292,
+   "failed": 0,
+   "skipped": 0,
+   "t23_new_files_passed": 60
+  },
+  "m1_t16": {
+   "assumption": {
+    "manipulated_centroid": "T16 planning 행 object_poses.apple.pos (MuJoCo world → body 'base')",
+    "manipulated_radius_m": 0.045,
+    "manipulated_state": "visible",
+    "authorized_links": [
+     "ee_left",
+     "ee_finger_l1",
+     "ee_finger_l2"
+    ],
+    "authorized_source": "AG3SConfig contact.contact_links['left'] (= ClearancePolicy.authorized_links(approach, [left]))",
+    "tolerance_m": 0.0001,
+    "allowed_contact_pad_m": 0.01,
+    "trajectory": "기록 refined_chunk (T16 --no-collision: refined ≡ reference)",
+    "max_violation": "그 변형 씬에서 같은 궤적의 worst_row",
+    "status": "violated if max_violation > tol else optimal",
+    "variant_main": "T24 재구성 씬(target_free_mask 기록대로) + manipulated_link_margin(권한 표); 조작 대상 점/구 없음 → classify 근거 centroid",
+    "variant_distance": "main + scene.manipulated_spheres=[사과 참값], r=0.045 → 근거 distance",
+    "variant_nomask": "main + target_free_mask=None",
+    "attached_chunks": "t=184–264 11 chunk: 쥔 물체 질의점 기록 없음 → 로봇 구 행만 재분류 + 기록 max_violation_pair(attached 점) 를 classify 규칙(attached_point → collision)대로 collision 사유로 추가",
+    "path": "SafePolicy._verdict (SafePolicy.__new__ 에 refiner.last_result · _last_constraint_set · _last_snapshot · _last_q_now 를 채운 stub)"
+   },
+   "n_unsafe_chunks_old": 25,
+   "fidelity_record_clearance_max_abs_diff_mm": 4.852385388810776e-05,
+   "fidelity_to_view_abs_diff_mm_max_non_attached": 3.5100380608998893e-05,
+   "per_variant": {
+    "main|allow_unresolved=False": {
+     "chunks_with_kind": {
+      "unverified": 23,
+      "collision": 21
+     },
+     "n_execute": 0,
+     "execute_chunks": [],
+     "n_hold": 25,
+     "collision_chunks": [
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33
+     ],
+     "n_collision_chunks": 21,
+     "unverified_only_chunks": [
+      9,
+      10,
+      11,
+      12
+     ],
+     "n_unverified_only": 4,
+     "grasp_window_t72_176": {
+      "n": 14,
+      "n_execute": 0
+     }
+    },
+    "main|allow_unresolved=True": {
+     "chunks_with_kind": {
+      "allowed_contact": 23,
+      "collision": 21
+     },
+     "n_execute": 4,
+     "execute_chunks": [
+      9,
+      10,
+      11,
+      12
+     ],
+     "n_hold": 21,
+     "collision_chunks": [
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33
+     ],
+     "n_collision_chunks": 21,
+     "unverified_only_chunks": [],
+     "n_unverified_only": 0,
+     "grasp_window_t72_176": {
+      "n": 14,
+      "n_execute": 4
+     }
+    },
+    "distance|allow_unresolved=False": {
+     "chunks_with_kind": {
+      "collision": 25,
+      "unverified": 23
+     },
+     "n_execute": 0,
+     "execute_chunks": [],
+     "n_hold": 25,
+     "collision_chunks": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33
+     ],
+     "n_collision_chunks": 25,
+     "unverified_only_chunks": [],
+     "n_unverified_only": 0,
+     "grasp_window_t72_176": {
+      "n": 14,
+      "n_execute": 0
+     }
+    },
+    "distance|allow_unresolved=True": {
+     "chunks_with_kind": {
+      "allowed_contact": 23,
+      "collision": 25
+     },
+     "n_execute": 0,
+     "execute_chunks": [],
+     "n_hold": 25,
+     "collision_chunks": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33
+     ],
+     "n_collision_chunks": 25,
+     "unverified_only_chunks": [],
+     "n_unverified_only": 0,
+     "grasp_window_t72_176": {
+      "n": 14,
+      "n_execute": 0
+     }
+    },
+    "nomask|allow_unresolved=False": {
+     "chunks_with_kind": {
+      "unverified": 24,
+      "allowed_contact": 2,
+      "collision": 20
+     },
+     "n_execute": 0,
+     "execute_chunks": [],
+     "n_hold": 25,
+     "collision_chunks": [
+      13,
+      14,
+      15,
+      16,
+      17,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33
+     ],
+     "n_collision_chunks": 20,
+     "unverified_only_chunks": [
+      9,
+      10,
+      11,
+      12,
+      18
+     ],
+     "n_unverified_only": 5,
+     "grasp_window_t72_176": {
+      "n": 14,
+      "n_execute": 0
+     }
+    },
+    "nomask|allow_unresolved=True": {
+     "chunks_with_kind": {
+      "allowed_contact": 24,
+      "collision": 20
+     },
+     "n_execute": 5,
+     "execute_chunks": [
+      9,
+      10,
+      11,
+      12,
+      18
+     ],
+     "n_hold": 20,
+     "collision_chunks": [
+      13,
+      14,
+      15,
+      16,
+      17,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33
+     ],
+     "n_collision_chunks": 20,
+     "unverified_only_chunks": [],
+     "n_unverified_only": 0,
+     "grasp_window_t72_176": {
+      "n": 14,
+      "n_execute": 5
+     }
+    }
+   },
+   "kinds_main_by_chunk": {
+    "9@t72": [
+     "unverified"
+    ],
+    "10@t80": [
+     "unverified"
+    ],
+    "11@t88": [
+     "unverified"
+    ],
+    "12@t96": [
+     "unverified"
+    ],
+    "13@t104": [
+     "unverified",
+     "collision"
+    ],
+    "14@t112": [
+     "unverified",
+     "collision"
+    ],
+    "15@t120": [
+     "unverified",
+     "collision"
+    ],
+    "16@t128": [
+     "unverified",
+     "collision"
+    ],
+    "17@t136": [
+     "unverified",
+     "collision"
+    ],
+    "18@t144": [
+     "unverified",
+     "collision"
+    ],
+    "19@t152": [
+     "unverified",
+     "collision"
+    ],
+    "20@t160": [
+     "unverified",
+     "collision"
+    ],
+    "21@t168": [
+     "unverified",
+     "collision"
+    ],
+    "22@t176": [
+     "collision"
+    ],
+    "23@t184": [
+     "unverified",
+     "collision"
+    ],
+    "24@t192": [
+     "unverified",
+     "collision"
+    ],
+    "25@t200": [
+     "unverified",
+     "collision"
+    ],
+    "26@t208": [
+     "unverified",
+     "collision"
+    ],
+    "27@t216": [
+     "unverified",
+     "collision"
+    ],
+    "28@t224": [
+     "unverified",
+     "collision"
+    ],
+    "29@t232": [
+     "unverified",
+     "collision"
+    ],
+    "30@t240": [
+     "unverified",
+     "collision"
+    ],
+    "31@t248": [
+     "collision"
+    ],
+    "32@t256": [
+     "unverified",
+     "collision"
+    ],
+    "33@t264": [
+     "unverified",
+     "collision"
+    ]
+   },
+   "unresolved_rows_main_by_chunk": {
+    "9": {
+     "coarse": 36,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "10": {
+     "coarse": 107,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "11": {
+     "coarse": 98,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "12": {
+     "coarse": 80,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "13": {
+     "coarse": 79,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "14": {
+     "coarse": 97,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "15": {
+     "coarse": 61,
+     "window_edge": 12,
+     "outside": 0
+    },
+    "16": {
+     "coarse": 35,
+     "window_edge": 14,
+     "outside": 0
+    },
+    "17": {
+     "coarse": 31,
+     "window_edge": 12,
+     "outside": 0
+    },
+    "18": {
+     "coarse": 15,
+     "window_edge": 11,
+     "outside": 0
+    },
+    "19": {
+     "coarse": 1,
+     "window_edge": 17,
+     "outside": 0
+    },
+    "20": {
+     "coarse": 2,
+     "window_edge": 10,
+     "outside": 0
+    },
+    "21": {
+     "coarse": 0,
+     "window_edge": 1,
+     "outside": 0
+    },
+    "22": {
+     "coarse": 0,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "23": {
+     "coarse": 46,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "24": {
+     "coarse": 47,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "25": {
+     "coarse": 39,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "26": {
+     "coarse": 23,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "27": {
+     "coarse": 12,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "28": {
+     "coarse": 2,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "29": {
+     "coarse": 1,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "30": {
+     "coarse": 1,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "31": {
+     "coarse": 0,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "32": {
+     "coarse": 3,
+     "window_edge": 0,
+     "outside": 0
+    },
+    "33": {
+     "coarse": 3,
+     "window_edge": 0,
+     "outside": 0
+    }
+   },
+   "unverified_coarse_count": {
+    "chunks_with_unverified_main": 23,
+    "chunks_unverified_only_main": [
+     9,
+     10,
+     11,
+     12
+    ],
+    "chunks_execute_if_allow_unresolved_tier": [
+     9,
+     10,
+     11,
+     12
+    ]
+   },
+   "collision_rows_main": {
+    "13": {
+     "t": 104,
+     "groups": {
+      "ee_finger_l1|answer_excludes_target|target_free": {
+       "n": 1,
+       "worst_clearance_mm": -3.01,
+       "nearest_object_centre": {
+        "apple": 1
+       },
+       "min_to_apple_mm": 36.62,
+       "min_to_orange_mm": 81.24,
+       "min_to_crate_mm": 312.98
+      },
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 7,
+       "worst_clearance_mm": -8.32,
+       "nearest_object_centre": {
+        "orange": 7
+       },
+       "min_to_apple_mm": 82.77,
+       "min_to_orange_mm": 39.91,
+       "min_to_crate_mm": 320.49
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 5,
+       "worst_clearance_mm": -7.54,
+       "nearest_object_centre": {
+        "orange": 5
+       },
+       "min_to_apple_mm": 80.33,
+       "min_to_orange_mm": 36.19,
+       "min_to_crate_mm": 337.08
+      }
+     },
+     "attached_recorded_row": null
+    },
+    "14": {
+     "t": 112,
+     "groups": {
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 14,
+       "worst_clearance_mm": -5.45,
+       "nearest_object_centre": {
+        "orange": 14
+       },
+       "min_to_apple_mm": 83.55,
+       "min_to_orange_mm": 38.23,
+       "min_to_crate_mm": 332.63
+      },
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 3,
+       "worst_clearance_mm": -5.39,
+       "nearest_object_centre": {
+        "orange": 3
+       },
+       "min_to_apple_mm": 78.94,
+       "min_to_orange_mm": 39.0,
+       "min_to_crate_mm": 319.39
+      }
+     },
+     "attached_recorded_row": null
+    },
+    "15": {
+     "t": 120,
+     "groups": {
+      "ee_finger_l1|answer_excludes_target|target_free": {
+       "n": 20,
+       "worst_clearance_mm": -7.5,
+       "nearest_object_centre": {
+        "orange": 20
+       },
+       "min_to_apple_mm": 80.3,
+       "min_to_orange_mm": 39.05,
+       "min_to_crate_mm": 311.99
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 14,
+       "worst_clearance_mm": -13.18,
+       "nearest_object_centre": {
+        "orange": 14
+       },
+       "min_to_apple_mm": 78.63,
+       "min_to_orange_mm": 35.08,
+       "min_to_crate_mm": 323.78
+      },
+      "ee_finger_l2|answer_excludes_target|target_free": {
+       "n": 2,
+       "worst_clearance_mm": -1.83,
+       "nearest_object_centre": {
+        "apple": 2
+       },
+       "min_to_apple_mm": 43.82,
+       "min_to_orange_mm": 72.54,
+       "min_to_crate_mm": 313.48
+      }
+     },
+     "attached_recorded_row": null
+    },
+    "16": {
+     "t": 128,
+     "groups": {
+      "ee_finger_l1|answer_excludes_target|target_free": {
+       "n": 26,
+       "worst_clearance_mm": -7.35,
+       "nearest_object_centre": {
+        "orange": 26
+       },
+       "min_to_apple_mm": 66.54,
+       "min_to_orange_mm": 40.94,
+       "min_to_crate_mm": 304.38
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 13,
+       "worst_clearance_mm": -8.34,
+       "nearest_object_centre": {
+        "orange": 13
+       },
+       "min_to_apple_mm": 78.85,
+       "min_to_orange_mm": 35.48,
+       "min_to_crate_mm": 319.21
+      }
+     },
+     "attached_recorded_row": null
+    },
+    "17": {
+     "t": 136,
+     "groups": {
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 14,
+       "worst_clearance_mm": -6.26,
+       "nearest_object_centre": {
+        "orange": 14
+       },
+       "min_to_apple_mm": 78.99,
+       "min_to_orange_mm": 35.91,
+       "min_to_crate_mm": 317.43
+      },
+      "ee_finger_l1|answer_excludes_target|target_free": {
+       "n": 16,
+       "worst_clearance_mm": -7.14,
+       "nearest_object_centre": {
+        "orange": 16
+       },
+       "min_to_apple_mm": 68.03,
+       "min_to_orange_mm": 41.43,
+       "min_to_crate_mm": 302.94
+      }
+     },
+     "attached_recorded_row": null
+    },
+    "18": {
+     "t": 144,
+     "groups": {
+      "ee_finger_l1|answer_excludes_target|target_free": {
+       "n": 9,
+       "worst_clearance_mm": -3.21,
+       "nearest_object_centre": {
+        "orange": 9
+       },
+       "min_to_apple_mm": 75.37,
+       "min_to_orange_mm": 59.18,
+       "min_to_crate_mm": 296.92
+      }
+     },
+     "attached_recorded_row": null
+    },
+    "19": {
+     "t": 152,
+     "groups": {
+      "ee_finger_l1|answer_excludes_target|target_free": {
+       "n": 16,
+       "worst_clearance_mm": -11.05,
+       "nearest_object_centre": {
+        "orange": 16
+       },
+       "min_to_apple_mm": 71.06,
+       "min_to_orange_mm": 56.49,
+       "min_to_crate_mm": 290.89
+      },
+      "ee_finger_l2|answer_excludes_target|target_free": {
+       "n": 5,
+       "worst_clearance_mm": -10.74,
+       "nearest_object_centre": {
+        "orange": 5
+       },
+       "min_to_apple_mm": 69.15,
+       "min_to_orange_mm": 52.26,
+       "min_to_crate_mm": 298.97
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 2,
+       "worst_clearance_mm": -1.77,
+       "nearest_object_centre": {
+        "orange": 2
+       },
+       "min_to_apple_mm": 86.67,
+       "min_to_orange_mm": 35.56,
+       "min_to_crate_mm": 314.37
+      }
+     },
+     "attached_recorded_row": null
+    },
+    "20": {
+     "t": 160,
+     "groups": {
+      "ee_finger_l1|answer_excludes_target|target_free": {
+       "n": 17,
+       "worst_clearance_mm": -7.42,
+       "nearest_object_centre": {
+        "orange": 17
+       },
+       "min_to_apple_mm": 72.12,
+       "min_to_orange_mm": 60.68,
+       "min_to_crate_mm": 292.09
+      },
+      "ee_finger_l2|answer_excludes_target|target_free": {
+       "n": 9,
+       "worst_clearance_mm": -7.04,
+       "nearest_object_centre": {
+        "orange": 8,
+        "apple": 1
+       },
+       "min_to_apple_mm": 65.39,
+       "min_to_orange_mm": 57.12,
+       "min_to_crate_mm": 300.22
+      }
+     },
+     "attached_recorded_row": null
+    },
+    "21": {
+     "t": 168,
+     "groups": {
+      "ee_finger_l1|answer_excludes_target|target_free": {
+       "n": 19,
+       "worst_clearance_mm": -11.31,
+       "nearest_object_centre": {
+        "orange": 17,
+        "apple": 2
+       },
+       "min_to_apple_mm": 73.22,
+       "min_to_orange_mm": 64.09,
+       "min_to_crate_mm": 283.17
+      },
+      "ee_finger_l2|answer_excludes_target|target_free": {
+       "n": 17,
+       "worst_clearance_mm": -10.97,
+       "nearest_object_centre": {
+        "orange": 15,
+        "apple": 2
+       },
+       "min_to_apple_mm": 66.11,
+       "min_to_orange_mm": 59.86,
+       "min_to_crate_mm": 293.76
+      }
+     },
+     "attached_recorded_row": null
+    },
+    "22": {
+     "t": 176,
+     "groups": {
+      "ee_finger_l1|answer_excludes_target|target_free": {
+       "n": 20,
+       "worst_clearance_mm": -10.82,
+       "nearest_object_centre": {
+        "apple": 2,
+        "orange": 18
+       },
+       "min_to_apple_mm": 74.06,
+       "min_to_orange_mm": 62.6,
+       "min_to_crate_mm": 283.83
+      },
+      "ee_finger_l2|answer_excludes_target|target_free": {
+       "n": 18,
+       "worst_clearance_mm": -10.51,
+       "nearest_object_centre": {
+        "orange": 15,
+        "apple": 3
+       },
+       "min_to_apple_mm": 66.49,
+       "min_to_orange_mm": 58.46,
+       "min_to_crate_mm": 291.93
+      }
+     },
+     "attached_recorded_row": null
+    },
+    "23": {
+     "t": 184,
+     "groups": {
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 13,
+       "worst_clearance_mm": -12.63,
+       "nearest_object_centre": {
+        "orange": 13
+       },
+       "min_to_apple_mm": 80.47,
+       "min_to_orange_mm": 67.89,
+       "min_to_crate_mm": 283.9
+      }
+     },
+     "attached_recorded_row": {
+      "block": "esdf",
+      "step": 7,
+      "query": 147,
+      "link": "attached:ee_finger_l1[25]",
+      "clearance_m": -0.034992885526408495,
+      "class": "collision",
+      "why": "attached_point",
+      "source": "recorded max_violation_pair"
+     }
+    },
+    "24": {
+     "t": 192,
+     "groups": {
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 25,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "orange": 22,
+        "apple": 3
+       },
+       "min_to_apple_mm": 79.92,
+       "min_to_orange_mm": 70.85,
+       "min_to_crate_mm": 279.03
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 7,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "orange": 7
+       },
+       "min_to_apple_mm": 79.73,
+       "min_to_orange_mm": 66.67,
+       "min_to_crate_mm": 292.15
+      }
+     },
+     "attached_recorded_row": {
+      "block": "esdf",
+      "step": 1,
+      "query": 128,
+      "link": "attached:ee_finger_l1[6]",
+      "clearance_m": -0.030004272460937502,
+      "class": "collision",
+      "why": "attached_point",
+      "source": "recorded max_violation_pair"
+     }
+    },
+    "25": {
+     "t": 200,
+     "groups": {
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 31,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "apple": 13,
+        "orange": 18
+       },
+       "min_to_apple_mm": 79.83,
+       "min_to_orange_mm": 75.02,
+       "min_to_crate_mm": 275.0
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 10,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "orange": 10
+       },
+       "min_to_apple_mm": 80.02,
+       "min_to_orange_mm": 70.89,
+       "min_to_crate_mm": 290.48
+      }
+     },
+     "attached_recorded_row": {
+      "block": "esdf",
+      "step": 0,
+      "query": 131,
+      "link": "attached:ee_finger_l1[9]",
+      "clearance_m": -0.030004272460937502,
+      "class": "collision",
+      "why": "attached_point",
+      "source": "recorded max_violation_pair"
+     }
+    },
+    "26": {
+     "t": 208,
+     "groups": {
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "apple": 24,
+        "orange": 16
+       },
+       "min_to_apple_mm": 80.71,
+       "min_to_orange_mm": 78.71,
+       "min_to_crate_mm": 270.95
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 17,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "orange": 15,
+        "apple": 2
+       },
+       "min_to_apple_mm": 80.36,
+       "min_to_orange_mm": 74.67,
+       "min_to_crate_mm": 283.92
+      }
+     },
+     "attached_recorded_row": {
+      "block": "esdf",
+      "step": 6,
+      "query": 131,
+      "link": "attached:ee_finger_l1[9]",
+      "clearance_m": -0.030004272460937502,
+      "class": "collision",
+      "why": "attached_point",
+      "source": "recorded max_violation_pair"
+     }
+    },
+    "27": {
+     "t": 216,
+     "groups": {
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "apple": 23,
+        "orange": 17
+       },
+       "min_to_apple_mm": 82.68,
+       "min_to_orange_mm": 81.72,
+       "min_to_crate_mm": 267.85
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 28,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "orange": 15,
+        "apple": 13
+       },
+       "min_to_apple_mm": 79.81,
+       "min_to_orange_mm": 77.78,
+       "min_to_crate_mm": 278.98
+      }
+     },
+     "attached_recorded_row": {
+      "block": "esdf",
+      "step": 0,
+      "query": 134,
+      "link": "attached:ee_finger_l1[12]",
+      "clearance_m": -0.030004272460937502,
+      "class": "collision",
+      "why": "attached_point",
+      "source": "recorded max_violation_pair"
+     }
+    },
+    "28": {
+     "t": 224,
+     "groups": {
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "apple": 17,
+        "orange": 23
+       },
+       "min_to_apple_mm": 86.27,
+       "min_to_orange_mm": 83.14,
+       "min_to_crate_mm": 266.81
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 38,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "orange": 16,
+        "apple": 22
+       },
+       "min_to_apple_mm": 79.96,
+       "min_to_orange_mm": 79.0,
+       "min_to_crate_mm": 275.05
+      }
+     },
+     "attached_recorded_row": {
+      "block": "esdf",
+      "step": 7,
+      "query": 131,
+      "link": "attached:ee_finger_l1[9]",
+      "clearance_m": -0.03229711895270514,
+      "class": "collision",
+      "why": "attached_point",
+      "source": "recorded max_violation_pair"
+     }
+    },
+    "29": {
+     "t": 232,
+     "groups": {
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "apple": 18,
+        "orange": 22
+       },
+       "min_to_apple_mm": 87.6,
+       "min_to_orange_mm": 84.77,
+       "min_to_crate_mm": 262.53
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 39,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "orange": 16,
+        "apple": 23
+       },
+       "min_to_apple_mm": 80.22,
+       "min_to_orange_mm": 80.75,
+       "min_to_crate_mm": 270.79
+      },
+      "ee_left|nearest_is_not_manipulated|fine": {
+       "n": 3,
+       "worst_clearance_mm": -2.44,
+       "nearest_object_centre": {
+        "orange": 3
+       },
+       "min_to_apple_mm": 157.92,
+       "min_to_orange_mm": 115.84,
+       "min_to_crate_mm": 228.22
+      }
+     },
+     "attached_recorded_row": {
+      "block": "esdf",
+      "step": 7,
+      "query": 160,
+      "link": "attached:ee_finger_l1[38]",
+      "clearance_m": -0.03144463304947997,
+      "class": "collision",
+      "why": "attached_point",
+      "source": "recorded max_violation_pair"
+     }
+    },
+    "30": {
+     "t": 240,
+     "groups": {
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "apple": 23,
+        "orange": 17
+       },
+       "min_to_apple_mm": 89.7,
+       "min_to_orange_mm": 89.28,
+       "min_to_crate_mm": 264.53
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "orange": 14,
+        "apple": 26
+       },
+       "min_to_apple_mm": 81.33,
+       "min_to_orange_mm": 84.61,
+       "min_to_crate_mm": 272.77
+      }
+     },
+     "attached_recorded_row": {
+      "block": "esdf",
+      "step": 5,
+      "query": 160,
+      "link": "attached:ee_finger_l1[38]",
+      "clearance_m": -0.03146893305971333,
+      "class": "collision",
+      "why": "attached_point",
+      "source": "recorded max_violation_pair"
+     }
+    },
+    "31": {
+     "t": 248,
+     "groups": {
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "apple": 21,
+        "orange": 19
+       },
+       "min_to_apple_mm": 89.2,
+       "min_to_orange_mm": 87.07,
+       "min_to_crate_mm": 264.83
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "orange": 16,
+        "apple": 24
+       },
+       "min_to_apple_mm": 80.92,
+       "min_to_orange_mm": 82.62,
+       "min_to_crate_mm": 273.08
+      }
+     },
+     "attached_recorded_row": {
+      "block": "esdf",
+      "step": 4,
+      "query": 160,
+      "link": "attached:ee_finger_l1[38]",
+      "clearance_m": -0.029863041959307945,
+      "class": "collision",
+      "why": "attached_point",
+      "source": "recorded max_violation_pair"
+     }
+    },
+    "32": {
+     "t": 256,
+     "groups": {
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "apple": 31,
+        "orange": 9
+       },
+       "min_to_apple_mm": 89.03,
+       "min_to_orange_mm": 94.47,
+       "min_to_crate_mm": 261.98
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "orange": 4,
+        "apple": 36
+       },
+       "min_to_apple_mm": 80.59,
+       "min_to_orange_mm": 90.07,
+       "min_to_crate_mm": 270.26
+      },
+      "ee_left|nearest_is_not_manipulated|fine": {
+       "n": 5,
+       "worst_clearance_mm": -1.44,
+       "nearest_object_centre": {
+        "orange": 5
+       },
+       "min_to_apple_mm": 158.02,
+       "min_to_orange_mm": 124.03,
+       "min_to_crate_mm": 226.81
+      }
+     },
+     "attached_recorded_row": {
+      "block": "esdf",
+      "step": 5,
+      "query": 160,
+      "link": "attached:ee_finger_l1[38]",
+      "clearance_m": -0.03664016656552157,
+      "class": "collision",
+      "why": "attached_point",
+      "source": "recorded max_violation_pair"
+     }
+    },
+    "33": {
+     "t": 264,
+     "groups": {
+      "ee_finger_l1|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "apple": 30,
+        "orange": 10
+       },
+       "min_to_apple_mm": 90.16,
+       "min_to_orange_mm": 95.3,
+       "min_to_crate_mm": 262.12
+      },
+      "ee_finger_l2|nearest_is_not_manipulated|coarse": {
+       "n": 40,
+       "worst_clearance_mm": -14.72,
+       "nearest_object_centre": {
+        "orange": 7,
+        "apple": 33
+       },
+       "min_to_apple_mm": 81.62,
+       "min_to_orange_mm": 90.75,
+       "min_to_crate_mm": 270.44
+      },
+      "ee_left|nearest_is_not_manipulated|fine": {
+       "n": 4,
+       "worst_clearance_mm": -1.1,
+       "nearest_object_centre": {
+        "orange": 4
+       },
+       "min_to_apple_mm": 157.48,
+       "min_to_orange_mm": 124.45,
+       "min_to_crate_mm": 226.57
+      }
+     },
+     "attached_recorded_row": {
+      "block": "esdf",
+      "step": 7,
+      "query": 134,
+      "link": "attached:ee_finger_l1[12]",
+      "clearance_m": -0.0353107500294575,
+      "class": "collision",
+      "why": "attached_point",
+      "source": "recorded max_violation_pair"
+     }
+    }
+   }
+  },
+  "m2_t14_seq22": {
+   "record": {
+    "chunk": 21,
+    "seq": 22,
+    "ag3s_status": "no_target",
+    "validity": "valid",
+    "grounding_status": "no_seed",
+    "has_target": false,
+    "to_status": "violated",
+    "clearance_m": 0.013552815656937662,
+    "to_notes": [
+     "time budget 50 ms reached after 1 iteration(s); returning the best iterate so far",
+     "reduction.rows_per_step=24 bound on at least one step; some near-active constraints were not shown to the QP (the final check still sees all of them)",
+     "the trajectory clears every constraint, but AG3S could not certify the geometry behind them; safety cannot be claimed for a scene that was not fully accounted for"
+    ]
+   },
+   "cases": [
+    {
+     "case": "T20 replay switch_min_score=0.0, manipulated as replayed",
+     "time_budget_hit": true,
+     "manipulated_state": "occluded",
+     "manipulated_id": 2,
+     "manipulated_age_frames": 2,
+     "kinds": [
+      "occluded_target",
+      "budget_only"
+     ],
+     "safe": true
+    },
+    {
+     "case": "T20 replay switch_min_score=0.0, manipulated as replayed",
+     "time_budget_hit": false,
+     "manipulated_state": "occluded",
+     "manipulated_id": 2,
+     "manipulated_age_frames": 2,
+     "kinds": [
+      "occluded_target"
+     ],
+     "safe": true
+    },
+    {
+     "case": "control: same record with state=lost (min_score=0.0)",
+     "time_budget_hit": true,
+     "manipulated_state": "lost",
+     "manipulated_id": 2,
+     "manipulated_age_frames": 2,
+     "kinds": [
+      "uncertified",
+      "budget_only"
+     ],
+     "safe": false
+    },
+    {
+     "case": "T20 replay switch_min_score=0.05, manipulated as replayed",
+     "time_budget_hit": true,
+     "manipulated_state": "occluded",
+     "manipulated_id": 0,
+     "manipulated_age_frames": 11,
+     "kinds": [
+      "occluded_target",
+      "budget_only"
+     ],
+     "safe": true
+    },
+    {
+     "case": "T20 replay switch_min_score=0.05, manipulated as replayed",
+     "time_budget_hit": false,
+     "manipulated_state": "occluded",
+     "manipulated_id": 0,
+     "manipulated_age_frames": 11,
+     "kinds": [
+      "occluded_target"
+     ],
+     "safe": true
+    },
+    {
+     "case": "control: same record with state=lost (min_score=0.05)",
+     "time_budget_hit": true,
+     "manipulated_state": "lost",
+     "manipulated_id": 0,
+     "manipulated_age_frames": 11,
+     "kinds": [
+      "uncertified",
+      "budget_only"
+     ],
+     "safe": false
+    },
+    {
+     "case": "control: no manipulated record (T23 before T20)",
+     "time_budget_hit": true,
+     "manipulated_state": null,
+     "manipulated_id": null,
+     "manipulated_age_frames": null,
+     "kinds": [
+      "uncertified",
+      "budget_only"
+     ],
+     "safe": false
+    }
+   ],
+   "manipulated_source": "ground_target + TargetConfirm(switch_min_score, lost_frames=None) 를 T14 chunk 0..21 에 차례로 (T20 verify replay_t14.py 와 같은 입력)"
+  },
+  "m3_hold_drift": {
+   "setup": {
+    "model": "pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+    "episode": 1807,
+    "warmup_sim_steps": 1000,
+    "prefix": "T16 t=0..71 실행 청크 actions[t%8] 재적용",
+    "prefix_qpos_max_abs_err_at_t71": 0.0007957810951362831,
+    "hold_steps": 64,
+    "sim_steps_per_control_step": 33,
+    "init_variants": {
+     "replay": "재생 상태 그대로 t=72",
+     "record": "t=72 T16 기록 qpos, qvel=0"
+    },
+    "called_directly": [
+     "pi05_infer.apply_action",
+     "pi05_infer.reset_randomized_scene",
+     "pi05_infer.load_randomized_episode",
+     "pi05_infer.hold_keyframe_pose",
+     "benchmark.trajopt.client.HoldController"
+    ],
+    "reproduced_not_imported": [
+     "rby1_state()",
+     "applied_ctrl()",
+     "idx/act 사상",
+     "main() 의 씬 초기화 순서",
+     "제어 루프 HOLD 분기 (hold_action(last_command=applied_ctrl(), measured=rby1_state()) → apply_action → 33 mj_step)"
+    ],
+    "differences": [
+     "--start-delay 2.0 s 의 실제 sim step 수는 벽시계 페이싱이라 기록에 없다 → 명목 1000 step",
+     "T16 local mujoco 3.10.0, 여기 3.11.0",
+     "렌더/관측/서버 호출 없음",
+     "finger 중심 = T16 제약 모델(122 구)의 ee_finger_l1/l2 구 중심 평균"
+    ]
+   },
+   "replay|legacy|hold": {
+    "hold_source": "measured",
+    "q_hold_captured_at_t": 72,
+    "finger_drift_from_entry_mm@t80": 24.849828725836154,
+    "finger_drift_from_entry_mm@t92": 56.69879045545838,
+    "finger_drift_from_entry_mm@t96": 63.68523185965165,
+    "finger_drift_from_entry_mm@t135": 105.08175245568646,
+    "finger_dist_to_fk_q_hold_mm@t135": 105.08175245568646,
+    "arm_max_abs_dev_from_q_hold_deg@t96": 3.6277719810832925,
+    "arm_max_abs_dev_from_q_hold_deg@t135": 8.41396268147933,
+    "finger_step_mm_mean_t80_135": 1.6493166923798486,
+    "arm_step_max_deg_mean_t80_135": 0.14065053973149838,
+    "arm_step_max_deg_range_t73_135": [
+     0.12200155303166668,
+     0.33960461720294915
+    ],
+    "apple_world_disp_max_mm": 7.206737264870592,
+    "sim_vs_t16_finger_mm_max": 1.2727471092914773,
+    "sim_vs_t16_arm_deg_max": 0.03687471001665541
+   },
+   "replay|fixed|hold": {
+    "hold_source": "command",
+    "q_hold_captured_at_t": 72,
+    "finger_drift_from_entry_mm@t80": 5.968826017674764,
+    "finger_drift_from_entry_mm@t92": 5.9516341945663935,
+    "finger_drift_from_entry_mm@t96": 5.950927606016696,
+    "finger_drift_from_entry_mm@t135": 5.950414696514129,
+    "finger_dist_to_fk_q_hold_mm@t135": 9.61912796568546,
+    "arm_max_abs_dev_from_q_hold_deg@t96": 0.5234309560617986,
+    "arm_max_abs_dev_from_q_hold_deg@t135": 0.5234310240866242,
+    "finger_step_mm_mean_t80_135": 0.0019115879474403824,
+    "arm_step_max_deg_mean_t80_135": 0.0006077624615425959,
+    "arm_step_max_deg_range_t73_135": [
+     3.7349253624426076e-11,
+     0.6619831072630118
+    ],
+    "apple_world_disp_max_mm": 0.09978125122403547,
+    "sim_vs_t16_finger_mm_max": 101.85057151220656,
+    "sim_vs_t16_arm_deg_max": 8.391638207196866
+   },
+   "record|legacy|hold": {
+    "hold_source": "measured",
+    "q_hold_captured_at_t": 72,
+    "finger_drift_from_entry_mm@t80": 24.004506015964978,
+    "finger_drift_from_entry_mm@t92": 56.557419272047234,
+    "finger_drift_from_entry_mm@t96": 63.438296309457925,
+    "finger_drift_from_entry_mm@t135": 105.82026740839542,
+    "finger_dist_to_fk_q_hold_mm@t135": 105.82026740839542,
+    "arm_max_abs_dev_from_q_hold_deg@t96": 3.6742946574565116,
+    "arm_max_abs_dev_from_q_hold_deg@t135": 8.408960735801607,
+    "finger_step_mm_mean_t80_135": 1.6746246878000717,
+    "arm_step_max_deg_mean_t80_135": 0.14069756354868845,
+    "arm_step_max_deg_range_t73_135": [
+     0.11243339362053503,
+     0.17306821317384605
+    ],
+    "apple_world_disp_max_mm": 8.940179471795085,
+    "sim_vs_t16_finger_mm_max": 2.0391464465954052,
+    "sim_vs_t16_arm_deg_max": 0.3057276448874283
+   },
+   "record|fixed|hold": {
+    "hold_source": "command",
+    "q_hold_captured_at_t": 72,
+    "finger_drift_from_entry_mm@t80": 5.945779317245201,
+    "finger_drift_from_entry_mm@t92": 5.951422672649399,
+    "finger_drift_from_entry_mm@t96": 5.950904662950577,
+    "finger_drift_from_entry_mm@t135": 5.950414688430448,
+    "finger_dist_to_fk_q_hold_mm@t135": 9.619127960331706,
+    "arm_max_abs_dev_from_q_hold_deg@t96": 0.5234313106777427,
+    "arm_max_abs_dev_from_q_hold_deg@t135": 0.5234310240795571,
+    "finger_step_mm_mean_t80_135": 0.0023619925153645304,
+    "arm_step_max_deg_mean_t80_135": 0.0008621128364171791,
+    "arm_step_max_deg_range_t73_135": [
+     3.474755989498892e-11,
+     0.47846445560602674
+    ],
+    "apple_world_disp_max_mm": 0.11153748568095598,
+    "sim_vs_t16_finger_mm_max": 101.85057151531423,
+    "sim_vs_t16_arm_deg_max": 8.391638207218834
+   },
+   "t16_recorded_finger_drift_from_t72_mm@t80,92,96,135": [
+    24.849828673645323,
+    56.72938488340276,
+    63.67615149233137,
+    105.01089530237634
+   ],
+   "t16_recorded_arm_step_max_deg_mean_t73_135": 0.14712016163532635
+  },
+  "m4_gripper": {
+   "scenario_hold": {
+    "legacy": {
+     "gripper_hold": [
+      0.9994409768077831,
+      0.9983027678734882
+     ],
+     "ctrl_left_grip_first_last": [
+      -0.044974843956350236,
+      -0.04496918695274408,
+      -0.04499147509432043
+     ],
+     "applied_gripper_left_first_last": [
+      0.9994409768077831,
+      0.9993152656165352,
+      0.9998105576515651
+     ],
+     "measured_gripper_left_last": 0.9998105576515651
+    },
+    "fixed": {
+     "gripper_hold": [
+      0.9984515905380249,
+      0.9972856044769286
+     ],
+     "ctrl_left_grip_first_last": [
+      -0.04493032157421112,
+      -0.04493032157421112,
+      -0.04493032157421112
+     ],
+     "applied_gripper_left_first_last": [
+      0.9984515905380249,
+      0.9984515905380249,
+      0.9984515905380249
+     ],
+     "measured_gripper_left_last": 0.9984515905382679
+    }
+   },
+   "scenario_close_then_hold(합성: t=72 에 팔=직전 명령, 왼 gripper=0.0 한 step 실행 후 HOLD 63 step)": {
+    "legacy": {
+     "gripper_hold": [
+      0.8780333187597962,
+      0.9981075171202498
+     ],
+     "ctrl_left_grip_first_last": [
+      -0.0,
+      -0.03951149934419083,
+      -0.04498729290655538
+     ],
+     "applied_gripper_left_first_last": [
+      0.0,
+      0.8780333187597962,
+      0.9997176201456751
+     ],
+     "measured_gripper_left_last": 0.9997176201456751
+    },
+    "fixed": {
+     "gripper_hold": [
+      0.0,
+      0.9972856044769286
+     ],
+     "ctrl_left_grip_first_last": [
+      -0.0,
+      -0.0,
+      -0.0
+     ],
+     "applied_gripper_left_first_last": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "measured_gripper_left_last": 2.431672796916965e-13
+    }
+   },
+   "units": "applied_gripper = d.ctrl / RBY1_GRIPPER_OPEN (1 열림, 0 닫힘); ctrl_left_grip = d.ctrl 원값 (m)"
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t23/t23-hold-scene.png",
+   "sidecar": "benchmark/ag3s/docs/figures/t23/t23-hold-scene.json",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t23/t23-reasons-hold-graph.png",
+   "sidecar": "benchmark/ag3s/docs/figures/t23/t23-reasons-hold-graph.json",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t23/t23-reasons-table.png",
+   "sidecar": "benchmark/ag3s/docs/figures/t23/t23-reasons-table.json",
+   "kind": "table"
+  }
+ ],
+ "figure_scripts": [
+  "outputs/verify/T23/fig_scene.py",
+  "outputs/verify/T23/fig_graph_table.py"
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "위반으로 시작 13/15 · has_target 15/15 · frame0 clearance_before +0.18597810857728936 mm — 기준선과 같다"
+ },
+ "verdict": "기준선 일치. tests 1292 passed / 0 failed.",
+ "not_measured": [
+  "실제 closed loop (서버·8123 없음)",
+  "--safe-max-hold-chunks 의 값",
+  "T16 attached chunk 의 쥔 물체 질의점 행 (기록 없음)",
+  "T16 의 실제 manipulated 기록 (T20 전 — 사과 참값으로 가정)",
+  "HOLD 의 SafeRemoteClient._hold 대체 청크 경로 (단위 테스트 60 개 외 별도 측정 없음)",
+  "SendUserFile (이 세션에 도구 없음)"
+ ]
+}

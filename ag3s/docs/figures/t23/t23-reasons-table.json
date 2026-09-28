@@ -1,0 +1,804 @@
+{
+ "gate_default": {
+  "allowed_contact": "execute",
+  "budget_only": "execute",
+  "occluded_target": "execute",
+  "uncertified_waived": "execute",
+  "collision": "hold",
+  "uncertified": "hold",
+  "unverified": "hold",
+  "comms": "hold"
+ },
+ "t16_per_variant": {
+  "main|allow_unresolved=False": {
+   "chunks_with_kind": {
+    "unverified": 23,
+    "collision": 21
+   },
+   "n_execute": 0,
+   "execute_chunks": [],
+   "n_hold": 25,
+   "collision_chunks": [
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33
+   ],
+   "n_collision_chunks": 21,
+   "unverified_only_chunks": [
+    9,
+    10,
+    11,
+    12
+   ],
+   "n_unverified_only": 4,
+   "grasp_window_t72_176": {
+    "n": 14,
+    "n_execute": 0
+   }
+  },
+  "main|allow_unresolved=True": {
+   "chunks_with_kind": {
+    "allowed_contact": 23,
+    "collision": 21
+   },
+   "n_execute": 4,
+   "execute_chunks": [
+    9,
+    10,
+    11,
+    12
+   ],
+   "n_hold": 21,
+   "collision_chunks": [
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33
+   ],
+   "n_collision_chunks": 21,
+   "unverified_only_chunks": [],
+   "n_unverified_only": 0,
+   "grasp_window_t72_176": {
+    "n": 14,
+    "n_execute": 4
+   }
+  },
+  "distance|allow_unresolved=False": {
+   "chunks_with_kind": {
+    "collision": 25,
+    "unverified": 23
+   },
+   "n_execute": 0,
+   "execute_chunks": [],
+   "n_hold": 25,
+   "collision_chunks": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33
+   ],
+   "n_collision_chunks": 25,
+   "unverified_only_chunks": [],
+   "n_unverified_only": 0,
+   "grasp_window_t72_176": {
+    "n": 14,
+    "n_execute": 0
+   }
+  },
+  "distance|allow_unresolved=True": {
+   "chunks_with_kind": {
+    "allowed_contact": 23,
+    "collision": 25
+   },
+   "n_execute": 0,
+   "execute_chunks": [],
+   "n_hold": 25,
+   "collision_chunks": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33
+   ],
+   "n_collision_chunks": 25,
+   "unverified_only_chunks": [],
+   "n_unverified_only": 0,
+   "grasp_window_t72_176": {
+    "n": 14,
+    "n_execute": 0
+   }
+  },
+  "nomask|allow_unresolved=False": {
+   "chunks_with_kind": {
+    "unverified": 24,
+    "allowed_contact": 2,
+    "collision": 20
+   },
+   "n_execute": 0,
+   "execute_chunks": [],
+   "n_hold": 25,
+   "collision_chunks": [
+    13,
+    14,
+    15,
+    16,
+    17,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33
+   ],
+   "n_collision_chunks": 20,
+   "unverified_only_chunks": [
+    9,
+    10,
+    11,
+    12,
+    18
+   ],
+   "n_unverified_only": 5,
+   "grasp_window_t72_176": {
+    "n": 14,
+    "n_execute": 0
+   }
+  },
+  "nomask|allow_unresolved=True": {
+   "chunks_with_kind": {
+    "allowed_contact": 24,
+    "collision": 20
+   },
+   "n_execute": 5,
+   "execute_chunks": [
+    9,
+    10,
+    11,
+    12,
+    18
+   ],
+   "n_hold": 20,
+   "collision_chunks": [
+    13,
+    14,
+    15,
+    16,
+    17,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33
+   ],
+   "n_collision_chunks": 20,
+   "unverified_only_chunks": [],
+   "n_unverified_only": 0,
+   "grasp_window_t72_176": {
+    "n": 14,
+    "n_execute": 5
+   }
+  }
+ },
+ "t14_seq22": [
+  {
+   "case": "T20 replay switch_min_score=0.0, manipulated as replayed",
+   "time_budget_hit": true,
+   "replay_grounding_status": "no_seed",
+   "manipulated": {
+    "id": 2,
+    "state": "occluded",
+    "age_frames": 2,
+    "centroid": [
+     0.49571162922041756,
+     -0.31108281765665324,
+     0.8648442711148944
+    ],
+    "radius": 0.09218095451295834,
+    "n_points": 175,
+    "last_seen_frame": 19,
+    "switched_from": 1,
+    "frame": 21
+   },
+   "safe": true,
+   "kinds": [
+    "occluded_target",
+    "budget_only"
+   ],
+   "reasons": [
+    {
+     "kind": "occluded_target",
+     "action": "execute",
+     "detail": "no target this frame (no_seed) but manipulated id=2 is occluded (unseen 2 frame(s)); its last geometry keeps the contact permission and the rest of the geometry is certified"
+    },
+    {
+     "kind": "budget_only",
+     "action": "execute",
+     "detail": "the solve stopped on its time budget (1 iteration(s)); the final check passed"
+    }
+   ],
+   "trajopt_status": "violated",
+   "geometry_certified": false,
+   "ag3s_status": "no_target",
+   "max_violation_m": 0.0,
+   "notes_tail": [
+    "verdict: occluded_target, budget_only \u2192 execute"
+   ]
+  },
+  {
+   "case": "T20 replay switch_min_score=0.0, manipulated as replayed",
+   "time_budget_hit": false,
+   "replay_grounding_status": "no_seed",
+   "manipulated": {
+    "id": 2,
+    "state": "occluded",
+    "age_frames": 2,
+    "centroid": [
+     0.49571162922041756,
+     -0.31108281765665324,
+     0.8648442711148944
+    ],
+    "radius": 0.09218095451295834,
+    "n_points": 175,
+    "last_seen_frame": 19,
+    "switched_from": 1,
+    "frame": 21
+   },
+   "safe": true,
+   "kinds": [
+    "occluded_target"
+   ],
+   "reasons": [
+    {
+     "kind": "occluded_target",
+     "action": "execute",
+     "detail": "no target this frame (no_seed) but manipulated id=2 is occluded (unseen 2 frame(s)); its last geometry keeps the contact permission and the rest of the geometry is certified"
+    }
+   ],
+   "trajopt_status": "violated",
+   "geometry_certified": false,
+   "ag3s_status": "no_target",
+   "max_violation_m": 0.0,
+   "notes_tail": [
+    "verdict: occluded_target \u2192 execute"
+   ]
+  },
+  {
+   "case": "control: same record with state=lost (min_score=0.0)",
+   "time_budget_hit": true,
+   "manipulated": {
+    "id": 2,
+    "state": "lost",
+    "age_frames": 2,
+    "centroid": [
+     0.49571162922041756,
+     -0.31108281765665324,
+     0.8648442711148944
+    ],
+    "radius": 0.09218095451295834,
+    "n_points": 175,
+    "last_seen_frame": 19,
+    "switched_from": 1,
+    "frame": 21
+   },
+   "safe": false,
+   "kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "reasons": [
+    {
+     "kind": "uncertified",
+     "action": "hold",
+     "detail": "AG3S could not certify the geometry (status=no_target, grounding=no_seed, validity=valid, manipulated lost)"
+    },
+    {
+     "kind": "budget_only",
+     "action": "execute",
+     "detail": "the solve stopped on its time budget (1 iteration(s)); the final check passed"
+    }
+   ],
+   "trajopt_status": "violated",
+   "geometry_certified": false,
+   "ag3s_status": "no_target",
+   "max_violation_m": 0.0,
+   "notes_tail": [
+    "verdict: uncertified, budget_only \u2192 HOLD"
+   ]
+  },
+  {
+   "case": "T20 replay switch_min_score=0.05, manipulated as replayed",
+   "time_budget_hit": true,
+   "replay_grounding_status": "no_seed",
+   "manipulated": {
+    "id": 0,
+    "state": "occluded",
+    "age_frames": 11,
+    "centroid": [
+     0.558813137086955,
+     0.3078364194794135,
+     0.853037790818648
+    ],
+    "radius": 0.04234798971477799,
+    "n_points": 44,
+    "last_seen_frame": 10,
+    "switched_from": null,
+    "frame": 21
+   },
+   "safe": true,
+   "kinds": [
+    "occluded_target",
+    "budget_only"
+   ],
+   "reasons": [
+    {
+     "kind": "occluded_target",
+     "action": "execute",
+     "detail": "no target this frame (no_seed) but manipulated id=0 is occluded (unseen 11 frame(s)); its last geometry keeps the contact permission and the rest of the geometry is certified"
+    },
+    {
+     "kind": "budget_only",
+     "action": "execute",
+     "detail": "the solve stopped on its time budget (1 iteration(s)); the final check passed"
+    }
+   ],
+   "trajopt_status": "violated",
+   "geometry_certified": false,
+   "ag3s_status": "no_target",
+   "max_violation_m": 0.0,
+   "notes_tail": [
+    "verdict: occluded_target, budget_only \u2192 execute"
+   ]
+  },
+  {
+   "case": "T20 replay switch_min_score=0.05, manipulated as replayed",
+   "time_budget_hit": false,
+   "replay_grounding_status": "no_seed",
+   "manipulated": {
+    "id": 0,
+    "state": "occluded",
+    "age_frames": 11,
+    "centroid": [
+     0.558813137086955,
+     0.3078364194794135,
+     0.853037790818648
+    ],
+    "radius": 0.04234798971477799,
+    "n_points": 44,
+    "last_seen_frame": 10,
+    "switched_from": null,
+    "frame": 21
+   },
+   "safe": true,
+   "kinds": [
+    "occluded_target"
+   ],
+   "reasons": [
+    {
+     "kind": "occluded_target",
+     "action": "execute",
+     "detail": "no target this frame (no_seed) but manipulated id=0 is occluded (unseen 11 frame(s)); its last geometry keeps the contact permission and the rest of the geometry is certified"
+    }
+   ],
+   "trajopt_status": "violated",
+   "geometry_certified": false,
+   "ag3s_status": "no_target",
+   "max_violation_m": 0.0,
+   "notes_tail": [
+    "verdict: occluded_target \u2192 execute"
+   ]
+  },
+  {
+   "case": "control: same record with state=lost (min_score=0.05)",
+   "time_budget_hit": true,
+   "manipulated": {
+    "id": 0,
+    "state": "lost",
+    "age_frames": 11,
+    "centroid": [
+     0.558813137086955,
+     0.3078364194794135,
+     0.853037790818648
+    ],
+    "radius": 0.04234798971477799,
+    "n_points": 44,
+    "last_seen_frame": 10,
+    "switched_from": null,
+    "frame": 21
+   },
+   "safe": false,
+   "kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "reasons": [
+    {
+     "kind": "uncertified",
+     "action": "hold",
+     "detail": "AG3S could not certify the geometry (status=no_target, grounding=no_seed, validity=valid, manipulated lost)"
+    },
+    {
+     "kind": "budget_only",
+     "action": "execute",
+     "detail": "the solve stopped on its time budget (1 iteration(s)); the final check passed"
+    }
+   ],
+   "trajopt_status": "violated",
+   "geometry_certified": false,
+   "ag3s_status": "no_target",
+   "max_violation_m": 0.0,
+   "notes_tail": [
+    "verdict: uncertified, budget_only \u2192 HOLD"
+   ]
+  },
+  {
+   "case": "control: no manipulated record (T23 before T20)",
+   "time_budget_hit": true,
+   "manipulated": null,
+   "safe": false,
+   "kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "reasons": [
+    {
+     "kind": "uncertified",
+     "action": "hold",
+     "detail": "AG3S could not certify the geometry (status=no_target, grounding=no_seed, validity=valid)"
+    },
+    {
+     "kind": "budget_only",
+     "action": "execute",
+     "detail": "the solve stopped on its time budget (1 iteration(s)); the final check passed"
+    }
+   ],
+   "trajopt_status": "violated",
+   "geometry_certified": false,
+   "ag3s_status": "no_target",
+   "max_violation_m": 0.0,
+   "notes_tail": [
+    "verdict: uncertified, budget_only \u2192 HOLD"
+   ]
+  }
+ ],
+ "hold_summary": {
+  "replay|legacy|hold": {
+   "hold_source": "measured",
+   "q_hold_captured_at_t": 72,
+   "gripper_hold": [
+    0.9994409768077831,
+    0.9983027678734882
+   ],
+   "prefix_qpos_max_abs_err_at_t71": 0.0007957810951362831,
+   "finger_drift_from_entry_mm@t80": 24.849828725836154,
+   "finger_dist_to_fk_q_hold_mm@t80": 24.849828725836154,
+   "arm_max_abs_dev_from_q_hold_deg@t80": 1.2894120789211923,
+   "finger_drift_from_entry_mm@t92": 56.69879045545838,
+   "finger_dist_to_fk_q_hold_mm@t92": 56.69879045545838,
+   "arm_max_abs_dev_from_q_hold_deg@t92": 3.145274636442109,
+   "finger_drift_from_entry_mm@t96": 63.68523185965165,
+   "finger_dist_to_fk_q_hold_mm@t96": 63.68523185965165,
+   "arm_max_abs_dev_from_q_hold_deg@t96": 3.6277719810832925,
+   "finger_drift_from_entry_mm@t135": 105.08175245568646,
+   "finger_dist_to_fk_q_hold_mm@t135": 105.08175245568646,
+   "arm_max_abs_dev_from_q_hold_deg@t135": 8.41396268147933,
+   "finger_step_mm_mean_t80_135": 1.6493166923798486,
+   "arm_step_max_deg_mean_t80_135": 0.14065053973149838,
+   "arm_step_max_deg_range_t73_135": [
+    0.12200155303166668,
+    0.33960461720294915
+   ],
+   "ctrl_left_grip_unique": [
+    -0.045,
+    -0.044996,
+    -0.044993,
+    -0.044992,
+    -0.044991,
+    -0.044975,
+    -0.044969,
+    -0.044968,
+    -0.044967
+   ],
+   "ctrl_left_grip_first_last": [
+    -0.044974843956350236,
+    -0.04496918695274408,
+    -0.04499147509432043
+   ],
+   "applied_gripper_left_first_last": [
+    0.9994409768077831,
+    0.9993152656165352,
+    0.9998105576515651
+   ],
+   "measured_gripper_left_last": 0.9998105576515651,
+   "apple_world_disp_max_mm": 7.206737264870592,
+   "apple_z_change_mm_last": 6.864132917616672e-05,
+   "sim_vs_t16_finger_mm_max": 1.2727471092914773,
+   "sim_vs_t16_arm_deg_max": 0.03687471001665541,
+   "t16_recorded_finger_drift_from_t72_mm@t80,92,96,135": [
+    24.849828673645323,
+    56.72938488340276,
+    63.67615149233137,
+    105.01089530237634
+   ],
+   "t16_recorded_arm_step_max_deg_mean_t73_135": 0.14712016163532635
+  },
+  "replay|fixed|hold": {
+   "hold_source": "command",
+   "q_hold_captured_at_t": 72,
+   "gripper_hold": [
+    0.9984515905380249,
+    0.9972856044769286
+   ],
+   "prefix_qpos_max_abs_err_at_t71": 0.0007957810951362831,
+   "finger_drift_from_entry_mm@t80": 5.968826017674764,
+   "finger_dist_to_fk_q_hold_mm@t80": 9.681995527998335,
+   "arm_max_abs_dev_from_q_hold_deg@t80": 0.5281660139052822,
+   "finger_drift_from_entry_mm@t92": 5.9516341945663935,
+   "finger_dist_to_fk_q_hold_mm@t92": 9.62012022802687,
+   "arm_max_abs_dev_from_q_hold_deg@t92": 0.5234369919224714,
+   "finger_drift_from_entry_mm@t96": 5.950927606016696,
+   "finger_dist_to_fk_q_hold_mm@t96": 9.619467799600642,
+   "arm_max_abs_dev_from_q_hold_deg@t96": 0.5234309560617986,
+   "finger_drift_from_entry_mm@t135": 5.950414696514129,
+   "finger_dist_to_fk_q_hold_mm@t135": 9.61912796568546,
+   "arm_max_abs_dev_from_q_hold_deg@t135": 0.5234310240866242,
+   "finger_step_mm_mean_t80_135": 0.0019115879474403824,
+   "arm_step_max_deg_mean_t80_135": 0.0006077624615425959,
+   "arm_step_max_deg_range_t73_135": [
+    3.7349253624426076e-11,
+    0.6619831072630118
+   ],
+   "ctrl_left_grip_unique": [
+    -0.04493
+   ],
+   "ctrl_left_grip_first_last": [
+    -0.04493032157421112,
+    -0.04493032157421112,
+    -0.04493032157421112
+   ],
+   "applied_gripper_left_first_last": [
+    0.9984515905380249,
+    0.9984515905380249,
+    0.9984515905380249
+   ],
+   "measured_gripper_left_last": 0.9984515905382679,
+   "apple_world_disp_max_mm": 0.09978125122403547,
+   "apple_z_change_mm_last": -0.002590749692776839,
+   "sim_vs_t16_finger_mm_max": 101.85057151220656,
+   "sim_vs_t16_arm_deg_max": 8.391638207196866,
+   "t16_recorded_finger_drift_from_t72_mm@t80,92,96,135": [
+    24.849828673645323,
+    56.72938488340276,
+    63.67615149233137,
+    105.01089530237634
+   ],
+   "t16_recorded_arm_step_max_deg_mean_t73_135": 0.14712016163532635
+  },
+  "replay|legacy|close_then_hold": {
+   "hold_source": "measured",
+   "q_hold_captured_at_t": 73,
+   "gripper_hold": [
+    0.8780333187597962,
+    0.9981075171202498
+   ],
+   "prefix_qpos_max_abs_err_at_t71": 0.0007957810951362831,
+   "finger_drift_from_entry_mm@t80": 23.4598779740417,
+   "finger_dist_to_fk_q_hold_mm@t80": 21.44851132566287,
+   "arm_max_abs_dev_from_q_hold_deg@t80": 1.127101872876509,
+   "finger_drift_from_entry_mm@t92": 49.025563981043085,
+   "finger_dist_to_fk_q_hold_mm@t92": 47.27599216091801,
+   "arm_max_abs_dev_from_q_hold_deg@t92": 2.7576339860962804,
+   "finger_drift_from_entry_mm@t96": 55.22437293294146,
+   "finger_dist_to_fk_q_hold_mm@t96": 53.49749236419841,
+   "arm_max_abs_dev_from_q_hold_deg@t96": 3.1879857466540455,
+   "finger_drift_from_entry_mm@t135": 102.7133605077422,
+   "finger_dist_to_fk_q_hold_mm@t135": 101.02077966793564,
+   "arm_max_abs_dev_from_q_hold_deg@t135": 8.290285442316986,
+   "finger_step_mm_mean_t80_135": 1.6132035992517468,
+   "arm_step_max_deg_mean_t80_135": 0.1393189942406612,
+   "arm_step_max_deg_range_t73_135": [
+    0.12058022648302165,
+    0.661983080407464
+   ],
+   "ctrl_left_grip_unique": [
+    -0.045,
+    -0.044993,
+    -0.044989,
+    -0.044988,
+    -0.044987,
+    -0.044494,
+    -0.043562,
+    -0.042464,
+    -0.041225,
+    -0.040051,
+    -0.039511,
+    -0.038945,
+    -0.037898,
+    -0.036922,
+    -0.036018,
+    -0.035177,
+    -0.034444,
+    -0.034415,
+    -0.033721,
+    -0.033103,
+    -0.032951,
+    -0.032579,
+    -0.032529,
+    -0.032413,
+    -0.032382,
+    -0.032373,
+    -0.032371,
+    -0.03237,
+    -0.0
+   ],
+   "ctrl_left_grip_first_last": [
+    -0.0,
+    -0.03951149934419083,
+    -0.04498729290655538
+   ],
+   "applied_gripper_left_first_last": [
+    0.0,
+    0.8780333187597962,
+    0.9997176201456751
+   ],
+   "measured_gripper_left_last": 0.9997176201456751,
+   "apple_world_disp_max_mm": 9.82692441852648,
+   "apple_z_change_mm_last": -0.001141127412451759,
+   "sim_vs_t16_finger_mm_max": 20.97325169371168,
+   "sim_vs_t16_arm_deg_max": 1.0248019427433201,
+   "t16_recorded_finger_drift_from_t72_mm@t80,92,96,135": [
+    24.849828673645323,
+    56.72938488340276,
+    63.67615149233137,
+    105.01089530237634
+   ],
+   "t16_recorded_arm_step_max_deg_mean_t73_135": 0.14712016163532635
+  },
+  "replay|fixed|close_then_hold": {
+   "hold_source": "command",
+   "q_hold_captured_at_t": 73,
+   "gripper_hold": [
+    0.0,
+    0.9972856044769286
+   ],
+   "prefix_qpos_max_abs_err_at_t71": 0.0007957810951362831,
+   "finger_drift_from_entry_mm@t80": 5.968822701443583,
+   "finger_dist_to_fk_q_hold_mm@t80": 9.666338998284488,
+   "arm_max_abs_dev_from_q_hold_deg@t80": 0.5281660282358565,
+   "finger_drift_from_entry_mm@t92": 5.951634270354305,
+   "finger_dist_to_fk_q_hold_mm@t92": 9.60414368379899,
+   "arm_max_abs_dev_from_q_hold_deg@t92": 0.5234369919301556,
+   "finger_drift_from_entry_mm@t96": 5.9509275509014,
+   "finger_dist_to_fk_q_hold_mm@t96": 9.603486952856583,
+   "arm_max_abs_dev_from_q_hold_deg@t96": 0.5234309550241839,
+   "finger_drift_from_entry_mm@t135": 5.950414620215094,
+   "finger_dist_to_fk_q_hold_mm@t135": 9.603144651629796,
+   "arm_max_abs_dev_from_q_hold_deg@t135": 0.5234310230041129,
+   "finger_step_mm_mean_t80_135": 0.0019117287827429199,
+   "arm_step_max_deg_mean_t80_135": 0.0006077606309571158,
+   "arm_step_max_deg_range_t73_135": [
+    3.734289251506315e-11,
+    0.661983080407464
+   ],
+   "ctrl_left_grip_unique": [
+    -0.0
+   ],
+   "ctrl_left_grip_first_last": [
+    -0.0,
+    -0.0,
+    -0.0
+   ],
+   "applied_gripper_left_first_last": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "measured_gripper_left_last": 2.431672796916965e-13,
+   "apple_world_disp_max_mm": 0.09978125122403547,
+   "apple_z_change_mm_last": -0.002590749692776839,
+   "sim_vs_t16_finger_mm_max": 101.85057157518222,
+   "sim_vs_t16_arm_deg_max": 8.391638207177449,
+   "t16_recorded_finger_drift_from_t72_mm@t80,92,96,135": [
+    24.849828673645323,
+    56.72938488340276,
+    63.67615149233137,
+    105.01089530237634
+   ],
+   "t16_recorded_arm_step_max_deg_mean_t73_135": 0.14712016163532635
+  }
+ }
+}
