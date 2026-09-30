@@ -11,6 +11,19 @@ real-time iteration scheme's central idea: at 15 Hz the optimizer runs once per 
 control loop waits, so an algorithm that runs until it converges cannot be used at all. What makes
 the truncation safe is not that the answer is optimal — it is that the answer is *checked*.
 
+**T31 — iterations first.** The deadline is checked only after `sqp.min_iterations` iterations
+(default 3). With the ESDF backend the first linearization on a new chunk's field costs ~100 ms
+(later ones ~3 ms), so a 50 ms deadline checked after the first iteration meant *one QP per chunk,
+always* — a rejected first step was returned without the retry the trust region exists to give it. The simulation loop is synchronous; a real
+robot that needs the old wall-clock behaviour sets `min_iterations: 1`.
+
+**A limit-only initial iterate falls back to its projection, not to a rejected step** (T31). When the
+reference breaks only the joint limits (no collision violation) and no QP candidate is accepted, the
+returned trajectory is the reference clipped onto the position box and the step-0 anchor — provided
+that clip satisfies every limit and passes the full-resolution collision check. The rejected QP
+candidate it replaces moved every joint (measured on E3b chunk 310: up to 8.7° on the wrist that
+was out of range, and 0.4–0.9° on joints that were not).
+
 **Every returned trajectory is checked at full resolution.** `linearize` may hand the QP a small
 subset of the rows; `_finish` re-evaluates all of them. That is the whole basis on which the
 reduction is allowed to exist: pruning may cost convergence, and it may not hide a collision. The
@@ -37,7 +50,7 @@ from benchmark.trajopt.linearize import (
     SceneSnapshot,
     append_collision_rows,
 )
-from benchmark.trajopt.limits import limit_report
+from benchmark.trajopt.limits import limit_report, project_to_limits
 from benchmark.trajopt.problem import build_problem, objective
 from benchmark.trajopt.qp import QpSolver
 from benchmark.trajopt.types import ChunkLayout, JointLimits, TrajOptResult, TrajOptStatus
@@ -164,7 +177,9 @@ class TrajectoryOptimizer:
         # **언제나 진다** — merit 만으로 고르면 한계를 넘는 reference 가 그대로 나간다. 두 후보의
         # 적격성이 같지 않은 것이다 (지침 §7.3 "모든 후보의 적격성이 같다고 가정하지 않는다").
         # 한계를 넘는 초기 iterate 는 비교 대상에서 빠지고 (예전 규칙 그대로), QP 가 하나도 못
-        # 풀었을 때의 마지막 대비로만 남는다.
+        # 풀었을 때의 마지막 대비로만 남는다. **T31**: 그 초기 iterate 가 limit **만** 어겼고
+        # 받아들여진 후보가 없으면, 거절된 후보 대신 reference 의 최소 투영이 나간다
+        # (`_limit_projection`, 루프 뒤).
         #
         # 적격한 초기화 아래에서 best 는 언제나 수락된 반복점이다: 후보의 merit 이 `best_merit`
         # 보다 작으면 `best_merit <= iterate_merit` 이므로 수락 조건도 만족한다. 그래서
@@ -192,12 +207,22 @@ class TrajectoryOptimizer:
         budget_bound = False
         time_budget_hit = False
 
+        # **반복 수 우선** (T31 G2-i): 벽시계 예산은 `min_iterations` 만큼 돈 뒤부터 검사한다.
+        # `max_iterations` 가 더 작으면 그것이 이긴다 — 상한은 상한이다.
+        min_iterations = max(1, min(int(getattr(cfg.sqp, "min_iterations", 1)),
+                                    int(cfg.sqp.max_iterations)))
         while iterations < cfg.sqp.max_iterations:
             # Checked *after* the first iteration, never before it. A budget so tight that the
             # set-up alone exhausts it would otherwise return the reference untouched while
             # reporting success — the one outcome a safety layer must not produce. One step is the
             # real-time iteration scheme's minimum unit of work, and it is always taken.
-            if iterations >= 1 and (time.perf_counter() - started) * 1000.0 >= cfg.sqp.time_budget_ms:
+            #
+            # T31: "the first iteration" became "the first `min_iterations`". In E3 the first
+            # iteration costs ~105 ms (the first linearize on a new field ~100 ms; later ones ~3 ms)
+            # against a 50 ms budget, so the old check ended 1124/1125 chunks after a single QP — a
+            # rejected first step never got its retry.
+            if (iterations >= min_iterations
+                    and (time.perf_counter() - started) * 1000.0 >= cfg.sqp.time_budget_ms):
                 notes.append(
                     f"time budget {cfg.sqp.time_budget_ms:.0f} ms reached after {iterations} "
                     "iteration(s); returning the best iterate so far"
@@ -269,6 +294,24 @@ class TrajectoryOptimizer:
             if step_size < cfg.sqp.step_tolerance:
                 break
 
+        # **limit 만 어긴 초기 iterate 의 대비는 reference 의 최소 투영이다** (T31 G2-ii).
+        projection = None
+        if not initial_eligible and not any(c["accepted"] for c in candidates):
+            projection = self._limit_projection(reference, q_now, scene, initial_violation)
+            if projection["used"]:
+                best, best_slack = projection.pop("_trajectory"), 0.0
+                best_states = projection.pop("_states")
+                best_index = _PROJECTION_INDEX
+                notes.append(
+                    "the initial iterate was outside the joint limits only (collision violation "
+                    + ("not enforced" if initial_violation is None
+                       else f"{initial_violation * 1000:.2f} mm")
+                    + ") and no QP candidate was accepted; returning the minimal projection of the "
+                    f"reference onto the limits (max change {projection['max_change_rad']:.4f} rad)"
+                    " instead of the rejected QP step")
+            projection.pop("_trajectory", None)
+            projection.pop("_states", None)
+
         if budget_bound:
             notes.append(
                 f"reduction.rows_per_step={cfg.reduction.rows_per_step} bound on at least one step; "
@@ -287,6 +330,8 @@ class TrajectoryOptimizer:
             "n_candidates": len(candidates),
             "n_accepted": int(sum(1 for c in candidates if c["accepted"])),
             "qp_failures": int(qp_failures),
+            "min_iterations": int(min_iterations),
+            "projection": projection,
         }
         return self._finish(
             best, reference, q_now, scene, template, iterations, best_slack,
@@ -342,6 +387,56 @@ class TrajectoryOptimizer:
             anchor = float(np.max(np.abs(trajectory[:, 0] - q0) - step, initial=0.0))
         report["anchor"] = max(anchor, 0.0)
         return report
+
+    def _limit_projection(self, reference, q_now, scene, initial_violation) -> dict[str, Any]:
+        """T31 G2-ii — **reference 의 최소 투영**을 반환할 수 있는가, 그리고 그 궤적.
+
+        | 조건 | 아니면 |
+        |---|---|
+        | `sqp.limit_projection_fallback` 이 켜져 있다 | `reason: disabled` |
+        | 초기 iterate 의 충돌 위반 ≤ `safety.violation_tolerance` (= limit **만** 어겼다) | `reason: initial_collision_violation` |
+        | 투영이 존재한다 (box ∩ anchor 가 비지 않음) | `reason: no_projection` |
+        | 투영이 limit 을 전부 지킨다 (`_limit_overshoot` — position·velocity·acceleration·anchor) | `reason: projection_outside_limits` |
+        | 투영이 충돌 검사를 통과한다 (전 해상도 `full_violation` ≤ tolerance) | `reason: projection_collides` |
+
+        충돌이 꺼진 판(`collision.enabled=False`)에서는 둘째·다섯째 줄을 보지 않는다 — merit 도
+        충돌을 보지 않으므로 (T15), 여기서만 보면 "껐다" 가 거짓이 된다. 반환된 궤적의 위반은
+        `_finish` 가 스위치와 무관하게 잰다.
+        """
+        cfg = self.config
+        out: dict[str, Any] = {"tried": True, "used": False, "reason": None,
+                               "max_change_rad": None, "violation_m": None,
+                               "limit_overshoot": None}
+        if not getattr(cfg.sqp, "limit_projection_fallback", True):
+            out.update(tried=False, reason="disabled")
+            return out
+        collision = bool(cfg.collision.enabled)
+        tolerance = cfg.safety.violation_tolerance
+        if collision and (initial_violation is None or initial_violation > tolerance):
+            out.update(tried=False, reason="initial_collision_violation")
+            return out
+        projected = project_to_limits(reference, self.limits,
+                                      np.asarray(q_now, np.float64)[self.layout.q_indices])
+        if projected is None:
+            out["reason"] = "no_projection"
+            return out
+        out["max_change_rad"] = float(np.abs(projected - reference).max(initial=0.0))
+        overshoot = self._limit_overshoot(projected, q_now)
+        out["limit_overshoot"] = {k: float(v) for k, v in overshoot.items()}
+        if max(overshoot.values()) > _LIMIT_TOLERANCE:
+            out["reason"] = "projection_outside_limits"
+            return out
+        states = None
+        if collision:
+            # FK 는 한 번 — `_finish` 가 같은 상태로 최종 검증을 한다.
+            states = self.linearizer.sphere_states(projected, q_now)
+            violation = max(0.0, -self.linearizer.full_violation(projected, q_now, scene, states))
+            out["violation_m"] = float(violation)
+            if violation > tolerance:
+                out["reason"] = "projection_collides"
+                return out
+        out.update(used=True, reason="limit_only", _trajectory=projected, _states=states)
+        return out
 
     def _passthrough(self, reference, q_now, template, status, notes, started) -> TrajOptResult:
         chunk = self._chunk_from(reference, template)
@@ -467,13 +562,19 @@ class TrajectoryOptimizer:
         )
 
 
+#: `best_index` 의 표시 — reference 의 최소 투영이 반환됐다 (T31 G2-ii). `-1` 은 초기 iterate.
+_PROJECTION_INDEX = -2
+
+
 def _returned_label(index: int, candidates: list[dict[str, Any]]) -> str:
-    """`best_index` → `"initial"` · `"accepted"` · `"best_unaccepted"`.
+    """`best_index` → `"initial"` · `"accepted"` · `"best_unaccepted"` · `"projection"` (T31).
 
     수락 여부를 **후보 기록에서 읽는다.** 적격한 초기 iterate 로 시작하면 `best_unaccepted` 는
     나오지 않는다 (`solve` 의 주석) — 나오는 것은 초기 iterate 가 한계 밖이라 비교에서 빠졌을
     때뿐이다. 그 성질을 여기서 가정하면 그것이 깨진 날 기록이 거짓말을 한다.
     """
+    if index == _PROJECTION_INDEX:
+        return "projection"
     if index < 0:
         return "initial"
     return "accepted" if candidates[index]["accepted"] else "best_unaccepted"
@@ -484,7 +585,7 @@ def _no_selection() -> dict[str, Any]:
     return {"returned": "initial", "returned_index": -1, "initial_merit": None,
             "initial_violation_m": None, "initial_eligible": None,
             "initial_limit_overshoot": None, "candidates": [], "n_candidates": 0,
-            "n_accepted": 0, "qp_failures": 0}
+            "n_accepted": 0, "qp_failures": 0, "min_iterations": None, "projection": None}
 
 
 __all__ = ["TrajectoryOptimizer"]

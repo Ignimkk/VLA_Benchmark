@@ -97,6 +97,12 @@ CODES: dict[str, str] = {
         "**이 코드가 보이면 AG3S 의 배선 결함이다.** validity 가 DEGRADED 로 내려갔는데 어느 "
         "자리도 코드 달린 사유를 남기지 않았다. 새 DEGRADED 분기를 만들면서 reason() 을 "
         "빠뜨린 것이다 — 조용히 지나가면 로컬이 '왜 degraded 인지' 를 다시 알 수 없게 된다",
+    # --- 제외 기하 불변식 (T26) ---------------------------------------------------------
+    "invariant_violation":
+        "pipeline(_exclusion_gate, T26): 제외 기하(ball·target-free·guard·접촉 허용)를 만들려던 "
+        "manipulated 물체에 admissible 증거(가장 좁은 주축 ≤ gripper 최대 개도 · destination "
+        "겹침 없음)가 없다. **만들지 않았다.** 보이면 버그다 — admissible 이 아닌 것은 여기 오면 "
+        "안 된다 (unit test 에서는 raise)",
     # --- 로봇 모델 ----------------------------------------------------------------------
     "no_robot_model":
         "pipeline(_constraints): 로봇 모델이 주입되지 않아 제약을 쓸 대상이 없다. 기하는 있는데 "

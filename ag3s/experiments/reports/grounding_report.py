@@ -73,14 +73,33 @@ def build_robot_model(scene):
 
     자기 필터는 바퀴와 베이스를 반드시 포함해야 한다. 머리 카메라가 자기 몸을 내려다보므로,
     빠뜨리면 그 점들이 클라우드에 남아 로봇에 용접된 유령 장애물로 뭉친다.
+
+    T29: 이제 **몸을 덮는다** — `inflation 0` 에서도 로봇 점이 새지 않게, 부풀리는 대신 구를 더한다
+    (cuRobo 원칙). `self_filter_covering_capsules` 가 URDF capsule 이 못 덮던 body
+    (`link_*_arm_2/3/4` 의 틈, 손목 카메라 bracket · D435i) 를 MJCF mesh 에서 맞춘 capsule 로 덮는다
+    (`mujoco_source.SELF_FILTER_COVER_BODIES` 의 표). 제약 모델(`build_constraint_robot_model`) 에는
+    **넣지 않는다.** 손가락 관절은 parameter 다 (`UrdfSphereChain.param_joint_names`) — 값은
+    호출자가 촬영 시점 개도로 준다 (`AG3S.set_finger_joints`, `robot_models/gripper_state.py`).
+
+    `link_*_arm_5` 의 URDF capsule (r 75 mm, 손목·손바닥·손가락과 그 사이 물체를 삼킨다 — T17 에서
+    사과를 통째로 지운 17 프레임의 원인) 은 이 모델에서 **빼고** mesh capsule 로 바꾼다
+    (`SELF_FILTER_MESH_LINKS`).
     """
-    from benchmark.ag3s.experiments.sources.mujoco_source import HEAD_JOINTS, gap_filling_capsules
+    import dataclasses
+
+    from benchmark.ag3s.experiments.sources.mujoco_source import (
+        HEAD_JOINTS, SELF_FILTER_MESH_LINKS, gap_filling_capsules, self_filter_covering_capsules)
     from benchmark.ag3s.robot_models import RBY1_URDF, UrdfSphereChain, parse_urdf
 
     urdf = parse_urdf(RBY1_URDF)
     head = {n: float(scene.data.qpos[scene._qadr[n]]) for n in HEAD_JOINTS if n in scene._qadr}
-    return UrdfSphereChain(urdf, extra_capsules=gap_filling_capsules(scene.model),
-                           fixed_joint_values=head)
+    urdf = dataclasses.replace(urdf, capsules=tuple(
+        c for c in urdf.capsules if c.link not in SELF_FILTER_MESH_LINKS))
+    gap = list(gap_filling_capsules(scene.model))
+    # 덮개는 **이미 있는 구가 못 덮은 표면에만** — 그래서 덮개 없는 모델을 먼저 짓고 그것에 묻는다.
+    bare = UrdfSphereChain(urdf, extra_capsules=gap, fixed_joint_values=head)
+    cover = self_filter_covering_capsules(scene.model, urdf.links, existing=bare)
+    return UrdfSphereChain(urdf, extra_capsules=gap + list(cover), fixed_joint_values=head)
 
 
 #: 손바닥 둘. **URDF 에 collision capsule 이 없다** — geometry 는 MJCF mesh 실측에서 온다

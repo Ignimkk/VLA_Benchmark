@@ -23,6 +23,13 @@
 가 정한다: 팔은 HOLD 진입 때 한 번 잡은 **명령** 목표 `q_hold`, gripper 는 마지막 명령 — 매 스텝
 측정값이 아니다 (지침 §8.2 · §8.5). "현재 관절을 유지한다" 의 뜻이 그렇게 바뀌었다.
 
+**T27 — 게이트 끄기 (`gate="off"`, 사용자 사다리 실험).** 서버 판정·`verdict_reasons` 와 무관하게
+**refined 청크(`actions`)를 실행한다.** 판정은 계산해 **기록만** 한다 — `last_gate` 에
+`{mode: off, would_hold, kinds}` 가 실려 "게이트가 켜져 있었다면 무엇이 막았나" 를 같은 실행에서 볼 수
+있다. 예외는 하나, 청크가 **도착하지 않은** 경우(통신 실패 넷)다 — 실행할 청크가 없으므로 T23 의 fixed
+HOLD 로 가고, `comms_holds` 로 세고 크게 찍는다 (실험에서 이것은 0 이어야 한다). shadow 와 다르다: shadow
+는 **reference** 를 실행하고 gate off 는 **refined** 를 실행한다 — 둘은 같이 쓸 수 없다.
+
 오래된 응답을 버리는 이유는 따로 적을 만하다. 서버가 늦으면 그 청크는 이미 지나간 자세를 위해
 계획된 것이다. 8스텝(533 ms) 뒤의 팔은 다른 곳에 있고, 그 청크의 첫 action 은 절대 관절 목표라
 관절이 순간적으로 튄다. `seq` 왕복이 그것을 잡는 유일한 장치다.
@@ -38,7 +45,7 @@ import numpy as np
 from benchmark.trajopt import wire
 
 __all__ = ["SafeRemoteClient", "HOLD_GRIPPER_NORM", "ExecutionLog", "HoldController",
-           "HOLD_MODES", "GATE_MODES", "action_row"]
+           "HOLD_MODES", "GATE_MODES", "action_row", "gate_banner"]
 
 #: HOLD 동안 로봇에 주는 목표 (T23, 지침 §8.5). 첫 항목이 기본이다.
 #:
@@ -54,7 +61,21 @@ HOLD_MODES = ("fixed", "legacy")
 #:   실행. 로컬은 서버보다 엄격해질 수만 있다.
 #: * `legacy` — T23 전의 판정: `trajopt_status ∈ {optimal, feasible}` (= `TrajOptStatus.safe`) 그리고 `safe`.
 #:   `allowed_contact` · `occluded_target` 도 HOLD 다.
-GATE_MODES = ("reasons", "legacy")
+#: * `off` — **판정은 기록만, 실행에 쓰지 않는다** (T27). 도착한 청크는 언제나 refined 를 실행한다.
+#:   `last_gate.would_hold` 가 `reasons` 게이트였다면의 결정이다. 도착하지 않은 청크만 HOLD (`comms`).
+GATE_MODES = ("reasons", "legacy", "off")
+
+
+def gate_banner(gate: str) -> Optional[str]:
+    """시작 로그에 **크게** 찍을 문장, 또는 `None` (게이트가 켜져 있으면 조용하다)."""
+    if gate != "off":
+        return None
+    return ("[safe] !!! GATE OFF (--safe-gate off) — 판정은 기록만, 실행에 쓰지 않는다 !!!\n"
+            "[safe]     도착한 청크는 서버 safe·verdict_reasons 와 무관하게 **refined(actions)** 를 "
+            "실행한다. HOLD 는 청크가 도착하지 않은 경우(timeout·stale·error·dimension = comms)뿐이고 "
+            "그때마다 크게 찍는다 — 실험에서 0 이어야 한다.\n"
+            "[safe]     planning 기록의 gate.would_hold / gate.kinds 가 '게이트가 켜져 있었다면' 의 "
+            "결정이다. shadow 와 다르다 (shadow 는 reference 를 실행한다)")
 
 #: hold 청크의 그리퍼 열에 넣을 **정규화** 값 — 씬이 실제 상태를 내놓지 않을 때만 쓴다.
 #:
@@ -91,6 +112,12 @@ class SafeRemoteClient:
                  gate_table: Optional[dict[str, str]] = None):
         if gate not in GATE_MODES:
             raise ValueError(f"gate must be one of {GATE_MODES}, got {gate!r}")
+        if gate == "off" and shadow:
+            # **둘은 다른 청크를 실행한다** (shadow = reference, gate off = refined). 같이 주면
+            # 무엇이 실행됐는지 기록이 말할 수 없다.
+            raise ValueError(
+                "gate='off' executes the REFINED chunk; shadow=True executes the policy "
+                "REFERENCE chunk. They are different experiments — pick one")
         self._policy = policy
         #: 로컬 게이트 방식 (`GATE_MODES`) 과 사유 → 처리 표 (없으면 `wire.GATE_DEFAULT`).
         self.gate = gate
@@ -121,6 +148,14 @@ class SafeRemoteClient:
         #: 그 시차가 손목 클라우드의 번짐과 직결된다. 그래서 왕복이 어떻게 끝나든(hold 포함)
         #: 남겨 둔다: 요청을 **보내기 전에** 채우므로 timeout 이어도 촬영 시각은 남는다.
         self.last_stamps: dict[str, float] = {}
+        #: 카메라별 **렌더가 끝난** 벽시계 순간 (단조시계) — 진단용 (T30c). `last_stamps` 와 따로다.
+        #:
+        #: 시뮬레이션 관측이면 `last_stamps` 는 세 카메라가 같은 한 순간(`capture_time`)이고, 렌더
+        #: 시간의 퍼짐(osmesa 순차 렌더, head ↔ wrist 102–142 ms)은 여기에만 남는다. T30c 전의
+        #: `last_stamps` 값이 바로 이것이다.
+        self.last_render_stamps: dict[str, float] = {}
+        #: `last_stamps` 가 무엇인가 (`wire.STAMP_MODES`): `sim_frozen` | `render_end`. 요청 전 `none`.
+        self.last_stamp_mode = "none"
         #: 마지막 응답의 `ag3s` 블록 (`{}` 면 인증됐거나 옛 서버다). **hold 일 때도 붙든다** —
         #: 왜 멈췄는지를 적으려면 그 프레임의 지각 사유가 무엇이었는지 알아야 한다.
         #: `last_verdict` 에 합치지 않는 것은 그 딕셔너리의 키 집합이 T0 기록의 `verdict` 이고,
@@ -175,6 +210,12 @@ class SafeRemoteClient:
         #: 사유 kind 별 청크 수 (T23). `stats` 와 따로 둔다 — `stats` 의 키 집합은 T0 기록의 것이다.
         self.reason_stats: dict[str, int] = {}
         self.stats = {"sent": 0, "safe": 0, "unsafe": 0, "timeout": 0, "stale": 0, "error": 0}
+        #: `gate="off"` 에서 청크가 **도착하지 않아** HOLD 한 수 (T27). 실험에서 0 이어야 한다.
+        #: `stats` 와 따로 둔다 — `stats` 의 키 집합은 T0 기록의 것이다.
+        self.comms_holds = 0
+        #: `gate="off"` 에서 **게이트가 켜져 있었다면 HOLD 였을** 청크 수와 그 사유 kind 별 수.
+        self.would_hold = 0
+        self.would_hold_kinds: dict[str, int] = {}
 
         self._trace = None
         if trace_dir:
@@ -193,15 +234,24 @@ class SafeRemoteClient:
 
     # ----------------------------------------------------------------------------------
     def infer(self, obs: dict[str, Any], *, reset: bool = False,
-              exec_feedback: Optional[dict[str, Any]] = None) -> dict[str, Any]:
-        """한 청크 — `_infer_once` 를 부르고 판정 사유를 센다 (T23). 계약은 `_infer_once` 에."""
+              exec_feedback: Optional[dict[str, Any]] = None,
+              capture_time: Optional[float] = None) -> dict[str, Any]:
+        """한 청크 — `_infer_once` 를 부르고 판정 사유를 센다 (T23). 계약은 `_infer_once` 에.
+
+        `capture_time` (T30c): **시뮬레이션이 이 관측을 위해 멈춘 순간** (`time.monotonic()`).
+        주면 세 카메라의 이미지 · `robot_state` · 외부 파라미터가 모두 이 한 순간으로 찍힌다
+        (`stamp_mode = "sim_frozen"`). 호출자는 그 순간부터 `infer` 가 돌아올 때까지 `mj_step` 을
+        하지 않았음을 **보증**한다. `None` 이면 예전처럼 카메라별 렌더 끝 순간이다 (`render_end`) —
+        실제 카메라처럼 순간이 정말로 다른 경우를 한 순간으로 뭉개지 않으려는 기본값이다.
+        """
         self.last_reasons = []
         self.last_reasons_source = "none"
         self.last_gate = {}
         if reset:
             # 지난 에피소드의 명령으로 HOLD 청크를 만들지 않는다.
             self.last_command = None
-        out = self._infer_once(obs, reset=reset, exec_feedback=exec_feedback)
+        out = self._infer_once(obs, reset=reset, exec_feedback=exec_feedback,
+                               capture_time=capture_time)
         for kind in {str(r.get("kind")) for r in self.last_reasons}:
             self.reason_stats[kind] = self.reason_stats.get(kind, 0) + 1
         return out
@@ -214,7 +264,8 @@ class SafeRemoteClient:
         self.last_command = action_row(applied["arm"], applied["gripper"])
 
     def _infer_once(self, obs: dict[str, Any], *, reset: bool = False,
-                    exec_feedback: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+                    exec_feedback: Optional[dict[str, Any]] = None,
+                    capture_time: Optional[float] = None) -> dict[str, Any]:
         """한 청크. 무슨 일이 있어도 `{"actions": [H, 14]}` 를 돌려준다.
 
         `exec_feedback` 은 **직전 청크의 실행 사실**이다 (T18, `ExecutionLog.close()`). 이
@@ -236,7 +287,8 @@ class SafeRemoteClient:
             self._trace.begin_chunk(seq)
 
         try:
-            request = self._pack(obs, reset=reset, seq=seq, exec_feedback=exec_feedback)
+            request = self._pack(obs, reset=reset, seq=seq, exec_feedback=exec_feedback,
+                                 capture_time=capture_time)
         except Exception as exc:  # noqa: BLE001 — 카메라 렌더 실패도 hold 로 간다
             return self._hold(f"could not capture the cameras ({exc})", "error", comms="error")
 
@@ -296,6 +348,8 @@ class SafeRemoteClient:
         server_safe = bool(result.get("safe", False))
         reasons, source = wire.unpack_verdict_reasons(result)
         self.last_reasons, self.last_reasons_source = reasons, source
+        if self.gate == "off":
+            return self._execute_ungated(result, reasons, source, server_safe, seq)
         if self.gate == "legacy":
             action = ("execute" if server_safe and result.get("trajopt_status") in
                       ("optimal", "feasible") else "hold")
@@ -355,6 +409,50 @@ class SafeRemoteClient:
         out["actions_refined"] = actions
         out["executed_chunk"] = "reference"
         return out
+
+    def _execute_ungated(self, result: dict[str, Any], reasons: list, source: str,
+                         server_safe: bool, seq: int) -> dict[str, Any]:
+        """`gate="off"` (T27): **refined 를 실행한다.** 판정은 `reasons` 게이트로 계산해 기록만 한다.
+
+        `last_safe` · `last_ipc` · `stats` 는 **판정 그대로**다 (shadow 와 같은 규율) — 게이트가
+        HOLD 였을 청크는 `last_safe=False` · `last_ipc="unsafe"` 이고, 실행됐다는 사실은
+        `last_executed_chunk="refined"` 가 따로 말한다. 한 값이 판정과 실행을 겸하면 기록에서 둘을
+        되살릴 수 없다.
+        """
+        would, holding = wire.gate_decision(reasons, self.gate_table)
+        if not server_safe and would == "execute":
+            would = "hold"
+            holding = [{"kind": "server_unsafe", "detail": "the server said safe=False"}]
+        would_hold = would == "hold"
+        hold_kinds = [str(r.get("kind")) for r in holding]
+        self.last_gate = {"mode": "off", "action": "execute", "source": source,
+                          "server_safe": server_safe, "would_hold": would_hold,
+                          "kinds": [str(r.get("kind")) for r in reasons],
+                          "would_hold_kinds": hold_kinds,
+                          # 실제로 HOLD 를 만든 사유 — 게이트가 꺼져 있으므로 언제나 비어 있다.
+                          # 키를 두는 것은 `pi05_infer.py` 가 이 키로 연속 HOLD 를 세기 때문이다.
+                          "hold_kinds": []}
+        if would_hold:
+            self.last_safe = False
+            self.last_reason = self._explain(result, holding)
+            self.last_ipc = "unsafe"
+            self.stats["unsafe"] += 1
+            # 일어났을 때만 키를 만든다 (`shadow_override` 와 같은 규약 — T0 `stats` 키 집합).
+            self.stats["gate_off_override"] = self.stats.get("gate_off_override", 0) + 1
+            self.would_hold += 1
+            for kind in dict.fromkeys(hold_kinds):
+                self.would_hold_kinds[kind] = self.would_hold_kinds.get(kind, 0) + 1
+        else:
+            self.last_safe = True
+            self.last_reason = ""
+            self.last_ipc = "ok"
+            self.stats["safe"] += 1
+        self.last_executed_chunk = "refined"
+        if self._trace is not None:
+            self._trace.mark("verdict", safe=self.last_safe, seq=seq, gate="off",
+                             executed="refined", would_hold=would_hold,
+                             **{k: v for k, v in self.last_verdict.items() if k != "timing_ms"})
+        return result
 
     @property
     def should_execute(self) -> bool:
@@ -448,7 +546,8 @@ class SafeRemoteClient:
 
     # ----------------------------------------------------------------------------------
     def _pack(self, obs: dict[str, Any], *, reset: bool, seq: int,
-              exec_feedback: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+              exec_feedback: Optional[dict[str, Any]] = None,
+              capture_time: Optional[float] = None) -> dict[str, Any]:
         """세 카메라를 **지금** 찍어 요청에 싣는다.
 
         카메라마다 `robot_state` 와 촬영 시각을 따로 담는다. 손목 카메라는 팔과 함께 움직이므로
@@ -458,13 +557,27 @@ class SafeRemoteClient:
         **실행 피드백도 여기서 싣는다** (T18). 없으면 `available=False` 와 이유를 싣는다 —
         키를 빼면 서버가 이 클라이언트를 옛 버전으로 읽는다. 카메라를 찍기 **전에** 붙드는 것은
         캡처가 실패해 hold 로 가도 *"무엇을 보내려 했나"* 가 기록에 남게 하려는 것이다.
+
+        **촬영 시각 (T30c).** 카메라마다 렌더가 끝난 순간을 `render_stamps` 로 잰다 (진단용).
+        `capture_time` 을 받았으면 판정용 `stamps` 는 세 카메라 모두 그 한 순간이다 — 이
+        메서드는 `m`/`d` 를 읽기만 하고 `mj_step` 을 하지 않으므로, 순차 렌더의 시차는 씬이
+        아니라 렌더의 것이다. 받지 않았으면 `stamps = render_stamps` (T30c 전 동작).
         """
+        # 이번 요청의 값만 남긴다 — 캡처 전에 실패하면 지난 청크의 시각이 이번 기록에 실리지 않게.
+        self.last_stamps, self.last_render_stamps, self.last_stamp_mode = {}, {}, "none"
         if exec_feedback is None:
             exec_feedback = wire.no_exec_feedback(
                 "first chunk of the episode (reset)" if reset else
                 "the control loop passed no exec_feedback to SafeRemoteClient.infer")
         self.last_exec_feedback = dict(exec_feedback)
-        depth, K, T, state, stamps = {}, {}, {}, {}, {}
+        if capture_time is not None:
+            capture_time = float(capture_time)
+            # 미래의 순간은 호출자의 버그다 (다른 시계 · 렌더 뒤에 잰 값). 그런 순간을 실으면 서버가
+            # 보는 나이가 음수가 된다 — 조용히 싣지 않고 hold 로 간다 (`_infer_once` 가 잡는다).
+            if not np.isfinite(capture_time) or capture_time > time.monotonic():
+                raise ValueError(
+                    f"capture_time {capture_time!r} is not a past time.monotonic() instant")
+        depth, K, T, state, render_stamps = {}, {}, {}, {}, {}
         with _maybe_span(self._trace, "capture"):
             for cam in self.cameras:
                 frame = self._scene.capture(cam)
@@ -472,13 +585,20 @@ class SafeRemoteClient:
                 K[cam] = np.asarray(frame.camera_intrinsics, np.float64)
                 T[cam] = np.asarray(frame.T_base_cam, np.float64)
                 state[cam] = np.asarray(frame.robot_state, np.float64)
-                stamps[cam] = time.monotonic()
+                render_stamps[cam] = time.monotonic()
+        if capture_time is None:
+            stamps, mode = dict(render_stamps), "render_end"
+        else:
+            stamps, mode = {cam: capture_time for cam in self.cameras}, "sim_frozen"
         self.last_stamps = dict(stamps)
+        self.last_render_stamps = dict(render_stamps)
+        self.last_stamp_mode = mode
         return wire.pack_request(
             obs, cameras=self.cameras, depth=depth, intrinsics=K, extrinsics=T,
             robot_state=state, stamps=stamps, phase=self.phase,
             active_manipulators=self.active_manipulators, reset=reset, seq=seq,
-            exec_feedback=self.last_exec_feedback)
+            exec_feedback=self.last_exec_feedback,
+            render_stamps=render_stamps, stamp_mode=mode)
 
     def _hold(self, reason: str, kind: str,
               result: Optional[dict] = None, *, comms: Optional[str] = None) -> dict[str, Any]:
@@ -490,6 +610,13 @@ class SafeRemoteClient:
         self.last_safe = False
         self.last_reason = reason
         self.last_ipc = kind
+        if self.gate == "off":
+            # **게이트가 꺼져 있어도 도착하지 않은 청크는 실행할 수 없다** (T27). 그것을 크게 찍고
+            # 센다 — 사다리 실험에서 이 수는 0 이어야 하고, 0 이 아니면 그 실행은 "HOLD 없음" 이
+            # 아니다. `gate="off"` 에서 `unsafe` 로 여기 오는 길은 없다 (`_execute_ungated`).
+            self.comms_holds += 1
+            print(f"[safe] !!! GATE OFF but chunk seq {self._seq} did NOT arrive ({kind}"
+                  f"{'/' + comms if comms else ''}) — fixed HOLD #{self.comms_holds}: {reason}")
         if kind != "unsafe":
             sub = comms if comms in wire.COMMS_KINDS else (
                 kind if kind in wire.COMMS_KINDS else "error")
@@ -687,6 +814,12 @@ class SafeRemoteClient:
             if self.reason_stats:
                 print("[safe] verdict reasons (chunks): " + ", ".join(
                     f"{k} {v}" for k, v in sorted(self.reason_stats.items())))
+            if self.gate == "off":
+                print(f"[safe] GATE OFF: executed the refined chunk on {s['sent'] - self.comms_holds}"
+                      f"/{s['sent']} chunks; a reasons gate would have held {self.would_hold} "
+                      f"({', '.join(f'{k} {v}' for k, v in sorted(self.would_hold_kinds.items())) or '-'}); "
+                      f"comms HOLD {self.comms_holds}"
+                      + (" !!! (must be 0 for a no-HOLD run)" if self.comms_holds else ""))
             if self.shadow:
                 print(f"[shadow] the robot executed the policy reference chunk on every "
                       f"executed chunk; {s.get('shadow_override', 0)} of them carried an "

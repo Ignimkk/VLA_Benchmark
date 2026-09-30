@@ -39,6 +39,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from benchmark.trajopt.config import TrajOptConfig
+from benchmark.trajopt.limits import velocity_rows
 from benchmark.trajopt.types import JointLimits
 
 
@@ -187,7 +188,11 @@ def build_problem(
     # needs something. `benchmark/knows_vla/cbf/filter.py` records the same lesson (D3): soften the
     # rows so the solve always returns, and make the violation an explicit, reported number rather
     # than a solver status nobody sees.
-    n_velocity = nq * max(horizon - 1, 0) if np.all(np.isfinite(limits.max_step)) else 0
+    #
+    # **속도 행은 `velocity_rows` 가 정한다** (T27). `max_step` 이 `inf` 이거나(예전 `enforce_velocity
+    # =False`) `RelaxedJointLimits.velocity_rows=False`(`--no-limits`) 면 행이 없다. 후자에서도
+    # `max_step` 은 유한하게 남아 아래 box 블록의 첫 스텝 anchor 가 그 값을 쓴다.
+    n_velocity = nq * max(horizon - 1, 0) if velocity_rows(limits) else 0
     n_acceleration = (
         nq * max(horizon - 2, 0) if np.all(np.isfinite(limits.max_step_change)) else 0
     )
@@ -229,6 +234,9 @@ def build_problem(
 
     # Box, trust region and anchor intersected into one block, because all three bound the same
     # variable and three separate row blocks would only make the QP larger.
+    #
+    # With `limits.enforce_position=False` (`--no-limits`, T27) `lower/upper` are `∓inf`, so this
+    # block is the trust region alone plus the step-0 anchor — the two SQP devices that stay.
     box_lo = np.tile(limits.lower, horizon)
     box_hi = np.tile(limits.upper, horizon)
     iterate_flat = iterate.T.reshape(-1)

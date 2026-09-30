@@ -431,6 +431,10 @@ class CuroboFieldBuilder:
     def __init__(self, config, *, bounds=None, image_hw: Optional[tuple] = None):
         self.config = config
         self._mapper = None
+        #: T32 H4-fix: a second `Mapper` whose TSDF uses the fine truncation
+        #: (`EsdfConfig.fine_truncation`) — the fine and target-free tiers are seeded from it, the
+        #: coarse tier from `_mapper` as before. `None` when the two truncations agree (one TSDF).
+        self._fine_mapper = None
         self._image_hw = image_hw
         self._frames = 0
         self._bounds = self._resolve_bounds(config, bounds)
@@ -475,9 +479,38 @@ class CuroboFieldBuilder:
                 "cuRobo 를 올렸다면 그 두 곳을 다시 맞춰야 합니다.")
 
     # -- Mapper 를 늦게 만든다 (첫 프레임의 depth 크기가 필요하다) ----------------------
+    @property
+    def coarse_truncation(self) -> float:
+        """TSDF truncation (m) of the TSDF the coarse tier is built from — `EsdfConfig.truncation`."""
+        return float(self.config.truncation)
+
+    @property
+    def fine_truncation(self) -> float:
+        """TSDF truncation (m) the fine tiers are built from (T32 H4-fix). Equals the coarse one
+        when `esdf.fine_truncation_m` is `None` or there is no fine tier."""
+        ft = getattr(self.config, "fine_truncation", None)
+        return self.coarse_truncation if ft is None or not self.fine_voxel else float(ft)
+
+    @property
+    def separate_fine_tsdf(self) -> bool:
+        """Two TSDFs (coarse truncation / fine truncation) instead of one (T32 H4-fix).
+
+        The coarse tier stays on the 60 mm TSDF on purpose: in `T32.h4.verify.json` a shared 30 mm
+        TSDF took the coarse band of the one-side-seen crate wall to **0** (chunks 16/20/30/36 px),
+        and 20 mm took both walls to 0 — a coarse 20 mm voxel needs the long truncation to keep a
+        negative interior at all.
+        """
+        return bool(self.fine_voxel) and abs(self.fine_truncation - self.coarse_truncation) > 1e-9
+
     def _ensure_mapper(self, cameras: Sequence[CameraDepth]):
         if self._mapper is not None:
             return self._mapper
+        self._mapper = self._make_mapper(cameras, self.coarse_truncation)
+        if self.separate_fine_tsdf:
+            self._fine_mapper = self._make_mapper(cameras, self.fine_truncation)
+        return self._mapper
+
+    def _make_mapper(self, cameras: Sequence[CameraDepth], truncation: float):
         import torch
         from curobo.perception import Mapper, MapperCfg
 
@@ -494,7 +527,7 @@ class CuroboFieldBuilder:
             esdf_voxel_size=self.coarse_voxel,
             grid_center=torch.tensor([float(v) for v in centre], device=dev,
                                      dtype=torch.float32),
-            truncation_distance=float(cfg.truncation),
+            truncation_distance=float(truncation),
             depth_minimum_distance=float(cfg.depth_min),
             depth_maximum_distance=float(cfg.depth_max),
             image_height=int(h), image_width=int(w),
@@ -503,14 +536,16 @@ class CuroboFieldBuilder:
             decay_factor=float(getattr(cfg, "time_decay", 1.0)),
             frustum_decay_factor=float(getattr(cfg, "frustum_decay", 1.0)),
             device=dev)
-        self._mapper = Mapper(mcfg)
-        self._assert_curobo_surface(self._mapper.integrator)
-        return self._mapper
+        mapper = Mapper(mcfg)
+        self._assert_curobo_surface(mapper.integrator)
+        return mapper
 
     def reset(self) -> None:
         """누적 TSDF 와 라벨 이름을 버린다. T0 이 요구하는 reset 시점 기록의 대상이다."""
         if self._mapper is not None:
             self._mapper.reset()
+        if self._fine_mapper is not None:
+            self._fine_mapper.reset()
         self._frames = 0
         self._label_names = ()
 
@@ -527,7 +562,8 @@ class CuroboFieldBuilder:
                static_geometry: Optional[Sequence[Any]] = None,
                observed_at: Optional[float] = None,
                frame_id: str = "", frame_index: int = -1,
-               fine_window: Optional["FineWindowRequest"] = None) -> CuroboEsdfField:
+               fine_window: Optional["FineWindowRequest"] = None,
+               held_free_points: Optional[np.ndarray] = None) -> CuroboEsdfField:
         """`EsdfBuilder.update` 와 같은 계약. 돌려주는 것은 `CuroboEsdfField` 다.
 
         `exclude_target` 는 **지원하지 않는다.** E1 이 그것을 폐기했다 — 필드는 익명이라
@@ -574,6 +610,20 @@ class CuroboFieldBuilder:
         dev = mapper._device if hasattr(mapper, "_device") else "cuda:0"
 
         per_camera = self._integrate(mapper, cameras, dev)
+        # T32 H4-fix: the fine tiers read their own TSDF (fine truncation), integrated from the
+        # same depth. `None` = one TSDF for all tiers (the pre-T32 build).
+        itg_fine = None
+        if self._fine_mapper is not None:
+            self._integrate(self._fine_mapper, cameras, dev)
+            itg_fine = self._fine_mapper.integrator
+        # T32 H3: the held object's old traces are set **free** in the TSDF(s) — after this frame's
+        # integration, before the tiers are seeded (see `_free_tsdf_points`).
+        freed = {}
+        if held_free_points is not None and len(held_free_points):
+            fp = np.asarray(held_free_points, np.float64).reshape(-1, 3)
+            freed["coarse_tsdf"] = self._free_tsdf_points(itg, fp, self.coarse_truncation)
+            if itg_fine is not None:
+                freed["fine_tsdf"] = self._free_tsdf_points(itg_fine, fp, self.fine_truncation)
 
         # 미세 계층 창의 배치 (T21, 지침 §5.1). **창의 배치는 손이 정하고, 제외할 물체는
         # manipulated 가 정한다** — 둘을 한 점(attention centroid)에 묶지 않는다. T14 seq 12–21 에서
@@ -607,7 +657,7 @@ class CuroboFieldBuilder:
             seeds[ATTACHED_LABEL] = attached
         label_names = tuple(seeds)
 
-        tiers = self._build_tiers(itg, attached, dev, torch)
+        tiers = self._build_tiers(itg, attached, dev, torch, itg_fine=itg_fine)
 
         # **target 없는 미세 계층.** 본 계층을 다 만든 **뒤에** 따로 만든다 — 같은 버퍼
         # (`_site_index`, `feature_tensor`)를 재사용하므로 (함정 4) 사이에 끼면 본 계층의 값이
@@ -628,7 +678,7 @@ class CuroboFieldBuilder:
                 free_points if held is None else np.vstack([held, free_points]))
             free_tiers = self._build_tiers(itg, remove, dev, torch, only="fine",
                                            tier_name="fine_no_target",
-                                           ball=target_free_ball)
+                                           ball=target_free_ball, itg_fine=itg_fine)
             free_ms = (time.monotonic() - t0) * 1e3
             self._announce_target_free_cost(free_ms, len(free_points), free_tiers,
                                             ball=target_free_ball)
@@ -666,6 +716,10 @@ class CuroboFieldBuilder:
         stats = self._stats(tiers, label_names, per_camera,
                             n_attached=0 if attached is None else int(len(attached)),
                             n_static=len(static_geometry or ()))
+        # T32 H3: TSDF voxels set free this frame (held-object traces), per TSDF.
+        stats["held_free"] = {"n_points": (0 if held_free_points is None
+                                           else int(len(held_free_points))),
+                              "n_voxels_freed": freed}
         # **창이 어디에, 왜 놓였나** (T21 §3). 미세 계층이 없으면 `basis=None` 으로 싣는다 —
         # 키가 프레임마다 있어야 "창이 없었다" 와 "기록이 없다" 가 구별된다. 권한 link 질의점의
         # 계층별 수는 필드가 다 만들어진 뒤 pipeline 이 더한다 (`authorized_query`).
@@ -828,9 +882,10 @@ class CuroboFieldBuilder:
         if fine and target_centre is not None:
             yield (tier_name or "fine"), np.asarray(target_centre, np.float64), fine
 
-    def _build_tiers(self, itg, attached, dev, torch, *, only: Optional[str] = None,
+    def _build_tiers(self, itg_coarse, attached, dev, torch, *, only: Optional[str] = None,
                      tier_name: Optional[str] = None,
-                     ball: Optional["TargetBall"] = None) -> list[_Tier]:
+                     ball: Optional["TargetBall"] = None,
+                     itg_fine=None) -> list[_Tier]:
         """계층마다 seed -> (제외) -> propagate -> 복사.
 
         `Mapper.compute_esdf` 를 부르지 않는다 — 그쪽은 CUDA graph 로 seed·propagate·distance
@@ -853,6 +908,8 @@ class CuroboFieldBuilder:
         tiers: list[_Tier] = []
         for name, origin_override, vs in self._tier_specs(centre, only=only,
                                                           tier_name=tier_name):
+            # T32 H4-fix: fine tiers from the fine-truncation TSDF when there is one.
+            itg = itg_coarse if (name == "coarse" or itg_fine is None) else itg_fine
             itg._esdf_voxel_size.copy_(
                 torch.tensor([float(vs)], device=dev, dtype=torch.float32))
             origin = (itg._origin if origin_override is None
@@ -890,6 +947,8 @@ class CuroboFieldBuilder:
             tier = _Tier(name=name, values=values,
                          site_linear=unpack_site_linear(site, values.shape),
                          origin=org, voxel_size=float(vs))
+            tier.extra["tsdf_truncation_m"] = (self.coarse_truncation if itg is itg_coarse
+                                               else self.fine_truncation)
             tier.extra["n_attached_seeds_excluded"] = n_excluded
             tier.extra["n_ball_seeds_excluded"] = n_ball
             if ball is not None:
@@ -931,6 +990,72 @@ class CuroboFieldBuilder:
             log.warning("    제외 방식 = **공** %s · seed %d 개 제외 (테이블 면 z 위만).",
                         ball.summary(),
                         sum(int(t.extra.get("n_ball_seeds_excluded", 0)) for t in tiers))
+
+    @staticmethod
+    def _free_tsdf_points(itg, points: np.ndarray, truncation: float) -> int:
+        """Set the TSDF voxels containing `points` to **free** (`+truncation`, weight kept). T32 H3.
+
+        Why: once the held object's pixels are masked (H1) nothing new of it is integrated, but what
+        was integrated **before** attach stays — its place on the table and the first lifted frames
+        (measured: E3b ep1807 r1, the table spot keeps 1,400–1,540 of 1,852 fine voxels occupied
+        26 requests after the lift; a masked ray is unobserved, so nothing ever clears it). The
+        pipeline hands the voxels only the held object can occupy (`AG3S._held_free_points`).
+
+        Per voxel, not `Mapper.clear_region` (whole 8³ blocks inside an AABB — erases the table
+        under the object and everything else in those blocks). The weight is kept, so the voxel is
+        "observed free" and later observations average against it; unallocated voxels are skipped
+        (nothing to clear). Indexing = cuRobo `storage.py` `_feature_node_indices_at_centers`:
+        centred block keys + `ceil(grid/BS)//2`, voxel `(p − origin)/vs + grid/2`, `z·BS² + y·BS + x`.
+        Returns the number of voxels freed.
+        """
+        import torch
+
+        ts = itg.tsdf
+        data = ts.data if hasattr(ts, "data") else ts
+        bd = data.block_data
+        n_alloc = int(data.num_allocated.detach().cpu().reshape(-1)[0])
+        if n_alloc <= 0 or bd.dim() != 3 or bd.shape[1] <= 1:
+            return 0
+        bs = int(round(bd.shape[1] ** (1.0 / 3.0)))
+        D, H, W = (int(v) for v in itg.grid_shape)
+        vs = float(itg.voxel_size)
+        origin = itg.origin.detach().cpu().numpy().reshape(-1)[:3].astype(np.float64)
+        coords = data.block_coords.detach().cpu().numpy().reshape(-1, 3)[:n_alloc].astype(np.int64)
+        slots = data.block_to_hash_slot.detach().cpu().numpy()[:n_alloc]
+        live = np.flatnonzero(slots >= 0)
+        if not live.size:
+            return 0
+        grid = np.array([W, H, D], np.int64)
+        offsets = ((grid + bs - 1) // bs) // 2
+        g = np.floor((np.asarray(points, np.float64) - origin) / vs + 0.5 * grid).astype(np.int64)
+        g = np.unique(g, axis=0)
+        key = g // bs - offsets
+        loc = g % bs
+
+        def pack(k):
+            k = k + 4096                            # hash keys are 13-bit signed per axis
+            return (k[:, 0] << 26) | (k[:, 1] << 13) | k[:, 2]
+
+        live_keys = pack(coords[live])
+        order = np.argsort(live_keys)
+        sorted_keys = live_keys[order]
+        want = pack(key)
+        pos = np.searchsorted(sorted_keys, want)
+        pos = np.clip(pos, 0, len(sorted_keys) - 1)
+        hit = sorted_keys[pos] == want
+        if not hit.any():
+            return 0
+        pool = live[order[pos[hit]]]
+        li = loc[hit, 2] * bs * bs + loc[hit, 1] * bs + loc[hit, 0]
+        dev = bd.device
+        t_pool = torch.as_tensor(pool, device=dev, dtype=torch.long)
+        t_li = torch.as_tensor(li, device=dev, dtype=torch.long)
+        w = bd[t_pool, t_li, 1].float()
+        observed = w > 0
+        if not bool(observed.any()):
+            return 0
+        bd[t_pool[observed], t_li[observed], 0] = (w[observed] * float(truncation)).to(bd.dtype)
+        return int(observed.sum().item())
 
     @staticmethod
     def _origin_of(itg, shape, voxel_size: float) -> np.ndarray:
@@ -1157,6 +1282,11 @@ class CuroboFieldBuilder:
                 {"tier": t.name, **{k: v for k, v in t.extra.items()
                                     if k != "n_attached_seeds_excluded"}} for t in tiers],
             "n_static_shapes": n_static,
+            # T32 H4-fix: which TSDF truncation each tier was built from.
+            "tsdf_truncation": {"coarse_m": self.coarse_truncation,
+                                "fine_m": self.fine_truncation,
+                                "fine_requested_m": getattr(self.config, "fine_truncation_m", None),
+                                "separate_fine_tsdf": self.separate_fine_tsdf},
             "decay": {"decayed": bool(
                 float(getattr(self.config, "time_decay", 1.0)) < 1.0
                 or float(getattr(self.config, "frustum_decay", 1.0)) < 1.0)},

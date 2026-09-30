@@ -30,8 +30,10 @@ Phase is an injected argument at every level. AG3S never infers it.
 from __future__ import annotations
 
 import dataclasses
+import logging
+import os
 import time
-from typing import Any, Optional, Sequence
+from typing import Any, Mapping, Optional, Sequence
 
 import numpy as np
 
@@ -49,6 +51,15 @@ from benchmark.ag3s.stages.robot_filter import (
 )
 from benchmark.ag3s.runtime.multiview import fuse_observations
 from benchmark.ag3s.stages.support_surface import fit_support_surfaces
+from benchmark.ag3s.stages.admissibility import (
+    DestinationGeometry,
+    ExclusionInvariantViolation,
+    MaxOpening,
+    assess,
+    destination_overlap,
+    hand_spheres,
+    resolve_max_opening,
+)
 from benchmark.ag3s.stages.target_grounding import (
     LOST,
     GroundingResult,
@@ -58,6 +69,7 @@ from benchmark.ag3s.stages.target_grounding import (
 )
 from benchmark.ag3s.constraints.to_adapter import build_constraint_set
 from benchmark.ag3s.runtime.degradation import ensure_reason, reason
+from benchmark.ag3s.robot_models.held_object import HELD_FILTER_SLIP_M
 from benchmark.ag3s.types import (
     DESTINATION_LABEL,
     TARGET_LABEL,
@@ -75,6 +87,16 @@ from benchmark.ag3s.types import (
     RobotCollisionModel,
     SourceType,
 )
+
+
+@dataclasses.dataclass(frozen=True)
+class _HeldTarget:
+    """What `attach_from_target` reads off a target (T32 H2): the primary held sphere replaces the
+    old centroid + max-distance `bounding_geometry`."""
+
+    id: int
+    points: Any
+    bounding_geometry: Any
 
 
 class AG3S:
@@ -113,16 +135,48 @@ class AG3S:
         attention_adapter: Any = None,
         max_support_surfaces: Optional[int] = None,
         attached_parent_links: Sequence[str] = (),
+        strict_invariants: Optional[bool] = None,
     ):
         self.config = config or AG3SConfig()
         self.robot_model = robot_model
         self.constraint_robot_model = constraint_robot_model or robot_model
         self.attention_adapter = attention_adapter
         self.tracker = CandidateTracker(self.config.collision_candidate)
+        #: T26: raise `ExclusionInvariantViolation` instead of refusing + recording. `None` reads
+        #: `AG3S_STRICT_INVARIANTS` (the unit tests set it to 1 in `tests/conftest.py`).
+        self.strict_invariants = (os.environ.get("AG3S_STRICT_INVARIANTS", "") == "1"
+                                  if strict_invariants is None else bool(strict_invariants))
+        #: T26: the widest object the gripper can close around — the fingers' collision geometry at
+        #: the finger joints' open limit, **from the injected robot model** (self-filter model first:
+        #: it is the whole body and never thinned by `--sphere-*`), or `clustering.
+        #: gripper_max_opening`. Unknown → nothing is graspable → no manipulated object (fail-closed).
+        self._max_opening: MaxOpening = resolve_max_opening(
+            self.config.clustering.gripper_max_opening, robot_model, self.constraint_robot_model)
+        _log = logging.getLogger(__name__)
+        if self._max_opening.known:
+            _log.info("AG3S gripper max opening %.1f mm (source %s) — manipulated candidates must "
+                      "have a narrowest principal extent at or below it",
+                      self._max_opening.value_m * 1000.0, self._max_opening.source)
+        else:
+            _log.warning("AG3S gripper max opening UNKNOWN (%s) — no cluster is graspable, so no "
+                         "manipulated object, no exclusion and no contact permission will be "
+                         "granted. Give a robot model with finger geometry or "
+                         "clustering.gripper_max_opening", self._max_opening.detail)
         #: The only cross-frame state grounding has (T5e). `ground_target` still decides from one
         #: frame; this decides whether a *different* object has led long enough to take the target
         #: over. It lives here because the episode lives here — `reset()` is the episode boundary.
-        self._target_confirm = TargetConfirm(self.config.clustering)
+        #: Since T26 it also owns admissibility (only graspable, non-destination clusters compete)
+        #: and the destination registry.
+        self._target_confirm = TargetConfirm(
+            self.config.clustering,
+            max_opening=self._max_opening.value_m if self._max_opening.known else None,
+            overlap_distance=self._overlap_distance())
+        #: T26: the manipulated object as of the last frame **that passed the exclusion gate**
+        #: (`_exclusion_gate`) — what the T19 guard is centred on. None when the gate refused.
+        self._gated_manipulated: Optional[ManipulatedIdentity] = None
+        #: T26: a grasp is in progress (closing … held) — set by the caller that owns the grasp
+        #: (`SafePolicy`). Challengers do not count while it is set, and while an object is attached.
+        self._grasp_active = False
         #: The **manipulated object** after the latest frame (T20): id, observation state
         #: (`visible | occluded | lost`) and last observed geometry, as `TargetConfirm` left it.
         #: Contact permission (`manipulated_link_margin`), target exclusion (`target_field_exclude`,
@@ -162,6 +216,64 @@ class AG3S:
         # Set only by an explicit `attach()` and cleared only by an explicit `detach()`. Perception
         # failure never touches it: the object is still in the gripper whatever the cameras can see.
         self._attached: Optional[AttachedCollisionGeometry] = None
+        #: T32 H2: how the held object's spheres were made at the last `attach()` (fit, spheres,
+        #: frame link) — `metrics["held_object"]`. None when nothing is held.
+        self._held_record: Optional[dict[str, Any]] = None
+        #: T32 H2: the robot state each recent frame was captured at, keyed by the grounding frame
+        #: (`ManipulatedIdentity.frame` / `last_seen_frame`). `attach()` snapshots the manipulated
+        #: geometry with the state **it was observed at**, not the attach request's — see `attach`.
+        self._state_by_frame: dict[int, np.ndarray] = {}
+        #: T32 H3: the last accepted surface fit of the manipulated object before a grasp
+        #: (`_target_ball`) — `(centre, radius)`, base frame. Its place on the table is one of the
+        #: held object's old traces cleared at attach.
+        self._last_object_fit: Optional[tuple[np.ndarray, float]] = None
+        #: T32 H3: extra spheres (base frame) whose TSDF voxels are set free on the first held
+        #: frames — the object's pre-grasp place and its pose at the geometry's capture — and how
+        #: many held frames still get them.
+        self._held_first_free: list[tuple[np.ndarray, float]] = []
+        self._held_first_free_frames: int = 0
+        #: T34 J1: the last processed frame's support surfaces and ESDF field. `attach()` runs
+        #: before its frame is processed (T22 order (a)), so these are what it can see of the table:
+        #: the plane the held query spheres must not cross, and the field's surface band over it.
+        self._last_support_surfaces: list = []
+        self._last_esdf_field = None
+        #: T34 J1: the held object's **self-filter** spheres (parent frame) — the fit spheres before
+        #: the support lift. The filter copy is left as T32 made it (fit + pad + slip); only the
+        #: query spheres are lifted. None when nothing is held (or a prebuilt attachment).
+        self._held_filter_local: Optional[list[tuple[np.ndarray, float]]] = None
+        #: T34 J2: what the held spheres are compared with after attach — the attach frame index,
+        #: the unlifted primary centre (parent frame), its base position at the attach request, and
+        #: the attached geometry's centroid (base).
+        self._held_check_ref: Optional[dict[str, Any]] = None
+        #: T34 J1: clearance of the lifted query spheres over the support plane (m) — `None` =
+        #: measure the field's surface band at attach (`held_object.field_support_band`), else
+        #: this value. A switch for measurement/ablation.
+        self.held_support_clearance_m: Optional[float] = None
+        #: T34 J1: lift the held query spheres off the support at attach. Ablation switch.
+        self.held_support_lift: bool = True
+        #: T32 H3: free the held object's traces in the TSDF (cuRobo backend). Switch for ablation.
+        self.free_held_traces: bool = True
+        #: T32 H1: the held object's spheres join the **self-filter** sphere set while attached
+        #: (cuRobo attach semantics) — its pixels are removed like the robot's and never reach the
+        #: TSDF. A public switch for ablation/measurement only; the live path keeps it on.
+        self.self_filter_held_object: bool = True
+        #: T32 H1: extra radius (m) the held spheres get **in the self-filter only** — the measured
+        #: in-hand slip (`held_object.HELD_FILTER_SLIP_M`, 20 mm). The query spheres keep fit + one
+        #: fine voxel (together fit + 25 mm). 0 = the filter uses exactly the query spheres.
+        self.held_filter_slip_m: float = HELD_FILTER_SLIP_M
+        #: This frame's self-filter model and inflation (T32 H1): `self.robot_model` / the resolved
+        #: inflation, or — while attached — the model wrapped with the held spheres
+        #: (`HeldSphereFilterModel`) and the inflation extended with 0 for them. Fixed at the start
+        #: of `_run` so the cloud filter, the fused path and the depth robot mask see one robot.
+        self._frame_filter_model: Optional[RobotCollisionModel] = robot_model
+        self._frame_filter_inflation = None
+        #: Depth pixels inside the held spheres this frame, one entry per depth robot mask (T32 H1).
+        self._mask_held_px: list[int] = []
+        #: T29: the finger joints the models use this frame and where they came from
+        #: (`set_finger_joints`) — `metrics["finger_joints"]`. Until a caller sets them, whatever the
+        #: models were built with (RB-Y1 default: 0 = closed, the pre-T29 behaviour).
+        self._finger_record: dict[str, Any] = {"source": "model_default",
+                                               "applied": self._finger_values_applied()}
         self._max_support_surfaces = (
             self.config.support_surface.max_planes
             if max_support_surfaces is None
@@ -225,24 +337,150 @@ class AG3S:
             "target_guard_pad_m": self._guard_pad(),
         }
 
-    def reset(self) -> None:
+    def reset(self, destination_points: Optional[np.ndarray] = None) -> None:
         """Clear cross-frame state. Call between episodes, never mid-episode.
 
         This *does* drop an attached object, because an episode boundary is an explicit statement
         that the previous task is over. Mid-episode there is no path from perception to detachment.
+
+        `destination_points` (T26): a caller that knows where the object goes (the crate) names it
+        here — `source="injected"`, and it takes precedence over perception's registration for the
+        whole episode. Without it the destination is registered from perception
+        (`stages/admissibility.DestinationRegistry`).
         """
         self.tracker.reset()
         self.profiler.reset()
-        self._target_confirm.reset()
+        self._target_confirm.reset(destination_points)
         self._manipulated = None
+        self._gated_manipulated = None
+        self._grasp_active = False
         self.frame_index = 0
         self._attached = None
+        self._held_record = None
+        self._state_by_frame = {}
+        self._last_object_fit = None
+        self._held_first_free = []
+        self._held_first_free_frames = 0
+        self._held_filter_local = None
+        self._held_check_ref = None
+        self._last_support_surfaces = []
+        self._last_esdf_field = None
         self._esdf_builder = None
 
     @property
     def manipulated(self) -> Optional[ManipulatedIdentity]:
         """The manipulated object after the latest frame (T20), or None before one is confirmed."""
         return self._manipulated
+
+    @property
+    def destination(self) -> Optional[DestinationGeometry]:
+        """Where the manipulated object is being taken (T26): injected at `reset`/`process`, or
+        registered from perception. Never excluded from any field; never admissible as the
+        manipulated object. `SafePolicy` reads this for the latch and for `placed_fn`."""
+        return self._target_confirm.destination
+
+    @property
+    def max_opening(self) -> MaxOpening:
+        """The gripper's max inner opening and where it came from (T26)."""
+        return self._max_opening
+
+    def set_grasp_active(self, active: bool) -> None:
+        """The caller that owns the grasp says a grasp is in progress (T26 §4).
+
+        From the closing command to the release, the manipulated object must not change — a switch
+        there would put the apple back into the gripper's field between closing and attach. While
+        set (and whenever an object is attached) challengers do not count toward a switch.
+        """
+        self._grasp_active = bool(active)
+
+    def set_finger_joints(self, values: Optional[Mapping[str, float]], *,
+                          record: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+        """The finger joints **at capture time** for both robot models (T29).
+
+        Before T29 every finger joint was pinned at 0 (closed) because it is not in `q`, so with the
+        gripper open the model fingers sat in the middle of the object between the real fingers: the
+        self-filter deleted the apple there and the constraints saw the apple inside the fingers.
+        The caller that knows the measured opening (`SafePolicy`: the 16D state's gripper columns
+        through `robot_models/gripper_state`) sets it here before `process*`; every numeric FK in
+        this frame — self-filter, depth robot mask, fine window, attach, reach — then uses it.
+
+        `values = None` restores each model's construction defaults (closed). Models without
+        finger parameters (`set_joint_parameters`) are skipped. `record` is stored verbatim with the
+        applied values in `metrics["finger_joints"]` from the next frame on. Returns that record.
+        """
+        seen: set[int] = set()
+        for model in (self.robot_model, self.constraint_robot_model):
+            setter = getattr(model, "set_joint_parameters", None)
+            if model is None or not callable(setter) or id(model) in seen:
+                continue
+            seen.add(id(model))
+            names = tuple(getattr(model, "param_joint_names", ()) or ())
+            setter(None if values is None
+                   else {k: float(v) for k, v in values.items() if k in names})
+        self._finger_record = {
+            "source": "model_default" if values is None else "caller",
+            **dict(record or {}),
+            "set_by_caller": values is not None,
+            "applied": self._finger_values_applied(),
+        }
+        return dict(self._finger_record)
+
+    def _finger_values_applied(self) -> dict[str, dict[str, float]]:
+        out: dict[str, dict[str, float]] = {}
+        for role, model in (("self_filter", self.robot_model),
+                            ("constraint", self.constraint_robot_model)):
+            values = getattr(model, "joint_parameters", None) if model is not None else None
+            if isinstance(values, dict):
+                out[role] = {k: float(v) for k, v in values.items()}
+        return out
+
+    @property
+    def finger_record(self) -> dict[str, Any]:
+        """What `metrics["finger_joints"]` carries (T29)."""
+        return self._finger_frame_record()
+
+    def _finger_frame_record(self) -> dict[str, Any]:
+        """This frame's finger joints, **read back from the models** (T29).
+
+        `source`: whatever `set_finger_joints` was told (`set_by_caller: true`; SafePolicy says
+        `state[7],state[15]` or `exec_feedback...`);
+        `model_state` = someone set the models directly (offline: `camera_observation` from the
+        MuJoCo scene); `model_default` = nobody did — the fingers are at the construction default
+        (closed), which leaks open fingers through the self-filter now that `link_*_arm_5`'s
+        oversized URDF capsule no longer hides them. That case is warned about once.
+        """
+        rec = dict(self._finger_record)
+        rec["applied"] = self._finger_values_applied()
+        if not rec.get("set_by_caller"):
+            defaults = [getattr(m, "joint_parameters_are_default", True)
+                        for m in (self.robot_model, self.constraint_robot_model)
+                        if m is not None and getattr(m, "param_joint_names", ())]
+            rec["source"] = "model_default" if all(defaults) else "model_state"
+            if defaults and all(defaults) and not getattr(self, "_warned_finger_default", False):
+                self._warned_finger_default = True
+                logging.getLogger(__name__).warning(
+                    "AG3S: finger joints are at the model default (closed) — nobody set the "
+                    "measured opening (AG3S.set_finger_joints / SafePolicy / camera_observation). "
+                    "With open hands the finger points survive the self-filter and the constraint "
+                    "fingers sit between the real ones (T29)")
+        return rec
+
+    def _overlap_distance(self) -> float:
+        """`clustering.destination_overlap_distance`, or one cloud voxel (T26)."""
+        cfg = self.config
+        if cfg.clustering.destination_overlap_distance is not None:
+            return float(cfg.clustering.destination_overlap_distance)
+        voxel = float(cfg.pointcloud.voxel_size)
+        return voxel if voxel > 0.0 else float(cfg.clustering.eps)
+
+    def admissibility_of(self, points: np.ndarray):
+        """`Admissibility` of an arbitrary point set against this AG3S's max opening and its
+        current destination — the same rule grounding applies to clusters (T26)."""
+        cfg = self.config.clustering
+        return assess(np.asarray(points, np.float64).reshape(-1, 3), extents=None,
+                      max_opening_m=self._max_opening.value_m if self._max_opening.known else None,
+                      destination=self.destination, overlap_distance=self._overlap_distance(),
+                      overlap_fraction=float(cfg.destination_overlap_fraction))
 
     # ------------------------------------------------------- explicit grasp state, injected
     @property
@@ -260,8 +498,29 @@ class AG3S:
         label: str = "attached_object",
         timestamp: Optional[float] = None,
         reach: Optional[float] = None,
+        hold_link: Optional[str] = None,
+        geometry_state: Optional[np.ndarray] = None,
     ) -> AttachedCollisionGeometry:
         """Record an externally confirmed grasp. **AG3S never calls this itself.**
+
+        **T32 H2 — a `TargetGeometry` is attached as fitted spheres on the palm.** The observed
+        points are fitted with a sphere (`robot_models.held_object.fit_surface_sphere`: the centre
+        of a convex object from its one visible side, radius ≤ half the max opening); the primary
+        sphere is that fit + one fine voxel of pad, and observed points still outside it (stem,
+        leaf) get a small cover sphere each (`covering_spheres`, ≤ `max_attached_primitives` in
+        all). The snapshot rides `hold_link`: `None` = the palm the grasping finger hangs from
+        (`palm_link_for`) when the constraint builder reserved it, else `parent_link` itself. The
+        reach gate below is still measured from `parent_link` (the grasping finger, T22). These
+        spheres are the held object from here on: self-filter spheres (H1), query spheres for the
+        optimizer, the field's seed exclusion. `held_record` says how they were made.
+
+        **The snapshot uses the state the geometry was captured at** (`geometry_state`; `None` =
+        looked up for the manipulated object's `last_seen_frame`, else `robot_state`). The attach
+        request comes one request (8 steps) or more after the geometry was observed (T22 order (a),
+        T30 F4 `settled`), and by then the hand has moved — by the lift, in the recordings: the
+        pre-T32 snapshot at the attach request's q put the held points 12–46 mm off the apple
+        (T31-diag D3); at the capture q the fitted centre is 1.5–3.5 mm off (T32a §2). The reach gate
+        still uses `robot_state` (where the hand is now).
 
         Pass an `AttachedCollisionGeometry` to attach a known shape, or a `TargetGeometry` together
         with `robot_state` and `parent_link` to snapshot what perception last fitted. Either way the
@@ -291,10 +550,41 @@ class AG3S:
         """
         from benchmark.ag3s.constraints.attached import (
             AttachRejected,
+            _link_pose_numeric,
             attach_from_target,
             attached_reach,
             parent_reach,
         )
+
+        # **T26 — only an admissible object is ever held.** Attach grants contact permission to the
+        # gripper and carves the object out of the field; the crate must never get either. Same
+        # rule as grounding (narrowest principal extent ≤ max opening, not the destination), on the
+        # points being attached. Extents are rotation-invariant, so parent-frame points serve.
+        pts = getattr(geometry, "points", None)
+        if (pts is None or not len(np.asarray(pts).reshape(-1, 3))) \
+                and isinstance(geometry, AttachedCollisionGeometry):
+            pts = self._primitive_surface_points(geometry)
+        if pts is None or not len(np.asarray(pts).reshape(-1, 3)):
+            raise AttachRejected(
+                "inadmissible: the geometry has no points, so it cannot be shown to be graspable",
+                parent_link=None if parent_link is None else str(parent_link))
+        pts = np.asarray(pts, np.float64).reshape(-1, 3)
+        if isinstance(geometry, AttachedCollisionGeometry):
+            T = np.asarray(geometry.T_parent_object, np.float64)
+            # For the destination overlap the points must be in the base frame; without a pose the
+            # extent test still applies and the overlap is checked on the base-frame path only.
+            adm = self.admissibility_of(pts @ T[:3, :3].T + T[:3, 3]) if robot_state is None \
+                else self.admissibility_of(self._attached_in_base(geometry, robot_state, pts))
+        else:
+            adm = self.admissibility_of(pts)
+        if not adm.admissible:
+            raise AttachRejected(
+                f"inadmissible ({adm.reason}): narrowest extent "
+                f"{'?' if adm.narrowest_extent_m is None else f'{adm.narrowest_extent_m * 1000.0:.1f}'}"
+                f" mm vs max opening "
+                f"{'?' if adm.max_opening_m is None else f'{adm.max_opening_m * 1000.0:.1f}'} mm, "
+                f"destination overlap {adm.destination_overlap:.2f}",
+                parent_link=None if parent_link is None else str(parent_link))
 
         if isinstance(geometry, AttachedCollisionGeometry):
             if reach is not None:
@@ -306,6 +596,10 @@ class AG3S:
                         "limit", reach_m=dist, limit_m=float(reach),
                         parent_link=geometry.parent_link)
             self._attached = geometry
+            # A prebuilt attachment keeps its own primitives (they are the held object's spheres
+            # for the self-filter and the optimizer); nothing is fitted.
+            self._held_record = {"mode": "prebuilt", "frame_link": geometry.parent_link,
+                                 "n_spheres": len(geometry.primitives)}
             return self._attached
         if robot_state is None or parent_link is None:
             raise ValueError(
@@ -332,16 +626,268 @@ class AG3S:
                     f"origin, over the {float(reach) * 1000.0:.0f} mm limit",
                     reach_m=dist, limit_m=float(reach), parent_link=str(parent_link))
 
+        frame_link = self._resolve_hold_link(str(parent_link), hold_link)
+        primitives, held_record = self._held_primitives(pts)
+        snap_state, snap_source = self._snapshot_state(geometry, robot_state, geometry_state)
+        T_snap = _link_pose_numeric(self.constraint_robot_model, snap_state, frame_link)
+        T_now = _link_pose_numeric(self.constraint_robot_model, robot_state, frame_link)
+        T_parent = np.linalg.inv(T_snap)
+        # T34 J1: the fit spheres as T32 made them are the self-filter copy (and the first-frame
+        # TSDF free spheres at the capture pose); the query spheres are lifted off the support.
+        fit_primitives = list(primitives)
+        primitives, support_record = self._lift_off_support(primitives, T_now @ T_parent)
+        # `attach_from_target` reads `id`, `points` and `bounding_geometry` only; the primary sphere
+        # stands in for the old centroid + max-distance bounding sphere, the covers ride along.
+        snapshot_of = _HeldTarget(id=int(getattr(geometry, "id", -1)), points=geometry.points,
+                                  bounding_geometry=primitives[0])
+        allowed = frozenset(str(link) for link in allowed_contact_links) | {frame_link}
         self._attached = attach_from_target(
-            geometry,
+            snapshot_of,
             robot_model=self.constraint_robot_model,
-            robot_state=robot_state,
-            parent_link=parent_link,
-            allowed_contact_links=allowed_contact_links,
+            robot_state=snap_state,
+            parent_link=frame_link,
+            allowed_contact_links=allowed,
             label=label,
             timestamp=time.time() if timestamp is None else float(timestamp),
+            extra_primitives=primitives[1:],
         )
+
+        def to_parent(p):
+            return T_parent[:3, :3] @ np.asarray(p.center, np.float64) + T_parent[:3, 3]
+
+        self._held_filter_local = [(to_parent(p), float(p.dimensions[0])) for p in fit_primitives]
+        g_pts = np.asarray(geometry.points, np.float64).reshape(-1, 3)
+        self._held_check_ref = {
+            "frame": int(self.frame_index),
+            "primary_fit_local": self._held_filter_local[0][0].copy(),
+            "primary_fit_radius": float(self._held_filter_local[0][1]),
+            "primary_fit_at_attach": (T_now[:3, :3] @ self._held_filter_local[0][0] + T_now[:3, 3]),
+            "object_centroid_at_attach": (np.asarray(geometry.centroid, np.float64).reshape(3)
+                                          if getattr(geometry, "centroid", None) is not None
+                                          else g_pts.mean(axis=0)),
+        }
+        if support_record.get("applied"):
+            held_record["fit_spheres"] = held_record.get("spheres")
+            held_record["spheres"] = [
+                {"centre_m": [round(float(v), 6) for v in p.center],
+                 "radius_mm": round(float(p.dimensions[0]) * 1000.0, 3)} for p in primitives]
+        self._held_record = {
+            **held_record,
+            "grasp_link": str(parent_link),
+            "frame_link": frame_link,
+            "snapshot_state": snap_source,
+            # T34 J1: how the query spheres were lifted off the support (plane, band, per sphere).
+            "support": support_record,
+            "filter_spheres_parent_frame": [
+                {"centre_m": [round(float(v), 6) for v in c], "radius_mm": round(r * 1000.0, 3)}
+                for c, r in self._held_filter_local],
+            "first_free_spheres": len(self._arm_first_free(fit_primitives, snap_state)),
+            "hand_shift_since_capture_mm": round(
+                float(np.linalg.norm(T_now[:3, 3] - T_snap[:3, 3])) * 1000.0, 2),
+            "spheres_parent_frame": [
+                {"centre_m": [round(float(v), 6) for v in (T_parent[:3, :3] @ p.center
+                                                          + T_parent[:3, 3])],
+                 "radius_mm": round(float(p.dimensions[0]) * 1000.0, 3)} for p in primitives],
+        }
         return self._attached
+
+    def _lift_off_support(self, primitives, T_rel) -> tuple[list, dict]:
+        """T34 J1 — the held **query** spheres do not cross the support surface at attach.
+
+        The object rests on the support when it is grasped, so a sphere reaching below the plane is
+        fit error (T33: all 9 attaches put the primary sphere's bottom 1.8–10.1 mm under the table
+        top; every E3b HOLD chunk was that held sphere against the table). Each sphere's centre is
+        raised along the plane normal until its bottom clears the support at **both** instants the
+        object was on it: at the geometry's capture pose (the snapshot, base frame of `primitives`)
+        it clears the plane itself, and at the attach request's pose (`T_rel` = T_now · T_snap⁻¹;
+        the hand may have pressed down since the capture — T33 E3b ep1800 r2: 10 mm) it clears the
+        plane + the field's surface band, because from that pose on the optimizer reads the table
+        through the field, which puts d = 0 up to ~8.8 mm above the plane (T33, 9 of 9 attaches).
+        Radii are kept (`held_object.lift_off_support` says why lifting, not capping).
+
+        The plane is the last processed frame's (`_last_support_surfaces`, the rule of
+        `_support_plane_z` under the primary sphere's centre); the band is measured in the last
+        field (`held_object.field_support_band`) unless `held_support_clearance_m` is set. No plane
+        → nothing changes (recorded). Returns `(primitives, record)`.
+        """
+        from benchmark.ag3s.robot_models.held_object import (
+            HELD_SUPPORT_BAND_FALLBACK_M,
+            field_support_band,
+            lift_off_support,
+            support_plane_under,
+        )
+        from benchmark.ag3s.types import Primitive
+
+        rec: dict[str, Any] = {"applied": False}
+        if not self.held_support_lift:
+            rec["reason"] = "switched_off"
+            return primitives, rec
+        primary = np.asarray(primitives[0].center, np.float64)
+        plane = support_plane_under(self._last_support_surfaces, primary)
+        if plane is None:
+            rec["reason"] = "no_support_plane_under_the_object"
+            return primitives, rec
+        normal, offset, surface = plane
+        rec["plane"] = {"normal": [round(float(v), 6) for v in normal],
+                        "offset_m": round(float(offset), 6),
+                        "surface_id": int(getattr(surface, "id", -1))}
+        if self.held_support_clearance_m is not None:
+            clearance, source = float(self.held_support_clearance_m), "given"
+        else:
+            band, band_rec = (None, {"reason": "no_field"})
+            if self._last_esdf_field is not None:
+                band, band_rec = field_support_band(self._last_esdf_field, normal, offset, primary)
+            rec["band"] = band_rec
+            if band is not None:
+                clearance, source = band, "field_band"
+            elif self._last_esdf_field is not None:
+                clearance, source = HELD_SUPPORT_BAND_FALLBACK_M, "fallback"
+            else:
+                clearance, source = 0.0, "no_field"
+        rec["clearance_source"] = source
+        spheres = [(np.asarray(p.center, np.float64), float(p.dimensions[0])) for p in primitives]
+        # Capture pose: the plane itself (geometry — the object was not below its support). Attach
+        # request pose: the plane + the field's band (what the optimizer's held↔table row reads from
+        # here on). Measured on T33: lifts 7.9–29.3 mm (`T34.impl.md` §1).
+        lifted, lift_rec = lift_off_support(spheres, normal, offset, clearance=clearance,
+                                            relative_poses=[T_rel], snapshot_clearance=0.0)
+        rec.update(lift_rec)
+        rec["applied"] = True
+        out = [dataclasses.replace(p, center=np.asarray(c, np.float64))
+               if isinstance(p, Primitive) else p for p, (c, _) in zip(primitives, lifted)]
+        return out, rec
+
+    def held_observation(self) -> Optional[dict[str, Any]]:
+        """T34 J2 — the latest frame's view of the held object against the held spheres, or None.
+
+        None when nothing is held, when the manipulated object was **not observed** in the latest
+        frame (`last_seen_frame != frame`: while really held its pixels are erased by the
+        self-filter, so it is normally unobserved — nothing to compare), or when that observation
+        is not after the attach. Otherwise the measurement of
+        `held_object.held_observation_check` at the state that frame was captured at, plus the
+        held primary sphere's self-filter radius (fit + pad) and the frame. The decision is
+        `trajopt.grasp_latch`'s (`LatchConfig.revoke_*`).
+        """
+        ref = self._held_check_ref
+        manip = self._manipulated
+        if self._attached is None or ref is None or manip is None:
+            return None
+        frame = int(manip.frame)
+        if int(manip.last_seen_frame) != frame or frame < int(ref["frame"]):
+            return None
+        q = self._state_by_frame.get(frame)
+        if q is None or self.constraint_robot_model is None:
+            return None
+        from benchmark.ag3s.constraints.attached import _link_pose_numeric
+        from benchmark.ag3s.robot_models.held_object import held_observation_check
+
+        T = _link_pose_numeric(self.constraint_robot_model, q, self._attached.parent_link)
+        centre = T[:3, :3] @ ref["primary_fit_local"] + T[:3, 3]
+        out = held_observation_check(
+            observed_centroid=manip.centroid, held_centre=centre,
+            held_centre_at_attach=ref["primary_fit_at_attach"],
+            object_centroid_at_attach=ref["object_centroid_at_attach"])
+        out.update({"frame": frame, "attach_frame": int(ref["frame"]),
+                    "held_radius_m": float(ref["primary_fit_radius"]),
+                    "n_points": (0 if getattr(manip, "geometry", None) is None
+                                 else int(len(np.asarray(manip.geometry.points).reshape(-1, 3)))),
+                    "state": str(manip.state)})
+        return out
+
+    def _arm_first_free(self, primitives, snap_state) -> list:
+        """T32 H3: the spheres (base) freed in the TSDF on the first held frames — the held spheres
+        at the geometry's capture pose (where the object was when last integrated) and the
+        manipulated object's last pre-grasp fit + one fine voxel (its place on the table)."""
+        extra = [(np.asarray(p.center, np.float64).copy(), float(p.dimensions[0]))
+                 for p in primitives]                 # base frame at `snap_state`
+        if self._last_object_fit is not None:
+            c, r = self._last_object_fit
+            extra.append((np.asarray(c, np.float64).copy(), float(r) + self._guard_pad()))
+        self._held_first_free = extra
+        self._held_first_free_frames = 2
+        return extra
+
+    def _snapshot_state(self, geometry, robot_state, geometry_state):
+        """`(q, source)` to snapshot `geometry` with (T32 H2): explicit > the frame the manipulated
+        object's geometry was last observed in > the attach request's `robot_state`."""
+        if geometry_state is not None:
+            return np.asarray(geometry_state, np.float64), "given"
+        manip = self._manipulated
+        if manip is not None and getattr(manip, "geometry", None) is geometry:
+            q = self._state_by_frame.get(int(manip.last_seen_frame))
+            if q is not None and len(q) == len(np.asarray(robot_state).reshape(-1)):
+                return q, f"frame {int(manip.last_seen_frame)} (manipulated last seen)"
+        return np.asarray(robot_state, np.float64), "attach_request"
+
+    def _resolve_hold_link(self, parent_link: str, hold_link: Optional[str]) -> str:
+        """The link the held object's snapshot rides (T32 H2). See `attach`."""
+        reserved = tuple(getattr(self._builder, "attached_parent_links", ()) or ())
+        if hold_link is not None:
+            if reserved and str(hold_link) not in reserved:
+                raise ValueError(
+                    f"hold_link={hold_link!r} has no reserved attached slots (reserved: "
+                    f"{list(reserved)}); pass it in attached_parent_links= when building AG3S")
+            return str(hold_link)
+        from benchmark.ag3s.robot_models.held_object import palm_link_for
+
+        palm = palm_link_for(self.constraint_robot_model, parent_link)
+        if palm is not None and (not reserved or palm in reserved):
+            return palm
+        return parent_link
+
+    def _held_primitives(self, points) -> tuple[list, dict]:
+        """Observed points (base) → `[primary, *covers]` sphere `Primitive`s (base) + record (H2)."""
+        from benchmark.ag3s.constraints.attached import trim_outliers
+        from benchmark.ag3s.robot_models.held_object import covering_spheres, fit_surface_sphere
+        from benchmark.ag3s.types import Primitive, PrimitiveType
+
+        pts = np.asarray(points, np.float64).reshape(-1, 3)
+        keep = trim_outliers(pts, 0.020, 3)
+        if int(keep.sum()) >= 4:
+            pts = pts[keep]
+        max_r = 0.5 * self._max_opening.value_m if self._max_opening.known else None
+        fit = fit_surface_sphere(pts, max_radius=max_r)
+        slots = int(getattr(self._builder, "max_attached", 0) or 0) or 4
+        spheres, rec = covering_spheres(pts, fit, pad=self._guard_pad(), max_spheres=slots)
+        from benchmark.ag3s.robot_models.held_object import HELD_ROLE
+
+        prims = [Primitive(type=PrimitiveType.SPHERE, center=c, dimensions=np.full(3, float(r)),
+                           semantic_role=HELD_ROLE) for c, r in spheres]
+        rec["max_radius_mm"] = None if max_r is None else round(max_r * 1000.0, 3)
+        return prims, rec
+
+    @property
+    def held_record(self) -> Optional[dict[str, Any]]:
+        """How the held object's spheres were made at the last `attach()` (T32 H2), or None."""
+        return None if self._attached is None or self._held_record is None \
+            else dict(self._held_record)
+
+    @staticmethod
+    def _primitive_surface_points(geometry) -> Optional[np.ndarray]:
+        """Six extreme points per bounding sphere of a points-less attachment (object frame →
+        parent frame through `T_parent_object`), so its extent can be tested like a cluster's."""
+        from benchmark.ag3s.stages.geometry import to_spheres
+
+        out = []
+        for primitive in geometry.primitives:
+            for local, radius in to_spheres(primitive):
+                c = np.asarray(local, np.float64).reshape(3)
+                out.extend(c + float(radius) * d for d in np.vstack([np.eye(3), -np.eye(3)]))
+        if not out:
+            return None
+        return np.asarray(out, np.float64)
+
+    def _attached_in_base(self, geometry, robot_state, local_points) -> np.ndarray:
+        """A prebuilt attachment's points in the base frame at `robot_state` (for the overlap)."""
+        from benchmark.ag3s.constraints.attached import _link_pose_numeric
+
+        try:
+            T_base_parent = _link_pose_numeric(self.constraint_robot_model, robot_state,
+                                               geometry.parent_link)
+        except Exception:  # noqa: BLE001 — no pose: fall back to the parent frame (extent still holds)
+            T_base_parent = np.eye(4)
+        T = T_base_parent @ np.asarray(geometry.T_parent_object, np.float64)
+        return local_points @ T[:3, :3].T + T[:3, 3]
 
     def detach(self) -> Optional[AttachedCollisionGeometry]:
         """Record an externally confirmed release. Returns what was let go, or None.
@@ -351,6 +897,11 @@ class AG3S:
         being able to see it.
         """
         released, self._attached = self._attached, None
+        self._held_record = None
+        self._held_first_free = []
+        self._held_first_free_frames = 0
+        self._held_filter_local = None
+        self._held_check_ref = None
         return released
 
     # ------------------------------------------------------------------------------------
@@ -450,12 +1001,15 @@ class AG3S:
         # the fingers' margin from erasing it where it was last seen, which is how it can re-appear.
         # T21 (user ruling 2026-09-28): the radius is the configured one when non-zero, otherwise
         # this object's radius + one fine voxel — set per object, no number baked in.
-        self._frame_guard_radius = self._guard_radius_for(self._manipulated)
+        # T26: only a manipulated object that passed the exclusion gate last frame is guarded.
+        self._frame_guard_radius = self._guard_radius_for(self._gated_manipulated)
         self._frame_guard_centre = (
-            self._manipulated.centroid.copy()
-            if self._frame_guard_radius > 0.0 and self._manipulated is not None else None)
+            self._gated_manipulated.centroid.copy()
+            if self._frame_guard_radius > 0.0 and self._gated_manipulated is not None else None)
         self._frame_filter_config = self._config_with_guard_radius(self._frame_guard_radius)
         self._mask_guard_px = []
+        # T32 H1: while an object is held, its spheres are part of the robot for the self-filter.
+        self._prepare_frame_filter()
 
         fusion = None
         if observations is not None:
@@ -466,10 +1020,10 @@ class AG3S:
                     observations,
                     # `cfg` with this frame's effective guard radius (T21) — identical otherwise.
                     self._frame_filter_config,
-                    robot_model=self.robot_model,
+                    robot_model=self._frame_filter_model,
                     attention_adapter=self.attention_adapter,
                     now=timestamp,
-                    self_filter_inflation=self._self_filter_inflation,
+                    self_filter_inflation=self._frame_filter_inflation,
                     self_filter_guard_centre=self._frame_guard_centre,
                 )
             cloud = fusion.pointcloud
@@ -522,14 +1076,16 @@ class AG3S:
         if fusion is None:
             with profiler.stage("robot_self_filter"):
                 cloud, filter_stats = filter_robot_points(
-                    cloud, self.robot_model, robot_state, self._frame_filter_config.pointcloud,
-                    inflation=self._self_filter_inflation,
+                    cloud, self._frame_filter_model, robot_state,
+                    self._frame_filter_config.pointcloud,
+                    inflation=self._frame_filter_inflation,
                     guard_centre=self._frame_guard_centre,
                 )
 
         # 3. support surfaces -------------------------------------------------------------
         with profiler.stage("support_surface"):
             surfaces, support_mask = fit_support_surfaces(cloud, cfg.support_surface, timestamp=ts)
+        self._last_support_surfaces = list(surfaces)   # T34 J1: the plane `attach()` lifts off
 
         # 4. attention lifting ------------------------------------------------------------
         with profiler.stage("attention_lifting"):
@@ -554,6 +1110,15 @@ class AG3S:
                 )
 
         # 5. target grounding -------------------------------------------------------------
+        # T26: a per-call destination is an injection (sticky until `reset`), and it must be known
+        # *before* grounding — it is part of what makes a cluster inadmissible.
+        if destination_points is not None and len(destination_points):
+            self._target_confirm.inject_destination(destination_points)
+        # T26 §4: no switch while a grasp is in progress or an object is attached.
+        self._target_confirm.freeze(self._grasp_active or self._attached is not None)
+        # T32b S3: the hands at this frame's state — challengers do not count while the manipulated
+        # object is hidden by the hand (`TargetConfirm.note_hand`, consumed by this grounding call).
+        self._target_confirm.note_hand(self._hand_for_grounding(robot_state))
         with profiler.stage("target_grounding"):
             grounding = ground_target(
                 attention_cloud,
@@ -573,8 +1138,44 @@ class AG3S:
         # T20: what the consumers below refer to. `geometry` is this frame's observation when
         # `visible`, the last one when `occluded`; `lost` (or nothing confirmed yet) means none.
         self._manipulated = manipulated = self._target_confirm.manipulated
-        manipulated_geometry = (manipulated.geometry
-                                if manipulated is not None and manipulated.usable else None)
+        if manipulated is not None and robot_state is not None:
+            # T32 H2: which q this frame's geometry was captured at (for `attach`'s snapshot).
+            self._state_by_frame[int(manipulated.frame)] = np.asarray(robot_state, np.float64).copy()
+            for old_frame in sorted(self._state_by_frame)[:-16]:
+                del self._state_by_frame[old_frame]
+        # T26 §3: **exclusion geometry only from an admissible manipulated object.** The gate
+        # re-checks the evidence (narrowest extent ≤ max opening, not the destination); on failure
+        # nothing is excluded, nothing is permitted, and `invariant_violation` is recorded (raised
+        # in strict mode). `_target_ball`, the target-free layer, the fine-window object box,
+        # `TARGET_LABEL`, `manipulated_link_margin` / `target_field_exclude` and the next frame's
+        # guard all read `manipulated_geometry` from here.
+        manipulated_geometry, invariant = self._exclusion_gate(manipulated)
+        self._gated_manipulated = manipulated if manipulated_geometry is not None else None
+        if invariant is not None:
+            notes.append(reason("invariant_violation", invariant["detail"]))
+            if grounding.target is not None:
+                # The same object must not reach the primitive path's TARGET relaxation either.
+                grounding = dataclasses.replace(grounding, target=None,
+                                                status=GroundingStatus.NO_ADMISSIBLE)
+        destination = self._target_confirm.destination
+        destination_points = None if destination is None else destination.points
+        if self._target_confirm.destinations.last_event == "registered":
+            notes.append(
+                f"destination registered from perception: id={destination.id}, "
+                f"{len(destination.points)} point(s), extents "
+                f"{[round(float(v) * 1000.0) for v in destination.extents_m]} mm (not graspable, "
+                f"led {self._target_confirm.frames} frame(s) at score ≥ "
+                f"{self._target_confirm.switch_min_score}); it stays in every field")
+        decision = self._target_confirm.last
+        if (decision is not None and decision.reason == "inadmissible_match"
+                and manipulated is not None):
+            adm = decision.admissibility
+            notes.append(
+                f"manipulated object id={manipulated.id}: the cluster at its place is inadmissible "
+                f"({'?' if adm is None else adm.reason}; narrowest "
+                f"{'?' if adm is None or adm.narrowest_extent_m is None else round(adm.narrowest_extent_m * 1000.0, 1)}"
+                " mm) — merged with the fingers or the destination; the last admissible geometry "
+                "stands in (occluded)")
         if manipulated is not None and manipulated.state == LOST:
             # The reason code T20 asks for, distinct from `no_seed`: *which* object and for how long.
             notes.append(
@@ -586,6 +1187,10 @@ class AG3S:
         if grounding.target is None:
             notes.append(
                 f"no target ({grounding.status.value}); all geometry held at full clearance"
+                + (f" — none of {len(grounding.clusters)} cluster(s) is admissible (graspable at "
+                   f"max opening {self._max_opening.record()['value_mm']} mm and off the "
+                   "destination)" if grounding.status is GroundingStatus.NO_ADMISSIBLE
+                   and invariant is None else "")
             )
             if manipulated_geometry is not None:
                 notes.append(
@@ -689,6 +1294,7 @@ class AG3S:
                         frame_id=self.config.frame_id,
                         frame_index=self.frame_index)
                 notes.extend(esdf_notes)
+                self._last_esdf_field = esdf_field     # T34 J1: the field band `attach()` measures
                 if esdf_field is not None:
                     # G2 (`docs/AG3S_REVIEW_LOG.md` Step 4): an unobserved field used to produce a
                     # *note* and nothing else, so a frame whose collision field was entirely empty
@@ -792,6 +1398,20 @@ class AG3S:
                     # last_seen_frame, switched_from, frame}` or None. The only way to tell,
                     # after the fact, whether contact permission was alive on an occluded frame.
                     "manipulated": None if manipulated is None else manipulated.record(),
+                    # T26: this frame's admissibility (per cluster, score order), the destination
+                    # and the exclusion-gate verdict. `exclusion` is added after the set is built.
+                    "admissibility": self._admissibility_frame_record(),
+                    "destination": (None if destination is None else {
+                        **destination.record(),
+                        "event": self._target_confirm.destinations.last_event}),
+                    "gripper_max_opening": {"value_mm": self._max_opening.record()["value_mm"],
+                                            "source": self._max_opening.source},
+                    # T29: the finger joints both models used this frame (self-filter and
+                    # constraint FK) and their provenance (`set_finger_joints`).
+                    "finger_joints": self._finger_frame_record(),
+                    # T32 H2: the held object's spheres (fit, pad, frame link) or None.
+                    "held_object": self.held_record,
+                    "invariant_violation": invariant,
                     "target_confidence": (
                         0.0 if grounding.target is None else float(grounding.target.confidence)
                     ),
@@ -810,6 +1430,9 @@ class AG3S:
                 },
             )
 
+        # T26 §4: which mechanism keeps the manipulated object out of the gripper's field this frame.
+        constraint_set.metrics["exclusion"] = self._exclusion_record(
+            constraint_set, manipulated_geometry, context, robot_state)
         profiler.end_frame()
         self.frame_index += 1
         object.__setattr__(constraint_set, "profile", profiler.last_frame_ms())
@@ -831,6 +1454,122 @@ class AG3S:
             "fusion": fusion,
         }
         return constraint_set, debug
+
+    # --- T26: the exclusion gate and its record ---------------------------------------------
+    def _exclusion_gate(self, manipulated: Optional[ManipulatedIdentity]):
+        """`(geometry | None, invariant_violation record | None)` — exclusion only from an
+        admissible manipulated object (T26 §3).
+
+        Not a limit: an inadmissible object should never have become the manipulated object
+        (`TargetConfirm` admits only graspable, off-destination clusters). Arriving here without
+        the evidence is a bug, so it is refused **and** recorded (raised in strict mode). Checked:
+        the identity carries `admissibility`; it was `admissible`; its narrowest extent is at or
+        under *this* AG3S's max opening; and its geometry does not overlap the destination as it
+        stands **now** (the destination may have been registered after the object was adopted).
+        """
+        if manipulated is None or not manipulated.usable:
+            return None, None
+        adm = manipulated.admissibility
+        cfg = self.config.clustering
+        opening = self._max_opening.value_m if self._max_opening.known else None
+        problem = None
+        overlap_now = None
+        if adm is None:
+            problem = "no admissibility evidence on the manipulated object"
+        elif not adm.admissible:
+            problem = f"the manipulated object's last observation was inadmissible ({adm.reason})"
+        elif opening is None or adm.narrowest_extent_m is None:
+            problem = "the gripper's max opening or the object's extent is unknown"
+        elif adm.narrowest_extent_m > opening + 1e-12:
+            problem = (f"narrowest extent {adm.narrowest_extent_m * 1000.0:.1f} mm exceeds the max "
+                       f"opening {opening * 1000.0:.1f} mm")
+        else:
+            overlap_now = destination_overlap(manipulated.points, self.destination,
+                                              self._overlap_distance())
+            if (self.destination is not None
+                    and overlap_now >= float(cfg.destination_overlap_fraction)):
+                problem = (f"it overlaps the destination id={self.destination.id} "
+                           f"({overlap_now:.2f} of its points)")
+        if problem is None:
+            return manipulated.geometry, None
+        record = {
+            "detail": (f"exclusion geometry refused for manipulated id={manipulated.id}: {problem}; "
+                       "no ball, no target-free layer, no guard, no contact permission this frame"),
+            "manipulated_id": int(manipulated.id),
+            "admissibility": None if adm is None else adm.record(),
+            "max_opening_mm": None if opening is None else round(opening * 1000.0, 2),
+            "destination_overlap_now": overlap_now,
+            "destination_id": None if self.destination is None else int(self.destination.id),
+        }
+        if self.strict_invariants:
+            raise ExclusionInvariantViolation(record["detail"], record)
+        logging.getLogger(__name__).error("invariant_violation: %s", record["detail"])
+        return None, record
+
+    def _admissibility_frame_record(self) -> Optional[dict]:
+        """This frame's clusters' admissibility, score order — the evidence behind `first`/`switch`."""
+        adm = self._target_confirm.last_admissibility
+        decision = self._target_confirm.last
+        if adm is None:
+            return None
+        return {
+            "max_opening_mm": self._max_opening.record()["value_mm"],
+            "n_clusters": len(adm),
+            "n_admissible": sum(1 for a in adm if a.admissible),
+            "clusters": [a.record() for a in adm],
+            "decision": None if decision is None else {
+                "mode": decision.mode, "rank": decision.rank, "reason": decision.reason,
+                "frozen": decision.frozen},
+            "destination_streak": self._target_confirm.destinations.streak,
+        }
+
+    def _exclusion_record(self, constraint_set, manipulated_geometry, context, robot_state):
+        """`metrics["exclusion"]` — `{active, source, mechanism, ...}` (T26 §4).
+
+        `source`: `attached` once an object is attached (it is carved out of the field and rides the
+        hand as robot geometry), `manipulated` before that (target-free layer and/or contact margin
+        on the authorized links), `none` when neither holds. `active` says the mechanism actually
+        applies to at least one authorized link this frame. The grasp is continuous iff no frame
+        between the closing command and the release reads `none`.
+        """
+        authorized = sorted(self._authorized_links(context))
+        cs_manip = getattr(constraint_set, "manipulated", None)
+        mechanism: list[str] = []
+        if self._attached is not None:
+            source = "attached"
+            if cs_manip is not None and getattr(cs_manip, "source", None) == "attached":
+                mechanism.append("attached_query")
+            esdf = getattr(constraint_set, "esdf", None)
+            if (robot_state is not None and self.constraint_robot_model is not None
+                    and esdf is not None):
+                # T32 H3: `held_free` = the held volume is set free in the TSDF (cuRobo);
+                # `attached_carve` = its seeds are excluded (legacy / points-only attachments).
+                freed = ((getattr(esdf, "stats", None) or {}).get("held_free") or {})
+                mechanism.append("held_free" if freed.get("n_points") else "attached_carve")
+            if int(getattr(self._frame_filter_model, "n_held", 0) or 0):
+                # T32 H1: its pixels are removed by the self-filter like the robot's.
+                mechanism.append("self_filter")
+            active = bool(mechanism)
+        elif manipulated_geometry is not None:
+            source = "manipulated"
+            if getattr(constraint_set, "target_field_exclude", None) is not None:
+                mechanism.append("target_free_layer")
+            if getattr(constraint_set, "manipulated_link_margin", None) is not None:
+                mechanism.append("contact_margin")
+            active = bool(mechanism) and bool(authorized)
+        else:
+            source, active = "none", False
+        manip = self._manipulated
+        return {
+            "active": bool(active),
+            "source": source,
+            "mechanism": mechanism,
+            "authorized_links": authorized,
+            "manipulated_id": None if manip is None else int(manip.id),
+            "manipulated_state": None if manip is None else str(manip.state),
+            "attached_label": None if self._attached is None else self._attached.label,
+            "grasp_active": bool(self._grasp_active),
+        }
 
     # --- helpers, kept thin on purpose ---------------------------------------------------
     def _lift(self, cloud, attention_map, image_hw, camera_intrinsics, T_base_cam):
@@ -1025,7 +1764,7 @@ class AG3S:
         """
         from benchmark.ag3s.stages.reconstruction import backproject
 
-        model = self.robot_model
+        model = self._frame_filter_model
         if model is None or robot_state is None:
             return None
         cfg = self.config.pointcloud
@@ -1035,16 +1774,87 @@ class AG3S:
         if cloud.uv is None or len(cloud) == 0:
             return None
         # Same decision as the cloud filter (T19): the inflation object resolved at construction
-        # and this frame's guard centroid, both through `self_filter_mask`.
+        # and this frame's guard centroid, both through `self_filter_mask`. T32 H1: the model
+        # carries the held spheres while attached (`_prepare_frame_filter`).
+        q = np.asarray(robot_state, np.float64)
         inside, guard = self_filter_mask(
-            cloud.points, model, np.asarray(robot_state, np.float64),
-            self._frame_filter_config.pointcloud,
-            inflation=self._self_filter_inflation, guard_centre=self._frame_guard_centre)
+            cloud.points, model, q, self._frame_filter_config.pointcloud,
+            inflation=self._frame_filter_inflation, guard_centre=self._frame_guard_centre)
         self._mask_guard_px.append(int(guard["n_guard_protected"]))
+        held_fn = getattr(model, "held_spheres", None)
+        if callable(held_fn):
+            from benchmark.ag3s.stages.robot_filter import robot_sphere_mask
+
+            hc, hr = held_fn(q)
+            self._mask_held_px.append(int(robot_sphere_mask(cloud.points, hc, hr, 0.0).sum()))
         mask = np.zeros(np.asarray(depth).shape, bool)
         uv = cloud.uv[inside]
         mask[uv[:, 1], uv[:, 0]] = True
         return mask
+
+    def _hand_for_grounding(self, robot_state):
+        """`HandSpheres` for T32b S3 at `robot_state`, or None (S3 then suppresses nothing).
+
+        **The constraint model first**, then the bare self-filter model. T32b calibrated the 30 mm
+        reach on the recorded constraint spheres (`sphere_centres/radii`: palm + fingers, 6.2 / 3.3
+        mm); the self-filter model's palm carries T29 cover capsules up to ~37 mm, which would make
+        the hand ~30 mm "thicker" than the reach was measured with. Never the held-object wrapper
+        (`_frame_filter_model`): a held sphere is not the hand.
+
+        Finger joints: both models carry this frame's measured opening (`set_finger_joints`, T29 —
+        `SafePolicy` sets them from the request's `state` before `process*`), and
+        `sphere_centers_numeric` uses them. `robot_state` is the one the constraints are built at
+        (the newest observation's, `process_multi_debug`).
+        """
+        if robot_state is None:
+            return None
+        for model in (self.constraint_robot_model, self.robot_model):
+            hand = hand_spheres(model, robot_state)
+            if hand is not None:
+                return hand
+        return None
+
+    def _prepare_frame_filter(self) -> None:
+        """This frame's self-filter model + inflation (T32 H1, cuRobo attach semantics).
+
+        Nothing held (or the switch off, or no self-filter model): the model and the inflation
+        resolved at construction — the pre-T32 arithmetic exactly. Held: the model wrapped with the
+        held object's spheres (`attached_spheres`, parent frame; FK'd per capture `q` with the
+        **constraint** model — the one `attach()` snapshotted with), and the inflation extended with
+        **0** for them: the spheres cover the object by construction (fit + pad), so inflating them
+        would only erase what is next to the object.
+        """
+        self._mask_held_px = []
+        self._frame_filter_model = self.robot_model
+        self._frame_filter_inflation = self._self_filter_inflation
+        held = self._attached
+        if held is None or self.robot_model is None or not self.self_filter_held_object:
+            return
+        from benchmark.ag3s.constraints.attached import attached_spheres
+        from benchmark.ag3s.robot_models.held_object import (
+            HeldSphereFilterModel,
+            extend_inflation,
+        )
+
+        spheres = attached_spheres(held)
+        if not spheres:
+            return
+        from benchmark.ag3s.robot_models.held_object import held_spheres_of
+
+        if held_spheres_of(held) and self._held_filter_local:
+            # T34 J1: the self-filter copy is the fit as T32 made it — the support lift is for
+            # the query spheres only.
+            spheres = [(np.asarray(c, np.float64).copy(), float(r))
+                       for c, r in self._held_filter_local]
+        if held_spheres_of(held) and float(self.held_filter_slip_m) > 0.0:
+            # T32: the fitted held spheres + the measured in-hand slip (filter only).
+            spheres = [(c, float(r) + float(self.held_filter_slip_m)) for c, r in spheres]
+        model = HeldSphereFilterModel(self.robot_model, spheres, held.parent_link,
+                                      pose_model=self.constraint_robot_model or self.robot_model)
+        n_robot = int(model.n_spheres) - model.n_held
+        self._frame_filter_model = model
+        self._frame_filter_inflation = extend_inflation(
+            self._self_filter_inflation, n_robot, model.n_held)
 
     def _guard_pad(self) -> float:
         """One **fine** voxel (m) — the same voxel `_target_ball` pads with (T21 guard rule)."""
@@ -1112,6 +1922,12 @@ class AG3S:
             "n_guard_protected_points": int(filter_stats.get("n_guard_protected", 0)),
             "n_depth_masks": len(self._mask_guard_px),
             "n_guard_protected_depth_px": int(sum(self._mask_guard_px)),
+            # T32 H1: the held object's spheres in this frame's self-filter (0 = nothing held) and
+            # the depth pixels inside them (removed from the TSDF like the robot's).
+            "n_held_spheres": int(getattr(self._frame_filter_model, "n_held", 0) or 0),
+            "held_filter_slip_m": (float(self.held_filter_slip_m)
+                                   if getattr(self._frame_filter_model, "n_held", 0) else None),
+            "n_held_depth_px": int(sum(self._mask_held_px)),
         }
 
     def _depth_cameras_from(self, observations, depth, camera_intrinsics, T_base_cam,
@@ -1245,9 +2061,24 @@ class AG3S:
         # 완화 판정 자체는 라벨에 기대지 않는다: 거친 격자에서 값(삼선형)과 라벨(최근접 격자점)이
         # 어긋나는 자리가 하필 파지하는 자리다 (`CuroboEsdfField.target_free_distance`).
         #
-        # **쥔 것이 없을 때만 싣는다.** 쥔 뒤에는 attention 의 target 이 목적지(crate)이고,
-        # crate 는 그 안에 넣어야 하므로 필드에서 빠지면 안 된다.
+        # **쥔 것이 없을 때만 싣는다.** 쥔 뒤에는 그 물체가 attached 경로로 필드에서 파이고
+        # (아래 `attached_points`) 로봇 쪽 질의점이 된다 — 그래서 제외의 근거가 끊기지 않는다
+        # (T26 §4: 파지 전 = manipulated, 파지 후 = attached, `metrics["exclusion"]`).
+        # T26 전에는 "쥔 뒤의 target 은 목적지(crate)" 라는 이유를 적었다. 이제 target 은 파지
+        # 뒤에도 사과이고, crate 는 admissible 이 아니라 이 인자로 들어올 수 없다.
         nothing_held = self._attached is None
+        if (nothing_held and not self._grasp_active and points is not None and len(points)
+                and self.free_held_traces):
+            # T32 H3: where the object sits before the grasp (its surface fit, last frame before the
+            # closing started — while closing the fingers cut the surface) — the TSDF voxels there
+            # are set free once it is attached (`_arm_first_free`).
+            from benchmark.ag3s.robot_models.held_object import fit_surface_sphere
+
+            mo = self._max_opening
+            fit = fit_surface_sphere(np.asarray(points, np.float64),
+                                     max_radius=0.5 * mo.value_m if mo.known else None)
+            if fit.accepted:
+                self._last_object_fit = (fit.centre.copy(), float(fit.radius))
         if nothing_held and points is not None and len(points):
             labelled = dict(labelled or {})
             labelled[TARGET_LABEL] = np.asarray(points, np.float64)
@@ -1283,15 +2114,27 @@ class AG3S:
         # **E1(조작 대상을 필드에서 파내면 손끝뿐 아니라 전신에게 사라진다)과 다른 경우다.**
         # E1 이 금지한 것은 *아직 안 쥔* target 을 파내는 것이었다. 쥔 뒤에는 로봇의 일부이고,
         # 로봇을 depth 에서 지우는 것과 같은 처리다. 그래서 `attach()` 가 불린 뒤에만 돈다.
+        # T32 H3: with the cuRobo backend the held object's volume is set **free in the TSDF**
+        # (`_held_free_points`) — the TSDF then holds no surface there to seed, so the per-frame seed
+        # exclusion of that same volume is **retired** (measured: E3b ep1807 r1 · E3a r3, freeing
+        # with vs without seed exclusion gave identical trails, table spot, held-sphere minimum and
+        # crate voxels; T32a §H3). The seed exclusion stays for the paths that do not free: legacy
+        # backend, `free_held_traces=False`, pre-T32 (points-only) attachments.
+        held_free = None
+        if cfg.backend == "curobo" and self._attached is not None and robot_state is not None \
+                and self.free_held_traces and self.constraint_robot_model is not None:
+            held_free = self._held_free_points(robot_state, support_surfaces, destination_points)
         attached_points = None
-        if (self._attached is not None and robot_state is not None
+        if (held_free is None and self._attached is not None and robot_state is not None
                 and self.constraint_robot_model is not None):
             from benchmark.ag3s.constraints.attached import attached_points_in_base
             # **`attach()` 가 쓴 것과 같은 모델이어야 한다.** 점은 그 모델의 parent link 프레임에
             # 스냅샷돼 있고, 다른 모델로 되돌리면 물체가 조용히 엉뚱한 자리에서 파인다.
-            attached_points = attached_points_in_base(
-                self._attached, robot_model=self.constraint_robot_model,
-                robot_state=robot_state)
+            attached_points = self._held_seed_points(robot_state, support_surfaces)
+            if attached_points is None:
+                attached_points = attached_points_in_base(
+                    self._attached, robot_model=self.constraint_robot_model,
+                    robot_state=robot_state)
         # **창의 배치 (T21)** — 손이 정한다. 제외(`target_free_ball`)는 위에서 manipulated 가
         # 정했고 여기서 넓히지 않는다 (지침 §5.3-3: 창 확대 ≠ 제외 영역 확대).
         window_request = None
@@ -1310,6 +2153,9 @@ class AG3S:
                                               "target_free_ball": target_free_ball}),
                                           support_points=support_points,
                                           attached_points=attached_points,
+                                          # T32 H3: the held object's old traces → free.
+                                          **({} if held_free is None
+                                             else {"held_free_points": held_free}),
                                           labelled_points=labelled,
                                           # 아는 정적 기하 — **주입**이다. AG3S 는 무엇이 벽이고
                                           # 무엇이 선반인지 알 수 없다 (phase·목적지와 같은 계약).
@@ -1327,6 +2173,78 @@ class AG3S:
                 and bool(getattr(field, "has_target_free", False)),
                 margin=self._fine_window_pads()[0])
         return field, notes
+
+    def _held_seed_points(self, robot_state, support_surfaces) -> Optional[np.ndarray]:
+        """The held spheres' **volume** as fine-voxel grid points (base) — what the field's seed
+        exclusion removes (T32 H1), or None when the attachment has no spheres (points-only).
+
+        Before T32 the exclusion used the 25–33 radius-0 snapshot points, so only *their* voxels
+        lost their seeds and the rest of the apple surface stayed an obstacle (T31-diag: fine value
+        at the apple centre down to −24 mm). The spheres are what the optimizer now queries with,
+        so the field must not hold a surface inside them — "a query, not an obstacle" (A2) on the
+        same set. Why it is still needed after H1: the TSDF surfaces integrated **before** attach
+        (the apple on the table, the closing/settle requests) sit exactly inside the spheres at
+        attach, and no ray can clear them any more — the self-filter now masks those very pixels
+        (a masked ray is unobserved, not free). Per frame and non-destructive (seeds only, the TSDF
+        is untouched). Points below the support plane under the sphere + one fine voxel are
+        dropped — the `TargetBall` rule — so a sphere resting on the table does not erase the table.
+        """
+        from benchmark.ag3s.constraints.attached import _link_pose_numeric
+        from benchmark.ag3s.robot_models.held_object import held_spheres_of, sphere_volume_points
+
+        held = self._attached
+        local = None if held is None else held_spheres_of(held)
+        if not local:
+            return None
+        T = _link_pose_numeric(self.constraint_robot_model, np.asarray(robot_state, np.float64),
+                               held.parent_link)
+        spheres = [(T[:3, :3] @ c + T[:3, 3], r) for c, r in local]
+        spacing = self._guard_pad()
+        z_plane = self._support_plane_z(support_surfaces, spheres[0][0])
+        z_min = None if z_plane is None else float(z_plane) + spacing
+        pts = sphere_volume_points(spheres, spacing, z_min=z_min)
+        return pts if len(pts) else None
+
+    def _held_free_points(self, robot_state, support_surfaces, destination_points):
+        """Points whose TSDF voxels are set **free** this frame (T32 H3), or None.
+
+        The held spheres at `robot_state` (every held frame), plus on the first held frames the
+        spheres at the geometry's capture pose and the object's pre-grasp place
+        (`_arm_first_free`). Measured need (T32a §H3): H1 stops new integration, but the table spot
+        and the frames between closing and attach stay in the TSDF — nothing clears them, since
+        the rays through them are masked or the hand still occludes them.
+
+        Only voxels the held object can occupy: points below the support plane + one fine voxel
+        are dropped (the `TargetBall` rule — never a hole in the table), and so are points within
+        two fine voxels of the destination (the crate the object is lowered into is never eroded).
+        Sampled at half a TSDF voxel so every voxel whose centre is inside is hit.
+        """
+        from benchmark.ag3s.constraints.attached import _link_pose_numeric
+        from benchmark.ag3s.robot_models.held_object import held_spheres_of, sphere_volume_points
+
+        held = self._attached
+        local = held_spheres_of(held)
+        if not local:
+            return None
+        T = _link_pose_numeric(self.constraint_robot_model, np.asarray(robot_state, np.float64),
+                               held.parent_link)
+        spheres = [(T[:3, :3] @ c + T[:3, 3], r) for c, r in local]
+        if self._held_first_free_frames > 0:
+            spheres = spheres + list(self._held_first_free)
+            self._held_first_free_frames -= 1
+        cfg = self.config.esdf
+        tsdf_voxel = float(getattr(cfg, "tsdf_voxel_size", None) or cfg.voxel_size)
+        pad = self._guard_pad()
+        z_plane = self._support_plane_z(support_surfaces, spheres[0][0])
+        pts = sphere_volume_points(spheres, 0.5 * tsdf_voxel,
+                                   z_min=None if z_plane is None else float(z_plane) + pad)
+        if len(pts) and destination_points is not None and len(destination_points):
+            from scipy.spatial import cKDTree
+
+            d, _ = cKDTree(np.asarray(destination_points, np.float64).reshape(-1, 3)).query(
+                pts, distance_upper_bound=2.0 * pad)
+            pts = pts[~np.isfinite(d)]
+        return pts if len(pts) else None
 
     def _authorized_links(self, contact_context) -> frozenset:
         """Contact-authorized links for this frame — the **same** set the target-free mask and the
@@ -1478,8 +2396,8 @@ class AG3S:
 
         | 값 | 어떻게 |
         |---|---|
-        | 중심 | 점구름의 centroid |
-        | 반지름 | centroid 까지 거리의 `esdf.target_ball_quantile` 분위수 + 여유 `pad × voxel` |
+        | 중심 | **관측 표면에 맞춘 구의 중심** (T32 S1, `fit_surface_sphere`); 맞춤이 물러나면 centroid |
+        | 반지름 | `max(중심까지 거리의 target_ball_quantile 분위수, 맞춘 반지름)` + 여유 `pad × voxel` |
         | `z_min` | **지원면** 평면 z (centroid 의 x·y 에서) + 여유 `pad × voxel` |
 
         **`z_min` 을 못 얻으면 `None` 을 돌려준다.** 그러면 호출자는 지금 동작(점 제외)으로
@@ -1493,15 +2411,29 @@ class AG3S:
         """
         from benchmark.ag3s.fields.curobo_builder import TargetBall
 
+        from benchmark.ag3s.robot_models.held_object import fit_surface_sphere
+
         pts = np.asarray(points, np.float64).reshape(-1, 3)
         if not len(pts):
             return None
-        centre = pts.mean(axis=0)
         cfg = self.config.esdf
         quantile = float(getattr(cfg, "target_ball_quantile", 1.0))
         pad = float(getattr(cfg, "target_ball_pad_voxels", 1.0)) * float(voxel)
+        # T32 S1: the centre is the **sphere fitted to the observed surface** (a convex fruit's
+        # centre from its one visible side), not the centroid of that side — the centroid sits on
+        # the seen face and the ball missed the apple's back by a median 4.4 mm once T31b split
+        # merged clusters. The radius covers both the observed points (as before) and the fitted
+        # sphere (the unseen back). The fit's radius is capped at half the max opening (nothing
+        # graspable is larger); a surface that is not a sphere falls back to the centroid rule.
+        mo = getattr(self, "_max_opening", None)
+        fit = fit_surface_sphere(
+            pts, max_radius=(0.5 * mo.value_m if mo is not None and mo.known else None))
+        centre = fit.centre
         spread = np.linalg.norm(pts - centre[None, :], axis=1)
-        radius = float(np.quantile(spread, np.clip(quantile, 0.0, 1.0))) + pad
+        raw = float(np.quantile(spread, np.clip(quantile, 0.0, 1.0)))
+        if fit.accepted:
+            raw = max(raw, float(fit.radius))
+        radius = raw + pad
         plane_z = self._support_plane_z(support_surfaces, centre)
         if plane_z is None or not np.isfinite(radius) or radius <= 0.0:
             return None
@@ -1514,8 +2446,10 @@ class AG3S:
             provenance={
                 "n_points": int(len(pts)),
                 "radius_quantile": quantile,
-                "radius_raw_mm": round(float(np.quantile(spread, np.clip(quantile, 0.0, 1.0)))
-                                       * 1000.0, 3),
+                "radius_raw_mm": round(raw * 1000.0, 3),
+                # T32 S1: how the centre was found (`surface_fit` | `centroid` + reason).
+                "centre_method": fit.method,
+                "fit": fit.record(),
                 "pad_mm": round(pad * 1000.0, 3),
                 "support_plane_z_m": float(plane_z),
                 "voxel_mm": round(float(voxel) * 1000.0, 3),

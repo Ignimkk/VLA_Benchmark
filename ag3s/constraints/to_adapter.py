@@ -216,7 +216,10 @@ def build_constraint_set(
     #
     # 조건이 넷이고 하나라도 어긋나면 `None`(= 지금 동작)이다.
     # 1. 정책이 `relax`(기본)가 아니다.
-    # 2. **쥔 것이 없다** — 쥔 뒤의 target 은 목적지(crate)이고 그것은 빠지면 안 된다 (규칙 3).
+    # 2. **쥔 것이 없다** — 쥔 뒤에는 그 물체가 attached 경로(필드에서 파임 + 로봇 쪽 질의점)로
+    #    빠진다 (T26 §4: 파지 전 manipulated → 파지 후 attached, 끊김 없음). T26 전의 이유 ("쥔
+    #    뒤의 target 은 crate") 는 더 이상 참이 아니다 — crate 는 admissible 이 아니어서
+    #    `manipulated_geometry` 로 들어올 수 없다 (`AG3S._exclusion_gate`).
     # 3. 조작 대상이 있다 (`visible` 또는 `occluded` — T20. 예전엔 "target 이 grounding 됐다").
     #    사과가 손가락에 가려진 프레임에도 사과의 제외는 살아 있어야 한다.
     # 4. 필드가 실제로 그 계층을 들고 있다 — 없으면 켰다고 믿은 채 아무 일도 안 일어난다.

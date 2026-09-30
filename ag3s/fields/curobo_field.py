@@ -362,15 +362,44 @@ class CuroboEsdfField:
         그대로 따라가며 이긴 쪽의 이름을 적는다 — 값은 다시 계산하지만 판정에는 쓰지 않는다.
         기록 전용이다 (지침 §5.3: 어느 계층이 답했는가, 창 밖/미관측 여부).
         """
+        return self._answer(points, target_free, want_gradient=False)[1]
+
+    def target_free_gradient(self, points: np.ndarray, *, return_tier: bool = False):
+        """`(N, 3)` — `target_free_distance` 의 값을 **낸 쪽의** 기울기 (T30 F1b).
+
+        값과 방향은 언제나 같은 층에서 온다 (`gradient` 가 본 합성에 대해 지키는 것과 같은 규칙):
+
+        | 답 (`answer_tier`) | 값 | 기울기 |
+        |---|---|---|
+        | `target_free` | target 없는 계층 `f` | 그 계층의 기울기 |
+        | `static` (창 안) | 해석적 정적 기하 | 그 도형의 기울기 |
+        | `window_edge` | 창 경계까지의 거리 `b` (하한) | `b` 의 기울기 — 가장 가까운 창 면에서 안쪽으로 |
+        | `fine` · `coarse` · `outside` (창 밖, 또는 `b ≤ d < f`) | 본 합성 `d` | 본 합성의 기울기 (`gradient`) |
+
+        **왜 필요한가.** `target_free_distance` 로 값을 받은 행을 `gradient`(사과가 든 본 합성)로
+        선형화하면, 사과 옆에서 값은 테이블 거리인데 방향은 사과 법선이다 — SQP 가 손가락을 사과
+        밖으로 민다 (E3a 증상). `return_tier` 면 `(gradient, tier)` — 어느 층이 답했는지의 기록.
+        """
+        pts = np.asarray(points, np.float64).reshape(-1, 3)
+        _, tier, grad = self._answer(pts, True, want_gradient=True)
+        return (grad, tier) if return_tier else grad
+
+    def _answer(self, points: np.ndarray, target_free, *, want_gradient: bool):
+        """`(d, tier, gradient | None)` — `distance`/`target_free_distance` 합성 하나를 따라간다.
+
+        `answer_tier` 와 `target_free_gradient` 가 **같은 분기**를 쓰게 하려고 한 곳에 둔다.
+        값 `d` 는 `target_free_distance` 와 같은 식이다 (그 메서드는 hot path 라 따로 둔다).
+        """
         pts = np.asarray(points, np.float64).reshape(-1, 3)
         n = len(pts)
         out = np.full(n, "coarse", dtype="<U11")
         if not n:
-            return out
+            return np.zeros(0), out, (np.zeros((0, 3)) if want_gradient else None)
         voxel, winner, _ = self._evaluate(pts, want_winner=True)
         out[winner > 0] = "fine"
         out[~self._covers(self.layers[0].grid, pts)] = "outside"
         d = np.asarray(voxel, np.float64).copy()
+        grad = np.asarray(self.gradient(pts), np.float64).copy() if want_gradient else None
         analytic = None
         if self.static_shapes:
             from benchmark.ag3s.fields.esdf import analytic_distance
@@ -380,7 +409,7 @@ class CuroboEsdfField:
             d = np.minimum(d, analytic)
         flags = np.broadcast_to(np.asarray(target_free, bool), (n,))
         if not flags.any() or not self.target_free_layers:
-            return out
+            return d, out, grad
         for layer in self.target_free_layers:
             inside = flags & self._covers(layer.grid, pts)
             if not inside.any():
@@ -396,12 +425,41 @@ class CuroboEsdfField:
             base = d[inside]
             alt = np.maximum(base, bound)
             use_free = free <= alt
+            edge = ~use_free & (bound > base)
             tier = out[inside].copy()
-            tier[~use_free & (bound > base)] = "window_edge"
+            tier[edge] = "window_edge"
             tier[use_free] = "target_free"
             tier[use_free & static_wins] = "static"
             out[inside] = tier
+            if want_gradient:
+                g = grad[inside]
+                layer_rows = use_free & ~static_wins
+                if layer_rows.any():
+                    g[layer_rows] = np.asarray(layer.gradient(here[layer_rows]), np.float64)
+                shape_rows = use_free & static_wins
+                if shape_rows.any():
+                    from benchmark.ag3s.fields.esdf import analytic_gradient
+                    g[shape_rows] = np.asarray(
+                        analytic_gradient(here[shape_rows], self.static_shapes), np.float64)
+                if edge.any():
+                    g[edge] = self._boundary_gradient(layer.grid, here[edge])
+                # 나머지 (`b ≤ d < f`) 는 본 합성 `d` 가 답했으므로 본 합성의 기울기 그대로.
+                grad[inside] = g
             d[inside] = np.minimum(free, alt)
+        return d, out, grad
+
+    @staticmethod
+    def _boundary_gradient(grid: VoxelGrid, pts: np.ndarray) -> np.ndarray:
+        """`(N, 3)` — `_boundary_distance` 의 기울기: 가장 가까운 창 면의 **안쪽** 법선."""
+        last = grid.origin + (np.asarray(grid.shape) - 1) * grid.voxel_size
+        lo = pts - grid.origin
+        hi = last - pts
+        gap = np.minimum(lo, hi)
+        axis = np.argmin(gap, axis=1)
+        rows = np.arange(len(pts))
+        sign = np.where(lo[rows, axis] <= hi[rows, axis], 1.0, -1.0)
+        out = np.zeros((len(pts), 3), np.float64)
+        out[rows, axis] = sign
         return out
 
     @staticmethod

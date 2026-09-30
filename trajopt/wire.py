@@ -17,7 +17,9 @@
 | `ag3s/K/<cam>` | (3, 3) intrinsics |
 | `ag3s/T_base_cam/<cam>` | (4, 4) extrinsics, **촬영 시점** |
 | `ag3s/robot_state/<cam>` | (nq,) **촬영 시점** 관절. 카메라마다 다르다 |
-| `ag3s/stamp/<cam>` | 촬영 시각 (초, 단조시계) |
+| `ag3s/stamp/<cam>` | 촬영 시각 (초, 단조시계). 이미지 · `robot_state` · `T_base_cam` 이 **이 한 순간**의 것이다. 시뮬레이션 관측이면 세 카메라가 같은 값 (T30c, 아래) |
+| `ag3s/render_stamp/<cam>` | **진단용** — 그 카메라의 렌더가 끝난 벽시계 순간 (초, 단조시계). 서버는 판정에 쓰지 않는다 (T30c) |
+| `ag3s/stamp_mode` | `stamp/<cam>` 이 무엇인가: `sim_frozen` (관측 하나에 한 순간) · `render_end` (카메라마다 렌더 끝) (T30c) |
 | `ag3s/phase` | 조작 단계. AG3S 는 절대 추론하지 않고 주입받는다 |
 | `ag3s/active_manipulators` | 접촉이 허용된 매니퓰레이터 |
 | `ag3s/reset` | True 면 SEAM·AG3S·TO 의 내부 상태와 warm-start 를 모두 버린다 |
@@ -66,6 +68,24 @@ HOLD·부분 실행이면 셋 다 틀린다 (지침 §6.4).
 **크기.** 8 스텝이면 배열 넷이 합쳐 1 KB 미만이다 (`[8, 2] + [8, 2] + [8, 14] + [2]` float32 =
 584 B). T9 가 감수한 응답 17 KB 증가에 비하면 무시할 만해서 스텝별 `applied_arm` 까지 와이어에 싣는다.
 
+### `ag3s/stamp/<cam>` — 시뮬레이션 관측 하나에는 **촬영 순간이 하나** (T30c, 2026-09-29)
+
+T28 E3b 에서 `uncertified` HOLD 125 청크가 `camera_transform_stale` 이었다. 서버의 신선도 검사
+(`ag3s/runtime/multiview.py:check_freshness`)는 한 관측 안에서 가장 최신 카메라보다
+`timing.max_transform_age_sec` (100 ms) 넘게 뒤진 이미지를 "외부 파라미터가 오래됐다" 로 본다. 그런데
+옛 `_pack` 은 카메라마다 **렌더가 끝난 순간**을 찍었고, headless osmesa 는 세 카메라를 **차례로**
+렌더하므로 head 가 wrist 보다 102–142 ms (중앙값 121) 앞섰다. 그동안 시뮬레이션은 **정지**해
+있다 — 세 이미지 · 자세 · 외부 파라미터는 같은 순간의 씬이다. 늦게 찍힌 것은 씬이 아니라 렌더다.
+
+그래서 시뮬레이션 클라이언트는 **시뮬레이션이 그 관측을 위해 멈춘 순간 하나**를 모든 카메라의
+`stamp/<cam>` 에 싣는다 (`stamp_mode = "sim_frozen"`, `SafeRemoteClient.infer(capture_time=)`).
+렌더 벽시계는 버리지 않고 `render_stamp/<cam>` 에 따로 싣는다 — 옛 `stamp/<cam>` 과 같은 값이다.
+
+**서버의 검사는 바꾸지 않는다.** 실기에서는 카메라가 정말로 서로 다른 순간을 찍고, 그때는 그 검사가
+맞다. `capture_time` 을 주지 않은 호출자는 예전처럼 카메라별 렌더 끝 순간을 싣는다
+(`stamp_mode = "render_end"`) — 한 순간을 **주장**하는 것은 시뮬레이션이 멈춰 있음을 아는 호출자뿐이다.
+틀린 한 순간은 진짜 지연을 숨기고(위험한 쪽), 틀린 카메라별 순간은 HOLD 를 낳는다(안전한 쪽).
+
 ## 응답
 
 `actions` 외에 안전 판정을 싣는다. 로컬은 이 판정이 유효할 때만 실행한다.
@@ -100,8 +120,14 @@ T16 에서 `--no-collision` 인데도 34 청크 중 25 개가 HOLD 였다. 이�
 | `uncertified` | `geometry_certified=False` (위 `occluded_target` 이 아닌 것 전부) | HOLD |
 | `unverified` | 최적화기가 검사하지 못했다 (`solver_failed` · `unconstrained`) | HOLD |
 | `comms` | **클라이언트가 만든다** — `timeout` · `stale` · `dimension` · `error` (`evidence.ipc`) | HOLD |
+| `no_perception` | 서버가 `--no-perception` 으로 떠 있다 (T27, `to_only_policy`) — AG3S·ESDF 가 없고 **아무것도 검사하지 않았다** | HOLD |
 
-**모르는 kind 는 HOLD 다** (fail closed). `action` 은 서버가 이 표로 붙인 값이고 읽기 편의용이다 —
+**모르는 kind 는 HOLD 다** (fail closed).
+
+**`no_perception` 은 `safe=True` 와 함께 온다 — 아래 `safe` 규칙의 유일한 예외다** (T27). 서버는 검사를
+하지 않았으므로 막을 근거도 없고 (`safe=True`), 로컬 사유 표는 "검사되지 않은 청크" 를 실행하지 않는다
+(`unverified` 와 같은 처리). 그래서 이 서버의 청크는 **로컬이 `--safe-gate off` 로 명시할 때만** 실행된다 —
+shadow 의 짝 검사와 같은 규율이다: 양쪽이 같은 실험이라고 말해야 로봇이 움직인다. `action` 은 서버가 이 표로 붙인 값이고 읽기 편의용이다 —
 로컬 게이트는 자기 표(`gate_decision`)로 다시 정한다.
 
 **`safe` 는 그대로 실린다: `safe = (HOLD 처리인 사유가 없다)`.** 옛 클라이언트는 `safe` 만 읽으므로
@@ -268,6 +294,12 @@ VIOLATION_PAIR = "max_violation_pair"
 #: 요청 키 (`ag3s/` 접두 뒤) — **직전 청크의 실행 사실** (T18). 위 머리말의 표가 안쪽 키의 정의다.
 EXEC_FEEDBACK = "exec_feedback"
 
+#: 요청 키 (`ag3s/` 접두 뒤) — `stamp/<cam>` 의 뜻 (T30c). 머리말의 `ag3s/stamp/<cam>` 절.
+STAMP_MODE = "stamp_mode"
+#: `sim_frozen`: 시뮬레이션이 관측을 위해 멈춘 한 순간 (모든 카메라 같은 값).
+#: `render_end`: 카메라마다 렌더가 끝난 순간 (T30c 전 동작, 호출자가 순간을 주지 않을 때).
+STAMP_MODES = ("sim_frozen", "render_end")
+
 #: HOLD 사유의 종류. `SafeRemoteClient.last_ipc` 의 값 중 `ok` 를 뺀 것과 같다 — 사유를 새로
 #: 지어내지 않고 로컬이 이미 쓰는 이름을 그대로 싣는다.
 HOLD_KINDS = ("unsafe", "timeout", "stale", "error")
@@ -278,9 +310,9 @@ EXECUTED_CHUNKS = ("refined", "reference", "none")
 #: 응답의 **선택 키** — `safe` 의 사유 목록 (T23). 머리말의 `verdict_reasons` 절.
 VERDICT_REASONS = "verdict_reasons"
 
-#: 사유의 종류. 머리말 표의 순서 그대로 — 앞 넷이 실행, 뒤 넷이 HOLD 다 (`GATE_DEFAULT`).
+#: 사유의 종류. 머리말 표의 순서 그대로 — 앞 넷이 실행, 뒤 다섯이 HOLD 다 (`GATE_DEFAULT`).
 REASON_KINDS = ("allowed_contact", "budget_only", "occluded_target", "uncertified_waived",
-                "collision", "uncertified", "unverified", "comms")
+                "collision", "uncertified", "unverified", "comms", "no_perception")
 
 #: 게이트의 처리 두 가지. **정지(abort)는 여기 없다** — 한 청크의 사유가 아니라 연속 HOLD 수가
 #: 정하는 것이고 (`--safe-max-hold-chunks`), 그것은 제어 루프의 일이다.
@@ -296,6 +328,8 @@ GATE_DEFAULT: dict[str, str] = {
     "uncertified": "hold",
     "unverified": "hold",
     "comms": "hold",
+    # T27 — `--no-perception` 서버. 검사되지 않은 청크다. 실행하려면 로컬 `--safe-gate off`.
+    "no_perception": "hold",
 }
 
 #: `comms` 사유의 하위 종류 (`evidence.ipc`). `dimension` 은 `last_ipc` 로는 `error` 로 남는다 —
@@ -344,16 +378,25 @@ def pack_request(obs: dict[str, Any], *, cameras: Sequence[str],
                  stamps: dict[str, float], phase: str,
                  active_manipulators: Sequence[str] = (),
                  reset: bool = False, seq: int = 0,
-                 exec_feedback: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+                 exec_feedback: Optional[dict[str, Any]] = None,
+                 render_stamps: Optional[dict[str, float]] = None,
+                 stamp_mode: Optional[str] = None) -> dict[str, Any]:
     """정책 관측에 AG3S 가 필요한 것을 더한다. `obs` 는 제자리에서 바뀌지 않는다.
 
     `exec_feedback` 은 `make_exec_feedback` / `no_exec_feedback` 의 결과다. **`None` 이면 키를
     싣지 않는다** — 서버는 그것을 "이 계약을 모르는 옛 클라이언트" 로 읽는다. 새 클라이언트는
     낼 사실이 없어도 `no_exec_feedback(reason)` 을 실어 그 둘을 구별되게 한다.
+
+    `render_stamps` · `stamp_mode` (T30c) 도 **주었을 때만** 키가 생긴다 — 옛 호출자의 요청은 키
+    집합이 그대로다. `stamps` 가 판정에 쓰이는 촬영 순간이고, `render_stamps` 는 진단용이다.
     """
+    if stamp_mode is not None and stamp_mode not in STAMP_MODES:
+        raise ValueError(f"stamp_mode must be one of {STAMP_MODES}, got {stamp_mode!r}")
     out = dict(obs)
     if exec_feedback is not None:
         out[PREFIX + EXEC_FEEDBACK] = dict(exec_feedback)
+    if stamp_mode is not None:
+        out[PREFIX + STAMP_MODE] = str(stamp_mode)
     out[PREFIX + "cameras"] = list(cameras)
     out[PREFIX + "phase"] = str(phase)
     out[PREFIX + "active_manipulators"] = list(active_manipulators)
@@ -367,7 +410,31 @@ def pack_request(obs: dict[str, Any], *, cameras: Sequence[str],
         out[f"{PREFIX}T_base_cam/{cam}"] = np.asarray(extrinsics[cam], np.float64)
         out[f"{PREFIX}robot_state/{cam}"] = np.asarray(robot_state[cam], np.float64)
         out[f"{PREFIX}stamp/{cam}"] = float(stamps[cam])
+        if render_stamps is not None:
+            out[f"{PREFIX}render_stamp/{cam}"] = float(render_stamps[cam])
     return out
+
+
+def unpack_stamps(scene: dict[str, Any]) -> dict[str, Any]:
+    """요청의 촬영 시각 (T30c). `scene` 은 `strip_request` 의 두 번째 값 (접두 없는 키).
+
+    `{"mode", "stamps", "render_stamps", "skew_sec", "render_spread_sec"}`. `mode` 가 `None` 이면
+    `stamp_mode` 를 모르는 옛 클라이언트이고, `render_stamps` 가 빈 dict 면 그 진단을 안 실은
+    것이다. skew/spread 는 카메라가 없으면 `None`. 서버의 판정은 이 함수를 쓰지 않는다 — 기록과
+    검증용이다.
+    """
+    cams = [c for c in (scene.get("cameras", ()) or ()) if f"stamp/{c}" in scene]
+    stamps = {c: float(scene[f"stamp/{c}"]) for c in cams}
+    render = {c: float(scene[f"render_stamp/{c}"]) for c in cams
+              if f"render_stamp/{c}" in scene}
+
+    def _spread(values: dict[str, float]):
+        return float(max(values.values()) - min(values.values())) if values else None
+
+    mode = scene.get(STAMP_MODE)
+    return {"mode": None if mode is None else str(mode), "stamps": stamps,
+            "render_stamps": render, "skew_sec": _spread(stamps),
+            "render_spread_sec": _spread(render)}
 
 
 def strip_request(request: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:

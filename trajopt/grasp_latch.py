@@ -32,6 +32,13 @@
 
 목적지에도 같은 잠금을 건다. 한 프레임(18)이 `orange` 로 튀기 때문이다.
 
+**T26 (2026-09-28) — 목적지는 밖에서 받을 수 있다.** T26 뒤 AG3S 의 target 은 파지 뒤에도 조작
+대상(사과)이다 — crate 는 admissible 이 아니어서 target 이 될 수 없다. 그러면 위의 "잠금 뒤
+grounding 이 내는 이름 = 목적지" 는 사과를 목적지로 잠근다. 그래서 `GraspLatch(...,
+external_destination=True)` 는 이름으로 목적지를 배우지 않고 `set_destination(label)` 으로만
+받는다 (`SafePolicy` 는 AG3S 가 등록한 destination 의 이름을 넘긴다). 잠금·파지 규칙(T22)은
+그대로다 — 바뀐 것은 목적지를 받는 입구뿐이다. 기본(False) 은 예전 그대로 이름으로 배운다.
+
 ## 파지 확인 (T22) — attach 는 "닫으라고 했다" 가 아니라 "잡았다" 에 붙는다
 
 attach 는 "물체가 손에 붙어 함께 움직인다" 는 충돌 모델의 선언이다 (지침 §6.1). 그래서
@@ -42,12 +49,17 @@ attach 는 "물체가 손에 붙어 함께 움직인다" 는 충돌 모델의 �
     CLOSING   ─(파지 증거 전부)─────► HELD     파지 확인       attach
     CLOSING   ─(명령·개도 다시 열림)► LATCHED  시도 포기
     HELD      ─(개도 열림 N 프레임 · 또는 placed ∧ 열림)─► PLACED  놓임 확인  detach
+    HELD      ─(attach 뒤 N 실행 청크 안의 반증, T34)─► LATCHED  attach_revoked  detach
 
 **파지 증거** (배포에서 쓸 추정치 — 시뮬레이터 참값이 아니다, `observe_grasp`):
 
 * 닫힘 명령이 **실제로 적용**됐다 — 실행 피드백의 `executed` 스텝 중 `applied_gripper` 가 문턱
   아래인 것. HOLD 로 취소된 청크(`n_exec == 0`)의 적용값은 현재 상태라 세지 않는다.
-* 그 명령이 `settle_steps` 스텝 이상 적용됐다 — 측정 개도가 정착했다고 볼 수 있다 (T17: 2 스텝).
+* 측정 개도가 **멈췄다** — 연속 두 요청의 측정 개도 차가 `settle_epsilon` 미만이다 (T30 F4).
+  예전(T22)에는 "닫힘 명령이 `settle_steps` 스텝 이상 적용됐다" 였다. 명령을 센 것이지 손가락을 본
+  것이 아니어서, 청크 경계에서 손가락이 아직 움직이는 중(0.16–0.76)인 빈손 닫힘이 24 중 10 번
+  attach 됐다 (T22 verify #4e). T28 E3b ep1808 r1 t=120 도 같은 모양이다 (0.997 → 0.364, 그 뒤
+  명령 0.43 을 따라 0.43 으로 되돌아감 — 들린 적 없음).
 * 측정 개도가 **줄었다** (`opening_before − opening_after ≥ min_drop`) 그리고 문턱 아래다.
 * 측정 개도가 **마지막 실행 명령보다 `blocked_gap` 이상 위에서 멈췄다** — 빈손이면 명령까지
   닫힌다 (위치 제어). 그리고 `empty_below` 보다 위다 (끝까지 닫힘 = 빈손).
@@ -57,6 +69,15 @@ attach 는 "물체가 손에 붙어 함께 움직인다" 는 충돌 모델의 �
 `evidence=False`(기본) 는 T22 전의 규칙 그대로다 — 그리퍼 값이 문턱 아래면 attach. 이 모듈을
 단독으로 쓰는 연구 스크립트와 기존 테스트가 그 계약을 읽는다. `SafePolicy` 는
 `LatchConfig.legacy_gripper_attach=False`(기본) 일 때 `evidence=True` 로 짓는다.
+
+## 거짓 attach 회수 (T34 J2)
+
+증거가 다 맞아도 attach 가 틀릴 수 있다 — T33 E3b ep1808 r1 은 개도가 명령을 느리게 따라가다
+멈춘 순간에 attach 했고, 손이 들렸는데 사과는 테이블에 남았다 (t=232 에 열려서야 detach, 그동안
+쥔 구가 허공을 들고 다녔다). 그래서 attach 뒤 `revoke_chunks` 실행 청크 동안 다시 본다: 개도가
+계속 "쥐고 있음" 인가 (더 닫히지 않았나 · 명령에 막혀 있나), 조작 대상이 보이면 쥔 구 자리에
+있나, 손을 들었으면 따라 올라왔나. 어긋나면 detach 하고 `attach_revoked` 를 남기며 LATCHED 로
+돌아간다 (PLACED 가 아니다 — 대상은 그대로이고 다음 닫힘을 다시 판정한다).
 
 ## 이 모듈은 부르지 않는다
 
@@ -110,9 +131,24 @@ class LatchConfig:
     #: 17.6 mm (T17a) 라 여유를 두었다. verifier 가 재서 정한다. T14 의 636 mm 는 어떤 값으로도
     #: 거절돼야 한다. `AG3S.attach` 의 기본 관문(`attached.DEFAULT_ATTACH_REACH_M`)과 같은 값.
     reach: float = 0.12
-    #: 닫힘 명령이 이만큼의 **실행된** 스텝 동안 적용돼야 측정 개도를 정착한 값으로 본다.
-    #: T17: 명령 0.0 이 t=115 에 적용 → t=116 0.904 → t=117 0.712 (2 스텝). 1 스텝 여유.
-    settle_steps: int = 3
+    #: **측정 개도가 멈췄다** 의 문턱 (T30 F4, 정규화 개도 — 1 = 열림). 이번 요청의 측정 개도와
+    #: 직전 요청의 측정 개도 차가 이보다 작아야 `settled`. 명령 스텝을 세지 않는다.
+    #:
+    #: 0.02 = 손가락 하나 0.9 mm / 청크 (`RBY1_GRIPPER_OPEN` −0.045 m) — fine 격자 5 mm 보다 한참
+    #: 작아서, 이 안에서 움직이는 손가락에 붙인 물체의 모델 오차는 무시할 만하다. 근거 (요청 간 차):
+    #:
+    #: | 기록 | 경우 | 차 |
+    #: |---|---|---|
+    #: | T17 실제 파지 t=120 → 128 | 쥔 뒤 정착 (0.715 → 0.720) | 0.0051 — 통과해야 한다 |
+    #: | T17 t=128–216 | 쥔 채 유지 | ≤ 0.0006 |
+    #: | T17 · T16 · T28 E3a·E3b 12 에피소드 (14 기록) | 청크 내내 스텝당 < 0.003 인 요청 793 개 | 중앙 0.0001 · p99 0.010 · 최대 0.0196 |
+    #: | T22 빈손 sweep 거짓 attach 10 건 | 청크 경계에서 이동 중 | 0.24–0.84 |
+    #: | T28 E3b ep1808 r1 t=120 거짓 attach | 이동 중 (0.997 → 0.364) | 0.633, 다음 요청 0.067 |
+    #: | T28 E3b ep1808 r2 t=128 attach (옛 규칙) | 이동 중 (0.991 → 0.775 → 0.572) | 0.216 |
+    #:
+    #: 느린 추종(부분 명령 ≈ 0.43 을 따라 스텝당 ≤ 0.02 로 움직임)은 0.02 아래로 들어올 수 있다 —
+    #: 차 하나로는 못 가른다. 그 경우 개도 ≈ 명령이라 `blocked` 가 거절한다 (빈손/쥔 손 구별은 T22 그대로).
+    settle_epsilon: float = 0.02
     #: 닫힘 시도 직전 개도 − 지금 개도 ≥ 이것 (정규화, 1 = 열림). "줄어들었다".
     min_drop: float = 0.05
     #: 지금 개도 − 마지막 실행 명령 ≥ 이것 — 손가락이 명령까지 못 가고 **막혔다** (물체).
@@ -122,6 +158,32 @@ class LatchConfig:
     #: 개도가 이보다 작으면 끝까지 닫힌 것 = 빈손 (`gripper_finger_l1` 범위 [−0.05, 0] → 정규화 0 이
     #: 완전 닫힘). 0.10 ≈ 물체 폭 9 mm.
     empty_below: float = 0.10
+
+    # --- T34 J2: 거짓 attach 회수 (`attach_revoked`) -------------------------------------------
+    #: attach 뒤 **실행된** 청크 몇 개 동안 쥔 상태를 다시 확인하나. HOLD 청크(실행 0)는 세지 않는다
+    #: — 로봇이 안 움직이면 새 증거도 없다. 근거 (T33 기록, `T34.impl.md` §2):
+    #:
+    #: | 기록 | 첫 반증이 보인 실행 청크 (attach 뒤 k 번째) |
+    #: |---|---|
+    #: | E3b ep1808 r1 거짓 attach | 개도 k=1 (0.684 → 0.555 = 명령 0.552) · 관측 k=3 (사과가 테이블에 보임, 쥔 구에서 215 mm) |
+    #: | E3a ep1800 r1 (들다 떨어뜨림, 실패) | k=2 (개도 0.551 = 명령 0.550, GT 사과 다시 테이블) |
+    #: | 성공 run 의 첫 정상 놓기 | k ≥ 8 (E3b ep1808 r2 k=8 crate 위 낙하 · 나머지 개도 열림 k ≥ 10) |
+    #:
+    #: 4 = 거짓 attach 의 마지막 증거(k=3) + 1, 정상 놓기(k ≥ 8)의 절반.
+    revoke_chunks: int = 4
+    #: attach 순간 개도 − 지금 개도 ≥ 이것이면 "쥐고 있음" 이 아니다 (손가락이 물체 없이 더 닫혔다).
+    #: 참 attach 는 창 안에서 최대 0.015 (0.701 → 0.686) 움직였고, 거짓·떨어뜨림은 0.13–0.15.
+    revoke_drop: float = 0.05
+    #: 관측된 조작 대상 centroid 가 쥔 주 구 중심에서 (주 구 반지름 + 이것) 밖이면 쥔 물체가 아니다.
+    #: 0.040 = 측정된 손 안 미끄럼 최대 24 mm (T32a) 의 두 배 가까이. 참 파지 뒤 창 안에서 조작 대상이
+    #: 관측된 적은 T33 에서 **한 번도 없다** (self-filter 가 지운다); 거짓 attach 는 206–238 mm.
+    revoke_centre_slack: float = 0.040
+    #: 손이 이만큼 (m, 위로) 들렸는데 관측된 물체가 `revoke_follow_ratio` 만큼도 따라오지 않으면 회수.
+    #: 참 들기는 첫 실행 청크에 75–88 mm, 들지 않은 흔들림은 ≤ 11 mm (T33).
+    revoke_lift_min: float = 0.030
+    revoke_follow_ratio: float = 0.5
+    #: 개도 두 검사(`opening_dropped` · `not_blocked`)를 쓰나. 측정·대조군용 스위치 (관측 두 검사만 남는다).
+    revoke_use_opening: bool = True
 
 
 @dataclasses.dataclass(frozen=True)
@@ -141,6 +203,9 @@ class LatchEvent:
     note: str = ""
     #: 파지 판단의 근거 (T22, `observe_grasp` 만 채운다). 기록(`summary_json.grasp`)에 그대로 간다.
     evidence: Optional[dict] = None
+    #: T34 J2: 이번 `detach` 는 놓기가 아니라 **거짓 attach 의 회수**다 (`attach_revoked`). 상태는
+    #: `LATCHED` 로 돌아간다 — 대상은 그대로 잠겨 있고 다음 닫힘을 다시 판정한다.
+    revoked: bool = False
 
 
 @dataclasses.dataclass(frozen=True)
@@ -195,6 +260,13 @@ def grasp_signal_from_feedback(feedback: Optional[dict], hand_index: int,
         last_command=executed[-1] if executed else None,
         opening=opening,
     )
+
+
+def _delta(opening, previous) -> Optional[float]:
+    """연속 두 요청의 측정 개도 차 `|opening − previous|`. 하나라도 없으면 `None`."""
+    if opening is None or previous is None:
+        return None
+    return round(abs(float(opening) - float(previous)), 6)
 
 
 class CentroidIdentity:
@@ -270,11 +342,15 @@ class GraspLatch:
     `attach`/`detach` 가 참일 때만 AG3S 의 해당 메서드를 부른다.
     """
 
-    def __init__(self, config: Optional[LatchConfig] = None, *, evidence: bool = False):
+    def __init__(self, config: Optional[LatchConfig] = None, *, evidence: bool = False,
+                 external_destination: bool = False):
         self.config = config or LatchConfig()
         #: T22. True 면 attach/detach 는 `observe_grasp`(실행 피드백 + 조작 대상 + reach)만 낸다.
         #: `update` 는 대상 확정과 목적지 학습만 하고 그리퍼 값으로 상태를 바꾸지 않는다.
         self.evidence = bool(evidence)
+        #: T26. True 면 목적지를 grounding 이름으로 배우지 않고 `set_destination` 으로만 받는다.
+        self.external_destination = bool(external_destination)
+        self._external_destination: Optional[str] = None
         self._manipulated = _Confirm(self.config)
         self._destination = _Confirm(self.config)
         self.phase = GraspPhase.SEARCHING
@@ -288,7 +364,15 @@ class GraspLatch:
 
     @property
     def destination(self) -> Optional[str]:
+        if self.external_destination:
+            return self._external_destination
         return self._destination.locked
+
+    def set_destination(self, label: Optional[str]) -> None:
+        """목적지를 밖에서 준다 (T26, `external_destination=True` 전용). `None` = 아직 모른다."""
+        if not self.external_destination:
+            raise RuntimeError("set_destination needs GraspLatch(external_destination=True)")
+        self._external_destination = None if label is None else str(label)
 
     @property
     def holding(self) -> bool:
@@ -327,7 +411,7 @@ class GraspLatch:
         if self.evidence:
             # T22 — 그리퍼 값으로는 상태를 바꾸지 않는다. 파지·놓임은 `observe_grasp` 가 낸다.
             # 여기서 하는 것은 대상 확정(위)과 목적지 학습뿐이다.
-            if self.phase is GraspPhase.HELD:
+            if self.phase is GraspPhase.HELD and not self.external_destination:
                 self._destination.update(label, score, runner_up)
         elif self.phase is GraspPhase.LATCHED:
             if closed:
@@ -338,8 +422,9 @@ class GraspLatch:
 
         elif self.phase is GraspPhase.HELD:
             # 잠금이 걸린 뒤 grounding 이 내는 이름은 조작 대상이 아니라 **목적지**다 (F11 의
-            # 뒤집기). 여기서만 목적지 잠금에 먹인다.
-            self._destination.update(label, score, runner_up)
+            # 뒤집기). 여기서만 목적지 잠금에 먹인다. (T26: 밖에서 받는 모드면 먹이지 않는다.)
+            if not self.external_destination:
+                self._destination.update(label, score, runner_up)
             self._open_streak = self._open_streak + 1 if (gripper is not None and not closed) else 0
             # **성공 판정은 그리퍼가 닫혀 있는 동안 풀지 않는다.** 주입된 판정은 기하만
             # 답한다 — 쥔 물체가 목적지 안에 있고 테두리 아래인가 (`trajopt/placed.py`).
@@ -357,7 +442,7 @@ class GraspLatch:
         return LatchEvent(
             phase=self.phase,
             manipulated=self._manipulated.locked,
-            destination=self._destination.locked,
+            destination=self.destination,
             attach=attach,
             detach=detach,
             note=note,
@@ -372,6 +457,7 @@ class GraspLatch:
         manipulated_id: Optional[int] = None,
         manipulated_state: Optional[str] = None,
         placed: bool = False,
+        held_observation: Optional[dict] = None,
     ) -> LatchEvent:
         """직전 청크의 **실행 사실**로 닫힘 시도 · 파지 확인 · 놓임 확인을 갱신한다 (`evidence=True`).
 
@@ -384,6 +470,9 @@ class GraspLatch:
             manipulated_id / manipulated_state: T20 `AG3S.manipulated` 의 id · 상태
                 (`visible`/`occluded`/`lost`). 없으면 `None`.
             placed: 외부 성공 판정 (`placed_fn`). **측정 개도가 열렸을 때만** 풀기에 쓴다.
+            held_observation: T34 J2 — 직전 프레임에 조작 대상이 **관측됐을 때** 쥔 구와의 비교
+                (`AG3S.held_observation()`: `centre_distance_m`, `held_radius_m`, `hand_rise_m`,
+                `object_rise_m`). 관측이 없으면 `None` — 그 두 검사는 판단하지 않는다.
         """
         if not self.evidence:
             raise RuntimeError("observe_grasp needs GraspLatch(evidence=True)")
@@ -399,6 +488,8 @@ class GraspLatch:
             "opening_previous": self._last_opening,
             "last_command": self._last_command,
             "settled_steps": int(self._settled_steps),
+            "opening_delta": _delta(signal.opening, self._last_opening),
+            "settle_epsilon": float(cfg.settle_epsilon),
             "reach_mm": None if reach_m is None else round(float(reach_m) * 1000.0, 2),
             "reach_limit_mm": round(float(cfg.reach) * 1000.0, 2),
             "manipulated_id": manipulated_id,
@@ -442,22 +533,31 @@ class GraspLatch:
                         "다시 열렸다 — attach 없음")
                 self._reset_grasp(keep_opening=True)
             else:
-                checks = self._grasp_checks(opening, reach_m, manipulated_id, manipulated_state)
+                checks = self._grasp_checks(opening, self._last_opening, reach_m,
+                                            manipulated_id, manipulated_state)
                 ev["checks"] = checks
                 failed = [k for k, v in checks.items() if not v]
                 if not failed:
                     self.phase = GraspPhase.HELD
                     self._open_streak = 0
                     attach = True
+                    # T34 J2: 회수 창을 연다 — attach 순간의 개도가 "쥐고 있음" 의 기준이다.
+                    self._attach_opening = None if opening is None else float(opening)
+                    self._held_exec_chunks = 0
                     note = (f"파지 확인 — attach(manipulated id={manipulated_id}): 개도 "
-                            f"{self._opening_before:.3f}→{opening:.3f}, 명령 {self._last_command:.3f}, "
+                            f"{self._opening_before:.3f}→{opening:.3f} (정지: 직전 요청과 차 "
+                            f"{ev['opening_delta']:.4f} < {cfg.settle_epsilon:g}), "
+                            f"명령 {self._last_command:.3f}, "
                             f"reach {reach_m * 1000.0:.1f} mm ≤ {cfg.reach * 1000.0:.0f} mm, "
                             f"feedback seq {signal.feedback_seq}")
                 else:
                     note = ((note + "; ") if note else "") + (
                         "닫힘 시도 — 파지 미확인: " + ", ".join(failed)
                         + (" (빈손 닫힘으로 보인다)" if "not_empty" in failed
-                           or ("blocked" in failed and checks.get("settled")) else ""))
+                           or ("blocked" in failed and checks.get("settled")) else "")
+                        + (f" (손가락이 아직 움직인다: 직전 요청과 차 {ev['opening_delta']:.3f} ≥ "
+                           f"{cfg.settle_epsilon:g})" if "settled" in failed
+                           and ev["opening_delta"] is not None else ""))
 
         elif self.phase is GraspPhase.HELD:
             open_now = opening is not None and opening >= cfg.gripper_closed_below
@@ -465,6 +565,21 @@ class GraspLatch:
             placed_now = bool(placed) and open_now
             ev["open_streak"] = int(self._open_streak)
             ev["placed"] = bool(placed)
+            failed_hold = self._hold_checks(signal, opening, open_now, held_observation, ev)
+            if failed_hold:
+                # T34 J2 — 거짓 attach 회수. 놓기(PLACED)가 아니다: 대상은 잠긴 채 LATCHED 로 돌아가
+                # 다음 닫힘을 처음부터 다시 판정한다 (PLACED 면 그 에피소드에서 다시 attach 할 수 없다).
+                self.phase = GraspPhase.LATCHED
+                self._open_streak = 0
+                ev["revoke"] = {"reasons": failed_hold, "window": dict(ev.get("hold_window") or {})}
+                note = (f"attach_revoked — 쥔 상태가 아니다: {', '.join(failed_hold)} "
+                        f"(attach 뒤 실행 청크 {self._held_exec_chunks}/{cfg.revoke_chunks}) — "
+                        f"detach(), 대상 잠금은 유지 (feedback seq {signal.feedback_seq})")
+                self._reset_grasp(keep_opening=True)
+                if opening is not None:
+                    self._last_opening = float(opening)
+                self._last_grasp = self._event(False, True, note, ev, revoked=True)
+                return self._last_grasp
             if placed_now or self._open_streak >= cfg.release_frames:
                 self.phase = GraspPhase.PLACED
                 detach = True
@@ -497,12 +612,18 @@ class GraspLatch:
         """마지막 `observe_grasp`/`revert_attach` 의 결과 (기록용)."""
         return self._last_grasp
 
-    def _grasp_checks(self, opening, reach_m, manipulated_id, manipulated_state) -> dict:
-        """파지 확인의 조건. **전부 참이어야** attach 한다. 이름이 곧 기록의 키다."""
+    def _grasp_checks(self, opening, previous, reach_m, manipulated_id,
+                      manipulated_state) -> dict:
+        """파지 확인의 조건. **전부 참이어야** attach 한다. 이름이 곧 기록의 키다.
+
+        `settled` (T30 F4): 이번 요청의 측정 개도 `opening` 과 직전 요청의 측정 개도 `previous` 의
+        차 < `settle_epsilon` — **손가락이 멈췄다.** 직전 측정이 없으면 거짓 (fail-closed).
+        """
         cfg = self.config
         known = opening is not None
+        delta = _delta(opening, previous)
         return {
-            "settled": self._settled_steps >= int(cfg.settle_steps),
+            "settled": delta is not None and delta < float(cfg.settle_epsilon),
             "closed": known and opening < cfg.gripper_closed_below,
             "dropped": (known and self._opening_before is not None
                         and self._opening_before - opening >= cfg.min_drop),
@@ -514,26 +635,90 @@ class GraspLatch:
             "reach": reach_m is not None and float(reach_m) <= float(cfg.reach),
         }
 
-    def _event(self, attach: bool, detach: bool, note: str, evidence: dict) -> LatchEvent:
+    def _hold_checks(self, signal: GraspSignal, opening, open_now: bool,
+                     held_observation: Optional[dict], ev: dict) -> list:
+        """T34 J2 — attach 뒤 `revoke_chunks` 실행 청크 동안 "정말 쥐고 있나" 를 본다.
+
+        돌려주는 것은 어긋난 검사 이름 목록 (비면 유지). 네 가지다:
+
+        * `opening_dropped` — attach 순간 개도 − 지금 ≥ `revoke_drop` (손가락이 더 닫혔다).
+        * `not_blocked` — 이번 청크의 마지막 **실행** 명령이 attach 개도보다 `blocked_gap` 이상
+          조이는데 개도가 그 명령까지 갔다 (`개도 − 명령 < blocked_gap`, T22 의 `blocked` 와 같은 뜻).
+          명령이 attach 개도 근처이거나 푸는 쪽이면 판단하지 않는다 — 놓기는 `open_streak` 의 일이다.
+        * `observed_elsewhere` — 관측된 조작 대상 centroid 가 쥔 주 구 밖 (`revoke_centre_slack`).
+        * `not_following` — 손이 `revoke_lift_min` 이상 들렸는데 관측된 물체가 그 `revoke_follow_ratio`
+          만큼도 안 올랐다.
+
+        개도가 열렸으면(`open_now`) 판단하지 않는다 — 놓기다. 창이 지나면 아무것도 안 본다.
+        """
+        cfg = self.config
+        if signal.n_exec > 0:
+            self._held_exec_chunks += 1
+        window = {"exec_chunks": int(self._held_exec_chunks), "limit": int(cfg.revoke_chunks),
+                  "attach_opening": self._attach_opening}
+        ev["hold_window"] = window
+        if self._held_exec_chunks > int(cfg.revoke_chunks) or open_now:
+            window["active"] = False
+            return []
+        window["active"] = True
+        checks: dict = {}
+        a = self._attach_opening
+        if a is not None and opening is not None:
+            checks["opening_dropped"] = round(a - float(opening), 4)
+        cmd = signal.last_command
+        tightening = (a is not None and cmd is not None
+                      and float(cmd) <= a - float(cfg.blocked_gap))
+        if tightening and opening is not None:
+            checks["gap_to_command"] = round(float(opening) - float(cmd), 4)
+        obs = held_observation or None
+        if obs:
+            checks["observed_distance_mm"] = round(float(obs["centre_distance_m"]) * 1000.0, 1)
+            checks["observed_limit_mm"] = round(
+                (float(obs["held_radius_m"]) + float(cfg.revoke_centre_slack)) * 1000.0, 1)
+            checks["hand_rise_mm"] = round(float(obs["hand_rise_m"]) * 1000.0, 1)
+            checks["object_rise_mm"] = round(float(obs["object_rise_m"]) * 1000.0, 1)
+        ev["hold_checks"] = checks
+        failed = []
+        if cfg.revoke_use_opening:
+            if "opening_dropped" in checks and checks["opening_dropped"] >= float(cfg.revoke_drop):
+                failed.append("opening_dropped")
+            if "gap_to_command" in checks and checks["gap_to_command"] < float(cfg.blocked_gap):
+                failed.append("not_blocked")
+        if obs:
+            if float(obs["centre_distance_m"]) > (float(obs["held_radius_m"])
+                                                   + float(cfg.revoke_centre_slack)):
+                failed.append("observed_elsewhere")
+            rise = float(obs["hand_rise_m"])
+            if (rise >= float(cfg.revoke_lift_min)
+                    and float(obs["object_rise_m"]) < float(cfg.revoke_follow_ratio) * rise):
+                failed.append("not_following")
+        return failed
+
+    def _event(self, attach: bool, detach: bool, note: str, evidence: dict, *,
+               revoked: bool = False) -> LatchEvent:
         evidence = dict(evidence)
         evidence["state"] = self.phase.value
         return LatchEvent(
             phase=self.phase,
             manipulated=self._manipulated.locked,
-            destination=self._destination.locked,
+            destination=self.destination,
             attach=attach,
             detach=detach,
             note=note,
             evidence=evidence,
+            revoked=bool(revoked),
         )
 
     def _reset_grasp(self, *, keep_opening: bool = False) -> None:
         #: 닫힘 시도가 시작되기 직전의 측정 개도.
         self._opening_before: Optional[float] = None
-        #: 닫힘 시도 뒤 **실행된** 닫힘 명령 스텝의 누적.
+        #: 닫힘 시도 뒤 **실행된** 닫힘 명령 스텝의 누적. 기록용 (T30 F4 뒤 `settled` 는 이것을 보지 않는다).
         self._settled_steps = 0
         #: 마지막으로 실행된 명령 (HOLD 청크는 갱신하지 않는다).
         self._last_command: Optional[float] = None
+        #: T34 J2: attach 순간의 측정 개도와 attach 뒤 실행된 청크 수 (회수 창).
+        self._attach_opening: Optional[float] = None
+        self._held_exec_chunks = 0
         if not keep_opening:
             #: 직전 요청의 측정 개도.
             self._last_opening: Optional[float] = None
@@ -543,6 +728,7 @@ class GraspLatch:
         """다음 과제로 넘어간다. 잠금 둘과 상태를 모두 푼다."""
         self._manipulated.release()
         self._destination.release()
+        self._external_destination = None
         self.phase = GraspPhase.SEARCHING
         self._open_streak = 0
         self._reset_grasp()

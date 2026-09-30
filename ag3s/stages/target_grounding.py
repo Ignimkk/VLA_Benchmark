@@ -47,6 +47,45 @@ last observed geometry (`occluded`), not the leader — on T14 seq 12 the leader
 0.015 because the apple was behind the fingers. After `target_lost_frames` it is `lost`: no target,
 `GroundingStatus.LOST`. A switch still happens, on the T5e count, from challengers scoring at least
 `target_switch_min_score` (default 0.0 = every challenger counts, as before).
+
+**Only admissible clusters compete (T26, 2026-09-28).** A cluster may become the manipulated object
+only if it is *graspable* — its narrowest principal extent fits between the fingers at their open
+limit, a number computed from the robot model — and it is not the *destination* (`stages/
+admissibility.py`). `first` adopts the highest-ranked admissible cluster, not the leader; a challenger
+is the highest-ranked admissible cluster that is not the held one; a held object whose matching
+cluster is inadmissible (the apple merged with the fingers or the crate) is `occluded` with reason
+`inadmissible_match` and keeps its last admissible geometry. With no admissible cluster and nothing
+held the frame is `GroundingStatus.NO_ADMISSIBLE`. The crate therefore never becomes the manipulated
+object — whatever its attention score — and is registered as the destination instead. The default
+`target_switch_min_score` is 0.1 since T26.
+
+**Before a grasp, a cluster is the held object only if it looks like it (T30 F3, 2026-09-29).** E3
+ep1808 t=96: the manipulated id 0 slid onto the orange (the held centroid 42.6 → 46.7 → 85.5 mm from
+the apple) and ep1800 onto the banana — each frame's nearest cluster within the 60 mm identity
+tolerance was taken as the apple and the held centroid followed it. An object on the table does not
+move until the hand touches it, so while `TargetConfirm` is not frozen the nearest cluster is the
+held object only if (i) its centroid is within the object's own bounding radius of the last
+admissible geometry and (ii) its narrowest and middle extents are within
+`clustering.manipulated_extent_ratio` of that geometry's (`admissibility.associate`). Otherwise
+the object is `occluded` with reason `association_rejected` and keeps its last admissible geometry;
+the rejected cluster is an ordinary challenger under the unchanged T26 switch rule.
+
+**A cluster that may be two objects is split by attention (T31b, 2026-09-29).** The E3 apple was
+adopted at t=0 merged with the orange (ep1808) or the banana (ep1800): 30 mm connectivity bridged
+the gap between them, and the merged cluster's narrowest extent still fit the gripper. Before a
+grasp (`confirm` not frozen), a cluster whose narrowest extent fits the gripper but whose largest
+does not is re-clustered at `clustering.attention_split_radius`; when attention separates the
+components (`clustering.attention_split_ratio`), each becomes its own cluster, the one with the
+largest attention mass being the target candidate (`stages/attention_split.py`). Every decision is
+kept: `GroundingResult.splits`, `ClusterInfo.split`, and `ManipulatedIdentity.split` in the record.
+
+**Two side effects of that split, closed in `TargetConfirm` (T32b, 2026-09-29).** (S2) The split is
+off while frozen, so the geometry a grasp attempt leaves standing can be the merge again; on the
+first call after the freeze is released it is split once (`clustering.split_anchor_on_release`,
+with the attention it was observed with). (S3) With the neighbour split out as a clean cluster, it
+could lead while the hand hid the apple and win the switch early; a frame where the held object is
+unobserved or a subset *and* a hand sphere (`TargetConfirm.note_hand`) is within
+`clustering.hand_occlusion_reach` of it does not count toward a switch.
 """
 
 from __future__ import annotations
@@ -59,12 +98,43 @@ from typing import Any, Optional
 import numpy as np
 
 from benchmark.ag3s.config import ClusteringConfig
+from benchmark.ag3s.stages.admissibility import (
+    Admissibility,
+    Association,
+    DestinationGeometry,
+    DestinationRegistry,
+    HandSpheres,
+    anchor_cover,
+    assess,
+    associate,
+    graspable,
+    principal_extents,
+)
+from benchmark.ag3s.stages.attention_split import SplitDecision, split_by_attention
 from benchmark.ag3s.stages.geometry import fit_sphere, rms_radius
 from benchmark.ag3s.types import AttentionPointCloud, GroundingStatus, TargetGeometry
 
 _EPS = 1e-9
 #: "Not given" for `TargetConfirm(lost_frames=...)`, where None already means "never lost".
 _FROM_CONFIG = object()
+#: `TargetConfirm(max_opening=UNCHECKED)`: admissibility is not evaluated at all (T20 behaviour).
+#: Only for standalone/offline use — `AG3S` always passes a number, or `None` (= unknown =
+#: nothing graspable), and its exclusion gate refuses geometry without admissibility evidence.
+UNCHECKED = "unchecked"
+#: `ConfirmDecision.mode` when nothing is held and no cluster is admissible (T26).
+NO_ADMISSIBLE = "no_admissible"
+#: `ConfirmDecision.reason` when the held object's matching cluster was inadmissible (T26).
+INADMISSIBLE_MATCH = "inadmissible_match"
+#: `ConfirmDecision.reason` when, before a grasp, the cluster at the held object's place failed the
+#: association test — moved further than the object's own radius, or changed size (T30 F3).
+ASSOCIATION_REJECTED = "association_rejected"
+#: `ConfirmDecision.reason` when, before a grasp, the cluster at the held object's place is the
+#: object but covers only part of its anchor geometry — the anchor is kept (T30 F3b).
+SUBSET_KEPT_ANCHOR = "subset_kept_anchor"
+#: `ConfirmDecision.reason` when, before a grasp, the anchor is a component of an attention split
+#: and the cluster at its place is a cluster that may again be several objects but could not be
+#: split this frame — the anchor is kept, the object counts as seen (T31b).
+UNSPLIT_KEPT_ANCHOR = "unsplit_kept_anchor"
 
 
 # ----------------------------------------------------------------------------- clustering
@@ -230,6 +300,13 @@ class ClusterInfo:
     distance_from_attention_peak: float
     target_score: float
     rms_radius: float = 0.0
+    #: `(3,)` extents along the cluster's principal axes, ascending (m) — T26's "graspable" reads
+    #: the first. None for a hand-built `ClusterInfo` (then it is computed from the points).
+    principal_extents: Optional[np.ndarray] = None
+    #: T31b: `{role, split_index, parent_n_points, parent_extents_mm}` (`split_index` indexes
+    #: `GroundingResult.splits`). `role` is `target`/`obstacle` for a component of a split parent,
+    #: `unsplit` (+ `reason`) for a triggered cluster the split left whole. None when not triggered.
+    split: Optional[dict] = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -247,6 +324,9 @@ class GroundingResult:
     seed_indices: np.ndarray = dataclasses.field(default_factory=lambda: np.zeros(0, np.int64))
     attention_peak_index: int = -1
     best_score: float = 0.0
+    #: T31b: this frame's split decisions, one per triggered cluster (accepted or not), in the
+    #: order the parents were grown. Empty when nothing was triggered or the split did not run.
+    splits: tuple[SplitDecision, ...] = ()
 
     @property
     def ok(self) -> bool:
@@ -300,6 +380,27 @@ class ManipulatedIdentity:
     switched_from: Optional[int]
     #: Grounding-call index this snapshot describes.
     frame: int
+    #: T26: the admissibility evidence of the **last observed geometry** (`narrowest_extent_m ≤
+    #: max_opening_m`, destination overlap) — what `AG3S._exclusion_gate` checks before any
+    #: exclusion geometry is built. None when `TargetConfirm` runs `UNCHECKED`.
+    admissibility: Optional[Admissibility] = None
+    #: T30 F3: this frame's association test of the cluster at the object's place (accepted on a
+    #: `keep`/`hold`, rejected on an `association_rejected` frame), or None when it did not run
+    #: (frozen, `UNCHECKED`, test off, no cluster there, nothing to compare with).
+    association: Optional[Association] = None
+    #: T30 F3b: the current geometry as the pre-grasp anchor — `{manipulated_id, active, source
+    #: (first|switch|refined|observed), since_frame, kept_frames, extents_mm, radius_mm, n_points,
+    #: centroid}` — or None before any geometry.
+    anchor: Optional[dict] = None
+    #: T31b: this frame's attention-split record — `{ran, skipped, max_opening_mm, n_triggered,
+    #: n_split, decisions: [SplitDecision.record()], manipulated_from_split}` — or None when
+    #: grounding did not reach clustering this frame.
+    split: Optional[dict] = None
+    #: T32b: this frame's hand record — `{available, gap_mm, reach_mm, occluded_by_hand,
+    #: challenger_gap_mm, n_spheres, links}`
+    #: (`gap_mm` = nearest hand sphere surface to the standing geometry) — or None when the caller
+    #: gave no hand this frame.
+    hand: Optional[dict] = None
 
     @property
     def usable(self) -> bool:
@@ -331,6 +432,11 @@ class ManipulatedIdentity:
             "last_seen_frame": int(self.last_seen_frame),
             "switched_from": None if self.switched_from is None else int(self.switched_from),
             "frame": int(self.frame),
+            "admissibility": None if self.admissibility is None else self.admissibility.record(),
+            "association": None if self.association is None else self.association.record(),
+            "anchor": None if self.anchor is None else dict(self.anchor),
+            "split": None if self.split is None else dict(self.split),
+            "hand": None if self.hand is None else dict(self.hand),
         }
 
 
@@ -369,6 +475,23 @@ class ConfirmDecision:
     manipulated_id: Optional[int] = None
     #: Consecutive unobserved frames after this decision (0 when visible).
     age_frames: int = 0
+    #: T26: why the held object is unobserved (`unobserved` | `inadmissible_match`), or
+    #: `no_admissible` for a frame with nothing held and nothing admissible. None otherwise.
+    reason: Optional[str] = None
+    #: T26: admissibility of `cluster` (or of the inadmissible match on `inadmissible_match`).
+    admissibility: Optional[Admissibility] = None
+    #: T26: how many of this frame's clusters were admissible (None when `UNCHECKED`).
+    n_admissible: Optional[int] = None
+    #: T26: whether a challenger was barred from counting because the grasp is in progress.
+    frozen: bool = False
+    #: T30 F3: the association test of the cluster nearest the held object (see
+    #: `ManipulatedIdentity.association`). Rejected ⇔ `reason == "association_rejected"`.
+    association: Optional[Association] = None
+    #: T32b: the held object was hidden by the hand this frame (unobserved or `subset_kept_anchor`
+    #: with a hand sphere within `clustering.hand_occlusion_reach`), so a challenger did not count.
+    hand_occluded: bool = False
+    #: T32b: nearest hand sphere surface ↔ the standing geometry (m), or None without a hand.
+    hand_gap_m: Optional[float] = None
 
 
 class TargetConfirm:
@@ -410,6 +533,18 @@ class TargetConfirm:
     undone; here the decision is remade every frame, so tracking the object is the safer error.
     While the object is unobserved the centroid stays where it was last seen — a pushed object is
     the known limit of that (T20.task "되돌아올 지점").
+
+    **Hidden by the hand does not count toward a switch (T32b S3).** The count keeps running while
+    the object is unobserved — unless the caller's hand spheres (`note_hand`) say a palm or finger
+    is within `clustering.hand_occlusion_reach` of it, and no nearer the challenger. Then the
+    object is hidden by the hand, not gone, and a challenger's frame is a gap (as while frozen).
+    Once the hand is away — or has gone to the challenger — the count runs again, so a real change
+    of object still switches on the T5e schedule.
+
+    **A released grasp re-splits its anchor (T32b S2).** While frozen the geometry follows the
+    observation unsplit; on the first call after the freeze is released that geometry goes through
+    the T31b attention split once (`split_anchor_on_release`), so the neighbour a failed grasp
+    left merged with the apple does not become the anchor.
     """
 
     def __init__(
@@ -420,6 +555,15 @@ class TargetConfirm:
         tolerance: Optional[float] = None,
         switch_min_score: Optional[float] = None,
         lost_frames: Any = _FROM_CONFIG,
+        max_opening: Any = _FROM_CONFIG,
+        overlap_distance: Optional[float] = None,
+        overlap_fraction: Optional[float] = None,
+        destination_points: Optional[np.ndarray] = None,
+        extent_ratio: Any = _FROM_CONFIG,
+        anchor_coverage: Any = _FROM_CONFIG,
+        anchor_distance: Optional[float] = None,
+        hand_reach: Any = _FROM_CONFIG,
+        split_on_release: Optional[bool] = None,
     ):
         cfg = config or ClusteringConfig()
         self.frames = int(cfg.target_confirm_frames if frames is None else frames)
@@ -429,6 +573,85 @@ class TargetConfirm:
         # None is a legal value (never lost), so "not given" needs its own sentinel.
         lost = cfg.target_lost_frames if lost_frames is _FROM_CONFIG else lost_frames
         self.lost_frames: Optional[int] = None if lost is None else int(lost)
+        # --- admissibility (T26) ---
+        # Not given: `clustering.gripper_max_opening` if set, otherwise UNCHECKED (standalone use).
+        # `None` given explicitly = "no one knows the opening" = nothing is graspable (fail-closed).
+        if max_opening is _FROM_CONFIG:
+            max_opening = (UNCHECKED if cfg.gripper_max_opening is None
+                           else float(cfg.gripper_max_opening))
+        if max_opening is not UNCHECKED and max_opening is not None:
+            max_opening = float(max_opening)
+        self.max_opening: Any = max_opening
+        self.overlap_distance = float(
+            overlap_distance if overlap_distance is not None
+            else (cfg.destination_overlap_distance if cfg.destination_overlap_distance is not None
+                  else cfg.eps))
+        self.overlap_fraction = float(
+            cfg.destination_overlap_fraction if overlap_fraction is None else overlap_fraction)
+        # --- pre-grasp association (T30 F3) ---
+        #: None = the test is off. Runs only when admissibility is checked and nothing is frozen.
+        self.extent_ratio: Optional[float] = (
+            None if extent_ratio is _FROM_CONFIG and cfg.manipulated_extent_ratio is None
+            else float(cfg.manipulated_extent_ratio) if extent_ratio is _FROM_CONFIG
+            else None if extent_ratio is None else float(extent_ratio))
+        self._association: Optional[Association] = None
+        # --- pre-grasp anchor (T30 F3b) ---
+        #: Minimum fraction of the anchor geometry's points an observation must cover (within
+        #: `anchor_distance`) to *replace* it before a grasp. None = off (every accepted observation
+        #: replaces it, the T26 behaviour).
+        self.anchor_coverage: Optional[float] = (
+            (None if cfg.manipulated_anchor_coverage is None
+             else float(cfg.manipulated_anchor_coverage)) if anchor_coverage is _FROM_CONFIG
+            else None if anchor_coverage is None else float(anchor_coverage))
+        #: Same-surface distance for that coverage. Default: the destination-overlap distance (one
+        #: cloud voxel inside `AG3S`) — "the same surface at the resolution it was observed at".
+        self.anchor_distance = float(self.overlap_distance if anchor_distance is None
+                                     else anchor_distance)
+        #: The **anchor**: the geometry adopted at `first`/`switch` (or last observed during a grasp,
+        #: once the grasp ends), its extents and frame. Coverage is always measured against it, so
+        #: a blob eroding a few percent per frame cannot walk the geometry off the object.
+        self._anchor_geom: Optional[TargetGeometry] = None
+        self._anchor_extents: Optional[np.ndarray] = None
+        self._anchor_source: Optional[str] = None
+        self._anchor_frame = -1
+        #: Where the current geometry came from (`first|switch|refined|observed`) and when.
+        self._geometry_source: Optional[str] = None
+        self._geometry_frame = -1
+        #: Consecutive frames the anchor was kept over a subset observation.
+        self._anchor_kept = 0
+        #: This frame kept the anchor (`observe` must not replace the geometry).
+        self._keep_anchor = False
+        #: T31b: this frame's split record (`note_split`), None until grounding reports one.
+        self._split: Optional[dict] = None
+        # --- hand occlusion (T32b S3) ---
+        #: Hand-sphere surface ↔ standing geometry distance under which an unobserved (or subset)
+        #: object counts as hidden by the hand. None = off.
+        hr = cfg.hand_occlusion_reach if hand_reach is _FROM_CONFIG else hand_reach
+        self.hand_reach: Optional[float] = None if hr is None else float(hr)
+        #: The hand spheres for the *next* grounding call (`note_hand`); consumed by it.
+        self._hand: Optional[HandSpheres] = None
+        #: This frame's hand record (None when no hand was given).
+        self._hand_record: Optional[dict] = None
+        # --- anchor split on release (T32b S2) ---
+        self.split_on_release = bool(
+            cfg.split_anchor_on_release if split_on_release is None else split_on_release)
+        #: The freeze was released and the next grounding call must split the standing geometry.
+        self._release_pending = False
+        #: Per-point attention of `_geometry` (the frame it was observed in), for that split.
+        self._geometry_attention: Optional[np.ndarray] = None
+        self._hand_occluded, self._hand_gap = False, None
+        self._frame_hand: Optional[HandSpheres] = None
+        #: The release split's record while the anchor it produced stands (anchor record).
+        self._release_split: Optional[dict] = None
+        #: This call's release event (split record), shown in `ManipulatedIdentity.split`.
+        self._release_event: Optional[dict] = None
+        #: The destination (T26): registered from perception, or injected. Same count and minimum
+        #: score as a switch — the destination has to earn its role the way a target does.
+        self.destinations = DestinationRegistry(
+            frames=self.frames, min_score=self.switch_min_score, tolerance=self.tolerance)
+        #: True while a grasp is in progress (closing … held): a challenger does not count, so the
+        #: manipulated object cannot change between the closing command and the release (T26 §4).
+        self.frozen = False
         self._held: Optional[np.ndarray] = None
         self._challenger: Optional[np.ndarray] = None
         self._streak = 0
@@ -437,6 +660,7 @@ class TargetConfirm:
         self._next_id = 0
         self._switched_from: Optional[int] = None
         self._geometry: Optional[TargetGeometry] = None
+        self._admissibility: Optional[Admissibility] = None
         self._age = 0
         self._last_seen_frame = -1
         self._last_seen_time: Optional[float] = None
@@ -444,8 +668,22 @@ class TargetConfirm:
         self._frame = -1
         #: The last decision, for logging. `None` before the first frame with a cluster.
         self.last: Optional[ConfirmDecision] = None
+        #: This frame's per-cluster admissibility, score order (None when UNCHECKED / no clusters).
+        self.last_admissibility: Optional[list[Admissibility]] = None
+        if destination_points is not None:
+            self.destinations.reset(destination_points)
 
     # --- queries ---------------------------------------------------------------------------
+    @property
+    def checked(self) -> bool:
+        """True when admissibility is evaluated (always inside `AG3S`)."""
+        return self.max_opening is not UNCHECKED
+
+    @property
+    def destination(self) -> Optional[DestinationGeometry]:
+        """The registered or injected destination, or None (T26)."""
+        return self.destinations.current
+
     @property
     def held_centroid(self) -> Optional[np.ndarray]:
         """Centroid of the object currently being called the target, or None."""
@@ -486,75 +724,281 @@ class TargetConfirm:
             last_seen_time=self._last_seen_time,
             switched_from=self._switched_from,
             frame=int(self._frame),
+            admissibility=self._admissibility,
+            association=self._association,
+            anchor=self._anchor_record(),
+            split=self._split_snapshot(),
+            hand=None if self._hand_record is None else dict(self._hand_record),
         )
 
-    def reset(self) -> None:
-        """Episode boundary. The next frame's leader is taken with no argument, under a fresh id."""
+    def reset(self, destination_points: Optional[np.ndarray] = None) -> None:
+        """Episode boundary. The next frame's leader is taken with no argument, under a fresh id.
+
+        `destination_points` (T26): the caller knows the destination — injected, it takes
+        precedence over anything perception would register and is never replaced by it.
+        """
         self._held = self._challenger = None
         self._streak = 0
         self._id = None
         self._next_id = 0
         self._switched_from = None
         self._geometry = None
+        self._admissibility = None
         self._age = 0
         self._last_seen_frame = -1
         self._last_seen_time = None
         self._frame = -1
         self.last = None
+        self.last_admissibility = None
+        self._association = None
+        self._anchor_geom, self._anchor_extents = None, None
+        self._anchor_source, self._anchor_frame, self._anchor_kept = None, -1, 0
+        self._geometry_source, self._geometry_frame = None, -1
+        self._keep_anchor = False
+        self._split = None
+        self._hand, self._hand_record, self._frame_hand = None, None, None
+        self._release_pending, self._geometry_attention = False, None
+        self._release_split, self._release_event = None, None
+        self.frozen = False
+        self.destinations.reset(destination_points)
+
+    def inject_destination(self, points: np.ndarray) -> None:
+        """The caller names the destination mid-episode (source `injected`, sticky until reset)."""
+        self.destinations.inject(points, frame=self._frame)
+
+    def freeze(self, on: bool) -> None:
+        """Bar challengers while a grasp is in progress (closing → held → release). T26 §4.
+
+        The release (frozen → not) arms the one-off anchor split of T32b S2 for the next grounding
+        call; freezing again before that call disarms it (the next release arms it again).
+        """
+        on = bool(on)
+        if self.frozen and not on:
+            self._release_pending = self.split_on_release
+        elif on:
+            self._release_pending = False
+        self.frozen = on
+        if self.frozen:
+            self._challenger, self._streak = None, 0
+
+    def note_hand(self, hand: Optional[HandSpheres]) -> None:
+        """The hands' collision spheres at this frame's robot state, in the cloud frame (T32b S3).
+
+        Given before each grounding call (as `freeze`) and consumed by it; None (or never calling
+        this) = no hand information, and then nothing is suppressed. Build it with
+        `stages.admissibility.hand_spheres(robot_model, robot_state)`.
+        """
+        if hand is not None and not isinstance(hand, HandSpheres):
+            raise TypeError(f"note_hand expects HandSpheres or None, got {type(hand).__name__}")
+        self._hand = hand if hand is not None and len(hand) else None
+
+    def split_anchor_on_release(self, config: ClusteringConfig, *,
+                                min_radius: float = 0.005) -> Optional[dict]:
+        """T32b S2: on the first grounding call after a freeze is released, split the standing
+        geometry (the anchor the grasp attempt left) once with the T31b attention split.
+
+        Uses the attention the geometry was observed with (`observe(..., attention=)`). When the
+        split is taken and its target component is admissible, that component becomes the geometry
+        and the anchor (source `release_split`, `attention_split = 1` so an unsplit merge cannot
+        replace it later — T31b `unsplit_kept_anchor`). Returns this call's record (also in
+        `ManipulatedIdentity.split["release"]`), or None when no release was pending.
+        """
+        self._release_event = None
+        if not self._release_pending:
+            return None
+        self._release_pending = False
+        geom, att = self._geometry, self._geometry_attention
+        event: dict[str, Any] = {"frame": int(self._frame + 1), "replaced": False,
+                                 "skipped": None, "decision": None}
+        self._release_event = event
+        opening, skipped = self.split_opening(config)
+        if opening is None:
+            event["skipped"] = skipped
+            return event
+        if geom is None or self._id is None:
+            event["skipped"] = "no_geometry"
+            return event
+        pts = np.asarray(geom.points, np.float64).reshape(-1, 3)
+        if att is None or len(att) != len(pts):
+            event["skipped"] = "no_attention"
+            return event
+        dec = split_by_attention(
+            pts, np.asarray(att, np.float64), np.arange(len(pts)), max_opening=opening,
+            radius=float(config.attention_split_radius), min_points=int(config.min_points),
+            min_ratio=float(config.attention_split_ratio))
+        if dec is None:
+            event["skipped"] = "not_triggered"
+            return event
+        event["decision"] = dec.record()
+        if not dec.accepted:
+            return event
+        idx = np.sort(dec.target.indices)
+        sub = pts[idx]
+        ext = principal_extents(sub)
+        adm = None
+        if self.checked:
+            adm = assess(sub, extents=ext, max_opening_m=self.max_opening,
+                         destination=self.destinations.current,
+                         overlap_distance=self.overlap_distance,
+                         overlap_fraction=self.overlap_fraction)
+            if not adm.admissible:
+                event["skipped"] = "component_inadmissible"
+                return event
+        metrics = dict(geom.metrics)
+        metrics.update({"attention_split": 1.0, "attention_split_target": 1.0,
+                        "attention_split_parent_n_points": float(len(pts)),
+                        "attention_split_on_release": 1.0, "point_count": float(len(sub))})
+        new = dataclasses.replace(
+            geom, points=sub, point_indices=np.zeros(0, np.int64), centroid=sub.mean(axis=0),
+            bounding_geometry=fit_sphere(sub, min_radius=min_radius, semantic_role="target"),
+            metrics=metrics)
+        self._geometry, self._geometry_attention = new, np.asarray(att, np.float64)[idx]
+        self._admissibility = adm
+        self._held = np.asarray(new.centroid, np.float64).reshape(3)
+        self._anchor_geom, self._anchor_extents = new, ext
+        self._anchor_source = self._geometry_source = "release_split"
+        self._anchor_frame = self._geometry_frame = int(self._frame + 1)
+        self._anchor_kept = 0
+        event["replaced"] = True
+        event["n_points"] = [int(len(pts)), int(len(sub))]
+        self._release_split = event
+        return event
+
+    def split_opening(self, config: ClusteringConfig) -> tuple[Optional[float], Optional[str]]:
+        """The max opening the T31b split tests against this frame, or None with the reason.
+
+        No split while a grasp is in progress (`frozen`: the fingers cut the held object into
+        pieces and it moves with the hand), with the split off in the config, or when the opening
+        is unknown (then nothing is graspable anyway). `UNCHECKED` falls back on
+        `clustering.gripper_max_opening`, as the rest of this class does.
+        """
+        if config.attention_split_radius is None:
+            return None, "off"
+        if self.frozen:
+            return None, "frozen"
+        if self.checked:
+            return (None, "max_opening_unknown") if self.max_opening is None else (
+                float(self.max_opening), None)
+        if config.gripper_max_opening is None:
+            return None, "max_opening_unknown"
+        return float(config.gripper_max_opening), None
+
+    def note_split(self, record: Optional[dict]) -> None:
+        """`ground_target` reports this frame's split decisions (T31b); see `ManipulatedIdentity.split`."""
+        self._split = record
 
     # --- one frame -------------------------------------------------------------------------
-    def select(self, clusters: "Sequence[ClusterInfo]") -> ConfirmDecision:
+    def select(self, clusters: "Sequence[ClusterInfo]",
+               points: Optional[np.ndarray] = None) -> ConfirmDecision:
         """Pick this frame's target from `clusters`, which must be sorted by descending score.
 
         Returns a decision whose `cluster` is None when the manipulated object is `occluded` or
         `lost` — the caller decides what stands in for it (`ground_target`: the last observed
-        geometry, or no target). It never substitutes the leader for an unobserved object.
+        geometry, or no target) — or when nothing is held and nothing is admissible
+        (`no_admissible`). It never substitutes the leader for an unobserved object, and never
+        adopts an inadmissible cluster (T26).
+
+        `points`: the cloud the clusters' `point_indices` index. Required when admissibility is
+        checked (the destination overlap and the extents are measured on it).
         """
         if not clusters:
             raise ValueError("TargetConfirm.select needs at least one cluster")
         self._frame += 1
-        leader = clusters[0]
+        self._association = None
+        self._keep_anchor = False
+        self._hand_occluded, self._hand_gap = False, self._take_hand()
+        adm = self._assess_frame(clusters, points)
+        candidates = (list(range(len(clusters))) if adm is None
+                      else [i for i, a in enumerate(adm) if a.admissible])
 
         if self._held is None:
-            self._adopt(leader, switched_from=None)
             self._challenger, self._streak = None, 0
-            return self._record(leader, 0, "first")
+            if not candidates:
+                return self._record(None, -1, NO_ADMISSIBLE, reason=NO_ADMISSIBLE)
+            first = candidates[0]
+            self._adopt(clusters[first], switched_from=None, adm=_at(adm, first))
+            return self._record(clusters[first], first, "first")
 
         held_rank = self._nearest(clusters, self._held)
-        if held_rank == 0:
-            # The leader is the object we are already calling the target. Track it and forget any
-            # challenger: leading again after a gap has to start the count over.
-            self._seen(leader)
-            self._challenger, self._streak = None, 0
-            return self._record(leader, 0, "keep")
+        reason = None
+        inadmissible = None
+        if held_rank is not None and adm is not None and not adm[held_rank].admissible:
+            # The cluster at the held object's place is not something the hand can hold (or it is
+            # the destination): the apple merged with the fingers or the crate. Its geometry must
+            # not stand in for the apple's — the object counts as unobserved and keeps its last
+            # admissible geometry (T26 `inadmissible_match`).
+            reason, inadmissible, held_rank = INADMISSIBLE_MATCH, adm[held_rank], None
+        elif held_rank is not None:
+            # Before a grasp the object has not moved, so the nearest cluster is it only if it sits
+            # within the object's own radius and has its size (T30 F3). A rejected cluster is not
+            # the held object this frame; it may still be a challenger under the T26 switch rule.
+            self._association = self._associate(clusters[held_rank], points)
+            if self._association is not None and not self._association.accepted:
+                reason, held_rank = ASSOCIATION_REJECTED, None
+            elif self._association is not None and self._association.subset:
+                # It is the object, but it shows only part of the anchor (the hand hides the rest):
+                # the anchor stays the exclusion geometry, the object counts as seen (T30 F3b).
+                reason, self._keep_anchor = SUBSET_KEPT_ANCHOR, True
+            elif self._association is not None and self._unsplit_over_split_anchor(
+                    clusters[held_rank]):
+                # The anchor is the apple split out of the apple+orange blob; this frame's cluster
+                # at its place is the blob again, which the split could not separate (the gap
+                # closed under 15 mm, or attention did not tell them apart). It shows the anchor,
+                # so it is the object — but it must not replace it and bring the neighbour back
+                # into the exclusion (T31b).
+                reason, self._keep_anchor = UNSPLIT_KEPT_ANCHOR, True
+        lead = candidates[0] if candidates else None
+        # T32b S3: the held object is not seen whole this frame (unobserved for any reason, or only
+        # a part of it), a hand sphere is within reach of it, and the hand is not nearer the
+        # challenger than the held object: the hand is hiding the held object. That is not a new
+        # object, so the challenger does not count this frame (T20). A hand that has gone to the
+        # challenger is the policy changing object — that frame counts (E3 ep1800: the hand 31 mm
+        # from the apple but at the banana it then grasped). A `keep` frame is never suppressed —
+        # there the held object leads and the count restarts anyway.
+        self._hand_occluded = self._hidden_by_hand(
+            hidden=held_rank is None or reason == SUBSET_KEPT_ANCHOR,
+            challenger=None if lead is None or lead == held_rank else clusters[lead],
+            points=points)
 
-        if float(leader.target_score) >= self.switch_min_score:
-            if self._challenger is not None and self._within(leader.centroid, self._challenger):
+        if held_rank is not None and lead == held_rank:
+            # The held object is the best admissible candidate. Track it and forget any challenger:
+            # leading again after a gap has to start the count over.
+            self._seen(clusters[held_rank], _at(adm, held_rank))
+            self._challenger, self._streak = None, 0
+            return self._record(clusters[held_rank], held_rank, "keep", reason=reason)
+
+        challenger = clusters[lead] if lead is not None else None
+        if (challenger is not None and not self.frozen and not self._hand_occluded
+                and float(challenger.target_score) >= self.switch_min_score):
+            if self._challenger is not None and self._within(challenger.centroid, self._challenger):
                 self._streak += 1
             else:
                 self._streak = 1
-            self._challenger = np.asarray(leader.centroid, np.float64).reshape(3)
+            self._challenger = np.asarray(challenger.centroid, np.float64).reshape(3)
         else:
-            # A leader under the minimum does not count, and it breaks the run: "N frames running
-            # at or above the minimum" is the rule, so a sub-minimum frame is a gap.
+            # A challenger under the minimum does not count, and it breaks the run: "N frames
+            # running at or above the minimum" is the rule, so a sub-minimum frame is a gap. No
+            # admissible challenger at all is a gap too, and so is a frozen (grasping) frame and a
+            # frame where the hand hides the held object (T32b).
             self._challenger, self._streak = None, 0
 
         if self._streak >= self.frames:
-            self._adopt(leader, switched_from=self._id)
+            self._adopt(challenger, switched_from=self._id, adm=_at(adm, lead))
             self._challenger, self._streak = None, 0
-            return self._record(leader, 0, "switch")
+            return self._record(challenger, lead, "switch")
 
         if held_rank is None:
-            # The held object produced no cluster this frame. It is not replaced by the leader —
-            # being hidden by the hand is not being a different object. The count is *not* reset:
-            # if it stays gone, a qualifying challenger still takes over on schedule.
+            # The held object produced no (admissible) cluster this frame. It is not replaced by
+            # the leader — being hidden by the hand is not being a different object. The count is
+            # *not* reset: if it stays gone, a qualifying challenger still takes over on schedule.
             self._age += 1
             state = self.state
-            return self._record(None, -1, LOST if state == LOST else OCCLUDED)
+            return self._record(None, -1, LOST if state == LOST else OCCLUDED,
+                                reason=reason or "unobserved", admissibility=inadmissible)
 
         held = clusters[held_rank]
-        self._seen(held)
-        return self._record(held, held_rank, "hold")
+        self._seen(held, _at(adm, held_rank))
+        return self._record(held, held_rank, "hold", reason=reason)
 
     def unseen(self) -> Optional[str]:
         """A grounding call that produced no clusters at all (NO_SEED, NO_CLUSTER, ...).
@@ -564,35 +1008,230 @@ class TargetConfirm:
         the resulting state (None when nothing is held).
         """
         self._frame += 1
+        self.last_admissibility = None
+        self._hand_occluded, self._hand_gap = False, self._take_hand()
         if self._held is None:
             return None
         self._age += 1
         return self.state
 
-    def observe(self, target: TargetGeometry) -> None:
+    def observe(self, target: TargetGeometry, attention: Optional[np.ndarray] = None) -> None:
         """Record this frame's geometry of the manipulated object (called by `ground_target` right
-        after a `first`/`keep`/`hold`/`switch` decision). This is what `occluded` falls back on."""
-        self._geometry = target
+        after a `first`/`keep`/`hold`/`switch` decision). This is what `occluded` falls back on.
+
+        `attention`: per-point attention of `target.points` in this frame (T32b S2 — what the
+        release split of this geometry reads). None = unknown (the release split is skipped)."""
         self._last_seen_time = float(target.timestamp)
+        if self._keep_anchor:
+            return  # T30 F3b: a subset observation never replaces the anchor
+        self._geometry = target
+        att = None if attention is None else np.asarray(attention, np.float64).reshape(-1)
+        self._geometry_attention = (
+            att if att is not None and len(att) == len(np.asarray(target.points).reshape(-1, 3))
+            else None)
+        decision = self.last.mode if self.last is not None else None
+        source = ("observed" if self.frozen
+                  else decision if decision in ("first", "switch") else "refined")
+        self._geometry_source, self._geometry_frame = source, self._frame
+        self._anchor_kept = 0
+        if source != "refined" or self._anchor_geom is None:
+            # A new anchor: a new object, or the object as the hand last had it (grasp in progress
+            # — after the release this is where it was put down). A refinement keeps the anchor.
+            self._release_split = None
+            self._anchor_geom = target
+            self._anchor_extents = (
+                np.asarray(self._admissibility.extents_m, np.float64)
+                if self._admissibility is not None and len(self._admissibility.extents_m) == 3
+                else principal_extents(target.points))
+            self._anchor_source, self._anchor_frame = source, self._frame
+
+    def observe_seen(self, timestamp: float) -> None:
+        """A `subset_kept_anchor` frame: the object was seen at `timestamp`, the geometry stays."""
+        self._last_seen_time = float(timestamp)
+
+    @property
+    def anchor_active(self) -> bool:
+        """True when the pre-grasp anchor rule runs this frame (T30 F3b)."""
+        return (not self.frozen and self.checked and self.anchor_coverage is not None
+                and self.extent_ratio is not None)
 
     # --- internals -------------------------------------------------------------------------
-    def _adopt(self, cluster: "ClusterInfo", *, switched_from: Optional[int]) -> None:
+    def _take_hand(self) -> Optional[float]:
+        """Consume this call's hand spheres (T32b): the record, and the gap to the standing
+        geometry (the last observed / kept anchor — what stands in while the object is hidden)."""
+        hand, self._hand = self._hand, None
+        self._frame_hand = hand
+        if hand is None:
+            self._hand_record = None
+            return None
+        geom = self._geometry
+        gap = None if geom is None else hand.gap(np.asarray(geom.points, np.float64))
+        self._hand_record = {
+            "available": True,
+            "gap_mm": None if gap is None else round(gap * 1000.0, 1),
+            "reach_mm": None if self.hand_reach is None else round(self.hand_reach * 1000.0, 1),
+            "occluded_by_hand": False,
+            "challenger_gap_mm": None,
+            "n_spheres": int(len(hand)),
+            "links": sorted(set(hand.links)),
+        }
+        return gap
+
+    def _hidden_by_hand(self, *, hidden: bool, challenger: Optional["ClusterInfo"],
+                        points) -> bool:
+        """T32b S3 (see `select`). Records the challenger-side gap in the hand record."""
+        hand, gap = self._frame_hand, self._hand_gap
+        if (not hidden or self.frozen or self.hand_reach is None or hand is None or gap is None
+                or gap > self.hand_reach):
+            return False
+        out = True
+        if challenger is not None and points is not None:
+            pts = np.asarray(points, np.float64).reshape(-1, 3)[
+                np.asarray(challenger.point_indices, np.int64)]
+            cgap = hand.gap(pts)
+            if cgap is not None:
+                self._hand_record["challenger_gap_mm"] = round(cgap * 1000.0, 1)
+                out = gap <= cgap
+        self._hand_record["occluded_by_hand"] = out
+        return out
+
+    def _associate(self, cluster: "ClusterInfo", points) -> Optional[Association]:
+        """T30 F3 test of `cluster` against the last admissible geometry, or None when it does not
+        apply: a grasp in progress (the object moves with the hand then), admissibility not
+        checked (`UNCHECKED` has no admissible geometry), the test off, or no geometry yet."""
+        geom, ref_adm = self._geometry, self._admissibility
+        if (self.frozen or not self.checked or self.extent_ratio is None or geom is None
+                or len(np.asarray(geom.points).reshape(-1, 3)) < 2):
+            return None
+        ref_ext = (np.asarray(ref_adm.extents_m, np.float64)
+                   if ref_adm is not None and len(ref_adm.extents_m) == 3
+                   else principal_extents(geom.points))
+        cluster_pts = None
+        if points is not None:
+            cluster_pts = np.asarray(points, np.float64).reshape(-1, 3)[
+                np.asarray(cluster.point_indices, np.int64)]
+        ext = cluster.principal_extents
+        if ext is None:
+            if cluster_pts is None:
+                return None
+            ext = principal_extents(cluster_pts)
+        assoc = associate(
+            cluster.centroid, ext,
+            reference_centroid=np.asarray(geom.centroid, np.float64),
+            reference_radius=float(np.asarray(geom.bounding_geometry.dimensions, np.float64)[0]),
+            reference_extents=ref_ext, max_ratio=self.extent_ratio)
+        if assoc.accepted and self.anchor_active and cluster_pts is not None:
+            anchor = self._anchor_geom if self._anchor_geom is not None else geom
+            assoc = anchor_cover(assoc, np.asarray(anchor.points, np.float64), cluster_pts,
+                                 distance=self.anchor_distance,
+                                 min_coverage=float(self.anchor_coverage))
+        return assoc
+
+    def _unsplit_over_split_anchor(self, cluster: "ClusterInfo") -> bool:
+        """T31b: the anchor came from an attention split and `cluster` is a triggered cluster the
+        split left whole (it may hold the anchor's neighbour again)."""
+        anchor = self._anchor_geom
+        return bool(self.anchor_active and anchor is not None
+                    and anchor.metrics.get("attention_split", 0.0)
+                    and cluster.split is not None and cluster.split.get("role") == "unsplit")
+
+    def _anchor_record(self) -> Optional[dict[str, Any]]:
+        """The pre-grasp anchor and the current geometry, per frame (T30 F3b record)."""
+        anchor = self._anchor_geom
+        if anchor is None or self._id is None:
+            return None
+        ext = (self._anchor_extents if self._anchor_extents is not None
+               else principal_extents(anchor.points))
+        return {
+            "manipulated_id": int(self._id),
+            "active": bool(self.anchor_active),
+            "source": self._anchor_source,
+            "since_frame": int(self._anchor_frame),
+            "kept_frames": int(self._anchor_kept),
+            "extents_mm": [round(float(v) * 1000.0, 1) for v in ext],
+            "radius_mm": round(float(np.asarray(anchor.bounding_geometry.dimensions)[0]) * 1000.0,
+                               1),
+            "n_points": int(len(np.asarray(anchor.points).reshape(-1, 3))),
+            "centroid": [float(v) for v in np.asarray(anchor.centroid, np.float64).reshape(3)],
+            "geometry_source": self._geometry_source,
+            "geometry_frame": int(self._geometry_frame),
+            # T31b: the anchor is a component of a cluster split by attention (the apple out of
+            # the apple+orange blob), not the blob.
+            "from_split": bool(anchor.metrics.get("attention_split", 0.0)),
+            # T32b S2: this anchor is the target component of the release split (its record).
+            "release_split": None if self._release_split is None else {
+                k: v for k, v in self._release_split.items() if k != "decision"},
+        }
+
+    def _split_snapshot(self) -> Optional[dict[str, Any]]:
+        """This frame's split record plus whether the manipulated geometry came from a split."""
+        if self._split is None and self._release_event is None:
+            return None
+        geom = self._geometry
+        out = dict(self._split) if self._split is not None else {"ran": False, "skipped": None}
+        out["manipulated_from_split"] = bool(
+            geom is not None and geom.metrics.get("attention_split", 0.0))
+        if self._release_event is not None:
+            out["release"] = dict(self._release_event)  # T32b S2, the call it happened on
+        return out
+
+    def _assess_frame(self, clusters, points) -> Optional[list[Admissibility]]:
+        """Per-cluster admissibility, destination registration first (T26). None when UNCHECKED."""
+        if not self.checked:
+            self.last_admissibility = None
+            return None
+        if points is None:
+            raise ValueError(
+                "TargetConfirm.select needs the cloud `points` when admissibility is checked — the "
+                "extents and the destination overlap are measured on the cluster's points")
+        pts = np.asarray(points, np.float64).reshape(-1, 3)
+        cluster_points = [pts[np.asarray(c.point_indices, np.int64)] for c in clusters]
+        extents = [c.principal_extents if c.principal_extents is not None
+                   else principal_extents(p) for c, p in zip(clusters, cluster_points)]
+        grasp = [graspable(e, self.max_opening) for e in extents]
+        self.destinations.observe(clusters, cluster_points, grasp, frame=self._frame)
+        dest = self.destinations.current
+        out = [assess(p, extents=e, max_opening_m=self.max_opening, destination=dest,
+                      overlap_distance=self.overlap_distance,
+                      overlap_fraction=self.overlap_fraction)
+               for p, e in zip(cluster_points, extents)]
+        self.last_admissibility = out
+        return out
+
+    def _adopt(self, cluster: "ClusterInfo", *, switched_from: Optional[int],
+               adm: Optional[Admissibility] = None) -> None:
+        self._keep_anchor = False  # a new object has no anchor to keep
         self._id = self._next_id
         self._next_id += 1
         self._switched_from = switched_from
         self._geometry = None  # the previous object's shape must never stand in for this one
         self._last_seen_time = None
-        self._seen(cluster)
+        self._seen(cluster, adm)
 
-    def _seen(self, cluster: "ClusterInfo") -> None:
-        self._held = np.asarray(cluster.centroid, np.float64).reshape(3)
+    def _seen(self, cluster: "ClusterInfo", adm: Optional[Admissibility] = None) -> None:
         self._age = 0
         self._last_seen_frame = self._frame
+        if self._keep_anchor:
+            # Seen, but the anchor stays: its centroid and its admissibility (they describe the
+            # geometry the exclusion gate will read), not this partial cluster's (T30 F3b).
+            self._anchor_kept += 1
+            return
+        self._held = np.asarray(cluster.centroid, np.float64).reshape(3)
+        self._admissibility = adm
 
-    def _record(self, cluster: Optional["ClusterInfo"], rank: int, mode: str) -> ConfirmDecision:
+    def _record(self, cluster: Optional["ClusterInfo"], rank: int, mode: str, *,
+                reason: Optional[str] = None,
+                admissibility: Optional[Admissibility] = None) -> ConfirmDecision:
+        adm = self.last_admissibility
+        if admissibility is None and adm is not None and cluster is not None and rank >= 0:
+            admissibility = adm[rank]
         self.last = ConfirmDecision(
             cluster, int(rank), mode, self._streak, self.frames,
-            state=str(self.state), manipulated_id=self._id, age_frames=int(self._age))
+            state="none" if self.state is None else str(self.state),
+            manipulated_id=self._id, age_frames=int(self._age), reason=reason, admissibility=admissibility,
+            n_admissible=None if adm is None else sum(1 for a in adm if a.admissible),
+            frozen=bool(self.frozen), association=self._association,
+            hand_occluded=bool(self._hand_occluded), hand_gap_m=self._hand_gap)
         return self.last
 
     def _within(self, a, b) -> bool:
@@ -612,6 +1251,10 @@ class TargetConfirm:
             if d <= self.tolerance and d < best_d:
                 best, best_d = i, d
         return best
+
+
+def _at(adm: Optional[list], i: Optional[int]) -> Optional[Admissibility]:
+    return None if adm is None or i is None else adm[i]
 
 
 # ------------------------------------------------------------------------------- scoring
@@ -655,6 +1298,7 @@ def _score_cluster(
         distance_from_attention_peak=peak_distance,
         target_score=score,
         rms_radius=rms,
+        principal_extents=principal_extents(pts),
     )
 
 
@@ -691,12 +1335,19 @@ def ground_target(
             `point_indices`, `metrics["manipulated_occluded"] = 1`) or, once `lost`, no target with
             `GroundingStatus.LOST` — never the leader (T20). A frame that ends with no cluster at
             all reports its usual status and only ages the manipulated object (`confirm.unseen()`).
+            When `confirm` checks admissibility (T26; always inside `AG3S`), only admissible
+            clusters compete, and a frame with nothing held and nothing admissible returns no
+            target with `GroundingStatus.NO_ADMISSIBLE`.
 
     Note the excluded points are excluded from *connectivity and clustering only*. They remain in the
     cloud and go on to become `SUPPORT_SURFACE` candidates in stage 5; nothing is deleted here.
     """
     cfg = config or ClusteringConfig()
     ts = time.time() if timestamp is None else float(timestamp)
+    if confirm is not None:
+        confirm.note_split(None)  # T31b: until this frame reaches clustering, no split record
+        # T32b S2: the first call after a grasp attempt's freeze is released splits its anchor once.
+        confirm.split_anchor_on_release(cfg, min_radius=min_radius)
     points = attention_cloud.points
     attention = attention_cloud.attention
     n = len(attention_cloud)
@@ -766,9 +1417,16 @@ def ground_target(
         return GroundingResult(None, GroundingStatus.NO_CLUSTER, seed_indices=seeds,
                                attention_peak_index=peak_index)
 
+    # T31b: a cluster that may be several objects is split by attention before anything is scored,
+    # so the components compete — and are excluded or kept — as the separate objects they are.
+    members, splits = _split_groups(
+        [idx for _, idx in sorted(groups.items())], points, attention, cfg, confirm,
+        enabled=cfg.use_3d_connectivity)
+
     clusters = [
-        _score_cluster(i, idx, member_points, member_attention, peak_point, cfg)
-        for i, (_, idx) in enumerate(sorted(groups.items()))
+        dataclasses.replace(
+            _score_cluster(i, idx, member_points, member_attention, peak_point, cfg), split=info)
+        for i, (idx, info) in enumerate(members)
     ]
     # Deterministic ordering: score descending, ties broken by the lowest member index.
     clusters.sort(key=lambda c: (-c.target_score, int(c.point_indices[0])))
@@ -783,18 +1441,30 @@ def ground_target(
     if best.target_score < cfg.target_score_threshold:
         _unseen(confirm)
         return GroundingResult(
-            None, GroundingStatus.LOW_SCORE, tuple(clusters), seeds, peak_index, best.target_score
+            None, GroundingStatus.LOW_SCORE, tuple(clusters), seeds, peak_index, best.target_score,
+            splits=splits,
         )
 
     # Which candidate wins. Without a `confirm` this is rank 1 and the frame stands alone, which is
     # what every direct caller gets and what makes this function reproducible from one frame. With
     # one, a challenger has to lead `target_confirm_frames` frames running before the target moves.
-    decision = confirm.select(clusters) if confirm is not None else None
+    decision = confirm.select(clusters, points=points) if confirm is not None else None
+    if decision is not None and decision.mode == NO_ADMISSIBLE:
+        # Nothing held yet and no cluster may become the manipulated object (T26) — e.g. the crate
+        # is all attention found. The leader is not named, whatever its score.
+        return GroundingResult(None, GroundingStatus.NO_ADMISSIBLE, tuple(clusters), seeds,
+                               peak_index, best.target_score, splits=splits)
     if decision is not None and decision.cluster is None:
         # The manipulated object is not among this frame's clusters (T20). The leader is *not*
         # named in its place: a hand in front of the apple does not make the crate the object.
-        return _unobserved_result(decision, confirm, tuple(clusters), seeds, peak_index,
-                                  best.target_score)
+        return dataclasses.replace(
+            _unobserved_result(decision, confirm, tuple(clusters), seeds, peak_index,
+                               best.target_score), splits=splits)
+    if decision is not None and decision.reason in (SUBSET_KEPT_ANCHOR, UNSPLIT_KEPT_ANCHOR):
+        # The object was seen, but only part of it: its anchor geometry stands in (T30 F3b).
+        return dataclasses.replace(
+            _anchor_result(decision, confirm, tuple(clusters), seeds, peak_index,
+                           best.target_score, ts), splits=splits)
     chosen = clusters[0] if decision is None else decision.cluster
     # The strongest *other* candidate. Identical to `clusters[1]` whenever rank 1 was taken, which is
     # the definition `GraspLatch` was written against; when the held object was kept over a stronger
@@ -840,20 +1510,146 @@ def ground_target(
             # second one scored nothing". This matches `_scores()` in
             # `experiments/diagrams/ppt_target_grounding.py`, which already reports the pair this way.
             "runner_up_score": max(others) if others else 0.0,
+            # T26: the admissibility evidence, as numbers (the full record is on the decision).
+            **_admissibility_metrics(None if decision is None else decision.admissibility),
+            **_association_metrics(None if decision is None else decision.association),
+            **_split_metrics(chosen),
+            **_hand_metrics(decision),
         },
     )
     if confirm is not None:
         # The manipulated object's latest observation — what an `occluded` frame falls back on.
-        confirm.observe(target)
+        confirm.observe(target, attention=attention[chosen.point_indices])
     return GroundingResult(
-        target, GroundingStatus.OK, tuple(clusters), seeds, peak_index, best.target_score
+        target, GroundingStatus.OK, tuple(clusters), seeds, peak_index, best.target_score,
+        splits=splits,
     )
+
+
+def _split_groups(groups, points, attention, cfg, confirm, *, enabled):
+    """T31b: split the triggered clusters of this frame (`stages/attention_split.py`).
+
+    Returns `([(member_indices, ClusterInfo.split), ...], splits)` — the parents in their grown
+    order, each replaced by its components (target first) when the split was taken — and reports
+    the frame's record to `confirm`.
+    """
+    if confirm is not None:
+        opening, skipped = confirm.split_opening(cfg)
+    elif cfg.attention_split_radius is None:
+        opening, skipped = None, "off"
+    elif cfg.gripper_max_opening is None:
+        opening, skipped = None, "max_opening_unknown"
+    else:
+        opening, skipped = float(cfg.gripper_max_opening), None
+    if not enabled and skipped is None:
+        opening, skipped = None, "no_3d_connectivity"
+    out, decisions = [], []
+    for idx in groups:
+        dec = None if opening is None else split_by_attention(
+            points, attention, idx, max_opening=opening, radius=float(cfg.attention_split_radius),
+            min_points=int(cfg.min_points), min_ratio=float(cfg.attention_split_ratio))
+        if dec is None:
+            out.append((idx, None))
+            continue
+        decisions.append(dec)
+        if not dec.accepted:
+            # Recorded on the cluster too: a triggered cluster left whole may still be several
+            # objects, so it must not replace an anchor that a split produced (T31b).
+            out.append((idx, {"role": "unsplit", "reason": dec.reason,
+                              "split_index": len(decisions) - 1, "parent_n_points": int(len(idx)),
+                              "parent_extents_mm": [round(float(v) * 1000.0, 1)
+                                                    for v in dec.parent_extents_m]}))
+            continue
+        parent = {"split_index": len(decisions) - 1, "parent_n_points": int(len(idx)),
+                  "parent_extents_mm": [round(float(v) * 1000.0, 1) for v in dec.parent_extents_m]}
+        for j, g in enumerate(dec.groups()):
+            out.append((np.sort(g), {"role": "target" if j == 0 else "obstacle", **parent}))
+    if confirm is not None:
+        confirm.note_split({
+            "ran": opening is not None,
+            "skipped": skipped,
+            "max_opening_mm": None if opening is None else round(float(opening) * 1000.0, 2),
+            "n_triggered": len(decisions),
+            "n_split": sum(1 for d in decisions if d.accepted),
+            "decisions": [d.record() for d in decisions],
+        })
+    return out, tuple(decisions)
+
+
+def _split_metrics(chosen: "ClusterInfo") -> dict[str, float]:
+    """T31b: the chosen cluster is a split component (`attention_split = 1`) — and which role."""
+    if chosen.split is None:
+        return {}
+    if chosen.split.get("role") == "unsplit":
+        return {"attention_split": 0.0, "attention_split_unsplit": 1.0}
+    return {"attention_split": 1.0,
+            "attention_split_target": float(chosen.split.get("role") == "target"),
+            "attention_split_parent_n_points": float(chosen.split.get("parent_n_points", 0))}
+
+
+def _hand_metrics(decision: Optional[ConfirmDecision]) -> dict[str, float]:
+    """T32b S3: hand gap to the standing geometry and whether the hand hid it (flat metrics)."""
+    if decision is None or decision.hand_gap_m is None:
+        return {}
+    return {"manipulated_hand_gap_m": float(decision.hand_gap_m),
+            "manipulated_hand_occluded": float(decision.hand_occluded)}
+
+
+def _association_metrics(assoc: Optional[Association]) -> dict[str, float]:
+    """T30 F3 numbers as flat metrics (the full record is `ManipulatedIdentity.association`)."""
+    if assoc is None:
+        return {}
+    return {"association_shift_m": float(assoc.shift_m),
+            "association_radius_m": float(assoc.radius_m),
+            "association_ratio_narrowest": float(assoc.extent_ratio[0]),
+            "association_ratio_middle": float(assoc.extent_ratio[1])}
+
+
+def _admissibility_metrics(adm: Optional[Admissibility]) -> dict[str, float]:
+    if adm is None:
+        return {}
+    out = {"destination_overlap": float(adm.destination_overlap),
+           "admissible": float(adm.admissible)}
+    if adm.narrowest_extent_m is not None:
+        out["narrowest_extent_m"] = float(adm.narrowest_extent_m)
+    if adm.max_opening_m is not None:
+        out["gripper_max_opening_m"] = float(adm.max_opening_m)
+    return out
 
 
 def _unseen(confirm: Optional["TargetConfirm"]) -> None:
     """A frame with no clusters: the manipulated object (if any) ages; the result is unchanged."""
     if confirm is not None:
         confirm.unseen()
+
+
+def _anchor_result(decision, confirm, clusters, seeds, peak_index, best_score, ts):
+    """`subset_kept_anchor` (T30 F3b) / `unsplit_kept_anchor` (T31b) → the kept geometry is this
+    frame's target.
+
+    Marked like an occluded stand-in so no consumer takes it for a fresh cluster: empty
+    `point_indices`, `target_rank` = the observed cluster's rank, `manipulated_subset_kept_anchor
+    = 1` and this frame's association numbers.
+    """
+    confirm.observe_seen(ts)
+    last = confirm.last_geometry
+    others = [c.target_score for c in clusters if c is not decision.cluster]
+    metrics = {k: v for k, v in last.metrics.items() if not k.startswith("association_")}
+    metrics.update({
+        "target_rank": float(decision.rank),
+        "target_confirm_streak": float(decision.streak),
+        "runner_up_score": max(others) if others else 0.0,
+        "manipulated_occluded": 0.0,
+        "manipulated_subset_kept_anchor": 1.0,
+        # T31b: kept because the cluster at its place was an unsplit merge (not a subset).
+        "manipulated_unsplit_kept_anchor": float(decision.reason == UNSPLIT_KEPT_ANCHOR),
+        **_association_metrics(decision.association),
+        **_hand_metrics(decision),
+    })
+    target = dataclasses.replace(
+        last, point_indices=np.zeros(0, np.int64), metrics=metrics,
+        seed_camera=None, supporting_cameras=())
+    return GroundingResult(target, GroundingStatus.OK, clusters, seeds, peak_index, best_score)
 
 
 def _unobserved_result(decision, confirm, clusters, seeds, peak_index, best_score):
@@ -869,13 +1665,22 @@ def _unobserved_result(decision, confirm, clusters, seeds, peak_index, best_scor
     last = confirm.last_geometry
     if decision.state == LOST or last is None:
         return GroundingResult(None, GroundingStatus.LOST, clusters, seeds, peak_index, best_score)
-    metrics = dict(last.metrics)
+    # The last observation's own association numbers describe *that* frame; this frame's (if any)
+    # are added below.
+    metrics = {k: v for k, v in last.metrics.items() if not k.startswith("association_")}
     metrics.update({
         "target_rank": -1.0,
         "target_confirm_streak": float(decision.streak),
         "runner_up_score": max(c.target_score for c in clusters),
         "manipulated_occluded": 1.0,
         "manipulated_age_frames": float(decision.age_frames),
+        # T26: 1 when the object's place held a cluster that could not be it (merged with fingers
+        # or the crate) — the geometry above is the last *admissible* observation.
+        "manipulated_inadmissible_match": float(decision.reason == INADMISSIBLE_MATCH),
+        # T30 F3: 1 when the nearest cluster failed the pre-grasp association test; its numbers.
+        "manipulated_association_rejected": float(decision.reason == ASSOCIATION_REJECTED),
+        **_association_metrics(decision.association),
+        **_hand_metrics(decision),
     })
     target = dataclasses.replace(
         last, id=-1, point_indices=np.zeros(0, np.int64), metrics=metrics,
@@ -884,6 +1689,12 @@ def _unobserved_result(decision, confirm, clusters, seeds, peak_index, best_scor
 
 
 __all__ = [
+    "ASSOCIATION_REJECTED",
+    "SUBSET_KEPT_ANCHOR",
+    "UNSPLIT_KEPT_ANCHOR",
+    "INADMISSIBLE_MATCH",
+    "NO_ADMISSIBLE",
+    "UNCHECKED",
     "ClusterInfo",
     "ConfirmDecision",
     "GroundingResult",

@@ -123,6 +123,15 @@ class SceneSnapshot:
     #: **행을 끄는 것과 다르다.** ESDF 의 한 행은 최근접 표면까지의 거리 하나뿐이므로 끄면
     #: table 에 대한 보호까지 잃는다. 여기서 바뀌는 것은 "어느 계층이 답하는가" 뿐이다.
     target_free_mask: Optional[np.ndarray] = None
+    #: `(S,)` bool — `target_free_mask` 행 중 `manipulated_link_margin` 을 **받지 않는** 행 (T30 F1).
+    #: `None`(기본)이면 `target_free_mask` 와 같다 — `exclude_authorized` 에서 그 마스크가 곧 권한
+    #: 행이기 때문이다. `exclude_all` 은 권한 없는 행까지 마스크에 넣으므로 `scene_from_constraint_set`
+    #: 이 권한 행만 추려 싣는다 (권한 없는 행은 T30 전 규칙 그대로).
+    #:
+    #: 왜 면제하나: 마진 규칙은 "이 행의 최근접 장애물이 조작 대상인가" 를 `|d − d_object| ≤ voxel`
+    #: 로 묻는데, target 없는 계층의 `d` 에는 조작 대상이 없다. 그 검사가 참이 되는 것은 다른 물체가
+    #: 우연히 같은 거리에 있을 때뿐이고, 그러면 그 물체에 phase 여유(APPROACH 20 mm)가 붙는다.
+    target_free_exempt: Optional[np.ndarray] = None
     #: The **held** object as query points riding `attached_parent_link`, in that link's frame
     #: (`AttachedCollisionGeometry.points`). Once a grasp closes the object stops being part of the
     #: world and becomes part of the robot, so it belongs on the query side of the field rather than
@@ -134,8 +143,16 @@ class SceneSnapshot:
     #: that is not there.
     #:
     #: They are `None` together whenever nothing is held.
+    #:
+    #: **T32 H2 — spheres, not radius-0 points.** When the attachment carries sphere primitives
+    #: (`AG3S.attach` fits them: the observed surface's sphere + pad, and small covers for what
+    #: sticks out), `attached_points` are those sphere **centres** and `attached_radii` their radii —
+    #: F19's 57.4 mm came from centroid + max distance over stem and leaf in one sphere; a surface
+    #: fit keeps the body sphere at the apple's own radius + 5 mm and gives the stem its own small
+    #: sphere. `attached_radii = None` = radius 0 (points-only attachments, the pre-T32 contract).
     attached_points: Optional[np.ndarray] = None
     attached_parent_link: Optional[str] = None
+    attached_radii: Optional[np.ndarray] = None
     #: Where the held object is being **put**. `destination_label` is the name it carries in the
     #: field's label layer; `destination_margin` is the clearance required against it.
     #:
@@ -332,13 +349,24 @@ class CollisionLinearizer:
         self.nq_opt = layout.nq_opt
 
         q = ca.SX.sym("q", int(robot_model.nq), 1)
-        spheres = robot_model.sphere_centers_symbolic(q)
+        #: T29 — finger joints are **parameters** of the FK, not decision variables. A model that
+        #: has them (`UrdfSphereChain.param_joint_names`) gets a second input `p`, one column per
+        #: step; the Jacobian stays with respect to the free arm joints only. Without a path set
+        #: (`set_joint_parameter_path`) each step uses the model's *current* values — for a model
+        #: nobody has set, the construction defaults, i.e. the pre-T29 FK exactly.
+        self.param_names: tuple[str, ...] = tuple(
+            getattr(robot_model, "param_joint_names", ()) or ())
+        self._p_sym = ca.SX.sym("p", len(self.param_names), 1) if self.param_names else None
+        spheres = (robot_model.sphere_centers_symbolic(q, params=self._p_sym)
+                   if self.param_names else robot_model.sphere_centers_symbolic(q))
         self.n_spheres = len(spheres)
         centres = ca.horzcat(*[c for c, _ in spheres])  # 3 x S
         free = [int(i) for i in layout.q_indices]
         jac = ca.jacobian(ca.reshape(centres, -1, 1), q[free])  # 3S x nq_opt
-        self._fk = ca.Function("fk_jac", [q], [centres, jac])
+        self._fk = ca.Function("fk_jac", self._fk_inputs(q), [centres, jac])
         self._fk_map = self._fk.map(self.horizon)
+        #: `(n_params, horizon)` finger-joint values per step, or None = the model's current values.
+        self._param_path: Optional[np.ndarray] = None
         self.robot_radii = np.asarray([float(r) for _, r in spheres], np.float64)
         #: Extra query points riding a link -- the held object. See `set_attached`.
         self._attached_local: Optional[np.ndarray] = None
@@ -346,13 +374,16 @@ class CollisionLinearizer:
         self._probe_maps: dict = {}
         #: Radii for every query point: the robot's spheres, then zeros for attached points.
         self.query_radii = self.robot_radii
+        #: T30 F1b — 마지막 `linearize` 에서 선택된 target-free 마스크 행이 **어느 층의 기울기**를
+        #: 받았나 (`answer_tier` 이름별 행 수). 기록·진단용.
+        self.last_target_free_tiers: dict[str, int] = {}
 
         # Converting a CasADi DM to numpy costs about 45 ns per *dense* entry regardless of how it is
         # asked for, and the mapped Jacobian is 183 x 600 with only 23% of its entries structurally
         # nonzero. Pulling the nonzeros out and scattering them straight into the layout this class
         # wants takes 1.8 ms where densifying and transposing took 5.7 — measured, and it was the
         # single largest cost in the whole optimization once the QP had been fixed.
-        probe = self._fk_map(np.zeros((int(robot_model.nq), self.horizon)))
+        probe = self._fk_map(*self._fk_args(np.zeros((int(robot_model.nq), self.horizon))))
         rows, cols = probe[1].sparsity().get_triplet()
         rows = np.asarray(rows, np.int64)
         cols = np.asarray(cols, np.int64)
@@ -370,9 +401,54 @@ class CollisionLinearizer:
             (self.horizon, self.n_spheres, 3),
         )
 
+    # --- finger joints (T29) --------------------------------------------------------------
+    def _fk_inputs(self, q):
+        return [q] if self._p_sym is None else [q, self._p_sym]
+
+    def _fk_args(self, full: np.ndarray) -> list:
+        """`[full]` or `[full, P]` — the per-step finger values for this chunk."""
+        if self._p_sym is None:
+            return [full]
+        return [full, self.param_path()]
+
+    def param_path(self) -> np.ndarray:
+        """`(n_params, horizon)` the FK uses: the set path, else the model's current values."""
+        if self._param_path is not None:
+            return self._param_path
+        current = np.asarray(self.robot_model.param_vector(), np.float64).reshape(-1, 1)
+        return np.tile(current, (1, self.horizon))
+
+    def set_joint_parameter_path(self, path: Optional[np.ndarray]) -> None:
+        """Finger joints per step for the next chunk (`(n_params, horizon)`, or `(n_params,)` for
+        every step). `None` = the model's current values on every step (`param_path`).
+
+        The caller (`SafePolicy`) builds it from the measured opening (step 0) and the chunk's
+        commanded gripper columns (`robot_models/gripper_state.opening_envelope`). It is **not** a
+        decision variable — no row, no Jacobian column — so the QP's sparsity does not move.
+        """
+        if path is None or self._p_sym is None:
+            if path is not None and len(np.asarray(path).reshape(-1)):
+                raise ValueError("this robot model has no finger parameters to set")
+            self._param_path = None
+            return
+        arr = np.asarray(path, np.float64)
+        if arr.ndim == 1:
+            arr = np.tile(arr.reshape(-1, 1), (1, self.horizon))
+        if arr.shape != (len(self.param_names), self.horizon):
+            raise ValueError(f"joint parameter path must be ({len(self.param_names)}, "
+                             f"{self.horizon}), got {arr.shape}")
+        if not np.all(np.isfinite(arr)):
+            raise ValueError("joint parameter path has non-finite values")
+        self._param_path = arr
+
     # --- held object ---------------------------------------------------------------------
-    def set_attached(self, points_local, parent_link: Optional[str]) -> None:
+    def set_attached(self, points_local, parent_link: Optional[str],
+                     radii: Optional[np.ndarray] = None) -> None:
         """Hold `points_local` (N, 3, in `parent_link`'s frame) as extra query points, or clear them.
+
+        `radii` (T32 H2): one radius per point — the held object's spheres. `None` = radius 0. A
+        caller that only passes points (the SQP loop does) still gets the spheres' radii: they
+        travel on the scene (`SceneSnapshot.attached_radii`) and `_esdf_clearance` reads them there.
 
         The points are appended to the robot's own spheres with radius zero, so every consumer that
         already walks the sphere axis picks them up: the ESDF rows, the activation band, the budget,
@@ -395,9 +471,11 @@ class CollisionLinearizer:
             return
         self._attached_local = np.asarray(points_local, np.float64).reshape(-1, 3)
         self._attached_link = str(parent_link)
-        self.query_radii = np.concatenate(
-            [self.robot_radii, np.zeros(self._attached_local.shape[0])]
-        )
+        held = (np.zeros(self._attached_local.shape[0]) if radii is None
+                else np.asarray(radii, np.float64).reshape(-1))
+        if held.shape[0] != self._attached_local.shape[0]:
+            raise ValueError(f"{self._attached_local.shape[0]} held points but {held.shape[0]} radii")
+        self.query_radii = np.concatenate([self.robot_radii, held])
 
     @property
     def n_attached(self) -> int:
@@ -420,14 +498,17 @@ class CollisionLinearizer:
         if cached is not None:
             return cached
         q = ca.SX.sym("q", int(self.robot_model.nq), 1)
-        T = self.robot_model.link_pose_symbolic(q, link)
+        # T29: the held object rides a finger link (`ee_finger_l1`), whose pose depends on the finger
+        # joint — the same per-step parameter as the spheres.
+        T = (self.robot_model.link_pose_symbolic(q, link, params=self._p_sym)
+             if self._p_sym is not None else self.robot_model.link_pose_symbolic(q, link))
         origin = T[:3, 3]
         probes = ca.horzcat(origin, origin + T[:3, 0], origin + T[:3, 1], origin + T[:3, 2])
         free = [int(i) for i in self.layout.q_indices]
         jac = ca.jacobian(ca.reshape(probes, -1, 1), q[free])
-        fn = ca.Function(f"probe_{link}", [q], [probes, jac]).map(self.horizon)
+        fn = ca.Function(f"probe_{link}", self._fk_inputs(q), [probes, jac]).map(self.horizon)
 
-        probe_dm, jac_dm = fn(np.zeros((int(self.robot_model.nq), self.horizon)))
+        probe_dm, jac_dm = fn(*self._fk_args(np.zeros((int(self.robot_model.nq), self.horizon))))
         rows, cols = jac_dm.sparsity().get_triplet()
         rows = np.asarray(rows, np.int64)
         cols = np.asarray(cols, np.int64)
@@ -450,7 +531,7 @@ class CollisionLinearizer:
             return (np.zeros((self.horizon, 0, 3)),
                     np.zeros((self.horizon, 0, 3, self.nq_opt)))
         fn, dest, shape, c_dest = self._link_probe_map(self._attached_link)
-        probe_dm, jac_dm = fn(full)
+        probe_dm, jac_dm = fn(*self._fk_args(full))
         probes = np.zeros(self.horizon * 4 * 3)
         probes[c_dest] = np.asarray(probe_dm).T.reshape(-1)
         probes = probes.reshape(self.horizon, 4, 3)
@@ -475,7 +556,7 @@ class CollisionLinearizer:
         optimizer at all before this).
         """
         full = self.layout.full_q(trajectory, q_now)
-        centres_dm, jac_dm = self._fk_map(full)
+        centres_dm, jac_dm = self._fk_map(*self._fk_args(full))
 
         centres = np.zeros(self.horizon * self.n_spheres * 3)
         centres[self._centre_dest] = np.asarray(centres_dm).T.reshape(-1)
@@ -488,6 +569,40 @@ class CollisionLinearizer:
         a_pos, a_jac = self.attached_states(full)
         return (np.concatenate([centres, a_pos], axis=1),
                 np.concatenate([jac, a_jac], axis=1))
+
+    def _esdf_directions(self, points: np.ndarray, rows: np.ndarray, scene: SceneSnapshot,
+                         n_query: int) -> np.ndarray:
+        """`(n, 3)` — ESDF 행의 기울기. **값을 낸 층과 같은 층에서** 가져온다 (T30 F1b).
+
+        값은 `_esdf_clearance` 가 `target_free_mask` 행이면 `target_free_distance`, 아니면
+        `distance` 로 받는다. 방향도 똑같이 갈라야 한다: 마스크 행을 본 합성(`gradient`, 사과가
+        들어 있다)으로 선형화하면 사과 옆에서 값은 테이블 거리인데 방향은 사과 법선이라, SQP 가
+        손가락을 사과 밖으로 민다 — F1 뒤에도 E3a 증상(손이 사과에서 밀려남)이 남는 길이다.
+        마스크 행은 `target_free_gradient` 가 답하고, 그 안에서 창 밖(본 합성이 답한 곳)은 본
+        합성의 기울기, 창 경계는 경계의 기울기로 — 값과 같은 분기다. 어느 층이 답했는지는
+        `last_target_free_tiers` 에 남는다 (마지막 `linearize` 의 선택된 마스크 행 수, 층별).
+        """
+        free_rows = self._target_free_rows(scene, n_query)
+        use_free = (np.zeros(len(rows), bool) if free_rows is None
+                    else free_rows[np.asarray(rows, np.int64)])
+        self.last_target_free_tiers = {}
+        if not use_free.any():
+            return np.asarray(scene.esdf.gradient(points), float)
+        free_grad = getattr(scene.esdf, "target_free_gradient", None)
+        if free_grad is None:
+            # 값은 target 없는 계층에서 왔는데 방향을 댈 곳이 없다 — 조용히 본 합성으로 가면
+            # F1b 전의 어긋남이 되살아난다. `_esdf_clearance` 의 target_free_distance 와 같은 규약.
+            raise ValueError(
+                "target_free_mask 행이 선택됐는데 필드에 target_free_gradient 가 없습니다 — 값과 "
+                "방향이 다른 층에서 옵니다. esdf.backend 가 'curobo' 인지 확인하세요")
+        out = np.empty((len(rows), 3), float)
+        if (~use_free).any():
+            out[~use_free] = np.asarray(scene.esdf.gradient(points[~use_free]), float)
+        g, tier = free_grad(points[use_free], return_tier=True)
+        out[use_free] = np.asarray(g, float)
+        names, counts = np.unique(np.asarray(tier).astype(str), return_counts=True)
+        self.last_target_free_tiers = {str(k): int(v) for k, v in zip(names, counts)}
+        return out
 
     # --- clearances ----------------------------------------------------------------------
     def clearances(
@@ -531,10 +646,24 @@ class CollisionLinearizer:
         erased by the self-filter is exactly that case (F12) — the one-sided form also accepts
         spheres whose field obstacle is much *further* than the object, and relaxes them wrongly.
         Requiring the two distances to agree within a voxel says what was meant.
+
+        **Rows that ask the target-free layer are exempt (T30 F1).** For an authorized row whose `d`
+        comes from `target_free_distance`, the object is not in `d` at all, so the test above can
+        only be true by coincidence — another surface (table, crate, a neighbouring fruit) at the
+        same distance as the object — and would put the phase margin on *that* surface. Those rows
+        get `esdf_margin` (+ the destination rule) and nothing else. Unauthorized rows and `relax`
+        (no mask) are untouched. `_target_free_exempt_rows` says which rows.
         """
         if scene.esdf is None:
             return np.zeros((centres.shape[0], centres.shape[1], 0))
         n_query = centres.shape[1]
+        held_radii = getattr(scene, "attached_radii", None)
+        if (held_radii is not None and self.n_attached
+                and np.asarray(held_radii).reshape(-1).shape[0] == self.n_attached):
+            # T32 H2: the held spheres' radii travel on the scene (`set_attached` is called with
+            # points only by the SQP loop). Kept on `query_radii` so every reader agrees.
+            self.query_radii = np.concatenate(
+                [self.robot_radii, np.asarray(held_radii, np.float64).reshape(-1)])
         radii = self.query_radii
         if radii.shape[0] != n_query:
             raise ValueError(
@@ -567,6 +696,13 @@ class CollisionLinearizer:
                 d_free = np.asarray(free(flat), np.float64).reshape(centres.shape[:2])
                 d = np.where(mask[None, :n_query], d_free, d)
         margin = np.full(centres.shape[:2], float(scene.esdf_margin))
+        # **target 없는 계층에 묻는 권한 행은 조작 대상 마진을 받지 않는다** (T30 F1). 그 계층에는
+        # 조작 대상이 없으므로 아래의 "이 행의 최근접 장애물이 대상인가" (`|d − d_object| ≤ voxel`)
+        # 는 뜻이 없다 — 참이 되는 것은 우연(테이블이 사과와 같은 거리에 있다)이고, 그때 붙는 것은
+        # phase 여유다. E3b chunk t=88: target-free +20.0 mm · 사과 점 20.5 mm 에서 APPROACH 여유
+        # 20 mm (0.05 × 0.4) 가 붙어 TO 가 −2.25 mm 를 냈다. 그 행의 여유는 `esdf_margin` (+ 목적지)
+        # 뿐이다. 권한 없는 행 · `relax`(마스크 없음) 는 한 줄도 달라지지 않는다.
+        exempt = self._target_free_exempt_rows(scene, n_query)
         # 목적지: 가장 가까운 표면이 목적지인 질의점만 얇은 마진을 쓴다. 필드가 라벨을 함께
         # 답하게 된 덕분에 이 구분이 가능해졌다 — 그 전에는 거리장이 익명이라 "지금 가까운 것이
         # 목적지인가" 를 물을 수 없었고, 그래서 전역 마진을 내리는 것 말고는 방법이 없었다.
@@ -602,6 +738,8 @@ class CollisionLinearizer:
                 d_object = d_object.reshape(centres.shape[:2])
                 tol = float(scene.esdf.grid.voxel_size)
                 is_object = np.abs(d - d_object) <= tol
+                if exempt is not None:
+                    is_object &= ~exempt[None, :]
                 per_link = np.asarray(scene.manipulated_link_margin, np.float64).reshape(-1)
                 if per_link.shape[0] < n_query:
                     # The held object's own points get no relaxation: they *are* the object, so
@@ -789,6 +927,27 @@ class CollisionLinearizer:
             mask = np.concatenate([mask, np.zeros(n_query - mask.shape[0], bool)])
         return mask[:n_query]
 
+    @staticmethod
+    def _target_free_exempt_rows(scene: SceneSnapshot, n_query: int) -> Optional[np.ndarray]:
+        """`(n_query,)` — 조작 대상 마진을 **받지 않는** 행 (T30 F1). 없으면 `None`.
+
+        = target 없는 계층에 묻는 **권한** 행. `scene.target_free_exempt` 가 있으면 그것
+        (`exclude_all` 에서 `scene_from_constraint_set` 이 권한 행만 추려 싣는다), 없으면
+        `target_free_mask` 자체 — `exclude_authorized` 에서 그 마스크는 권한 link 집합으로 지어지므로
+        (`to_adapter.build_constraint_set`) 둘은 같다. 쥔 물체의 점은 언제나 제외 (패딩 = `False`).
+        """
+        free = CollisionLinearizer._target_free_rows(scene, n_query)
+        if free is None:
+            return None                       # target 없는 계층이 없다 — 면제도 없다 (`relax`)
+        rows = scene.target_free_exempt
+        if rows is None:
+            return free
+        rows = np.asarray(rows, bool).reshape(-1)
+        if rows.shape[0] < n_query:
+            rows = np.concatenate([rows, np.zeros(n_query - rows.shape[0], bool)])
+        # 마스크 밖의 행은 target 이 든 답을 받으므로 면제될 수 없다.
+        return rows[:n_query] & free
+
     def _authorized_rows(self, centres: np.ndarray, scene: SceneSnapshot,
                          esdf_block: Optional[np.ndarray] = None) -> Optional[dict]:
         """권한 link 행 전부의 계층별 수 (T21 §2). **검증 불가를 명시**하는 곳이다.
@@ -901,6 +1060,7 @@ class CollisionLinearizer:
                 trajectory.shape[1], config.reduction.rows_per_step, self.nq_opt)
         reduction = config.reduction
         budget = reduction.rows_per_step
+        self.last_target_free_tiers = {}
         centres, jac = states or self.sphere_states(trajectory, q_now)
         candidate, plane, distance = self._clearances_from(centres, scene)
         esdf = self._esdf_clearance(centres, scene)
@@ -1000,7 +1160,8 @@ class CollisionLinearizer:
             # anyway would hide a field that had gone wrong, so it is used as computed and only
             # rescued where it vanishes (deep inside an obstacle, where the field is flat).
             sel = is_esdf & used
-            grad = np.asarray(scene.esdf.gradient(centres[step_index[sel], sphere[sel]]), float)
+            grad = self._esdf_directions(centres[step_index[sel], sphere[sel]], sphere[sel],
+                                         scene, centres.shape[1])
             norm = np.linalg.norm(grad, axis=1)
             grad = np.where(norm[:, None] > _EPS, grad / np.maximum(norm, _EPS)[:, None],
                             np.array([1.0, 0.0, 0.0]))
@@ -1106,8 +1267,20 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
     attached = getattr(constraint_set, "attached", None)
     attached_points = getattr(attached, "points", None) if attached is not None else None
     attached_link = getattr(attached, "parent_link", None) if attached is not None else None
+    attached_radii = None
+    # T32 H2: an attachment carrying the fitted held spheres (`AG3S.attach`) is queried **as those
+    # spheres** (centre + radius, parent frame) — the radius-0 point representation retires from
+    # the constraints. Points stay on the attachment for `placed_fn` and the records. Attachments
+    # built the pre-T32 way (one centroid + max-distance sphere, F19) keep the point queries.
+    if attached is not None:
+        from benchmark.ag3s.robot_models.held_object import held_spheres_of
+
+        spheres = held_spheres_of(attached)
+        if spheres:
+            attached_points = np.asarray([c for c, _ in spheres], np.float64).reshape(-1, 3)
+            attached_radii = np.asarray([r for _, r in spheres], np.float64)
     if attached_points is not None and len(attached_points) == 0:
-        attached_points, attached_link = None, None
+        attached_points, attached_link, attached_radii = None, None, None
     # 목적지 마진. AG3S 가 정책에서 뽑아 실어 보낸 값을 그대로 읽는다 — 여기서 다시 계산하지
     # 않는 것은 마진이 나오는 곳이 하나여야 하기 때문이다 (`ClearancePolicy`).
     destination_label = getattr(constraint_set, "destination_label", None)
@@ -1130,6 +1303,18 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
                 f"target_field_exclude has {target_free_mask.shape[0]} entries but "
                 f"{radii.size} robot radii were given; the optimizer and AG3S must share one "
                 "constraint model")
+    # 조작 대상 마진을 면제할 행 (T30 F1) — target 없는 계층에 묻는 **권한** 행.
+    # `exclude_authorized` 에서는 마스크가 곧 권한 행이라 따로 싣지 않는다 (`None` = 마스크).
+    # `exclude_all` 은 모든 구가 마스크에 들므로, 권한 행을 `manipulated_link_margin` 에서 읽는다:
+    # 권한 없는 구의 값은 `ClearancePolicy.full_margin(TARGET)` 이고 (배열의 최댓값), 권한 구는
+    # phase 규칙으로 그보다 작다. 둘이 같으면 (TRANSIT, margin_scale 1.0) 가를 수 없으므로 아무것도
+    # 면제하지 않는다 — 그 경우는 T30 전 규칙 그대로다.
+    target_free_exempt = None
+    if (target_free_mask is not None and manipulated_link_margin is not None
+            and str(getattr(constraint_set, "target_field_policy", "")) == "exclude_all"):
+        per_link = np.asarray(manipulated_link_margin, np.float64).reshape(-1)
+        relaxed = per_link < float(per_link.max()) - 1e-12 if per_link.size else per_link.astype(bool)
+        target_free_exempt = target_free_mask & relaxed
     if spec is None:
         # No `ConstraintSpec` at all. With the field that is a complete scene — an ESDF-only frame
         # never builds the primitive parameter vector — so return a field-only snapshot rather than
@@ -1147,8 +1332,9 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
             manipulated_points=man_points, manipulated_spheres=man_spheres,
             manipulated_sphere_radii=man_radii,
             manipulated_link_margin=manipulated_link_margin,
-            target_free_mask=target_free_mask,
+            target_free_mask=target_free_mask, target_free_exempt=target_free_exempt,
             attached_points=attached_points, attached_parent_link=attached_link,
+            attached_radii=attached_radii,
             destination_label=destination_label,
             destination_margin=float(destination_margin))
         return empty
@@ -1168,8 +1354,9 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
             manipulated_points=man_points, manipulated_spheres=man_spheres,
             manipulated_sphere_radii=man_radii,
             manipulated_link_margin=manipulated_link_margin,
-            target_free_mask=target_free_mask,
+            target_free_mask=target_free_mask, target_free_exempt=target_free_exempt,
             attached_points=attached_points, attached_parent_link=attached_link,
+            attached_radii=attached_radii,
             destination_label=destination_label,
             destination_margin=float(destination_margin))
 

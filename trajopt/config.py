@@ -177,15 +177,45 @@ class CostConfig:
             raise TrajOptConfigError(f"cost.track_decay must be in (0, 1], got {self.track_decay}")
 
 
+#: `LimitsConfig.source` 의 값 (T31 G1). **joint position 범위를 어디서 읽나.**
+#:
+#: | 값 | 범위 | 쓰는 곳 |
+#: |---|---|---|
+#: | `model_xml` (기본) | 제어 대상 MJCF 의 `jnt_range` (position actuator `ctrlrange` 와 대조) | 시뮬레이션 — 정책이 학습된 로봇 |
+#: | `urdf` | `robot_model.joint_limits()` (URDF `<limit lower upper>`) | T31 전 동작. 비교·재현용 |
+#: | `config` | `limits.position_ranges` 에 적은 표 | 실기 — 그 로봇의 실제 범위를 사람이 적는다 |
+#:
+#: URDF 는 **형상**(구 모델·FK)의 근거로 남는다. 속도·가속도 한계는 셋 모두 URDF 에서 온다 —
+#: MJCF 에는 관절 속도·가속도 한계가 없다 (`limits.py` 머리말).
+LIMIT_SOURCES = ("model_xml", "urdf", "config")
+
+#: `limits.model_xml` 이 비었을 때 읽는 MJCF — 시뮬레이션의 로봇
+#: (`ag3s/experiments/sources/mujoco_source.TRANSPORT_MODEL` 과 같은 파일, 테스트가 박는다).
+#: 작업공간 상대경로이고 `ag3s/runtime/asset_path.resolve_asset` 가 이 머신의 실제 자리를 찾는다.
+DEFAULT_LIMITS_MODEL_XML = "src/rby1_description/models/rby1a/mujoco/model_transport.xml"
+
+
 @dataclasses.dataclass(frozen=True)
 class LimitsConfig:
-    """How the URDF's own limits are applied.
+    """How the robot's own limits are applied.
 
     The scales are there to be conservative, not to be creative. A robot commanded to its exact
     velocity limit has no headroom for the tracking controller underneath, so 0.9 leaves some. The
     position margin keeps the optimizer off the hard stop for the same reason.
+
+    **Position 범위의 출처는 `source` 다** (T31 G1). T31 전에는 URDF 였고, 시뮬레이션의 로봇
+    (`model_transport.xml`)은 손목 `arm_6` 이 ±2.967 인데 URDF 는 ±2.705 라 정책이 학습한 자세를
+    TO 가 2.685 에서 잘랐다 (E3 ep1800·1808). 속도·가속도는 여전히 URDF 다.
     """
 
+    #: position 범위의 출처 — `LIMIT_SOURCES`. 기본 `model_xml` (시뮬레이션).
+    source: str = "model_xml"
+    #: `source == "model_xml"` 일 때 읽는 MJCF. `None` 이면 `DEFAULT_LIMITS_MODEL_XML`.
+    #: 서버는 `--model-xml` 을 여기 넣는다 (시뮬레이터가 돌리는 바로 그 파일).
+    model_xml: str | None = None
+    #: `source == "config"` 일 때만: ``{joint_name: [lower, upper]}`` (rad). TO 가 움직이는 관절은
+    #: **전부** 적어야 한다 — 빠진 관절을 URDF 로 채우면 무엇이 어디서 왔는지 다시 섞인다.
+    position_ranges: Mapping[str, Any] | None = None
     velocity_scale: float = 0.9
     acceleration_scale: float = 0.9
     position_margin: float = 0.02  # rad kept clear of each joint's hard stop
@@ -195,6 +225,23 @@ class LimitsConfig:
     default_acceleration: float | None = None
     enforce_velocity: bool = True
     enforce_acceleration: bool = True
+    #: **joint position box 를 거는가** (T27). `False` 면 `lower/upper` 가 `∓inf` 가 되어 box 행에는
+    #: trust region(과 anchor)만 남는다. 기본 `True` — 지금까지의 TO 다.
+    enforce_position: bool = True
+    #: `enforce_velocity=False` 일 때만 뜻이 있다 (T27). `True` 면 **첫 스텝 anchor**
+    #: ``|Q[:, 0] - q_now| <= v_max·dt`` 는 남기고 **스텝 사이 속도 행만** 뺀다. anchor 는 SQP 가
+    #: 로봇이 지금 있는 곳에서 계획을 시작하게 하는 장치이고, `sqp._limit_overshoot` 가 초기 iterate
+    #: 의 적격성을 그것으로 잰다 — 그래서 anchor 는 `max_step` 을 **유한하게 둔 채** 속도 행만
+    #: 끄는 방식으로 남긴다 (`limits.RelaxedJointLimits`).
+    #:
+    #: 기본 `False` 는 예전 동작 그대로다: `enforce_velocity=False` 면 `max_step = inf` 이고 anchor 도
+    #: 함께 사라진다 (`tests/trajopt/test_limits.py` 가 그것을 박고 있다).
+    keep_anchor: bool = False
+
+    @property
+    def enforces_nothing(self) -> bool:
+        """position · velocity · acceleration 을 **하나도** 걸지 않는가 (`--no-limits`, T27)."""
+        return not (self.enforce_position or self.enforce_velocity or self.enforce_acceleration)
 
     def validate(self) -> None:
         for name in ("velocity_scale", "acceleration_scale"):
@@ -205,6 +252,43 @@ class LimitsConfig:
             raise TrajOptConfigError(
                 f"limits.position_margin must be >= 0, got {self.position_margin}"
             )
+        if self.source not in LIMIT_SOURCES:
+            raise TrajOptConfigError(
+                f"limits.source must be one of {LIMIT_SOURCES}, got {self.source!r}")
+        if self.source == "config":
+            if not self.position_ranges:
+                raise TrajOptConfigError(
+                    "limits.source='config' needs limits.position_ranges "
+                    "({joint: [lower, upper]}) — a config source with no table would fall back to "
+                    "something nobody wrote down")
+            for name, pair in dict(self.position_ranges).items():
+                try:
+                    lo, hi = (float(v) for v in pair)
+                except (TypeError, ValueError):
+                    raise TrajOptConfigError(
+                        f"limits.position_ranges[{name!r}] must be [lower, upper], got {pair!r}"
+                    ) from None
+                if not lo < hi:
+                    raise TrajOptConfigError(
+                        f"limits.position_ranges[{name!r}] must satisfy lower < upper, got "
+                        f"[{lo}, {hi}]")
+        elif self.position_ranges:
+            # **조용히 무시하지 않는다** (이 모듈 머리말) — 표를 적었는데 다른 출처가 쓰이면 그
+            # 실행은 적힌 표로 돈 것처럼 읽힌다.
+            raise TrajOptConfigError(
+                f"limits.position_ranges is only read when limits.source='config' "
+                f"(got source={self.source!r})")
+
+
+#: `--no-limits` 가 `limits` 절에 얹는 것 (T27). **한 곳에만 적는다** — 서버·테스트·기록이 같은
+#: dict 를 본다. 무엇이 남는지: SQP 의 trust region (`sqp.trust_radius`, box 행 안) 과 첫 스텝
+#: anchor (`keep_anchor`). 무엇이 빠지는지: joint position box · 스텝 사이 속도 행 · 가속도 행.
+NO_LIMITS: dict[str, bool] = {
+    "enforce_position": False,
+    "enforce_velocity": False,
+    "enforce_acceleration": False,
+    "keep_anchor": True,
+}
 
 
 @dataclasses.dataclass(frozen=True)
@@ -282,10 +366,40 @@ class SqpConfig:
     The budget follows from the deployment: at 15 Hz one control period is 66.7 ms, and the
     optimizer runs once per chunk while the loop waits. 25 ms keeps it well inside a single period
     and small next to π0.5 inference.
+
+    **T31 — 반복 수 우선.** 위 계산은 한 반복이 수 ms 이던 primitive backend 의 것이다. ESDF
+    backend 의 E3 에서는 linearize 하나가 ~100 ms 라 예산 50 ms 가 언제나 첫 반복 뒤에 걸렸다.
+    `min_iterations` 만큼은 예산과 무관하게 돌고, 그 뒤부터 `time_budget_ms` 가 걸린다.
+    `max_iterations` 가 `min_iterations` 보다 작으면 `max_iterations` 가 이긴다 (상한은 상한이다).
     """
 
     max_iterations: int = 3
     time_budget_ms: float = 50.0
+    #: **벽시계 예산이 걸리기 전에 반드시 도는 SQP 반복 수** (T31 G2-i). 예산은 이 수만큼 돈 뒤부터
+    #: 검사된다 — `max_iterations` 는 여전히 상한이고, 수렴(`step_tolerance`)·QP 실패로 더 일찍
+    #: 끝날 수는 있다. 1 이면 T31 전 동작(첫 반복 뒤 곧바로 예산 검사)이다.
+    #:
+    #: 기본 3 (= `max_iterations`) 의 근거 — 둘로 나뉜다.
+    #:
+    #: 1. T30 E3 서버 기록 1125 청크 (E3a 675 · E3b 450, 각 run 첫 청크 제외): linearize 중앙값
+    #:    92.5–100.2 ms (p90 115–183), assemble 2.9 · QP 2.1–2.2 · check 4.6–4.7 ms. 예산 50 ms 가
+    #:    첫 반복보다 작아서 **1124/1125 청크가 1 반복**이었다.
+    #: 2. 그 ~100 ms 는 **청크마다 새 거리장에 대한 첫 linearize** 의 값이다. 같은 입력(E3b chunk
+    #:    302–311, T24 도구로 복원)을 3 반복으로 풀면 linearize 는 호출마다 121–145 ms · 2.7–3.2 ·
+    #:    2.7–3.0 ms 다 (이 머신). 2·3 번째 반복은 QP·check 를 합쳐 ≈ 10 ms 씩이다.
+    #:
+    #: 같은 도구로 E3b 1800 r1 · 1808 r1 의 pre-grasp 150 청크를 1·2·3 반복(시계 끔, MJCF 한계)으로
+    #: 풀면: 반환 merit / 초기 merit 중앙값 1.000 · 0.841 · 0.742, 충돌 위반 청크 0 · 0 · 0,
+    #: 관절 편차(실행 창, °) 중앙값 0.00 · 0.95 · 1.10 / 최대 7.16 · 7.05 · 7.09. 그래서 3 반복은
+    #: ≈ 20 ms 로 설계대로의 SQP(`max_iterations=3`)를 되돌리고, 반복 수가 부하와 무관하게 정해진다
+    #: (시뮬레이션 재현성). 시뮬레이션 루프는 동기식이라 이 시간은 제어 주기를 깨지 않는다.
+    #: **실기처럼 비동기로 도는 곳은 1 로 되돌린다** (`serve_safe --sqp-min-iterations 1`).
+    min_iterations: int = 3
+    #: 초기 iterate 가 **limit 만** 어기고 (충돌 위반 없음) 받아들여진 QP 후보가 없을 때, 거절된
+    #: 후보 대신 **reference 의 최소 투영** (`limits.project_to_limits`: position box ∩ 첫 스텝
+    #: anchor) 을 반환한다 — 그 투영이 limit 을 전부 지키고 충돌 검사를 통과할 때만 (T31 G2-ii).
+    #: `False` 는 T24 규칙 그대로 (`best_unaccepted`). ablation 용 스위치다.
+    limit_projection_fallback: bool = True
     trust_radius: float = 0.15  # rad, initial
     trust_radius_min: float = 0.01
     trust_radius_max: float = 0.6
@@ -300,6 +414,10 @@ class SqpConfig:
     def validate(self) -> None:
         if self.max_iterations < 1:
             raise TrajOptConfigError(f"sqp.max_iterations must be >= 1, got {self.max_iterations}")
+        if self.min_iterations < 1:
+            raise TrajOptConfigError(
+                f"sqp.min_iterations must be >= 1, got {self.min_iterations} — one step is the "
+                "real-time iteration scheme's minimum unit of work")
         if self.time_budget_ms <= 0.0:
             raise TrajOptConfigError(f"sqp.time_budget_ms must be > 0, got {self.time_budget_ms}")
         if not 0.0 < self.trust_radius_min <= self.trust_radius <= self.trust_radius_max:
@@ -565,6 +683,9 @@ def _build_section(section_cls: type, name: str, raw: Any) -> Any:
 
 
 __all__ = [
+    "DEFAULT_LIMITS_MODEL_XML",
+    "LIMIT_SOURCES",
+    "NO_LIMITS",
     "PLAN_EXECUTION_WINDOW",
     "ConstraintReductionConfig",
     "CostConfig",

@@ -47,6 +47,13 @@ T16 에서 t=176 · 208 의 gripper 닫힘이 **제안됐지만 HOLD 로 실행�
 | planning | `exec_feedback` | 이 요청이 서버에 실어 보낸 **직전 청크의 실행 사실** (`wire.make_exec_feedback`) |
 | control | `applied_ctrl` | 이 스텝에 **실제 `d.ctrl` 에 들어간** `{"arm": [2N], "gripper": [왼, 오른]}` (gripper 는 정규화, 1 = 열림) |
 
+## 촬영 시각과 렌더 시각을 따로 (T30c, 2026-09-29)
+
+시뮬레이션 관측은 세 카메라가 **한 순간**으로 찍힌다 (`wire` 머리말의 `ag3s/stamp/<cam>` 절). 그래서
+observation frame 의 `camera_stamps` 는 같은 값 셋이고 `camera_skew_sec` 은 0 이다. 순차 렌더의
+벽시계는 `camera_render_stamps` · `render_spread_sec` 에, 그 둘의 뜻은 `stamp_mode` 에 남는다 —
+**값이 주어졌을 때만** 키가 생긴다 (위와 같은 규약).
+
 한도(`timing.max_field_age_sec`)가 `None` 이면 `stale` 판정을 하지 않고
 `staleness_checked: false` 가 실린다 — 검사를 안 한 것이 통과한 것으로 읽히지 않게 하는 것이
 그 필드의 목적이다.
@@ -208,10 +215,27 @@ class FrameRecorder:
     def observation(self, *, t_step: int, stamps: dict, ag3s_status: str = "",
                     grounding_status: str = "", validity: str = "",
                     n_points: Optional[int] = None, notes: Any = (),
-                    extra: Optional[dict] = None) -> None:
+                    extra: Optional[dict] = None,
+                    render_stamps: Optional[dict] = None,
+                    stamp_mode: Optional[str] = None) -> None:
+        """관측 하나. `stamps` 는 **판정에 쓰인** 촬영 시각 (요청의 `ag3s/stamp/<cam>`).
+
+        T30c: `render_stamps` (카메라별 렌더 끝 벽시계, 진단용) · `stamp_mode` (`wire.STAMP_MODES`)
+        를 주면 `camera_render_stamps` · `render_spread_sec` · `stamp_mode` 가 더해진다. 안 주면 키가
+        생기지 않는다 (옛 기록과 키 집합이 같다). 시뮬레이션 관측이면 `camera_skew_sec` 은 0 이고
+        순차 렌더의 퍼짐은 `render_spread_sec` 에 남는다.
+        """
         newest = max(stamps.values()) if stamps else None
         reversed_ = self._check_order("observation", newest)
         self.counts.observation += 1
+        stamp_extra: dict = {}
+        if render_stamps is not None:
+            stamp_extra["camera_render_stamps"] = {k: float(v) for k, v in render_stamps.items()}
+            stamp_extra["render_spread_sec"] = (
+                None if not render_stamps
+                else float(max(render_stamps.values()) - min(render_stamps.values())))
+        if stamp_mode is not None:
+            stamp_extra["stamp_mode"] = str(stamp_mode)
         self._write({
             "kind": "observation", "t_step": int(t_step),
             "camera_stamps": {k: float(v) for k, v in (stamps or {}).items()},
@@ -222,6 +246,7 @@ class FrameRecorder:
             "validity": validity, "n_points": n_points,
             "timestamp_reversed": reversed_,
             "notes": list(notes or ()),
+            **stamp_extra,
             **(extra or {}),
         })
 

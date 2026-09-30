@@ -392,14 +392,25 @@ def bounding_capsules(
     """
     import mujoco
 
-    from benchmark.ag3s.stages.geometry import fit_capsule
-    from benchmark.ag3s.robot_models.urdf_sphere_chain import UrdfCapsule
-
     body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, body_name)
     if body_id < 0:
         raise KeyError(f"no body {body_name!r}")
     link_name = body_name if link is None else link
     points = _body_vertices(model, body_id)
+    return _capsules_from_points(points, link_name, segments=segments, subsample=subsample)
+
+
+def _capsules_from_points(points: np.ndarray, link_name: str, *, segments: int = 3,
+                          subsample: int = 4000) -> list:
+    """`bounding_capsules` 의 몸통 — 점(이미 link frame)을 PCA 주축 slab 으로 나눠 slab 마다 capsule.
+
+    T29 가 이 부분을 떼어 냈다: 부모 URDF link 의 frame 으로 옮긴 **다른 body 의** 정점(손목 카메라
+    bracket · D435i)에도 같은 규칙을 쓰기 위해서다. 동작은 예전과 글자 그대로 같다.
+    """
+    from benchmark.ag3s.stages.geometry import fit_capsule
+    from benchmark.ag3s.robot_models.urdf_sphere_chain import UrdfCapsule
+
+    points = np.asarray(points, np.float64).reshape(-1, 3)
     if points.shape[0] < 8:
         return []
     if points.shape[0] > subsample:  # deterministic stride, as everywhere else in AG3S
@@ -580,6 +591,410 @@ def gap_filling_capsules(model, links: Sequence[str] = UNCOVERED_LINKS, **kwargs
     return out
 
 
+#: T29 — MJCF bodies whose visible surface the self-filter spheres **did not cover** at
+#: `self_filter_inflation = 0` (T28 P1-3b, GT segmentation, every planning row of T14 / T17, px):
+#:
+#: | body | leak T14 / T17 | why |
+#: |---|---:|---|
+#: | `link_left_arm_2` | 24,697 / 22,034 | URDF 에 capsule 이 둘뿐이다 — `link_*_arm_1` 의 위팔 capsule (축 z ∈ [−0.2, 0], r 50) 과 `link_*_arm_2` 의 팔꿈치 capsule (y 축, 중심 x +26 · z −276 mm, r 50, L 80). **그 사이 z −200…−280 mm 의 위팔 아래쪽이 비어 있다** — mesh 는 x −45…+71 · y ±67 mm 인데 팔꿈치 capsule 은 x +26 에 치우쳐 x < −24 mm 를 못 덮는다. 정점 11 % 가 구 밖, 최대 14.0 mm (T14/T17 자세 전부) |
+#: | `wrist_bracket_l/r` | 2,661 / 6,879 · 3,920 / 9,405 | URDF link 이 아니다 (MJCF 전용 카메라 bracket, `link_*_arm_6` 아래) — 자기 구가 없다. 3.1 % · 9.2 mm |
+#: | `d435i_body_l/r` | 1,777 / 3,648 · 2,468 / 6,881 | 같은 이유 (D435i, bracket 아래). 34 % · 10.7 mm |
+#: | `link_left_arm_3` | 429 / 4,581 | URDF capsule (x −31 mm, r 40) 보다 mesh 가 넓다 (x −68 mm). 2.9 % · 9.5 mm |
+#: | `link_left_arm_4` | 26 / 241 | 0.2 mm — 경계 잔차 |
+#:
+#: 오른팔의 같은 link 은 T14/T17 에 안 보였지만 거울 기하라 같이 덮는다 (다른 에피소드에서 보인다).
+#: `link_torso_5` 도 정점 28 % 가 구 밖이지만 (최대 50 mm) 머리 카메라가 그 위에 달려 있어 어느
+#: 카메라에도 안 보였다 (누수 0 px) — 넣지 않는다.
+#:
+#: **`link_*_arm_5` 는 더하는 것이 아니라 바꾼다** (`SELF_FILTER_MESH_LINKS`). T17 에서 사과가 통째로
+#: 지워진 17 프레임 (seq 12–28) 의 사과 px 는 **전부 `link_left_arm_5` 의 구 안**이었다
+#: (seq 12: 17,277 / 17,277 px; 손가락 구는 665 px, 손바닥 236 px — 손가락 관절을 실제 개도로
+#: 놓아도 이 17 프레임은 그대로 남았다). 그 URDF capsule 은 r 75 mm · L 250 mm, 축 z ∈
+#: [−0.225, +0.025] 로 손목·손바닥·손가락과 **그 사이의 물체**까지 삼킨다 (`CapsuleTrim` 머리말).
+#: 자기 mesh 는 z ≥ −82 mm 에서 끝난다.
+#:
+#: 그것을 빼자 **그 capsule 이 가리고 있던 구멍**이 드러났다: 손바닥 (`EE_BODY_L/R`, 누수 T14
+#: 140,675 / 148,929 px) 과 손가락 (1,420–2,032 px) 의 `gap_filling_capsules` 는 **정점**에 맞춘
+#: slab capsule (4000 점 솎음) 이라 slab 경계를 가로지르는 삼각형의 안쪽 면이 최대 7 mm 밖에 있다
+#: (wrist_cam_l 에서 손바닥 depth 점의 45 % 가 구 밖, 그 점들은 mesh 표면에서 ≤ 1.6 mm). 그래서
+#: 손바닥 · 손가락 · `link_*_arm_6` · FT sensor 도 목록에 있다. 이들의 gap-filler 는 **그대로 두고**
+#: (제약 모델과 T26 max opening 이 그것을 쓴다) 덮개를 더한다.
+#:
+#: 이름은 **MJCF body** 이름이다. capsule 이 붙는 URDF link 은 `static_urdf_ancestor` 가 찾는다
+#: (`EE_BODY_L` → `ee_left`, MJCF `ee_finger_l1` → URDF `ee_finger_l2` (이름 뒤바뀜),
+#: `wrist_bracket_l` · `d435i_body_l` · `FT_SENSOR_L` → `link_left_arm_6`).
+#:
+#: **T30 (F5) — `base` 추가.** base mesh 표면 점 2,116,268 개 중 31,730 개(1.5 %)가 URDF 구 14 개
+#: 밖에 있다(최대 53.6 mm). 회귀 기준선 `run_16d_ep1800` 15 프레임 × 3 카메라의 GT 에서는 그 자리가
+#: 안 보여서 누수가 0 px 이었다(base 33,123 px 보임, 0 px 샘). 그래도 넣는 이유는 다른 자세·카메라에서
+#: 보일 수 있기 때문이다. 기준선에서 inflation 0 과 0.05 사이에 갈리는 px 는 base 가 아니라 **crate** 다
+#: (frame0 wrist_cam_l 2,787 · wrist_cam_r 569 px). 0.05 가 왼손 옆의 실제 crate 를 지우고 있었던
+#: 것이므로 덮개로 되돌릴 대상이 아니다(T30b.impl).
+#: `wheel_*` 는 표면이 전부 구 안이다(최대 −0.9 mm). `link_torso_0` 은 3,933 점이 최대 3.2 mm 밖으로
+#: 나오지만 누수가 0 이라 넣지 않았다.
+SELF_FILTER_COVER_BODIES = (
+    "base",
+    "link_left_arm_2", "link_right_arm_2",
+    "link_left_arm_3", "link_right_arm_3",
+    "link_left_arm_4", "link_right_arm_4",
+    "link_left_arm_5", "link_right_arm_5",
+    "link_left_arm_6", "link_right_arm_6",
+    "FT_SENSOR_L", "FT_SENSOR_R",
+    "wrist_bracket_l", "wrist_bracket_r",
+    "d435i_body_l", "d435i_body_r",
+    "EE_BODY_L", "EE_BODY_R",
+    "ee_finger_l1", "ee_finger_l2", "ee_finger_r1", "ee_finger_r2",
+)
+
+#: URDF capsule 을 **빼고** mesh capsule 만 쓰는 link (자기 필터 모델만) — 위 표.
+SELF_FILTER_MESH_LINKS = ("link_left_arm_5", "link_right_arm_5")
+
+#: 덮개 capsule 을 맞출 때 mesh 삼각형 표면을 이 간격(m)으로 채운다. 정점만 쓰면 slab 경계를
+#: 가로지르는 큰 삼각형의 안쪽이 두 capsule 어디에도 안 들어간다 (bracket 이 정점 637 개라 실측
+#: 95 / 236 px 가 그렇게 샜고, 손바닥은 140 k px).
+SURFACE_SAMPLE_SPACING = 0.004
+
+#: 덮개 capsule 반지름에 더하는 여유 (m). **inflation 이 아니다** — 덮개 구에만 붙는 기하의 일부이고
+#: 표본 간격(4 mm 격자의 삼각형 안쪽 최대 ≈ 1.2 mm)과 depth 양자화(1 mm, `wire.DEPTH_SCALE_MM`)를
+#: 흡수한다. 다른 구는 그대로다.
+COVER_PAD = 0.002
+
+#: 덮이지 않은 표면 점을 이 거리(m) 안에서 이어진 덩어리로 나눠 덩어리마다 capsule 을 맞춘다.
+#: 한 body 의 양 끝에 흩어진 구멍을 capsule 하나로 이으면 그 사이 (손가락 사이 = 사과 자리) 까지
+#: 덮는다.
+COVER_CLUSTER_EPS = 0.010
+
+#: T30 (F5): 덮개가 **자기 mesh 상자 밖으로 나가면 안 되는** body. base 에서 구 밖에 남는 표면은
+#: 앞뒤 두 줄 구 사이의 띠 하나다(x −12…147 · y ±230 · z 36…175 mm, 연결 덩어리 1 개).
+#: slab 3 개로 맞추면 capsule 이 r 134–141 mm 가 되어 base 옆으로 ~170 mm 튀어나간다
+#: (y −432 mm, base 상자는 ±263). 그 자리의 바닥이나 물체를 로봇으로 지우게 된다. 그래서 이 body 들은
+#: 덮개 capsule 의 AABB 가 body 표면 AABB(+`COVER_PAD`) 안에 들 때까지 점을 주축으로 반씩 나눠
+#: 다시 맞춘다(`_fit_confined`). 숫자 상한이 아니라 기하 규칙이다. T29 의 22 body 는
+#: 누수 표로 검증된 덮개라 바꾸지 않는다.
+COVER_CONFINED_BODIES = ("base",)
+#: `_fit_confined` 의 최대 분할 깊이 (2^8 = 256 조각). 그 깊이에서도 상자를 넘으면 그대로 둔다
+#: (덮개가 빠지는 것보다 조금 튀어나오는 쪽이 낫다 — 담는 것이 먼저다).
+COVER_CONFINE_MAX_DEPTH = 8
+
+
+def _body_surface_points(model, body_id: int, spacing: float = SURFACE_SAMPLE_SPACING
+                         ) -> np.ndarray:
+    """Mesh vertices **and** points on every triangle (barycentric grid ≤ `spacing`), body frame.
+
+    Visual geoms included, like `_body_vertices` — the camera sees them.
+    """
+    import mujoco
+
+    out = []
+    for geom in range(model.ngeom):
+        if model.geom_bodyid[geom] != body_id or model.geom_type[geom] != mujoco.mjtGeom.mjGEOM_MESH:
+            continue
+        mesh = int(model.geom_dataid[geom])
+        v0, nv = int(model.mesh_vertadr[mesh]), int(model.mesh_vertnum[mesh])
+        f0, nf = int(model.mesh_faceadr[mesh]), int(model.mesh_facenum[mesh])
+        verts = np.asarray(model.mesh_vert[v0:v0 + nv], np.float64).reshape(-1, 3)
+        faces = np.asarray(model.mesh_face[f0:f0 + nf], np.int64).reshape(-1, 3)
+        pts = [verts]
+        if faces.size:
+            a, b, c = verts[faces[:, 0]], verts[faces[:, 1]], verts[faces[:, 2]]
+            edge = np.max(np.stack([np.linalg.norm(b - a, axis=1), np.linalg.norm(c - b, axis=1),
+                                    np.linalg.norm(a - c, axis=1)], 1), axis=1)
+            n = np.ceil(edge / float(spacing)).astype(np.int64)
+            for k in np.unique(n[n >= 2]):
+                sel = n == k
+                ij = np.array([(i, j) for i in range(k + 1) for j in range(k + 1 - i)], np.float64) / k
+                w = np.column_stack([1.0 - ij.sum(1), ij])                   # (m, 3)
+                tri = np.stack([a[sel], b[sel], c[sel]], 1)                   # (t, 3, 3)
+                pts.append(np.einsum("mk,tkj->tmj", w, tri).reshape(-1, 3))
+        local = np.vstack(pts)
+        rotation = np.zeros(9)
+        mujoco.mju_quat2Mat(rotation, model.geom_quat[geom])
+        out.append(local @ rotation.reshape(3, 3).T + model.geom_pos[geom])
+    return np.vstack(out) if out else np.zeros((0, 3))
+
+
+def _body_to_parent(model, body_id: int) -> np.ndarray:
+    """4×4 constant pose of `body_id` in its parent's frame (`body_pos` · `body_quat`)."""
+    import mujoco
+
+    T = np.eye(4)
+    R = np.zeros(9)
+    mujoco.mju_quat2Mat(R, model.body_quat[body_id])
+    T[:3, :3] = R.reshape(3, 3)
+    T[:3, 3] = model.body_pos[body_id]
+    return T
+
+
+def static_urdf_ancestor(model, body_name: str, urdf_links: Sequence[str]) -> tuple[str, np.ndarray]:
+    """`(URDF link, T_link_body)` — the nearest ancestor that the URDF knows, **rigidly** attached.
+
+    Walks up the MJCF tree from `body_name` until a body whose name (through `MJCF_BODY_ALIASES`,
+    reversed) is a URDF link. Every body on the way must have **no joint** — otherwise the offset
+    is not constant and a capsule fixed in the ancestor's frame would be wrong in every pose but
+    one, so this raises instead. A URDF link itself returns `(link, I)`.
+    """
+    import mujoco
+
+    reverse = {mj: urdf for urdf, mj in MJCF_BODY_ALIASES.items()}
+    known = set(urdf_links)
+    bid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, body_name)
+    if bid < 0:
+        raise KeyError(f"no body {body_name!r}")
+    T = np.eye(4)
+    cursor = bid
+    while True:
+        name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_BODY, cursor) or ""
+        urdf = reverse.get(name, name)
+        if urdf in known:
+            return urdf, T
+        if int(model.body_jntnum[cursor]) != 0:
+            raise ValueError(
+                f"{body_name!r}: ancestor {name!r} has a joint before any URDF link is reached — "
+                "a capsule fixed in a URDF link frame would not follow it")
+        parent = int(model.body_parentid[cursor])
+        if parent == cursor or parent == 0:
+            raise ValueError(f"{body_name!r}: no URDF link among its MJCF ancestors")
+        T = _body_to_parent(model, cursor) @ T
+        cursor = parent
+
+
+#: 덮개 capsule 캐시 — 표면 표본 + 솎지 않은 fit 이 body 당 0.3–0.8 s 라 (D435i 정점 49.7 만 개)
+#: 모델을 짓는 곳마다 다시 하면 테스트·sweep 가 느려진다. 키는 body 의 **mesh 내용 digest** 와
+#: 조상 변환이므로 다른 모델의 같은 이름 body 가 옛 값을 받지 않는다.
+_COVER_CACHE: dict = {}
+
+
+def _body_mesh_digest(model, body_id: int) -> str:
+    import hashlib
+
+    import mujoco
+
+    h = hashlib.sha1()
+    for geom in range(model.ngeom):
+        if model.geom_bodyid[geom] != body_id or model.geom_type[geom] != mujoco.mjtGeom.mjGEOM_MESH:
+            continue
+        mesh = int(model.geom_dataid[geom])
+        v0, nv = int(model.mesh_vertadr[mesh]), int(model.mesh_vertnum[mesh])
+        f0, nf = int(model.mesh_faceadr[mesh]), int(model.mesh_facenum[mesh])
+        h.update(np.ascontiguousarray(model.mesh_vert[v0:v0 + nv]).tobytes())
+        h.update(np.ascontiguousarray(model.mesh_face[f0:f0 + nf]).tobytes())
+        h.update(np.ascontiguousarray(model.geom_pos[geom]).tobytes())
+        h.update(np.ascontiguousarray(model.geom_quat[geom]).tobytes())
+    return h.hexdigest()
+
+
+def _clusters(points: np.ndarray, eps: float) -> list[np.ndarray]:
+    """Connected components of `points` on an `eps` voxel grid (26-neighbourhood), index arrays.
+
+    A grid rather than an `eps`-ball graph: the D435i surface alone is ~10^5 points and the pair
+    list of a ball graph at 10 mm is quadratic in the local density.
+    """
+    from scipy import ndimage
+
+    n = points.shape[0]
+    if n == 0:
+        return []
+    cell = np.floor((points - points.min(axis=0)) / float(eps)).astype(np.int64)
+    grid = np.zeros(tuple(cell.max(axis=0) + 1), bool)
+    grid[cell[:, 0], cell[:, 1], cell[:, 2]] = True
+    labels, count = ndimage.label(grid, structure=np.ones((3, 3, 3), bool))
+    point_label = labels[cell[:, 0], cell[:, 1], cell[:, 2]]
+    order = np.argsort(point_label, kind="stable")
+    bounds = np.searchsorted(point_label[order], np.arange(1, count + 2))
+    return [order[bounds[k]:bounds[k + 1]] for k in range(count) if bounds[k + 1] > bounds[k]]
+
+
+def _capsule_distance(points: np.ndarray, capsule) -> np.ndarray:
+    """Signed distance from `points` to a `UrdfCapsule` (link frame; negative = inside)."""
+    a = capsule.origin[:3, 3] - capsule.origin[:3, 2] * (capsule.length / 2.0)
+    b = capsule.origin[:3, 3] + capsule.origin[:3, 2] * (capsule.length / 2.0)
+    ab = b - a
+    denom = float(ab @ ab)
+    t = np.zeros(points.shape[0]) if denom <= 1e-18 else np.clip((points - a) @ ab / denom, 0.0, 1.0)
+    return np.linalg.norm(points - (a + t[:, None] * ab), axis=1) - float(capsule.radius)
+
+
+def _fit_cover(points: np.ndarray, link: str, segments: int = 3) -> list:
+    """PCA slabs like `_capsules_from_points`, but **no slab is dropped** (a slab of 1–3 points gets
+    its own `fit_capsule`/sphere) — a skipped slab is an uncovered patch."""
+    from benchmark.ag3s.robot_models.urdf_sphere_chain import UrdfCapsule
+    from benchmark.ag3s.stages.geometry import fit_capsule
+
+    def one(pts):
+        prim = fit_capsule(pts, min_radius=0.0)
+        origin = np.eye(4)
+        origin[:3, :3] = prim.orientation
+        origin[:3, 3] = prim.center
+        half = float(prim.dimensions[1]) if prim.type.value == "capsule" else 0.0
+        return UrdfCapsule(link=link, origin=origin, radius=float(prim.dimensions[0]),
+                           length=2.0 * half)
+
+    if points.shape[0] < 8:
+        return [one(points)]
+    centred = points - points.mean(axis=0)
+    axis = np.linalg.eigh((centred.T @ centred) / max(points.shape[0] - 1, 1))[1][:, 2]
+    proj = centred @ axis
+    edges = np.linspace(proj.min(), proj.max(), max(int(segments), 1) + 1)
+    out = []
+    for i in range(len(edges) - 1):
+        sel = (proj >= edges[i]) & (proj <= edges[i + 1] if i == len(edges) - 2 else proj < edges[i + 1])
+        if sel.any():
+            out.append(one(points[sel]))
+    return out
+
+
+def _capsule_aabb(capsule) -> tuple[np.ndarray, np.ndarray]:
+    """Axis-aligned box of a `UrdfCapsule` in its link frame."""
+    half = capsule.origin[:3, 2] * (capsule.length / 2.0)
+    a, b = capsule.origin[:3, 3] - half, capsule.origin[:3, 3] + half
+    return np.minimum(a, b) - capsule.radius, np.maximum(a, b) + capsule.radius
+
+
+def _fit_confined(points: np.ndarray, link: str, box: tuple[np.ndarray, np.ndarray], *,
+                  slack: float, depth: int = 0) -> list:
+    """`_fit_cover`, then every capsule whose AABB leaves `box` (± `slack`) is refit on its points
+    split in half along their principal axis — recursively, up to `COVER_CONFINE_MAX_DEPTH` (T30 F5).
+    Still containing: each piece is a max-distance fit of its own points."""
+    lo, hi = np.asarray(box[0]) - slack, np.asarray(box[1]) + slack
+    out = []
+    for cap in _fit_cover(points, link, segments=1):
+        c_lo, c_hi = _capsule_aabb(cap)
+        if (np.all(c_lo >= lo) and np.all(c_hi <= hi)) or points.shape[0] < 8 \
+                or depth >= COVER_CONFINE_MAX_DEPTH:
+            out.append(cap)
+            continue
+        centred = points - points.mean(axis=0)
+        axis = np.linalg.eigh(centred.T @ centred)[1][:, 2]
+        proj = centred @ axis
+        cut = float(np.median(proj))
+        left, right = proj <= cut, proj > cut
+        if not left.any() or not right.any():
+            out.append(cap)
+            continue
+        out += _fit_confined(points[left], link, box, slack=slack, depth=depth + 1)
+        out += _fit_confined(points[right], link, box, slack=slack, depth=depth + 1)
+    return out
+
+
+def _cover_capsules_for(points: np.ndarray, link: str, *, pad: float, eps: float,
+                        box: Optional[tuple[np.ndarray, np.ndarray]] = None) -> list:
+    """Capsules that contain **every** point: per `eps`-cluster, `_fit_cover`; then any point still
+    outside (it should not happen, but a cover that silently misses is the failure T29 fixes) is
+    covered on its own. Radius + `pad`, role `COVER_ROLE`.
+
+    `box` (T30, `COVER_CONFINED_BODIES`): the body's own surface AABB in the link frame — the
+    capsules are split until they stay inside it (`_fit_confined`)."""
+    from benchmark.ag3s.robot_models.urdf_sphere_chain import COVER_ROLE, UrdfCapsule
+
+    def fit(pts):
+        return (_fit_cover(pts, link) if box is None
+                else _fit_confined(pts, link, box, slack=pad))
+
+    out = []
+    for idx in _clusters(points, eps):
+        cluster = points[idx]
+        caps = fit(cluster)
+        for _ in range(3):
+            d = np.min(np.stack([_capsule_distance(cluster, c) for c in caps]), axis=0)
+            missed = cluster[d > 1e-12]
+            if not missed.shape[0]:
+                break
+            caps += [c for sub in _clusters(missed, eps) for c in fit(missed[sub])]
+        out.extend(UrdfCapsule(link=c.link, origin=c.origin, radius=float(c.radius) + pad,
+                               length=float(c.length), role=COVER_ROLE) for c in caps)
+    return out
+
+
+def self_filter_covering_capsules(model, urdf_links: Sequence[str],
+                                  bodies: Sequence[str] = SELF_FILTER_COVER_BODIES,
+                                  *, existing=None,
+                                  spacing: float = SURFACE_SAMPLE_SPACING,
+                                  pad: float = COVER_PAD,
+                                  eps: float = COVER_CLUSTER_EPS) -> list:
+    """`extra_capsules` that make the **self-filter** model cover `bodies` (T29). Role
+    `COVER_ROLE` — `gripper_openings` does not read them.
+
+    For each MJCF body:
+
+    1. **surface** points (`_body_surface_points`: vertices + every triangle every `spacing`,
+       visual geoms included — the camera sees them), moved into the frame of its nearest
+       rigidly-attached URDF link (`static_urdf_ancestor`);
+    2. with `existing` (a `UrdfSphereChain` that already has the link's own spheres), only the points
+       **outside** that link's spheres are kept — this is gap filling, so a link the URDF already
+       covers gets nothing and the cover stays where the holes are;
+    3. the rest is split into `eps`-connected clusters and each cluster gets `fit_capsule`-style
+       capsules (PCA slabs, max distance — they contain every point), radius + `pad`;
+    4. (T30) a body in `COVER_CONFINED_BODIES` has its capsules split until each stays inside the
+       body's own surface AABB (+ `pad`) — `_fit_confined`.
+
+    Missing bodies are warned about and skipped, as in `gap_filling_capsules`.
+    """
+    import mujoco
+
+    out: list = []
+    empty: list[tuple[str, str, str]] = []
+    for body in tuple(bodies):
+        try:
+            link, T = static_urdf_ancestor(model, body, urdf_links)
+        except KeyError:
+            empty.append((body, body, "mj_name2id found no such body"))
+            continue
+        bid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, body)
+        centres, radii = (np.zeros((0, 3)), np.zeros(0)) if existing is None \
+            else existing.local_spheres(link)
+        confined = body in COVER_CONFINED_BODIES
+        key = (body, link, T.tobytes(), float(spacing), float(pad), float(eps),
+               centres.tobytes(), radii.tobytes(), _body_mesh_digest(model, bid), confined)
+        capsules = _COVER_CACHE.get(key)
+        if capsules is None:
+            pts = _body_surface_points(model, bid, spacing)
+            if pts.shape[0]:
+                pts = pts @ T[:3, :3].T + T[:3, 3]
+            box = (pts.min(axis=0), pts.max(axis=0)) if confined and pts.shape[0] else None
+            if pts.shape[0] and radii.size:
+                from scipy.spatial import cKDTree
+
+                inside = np.zeros(pts.shape[0], bool)
+                tree = cKDTree(pts)
+                for c, r in zip(centres, radii):
+                    hits = tree.query_ball_point(c, float(r))
+                    if hits:
+                        inside[hits] = True
+                pts = pts[~inside]
+            capsules = (_cover_capsules_for(pts, link, pad=pad, eps=eps, box=box)
+                        if pts.shape[0] else [])
+            _COVER_CACHE[key] = capsules
+        if capsules:
+            out.extend(capsules)
+        elif existing is None:
+            empty.append((body, body, "the body has no mesh geoms to measure"))
+    for link, body, reason in empty:
+        _warn_no_capsules(link, body, reason, empty=len(empty), listed=len(tuple(bodies)))
+    return out
+
+
+def set_finger_joints_from_scene(scene: "TransportScene", robot_model) -> Optional[dict]:
+    """Put the scene's **current** finger opening into `robot_model` (T29) and return the values.
+
+    Read the client's way (`gripper_state.openings_from_mujoco` = `rby1_state()`), inverted to the
+    URDF finger joints (`FingerJointMap`). A model without finger parameters is left alone (None).
+    `camera_observation` calls this, so every offline tool that builds observations from a MuJoCo
+    scene gets a self-filter whose fingers are where the rendered fingers are — the same thing
+    `SafePolicy` does on the server from the request's 16D state.
+    """
+    if not tuple(getattr(robot_model, "param_joint_names", ()) or ()):
+        return None
+    from benchmark.ag3s.robot_models.gripper_state import FingerJointMap, openings_from_mujoco
+
+    fmap = getattr(robot_model, "_t29_finger_map", None)
+    if fmap is None:
+        fmap = FingerJointMap(robot_model)
+        robot_model._t29_finger_map = fmap
+    values = fmap.joint_values(openings_from_mujoco(scene.model, scene.data, fmap.convention))
+    robot_model.set_joint_parameters(values)
+    return values
+
+
 def camera_observation(
     scene: "TransportScene",
     camera: str,
@@ -607,6 +1022,7 @@ def camera_observation(
         raise KeyError(f"no mount recorded for camera {camera!r}; have {sorted(CAMERA_MOUNTS)}")
     mount_link, camera_id = CAMERA_MOUNTS[camera]
     frame = scene.capture(camera)
+    set_finger_joints_from_scene(scene, robot_model)
     T_base_link = robot_model.link_pose(frame.robot_state, mount_link)
     return CameraObservation(
         camera_id=CameraID.parse(camera_id),
@@ -661,8 +1077,15 @@ __all__ = [
     "camera_observation",
     "link_pose_error",
     "UNCOVERED_LINKS",
+    "SELF_FILTER_COVER_BODIES",
+    "SELF_FILTER_MESH_LINKS",
+    "COVER_PAD",
+    "COVER_CONFINED_BODIES",
     "bounding_capsules",
     "gap_filling_capsules",
+    "self_filter_covering_capsules",
+    "set_finger_joints_from_scene",
+    "static_urdf_ancestor",
     "DEFAULT_RBY1_JOINTS",
     "TRANSPORT_MODEL",
     "TransportScene",

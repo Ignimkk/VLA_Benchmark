@@ -178,6 +178,7 @@ def build_live_pipeline(
     trace=None,
     recorder=None,
     phase_fn: Optional[Callable[[int], str]] = None,
+    model_xml: Optional[str] = None,
 ) -> LivePipeline:
     """live 루프용 AG3S + TO 한 벌.
 
@@ -190,6 +191,10 @@ def build_live_pipeline(
             바퀴·베이스는 결정 변수가 아니라 어떤 해에서도 같은 값을 내고, 고칠 수 없는 위반을
             상수로 깔아 실제 신호를 묻는다. **자기 필터 모델은 어느 쪽이든 전신이다** — 머리
             카메라가 자기 몸을 내려다보므로 바퀴를 빼면 그 점이 로봇에 용접된 유령 장애물이 된다.
+        model_xml: `mj_model` 을 컴파일한 MJCF 경로 (T31 G1). 주면 기본 `to_config` 의 joint
+            position 범위를 그 파일에서 읽는다 (서버의 `--model-xml` 과 같은 규칙). 어느 경우든
+            **TO 의 범위를 `mj_model` 자신의 `jnt_range` 와 대조하고, 다르면 예외다** —
+            `limits.source` 가 `model_xml` 인데 다른 파일을 읽었으면 여기서 드러난다.
     """
     from benchmark.ag3s.experiments.reports.grounding_report import (
         ARM_LINKS, build_constraint_robot_model, build_robot_model)
@@ -202,6 +207,8 @@ def build_live_pipeline(
     })
     to_cfg = to_config or TrajOptConfig.from_dict({
         "collision": {"backend": "esdf", "esdf_margin": 0.05, "use_support_planes": False},
+        # T31 G1 — position 범위는 제어 대상 MJCF 에서 (`LimitsConfig.source` 기본 `model_xml`).
+        **({"limits": {"model_xml": str(model_xml)}} if model_xml else {}),
     })
 
     scene_like = _SceneAdapter(mj_model, mj_data)
@@ -212,6 +219,17 @@ def build_live_pipeline(
 
     ag3s = AG3S(ag_cfg, robot_model=filter_robot, constraint_robot_model=constraint_robot)
     layout = ChunkLayout.rby1(constraint_robot.joint_names)
+    if to_cfg.limits.source == "model_xml":
+        # T31 G1 — **값을 대조한다.** 컴파일된 모델은 자기 경로를 모르므로 `limits.model_xml`
+        # (비면 작업공간 기본 모델)이 이 `mj_model` 과 같은 로봇인지 여기서 확인한다.
+        from benchmark.trajopt.limits import mismatch_with_mj_model
+
+        bad = mismatch_with_mj_model(constraint_robot, layout, to_cfg.limits, mj_model)
+        if bad:
+            raise ValueError(
+                "TO joint position limits (limits.source='model_xml', limits.model_xml="
+                f"{to_cfg.limits.model_xml!r}) do not match the running mj_model on "
+                f"{len(bad)} joint(s): {bad}. Pass model_xml= the file mj_model was compiled from")
     planned = to_cfg.horizon.planned
     linearizer = CollisionLinearizer(constraint_robot, layout, planned)
 

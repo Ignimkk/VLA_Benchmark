@@ -13,6 +13,16 @@ openpi 는 vendored 서브모듈이라 손대면 다음 sync 에서 충돌하고
 `--no-safe` 로 띄우면 감싸지 않는다 — 기존 서빙과 같은 동작이라, 문제가 안전 계층에 있는지
 아닌지를 플래그 하나로 가를 수 있다.
 
+`--no-perception` (T27) 은 그 사이다: π0.5 → **TO 만** 돌리고 AG3S·depth·ESDF·attention 두 번째
+사본·grasp latch 를 하나도 만들지 않는다 (`trajopt/to_only_policy.py`). `--no-limits` 는 TO 에서 joint
+position box · 속도 · 가속도 행을 뺀다 (trust region 과 첫 스텝 anchor 는 남는다). 사용자 사다리 실험:
+
+    E1 "TO only"  --no-perception --no-limits --w-smooth 0 --w-continuity 0
+    E2            --no-perception
+    E3            (flag 없음 = AG3S + 거리장, 충돌 제약은 gripper 에만 — `--links` 기본)
+
+세 판 모두 로컬은 `pi05_infer.py --safe-remote --safe-gate off` 다 (판정은 기록만, HOLD 없음).
+
 `--shadow` 는 **계산을 줄이지 않는다.** AG3S·ESDF·SQP·판정이 전부 돌고 `actions` 도 그대로
 refined 다. 응답에 정책 **원본** 청크를 `actions_reference` 로 함께 실어, 로컬이 그것을
 실행할 수 있게 하는 것뿐이다 (T5 — 수정이 여유거리를 나쁘게 만드는지를 로봇을 움직이기 전에
@@ -77,8 +87,13 @@ def constraint_links_minus(present: Sequence[str], exclude: Sequence[str],
     return kept
 
 
-#: `--links` 선택지. **기본은 `arms` 이고 그것이 지금까지의 서버다.**
-LINK_GROUPS: tuple[str, ...] = ("arms", "gripper", "all")
+#: `--links` 선택지. **첫 항목이 기본이다 — T27 부터 `gripper`** (사용자 판정 2026-09-28: "거리장 충돌제약은
+#: gripper 에만, 나머지 link 은 전부 제외"). 손바닥 둘 + 손가락 넷(`GRIPPER_LINKS`)에만 제약이 걸린다.
+#: `arms`(T27 전 기본) · `all` 은 옵션으로 남고, 고르면 시작 로그가 크게 말한다.
+LINK_GROUPS: tuple[str, ...] = ("gripper", "arms", "all")
+
+#: `--links` 의 기본값. `LINK_GROUPS[0]` 과 같다 — 두 곳에 적지 않는다.
+DEFAULT_LINKS: str = LINK_GROUPS[0]
 
 
 def target_field_policy_choices() -> tuple[str, ...]:
@@ -107,7 +122,7 @@ def resolve_target_field_policy(value: str) -> str:
 def constraint_link_filter(links: str):
     """`--links` 값 → `build_constraint_robot_model(link_filter=...)` 에 줄 것.
 
-    `arms`(기본) = 양팔 14 link + 손가락 4 · `gripper` = **손가락 4 만** · `all` = 전신(`None`).
+    `gripper`(기본, T27) = **손바닥 2 + 손가락 4** · `arms` = 양팔 14 link + 손가락 4 · `all` = 전신(`None`).
 
     이름 목록을 `grounding_report` 에서 가져오는 것이 요점이다 (T7b). 같은 일을
     `--exclude-links` 로 하려면 남길 것 넷을 빼고 열넷을 손으로 적어야 하고, `link_filter` 는
@@ -254,6 +269,39 @@ def announce_collision_switch(enabled: bool) -> None:
         "    **진단용입니다.** 되돌리는 방법은 이 flag 를 빼는 것뿐입니다.")
 
 
+def announce_limits_switch(limits) -> None:
+    """**joint limit 행이 꺼져 있으면 크게 말한다** (T27, `--no-limits`). `limits` 는 `LimitsConfig`.
+
+    무엇이 남는지를 **같은 줄에** 말한다 — trust region 과 첫 스텝 anchor 는 SQP 장치라 남는다.
+    그것을 안 적으면 *"limit 을 다 뺐는데 첫 스텝이 움직였다"* 를 읽을 근거가 없다.
+    """
+    off = [name for name in ("position", "velocity", "acceleration")
+           if not getattr(limits, f"enforce_{name}")]
+    if not off:
+        return
+    anchor = bool(getattr(limits, "enforce_velocity", True) or getattr(limits, "keep_anchor", False))
+    logging.getLogger(__name__).warning(
+        "!!! JOINT LIMIT ROWS ARE OFF (--no-limits): %s !!!\n"
+        "    최적화기는 이 한계를 **보지 않습니다** — 청크가 로봇 한계를 넘어도 그대로 나갑니다.\n"
+        "    남는 것: SQP trust region (sqp.trust_radius) · 첫 스텝 anchor %s.\n"
+        "    기록의 limit_overshoot 는 로봇 자신의 한계로 계속 잽니다 (강제하지 않은 값).",
+        ", ".join(off),
+        "(|Q0 − q_now| ≤ v_max·dt — 남음)" if anchor else "(**없음**)")
+
+
+def announce_no_perception() -> None:
+    """**지각이 없는 서버로 떠 있으면 크게 말한다** (T27, `--no-perception`)."""
+    logging.getLogger(__name__).warning(
+        "!!! NO PERCEPTION (--no-perception): π0.5 → TO ONLY !!!\n"
+        "    AG3S · depth · 점군 · ESDF · attention(두 번째 체크포인트 사본) · grasp latch 가 "
+        "**하나도 없습니다.** 최적화기는 빈 세계를 봅니다 — 충돌 행 0, 충돌 판정 없음.\n"
+        "    `--no-collision` 과 다릅니다 (그쪽은 행만 끄고 지각·거리장·판정이 전부 돕니다).\n"
+        "    응답: actions = refined · actions_reference · to · safe=True · "
+        "verdict_reasons=[no_perception].\n"
+        "    **로컬은 `--safe-gate off` 여야 합니다** — 사유 게이트는 no_perception 을 HOLD 로 "
+        "읽습니다 (검사되지 않은 청크).")
+
+
 def announce_cost_weights(overrides: dict) -> None:
     """**기본이 아닌 목적함수로 떠 있으면 크게 말한다.**
 
@@ -361,13 +409,23 @@ def announce_diagnostic_scope(*, links: str, self_collision: bool,
     한다. `build_ag3s` 안에 묻어 두면 그 검사가 소스 문자열 비교로 내려간다.
     """
     log = logging.getLogger(__name__)
-    if links != "arms":
+    if links != DEFAULT_LINKS:
+        # **T27 에서 방향이 뒤집혔다.** 기본이 `gripper` 이므로 이제 크게 말하는 쪽은 `arms`·`all`
+        # 이다 — 팔뚝·손목·몸통까지 제약에 걸리면 파지 접근이 그 행에 밀린다 (T6d·T7b 가 그것을
+        # 쟀다). 사용자 판정(2026-09-28)이 gripper 이므로 그 밖은 비기본이다.
         log.warning(
-            "!!! CONSTRAINT SCOPE IS %s, NOT THE DEFAULT 'arms' !!!\n"
+            "!!! CONSTRAINT SCOPE IS %s, NOT THE DEFAULT %r !!!\n"
             "    제약이 걸리는 link: %s\n"
-            "    **여기 없는 것은 무엇에 부딪혀도 아무도 막지 않습니다** — 팔뚝·몸통·반대팔이"
-            " 그 안에 있습니다. 진단용입니다 (T7b).",
-            links.upper(), ", ".join(str(n) for n in constraint_links) or "(전신)")
+            "    **손 밖의 link(팔뚝·손목·%s)까지 거리장 제약이 걸립니다** — 파지 접근이 그 행에 "
+            "밀려 청크가 바뀔 수 있습니다 (T6d·T7b). 사용자 판정(2026-09-28)의 기본은 gripper "
+            "(손바닥 2 + 손가락 4) 입니다.",
+            links.upper(), DEFAULT_LINKS, ", ".join(str(n) for n in constraint_links) or "(전신)",
+            "몸통·바퀴·베이스" if links == "all" else "반대팔")
+    else:
+        log.info(
+            "constraint scope: %s (기본, T27) — %s. **여기 없는 link(팔뚝·몸통·반대팔)는 무엇에 "
+            "부딪혀도 아무도 막지 않습니다**; 자기 필터 모델은 그대로 전신입니다.",
+            links, ", ".join(str(n) for n in constraint_links) or "(모델에서 읽지 못함)")
     if not self_collision:
         log.warning(
             "!!! SELF-COLLISION IS OFF (--no-self-collision) !!!\n"
@@ -570,7 +628,7 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
                plan_horizon_steps: int | None = None,
                rows_per_step: int | None = None,
                self_filter: dict | None = None):
-    """서버가 쓸 AG3S. 자기 필터는 전신, 제약은 양팔.
+    """서버가 쓸 AG3S. 자기 필터는 전신, 제약은 `links` (T27 부터 기본 `gripper` — 손바닥 + 손가락).
 
     **두 모델은 일부러 다르다.** 자기 필터는 바퀴·베이스까지 있어야 한다 — 머리 카메라가 자기
     몸을 내려다보므로 빠뜨리면 그 점이 클라우드에 남아 로봇에 용접된 유령 장애물로 뭉친다.
@@ -588,9 +646,9 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     방향의 사고다. 덮지 못하는 capsule 이 생기면 `UrdfSphereChain` 이 경고를 찍고 여기서
     `coverage_report()` 를 한 번 더 찍는다 — 조용히 가늘어진 모델로 떠 있는 것이 가장 나쁘다.
 
-    `links="gripper"` 는 **손가락 넷만** 제약에 남긴다 (T7b 진단). `self_collision=False` 는 쥔
-    물체 대 로봇 구 블록을 끈다 — 이 repo 의 자기 충돌은 그 블록 하나뿐이다. 둘 다 기본값이
-    예전 그대로이고, 기본이 아닐 때는 `announce_diagnostic_scope` 가 시작 로그에 크게 찍는다.
+    `links="gripper"` 는 **손바닥 둘 + 손가락 넷만** 제약에 남긴다 (T7b 진단 → T27 기본). `arms` ·
+    `all` 이면 `announce_diagnostic_scope` 가 크게 찍는다. `self_collision=False` 는 쥔 물체 대 로봇
+    구 블록을 끈다 — 이 repo 의 자기 충돌은 그 블록 하나뿐이다.
 
     `self_filter` 는 `self_filter_options(args)` — **준 것만** `pointcloud` 에 얹는다 (T19). 비면
     `pointcloud` 는 예전과 글자 그대로 `{"range_max": ...}` 이다. 실제 유효 inflation 표는
@@ -761,7 +819,7 @@ def load_static_geometry(spec: str, model_xml: str, *, links: str):
         logging.warning(
             "--links all 과 정적 기하를 함께 켰습니다. 바닥 평면이 바퀴·베이스 구에 어떤 해로도 "
             "못 푸는 위반을 상수로 깝니다 (실측 base -342 mm, wheel -108 mm). 의도한 것이 "
-            "아니면 --links arms 를 쓰십시오")
+            "아니면 --links gripper(기본) 나 arms 를 쓰십시오")
     for s in shapes:
         logging.debug("  static %s", getattr(s, "label", s))
     return shapes
@@ -830,12 +888,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--default-prompt", default=None)
     ap.add_argument("--voxel", type=float, default=0.020, help="ESDF 복셀 크기 (m)")
     ap.add_argument("--range-max", type=float, default=2.0, help="점군 최대 거리 (m)")
-    ap.add_argument("--links", choices=LINK_GROUPS, default="arms",
-                    help="제약을 걸 링크. arms(기본) 는 양팔과 손끝만 — 바퀴·베이스는 결정 "
-                         "변수가 아니라 고칠 수 없는 위반을 상수로 깔아 실제 신호를 묻는다. "
-                         "gripper 는 **손가락 넷만** (ee_finger_l1/l2/r1/r2, T7b 진단): 팔뚝·"
-                         "손목·몸통·반대팔이 전부 제약에서 빠지므로 무엇이 미는지 한 번에 "
-                         "갈리지만, 빠진 것은 무엇에 부딪혀도 아무도 막지 않는다. all 은 전신")
+    ap.add_argument("--links", choices=LINK_GROUPS, default=DEFAULT_LINKS,
+                    help="거리장 충돌 제약을 걸 링크. **gripper(기본, T27 — 사용자 판정 2026-09-28)** "
+                         "= 손바닥 둘 + 손가락 넷 (ee_left/ee_right, ee_finger_l1/l2/r1/r2): 팔뚝·"
+                         "손목·몸통·반대팔은 제약에서 빠지고, 빠진 것은 무엇에 부딪혀도 아무도 "
+                         "막지 않는다. arms = 양팔과 손끝 (T27 전 기본) · all = 전신 — 둘 다 시작 "
+                         "로그가 크게 말한다. 자기 필터 모델(전신)은 이 값과 무관하다")
     ap.add_argument("--exclude-links", nargs="+", default=(), metavar="LINK",
                     help="제약 모델에서 **뺄** link 이름. 예: --exclude-links "
                          "link_left_arm_5 link_right_arm_5. --links 가 고른 집합에서 뺀다. "
@@ -898,6 +956,46 @@ def build_parser() -> argparse.ArgumentParser:
                          "**이 설정에서는 로봇이 무엇에 부딪혀도 아무도 막지 않는다.** "
                          "여유거리 측정은 계속 돌아가므로 max_violation_m 은 참값이고, 충돌이 "
                          "꺼졌다는 사실이 notes 와 기록에 실린다")
+    ap.add_argument("--no-limits", action="store_true",
+                    help="**TO 에서 joint limit 행을 뺀다** (T27 진단). joint position box · 스텝 사이 "
+                         "속도 · 가속도 행이 없어진다. **남는 것**: SQP trust region 과 첫 스텝 "
+                         "anchor (|Q0 − q_now| ≤ v_max·dt — 로봇이 지금 있는 곳에서 계획을 시작하게 "
+                         "하는 장치). 추적 항만 두면 (`--w-smooth 0 --w-continuity 0`) 최적해가 "
+                         "reference 그 자체다 — reference 가 anchor 를 넘지 않는 한. 기록의 "
+                         "limit_overshoot 는 로봇 자신의 한계로 계속 잰다")
+    # --- joint limit 출처 · SQP 예산 (T31) -----------------------------------------------
+    ap.add_argument("--limits-source", choices=("model_xml", "urdf", "config"),
+                    default="model_xml",
+                    help="TO 의 joint **position** 범위를 어디서 읽나 (T31 G1). model_xml(기본) = "
+                         "--model-xml 의 jnt_range (시뮬레이터가 쓰는 범위, actuator ctrlrange 와 "
+                         "대조) — 정책이 학습된 로봇이다. urdf = T31 전 동작 (URDF <limit>; arm_6 "
+                         "±2.705 로 MJCF ±2.967 보다 좁다). config = --joint-ranges 파일의 표 (실기). "
+                         "속도·가속도 한계는 셋 모두 URDF 다 (MJCF 에 없다). 시작 로그에 관절별 "
+                         "URDF 대 사용값 표가 찍힌다")
+    ap.add_argument("--joint-ranges", default=None, metavar="FILE",
+                    help="--limits-source config 의 표: YAML/JSON {joint_name: [lower, upper]} (rad). "
+                         "TO 가 움직이는 관절은 전부 적어야 한다")
+    ap.add_argument("--sqp-min-iterations", type=int, default=None, metavar="N",
+                    help="벽시계 예산이 걸리기 전에 **반드시** 도는 SQP 반복 수 (T31 G2; 기본 "
+                         "`SqpConfig.min_iterations` = 3 = max_iterations). 1 = T31 전 동작 (첫 반복 뒤 곧바로 예산 "
+                         "검사). 실기처럼 제어 루프가 TO 를 기다리지 않는 곳에서는 1 로 둔다")
+    ap.add_argument("--sqp-max-iterations", type=int, default=None, metavar="N",
+                    help="SQP 반복 상한 (기본 `SqpConfig.max_iterations`)")
+    ap.add_argument("--sqp-time-budget-ms", type=float, default=None, metavar="MS",
+                    help="min 반복 뒤의 벽시계 예산 (기본 `SqpConfig.time_budget_ms`)")
+    ap.add_argument("--no-limit-projection", action="store_true",
+                    help="T31 G2-ii 를 끈다: limit 만 어긴 reference 에 받아들여진 후보가 없을 때 "
+                         "최소 투영 대신 T24 규칙대로 거절된 QP 후보(best_unaccepted)를 반환한다 "
+                         "(ablation)")
+    ap.add_argument("--no-perception", action="store_true",
+                    help="**π0.5 → TO 만** (T27, 사용자 사다리 실험 E1·E2). AG3S·depth·ESDF·"
+                         "attention 두 번째 사본·grasp latch 를 **하나도** 만들지 않는다 — "
+                         "`--no-collision`(행만 끄고 지각·판정은 돈다) 과 다르다. 응답은 같은 "
+                         "와이어: actions=refined · actions_reference · to · safe=True · "
+                         "verdict_reasons=[no_perception]. 로컬 사유 게이트는 no_perception 을 "
+                         "HOLD 로 읽으므로 **로컬은 `--safe-gate off` 여야 한다**. "
+                         "`--record-constraints DIR` 이면 청크마다 reference·refined·관절별 편차·"
+                         "limit overshoot·SQP metrics 를 남긴다")
     ap.add_argument("--no-self-collision", action="store_true",
                     help="쥔 물체 대 로봇 구 제약을 끈다 (T7b 진단). **기본은 켠 상태이고 그것이 "
                          "지금까지의 서버다.** 이 repo 에 로봇-로봇 쌍 검사는 원래 없으므로 "
@@ -1000,6 +1098,12 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
 
     아무 일도 안 하는 flag 를 받아 놓고 뜨면, 로그를 읽는 사람은 그것이 효과가 있었다고 믿는다.
     """
+    # T31 — 표를 줬는데 다른 출처가 쓰이면 그 실행은 적힌 표로 돈 것처럼 읽힌다.
+    if getattr(args, "joint_ranges", None) and getattr(args, "limits_source", None) != "config":
+        ap.error("--joint-ranges 는 --limits-source config 일 때만 읽힙니다 "
+                 f"(지금 {getattr(args, 'limits_source', None)!r}). 둘을 같이 주십시오")
+    if getattr(args, "limits_source", None) == "config" and not getattr(args, "joint_ranges", None):
+        ap.error("--limits-source config 에는 --joint-ranges FILE 이 필요합니다")
     if args.shadow and args.no_safe:
         ap.error("--shadow 는 안전 계층이 돌아야 뜻이 있습니다 (--no-safe 는 그것을 끕니다). "
                  "shadow 는 '전부 계산하되 수정을 로봇에 보내지 않는' 실행이므로, 계산이 없으면 "
@@ -1032,6 +1136,35 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         if not args.fine_voxel:
             ap.error("--target-field-policy 는 미세 계층 한 겹으로 만들어집니다. "
                      "--fine-voxel 0 은 단일 계층이므로 정책이 아무 일도 하지 않습니다")
+    # --- T27 ------------------------------------------------------------------------------
+    if args.no_limits and args.no_safe:
+        ap.error("--no-limits 는 최적화기의 joint limit 행을 끄는 flag 입니다 (--no-safe 는 "
+                 "최적화기를 아예 안 돌립니다). 그대로 띄우면 limit 을 뺐다고 믿게 되는데, 실은 "
+                 "정책 청크가 그대로 나가는 서버가 뜹니다")
+    if args.no_perception:
+        if args.no_safe:
+            ap.error("--no-perception 은 π0.5 → TO 를 돌리는 서버입니다 (--no-safe 는 TO 를 안 "
+                     "돌립니다). 둘을 같이 주면 어느 서버인지 알 수 없습니다 — 정책만 서빙하려면 "
+                     "--no-safe 하나만 주십시오")
+        if args.shadow:
+            ap.error("--no-perception 과 --shadow 는 같이 쓸 수 없습니다. shadow 는 '전부 "
+                     "계산하되 로봇은 정책 원본을 실행' 이고, 지각이 없으면 그것은 --no-safe 와 "
+                     "같습니다. E1/E2 는 refined 를 실행해야 합니다 (로컬 --safe-gate off)")
+        # **AG3S 를 고치는 flag 는 이 서버에서 아무 일도 하지 않는다.** 받아 놓고 뜨면 그것이
+        # 효과가 있었다고 믿게 된다 (이 함수의 머리말).
+        inert = [flag for flag, given in (
+            ("--exclude-links", bool(args.exclude_links)),
+            ("--no-self-collision", bool(args.no_self_collision)),
+            ("--target-field-policy", args.target_field_policy != "relax"),
+            ("--static-geometry", bool(args.static_geometry) and args.static_geometry != "none"),
+            ("--esdf-backend curobo", args.esdf_backend == "curobo"),
+            ("--self-filter-*", bool(getattr(args, "self_filter_inflation_link", ()))
+             or getattr(args, "self_filter_target_guard", None) is not None),
+            ("--max-field-age-sec", args.max_field_age_sec is not None),
+        ) if given]
+        if inert:
+            ap.error(f"--no-perception 서버에는 AG3S 가 없으므로 {', '.join(inert)} 가 아무 일도 "
+                     "하지 않습니다. 그대로 띄우면 효과가 있었다고 믿게 됩니다 — 빼고 띄우십시오")
     if args.no_self_collision and args.no_safe:
         ap.error("--no-self-collision 은 제약 모델을 고치는 flag 입니다 (--no-safe 는 그 모델을 "
                  "아예 안 만듭니다). 그대로 띄우면 자기 충돌을 껐다고 믿게 되는데, 실은 어떤 "
@@ -1047,6 +1180,9 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         ap.error("--sphere-* 는 제약 모델의 구를 고치는 flag 입니다 (--no-safe 는 그 모델을 "
                  "아예 안 만듭니다). 그대로 띄우면 팔을 가늘게 모델링했다고 믿은 채 안전 계층이 "
                  "꺼진 서버가 뜹니다")
+    if args.no_perception and options:
+        ap.error("--sphere-* 는 충돌 제약 모델의 구를 고치는 flag 입니다 (--no-perception 서버에는 "
+                 "충돌 행이 없습니다). 그대로 띄우면 효과가 있었다고 믿게 됩니다")
     # **self-filter flag 의 형식 오류도 여기서 죽는다** (T19). 모르는 link 이름은 모델이 있어야
     # 가를 수 있으므로 `AG3S` 생성자가 거절한다 — 그것도 체크포인트를 올리기 전이다.
     try:
@@ -1057,12 +1193,219 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         ap.error("--self-filter-* 는 AG3S 의 자기 필터를 고치는 flag 입니다 (--no-safe 는 AG3S 를 "
                  "아예 안 만듭니다). 그대로 띄우면 사과를 보존했다고 믿은 채 필터 자체가 없는 "
                  "서버가 뜹니다")
+    # T31 — TO 가 없으면 limit 출처·SQP 예산 flag 는 아무 일도 안 한다.
+    to_flags = [name for name, given in (
+        ("--limits-source", getattr(args, "limits_source", "model_xml") != "model_xml"),
+        ("--sqp-*", bool(sqp_overrides(args))),
+    ) if given]
+    if args.no_safe and to_flags:
+        ap.error(f"{', '.join(to_flags)} 는 TO 를 고치는 flag 입니다 (--no-safe 는 TO 를 아예 안 "
+                 "돌립니다). 그대로 띄우면 효과가 있었다고 믿게 됩니다")
+    for flag, value in (("--sqp-min-iterations", getattr(args, "sqp_min_iterations", None)),
+                        ("--sqp-max-iterations", getattr(args, "sqp_max_iterations", None))):
+        if value is not None and value < 1:
+            ap.error(f"{flag} 는 1 이상이어야 합니다 (got {value})")
     # `--plan-horizon` 은 여기서 한 번 읽어 본다. 잘못된 값이 서버를 띄운 뒤에 죽으면 그때는
     # 체크포인트 두 벌을 이미 GPU 에 올린 뒤다.
     try:
         resolve_plan_horizon(args.plan_horizon)
     except ValueError as exc:
         ap.error(str(exc))
+
+
+def limits_overrides(args) -> dict:
+    """`--limits-source` · `--model-xml` · `--joint-ranges` → `limits` 절 (T31 G1).
+
+    `model_xml` 출처면 **서버가 로드한 바로 그 MJCF** 를 적는다 — `LimitsConfig.model_xml` 이 비면
+    작업공간 기본 모델을 읽는데, `--model-xml` 이 다른 파일이면 한계와 시뮬레이터가 갈라진다.
+    """
+    source = getattr(args, "limits_source", None) or "model_xml"
+    out: dict = {"source": source}
+    if source == "model_xml":
+        model_xml = getattr(args, "model_xml", None)
+        if model_xml:
+            out["model_xml"] = str(model_xml)
+    elif source == "config":
+        out["position_ranges"] = load_joint_ranges(getattr(args, "joint_ranges", None))
+    return out
+
+
+def load_joint_ranges(path) -> dict:
+    """`--joint-ranges FILE` → ``{joint: [lower, upper]}``. YAML 이 JSON 을 포함하므로 YAML 로 읽는다."""
+    if not path:
+        raise SystemExit("--limits-source config 에는 --joint-ranges FILE 이 필요합니다 — 표 없는 "
+                         "config 출처는 아무도 적지 않은 범위로 돕니다")
+    import yaml
+
+    data = yaml.safe_load(pathlib.Path(path).read_text()) or {}
+    if not isinstance(data, dict):
+        raise SystemExit(f"--joint-ranges {path}: {{joint: [lower, upper]}} 매핑이어야 합니다")
+    return {str(k): [float(v) for v in pair] for k, pair in data.items()}
+
+
+def sqp_overrides(args) -> dict:
+    """`--sqp-*` · `--no-limit-projection` 중 **준 것만** (T31 G2). 빈 dict 면 `SqpConfig` 기본값."""
+    out: dict = {}
+    for flag, key, cast in (("sqp_min_iterations", "min_iterations", int),
+                            ("sqp_max_iterations", "max_iterations", int),
+                            ("sqp_time_budget_ms", "time_budget_ms", float)):
+        value = getattr(args, flag, None)
+        if value is not None:
+            out[key] = cast(value)
+    if getattr(args, "no_limit_projection", False):
+        out["limit_projection_fallback"] = False
+    return out
+
+
+def announce_joint_limits(robot_model, layout, limits_config) -> dict:
+    """**관절마다 URDF 대 사용값 표를 시작 로그에 찍는다** (T31 G1). 다르면 크게.
+
+    표를 dict 로도 돌려준다 — 기록기 meta 에 실어 "이 실행이 어느 범위로 돌았나" 를 기록에서
+    되짚을 수 있게 한다. T31 전 기록에는 이 키가 없고 그 실행들은 URDF 범위였다.
+    """
+    from benchmark.trajopt.limits import format_position_limit_table, position_limit_table
+
+    log = logging.getLogger(__name__)
+    table = position_limit_table(robot_model, layout, limits_config)
+    text = format_position_limit_table(table)
+    if table["n_differs"] or table["n_ctrl_mismatch"]:
+        log.warning(
+            "!!! TO JOINT POSITION LIMITS DIFFER FROM THE URDF ON %d OPTIMIZED JOINT(S) "
+            "(source: %s) !!!\n%s\n"
+            "    URDF 는 형상(구 모델·FK)에만 쓰인다. 속도·가속도 한계는 URDF 그대로다%s",
+            table["n_differs"], table["source"], text,
+            (f"\n    !!! {table['n_ctrl_mismatch']} joint(s): MJCF jnt_range ≠ actuator ctrlrange "
+             "— 교집합을 쓴다 !!!") if table["n_ctrl_mismatch"] else "")
+    else:
+        log.info("%s", text)
+    return table
+
+
+def joint_limits_meta(limits_config) -> dict:
+    """기록 meta 의 `joint_limits` — 출처와 (MJCF 면) 파일. 표 전체는 시작 로그에 있다."""
+    from benchmark.trajopt.limits import limits_model_xml
+
+    out = {"source": limits_config.source,
+           "position_margin": float(limits_config.position_margin),
+           "velocity_acceleration": "urdf"}
+    if limits_config.source == "model_xml":
+        out["model_xml"] = limits_model_xml(limits_config)
+    elif limits_config.source == "config":
+        out["position_ranges"] = {k: list(v) for k, v in
+                                  dict(limits_config.position_ranges or {}).items()}
+    return out
+
+
+def sqp_meta(sqp_config) -> dict:
+    """기록 meta 의 `sqp` — 반복 수 우선 예산과 투영 대비 (T31 G2)."""
+    return {"min_iterations": int(sqp_config.min_iterations),
+            "max_iterations": int(sqp_config.max_iterations),
+            "time_budget_ms": float(sqp_config.time_budget_ms),
+            "limit_projection_fallback": bool(sqp_config.limit_projection_fallback)}
+
+
+def announce_sqp_budget(sqp_config) -> None:
+    """SQP 예산을 한 줄로 — **반복 수 우선**이면 그렇다고, 투영 대비가 꺼져 있으면 크게 (T31 G2)."""
+    log = logging.getLogger(__name__)
+    log.info("TO SQP budget: at least %d iteration(s) before the %.0f ms wall-clock budget applies, "
+             "at most %d (T31: iterations first — the simulation loop waits for the TO)",
+             min(sqp_config.min_iterations, sqp_config.max_iterations),
+             sqp_config.time_budget_ms, sqp_config.max_iterations)
+    if not sqp_config.limit_projection_fallback:
+        log.warning("!!! LIMIT PROJECTION FALLBACK IS OFF (--no-limit-projection) !!!\n"
+                    "    limit 만 어긴 reference 에 받아들여진 후보가 없으면 거절된 QP 후보"
+                    "(best_unaccepted)가 나간다 — T24 규칙")
+
+
+def trajopt_config_from_args(args):
+    """CLI → `TrajOptConfig`. `SafePolicy` 경로와 `--no-perception` 경로가 **같은 함수**를 쓴다.
+
+    **준 것만 넣는다.** 빈 dict 면 키가 없고, 그러면 `CostConfig` · `LimitsConfig` 기본값이 그대로다
+    — 호출이 예전과 글자 그대로 같다는 뜻이다 (`sphere_options` 와 같은 규약).
+    """
+    from benchmark.trajopt.config import NO_LIMITS, TrajOptConfig
+
+    weights = cost_overrides(args)
+    no_collision = bool(getattr(args, "no_collision", False)) or bool(
+        getattr(args, "no_perception", False))
+    limits = limits_overrides(args)
+    sqp = sqp_overrides(args)
+    return TrajOptConfig.from_dict({
+        "collision": {"backend": "esdf", "esdf_margin": args.esdf_margin,
+                      "use_support_planes": False,
+                      # **기본값을 여기 다시 적지 않는다.** 켠 경우에는 키가 아예 없다.
+                      **({"enabled": False} if no_collision else {})},
+        **({"cost": weights} if weights else {}),
+        # T27 — `--no-limits`. 무엇이 빠지고 무엇이 남는지는 `config.NO_LIMITS` 한 곳에.
+        # T31 — position 범위의 출처 (`limits_overrides`): 기본은 `--model-xml` 의 MJCF.
+        "limits": {**limits,
+                   **(dict(NO_LIMITS) if getattr(args, "no_limits", False) else {})},
+        **({"sqp": sqp} if sqp else {}),
+        # 기하 인증 요구는 여기 **한 곳**에서만 켜고 끈다 (`--no-perception` 은 `ToOnlyPolicy` 가
+        # 끈다 — 인증할 기하가 애초에 없다).
+        "safety": {"require_certified_geometry": not args.allow_uncertified},
+        # 다듬는 창. `execution` 이면 `horizon.execution_length` 를 따라가므로 실행 길이가
+        # 두 번 적히지 않는다 (`config.PLAN_EXECUTION_WINDOW` 머리말).
+        "horizon": {"plan_horizon": resolve_plan_horizon(args.plan_horizon)},
+    })
+
+
+def build_to_only_robot_model(model_xml: str, *, links: str):
+    """`--no-perception` 의 TO 가 쓸 로봇 모델 — FK 와 joint limit 의 근거. AG3S 를 만들지 않는다.
+
+    `SafePolicy` 경로와 **같은 builder** (`build_constraint_robot_model`) 와 같은 `--links` 필터다.
+    충돌 행이 없으므로 구 범위는 FK 비용만 바꾼다 (gripper 가 가장 싸다).
+    """
+    import mujoco
+
+    from benchmark.ag3s.experiments.reports.grounding_report import build_constraint_robot_model
+    from benchmark.ag3s.experiments.sources.mujoco_source import TransportScene
+
+    mj_model = mujoco.MjModel.from_xml_path(str(pathlib.Path(model_xml).resolve()))
+    scene = TransportScene.attach(mj_model, mujoco.MjData(mj_model))
+    return build_constraint_robot_model(scene, link_filter=constraint_link_filter(links))
+
+
+def build_to_only_policy(policy, args):
+    """`--no-perception` 서버의 정책. attention 사본·AG3S·거리장 기록기를 **만들지 않는다**."""
+    from benchmark.trajopt.to_only_policy import ToOnlyPolicy, ToOnlyRecorder
+
+    to_config = trajopt_config_from_args(args)
+    horizon = to_config.horizon
+    announce_no_perception()
+    announce_limits_switch(to_config.limits)
+    weights = cost_overrides(args)
+    announce_cost_weights(weights)
+    logging.info(
+        "TO objective: w_track=%g w_smooth=%g w_continuity=%g w_slack=%g%s",
+        to_config.cost.w_track, to_config.cost.w_smooth,
+        to_config.cost.w_continuity, to_config.cost.w_slack,
+        "" if weights else " (전부 기본값)")
+    logging.info("TO plan window: %d of %d chunk steps (execution_length=%d)",
+                 horizon.planned, horizon.horizon, horizon.execution_length)
+    recorder = None
+    if args.record_constraints:
+        recorder = ToOnlyRecorder(args.record_constraints, meta={
+            "config": args.config, "checkpoint": args.checkpoint,
+            "model_xml": args.model_xml, "links": args.links,
+            "perception": False, "plan_horizon": args.plan_horizon,
+            **({"limits": "off"} if args.no_limits else {}),
+            # T31 — position 범위의 출처. **항상 남긴다**: 기본값이 바뀌었으므로(URDF → MJCF)
+            # 이 키가 없는 기록은 T31 전 = URDF 범위다.
+            "joint_limits": joint_limits_meta(to_config.limits),
+            "sqp": sqp_meta(to_config.sqp),
+            **({"cost": weights} if weights else {}),
+            "trajopt_config": to_config.to_dict()})
+        logging.info("recording TO-only diagnostics to %s (reference · refined · 관절별 편차 · "
+                     "limit overshoot · SQP metrics)", recorder.run_dir)
+    served = ToOnlyPolicy(policy, robot_model=build_to_only_robot_model(
+        args.model_xml, links=args.links), to_config=to_config, recorder=recorder)
+    # T31 G1 — 관절별 URDF 대 사용값. 다르면 크게.
+    announce_joint_limits(served.robot_model, served.layout, to_config.limits)
+    announce_sqp_budget(to_config.sqp)
+    announce_reference_payload()
+    announce_execution_mode(False)
+    return served
 
 
 def main() -> None:
@@ -1087,8 +1430,10 @@ def main() -> None:
     if args.no_safe:
         logging.info("safety layer OFF — serving the bare policy")
         served = policy
+    elif args.no_perception:
+        # T27 — π0.5 → TO 만. attention 두 번째 사본을 **올리지 않는다** (필요 없다).
+        served = build_to_only_policy(policy, args)
     else:
-        from benchmark.trajopt.config import TrajOptConfig
         from benchmark.trajopt.safe_policy import SafePolicy
 
         served_policy = policy
@@ -1102,6 +1447,8 @@ def main() -> None:
         recorder = None
         if args.record_constraints:
             from benchmark.ag3s.experiments.sources.constraint_record import ConstraintRecordWriter
+
+            meta_to_config = trajopt_config_from_args(args)
 
             recorder = ConstraintRecordWriter(
                 args.record_constraints, esdf_mode=args.record_constraints_esdf,
@@ -1124,6 +1471,12 @@ def main() -> None:
                       # **끈 경우에만 남긴다.** 충돌이 꺼진 기록을 켜진 것과 나란히 읽는 것이
                       # 이 flag 의 가장 나쁜 실패다 (`self_collision` 과 같은 규약).
                       **({"collision": "off"} if args.no_collision else {}),
+                      # T27 — 같은 규약. limit 이 꺼진 기록을 켜진 것과 나란히 읽으면 안 된다.
+                      **({"limits": "off"} if args.no_limits else {}),
+                      # T31 — position 범위의 출처와 SQP 예산. **항상 남긴다**: 기본값이 바뀌었으므로
+                      # (URDF → MJCF, 1 → 2 반복) 이 키가 없는 기록은 T31 전이다.
+                      "joint_limits": joint_limits_meta(meta_to_config.limits),
+                      "sqp": sqp_meta(meta_to_config.sqp),
                       # **다듬는 창은 항상 남긴다.** T6f 에서 기본값이 32 → 실행 창으로
                       # 바뀌었으므로, 안 남기면 T6d 기록과 이 기록이 meta 로 구별되지 않는다 —
                       # 그리고 둘은 서로 다른 것을 재고 있다.
@@ -1158,21 +1511,8 @@ def main() -> None:
                     "보려면 `full` 을 쓰십시오** (계층마다 float16 격자를 싣습니다: 주 계층 · "
                     "coarse · target 없는 계층).")
 
-        # **준 것만 넣는다.** 빈 dict 면 키가 없고, 그러면 `CostConfig` 기본값이 그대로다 —
-        # 호출이 예전과 글자 그대로 같다는 뜻이다 (`sphere_options` 와 같은 규약).
         weights = cost_overrides(args)
-        to_config = TrajOptConfig.from_dict({
-            "collision": {"backend": "esdf", "esdf_margin": args.esdf_margin,
-                          "use_support_planes": False,
-                          # **기본값을 여기 다시 적지 않는다.** 켠 경우에는 키가 아예 없다.
-                          **({"enabled": False} if args.no_collision else {})},
-            **({"cost": weights} if weights else {}),
-            # 기하 인증 요구는 여기 **한 곳**에서만 켜고 끈다.
-            "safety": {"require_certified_geometry": not args.allow_uncertified},
-            # 다듬는 창. `execution` 이면 `horizon.execution_length` 를 따라가므로 실행 길이가
-            # 두 번 적히지 않는다 (`config.PLAN_EXECUTION_WINDOW` 머리말).
-            "horizon": {"plan_horizon": resolve_plan_horizon(args.plan_horizon)},
-        })
+        to_config = trajopt_config_from_args(args)
         horizon = to_config.horizon
         logging.info(
             "TO plan window: %d of %d chunk steps (execution_length=%d) — %s",
@@ -1184,6 +1524,7 @@ def main() -> None:
         logging.info("TO esdf_margin: %.1f mm (구 반지름과 합쳐야 중심 기준 요구 자유공간이다)",
                      to_config.collision.esdf_margin * 1000)
         announce_collision_switch(to_config.collision.enabled)
+        announce_limits_switch(to_config.limits)
         announce_cost_weights(weights)
         logging.info(
             "TO objective: w_track=%g w_smooth=%g w_continuity=%g w_slack=%g%s",
@@ -1219,6 +1560,9 @@ def main() -> None:
         # 조용히 shadow 로 떠 있으면(또는 shadow 가 아닌 채로) 로그를 읽는 사람이 그 실행이
         # 로봇을 움직였는지 아닌지 알 방법이 없다.
         announce_execution_mode(args.shadow)
+        # T31 G1 — TO 가 실제로 쓰는 로봇 모델로 표를 찍는다. 다르면 크게.
+        announce_joint_limits(served.constraint_robot_model, served.layout, to_config.limits)
+        announce_sqp_budget(to_config.sqp)
 
     logging.info("serving on port %d", args.port)
     websocket_policy_server.WebsocketPolicyServer(

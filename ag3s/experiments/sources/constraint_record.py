@@ -153,6 +153,12 @@ class ConstraintRecordWriter:
         # T20: 조작 대상 정체 (`AG3S.manipulated.record()`, 파이프라인이 metrics 에 싣는다).
         # `state == "occluded"` 인 청크에서 접촉 허용이 살아 있었는지는 이것 없이 알 수 없다.
         summary["manipulated"] = (getattr(constraint_set, "metrics", None) or {}).get("manipulated")
+        # T26: 제외 연속성 (`{active, source, mechanism, ...}`) · destination · 불변식 위반 ·
+        # 이번 프레임 cluster 들의 admissibility — 기록 키 추가만 (T20 의 `manipulated` 와 같은 방식).
+        # T29: `finger_joints` — 이 프레임의 FK 가 쓴 손가락 관절값과 그 출처.
+        for key in ("exclusion", "destination", "invariant_violation", "admissibility",
+                    "gripper_max_opening", "finger_joints"):
+            summary[key] = (getattr(constraint_set, "metrics", None) or {}).get(key)
         target = getattr(constraint_set, "target", None)
         if target is not None:
             payload["target_points"] = np.asarray(target.points, np.float32)

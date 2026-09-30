@@ -109,6 +109,10 @@ def main() -> None:
                          "min(복셀, 해석적) 을 답해 미관측·격자 밖의 낙관을 없앤다 (E4·N2). "
                          "none(기본) = 회귀 기준선. auto = 재생 중인 씬에서 뽑는다. "
                          "PATH = `ag3s.static_scene` 이 쓴 JSON. `serve_safe.py` 와 같은 계약")
+    ap.add_argument("--limits-source", choices=("model_xml", "urdf"), default="model_xml",
+                    help="TO joint position 범위의 출처 (T31 G1). model_xml(기본) = 기록을 재생하는 "
+                         "MJCF (`meta.json` 의 model_xml) — 서버(`serve_safe --model-xml`)와 같은 "
+                         "출처다. urdf = T31 전 동작")
     ap.add_argument("--out-json", default="benchmark/trajopt/asset/esdf_rollout.json")
     ap.add_argument("--out-doc", default="benchmark/ag3s/docs/archive/14d-era-20260923/esdf-full-scenario.md")
     args = ap.parse_args()
@@ -211,11 +215,17 @@ def main() -> None:
             raise SystemExit("--static-geometry 가 도형을 하나도 내놓지 않았습니다")
 
     layout = ChunkLayout.rby1(DEFAULT_RBY1_JOINTS)
+    # T31 G1 — position 범위는 **재생하는 바로 그 MJCF** 에서 (서버의 `--model-xml` 과 같은 규칙).
     to_cfg = TrajOptConfig.from_dict({
         "collision": {"backend": "esdf", "esdf_margin": args.esdf_margin,
                       "use_support_planes": plane_mode},
+        "limits": ({"source": "model_xml", "model_xml": str(run.model_xml)}
+                   if args.limits_source == "model_xml" else {"source": "urdf"}),
     })
     limits = build_limits(robot, layout, dt=to_cfg.horizon.dt, config=to_cfg.limits)
+    from benchmark.trajopt.limits import format_position_limit_table, position_limit_table
+    limit_table = position_limit_table(robot, layout, to_cfg.limits)
+    print(format_position_limit_table(limit_table))
     planned = to_cfg.with_overrides({"horizon": {"horizon": to_cfg.horizon.planned,
                                                  "execution_length": min(
                                                      to_cfg.horizon.execution_length,
@@ -399,7 +409,15 @@ def main() -> None:
                  "n_constraint_spheres": robot.n_spheres},
         "trajopt": {"backend": "esdf", "esdf_margin": args.esdf_margin,
                     "planned_horizon": planned.horizon.horizon,
-                    "support_surfaces": args.support_surfaces},
+                    "support_surfaces": args.support_surfaces,
+                    # T31 — position 범위의 출처와 SQP 예산 (이 키가 없는 기록은 URDF · 1 반복 우선).
+                    "joint_limits": {"source": limit_table["source"],
+                                     "model_xml": limit_table["model_xml"],
+                                     "n_optimized_joints_differing_from_urdf":
+                                         limit_table["n_differs"]},
+                    "sqp": {"min_iterations": planned.sqp.min_iterations,
+                            "max_iterations": planned.sqp.max_iterations,
+                            "time_budget_ms": planned.sqp.time_budget_ms}},
         "frames": rows,
     }, indent=2, ensure_ascii=False))
 

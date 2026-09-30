@@ -149,6 +149,11 @@ class GroundingStatus(str, enum.Enum):
     #: purpose: those say "this frame had nothing to name", this says "the object we were
     #: manipulating is no longer accounted for" — and the leader is *not* substituted for it.
     LOST = "lost"
+    #: Clusters exist, but none of them may become the manipulated object (T26): none is graspable
+    #: (narrowest principal extent ≤ the gripper's max opening) and off the destination — e.g. the
+    #: only thing attention finds is the crate. Distinct from NO_CLUSTER (nothing clustered) and
+    #: NO_SEED; the leader is *not* named, whatever its score.
+    NO_ADMISSIBLE = "no_admissible"
 
     @property
     def ok(self) -> bool:

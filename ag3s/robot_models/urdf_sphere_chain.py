@@ -193,6 +193,16 @@ class UrdfCapsule:
     origin: np.ndarray  # (4, 4)
     radius: float
     length: float
+    #: T29: `"collision"` (default — the URDF's own capsules and the MJCF gap-fillers) or
+    #: `"self_filter_cover"` — spheres that exist only so the self-filter **covers** the visible
+    #: surface (`mujoco_source.self_filter_covering_capsules`). They are ordinary spheres for FK,
+    #: the filter and the constraints, but `gripper_openings` does not read them: the gripper's
+    #: max opening (T26) is a property of the collision geometry, not of the filter's cover.
+    role: str = "collision"
+
+
+#: `UrdfCapsule.role` of self-filter covering capsules (T29).
+COVER_ROLE = "self_filter_cover"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -609,9 +619,26 @@ class UrdfSphereChain:
 
         self._q_index = {name: i for i, name in enumerate(self.joint_names)}
         self._parent_joint = {j.child: j for j in model.joints}
+        #: T29 — **finger joints are parameters, not decision variables.** Before T29 every movable
+        #: joint outside `q` was pinned to `fixed_joint_values.get(name, 0.0)`, so RB-Y1's fingers
+        #: were always closed (0) in both the self-filter and the constraint model — with the
+        #: gripper open the model fingers sat 51 mm inside the real ones, in the middle of the apple.
+        #: The finger joints of every parallel gripper (`gripper_joint_pairs`) that are not in `q`
+        #: now take a *current value* the caller sets (`set_joint_parameters`) and, for symbolic FK,
+        #: an optional parameter vector (`params=`). Default = `fixed_joint_values` or 0.0, i.e.
+        #: letter-for-letter the pre-T29 model until someone sets a value.
+        self.param_joint_names: tuple[str, ...] = tuple(
+            name for pair in self.gripper_joint_pairs() for name in pair["joints"]
+            if name not in self._q_index)
+        self._param_index = {name: i for i, name in enumerate(self.param_joint_names)}
+        self._param_default = {name: float(self.fixed_joint_values.get(name, 0.0))
+                               for name in self.param_joint_names}
+        self._param_values: dict[str, float] = dict(self._param_default)
         # Precompute, per capsule, the sphere centres in the *link* frame and their radii. These are
         # constant, so the per-call work is one FK chain and one 4x4 * 3 multiply per sphere.
         self._local_spheres: list[tuple[str, np.ndarray, float]] = []
+        #: `UrdfCapsule.role` of each sphere, same order (T29).
+        self._sphere_roles: list[str] = []
         #: `(link, 원했던 구 수, 상한에 잘린 구 수)` — `max_spheres_per_capsule` 이 먼저 걸린 곳.
         self._spacing_capped: list[tuple[str, int, int]] = []
         shortfall: list[CoverageShortfall] = []
@@ -619,6 +646,7 @@ class UrdfSphereChain:
             centres, radius, required = self._capsule_sphere_centres(cap)
             for centre in centres:
                 self._local_spheres.append((cap.link, centre, radius))
+                self._sphere_roles.append(str(getattr(cap, "role", "collision")))
             if radius < required - _COVERAGE_TOL:
                 shortfall.append(CoverageShortfall(
                     link=cap.link, n_spheres=len(centres), capsule_radius=float(cap.radius),
@@ -656,6 +684,169 @@ class UrdfSphereChain:
         specific constraint row rather than a sphere index nobody can interpret.
         """
         return tuple(link for link, _, _ in self._local_spheres)
+
+    def gripper_openings(self) -> list[dict]:
+        """Every parallel gripper this model carries, with its **inner-face gap** at the open limit.
+
+        T26 (`stages/admissibility.py`): "graspable" is *narrowest principal extent ≤ the widest
+        object the fingers can close around*, and that width must come from the robot, not from a
+        number typed into a config. It is read off this model's own collision geometry:
+
+        * a gripper = two prismatic joints on the **same parent link** whose child links carry
+          spheres here (RB-Y1: `gripper_finger_l1/l2` on `ee_left`, `_r1/_r2` on `ee_right`);
+        * each finger joint at the limit that maximizes the finger-origin separation (both limit
+          combinations are evaluated — no sign is assumed);
+        * closing axis `u` = unit vector between the two finger origins at that opening;
+        * inner-face gap = `min_i(u·c_a_i − r_a_i) − max_j(u·c_b_j + r_b_j)` over the two fingers'
+          spheres — the facing surfaces of the collision geometry, not the origins.
+
+        The finger spheres cover the finger meshes (they are inflated to close inter-sphere gaps,
+        see the class docstring), so this is **smaller** than the mesh's own inner gap: the admissible
+        set errs toward "not graspable". The joints being pinned in `q` (RB-Y1's fingers are not
+        in `DEFAULT_RBY1_JOINTS`) does not matter — the opening is a property of the joint limits.
+        Returns `[]` when the model has no such pair (a finger with no limit is skipped).
+        """
+        be = _NumpyBackend()
+        sphere_links: dict[str, list[tuple[np.ndarray, float]]] = {}
+        for (link, centre, radius), role in zip(self._local_spheres, self._sphere_roles):
+            if role == COVER_ROLE:  # T29: the filter's cover is not the gripper's geometry
+                continue
+            sphere_links.setdefault(link, []).append((np.asarray(centre, np.float64), float(radius)))
+        by_parent: dict[str, list[UrdfJoint]] = {}
+        for joint in self.model.joints:
+            if joint.type == "prismatic" and joint.child in sphere_links:
+                by_parent.setdefault(joint.parent, []).append(joint)
+        out: list[dict] = []
+        for parent, joints in sorted(by_parent.items()):
+            if len(joints) != 2:
+                continue
+            a, b = joints
+            if None in (a.lower, a.upper, b.lower, b.upper):
+                continue
+            best = None
+            for qa in (float(a.lower), float(a.upper)):
+                for qb in (float(b.lower), float(b.upper)):
+                    Ta = np.asarray(_joint_transform(a, qa, be), np.float64)
+                    Tb = np.asarray(_joint_transform(b, qb, be), np.float64)
+                    gap = float(np.linalg.norm(Ta[:3, 3] - Tb[:3, 3]))
+                    if best is None or gap > best[0]:
+                        best = (gap, qa, qb, Ta, Tb)
+            origin_gap, qa, qb, Ta, Tb = best
+            if origin_gap <= 1e-9:
+                continue
+            u = (Ta[:3, 3] - Tb[:3, 3]) / origin_gap
+            face_a = min(float(u @ (Ta[:3, :3] @ c + Ta[:3, 3])) - r for c, r in sphere_links[a.child])
+            face_b = max(float(u @ (Tb[:3, :3] @ c + Tb[:3, 3])) + r for c, r in sphere_links[b.child])
+            out.append({
+                "parent_link": parent,
+                "fingers": [a.child, b.child],
+                "joints": {a.name: qa, b.name: qb},
+                "joint_limits": {a.name: [float(a.lower), float(a.upper)],
+                                 b.name: [float(b.lower), float(b.upper)]},
+                "origin_gap_m": origin_gap,
+                "inner_gap_m": face_a - face_b,
+                "n_spheres": {a.child: len(sphere_links[a.child]),
+                              b.child: len(sphere_links[b.child])},
+                "geometry": "UrdfSphereChain finger spheres",
+            })
+        return out
+
+    def local_spheres(self, link: str) -> tuple[np.ndarray, np.ndarray]:
+        """`(centres[n, 3], radii[n])` of `link`'s spheres **in the link frame** (T29)."""
+        rows = [(c, r) for name, c, r in self._local_spheres if name == link]
+        if not rows:
+            return np.zeros((0, 3)), np.zeros(0)
+        return (np.asarray([c for c, _ in rows], np.float64).reshape(-1, 3),
+                np.asarray([r for _, r in rows], np.float64))
+
+    @property
+    def sphere_roles(self) -> tuple[str, ...]:
+        """`UrdfCapsule.role` of each sphere, in `sphere_link_names` order (T29)."""
+        return tuple(self._sphere_roles)
+
+    def gripper_joint_pairs(self) -> list[dict]:
+        """Every parallel gripper in the URDF, **structurally** — no spheres required (T29).
+
+        A gripper = exactly two prismatic joints with limits on the same parent link (RB-Y1:
+        `gripper_finger_l1/l2` on `ee_left`, `_r1/_r2` on `ee_right`). The *open* value of each
+        joint is the limit combination that maximizes the finger-origin separation (the same rule
+        as `gripper_openings`, so no sign is assumed); *closed* is the other limit.
+
+        Returns ``[{parent_link, joints: (a, b), children: (a, b), open: {a: qa, b: qb},
+        closed: {a: .., b: ..}, limits: {a: (lo, hi), b: (lo, hi)}}]`` sorted by parent.
+        """
+        be = _NumpyBackend()
+        by_parent: dict[str, list[UrdfJoint]] = {}
+        for joint in self.model.joints:
+            if joint.type == "prismatic" and None not in (joint.lower, joint.upper):
+                by_parent.setdefault(joint.parent, []).append(joint)
+        out: list[dict] = []
+        for parent, joints in sorted(by_parent.items()):
+            if len(joints) != 2:
+                continue
+            a, b = joints
+            best = None
+            for qa in (float(a.lower), float(a.upper)):
+                for qb in (float(b.lower), float(b.upper)):
+                    Ta = np.asarray(_joint_transform(a, qa, be), np.float64)
+                    Tb = np.asarray(_joint_transform(b, qb, be), np.float64)
+                    gap = float(np.linalg.norm(Ta[:3, 3] - Tb[:3, 3]))
+                    if best is None or gap > best[0]:
+                        best = (gap, qa, qb)
+            _, qa, qb = best
+            other = lambda j, v: float(j.upper) if v == float(j.lower) else float(j.lower)  # noqa: E731
+            out.append({
+                "parent_link": parent,
+                "joints": (a.name, b.name),
+                "children": (a.child, b.child),
+                "open": {a.name: qa, b.name: qb},
+                "closed": {a.name: other(a, qa), b.name: other(b, qb)},
+                "limits": {a.name: (float(a.lower), float(a.upper)),
+                           b.name: (float(b.lower), float(b.upper))},
+            })
+        return out
+
+    # --- finger joints as parameters (T29) ------------------------------------------------
+    @property
+    def n_params(self) -> int:
+        return len(self.param_joint_names)
+
+    @property
+    def joint_parameters(self) -> dict[str, float]:
+        """The current value of every parameter joint (what numeric FK uses)."""
+        return dict(self._param_values)
+
+    @property
+    def joint_parameters_are_default(self) -> bool:
+        return self._param_values == self._param_default
+
+    def set_joint_parameters(self, values: Optional[Mapping[str, float]]) -> None:
+        """Set the current finger-joint values. `None` restores the construction defaults.
+
+        Names not in `param_joint_names` are refused — a typo would otherwise leave the fingers
+        closed while the caller believes it opened them (the failure T29 fixes). Joints not named
+        keep their current value. The value is **not** clamped here; the caller (`gripper_state`)
+        clamps to the URDF limits and says so.
+        """
+        if values is None:
+            self._param_values = dict(self._param_default)
+            return
+        unknown = sorted(set(values) - set(self.param_joint_names))
+        if unknown:
+            raise ValueError(
+                f"set_joint_parameters: {unknown} are not parameter joints of this model "
+                f"(have {list(self.param_joint_names)})")
+        for name, value in values.items():
+            v = float(value)
+            if not math.isfinite(v):
+                raise ValueError(f"set_joint_parameters: {name} = {value!r} is not finite")
+            self._param_values[name] = v
+
+    def param_vector(self, values: Optional[Mapping[str, float]] = None) -> np.ndarray:
+        """`(n_params,)` in `param_joint_names` order — `values` over the current values."""
+        cur = dict(self._param_values)
+        cur.update({k: float(v) for k, v in dict(values or {}).items()})
+        return np.asarray([cur[n] for n in self.param_joint_names], np.float64)
 
     def scale_for_link(self, link: str) -> float:
         """이 link 의 capsule 반지름 배율. 이름이 안 적혀 있으면 전역 배율.
@@ -916,28 +1107,49 @@ class UrdfSphereChain:
             cursor = joint.parent
         return tuple(reversed(chain))
 
-    def _joint_value(self, joint: UrdfJoint, q: Any, be: Any) -> Any:
+    def _joint_value(self, joint: UrdfJoint, q: Any, be: Any, params: Any = None) -> Any:
         if joint.name in self._q_index:
             return be.index(q, self._q_index[joint.name])
+        i = self._param_index.get(joint.name)
+        if i is not None:
+            # T29: a finger joint. An explicit parameter vector (symbolic: a CasADi symbol, so the
+            # graph does **not** bake today's opening in; numeric: one row of a plan) wins over
+            # the current value set by `set_joint_parameters`.
+            if params is not None:
+                return be.index(params, i)
+            return self._param_values[joint.name]
         return self.fixed_joint_values.get(joint.name, 0.0)
 
-    def _link_transforms(self, q: Any, be: Any) -> dict[str, Any]:
+    def _check_params(self, params: Any) -> Any:
+        if params is None:
+            return None
+        if isinstance(params, np.ndarray) or isinstance(params, (list, tuple)):
+            params = np.asarray(params, np.float64).reshape(-1)
+            if params.shape[0] != self.n_params:
+                raise ValueError(f"params must have {self.n_params} entries "
+                                 f"({list(self.param_joint_names)}), got {params.shape[0]}")
+        return params
+
+    def _link_transforms(self, q: Any, be: Any, params: Any = None) -> dict[str, Any]:
         """FK for every link that carries a capsule. Shared by both backends — that is the point."""
         out: dict[str, Any] = {}
         for link, chain in self._chains.items():
             T = be.const(np.eye(4))
             for joint in chain:
-                T = be.matmul(T, _joint_transform(joint, self._joint_value(joint, q, be), be))
+                T = be.matmul(T, _joint_transform(joint, self._joint_value(joint, q, be, params), be))
             out[link] = T
         return out
 
     # --- RobotCollisionModel ------------------------------------------------------------
-    def sphere_centers_numeric(self, q: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def sphere_centers_numeric(self, q: np.ndarray, params: Optional[np.ndarray] = None
+                               ) -> tuple[np.ndarray, np.ndarray]:
+        """Sphere centres/radii at `q`. Finger joints: `params` (`(n_params,)`) if given, else the
+        current values (`set_joint_parameters`, T29)."""
         q = np.asarray(q, np.float64).reshape(-1)
         if q.shape[0] != self.nq:
             raise ValueError(f"q must have {self.nq} entries, got {q.shape[0]}")
         be = _NumpyBackend()
-        T = self._link_transforms(q, be)
+        T = self._link_transforms(q, be, self._check_params(params))
         centres = np.empty((len(self._local_spheres), 3), np.float64)
         radii = np.empty(len(self._local_spheres), np.float64)
         for i, (link, local, radius) in enumerate(self._local_spheres):
@@ -946,10 +1158,12 @@ class UrdfSphereChain:
             radii[i] = radius
         return centres, radii
 
-    def sphere_centers_symbolic(self, q: Any) -> list[tuple[Any, float]]:
+    def sphere_centers_symbolic(self, q: Any, params: Any = None) -> list[tuple[Any, float]]:
+        """CasADi centres in `q`. `params` (a `(n_params, 1)` symbol) keeps the finger joints
+        symbolic parameters; without it the **current** values are baked in as constants (T29)."""
         be = _CasadiBackend()
         ca = be.ca
-        T = self._link_transforms(q, be)
+        T = self._link_transforms(q, be, self._check_params(params))
         out: list[tuple[Any, float]] = []
         for link, local, radius in self._local_spheres:
             M = T[link]
@@ -958,17 +1172,21 @@ class UrdfSphereChain:
         return out
 
     # --- convenience --------------------------------------------------------------------
-    def link_pose(self, q: np.ndarray, link: str) -> np.ndarray:
-        """Numeric 4x4 pose of any link, for visualization and debugging."""
+    def link_pose(self, q: np.ndarray, link: str, params: Optional[np.ndarray] = None) -> np.ndarray:
+        """Numeric 4x4 pose of any link, for visualization and debugging. Finger joints as in
+        `sphere_centers_numeric`."""
         if link not in self._chains:
             self._chains[link] = self._chain_to(link)
+        chain = self._chains[link]
         be = _NumpyBackend()
+        params = self._check_params(params)
         T = be.const(np.eye(4))
-        for joint in self._chains[link]:
-            T = T @ _joint_transform(joint, self._joint_value(joint, np.asarray(q, np.float64), be), be)
+        for joint in chain:
+            T = T @ _joint_transform(
+                joint, self._joint_value(joint, np.asarray(q, np.float64), be, params), be)
         return T
 
-    def link_pose_symbolic(self, q: Any, link: str) -> Any:
+    def link_pose_symbolic(self, q: Any, link: str, params: Any = None) -> Any:
         """The same chain as `link_pose`, in CasADi. `(4, 4)` SX/MX in `q`.
 
         Attached-object geometry needs this: the held object's pose is `FK_parent(q) @
@@ -979,10 +1197,12 @@ class UrdfSphereChain:
         """
         if link not in self._chains:
             self._chains[link] = self._chain_to(link)
+        chain = self._chains[link]
         be = _CasadiBackend()
+        params = self._check_params(params)
         T = be.const(np.eye(4))
-        for joint in self._chains[link]:
-            T = be.matmul(T, _joint_transform(joint, self._joint_value(joint, q, be), be))
+        for joint in chain:
+            T = be.matmul(T, _joint_transform(joint, self._joint_value(joint, q, be, params), be))
         return T
 
     def joint_limits(self) -> tuple[np.ndarray, np.ndarray]:
@@ -1045,6 +1265,7 @@ def load_rby1(
 
 
 __all__ = [
+    "COVER_ROLE",
     "DEFAULT_RBY1_JOINTS",
     "RBY1_URDF",
     "UrdfCapsule",

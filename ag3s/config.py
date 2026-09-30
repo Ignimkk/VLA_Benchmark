@@ -17,6 +17,7 @@ wrong parent is an ablation that reports the default's numbers under the variant
 from __future__ import annotations
 
 import dataclasses
+import math
 import pathlib
 from typing import Any, Mapping
 
@@ -118,17 +119,91 @@ class ClusteringConfig:
     #: Minimum score a challenger must reach **on every frame of its run** for that frame to count
     #: toward `target_confirm_frames` (T20). A frame where the leader scores below it breaks the run
     #: (the count starts over), exactly like a frame where a different object led. 0.0 = "never
-    #: filter on score" and is the default, because scores are strictly positive: the switch rule is
-    #: then the T5e rule unchanged. No number is baked in here — T14 seq 12 had the crate leading at
-    #: 0.015 while the apple was hidden by the hand, and the value that separates that from a real
-    #: re-selection is for the T19/T20 measurements to decide.
-    target_switch_min_score: float = 0.0
+    #: filter on score". **Default 0.1 since T26 (user ruling 2026-09-28)**, from the T20 sweep: on
+    #: T14 seq 12–21 every value ≥ 0.05 kept the apple (crate 0.015–0.05, banana side 0.03) and 0.0
+    #: switched to the crate at seq 14. The same threshold gates destination registration
+    #: (`DestinationRegistry`).
+    target_switch_min_score: float = 0.1
     #: How many consecutive frames the manipulated object may go unobserved (`occluded`) before it
     #: is `lost` (T20). Lost means "no target, reason lost(id, age)" — never "the leader instead".
-    #: `None` = never lost, which is the pre-T20 behaviour of the held centroid (it was only ever
-    #: replaced by a switch, never dropped by time). An object that re-appears within tolerance of its
-    #: last centroid is `visible` again under the same id, lost or not.
+    #: `None` = never lost (**the default, confirmed by the user on 2026-09-28 for T26**): the apple
+    #: changes only when a higher, *admissible* challenger clears the switch rule. An object that
+    #: re-appears within tolerance of its last centroid is `visible` again under the same id.
     target_lost_frames: int | None = None
+    #: **Widest object the gripper can close around (m) — normally not set** (T26). `None` = computed
+    #: from the injected robot model (`UrdfSphereChain.gripper_openings`: the finger spheres'
+    #: inner-face gap at the finger joints' open limit; RB-Y1 71.5 mm). Setting it is for offline
+    #: tools that have no robot model; the start log and every record say which source was used.
+    #: With neither, nothing is graspable and there is no manipulated object (fail-closed).
+    gripper_max_opening: float | None = None
+    #: A cluster is "the destination" (and so never the manipulated object) when at least this
+    #: fraction of its points lie within `destination_overlap_distance` of the destination's points
+    #: (T26). 0.5 = "mostly the destination's surface": a re-observed crate fragment scores ~1, an
+    #: apple resting against the crate a few percent.
+    destination_overlap_fraction: float = 0.5
+    #: Distance for the overlap test above (m). `None` = one cloud voxel (`pointcloud.voxel_size`),
+    #: i.e. "on the destination's surface at the resolution it was observed at".
+    destination_overlap_distance: float | None = None
+    #: **Pre-grasp association (T30 F3).** Before a grasp (`TargetConfirm` not frozen), the cluster
+    #: at the manipulated object's place is that object only if (i) its centroid moved no more than
+    #: the object's own bounding radius (last admissible geometry) — an object on the table does not
+    #: move before the hand touches it — and (ii) its narrowest and middle principal extents are each
+    #: within this factor of the last admissible geometry's (`1/r ≤ new/ref ≤ r`). Otherwise it is not
+    #: associated: the object is `occluded` with reason `association_rejected` and keeps its last
+    #: admissible geometry. `None` = test off (T26 behaviour). **2.5**: over the 155 pre-grasp
+    #: associations of the apple alone (E3 ep1807 ×4, T14, T17), the largest fold was 2.08
+    #: (narrowest) / 2.08 (middle) — a hand-cut fragment, ep1807 t=88; 2.5 keeps that with ~20 %
+    #: to spare, so partial views are not turned into challengers (T30b.impl).
+    manipulated_extent_ratio: float | None = 2.5
+    #: **Pre-grasp anchor (T30 F3b).** Before a grasp the manipulated object's geometry — what the
+    #: exclusion (ball, target-free layer, contact permission) is built from — is the one adopted at
+    #: `first`/`switch`. An associated observation replaces it only if it covers at least this
+    #: fraction of the anchor's points (within one cloud voxel, the destination-overlap distance).
+    #: One that covers less drops part of the object — the hand hiding the apple — and the anchor is
+    #: kept (`subset_kept_anchor`). `None` = off: every associated observation replaces it (T26).
+    #: Needs `manipulated_extent_ratio`. **0.9**: an observation may drop at most 10 % of the
+    #: anchor. In E3 the apple was 53–57 % of the merged blobs adopted at t=0, and the
+    #: observations after the hand hid the apple covered 0.33–0.49 of the anchor. Coverage
+    #: is measured against the adopted anchor, not the last refinement, so drops do not add up.
+    manipulated_anchor_coverage: float | None = 0.9
+    #: **Attention split of a merged cluster (T31b).** A cluster whose narrowest principal extent
+    #: fits the gripper but whose largest does not may be several graspable objects side by side
+    #: (E3: the apple merged with the orange, 54·67·144 mm, or the banana, 59·65·164 mm). Before a
+    #: grasp such a cluster is re-clustered with this connectivity radius (m); if it falls into two
+    #: or more components of `min_points` and attention separates them (below), the component with
+    #: the largest attention mass is the target candidate and the others stay as obstacle clusters
+    #: (`stages/attention_split.py`). `None` = off (T30 behaviour). **0.015** (3 cloud voxels): a
+    #: single apple's surface is connected at ≤ 17 mm (95th pct.) and never splits into two
+    #: ≥ 20-point components at 15 mm before a grasp (0 of 139, E3·T14·T17); the apple–neighbour
+    #: gap in the merged clusters has median 24 mm and 469 of 510 separate (T31b.impl).
+    attention_split_radius: float | None = 0.015
+    #: The split is taken only when the target component's mean attention is at least this many
+    #: times that of every other component (attention tells them apart). **2.0**: in the E3 merged
+    #: clusters the apple ÷ neighbour mean-attention ratio was ≥ 2.2 whenever attention was on the
+    #: apple (T30b §F3-4); below 2 the cluster is left whole (`attention_not_discriminative`).
+    attention_split_ratio: float = 2.0
+    #: **Split the anchor once when a grasp attempt ends (T32b S2).** While `TargetConfirm` is
+    #: frozen the split is off and the geometry follows the observation, so the geometry standing
+    #: when the freeze is released — the new anchor — can be the apple merged with its neighbour
+    #: again (T31b: 196 of the 200 merged pre-grasp chunks left came after a freeze). True = on the
+    #: first grounding call after the release, that geometry goes through the same attention split
+    #: (`attention_split_radius`/`_ratio`, with the attention it was observed with); if it splits,
+    #: its target component becomes the anchor. False = keep it as observed (T31b).
+    split_anchor_on_release: bool = True
+    #: **Hand occlusion does not count toward a switch (T32b S3).** While the manipulated object is
+    #: unobserved (`occluded`, any reason) or seen only in part (`subset_kept_anchor`) *and* a hand
+    #: collision sphere (palm or finger, `HandSpheres` given by the caller) is within this distance
+    #: (m, sphere surface to the object's standing geometry) of it — and no nearer the
+    #: challenger's points than that — a challenger's frames do not count: the frame breaks the
+    #: run, as a frozen frame does ("hidden is not replaced", T20). A hand at the challenger is the
+    #: policy changing object and counts. `None` = off (T31b). Without hand spheres for a frame
+    #: nothing is suppressed. **0.03** (E3 T28+T30 replay under the T31b rule, T32b.impl): in the
+    #: hidden frames that counted toward the 10 switches made while the hand hid the apple (4 early
+    #: switches to a pear/banana piece, 6 new-id switches back to the same apple) the gap was
+    #: 5–25 mm; in those of the genuine switches ≥ 31 mm (T30 ep1800 r3 t=416–424: 31–33 mm, the
+    #: hand reaching the banana beside the apple, grasped at t=440), the rest ≥ 45 mm, most ≥ 90.
+    #: 50 mm already blocks two genuine switches (t=432 · t=480). The margin is thin (25 → 31 mm).
+    hand_occlusion_reach: float | None = 0.03
     w_attention: float = 0.7
     w_geometry: float = 0.3
     max_seed_points: int = 4000  # cap on seeds fed to the connectivity search, for latency
@@ -167,6 +242,54 @@ class ClusteringConfig:
                 f"clustering.target_switch_min_score must be >= 0 (0 = never filter on score), "
                 f"got {self.target_switch_min_score}"
             )
+        mo = self.gripper_max_opening
+        if mo is not None and not (isinstance(mo, (int, float)) and not isinstance(mo, bool)
+                                   and math.isfinite(float(mo)) and float(mo) > 0.0):
+            raise AG3SConfigError(
+                f"clustering.gripper_max_opening must be null (from the robot model) or a finite "
+                f"value > 0 in metres, got {mo!r}")
+        if not (0.0 < float(self.destination_overlap_fraction) <= 1.0):
+            raise AG3SConfigError(
+                f"clustering.destination_overlap_fraction must be in (0, 1], "
+                f"got {self.destination_overlap_fraction}")
+        dd = self.destination_overlap_distance
+        if dd is not None and not (math.isfinite(float(dd)) and float(dd) > 0.0):
+            raise AG3SConfigError(
+                f"clustering.destination_overlap_distance must be null (one cloud voxel) or > 0, "
+                f"got {dd!r}")
+        er = self.manipulated_extent_ratio
+        if er is not None and not (isinstance(er, (int, float)) and not isinstance(er, bool)
+                                   and math.isfinite(float(er)) and float(er) > 1.0):
+            raise AG3SConfigError(
+                f"clustering.manipulated_extent_ratio must be null (association test off) or a "
+                f"finite ratio > 1, got {er!r}")
+        ac = self.manipulated_anchor_coverage
+        if ac is not None and not (isinstance(ac, (int, float)) and not isinstance(ac, bool)
+                                   and 0.0 < float(ac) <= 1.0):
+            raise AG3SConfigError(
+                f"clustering.manipulated_anchor_coverage must be null (anchor off) or in (0, 1], "
+                f"got {ac!r}")
+        sr = self.attention_split_radius
+        if sr is not None and not (isinstance(sr, (int, float)) and not isinstance(sr, bool)
+                                   and math.isfinite(float(sr)) and float(sr) > 0.0):
+            raise AG3SConfigError(
+                f"clustering.attention_split_radius must be null (split off) or a finite radius "
+                f"> 0 in metres, got {sr!r}")
+        sq = self.attention_split_ratio
+        if not (isinstance(sq, (int, float)) and not isinstance(sq, bool)
+                and math.isfinite(float(sq)) and float(sq) >= 1.0):
+            raise AG3SConfigError(
+                f"clustering.attention_split_ratio must be a finite ratio >= 1, got {sq!r}")
+        if not isinstance(self.split_anchor_on_release, bool):
+            raise AG3SConfigError(
+                f"clustering.split_anchor_on_release must be true or false, "
+                f"got {self.split_anchor_on_release!r}")
+        hr = self.hand_occlusion_reach
+        if hr is not None and not (isinstance(hr, (int, float)) and not isinstance(hr, bool)
+                                   and math.isfinite(float(hr)) and float(hr) >= 0.0):
+            raise AG3SConfigError(
+                f"clustering.hand_occlusion_reach must be null (off) or a finite distance >= 0 "
+                f"in metres, got {hr!r}")
         lost = self.target_lost_frames
         if lost is not None and (
                 isinstance(lost, bool) or not isinstance(lost, (int, float))
@@ -235,7 +358,16 @@ class PointCloudConfig:
     # of it **occupied** (mean -8.2 mm), so the robot's own plinth became an obstacle to itself.
     # What leaks is precisely what `robot_sphere_mask` already names as the reason to inflate:
     # "the gap between the capsule chain and the real mesh".
-    self_filter_inflation: float = 0.05
+    #
+    # **Default 0.0 since T26 (user ruling 2026-09-28: "inflation 없이 구 반지름 자체로").** The
+    # sphere radius itself is the robot. cuRobo's `RobotSegmenter` also defaults to +0.05 m
+    # (`distance_threshold=0.05` at `robot_segmenter.py:53`, applied as `distance > -threshold` at
+    # `:303`), so "the radius itself" is a setting that has to be asked for there too. A robot point
+    # that leaks at 0.0 is a hole in the **sphere model** of that link and is fixed there (cuRobo's
+    # principle: the spheres cover the mesh), not by growing every sphere — the 50 mm margin is what
+    # erased the apple from the fingers' field (T14/T19: `link_left_arm_5`). T28 measures the leak
+    # per link with ground-truth segmentation. 0.05 restores the T1 behaviour above.
+    self_filter_inflation: float = 0.0
     # **Per-link override of `self_filter_inflation`** (T19). Keys are link names from the
     # self-filter model's `sphere_link_names`, or the group names `arms` / `gripper` that
     # `serve_safe --links` uses (the canonical member lists are `grounding_report.ARM_LINKS` /
@@ -646,6 +778,30 @@ class EsdfConfig:
     #: cuRobo TSDF 의 복셀 크기. `None`/0 이면 `voxel_size` 를 쓴다. ESDF 계층과 분리된 것은
     #: cuRobo 가 하나의 TSDF 에서 해상도가 다른 ESDF 를 여러 번 뽑기 때문이다.
     tsdf_voxel_size: float | None = None
+    #: **미세 계층 전용 TSDF truncation (m)** (T32 H4-fix). `None` 이면 예전 그대로 — 한 TSDF 를
+    #: `truncation` (= `truncation_voxels × voxel_size`, 거친 복셀 기준 60 mm) 로 적분하고 두 계층이
+    #: 함께 쓴다. 값을 주면 cuRobo `Mapper` 를 하나 더 두어 **미세 계층(과 target 없는 계층)은 이
+    #: truncation 의 TSDF 에서**, 거친 계층은 예전 TSDF 에서 뽑는다 (`CuroboFieldBuilder`).
+    #:
+    #: 왜: 5 mm 미세 TSDF 에 20 mm 복셀 기준 60 mm 가 걸려, 표면 뒤 60 mm 까지 음수가 적분된다.
+    #: crate 벽(8 mm 두 장, 선 위 16 mm) 의 d<0 띠가 미세 55.5 mm · 거친 47 mm 였다
+    #: (`T32.h4.verify.json`, E3b ep1807 r1 chunk 30). 한쪽만 본 벽의 띠 ≈ truncation − 2 미세 복셀
+    #: (합성 normal_1side: 20→10, 30→20, 40→30, 60→50 mm).
+    #:
+    #: **30 mm 를 고른 이유** (같은 표): 합성 16 mm 벽 띠 18 (head_1side) · 20 (normal) · 22 mm
+    #: (head_2side) — 두께에 가깝다. 실제 chunk 30/20/36 에서 두 벽 합 23–24.5 mm (예전 55–58).
+    #: 20 mm 는 실제 네 chunk 모두 px 벽의 띠가 **0** 이다 (벽 안쪽 부호가 사라진다 — 한쪽에서만
+    #: 본 얇은 벽을 넘어간 질의점이 양수를 읽는다). 30 mm 에서도 chunk 16 의 px 벽은 0 이었다 —
+    #: 한계로 기록한다 (T32a.impl §H4-fix).
+    #:
+    #: **하한** `FINE_TRUNCATION_MIN_VOXELS` × TSDF 복셀 (`fine_truncation_floor`): 합성에서 15 mm
+    #: (3 복셀) 이하는 16 mm 벽의 미세 띠가 0 이었다 (seed 가 |tsdf| ≤ 0.9 복셀을 표면으로 잡으므로
+    #: 음수 띠 ≈ truncation − 2 복셀). 더 작은 값을 주면 `fine_truncation` 이 하한으로 올린다 —
+    #: 예외가 아닌 이유: TSDF 복셀이 커지면(예: `tsdf_voxel_size` 없이 20 mm) 같은 기본값이 하한
+    #: 아래로 내려가는데, 그때도 벽을 지키는 쪽으로 닫힌다. 적용 값은 builder stats 에 실린다.
+    fine_truncation_m: float | None = 0.030
+    #: `fine_truncation_m` 의 하한, TSDF 복셀 단위 (T32 H4-fix). 위 주석의 측정.
+    FINE_TRUNCATION_MIN_VOXELS = 4.0
     #: 쥔 물체 복셀에서 **부호를 양수로 강제할지** 가르는 문턱, **복셀 단위**.
     #:
     #: cuRobo 는 부호를 질의 복셀의 TSDF 에서 가져오므로(`builder_esdf.py:455-489`) seed 만
@@ -745,6 +901,9 @@ class EsdfConfig:
             v = getattr(self, name)
             if v is not None and float(v) <= 0.0:
                 raise AG3SConfigError(f"esdf.{name} 는 양수이거나 None 이어야 합니다: {v}")
+        if self.fine_truncation_m is not None and float(self.fine_truncation_m) <= 0.0:
+            raise AG3SConfigError(
+                f"esdf.fine_truncation_m 는 양수이거나 None 이어야 합니다: {self.fine_truncation_m}")
         if self.fine_voxel_size and float(self.fine_voxel_size) > float(self.voxel_size):
             raise AG3SConfigError(
                 f"esdf.fine_voxel_size ({self.fine_voxel_size}) 가 voxel_size "
@@ -793,6 +952,20 @@ class EsdfConfig:
     @property
     def truncation(self) -> float:
         return float(self.truncation_voxels) * float(self.voxel_size)
+
+    @property
+    def fine_truncation(self) -> float:
+        """The TSDF truncation the **fine** tier is built from (m) — `fine_truncation_m`, or
+        `truncation` when that is `None` or there is no fine tier (T32 H4-fix)."""
+        if self.fine_truncation_m is None or not self.fine_voxel_size:
+            return self.truncation
+        return max(float(self.fine_truncation_m), self.fine_truncation_floor)
+
+    @property
+    def fine_truncation_floor(self) -> float:
+        """`FINE_TRUNCATION_MIN_VOXELS` × the TSDF voxel (m) — below it a thin wall's negative band
+        vanishes (T32 H4-fix, measured). `fine_truncation` never goes below it."""
+        return self.FINE_TRUNCATION_MIN_VOXELS * float(self.tsdf_voxel_size or self.voxel_size)
 
 
 @dataclasses.dataclass(frozen=True)

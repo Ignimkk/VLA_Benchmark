@@ -27,6 +27,7 @@ from benchmark.trajopt.config import TrajOptConfig
 from benchmark.trajopt.grasp_latch import (
     CentroidIdentity,
     GraspLatch,
+    GraspPhase,
     LatchConfig,
     grasp_signal_from_feedback,
 )
@@ -45,7 +46,27 @@ DEFAULT_GRASP_LINKS: dict[str, tuple] = {
 }
 
 
-def grasp_parent_links(grasp_links: Optional[dict] = None) -> tuple[str, ...]:
+#: 쥔 물체가 **붙는** link — 손바닥 (T32 H2). 손가락 link(`DEFAULT_GRASP_LINKS` 의 첫 값)는 개도에 따라
+#: 움직이므로 물체가 손가락 하나와 함께 움직였다 (T22 · T29). reach 는 여전히 손가락에서 잰다.
+DEFAULT_HOLD_LINKS: dict[str, str] = {"left": "ee_left", "right": "ee_right"}
+
+
+def hold_links_for(grasp_links: Optional[dict] = None,
+                   hold_links: Optional[dict] = None) -> dict[str, str]:
+    """손마다 쥔 물체가 붙는 link. `hold_links` 가 주어지면 그것, 기본 `grasp_links` 면 손바닥
+    (`DEFAULT_HOLD_LINKS`), 직접 준 `grasp_links` 면 그 grasp link 자신 (예전 계약)."""
+    links = grasp_links or DEFAULT_GRASP_LINKS
+    if hold_links is not None:
+        hold = dict(hold_links)
+    elif grasp_links is None:
+        hold = dict(DEFAULT_HOLD_LINKS)
+    else:
+        hold = {}
+    return {str(h): str(hold.get(h) or v[0]) for h, v in links.items()}
+
+
+def grasp_parent_links(grasp_links: Optional[dict] = None,
+                       hold_links: Optional[dict] = None) -> tuple[str, ...]:
     """AG3S 를 지을 때 `attached_parent_links=` 로 넘겨야 하는 링크들.
 
     **슬롯은 생성 시점에 예약된다.** `ConstraintBuilder` 의 심볼 그래프와 희소성이 거기서
@@ -54,7 +75,8 @@ def grasp_parent_links(grasp_links: Optional[dict] = None) -> tuple[str, ...]:
     멈춘 채 응답만 계속 나간다** — 실측으로 잡은 결함이다 (2026-09-18, `run_0004` 프레임 10
     이후 14 프레임 동안 AG3S 가 한 번도 안 돌았다).
     """
-    return tuple(v[0] for v in (grasp_links or DEFAULT_GRASP_LINKS).values())
+    # T32 H2: 슬롯은 쥔 물체가 **붙는** link (기본 = 손바닥) 에 예약한다 — 손가락이 아니다.
+    return tuple(hold_links_for(grasp_links, hold_links).values())
 
 
 class SafePolicy:
@@ -89,6 +111,7 @@ class SafePolicy:
                  default_phase: str = "approach", recorder=None,
                  latch: Optional[LatchConfig] = None,
                  grasp_links: Optional[dict] = None,
+                 hold_links: Optional[dict] = None,
                  placed_fn: Optional[Callable[[dict, Any], bool]] = None,
                  static_geometry: Optional[Sequence[Any]] = None,
                  shadow: bool = False,
@@ -131,7 +154,10 @@ class SafePolicy:
         #: 그 판단은 **제약을 짓기 전에** 한다 (`_advance_grasp`). 계획값으로 attach 하는 경로는
         #: `legacy_gripper_attach=True` 로만 켜진다 (옛 기록 재생용).
         latch_cfg = latch or LatchConfig()
-        self._latch = GraspLatch(latch_cfg, evidence=not latch_cfg.legacy_gripper_attach)
+        #: T26: 목적지는 **AG3S 가 등록한 destination** 이다 (`ag3s.destination`). grounding 이름으로
+        #: 배우던 길(파지 뒤의 target = 목적지)은 T26 뒤 target 이 사과로 남으므로 닫는다.
+        self._latch = GraspLatch(latch_cfg, evidence=not latch_cfg.legacy_gripper_attach,
+                                 external_destination=True)
         #: attach/detach 가 일어날 때마다 +1 (T22). 제약이 어느 버전으로 지어졌는지와 비교해
         #: 어긋남을 검출한다 (`summary_json.grasp.state_version` / `constraint_version`).
         self._grasp_state_version = 0
@@ -142,6 +168,8 @@ class SafePolicy:
         self._identity = CentroidIdentity()
         #: 어느 손이 어느 링크로 쥐는가. 주입이다 — 로봇마다 다르고 추측할 수 없다.
         self.grasp_links = dict(grasp_links or DEFAULT_GRASP_LINKS)
+        #: T32 H2: 손마다 쥔 물체가 붙는 link (기본 = 손바닥). reach 는 `grasp_links` 에서 잰다.
+        self.hold_links = hold_links_for(grasp_links, hold_links)
         #: `(scene, constraint_set) -> bool`. 조작 대상이 목적지 안에 들어가 손에서 떨어졌는가.
         #: 기하 판정이라 외부가 준다 — 이 클래스도 잠금도 씬을 보지 않는다.
         self.placed_fn = placed_fn
@@ -155,8 +183,11 @@ class SafePolicy:
         #: 실행된 쪽으로 잡는 것뿐이다. 계산은 하나도 건너뛰지 않는다 — shadow 의 목적이
         #: **전체 파이프라인을 돌린 결과**를 로봇을 움직이기 전에 보는 것이기 때문이다.
         self.shadow = bool(shadow)
-        #: 이번 프레임에 목적지로 넘길 점. 잠금이 목적지를 확정한 **다음** 프레임부터 찬다.
+        #: 이번 프레임에 AG3S 가 쓴 목적지 점 (**기록용 거울**, T26). 목적지를 정하는 것은 AG3S 다 —
+        #: 인지 등록(`DestinationRegistry`) 또는 `ag3s.reset(destination_points=...)` 주입.
         self._destination_points = None
+        #: 이번 청크가 AG3S 에 넘긴 실행 구간 (T21b/T26 §6) — 기록용 요약.
+        self._last_execution_path: dict[str, Any] = {}
         #: 잠긴 이름이 마지막으로 target 으로 나왔을 때의 그 target. `attach` 가 이것을 쓴다 —
         #: 잠금이 걸린 뒤의 target 은 이미 목적지일 수 있으므로 지금 프레임 것을 쓰면 안 된다.
         self._latched_target = None
@@ -168,7 +199,7 @@ class SafePolicy:
         # 시작할 때 큰 소리로 죽는 편이 낫다.
         builder = getattr(ag3s, "builder", None)
         reserved = tuple(getattr(builder, "attached_parent_links", ()) or ())
-        missing = [p for p in grasp_parent_links(self.grasp_links) if p not in reserved]
+        missing = [p for p in self.hold_links.values() if p not in reserved]
         if missing:
             raise ValueError(
                 f"AG3S reserved attached slots for {list(reserved)} but this SafePolicy grasps "
@@ -193,6 +224,13 @@ class SafePolicy:
         self.gripper_columns = wire.gripper_columns(self.layout.nq_opt // 2)
         self.linearizer = CollisionLinearizer(model, self.layout, self.to_config.horizon.planned)
         self.refiner = TrajOptChunkRefiner(model, self.layout, self._scene_fn, self.to_config)
+        #: T29 — 손가락 관절을 실제 개도로. 모델에 finger parameter 가 있으면 (RB-Y1
+        #: `UrdfSphereChain`) 클라이언트의 gripper 규약(`pi05_infer.py` 의 `RBY1_GRIPPER_OPEN` ·
+        #: `GRIPPER_L/R_JOINT`)을 **여기서 읽는다** — 못 읽으면 시작할 때 죽는다 (손가락이 조용히
+        #: 닫힌 채 떠 있는 것이 T29 가 고치는 결함이다). 없는 모델(mock)은 예전 그대로.
+        self._finger_map = self._build_finger_map(model, getattr(ag3s, "robot_model", None))
+        #: 이번 청크의 손가락 상태 기록 (`summary_json.finger_joints`).
+        self._last_finger: dict[str, Any] = {}
 
         self._pending: dict[str, Any] = {}
         #: 연속성 기준의 **기본값** — 피드백이 없을 때 쓰는 "로봇이 실행했으리라 가정하는" 청크
@@ -259,6 +297,7 @@ class SafePolicy:
         self._latch.reset()
         self._identity.reset()
         self._destination_points = None
+        self._last_execution_path = {}
         self._latched_target = None
         self._last_debug = {}
         self._last_attention_by_camera = {}
@@ -269,6 +308,9 @@ class SafePolicy:
         self._grasp_state_version = 0
         self._grasp_constraint_version = None
         self._last_grasp_record = {}
+        self._last_finger = {}
+        for lin in self._finger_linearizers():
+            lin.set_joint_parameter_path(None)
 
     # ------------------------------------------------------------------------------------
     def infer(self, obs: dict[str, Any], **kwargs) -> dict[str, Any]:
@@ -304,8 +346,11 @@ class SafePolicy:
 
         # `_scene_fn` 이 읽을 것들. refiner 가 콜백을 부를 때 인자로 넘길 수 없는 값이라
         # 여기 둔다 — 콜백 계약(`context -> (scene, q_now, certified)`)을 바꾸지 않으려는 것이다.
+        self._last_finger = {}
         self._pending = {"scene": scene, "attention": attention, "timing": timing,
-                         "chunk": chunk, "exec_feedback": feedback}
+                         "chunk": chunk, "exec_feedback": feedback,
+                         # T29: 정책 관측의 16D state — gripper 열이 촬영 시점 측정 개도다.
+                         "state": policy_obs.get("state")}
 
         previous, executed_steps = self._continuity_input(feedback)
         context: dict[str, Any] = {"t_step": seq, "previous_physical_chunk": previous}
@@ -565,6 +610,9 @@ class SafePolicy:
             raise ValueError("no camera observations in the request")
 
         manipulators = list(scene.get("active_manipulators", ()) or ())
+        # **T29: 손가락 관절을 먼저 놓는다** — 이번 프레임의 모든 FK (self-filter · depth mask ·
+        # 미세 창 · reach · attach · TO) 가 촬영 시점 개도를 보게. 파지 판단(reach)보다 앞이다.
+        self._apply_finger_state()
         # **파지 상태를 먼저 갱신한다** (T22, 지침 §6.3: 피드백 → 파지 상태 → 기하 → TO).
         # attach/detach 가 이번 프레임의 거리장(쥔 물체 파내기 · target-free 계층)과 제약(attached
         # 행 · 접촉 허용)에 바로 들어가야 한다. 뒤에서 하면 한 프레임 늦고, 그 프레임을 다시 지으려면
@@ -572,6 +620,14 @@ class SafePolicy:
         if self._latch.evidence:
             self._advance_grasp(observations, manipulators)
         self._grasp_constraint_version = self._grasp_state_version
+        # T26 §4: 닫힘 시도부터 놓을 때까지 조작 대상이 바뀌면 안 된다 — 바뀌면 attach 전 프레임에
+        # 사과가 손가락의 거리장으로 돌아온다. AG3S 는 이 동안 도전자를 세지 않는다.
+        set_grasp = getattr(self.ag3s, "set_grasp_active", None)
+        if callable(set_grasp):
+            set_grasp(self._latch.phase in (GraspPhase.CLOSING, GraspPhase.HELD))
+
+        newest = max(observations, key=lambda o: o.timestamp)
+        execution_path = self._execution_path(np.asarray(newest.robot_state, np.float64))
 
         t = time.monotonic()
         # `process_multi_debug` 는 `process_multi` 와 **같은 계산**이고 중간 결과를 버리지 않고
@@ -580,10 +636,12 @@ class SafePolicy:
             observations,
             phase=scene.get("phase") or self.default_phase,
             active_manipulators=manipulators,
-            # 목적지는 **지난 프레임**에 잠금이 확정한 것이다. 한 프레임 늦는 것은 의도다 —
-            # 이번 프레임의 grounding 결과를 쓰려면 필드를 두 번 지어야 한다.
-            destination_points=self._destination_points,
+            # 목적지는 **AG3S 가 가진 것**이다 (T26 — 인지 등록 또는 reset 주입). 여기서 넘기지
+            # 않는다: 넘기면 AG3S 는 그것을 주입으로 받아 등록보다 앞세운다.
             static_geometry=self.static_geometry or None,
+            # T21b/T26 §6: 정책 reference 청크의 **실행 창** (K = execution_length) 행 — 미세 창이
+            # 손이 지금 있는 곳뿐 아니라 이번 청크 동안 지나갈 곳을 덮는다.
+            **({} if execution_path is None else {"execution_path": execution_path}),
         )
         self._pending.setdefault("timing", {})["ag3s"] = (time.monotonic() - t) * 1000.0
         self._last_constraint_set = constraint_set
@@ -606,6 +664,133 @@ class SafePolicy:
         self._last_q_now = q_now
         certified = constraint_set.status.value == "ok"
         return snapshot, q_now, certified
+
+    # --- T29: finger joints ---------------------------------------------------------------
+    @staticmethod
+    def _build_finger_map(constraint_model, filter_model):
+        """`FingerJointMap` over the model that has finger parameters, or None (mock models)."""
+        for model in (constraint_model, filter_model):
+            if model is not None and getattr(model, "param_joint_names", ()):
+                from benchmark.ag3s.robot_models.gripper_state import FingerJointMap
+
+                return FingerJointMap(model)
+        return None
+
+    def _finger_linearizers(self) -> list:
+        out = [self.linearizer]
+        optimizer = getattr(self.refiner, "optimizer", None)
+        lin = getattr(optimizer, "linearizer", None)
+        if lin is not None and lin is not self.linearizer:
+            out.append(lin)
+        return [x for x in out if getattr(x, "param_names", ())]
+
+    def _measured_openings(self) -> tuple[dict[str, float], str]:
+        """`({hand: norm}, source)` — 촬영 시점 측정 개도 (클라이언트 규약, 1 = 열림).
+
+        1순위는 정책 관측 16D `state` 의 gripper 열 (`self.gripper_columns`, 16D = 7 · 15) 이다 —
+        클라이언트 `build_obs` 가 `|qpos| / |RBY1_GRIPPER_OPEN|` 로 쓴 값이고, 같은 요청의 카메라와
+        같은 순간에 찍힌다. 없으면 실행 피드백의 `measured_gripper` (같은 식, T18). 둘 다 없으면 빈 dict.
+        """
+        state = self._pending.get("state")
+        left_col, right_col = self.gripper_columns
+        if state is not None:
+            arr = np.asarray(state, np.float64).reshape(-1)
+            if arr.shape[0] > right_col and np.all(np.isfinite(arr[[left_col, right_col]])):
+                return ({"left": float(arr[left_col]), "right": float(arr[right_col])},
+                        f"state[{left_col}],state[{right_col}]")
+        fb = self._pending.get("exec_feedback") or {}
+        if fb.get("available") and fb.get("measured_gripper") is not None:
+            mg = np.asarray(fb["measured_gripper"], np.float64).reshape(-1)
+            if mg.shape[0] >= 2 and np.all(np.isfinite(mg[:2])):
+                return ({"left": float(mg[0]), "right": float(mg[1])},
+                        f"exec_feedback.measured_gripper (seq {fb.get('seq')})")
+        return {}, "none"
+
+    def _apply_finger_state(self) -> None:
+        """손가락 관절 — AG3S 두 모델(촬영 시점 측정값)과 TO 창(스텝별 포락선)에 (T29).
+
+        | 어디 | 값 |
+        |---|---|
+        | self-filter · 제약 모델의 numeric FK (이번 프레임) | 측정 개도 |
+        | TO 창 스텝 0 | 측정 개도 |
+        | TO 창 스텝 k ≥ 1 | `max(측정, max(clip(명령[0..k], 0, 1)))` (`gripper_state.opening_envelope`) |
+
+        손가락은 결정 변수가 아니다 — linearizer 의 parameter 이고 Jacobian 은 팔 관절만이다.
+        """
+        fmap = self._finger_map
+        if fmap is None:
+            return
+        measured, source = self._measured_openings()
+        set_fingers = getattr(self.ag3s, "set_finger_joints", None)
+        if not measured:
+            if callable(set_fingers):
+                set_fingers(None, record={"source": "model_default",
+                                          "note": "no gripper opening in the request"})
+            for lin in self._finger_linearizers():
+                lin.set_joint_parameter_path(None)
+            self._last_finger = {"source": "model_default",
+                                 "note": "no gripper opening in the request (state/feedback)"}
+            return
+        values = fmap.joint_values(measured)
+        record = {"source": source, "opening_norm": dict(measured), "joints": dict(values)}
+        if callable(set_fingers):
+            set_fingers(values, record=record)
+        else:  # AG3S 가 이 메서드를 모르면 모델에 직접
+            for model in (getattr(self.ag3s, "robot_model", None), self.constraint_robot_model):
+                setter = getattr(model, "set_joint_parameters", None)
+                if callable(setter):
+                    names = set(getattr(model, "param_joint_names", ()))
+                    setter({k: v for k, v in values.items() if k in names})
+        chunk = self._pending.get("chunk")
+        left_col, right_col = self.gripper_columns
+        commanded: dict[str, np.ndarray] = {}
+        if chunk is not None and len(chunk) and chunk.ndim == 2 and chunk.shape[1] > right_col:
+            commanded = {"left": np.asarray(chunk[:, left_col], np.float64),
+                         "right": np.asarray(chunk[:, right_col], np.float64)}
+        path_record: dict[str, Any] = {}
+        for lin in self._finger_linearizers():
+            default = self.constraint_robot_model.param_vector()
+            P, openings = fmap.path(measured, commanded, lin.horizon, default=default)
+            # 모델의 parameter 순서와 map 의 순서는 같은 모델에서 왔다 — 다르면 여기서 죽는다.
+            if tuple(lin.param_names) != tuple(fmap.param_joint_names):
+                raise ValueError(f"finger parameter order differs: linearizer {lin.param_names} "
+                                 f"vs map {fmap.param_joint_names}")
+            lin.set_joint_parameter_path(P)
+            path_record = {"horizon": int(lin.horizon),
+                           "opening_norm": {h: [round(float(x), 4) for x in v]
+                                            for h, v in openings.items()},
+                           "commanded_available": bool(commanded)}
+        self._last_finger = {**record, "model": "envelope(measured, running max of clip(cmd,0,1))",
+                             "plan": path_record,
+                             "convention": fmap.convention.record()}
+
+    def _execution_path(self, q_now: np.ndarray) -> Optional[np.ndarray]:
+        """`(K, nq)` — 정책 reference 청크의 실행 창을 전체 로봇 상태 벡터로 (T21b, T26 §6).
+
+        refiner 는 `scene_fn` 을 reference 보다 먼저 부르지만, 청크 자체는 `infer` 가 이미 받아
+        `_pending["chunk"]` 에 두었다. 자유 관절은 청크 열에서(`ChunkLayout.chunk_to_trajectory`),
+        나머지(토르소 등)는 `q_now` 에서 채운다 — linearizer 가 FK 에 넣는 것과 같은 `full_q` 다.
+        청크나 자세가 모양이 맞지 않으면 넘기지 않고(AG3S 는 `q_now` 창으로 물러난다) 이유를 남긴다.
+        """
+        chunk = self._pending.get("chunk")
+        K = int(self.to_config.horizon.execution_length)
+        self._last_execution_path = {"rows": 0, "source": None, "note": None}
+        if chunk is None or not len(chunk):
+            self._last_execution_path["note"] = "no reference chunk"
+            return None
+        if q_now.shape[0] != self.layout.nq_model:
+            self._last_execution_path["note"] = (
+                f"q_now has {q_now.shape[0]} entries, layout expects {self.layout.nq_model}")
+            return None
+        try:
+            traj = self.layout.chunk_to_trajectory(np.asarray(chunk, np.float64))[:, :K]
+            path = self.layout.full_q(traj, q_now).T
+        except ValueError as exc:
+            self._last_execution_path["note"] = f"{type(exc).__name__}: {exc}"
+            return None
+        self._last_execution_path = {"rows": int(path.shape[0]), "source": "reference",
+                                     "execution_length": K, "note": None}
+        return path
 
     def _run_latch(self, constraint_set, observations, manipulators) -> None:
         """잠금을 한 프레임 돌리고, 그것이 말할 때만 `attach`/`detach` 를 부른다.
@@ -633,6 +818,12 @@ class SafePolicy:
         if self.placed_fn is not None and self._latch.holding and not self._latch.evidence:
             placed = bool(self.placed_fn(self._pending.get("scene", {}), constraint_set))
 
+        # T26: 목적지는 AG3S 가 등록(또는 주입받은) destination 이다. 잠금에는 그 이름만 준다.
+        destination = getattr(self.ag3s, "destination", None)
+        self._latch.set_destination(None if destination is None else destination.label)
+        self._destination_points = (None if destination is None
+                                    else np.asarray(destination.points, np.float64))
+
         metrics = getattr(target, "metrics", {}) or {}
         event = self._latch.update(
             label=label,
@@ -652,7 +843,8 @@ class SafePolicy:
             try:
                 self.ag3s.attach(self._latched_target, robot_state=q, parent_link=parent_link,
                                  allowed_contact_links=allowed, label="manipulated",
-                                 reach=self._latch.config.reach)
+                                 reach=self._latch.config.reach,
+                                 hold_link=self.hold_links.get(str(hand), parent_link))
                 self._grasp_state_version += 1
                 self._last_grasp_record.update({
                     "mode": "legacy_gripper", "transition": True,
@@ -665,16 +857,15 @@ class SafePolicy:
         elif event.detach:
             self.ag3s.detach()
             self._grasp_state_version += 1
-            # 놓았으니 목적지도 더는 목적지가 아니다. 다음 과제는 새로 잠근다.
-            self._destination_points = None
+            # T26: 목적지는 AG3S 의 것이고 에피소드 동안 남는다 (여기서 지우지 않는다).
             if not self._latch.evidence:
                 self._last_grasp_record.update({
                     "mode": "legacy_gripper", "transition": True,
                     "note": f"legacy: {event.note}"})
 
-        # 목적지 점 — 잠금이 목적지를 확정했고 지금 target 이 그것이면 그 점구름을 쓴다.
-        if event.destination is not None and label == event.destination and target is not None:
-            self._destination_points = np.asarray(target.points, np.float64)
+        # (T26 전: "잠금이 목적지를 확정했고 지금 target 이 그것이면 그 점구름" — T26 뒤 target 은
+        # 파지 뒤에도 사과이므로 그 길은 목적지를 영영 못 잡거나 사과를 목적지로 잡는다. 위에서
+        # AG3S 의 destination 을 읽는 것으로 바꿨다.)
 
     def _grasp_hand(self, manipulators) -> tuple[str, str, Any]:
         hand = str((manipulators or ["left"])[0])
@@ -747,12 +938,18 @@ class SafePolicy:
                                          self._last_constraint_set))
 
         phase_before = self._latch.phase
+        # T34 J2: 쥔 동안 직전 프레임에 조작 대상이 관측됐으면 쥔 구와 비교한 측정 (없으면 None).
+        held_observation = None
+        if self._latch.holding:
+            held_fn = getattr(self.ag3s, "held_observation", None)
+            held_observation = held_fn() if callable(held_fn) else None
         event = self._latch.observe_grasp(
             signal, reach_m=reach,
             manipulated_id=None if manip is None else int(manip.id),
             manipulated_state=None if manip is None else str(manip.state),
-            placed=placed)
+            placed=placed, held_observation=held_observation)
         rejected = None
+        revoked = None
         if event.attach:
             try:
                 if not usable:
@@ -760,7 +957,8 @@ class SafePolicy:
                                          parent_link=parent_link)
                 self.ag3s.attach(manip.geometry, robot_state=q, parent_link=parent_link,
                                  allowed_contact_links=allowed, label="manipulated",
-                                 reach=cfg.reach)
+                                 reach=cfg.reach,
+                                 hold_link=self.hold_links.get(hand, parent_link))
                 self._grasp_state_version += 1
             except AttachRejected as exc:
                 rejected = exc.record()
@@ -768,13 +966,22 @@ class SafePolicy:
         elif event.detach:
             self.ag3s.detach()
             self._grasp_state_version += 1
-            # 놓았으니 목적지도 더는 목적지가 아니다. 다음 과제는 새로 잠근다.
-            self._destination_points = None
+            # T26: 목적지는 AG3S 의 것이고 에피소드 동안 남는다 (여기서 지우지 않는다).
+            if event.revoked:
+                # T34 J2: 거짓 attach 회수. 조작 대상은 쥔 구가 아니라 다시 **자기 anchor**(마지막으로
+                # 관측된 기하)로 대표된다 — detach 로 쥔 구가 빠지고, 잠금이 LATCHED 라 아래
+                # `set_grasp_active(False)` 가 동결을 푼다. 기록에는 그 anchor 를 남긴다.
+                revoked = {"reasons": list(((event.evidence or {}).get("revoke") or {})
+                                           .get("reasons") or ()),
+                           "held_observation": held_observation,
+                           "anchor": None if manip is None else getattr(manip, "anchor", None)}
+                print(f"[safe_policy] attach_revoked: {event.note}")
 
         self._last_grasp_record = {
             "mode": "evidence",
             "hand": hand,
             "parent_link": parent_link,
+            "hold_link": self.hold_links.get(hand, parent_link),
             "state": self._latch.phase.value,
             "state_before": phase_before.value,
             "transition": bool(event.attach or event.detach or rejected is not None
@@ -782,6 +989,8 @@ class SafePolicy:
             "attach": bool(event.attach),
             "detach": bool(event.detach),
             "rejected": rejected,
+            # T34 J2: `{reasons, held_observation, anchor}` when this detach revoked a false attach.
+            "attach_revoked": revoked,
             "note": event.note,
             "evidence": dict(event.evidence or {}),
             "alignment": alignment,
@@ -818,6 +1027,9 @@ class SafePolicy:
             "attached_at": getattr(attached, "attached_at", None),
             "n_points": (0 if getattr(attached, "points", None) is None
                          else int(len(attached.points))),
+            # T32 H2: the held spheres (parent frame) and how they were fitted.
+            "n_spheres": len(getattr(attached, "primitives", ()) or ()),
+            "held": getattr(self.ag3s, "held_record", None),
         }
 
     def _latch_gripper_signal(self, hand: str) -> Optional[float]:
@@ -918,6 +1130,10 @@ class SafePolicy:
             "exec_latch_signal": dict(self._last_latch_signal or {}),
             # T22 — 파지 상태 · 근거 · 상태/제약 버전. 씬이 없어 latch 가 안 돈 청크는 `{}`.
             "grasp": _jsonable(self._last_grasp_record or {}),
+            # T26 §6 — AG3S 에 넘긴 실행 구간 (행 수 · 출처, 못 넘겼으면 이유).
+            "execution_path": _jsonable(self._last_execution_path or {}),
+            # T29 — 손가락 관절: 측정 개도 · 출처 · 관절값 · TO 창의 스텝별 개도.
+            "finger_joints": _jsonable(self._last_finger or {}),
             # T23 — 판정 사유와 위반 행 분류. `reasons` 가 `None` 이면 판정 전(기록 순서상 없음).
             "verdict": _jsonable({
                 "policy": self.verdict_policy,
