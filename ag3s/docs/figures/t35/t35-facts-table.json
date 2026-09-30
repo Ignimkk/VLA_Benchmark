@@ -1,0 +1,159 @@
+{
+ "figure": "/mnt/dev/work/benchmark/ag3s/docs/figures/t35/t35-facts-table.png",
+ "script": "outputs/verify/T35diag/figs/fig_facts.py",
+ "source": "outputs/verify/T35diag/f/f_table.json",
+ "columns": [
+  "cand.",
+  "fact",
+  "E3b_ep1800_r1",
+  "E3b_ep1808_r1",
+  "E3b_ep1808_r2",
+  "E3a_ep1800_r1"
+ ],
+ "rows": [
+  [
+   "C1 TO",
+   "max refined-ref, 10 before / 11 after close (deg)",
+   "2.16 / 4.22 @t184",
+   "2.34 / 3.90 @t120",
+   "1.40 / 12.35 @t120",
+   "2.25 / 4.08 @t144"
+  ],
+  [
+   "C1 TO",
+   "variant that zeroes the max chunk",
+   "no_continuity",
+   "no_continuity",
+   "no_continuity",
+   "none"
+  ],
+  [
+   "C1 TO",
+   "chunk executing when contact was lost: t, refined-ref (deg)",
+   "t144 held, 2.41",
+   "t120, 3.90",
+   "t112, 6.34",
+   "t144, 4.08"
+  ],
+  [
+   "C1 TO",
+   "  fingertip shift max (mm): recorded / replay / no_collision / no_continuity",
+   "41.9 / 29.7 / 4.8 / 35.4",
+   "30.1 / 19.6 / 20.6 / 0.0",
+   "35.0 / 34.7 / 35.1 / 0.0",
+   "34.1 / 25.0 / 25.2 / 25.3"
+  ],
+  [
+   "C1 TO",
+   "  reference worst row (link, tier, mm, GT nearest)",
+   "ee_finger_l2, fine, -16.8, banana",
+   "ee_finger_l2, target_free, 3.1, apple",
+   "ee_finger_l2, target_free, 9.6, apple",
+   "ee_finger_l1, target_free, -3.9, apple"
+  ],
+  [
+   "C1 TO",
+   "returned in window (initial/accepted/projection)",
+   "2/19/0",
+   "11/8/2",
+   "6/15/0",
+   "1/20/0"
+  ],
+  [
+   "C1 TO",
+   "ref beyond TO pos. limit / beyond MJCF (chunks)",
+   "0 / 0",
+   "3 / 0",
+   "0 / 0",
+   "0 / 0"
+  ],
+  [
+   "C2 policy",
+   "first close t; finger-apple at close: meas / ref / refined (mm)",
+   "t130; 8.3 / 4.0 / 3.5",
+   "t110; 2.1 / 12.0 / 11.9",
+   "t104; 4.9 / 13.9 / 13.9",
+   "t130; 8.3 / 4.6 / 4.2"
+  ],
+  [
+   "C2 policy",
+   "min finger-apple 16 rows after close: ref / meas (mm)",
+   "-8.1 / -2.4",
+   "-1.6 / -1.1",
+   "-4.9 / -1.8",
+   "-6.5 / -2.1"
+  ],
+  [
+   "C2 policy",
+   "same episode success E0 / E0_rec / E1 / E1_rec / E2_rec",
+   "1/2 / 1/2 / 1/2 / 1/2 / 2/2",
+   "1/2 / 0/2 / 0/2 / 0/2 / 2/2",
+   "1/2 / 0/2 / 0/2 / 0/2 / 2/2",
+   "1/2 / 1/2 / 1/2 / 1/2 / 2/2"
+  ],
+  [
+   "C3 percep.",
+   "manip!=apple / occluded_by_hand (of 21 chunks)",
+   "0 / 8",
+   "4 / 5",
+   "0 / 3",
+   "2 / 7"
+  ],
+  [
+   "C3 percep.",
+   "split triggered / accepted; ball not whole apple",
+   "12 / 11; 1 of 19",
+   "11 / 11; 4 of 21",
+   "11 / 11; 0 of 21",
+   "10 / 9; 2 of 21"
+  ],
+  [
+   "C4 grasp",
+   "opening at settle; both fingers touching",
+   "0.70; yes",
+   "0.59; yes",
+   "0.68; yes",
+   "0.68; yes"
+  ],
+  [
+   "C4 grasp",
+   "contact midpoint - apple centre at settle (x,y,z mm)",
+   "-0.7, -1.4, +8.7",
+   "+6.5, -9.7, +15.1",
+   "+6.4, -5.7, +3.8",
+   "+4.0, -5.7, +6.4"
+  ],
+  [
+   "C4 grasp",
+   "hold: cmd median / min opening",
+   "0.53 / 0.47",
+   "0.44 / 0.43",
+   "0.55 / 0.49",
+   "0.45 / 0.41"
+  ],
+  [
+   "C4 grasp",
+   "contact lost t; apple dz max (mm); mid z rise (mm)",
+   "t152; 9.7; 17.6",
+   "t124; 0.2; 0.5",
+   "t120; 35.7; 8.9",
+   "t148; 0.4; 14.7"
+  ],
+  [
+   "C4 grasp",
+   "apple xy pushed before close (mm)",
+   "0.2",
+   "5.1",
+   "0.1",
+   "0.2"
+  ],
+  [
+   "C5 revoke",
+   "in hand rows: attach exec 144-151 / revoke feedback 152-159",
+   "7/8 / 0/8, last in hand t150",
+   "no attach",
+   "no attach",
+   "no attach"
+  ]
+ ]
+}

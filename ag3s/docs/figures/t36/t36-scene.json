@@ -1,0 +1,94 @@
+{
+ "source": [
+  "outputs/verify/T36/scene/scene_legacy.npz",
+  "outputs/verify/T36/scene/scene_curobo.npz"
+ ],
+ "slice_half_width_m": 0.3,
+ "slice_res_m": 0.0025000000000000022,
+ "margin_m": 0.05,
+ "frames": [
+  0,
+  4
+ ],
+ "worst": {
+  "frame0_legacy": {
+   "link": "link_left_arm_5",
+   "step": 2,
+   "sphere": 41,
+   "centre_m": [
+    0.4764874183530972,
+    0.25794051271075236,
+    1.0728229236342768
+   ],
+   "radius_m": 0.08125,
+   "clearance_mm": -29.031048280806342,
+   "full_violation_mm": -29.031048280806342,
+   "d_at_centre_m": 0.10221894830465317,
+   "slice_plane": "x-z at y = centre y"
+  },
+  "frame0_cuRobo": {
+   "link": "link_left_arm_5",
+   "step": 2,
+   "sphere": 41,
+   "centre_m": [
+    0.4764874183530972,
+    0.25794051271075236,
+    1.0728229236342768
+   ],
+   "radius_m": 0.08125,
+   "clearance_mm": -9.171877401271193,
+   "full_violation_mm": -9.171877401271193,
+   "d_at_centre_m": 0.12207812070846558,
+   "slice_plane": "x-z at y = centre y",
+   "answer_tier": "coarse"
+  },
+  "frame4_legacy": {
+   "link": "link_right_arm_5",
+   "step": 1,
+   "sphere": 18,
+   "centre_m": [
+    0.4839333311101925,
+    -0.26991855410353105,
+    1.0961970091421533
+   ],
+   "radius_m": 0.08125,
+   "clearance_mm": -0.5152471840129957,
+   "full_violation_mm": -0.5152471840129957,
+   "d_at_centre_m": 0.13073475658893585,
+   "slice_plane": "x-z at y = centre y"
+  },
+  "frame4_cuRobo": {
+   "link": "link_right_arm_5",
+   "step": 1,
+   "sphere": 18,
+   "centre_m": [
+    0.4839333311101925,
+    -0.26991855410353105,
+    1.0961970091421533
+   ],
+   "radius_m": 0.08125,
+   "clearance_mm": 19.553017889882284,
+   "full_violation_mm": 19.553017889882284,
+   "d_at_centre_m": 0.15080301463603973,
+   "slice_plane": "x-z at y = centre y",
+   "answer_tier": "coarse"
+  }
+ },
+ "curobo_answer_tier_per_frame": [
+  "coarse",
+  "coarse",
+  "coarse",
+  "fine",
+  "coarse",
+  "coarse",
+  "fine",
+  "fine",
+  "fine",
+  "fine",
+  "fine",
+  "fine",
+  "fine",
+  "coarse",
+  "fine"
+ ]
+}

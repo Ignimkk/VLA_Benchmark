@@ -1,7 +1,7 @@
 # 세션 상태 — 끊겨도 여기서 이어 간다
 
 > writer: lead (A0). **매 turn 끝에 갱신한다.** 새 세션은 이 파일을 먼저 읽고, 아래 "이어 가는 절차" 를 따른다.
-> 마지막 갱신: 2026-09-30 — T26–T34 커밋 완료, T35-diag (E3 남은 실패 원인) 실행 중
+> 마지막 갱신: 2026-09-30 — T35-diag · T36-baseline 완료, skill 갱신. K1 (파지 구간 continuity 끄기) 사용자 판정 대기
 
 ## 1. 지금 무엇을 하고 있나
 
@@ -127,3 +127,7 @@ ls -t ag3s/docs/handoff | head                            # *.progress.md / *.im
 | 2026-09-29 20:30 | **T34 구현 완료** (1676 passed). J1: 쥔 질의 구를 받침 평면 + 테이블 ESDF 0-거리 띠(≈ 8.8 mm, 중앙 8.6–9.0) 위로 **들어올림** (반지름 유지, 7.9–29.4 mm) — T33 attach 9 건 held↔table 행 ≥ 0, ep1800 r2 교착 56 청크 −14.4~−18.5 → +6.7~+10.4 mm. 대가: 사과 밑면이 질의 구 밖으로 최대 5.8–12.8 mm. J2: attach 후 실행 4 청크 안 개도·관측·들림 검사 → `attach_revoked` (1808 r1 거짓 attach t=136 회수, 성공 run 5 건 무회수). lead: 구현 기본값으로 검증 진행. **T34 verifier 착수** (`T34.verify.partial.json`; 끊기면 같은 verifier 재개) |
 | 2026-09-30 00:50 | **T34 검증 완료**: E3a 5/6 · E3b 3/6 (합 8/12 = VLA 단독 E0 7/12 수준 이상), E3b HOLD 0, 요동 E2 수준, 기준선 불변. scribe (A3) 로 `AG3S_T0T6_LOG.md` 에 T26–T34 이어쓰기. 다음 판정: 커밋 (T26–T34 미커밋) · 더 큰 N 평가 · 남은 소결함 |
 | 2026-09-30 | **커밋 (사용자 승인)**: benchmark `421bb71` (코드) · `76f02e0` (handoff·figures·로그) · pi05_TO_hybrid `8a9eae9` (pi05_infer gate off · sim 시각) · 루트 `b74a492` (tests). push 는 사용자. 제외: figures `ag3s-architecture-v2/` · `ppt-0930/` · `r-16d/attention-cell-*` (이번 작업 산출물 아님). **T35-diag 착수** — E3b 1800 r1 · 1808 r1/r2 · E3a 1800 r1 실패 원인 (오프라인, `T35.diag.verify.json`) |
+| 2026-09-30 | **사용자 판정 B**: cuRobo 기준선을 둘째 기준으로. T36-baseline verifier 착수 — legacy 1 회 확인 + cuRobo (`--esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005`) 4 회 단독, 비트 단위 재현 여부 (R2 때 4 회 중 1 회 뒤집힘 전력). 재현되면 skill 에 legacy 새 값(14/15 · −29.031048) + cuRobo 값 + 한계를 함께 올린다. T35-diag 병행 (오프라인 CPU) |
+| 2026-09-30 | **T35-diag 완료** (`T35.diag.verify.json`, `figures/t35/`). 실패 4 run 모두 두 손가락이 사과에 닿고 닫혔으나 **접촉 중점이 사과 중심보다 높음** (+3.8 ~ +15.1 mm; 42 run 중 첫 파지가 유지된 성공 18/22 는 −7.1 ~ +2.4) → 들 때 미끄러짐. 닫기 전 TO 편차 ≤ 2.34°. 접촉을 잃은 청크의 손끝 편차: 1808 r1/r2 30.1/35.0 mm → **continuity 끄면 0.0**; 1800 r1 41.9 mm → collision 끄면 4.8 (쥔 채 이웃 banana 와 −16.8 mm); E3a 1800 r1 은 단일 항으로 0 이 안 됨. 같은 에피소드 VLA 단독 E0 1800 1/2 · 1808 1/2, E2 2/2. 제안 K1: 닫기·쥐기 구간에 continuity 항 끄기 (판정 대기) |
+| 2026-09-30 10:16 | **SUBTASK audit (사용자 요청, 판정 대기)** — pi0.5 subtask 문장으로 attention 의 목적(pick/place)을 알 수 있나. openpi 에 코드 없음 · 구현은 model 수정 없이 가능(tied LM head, prefix-LM decode) · pi05_base 는 `Subtask: …` 를 말함 · issue #679 "garbled" = FAST action token (97.4 %). 그러나 zero-shot 으로는 phase 판정 불가 (served 16D 는 held 36 frame 중 30 에서 action token, AUROC 0.50–0.85). 선택지 A zero-shot / B subtask co-training (`phase_index` 14 phase) / C phase probe / D rule 유지 → 사용자 판정 대기. `SUBTASK.audit.md` · `figures/subtask/` · `outputs/verify/subtask_probe/`. 코드 변경 없음 |
+| 2026-09-30 | **T36-baseline 완료**: cuRobo 기준선 단독 4 회 비트 단위 재현 — 10/15 · 15/15 · −9.171877401271193 mm (필드 sha1 15/15 동일); legacy 14/15 · −29.031048 재확인. skill `regression-baseline` 에 두 기준 + 덮지 않는 경로 (gripper 범위 · exclude-authorized · margin 0 · 쥔 물체) 기록 (루트 커밋). K1 판정 대기 |

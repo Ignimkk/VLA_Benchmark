@@ -1,0 +1,343 @@
+{
+ "figure": "/mnt/dev/work/benchmark/ag3s/docs/figures/t35/t35-grasp-geometry-all-runs.png",
+ "script": "outputs/verify/T35diag/figs/fig_facts.py",
+ "doc": "T35-diag figure 3 \u2014 (a) graph over all 42 runs (T28 E0/E0_rec/E1/E1_rec/E2_rec, T34 E3a/E3b; episodes 1800/1807/1808):\ncontact midpoint z - apple centre z at settle (mm) and minimum measured opening in the 24 control rows after settle, per condition,\nsuccess vs failure (a/settle.json). (b) fact table for the 4 failed T34 runs, candidates 1-5 (f/f_table.json).\nWrites figures/t35/t35-grasp-geometry-all-runs.png/.json and figures/t35/t35-facts-table.png/.json.\n",
+ "points": [
+  {
+   "run": "E0/E0_ep1800_r1",
+   "success": false,
+   "contact_mid_z_mm": 8.020811562927776,
+   "hold_min_open": 0.5725479604696487,
+   "open_settle": 0.6998740467419321,
+   "contact_lost_t": 162
+  },
+  {
+   "run": "E0/E0_ep1800_r2",
+   "success": true,
+   "contact_mid_z_mm": 1.943007004549191,
+   "hold_min_open": 0.713086687002117,
+   "open_settle": 0.6990587804503801,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E0/E0_ep1807_r1",
+   "success": true,
+   "contact_mid_z_mm": -7.124436914698662,
+   "hold_min_open": 0.7141359598318764,
+   "open_settle": 0.714041717343064,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E0/E0_ep1807_r2",
+   "success": true,
+   "contact_mid_z_mm": -6.997807655413135,
+   "hold_min_open": 0.7147399729755773,
+   "open_settle": 0.7147906575922394,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E0/E0_ep1808_r1",
+   "success": false,
+   "contact_mid_z_mm": 10.194161987229776,
+   "hold_min_open": 0.44727225490265826,
+   "open_settle": 0.5850208537812557,
+   "contact_lost_t": 146
+  },
+  {
+   "run": "E0/E0_ep1808_r2",
+   "success": true,
+   "contact_mid_z_mm": 2.158328121619979,
+   "hold_min_open": 0.7153223287933668,
+   "open_settle": 0.8995073606373221,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E0_rec/E0_ep1800_r1",
+   "success": false,
+   "contact_mid_z_mm": 2.934151521347128,
+   "hold_min_open": 0.7321951270122359,
+   "open_settle": 0.7327655733286519,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E0_rec/E0_ep1800_r2",
+   "success": true,
+   "contact_mid_z_mm": 1.047105756176614,
+   "hold_min_open": 0.7210130853120424,
+   "open_settle": 0.6988052726804341,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E0_rec/E0_ep1807_r1",
+   "success": true,
+   "contact_mid_z_mm": -6.94662284096037,
+   "hold_min_open": 0.7141232122976776,
+   "open_settle": 0.715215805679376,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E0_rec/E0_ep1807_r2",
+   "success": true,
+   "contact_mid_z_mm": -6.984132265364318,
+   "hold_min_open": 0.716266688393929,
+   "open_settle": 0.7131328172621917,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E0_rec/E0_ep1808_r1",
+   "success": false,
+   "contact_mid_z_mm": 5.674977884934873,
+   "hold_min_open": 0.5410539219832422,
+   "open_settle": 0.6149249073066396,
+   "contact_lost_t": 157
+  },
+  {
+   "run": "E0_rec/E0_ep1808_r2",
+   "success": false,
+   "contact_mid_z_mm": 4.873262911129328,
+   "hold_min_open": 0.4360674200723956,
+   "open_settle": 0.6959909932354501,
+   "contact_lost_t": 159
+  },
+  {
+   "run": "E1/E1_ep1800_r1",
+   "success": false,
+   "contact_mid_z_mm": 5.764814957234909,
+   "hold_min_open": 0.5644369256921887,
+   "open_settle": 0.7201143256226274,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E1/E1_ep1800_r2",
+   "success": true,
+   "contact_mid_z_mm": 2.39005786285329,
+   "hold_min_open": 0.7280300477809339,
+   "open_settle": 0.7293526035800165,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E1/E1_ep1807_r1",
+   "success": true,
+   "contact_mid_z_mm": 0.030018824583311066,
+   "hold_min_open": 0.7147579291351032,
+   "open_settle": 0.7153856659615689,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E1/E1_ep1807_r2",
+   "success": true,
+   "contact_mid_z_mm": -6.705317063706362,
+   "hold_min_open": 0.7153125788325005,
+   "open_settle": 0.7172007779094376,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E1/E1_ep1808_r1",
+   "success": false,
+   "contact_mid_z_mm": 21.139084002261388,
+   "hold_min_open": 0.3241387546591845,
+   "open_settle": 0.332492973875647,
+   "contact_lost_t": 121
+  },
+  {
+   "run": "E1/E1_ep1808_r2",
+   "success": false,
+   "contact_mid_z_mm": 1.2352374360209417,
+   "hold_min_open": 0.7165716592143974,
+   "open_settle": 0.7092173703507485,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E1_rec/E1_ep1800_r1",
+   "success": true,
+   "contact_mid_z_mm": 4.379024586307678,
+   "hold_min_open": 0.7263720573420006,
+   "open_settle": 0.7269363239309863,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E1_rec/E1_ep1800_r2",
+   "success": false,
+   "contact_mid_z_mm": 3.5604048022365165,
+   "hold_min_open": 0.5810286507106278,
+   "open_settle": 0.6999771238138456,
+   "contact_lost_t": 209
+  },
+  {
+   "run": "E1_rec/E1_ep1807_r1",
+   "success": true,
+   "contact_mid_z_mm": -6.908010348557925,
+   "hold_min_open": 0.714200684175483,
+   "open_settle": 0.7140802461149002,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E1_rec/E1_ep1807_r2",
+   "success": true,
+   "contact_mid_z_mm": -0.2469202243138291,
+   "hold_min_open": 0.7182382280456632,
+   "open_settle": 0.7150611264586305,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E1_rec/E1_ep1808_r1",
+   "success": false,
+   "contact_mid_z_mm": 11.785589748242842,
+   "hold_min_open": 0.5379550711373685,
+   "open_settle": 0.644125832380949,
+   "contact_lost_t": 154
+  },
+  {
+   "run": "E1_rec/E1_ep1808_r2",
+   "success": false,
+   "contact_mid_z_mm": 0.9431429703118388,
+   "hold_min_open": 0.6868658663855192,
+   "open_settle": 0.699782589153173,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E2_rec/E2_ep1800_r1",
+   "success": true,
+   "contact_mid_z_mm": -0.3558162781001073,
+   "hold_min_open": 0.7266358591707156,
+   "open_settle": 0.7271135607141573,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E2_rec/E2_ep1800_r2",
+   "success": true,
+   "contact_mid_z_mm": -0.7281289505880473,
+   "hold_min_open": 0.7230310238918707,
+   "open_settle": 0.7233406236122647,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E2_rec/E2_ep1807_r1",
+   "success": true,
+   "contact_mid_z_mm": -6.974778329086551,
+   "hold_min_open": 0.7143082692460057,
+   "open_settle": 0.7143929226982351,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E2_rec/E2_ep1807_r2",
+   "success": true,
+   "contact_mid_z_mm": -7.00195795241465,
+   "hold_min_open": 0.7142366648562531,
+   "open_settle": 0.715399155372268,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E2_rec/E2_ep1808_r1",
+   "success": true,
+   "contact_mid_z_mm": -0.0183767855392869,
+   "hold_min_open": 0.7245308512331615,
+   "open_settle": 0.724513709283552,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E2_rec/E2_ep1808_r2",
+   "success": true,
+   "contact_mid_z_mm": -6.756718911124171,
+   "hold_min_open": 0.7126131802906928,
+   "open_settle": 0.7081194898318564,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E3a_rec/E3a_ep1800_r1",
+   "success": false,
+   "contact_mid_z_mm": 6.39091669964309,
+   "hold_min_open": 0.4077357625252761,
+   "open_settle": 0.6770364887024165,
+   "contact_lost_t": 148
+  },
+  {
+   "run": "E3a_rec/E3a_ep1800_r2",
+   "success": true,
+   "contact_mid_z_mm": -0.5678192718892028,
+   "hold_min_open": 0.7151037653464216,
+   "open_settle": 0.715635393616139,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E3a_rec/E3a_ep1807_r1",
+   "success": true,
+   "contact_mid_z_mm": -0.2076389118927935,
+   "hold_min_open": 0.7140083361555756,
+   "open_settle": 0.714800907655857,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E3a_rec/E3a_ep1807_r2",
+   "success": true,
+   "contact_mid_z_mm": -6.999182453081398,
+   "hold_min_open": 0.7123554839246787,
+   "open_settle": 0.7123663981955226,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E3a_rec/E3a_ep1808_r1",
+   "success": true,
+   "contact_mid_z_mm": 9.129041216213164,
+   "hold_min_open": 0.4425545715805598,
+   "open_settle": 0.6794682424536551,
+   "contact_lost_t": 131
+  },
+  {
+   "run": "E3a_rec/E3a_ep1808_r2",
+   "success": true,
+   "contact_mid_z_mm": 3.7457106626505032,
+   "hold_min_open": 0.44884798268189174,
+   "open_settle": 0.6933298926184029,
+   "contact_lost_t": 119
+  },
+  {
+   "run": "E3b_rec/E3b_ep1800_r1",
+   "success": false,
+   "contact_mid_z_mm": 8.706871219333223,
+   "hold_min_open": 0.4693590996801602,
+   "open_settle": 0.697848705623122,
+   "contact_lost_t": 152
+  },
+  {
+   "run": "E3b_rec/E3b_ep1800_r2",
+   "success": true,
+   "contact_mid_z_mm": -0.6485534811319082,
+   "hold_min_open": 0.7180645929494291,
+   "open_settle": 0.7185200317026463,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E3b_rec/E3b_ep1807_r1",
+   "success": true,
+   "contact_mid_z_mm": -1.5254393666152,
+   "hold_min_open": 0.7140248532047639,
+   "open_settle": 0.7126234947811636,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E3b_rec/E3b_ep1807_r2",
+   "success": true,
+   "contact_mid_z_mm": -7.144325096216209,
+   "hold_min_open": 0.7139154587216398,
+   "open_settle": 0.7137451948154211,
+   "contact_lost_t": null
+  },
+  {
+   "run": "E3b_rec/E3b_ep1808_r1",
+   "success": false,
+   "contact_mid_z_mm": 15.146907090549778,
+   "hold_min_open": 0.43369845265503604,
+   "open_settle": 0.5874234404501514,
+   "contact_lost_t": 124
+  },
+  {
+   "run": "E3b_rec/E3b_ep1808_r2",
+   "success": false,
+   "contact_mid_z_mm": 3.789414447873951,
+   "hold_min_open": 0.48507836281739736,
+   "open_settle": 0.6836006280844728,
+   "contact_lost_t": 120
+  }
+ ]
+}

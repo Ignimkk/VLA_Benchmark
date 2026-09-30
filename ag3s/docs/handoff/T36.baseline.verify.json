@@ -1,0 +1,656 @@
+{
+ "_comment": "ag3s-verifier T36-baseline (2026-09-30): second regression baseline on the cuRobo ESDF path, run_16d_ep1800, 4 identical runs alone. numbers and paths only, no interpretation.",
+ "step": "T36-baseline",
+ "date": "2026-09-30",
+ "runs": [
+  {
+   "id": "legacy_shim",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work <scratchpad>/venv-ag3s-local/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/T36/legacy/legacy_shim.json",
+   "venv": "scratchpad venv-ag3s-local shim (cpython 3.11.16 + .venv-ag3s site-packages); .venv-ag3s/bin/python timed out (timeout 20 s, rc 124) 2026-09-30",
+   "raw_output": "outputs/verify/T36/legacy/legacy_shim.json",
+   "stdout_log": "outputs/verify/T36/legacy/legacy_shim.log",
+   "env_check": "outputs/verify/T36/legacy/legacy_shim.pre.txt",
+   "alone": "no other python >5% CPU at start, GPU 0 MiB; another session's `.venv-openpi-live/bin/python -` process appeared ~8 s before the end (09:55:12-09:55:20)"
+  },
+  {
+   "id": "legacy_openpilive",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-openpi-live/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --out-json outputs/verify/T36/legacy/legacy_openpilive.json",
+   "venv": ".venv-openpi-live (interpreter control for the legacy-vs-cuRobo comparison)",
+   "raw_output": "outputs/verify/T36/legacy/legacy_openpilive.json",
+   "stdout_log": "outputs/verify/T36/legacy/legacy_openpilive.log",
+   "env_check": "outputs/verify/T36/legacy/legacy_openpilive.pre.txt",
+   "alone": "yes"
+  },
+  {
+   "id": "curobo_r1",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-openpi-live/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005 --out-json outputs/verify/T36/curobo/curobo_r1.json",
+   "venv": ".venv-openpi-live (same interpreter as serve_safe in T33/p/start_server_e3.sh; curobo not importable from .venv-ag3s shim)",
+   "raw_output": "outputs/verify/T36/curobo/curobo_r1.json",
+   "stdout_log": "outputs/verify/T36/curobo/curobo_r1.log",
+   "env_check": "outputs/verify/T36/curobo/curobo_r1.pre.txt",
+   "alone": "yes - no python >5% CPU and GPU 0 MiB at start and at end; started only after 3 consecutive idle checks (wait_idle.sh)"
+  },
+  {
+   "id": "curobo_r2",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-openpi-live/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005 --out-json outputs/verify/T36/curobo/curobo_r2.json",
+   "venv": ".venv-openpi-live (same interpreter as serve_safe in T33/p/start_server_e3.sh; curobo not importable from .venv-ag3s shim)",
+   "raw_output": "outputs/verify/T36/curobo/curobo_r2.json",
+   "stdout_log": "outputs/verify/T36/curobo/curobo_r2.log",
+   "env_check": "outputs/verify/T36/curobo/curobo_r2.pre.txt",
+   "alone": "yes - no python >5% CPU and GPU 0 MiB at start and at end; started only after 3 consecutive idle checks (wait_idle.sh)"
+  },
+  {
+   "id": "curobo_r3",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-openpi-live/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005 --out-json outputs/verify/T36/curobo/curobo_r3.json",
+   "venv": ".venv-openpi-live (same interpreter as serve_safe in T33/p/start_server_e3.sh; curobo not importable from .venv-ag3s shim)",
+   "raw_output": "outputs/verify/T36/curobo/curobo_r3.json",
+   "stdout_log": "outputs/verify/T36/curobo/curobo_r3.log",
+   "env_check": "outputs/verify/T36/curobo/curobo_r3.pre.txt",
+   "alone": "yes - no python >5% CPU and GPU 0 MiB at start and at end; started only after 3 consecutive idle checks (wait_idle.sh)"
+  },
+  {
+   "id": "curobo_r4",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-openpi-live/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005 --out-json outputs/verify/T36/curobo/curobo_r4.json",
+   "venv": ".venv-openpi-live (same interpreter as serve_safe in T33/p/start_server_e3.sh; curobo not importable from .venv-ag3s shim)",
+   "raw_output": "outputs/verify/T36/curobo/curobo_r4.json",
+   "stdout_log": "outputs/verify/T36/curobo/curobo_r4.log",
+   "env_check": "outputs/verify/T36/curobo/curobo_r4.pre.txt",
+   "alone": "yes - no python >5% CPU and GPU 0 MiB at start and at end; started only after 3 consecutive idle checks (wait_idle.sh)"
+  },
+  {
+   "id": "curobo_r0_overlap",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-openpi-live/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005 --out-json outputs/verify/T36/curobo/curobo_r0_overlap.json",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T36/curobo/curobo_r0_overlap.json",
+   "stdout_log": "outputs/verify/T36/curobo/curobo_r0_overlap.log",
+   "env_check": "outputs/verify/T36/curobo/curobo_r0_overlap.pre.txt",
+   "alone": "overlapped: another session's subtask_discover.py (.venv-openpi-live, GPU) started ~5 s after this run and ran through it",
+   "counted_in_4_runs": false
+  },
+  {
+   "id": "curobo_r0b_overlap",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-openpi-live/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005 --out-json outputs/verify/T36/curobo/curobo_r0b_overlap.json",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T36/curobo/curobo_r0b_overlap.json",
+   "stdout_log": "outputs/verify/T36/curobo/curobo_r0b_overlap.log",
+   "env_check": "outputs/verify/T36/curobo/curobo_r0b_overlap.pre.txt",
+   "alone": "overlapped: another session's subtask_episode.py (.venv-openpi-live, 17 GB GPU, ~150 % CPU) ran through the whole run",
+   "counted_in_4_runs": false
+  },
+  {
+   "id": "probe_fields_a/b",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-openpi-live/bin/python outputs/verify/T36/probe_fields.py outputs/verify/T36/probe/probe_{a,b}.json",
+   "venv": ".venv-openpi-live",
+   "raw_output": [
+    "outputs/verify/T36/probe/probe_a.json",
+    "outputs/verify/T36/probe/probe_b.json"
+   ],
+   "alone": "yes",
+   "what": "AG3S-only replay with the same cuRobo config; per-frame builder stats + sha1 of every tier's distance array and label grid; two separate processes"
+  },
+  {
+   "id": "scene_dump_legacy/curobo",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-openpi-live/bin/python outputs/verify/T36/scene_dump.py {legacy|curobo} outputs/verify/T36/scene/scene_{legacy|curobo}.npz",
+   "venv": ".venv-openpi-live",
+   "raw_output": [
+    "outputs/verify/T36/scene/scene_legacy.npz",
+    "outputs/verify/T36/scene/scene_curobo.npz"
+   ],
+   "stdout_log": [
+    "outputs/verify/T36/scene/scene_legacy.log",
+    "outputs/verify/T36/scene/scene_curobo.log"
+   ],
+   "alone": "yes",
+   "what": "worst ESDF row per frame (no SQP) + field slices for the scene figure"
+  }
+ ],
+ "flags": {
+  "used_curobo": [
+   "--esdf-backend curobo",
+   "--fine-voxel 0.005",
+   "--tsdf-voxel 0.005"
+  ],
+  "defaults_from_config_not_flags": {
+   "esdf.fine_truncation_m": 0.03,
+   "esdf.voxel_size (coarse)": 0.02,
+   "esdf.max_distance": 0.4,
+   "esdf.exclude_support_surfaces": false,
+   "esdf.attached_sign_threshold_voxels": 1.5,
+   "esdf.fine_window_placement": "hand_swept",
+   "constraint.target_field_policy": "relax"
+  },
+  "server_flags_matching": [
+   "--esdf-backend curobo",
+   "--voxel 0.020",
+   "--fine-voxel 0.005",
+   "--tsdf-voxel 0.005"
+  ],
+  "server_flags_without_esdf_rollout_equivalent_(not_applied)": {
+   "--links": "gripper (rollout: --constraint-links arms, choices arms|all)",
+   "--target-field-policy": "exclude-authorized (rollout: no flag -> relax)",
+   "--esdf-margin": "0 (rollout: 0.05, kept = skill command)",
+   "--no-self-collision": "(no flag)",
+   "--capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32": "(no flag)"
+  },
+  "server_flag_source": "outputs/verify/T33/p/start_server_e3.sh"
+ },
+ "code_state": {
+  "repo": "benchmark",
+  "head": "ab920ea",
+  "work_head": "b74a492",
+  "dirty_py_files": [],
+  "code_md5_at_start": "outputs/verify/T36/code_md5_at_start.txt",
+  "code_md5_vs_T34_end": "outputs/verify/T36/code_md5_vs_T34_end.txt (empty = all files in T34 code_md5_at_end identical)",
+  "code_md5_end_vs_start": "outputs/verify/T36/code_md5_end_vs_start.txt (empty = unchanged during T36)"
+ },
+ "numbers": {
+  "_comment": "clearance values in mm, float64 as written by esdf_rollout. SQP-side values (status/iterations/clearance_after) are not baseline (sqp.time_budget_ms wall clock); listed only under sqp_side_for_reference.",
+  "legacy": {
+   "violated_start": "14/15",
+   "has_target": "15/15",
+   "frame0_clearance_before_mm": -29.031048280806342,
+   "violated_start_set": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
+   "clearance_before_mm": [
+    -29.031048280806342,
+    -25.459368335319574,
+    -9.242646574210797,
+    -0.5363804303415154,
+    -0.5152471840129957,
+    -0.6554878048135593,
+    0.14454196427604593,
+    -7.216120518425156,
+    -46.090465035965686,
+    -73.88725230223834,
+    -105.97849109174706,
+    -123.3170138151228,
+    -122.63332596933374,
+    -124.0329667235858,
+    -127.49956534763415
+   ],
+   "clearance_before_sha1": "fd943e3e7aa9fc6dd80f3582c67d2d87c0f6caa6",
+   "same_as_T34_T35diag": "per-frame clearance_before equal to outputs/verify/T34/base/base.json (15/15 frames)",
+   "interpreter_control_legacy_openpilive_equal": true
+  },
+  "curobo_4_runs": {
+   "r1": {
+    "violated_start": "10/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "violated_start_set": [
+     0,
+     1,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clearance_before_mm": [
+     -9.171877401271193,
+     -5.648570689139543,
+     9.852846656040997,
+     6.450196027978722,
+     19.553017889882284,
+     19.501786239009668,
+     16.686905812824588,
+     -4.039648023169362,
+     -37.37479033574455,
+     -65.55879375889504,
+     -100.1568691779972,
+     -123.23158677074396,
+     -126.17007996410706,
+     -125.69421446109195,
+     -124.97617978154466
+    ],
+    "clearance_before_sha1": "247da8a22076ebbabb466b95d70031d4e768be82"
+   },
+   "r2": {
+    "violated_start": "10/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "violated_start_set": [
+     0,
+     1,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clearance_before_mm": [
+     -9.171877401271193,
+     -5.648570689139543,
+     9.852846656040997,
+     6.450196027978722,
+     19.553017889882284,
+     19.501786239009668,
+     16.686905812824588,
+     -4.039648023169362,
+     -37.37479033574455,
+     -65.55879375889504,
+     -100.1568691779972,
+     -123.23158677074396,
+     -126.17007996410706,
+     -125.69421446109195,
+     -124.97617978154466
+    ],
+    "clearance_before_sha1": "247da8a22076ebbabb466b95d70031d4e768be82"
+   },
+   "r3": {
+    "violated_start": "10/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "violated_start_set": [
+     0,
+     1,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clearance_before_mm": [
+     -9.171877401271193,
+     -5.648570689139543,
+     9.852846656040997,
+     6.450196027978722,
+     19.553017889882284,
+     19.501786239009668,
+     16.686905812824588,
+     -4.039648023169362,
+     -37.37479033574455,
+     -65.55879375889504,
+     -100.1568691779972,
+     -123.23158677074396,
+     -126.17007996410706,
+     -125.69421446109195,
+     -124.97617978154466
+    ],
+    "clearance_before_sha1": "247da8a22076ebbabb466b95d70031d4e768be82"
+   },
+   "r4": {
+    "violated_start": "10/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "violated_start_set": [
+     0,
+     1,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clearance_before_mm": [
+     -9.171877401271193,
+     -5.648570689139543,
+     9.852846656040997,
+     6.450196027978722,
+     19.553017889882284,
+     19.501786239009668,
+     16.686905812824588,
+     -4.039648023169362,
+     -37.37479033574455,
+     -65.55879375889504,
+     -100.1568691779972,
+     -123.23158677074396,
+     -126.17007996410706,
+     -125.69421446109195,
+     -124.97617978154466
+    ],
+    "clearance_before_sha1": "247da8a22076ebbabb466b95d70031d4e768be82"
+   }
+  },
+  "curobo_reproducibility": {
+   "judgment_numbers_bitwise_equal_4_of_4": true,
+   "per_frame_clearance_before_bitwise_equal_4_of_4": true,
+   "frames_differing": [],
+   "max_abs_diff_mm": 0.0,
+   "other_per_frame_keys_equal_across_r1_r4_and_2_overlap_runs": [
+    "n_candidates",
+    "target",
+    "esdf_unknown",
+    "esdf_observed_frustum",
+    "esdf_backend",
+    "esdf_occupied",
+    "target_voxels_carved",
+    "clearance_before_mm",
+    "clearance_after_mm",
+    "arm_before_mm",
+    "arm_after_mm",
+    "status",
+    "safe",
+    "iterations",
+    "reference_deviation"
+   ],
+   "per_frame_keys_differing": [
+    "ag3s_ms",
+    "to_ms"
+   ],
+   "overlap_runs_judgment_equal_to_r1": true,
+   "field_level_probe": {
+    "processes": 2,
+    "frames": 15,
+    "tier_distance_sha1_equal_frames": 15,
+    "label_grid_sha1_equal": true,
+    "all_probe_rows_equal": true,
+    "n_occupied_equal_to_rollout": true
+   },
+   "nondeterminism_search": "not needed - no differing frame in 4 alone runs + 2 overlapped runs + 2 field-level probes"
+  },
+  "curobo_esdf_occupied_per_frame": [
+   1715,
+   1722,
+   1756,
+   1825,
+   1913,
+   1987,
+   1989,
+   2001,
+   2008,
+   2020,
+   2041,
+   2061,
+   2083,
+   2078,
+   2067
+  ],
+  "legacy_vs_curobo": {
+   "frames": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
+   "legacy_clearance_before_mm": [
+    -29.031048280806342,
+    -25.459368335319574,
+    -9.242646574210797,
+    -0.5363804303415154,
+    -0.5152471840129957,
+    -0.6554878048135593,
+    0.14454196427604593,
+    -7.216120518425156,
+    -46.090465035965686,
+    -73.88725230223834,
+    -105.97849109174706,
+    -123.3170138151228,
+    -122.63332596933374,
+    -124.0329667235858,
+    -127.49956534763415
+   ],
+   "curobo_clearance_before_mm": [
+    -9.171877401271193,
+    -5.648570689139543,
+    9.852846656040997,
+    6.450196027978722,
+    19.553017889882284,
+    19.501786239009668,
+    16.686905812824588,
+    -4.039648023169362,
+    -37.37479033574455,
+    -65.55879375889504,
+    -100.1568691779972,
+    -123.23158677074396,
+    -126.17007996410706,
+    -125.69421446109195,
+    -124.97617978154466
+   ],
+   "curobo_minus_legacy_mm": [
+    19.85917087953515,
+    19.81079764618003,
+    19.095493230251794,
+    6.986576458320237,
+    20.06826507389528,
+    20.15727404382323,
+    16.54236384854854,
+    3.176472495255794,
+    8.715674700221136,
+    8.328458543343302,
+    5.8216219137498655,
+    0.08542704437884652,
+    -3.5367539947733206,
+    -1.6612477375061445,
+    2.5233855660894875
+   ],
+   "legacy_violated_start_set": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
+   "curobo_violated_start_set": [
+    0,
+    1,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
+   "violated_only_legacy": [
+    2,
+    3,
+    4,
+    5
+   ],
+   "violated_only_curobo": [],
+   "curobo_answer_tier_at_worst_centre": [
+    "coarse",
+    "coarse",
+    "coarse",
+    "fine",
+    "coarse",
+    "coarse",
+    "fine",
+    "fine",
+    "fine",
+    "fine",
+    "fine",
+    "fine",
+    "fine",
+    "coarse",
+    "fine"
+   ],
+   "worst_link_frame0": {
+    "legacy": "link_left_arm_5 step 2",
+    "curobo": "link_left_arm_5 step 2"
+   },
+   "worst_link_frame4": {
+    "legacy": "link_right_arm_5 step 1",
+    "curobo": "link_right_arm_5 step 1"
+   },
+   "worst_sphere_radius_m": 0.0813
+  },
+  "curobo_path_coverage_in_this_rollout": {
+   "tsdf_truncation": {
+    "coarse_m": 0.06,
+    "fine_m": 0.03,
+    "fine_requested_m": 0.03,
+    "separate_fine_tsdf": true
+   },
+   "separate_fine_tsdf_frames": "15/15",
+   "held_free_n_points_per_frame": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "target_free_n_layers_per_frame": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "target_free_mode": "none (15/15)",
+   "n_attached_points_per_frame": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "fine_window": {
+    "placement": "hand_swept",
+    "basis": "manipulated",
+    "hand_source": "none",
+    "links": [],
+    "manipulated_covered": true,
+    "frames": "15/15"
+   }
+  },
+  "sqp_side_for_reference": {
+   "legacy_status": {
+    "feasible": 15
+   },
+   "curobo_status_r1_r4": {
+    "feasible": 14,
+    "violated": 1
+   },
+   "curobo_violated_end_frame": [
+    12
+   ],
+   "curobo_iterations_r1": [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+   ]
+  }
+ },
+ "raw": {
+  "summary": "outputs/verify/T36/summary.json",
+  "scripts": [
+   "outputs/verify/T36/run_one.sh",
+   "outputs/verify/T36/wait_idle.sh",
+   "outputs/verify/T36/run_series.sh",
+   "outputs/verify/T36/analyze.py",
+   "outputs/verify/T36/probe_fields.py",
+   "outputs/verify/T36/scene_dump.py",
+   "outputs/verify/T36/figs.py"
+  ]
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t36/t36-scene.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t36/t36-scene.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t36/t36-trend.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t36/t36-trend.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t36/t36-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t36/t36-table.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "legacy 14/15 · 15/15 · -29.031048280806342 mm = task expectation and T34/T35diag"
+ },
+ "verdict": "legacy 기준선 일치 (14/15 · 15/15 · -29.031048280806342 mm). cuRobo 4 회 판정 숫자 bitwise 동일 (10/15 · 15/15 · -9.171877401271193 mm), 15 프레임 clearance_before 전부 bitwise 동일.",
+ "not_measured": [
+  "server-only settings with no esdf_rollout flag (links gripper, target-field-policy exclude-authorized, esdf-margin 0, no-self-collision, sphere options)",
+  "held-trace freeing, target-free layer, attached-object path: 0 points / 0 layers / 0 attached in all 15 frames of this rollout",
+  "fine window hand_swept with hand input (hand_source none in 15/15 frames)",
+  "R2 long record (attention_16d_long.npz) reproducibility - not rerun"
+ ],
+ "updated_at": "2026-09-30T10:34:58"
+}
