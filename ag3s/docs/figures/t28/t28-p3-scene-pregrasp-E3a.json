@@ -1,0 +1,119 @@
+{
+ "condition": "E3a",
+ "run": "E3a_ep1800_r1",
+ "seq": 18,
+ "t": 136,
+ "server_chunk": "server_8204/server_constraints/run_0000/chunk_00092.npz",
+ "finger_joints": {
+  "source": "state[7],state[15]",
+  "opening_norm": {
+   "left": 1.0064590129269444,
+   "right": 0.9999888941500857
+  },
+  "joints": {
+   "gripper_finger_l1": -0.0452906555817125,
+   "gripper_finger_l2": 0.0452906555817125,
+   "gripper_finger_r1": -0.04499950023675386,
+   "gripper_finger_r2": 0.04499950023675386
+  },
+  "set_by_caller": true,
+  "applied": {
+   "self_filter": {
+    "gripper_finger_l1": -0.0452906555817125,
+    "gripper_finger_l2": 0.0452906555817125,
+    "gripper_finger_r1": -0.04499950023675386,
+    "gripper_finger_r2": 0.04499950023675386
+   },
+   "constraint": {
+    "gripper_finger_l1": -0.0452906555817125,
+    "gripper_finger_l2": 0.0452906555817125,
+    "gripper_finger_r1": -0.04499950023675386,
+    "gripper_finger_r2": 0.04499950023675386
+   }
+  }
+ },
+ "manipulated": {
+  "id": 0,
+  "state": "visible",
+  "age_frames": 0,
+  "centroid": [
+   0.5230652195755509,
+   0.3184213788060715,
+   0.8567240309886209
+  ],
+  "radius": 0.07724670180887999,
+  "n_points": 97,
+  "last_seen_frame": 17,
+  "switched_from": null,
+  "frame": 17,
+  "admissibility": {
+   "admissible": true,
+   "reason": "admissible",
+   "graspable": true,
+   "narrowest_extent_mm": 31.36,
+   "extents_mm": [
+    31.4,
+    50.2,
+    138.6
+   ],
+   "max_opening_mm": 71.46,
+   "destination_overlap": 0.0,
+   "overlaps_destination": false,
+   "destination_id": null
+  }
+ },
+ "exclusion": {
+  "active": true,
+  "source": "manipulated",
+  "mechanism": [
+   "target_free_layer",
+   "contact_margin"
+  ],
+  "authorized_links": [
+   "ee_finger_l1",
+   "ee_finger_l2",
+   "ee_left"
+  ],
+  "manipulated_id": 0,
+  "manipulated_state": "visible",
+  "attached_label": null,
+  "grasp_active": false
+ },
+ "ball": null,
+ "worst_row": {
+  "link": "ee_finger_l1",
+  "tier": "target_free",
+  "obstacle": null,
+  "clearance_m": 0.003014244094628825
+ },
+ "worst_nearest_body": "apple",
+ "worst_inside_apple": false,
+ "gate": {
+  "mode": "off",
+  "action": "execute",
+  "source": "server",
+  "server_safe": true,
+  "would_hold": false,
+  "kinds": [
+   "budget_only"
+  ],
+  "would_hold_kinds": [],
+  "hold_kinds": []
+ },
+ "latch": {
+  "state": "latched",
+  "attach": false,
+  "detach": false,
+  "rejected": null,
+  "note": ""
+ },
+ "apple_centre_world": [
+  0.4570983196226619,
+  0.3264971729272963,
+  0.8499371005637721
+ ],
+ "n_target_points": 97,
+ "n_cloud_points_within_0.15m_of_apple_drawn": 788,
+ "mp4": "/mnt/dev/work/outputs/verify/T28/E3a_rec/E3a_ep1800_r1/third_person_front.mp4",
+ "mp4_frame": 135
+}

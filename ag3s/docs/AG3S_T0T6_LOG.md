@@ -118,7 +118,7 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **`placed_ground_truth`** | MuJoCo 시뮬레이터의 참값(물체·바구니 실좌표)으로만 판정한 "놓였다" — crate 로컬 좌표계의 벽 안쪽 + rim 아래. AG3S/production 이 쓰는 ESDF 라벨층 기반 `placed_fn` 과는 다른, 대조용 참값이다 (T2) |
 | **frame card** | 한 프레임의 결과를 시각화한 카드. 원 사진·지각 출력·충돌 체크를 한 그림에 나란히 띄운다. 전체 동작 시퀀스를 여러 카드로 만들어 한눈에 본다 |
 | **leakage** | self-filter 에서 로봇 마스크가 완전하지 못해 빠져나가는 로봇 픽셀. 단위 px (픽셀). 구 근사와 실제 메시 사이의 간격에서 나온다 |
-| **self_filter_inflation** | self-filter 마스크의 마진. 미터 단위로 로봇 구 바깥쪽으로 더 확대해 마스킹하는 거리. 현재 **0.05 m(50 mm)** — cuRobo 기본값과 같다 (2026-09-25 에 0.02 m 에서 올렸다, T1) |
+| **self_filter_inflation** | self-filter 마스크의 마진. 미터 단위로 로봇 구 바깥쪽으로 더 확대해 마스킹하는 거리. ~~현재 **0.05 m(50 mm)** — cuRobo 기본값과 같다 (2026-09-25 에 0.02 m 에서 올렸다, T1)~~ → **T26(2026-09-29)에서 기본값을 0.0 으로 내렸다** (사용자 판정 2026-09-28: 구 반지름 자체). 로봇 누수는 inflation 이 아니라 구 모델 덮개로 막는다 (T29 · T30b, 아래 T26–T34 절) |
 | **gap-filling capsule** | 로봇 구 모델에 구가 아예 없는 링크(예: `EE_BODY_L/R`)를 self-filter 가 덮을 수 있도록 대신 만들어 끼워 넣는 캡슐. `UNCOVERED_LINKS` 목록에 있는 링크마다 MJCF 메시 정점에서 치수를 뽑아(`bounding_capsules`) 만든다. 이름이 목록에 없으면 `gap_filling_capsules` 가 `except KeyError: continue` 로 조용히 캡슐 0 개를 낸다 (T1) |
 | **`MJCF_BODY_ALIASES`** | 캡슐 치수를 **재는 이름**(MJCF, 예: `EE_BODY_L`)과 로봇 모델에 **붙이는 이름**(URDF, 예: `ee_left`)이 다를 때 그 둘을 잇는 번역표. 같은 부품을 두 파일이 다르게 부르는 데서 생기는 함정을 막는다 (`mujoco_source.py:450-453`, T1) |
 | **attention** | VLA 정책이 "어디를 보고 있는가" 를 나타내는 이미지 위의 열지도 |
@@ -216,6 +216,30 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **`manipulated_link_margin`** | target 에 접촉 권한이 있는 link 에만 margin 을 완화하는 벡터. `is_authorized` 가 문자열 그대로 일치하는 link 이름만 골라 phase(`approach`/`pre_grasp`/`grasp`)별로 다른 margin 을 준다. `T6d` 에서 `arms` 제약 model 120 구 중 22 구가 실제로 완화를 받는 것으로 확인됐다 — AG3S 가 cuRobo 에 넘기는 이 경계는 결백하다 |
 | **`capsule_radius_scale`** | `UrdfSphereChain` 이 로봇 구를 만들 때 URDF capsule 반지름에 곱하는 배율(`T6f`, `--capsule-radius-scale`). 기본 1.0 — 줄이면 팔의 실제 두께에 가까워지지만 덮개(coverage)를 잃을 수 있어 생성 시점에 `coverage_report()` 가 경고를 찍는다 |
 
+### 폐루프 사다리와 E3 원인 추적 (T26–T34, 2026-09-30 추가)
+
+| 용어 | 뜻 |
+|---|---|
+| **사다리 (ladder) E0–E3b** | 정책 위에 한 번에 하나씩 얹어 어디서 깨지는지 보는 폐루프 실험. E0 = VLA 단독, E1 = +TO(추적만, limit·평활 없음), E2 = +목적함수·limit, E3a = +ESDF 충돌 제약 (게이트 off), E3b = 같음 (게이트 on, 단독 실행) (T28) |
+| **gate off (`--safe-gate off`)** | client 가 서버 판정과 무관하게 refined chunk 를 실행하고 판정은 `would_hold` 로 기록만 한다. HOLD 는 chunk 가 도착하지 않은 경우(comms)뿐 (T27) |
+| **`no_perception` (`--no-perception`)** | 서버가 AG3S·depth·ESDF·grasp latch 없이 π0.5 → TO 만 돌리는 모드. E1·E2 를 위한 것 (T27) |
+| **admissibility** | 조작 대상(manipulated) 후보 cluster 가 "잡을 수 있는 것"인가를 가르는 자격 검사. (1) 가장 좁은 PCA 주축 extent ≤ gripper 최대 개도(로봇 모델에서 계산, RB-Y1 71.46 mm) (2) 등록된 destination 과 겹치지 않음. 통과하지 못하면 target/exclusion 기하가 될 수 없다. 관문 `_exclusion_gate` 가 어기면 `invariant_violation` 을 기록한다 (T26) |
+| **destination (registry)** | crate 처럼 graspable 이 아닌 cluster 가 attention 1 등을 3 프레임 연속 지키면 목적지로 등록되는 것 (`DestinationRegistry`). 어떤 거리장에서도 빠지지 않는다 (T26) |
+| **target-free layer** | 조작 대상(사과) 주변 **exclusion ball** 안의 seed 를 뺀 채 따로 만든 ESDF 층. 접촉 권한이 있는 gripper 행이 이 층에 묻는다. 값과 QP 방향(gradient)을 **같은 층**에서 받아야 한다 (F1b) |
+| **exclusion ball** | 조작 대상의 중심 + 반지름 공. 이 안의 표면 복셀을 target-free layer 의 seed 에서 뺀다 (`_target_ball`). 사과 전체가 공 안에 있어야 손가락이 사과에 대해 자유롭고, 이웃 과일 중심은 공 밖이어야 이웃이 장애물로 남는다 |
+| **anchor** | 파지 전에 admissible 로 채택한 조작 대상 기하를 고정해 둔 것. 관측이 anchor 점의 90 % 이상을 덮을 때만 갱신하고, 그보다 적게 덮으면 `subset_kept_anchor` 로 anchor 를 유지한다 (F3, T30b) |
+| **attention split** | 병합 cluster 를 15 mm 로 다시 연결해 둘 이상으로 갈라지고 attention 평균비가 2 이상이면 attention 질량이 큰 쪽만 target 후보로, 나머지는 장애물로 남기는 것. 파지 중에는 가르지 않는다 (T31b) |
+| **held sphere** | 쥔 사과를 관측 점에 맞춘 **표면 구**(+튀어나온 부분을 덮는 작은 구)로 표현해 손바닥(`ee_left`) frame 에 붙인 것. 질의 구 = fit + 5 mm, self-filter 복사본 = fit + 25 mm. 옛 표현(반지름 0 인 점 25–33 개)을 대체한다 (T32a H2) |
+| **support lift (J1)** | attach 순간 held sphere 를 반지름은 그대로 두고 중심을 받침면 법선 방향으로 올려, 구 바닥이 테이블 평면 + ESDF 표면 띠(약 9 mm) 위에 오게 하는 것 (T34) |
+| **`attach_revoked`** | attach 뒤 실행된 chunk 4 개 안에서 쥐고 있는지 다시 봐서, 개도(`opening_dropped` · `not_blocked`)·관측(`observed_elsewhere`)·들기(`not_following`) 중 하나라도 어긋나면 attach 를 취소하고 detach 하여 latch 를 LATCHED 로 되돌리는 것. 다시 attach 할 수 있다 (J2, T34) |
+| **TSDF truncation** | TSDF 가 표면 양쪽으로 채우는 띠의 두께(이 밖은 잘라 채우지 않는다). 기본은 `3 × voxel_size` = coarse 20 mm 기준 **60 mm** 라서 16 mm 벽이 fine layer 에서도 55.5 mm 로 두꺼워졌다. `esdf.fine_truncation_m` = 0.030 m 로 fine 만 분리 (H4, T32) |
+| **trust radius** | SQP 한 반복에서 iterate 가 움직일 수 있는 한도 (여기서 0.15 rad ≈ 8.6°). 반복이 1 회뿐이면 매 chunk 그 끝까지 간다 (T31-diag) |
+| **`min_iterations`** | 벽시계 예산과 무관하게 SQP 가 최소로 도는 반복 수 (`sqp.min_iterations`, 기본 3) (T31a G2-i) |
+| **limit projection** | 받아들여진 후보가 없고 초기 iterate 가 limit 만 어겼을 때, 거절된 QP 후보 대신 reference 를 position box ∩ 첫 스텝 anchor 로 원소별 clip 해서 돌려주는 것. `returned = projection` (T31a G2-ii) |
+| **`best_unaccepted`** | SQP 가 받아들이지 않은 후보 중 merit 이 가장 좋은 것. 옛 코드는 받아들여진 후보가 없으면 이것을 돌려줬고 초기 iterate 보다 나쁠 수 있다 (T24) |
+| **`sim_frozen` stamp** | 시뮬레이션이 관측을 만드는 동안 멈춰 있음을 이용해 한 관측의 세 카메라·robot state·extrinsics 에 촬영 시각을 하나만 찍는 모드. 카메라별 렌더 끝 시각은 진단 key `ag3s/render_stamp/<cam>` 으로만 남는다. 실기에서는 카메라 driver 시각을 써야 하므로 서버 신선도 검사는 그대로 (F2, T30c) |
+| **부호 반전/s · jerk RMS (oscillation metrics)** | 실행된 왼팔 관절 궤적의 요동 지표. 부호 반전/s = 관절 속도(deadband 0.02 rad/s)의 부호가 바뀐 횟수를 창 길이로 나눈 7 관절 합, jerk RMS = 3 차 차분(rad/s³)의 제곱평균제곱근 (T31-diag) |
+
 ---
 
 > **갈림길에서 안 고른 선택지** — 맨 아래 **"선택한 것과 안 고른 것 — 되돌아올 지점"** 절.
@@ -244,6 +268,11 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **T5** shadow 루프 | 판정만 하고 실행은 안 하는 루프가 서나 | **통과**(`T5f`, 사용자 판정 2026-09-26) — 75 chunk 전부 돌고 target 이 한 번도 엉뚱하게 잡히지 않았고 `violated` 7 건이 진짜 충돌이 아니다. **단 핵심 조건인 refined 대 reference clearance 비교는 미측정**(기록에 `actions` 배열이 없다). 회귀 기준선 `has_target` 9/15 → 15/15 갱신 |
 | **T6** 실기 닫힌 루프 | 예산 안에서 실제로 도나 | ~~실행 완료(execute, closed loop, `ep1807`), 집계는 `T6b` 로 측정 중, 기록기 수정은 `T6a` 로 진행 중(담당 A1)~~ → **과제 구간(seq 1-37) collision 위반 0 · closed loop 에서 잡기 실패 · 원인 미확정, `T7` 로 이어짐**(2026-09-26). `T6d` 가 AG3S→cuRobo·cuRobo·TO 세 단계를 전부 결백으로 확인했고(`manipulated_link_margin` 22/120 구 완화 · `unknown_policy=free` 220/225 프레임 100 mm 안 무장애물 · refined 가 reference 보다 나빠진 chunk 0/75), 로컬 GPU 렌더링 재현 여섯 건 중 다섯이 closed-loop 에서 apple 0.0 mm 로 실패한다 |
 | — **실시간성** | 청크 예산 533 ms 안에 드나 | **별도 판정 실패** — P50 2519 ms, 24/24 청크가 4.7 배 |
+| **T26–T34** 닫힌 루프 사다리(E0→E3)와 E3 원인 추적 | VLA 위에 TO·ESDF 를 얹으면 어디서 왜 깨지나, 고치면 어디까지 회복되나 | **T34 검증 완료 · 커밋·N 확대 판정 대기**(2026-09-30 00:50). 사다리 E0 7/12 · E1 6/12 · E2 6/6 · **E3a 0/6 · E3b 0/6**(T28) → T30 2/6 · 2/6 → T33 2/6 · 3/6 → **T34 5/6 · 3/6**. 원인 13 개를 순서대로 고쳤다 — 아래 **"T26–T34"** 절. 남은 것: apple-top 잔상 · E3a ep1800 r2 `uncertified` 27 chunk(원인 미측정) · E3b 실패 3 건 · 실시간성. **(T7–T25 는 `handoff/` 에 있고 이 로그에는 아직 옮기지 않았다)** |
+| ↳ T28 사다리 | E0–E3 성공 격자 | E0 7/12 · E1 6/12 · E2 6/6 · E3a 0/6 · E3b 0/6 (2026-09-29) |
+| ↳ T30 | F1–F5 (E3 원인 5) | E3a 2/6 · E3b 2/6, 성공은 전부 ep1807 (2026-09-29 11:00) |
+| ↳ T31–T33 | limit 출처·SQP 예산·attention split·요동·crate 벽 | 요동 E2 수준으로 해소, E3a 2/6 · E3b 3/6 (2026-09-29 19:30) |
+| ↳ T34 | J1 쥔 구가 테이블을 뚫음 · J2 거짓 attach 회수 | E3a **5/6** · E3b 3/6, E3b HOLD 0 (2026-09-30 00:50) |
 
 ### 이 국면에서 쓰는 자산
 
@@ -270,7 +299,7 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | 결정 | 무엇 | 모델 |
 |---|---|---|
 | E1 — 조작 대상을 필드에서 파내지 않는다 | 파내면 손끝뿐 아니라 전신에게 사라진다. 대신 질의 쪽에서 구별 마진으로 봐준다 | 14D |
-| E3 · F19 — 쥔 물체는 **점 기반**으로 로봇에 편입한다 | 단일 primitive 로 근사하면 여유를 먹고 없는 충돌을 만든다 (중앙 13.2 mm 차이) | 14D |
+| ~~E3 · F19 — 쥔 물체는 **점 기반**으로 로봇에 편입한다~~ | ~~단일 primitive 로 근사하면 여유를 먹고 없는 충돌을 만든다 (중앙 13.2 mm 차이)~~ → **T32a H2 에서 대체**: 쥔 사과는 관측 점에 맞춘 표면 구(held sphere)로 손바닥 frame 에 붙는다 (구현자 자체 점검: 맞춘 중심 오차 1.4–3.5 mm). F19 의 원 측정은 그대로 옛 로그에 있다 | 14D |
 | A2 — 쥔 물체는 장애물 쪽에서 빠진다 | 양쪽에 동시에 있으면 자기 자신에게 부딪히고 그 행은 어떤 해로도 못 푼다 | 14D |
 | F17 — 조작 대상을 에피소드 상태로 잠근다 | grounding 은 무상태라 파지 순간 대상이 바뀔 수 있다 | 14D |
 | F18 — 목적지 전용 마진 20 mm | 전역 50 mm 가 담기를 구조적으로 막는다. 쥔 물체의 질의점에만 붙인다 | 14D |
@@ -279,7 +308,7 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | F16 — 블록-스파스에서 "모른다" 를 0 으로 읽지 않는다 | `unknown_fraction` 이 `None` 이면 검사 안 한 것으로 싣는다 | 16D 경로 |
 | I3 — 거리장에 출처 도장을 찍는다 (14 키) | 두 backend 가 같은 모양으로 찍고 응답에 실린다 | 16D 경로 |
 | I3 — `max_field_age_sec` 를 비워 둔다 | 근거 없는 판정을 기록에 남기지 않는다. T3 에서 정한다 | — |
-| 쥔 물체 — seed 제외 + **순수 복셀 부호 교정** | cuRobo 는 부호를 질의 복셀의 TSDF 에서 가져오므로 seed 만 지우면 더 나빠진다 | 14D |
+| ~~쥔 물체 — seed 제외 + **순수 복셀 부호 교정**~~ | ~~cuRobo 는 부호를 질의 복셀의 TSDF 에서 가져오므로 seed 만 지우면 더 나빠진다~~ → **T32a 에서 cuRobo 경로의 seed 제외를 은퇴**시켰다: 쥔 물체 pixel 은 self-filter 구 집합(H1)으로 TSDF 에 안 들어가고, 이미 적분된 흔적은 TSDF free 갱신(H3)으로 지운다 (구현자 자체 점검; 검증은 T33 오프라인) | 14D |
 | T0 — legacy 생성 0 을 **불변식**으로 | 출처 도장은 *쓰인* 필드만 말한다 | 16D |
 | ~~아키텍처 — T1~T4 는 서버 쪽 AG3S 유지, T5·T6 에서 AG3S 를 클라이언트 in-process 로 옮긴다~~ | ~~T0~T4 가 프레임별 IPC 기록을 요구하고, 한 프로세스 안에서는 IPC 가 없어진다~~ | **철회 — 사용자 판정 2026-09-25 (T5 절 참고).** AG3S·cuRobo·TO 는 **서버에 둔다.** 로컬은 `--safe-remote` 로 관측·프롬프트만 보내고 action 을 받는다. 근거는 IPC 가 왕복 2725 ms 중 약 206 ms(7.6 %)뿐이라 옮겨도 청크 예산 533 ms 를 못 맞추고, 지배 항은 AG3S 지각 1943 ms(서버 시간의 77 %)라는 T0 실시간성 절의 수치다 |
 
@@ -2664,3 +2693,513 @@ refined **+25.61 mm** 로 개선된다(`gt_clearance_apple_excluded_exec8`). **T
 측정되지 않았다** — `T7` 로 넘어간다.
 
 ---
+
+---
+
+## T26–T34 — 닫힌 루프 사다리(E0→E3)와 E3 실패 원인 추적 (2026-09-28 ~ 2026-09-30)
+
+**이 절이 답하는 물음.** 정책(VLA)만 돌리면 사과를 집는데, 그 위에 trajectory optimization(TO)과 ESDF 충돌 회피를 얹으면 왜 못 집는가? 그리고 그 원인을 하나씩 고치면 어디까지 회복되는가?
+
+**읽는 법과 출처 규약.**
+
+- 이 절의 수치는 전부 `handoff/` 의 `T28.verify.partial.json` · `T30.verify.json` · `T31.diag.verify.json` · `T32.h4.verify.json` · `T33.verify.json` · `T34.verify.json` 에서 왔다. 출처가 impl.md 뿐인 값은 **"구현자 자체 점검(impl.md)"** 이라고 그 자리에서 밝혔다. verify.json 에 없는 값은 **미측정**이라고 썼다.
+- 결정 시각(사용자 판정·착수·종료)은 `handoff/SESSION_STATE.md` §5 갱신 이력의 표기 그대로이고, 실행 시각은 각 verify.json 의 서버 시각(UTC)이다. 두 표기가 몇십 분 어긋나는 곳이 있으나 맞추지 않았다.
+- 이 로그의 앞선 절은 T6 에서 끝난다. **T7–T25 는 `handoff/` 에 있고 이 로그에 아직 옮기지 않았다.** 이 절이 쓰는 T18–T24 의 결과는 아래 "전제"에 한 줄씩만 적었다.
+- 실험 기록의 다른 이름: `E3a`(ESDF 켬 + 게이트 off) · `E3b`(ESDF 켬 + 게이트 on) 는 아래 §1 에서 정의한다.
+
+### 전제 — T18–T24 가 끝난 자리 (2026-09-28)
+
+| STEP | 한 줄 | 출처 |
+|---|---|---|
+| T14 audit | 실패 사슬: self-filter 가 사과 관측을 지움 → grounding 이 다른 물체를 target 으로 → 접촉 허용·fine/target-free 창이 그 물체를 따라감 → 사과가 손가락에게 다시 장애물 → `violated`/미인증 → 실행 게이트 HOLD → 닫힘 명령 미실행 | `AG3S_GRASP_FIX_PLAN.md` §0 |
+| T19–T23 | self-filter 가 조작 대상을 보존하는 guard · manipulated 정체(영속 ID) · fine/target-free 창을 실행 경로에 · 파지 확인 기반 attach · HOLD 사유 분리 (구현·검증 완료) | 계획 §5 |
+| T24 | TO 고정 입력 ablation — 옛 `sqp` 가 거절된 QP 후보를 돌려준 chunk 가 있어 초기 iterate 를 후보에 포함하는 수정을 사용자가 유지로 판정 (2026-09-28 16:05) | 계획 §5 T24 행 · SESSION_STATE |
+
+### 타임라인
+
+| 시각 | STEP | 무엇 |
+|---|---|---|
+| 2026-09-28 17:45 | 사용자 판정 | (1) admissibility 안 승인 — crate 는 어떤 경우에도 manipulated 도 공도 될 수 없다 (2) self-filter inflation 0 (3) 거리장 충돌 제약은 gripper 에만. 필수 질문 Q1–Q7. **T26·T27 구현과 T28 Phase 1 을 병렬 착수** |
+| 2026-09-28 18:40 | T27 구현 완료 · T28 Phase 1 완료 | Phase 1 이 손가락 관절이 늘 0(닫힘)으로 고정된 것을 발견 → T29 task 발행 |
+| 2026-09-29 01:30 | T26 구현 완료 · 사용자 지시 | 모든 테스트를 3인칭으로 녹화. 세션이 rate limit 으로 끊긴 뒤 재개 |
+| 2026-09-29 01:27–01:49 (UTC) | T28 Phase 2R | E0·E1·E2 녹화 실행 18 회 (세 서버 동시) |
+| 2026-09-29 02:50 | T29 구현 완료 | 손가락 관절 실제 개도 + self-filter 덮개 |
+| 2026-09-29 02:13–03:43 (UTC) | T28 Phase 3 | 오프라인 0a–0f + E3a·E3b 12 회 + 기준선 → **E3a 0/6 · E3b 0/6** |
+| 2026-09-29 04:20 | 사용자 승인 F1–F5 → T30 착수 | 원인 다섯 개 수정 (구현자 3 병렬) |
+| 2026-09-29 11:00 | T30 검증 완료 | E3a 2/6 · E3b 2/6 |
+| 2026-09-29 11:20 | 사용자 승인 G1·G2·(c) + 새 요청 | T31 착수 (place 구간 팔 요동 원인 · 거리장 시각화 · crate 가 구로 표현되는지) |
+| 2026-09-29 12:10 | T31-diag 완료 | 요동 원인 = 쥔 사과 (crate 아님) |
+| 2026-09-29 12:20 · 13:40 | 사용자 승인 H1–H4 · H4-fix | T32 착수 |
+| 2026-09-29 13:30 | T32 H4 측정 완료 | crate 벽 띠 폭은 TSDF truncation 이 정한다 |
+| 2026-09-29 12:40 · 13:50 · 15:50 · 16:10 · 16:40 | T31a · T31b · T32a · T32b 구현 완료 · S3 배선 | |
+| 2026-09-29 19:30 | T33 검증 완료 | 요동 해소, E3a 2/6 · E3b 3/6 |
+| 2026-09-29 19:40 | 사용자 승인 J1·J2 → T34 착수 | 구현 완료 20:30 |
+| 2026-09-30 00:50 | **T34 검증 완료** | **E3a 5/6 · E3b 3/6** |
+
+---
+
+### §1 물음과 사다리
+
+**사용자가 답을 요구한 질문(2026-09-28, `T28.task.md`).**
+
+| Q | 질문 | 답하는 실험 |
+|---|---|---|
+| Q1 | 제약·목적함수 없이(추적만) TO 했을 때 사과를 집는가 — ESDF 판정·HOLD 없이 | E1 |
+| Q2 | 일부 목적함수·제약을 넣어도 집는가 | E2 |
+| Q3 | 거리장을 더하되 조건을 최대한 완화했을 때 집는가 | E3a · E3b |
+| Q4 | 실패하면 원인은 HOLD 규칙인가 · 지연시간인가 · action chunk–TO 결합인가 | 사다리의 어느 칸에서 깨지나 |
+| Q5 | gripper capsule 구가 너무 커서인가 | E3 (구를 최소로) |
+| Q6 | 사과를 여전히 충돌 객체로 인식해서 못 집는가 | E3 프레임별 최악 행의 대상 물체 |
+| Q7 | 사과를 잡지도 않았는데 target 이 crate 로 바뀌어 사과가 충돌 객체가 되었나 | E3 프레임별 manipulated 라벨 |
+
+**사다리 (ladder).** 한 번에 하나씩 얹어 어디서 깨지는지 본다. 전부 GPU 서버에서 headless MuJoCo client 와 함께 **폐루프(closed loop)** 로 돌렸다 (포트 8201–8206, 8123 은 쓰지 않는다).
+
+| 칸 | 서버 | client | 뜻 |
+|---|---|---|---|
+| **E0** VLA | `--no-safe` | `--safe-remote` 없음 | 정책 원본만 (기준) |
+| **E1** TO-only | `--no-perception --no-limits --w-smooth 0 --w-continuity 0` | `--safe-gate off` | AG3S·ESDF·판정·HOLD 없이 추적 항만 |
+| **E2** +objective/limits | `--no-perception` | `--safe-gate off` | 기본 목적함수(`w_smooth` 0.05 · `w_continuity` 0.5)와 joint limit 추가 |
+| **E3a** +ESDF, gate off | ESDF(cuRobo) · `--links gripper` · `--esdf-margin 0` · `--capsule-radius-scale 0.05` | `--safe-gate off` | 거리장 추가, 판정은 기록만 |
+| **E3b** +ESDF, gate on | 같음 | `--safe-gate reasons --safe-hold-mode fixed` | 판정이 실행을 막을 수 있다. **단독 실행**(SQP 벽시계 예산이 부하에 민감) |
+
+**성공 판정** (planning frame 의 `object_poses`): grasp = 사과 z 가 초기 + 50 mm 이상, place = 마지막에 사과가 crate 안 (crate 프레임 `|x|<0.077, |y|<0.137, −0.052<z<0.075` m). 둘 다 참이면 success. 에피소드 1807 · 1800 · 1808 (test split, target = apple · 왼팔) 각 2 회, 총 6 회 = "N/6". 정책이 비결정적이라 같은 에피소드 두 번이 다른 결과를 낸다.
+
+---
+
+### §2 T26·T27 구현 — 무엇을 만들었나 (구현자 A1, 2026-09-28 ~ 09-29)
+
+**T27 — 사다리를 돌릴 스위치 넷** (`T27.impl.md`).
+
+| 스위치 | 하는 일 |
+|---|---|
+| client `--safe-gate off` (**gate off**) | 서버 판정과 무관하게 refined chunk 를 실행한다. HOLD 는 chunk 가 도착하지 않은 경우(timeout 등)뿐이고 `comms` 로 센다. 판정은 `would_hold` 로 기록만 |
+| server `--no-perception` (**no_perception**) | π0.5 → TO 만. AG3S·depth·ESDF·grasp latch 를 만들지 않는다 (`trajopt/to_only_policy.py`) |
+| server `--no-limits` | QP 에서 joint position box · 속도 · 가속도 행을 뺀다. trust region 과 첫 스텝 anchor 는 남는다 |
+| `--links` 기본값 `arms` → `gripper` | 거리장 충돌 제약을 손바닥 둘 + 손가락 넷에만 (사용자 판정) |
+
+구현자 자체 점검(impl.md): E1 smoke 3 chunk 에서 refined − reference 0.0°, comms HOLD 0. 추적 항만 두면 refined ≡ reference 가 비트 단위로 같다(단위 시험).
+
+**T26 — 조작 대상은 "잡을 수 있는 것"만** (`T26.impl.md`).
+
+- **admissibility (자격 검사).** 조작 대상(manipulated) 후보 cluster 가 될 수 있는 조건이다. 둘이다. (1) **graspable** — cluster 의 가장 좁은 PCA 주축 extent 가 gripper 최대 개도 이하. 최대 개도는 숫자를 박지 않고 로봇 모델의 손가락 구(안쪽 면 간격 @ joint limit)에서 계산한다: RB-Y1 **71.46 mm**. (2) **등록된 destination 과 겹치지 않는다.** `first` 는 attention 1 등이 아니라 rank 가 가장 높은 **admissible** cluster 를 채택한다. 없으면 target 없음(`GroundingStatus.NO_ADMISSIBLE`).
+- **destination 등록 (`DestinationRegistry`).** graspable 이 아닌 cluster 가 attention 1 등이고 `target_switch_min_score`(0.1) 이상이 3 프레임 연속이면 crate 를 목적지로 등록한다. crate 는 모델에서 free body 라 `--static-geometry` 로 얻을 수 없어 인지에서 등록한다. 목적지는 어떤 거리장에서도 빠지지 않는다.
+- **불변식 관문 `_exclusion_gate`.** exclusion ball · target-free layer · fine window · guard · 접촉 허용을 만들 때 그 기하가 admissible 이라는 증거가 없으면 만들지 않고 `invariant_violation` 을 기록한다. crate 가 제외 기하가 되는 길을 코드에서 없앤다.
+- 기본값 변경: `self_filter_inflation` 0.05 → **0.0**, `target_switch_min_score` 0.0 → **0.1**, `target_lost_frames` = None(무기한). `SafePolicy` 가 reference chunk 의 실행 창 K 행을 `execution_path` 로 AG3S 에 넘긴다(T21b).
+- 구현자 자체 점검(impl.md): tests/ag3s + tests/trajopt **1409 passed · 1 skipped · 0 failed**.
+
+**T29 — 손가락 관절이 실제 개도를 따른다 + self-filter 덮개** (`T29.impl.md`, 구현자 자체 점검 1444 passed).
+
+- 제약 모델과 self-filter 모델의 손가락 관절이 `q` 에 없어 **늘 0(닫힘)** 으로 고정돼 있었다. 이제 `state` 의 열 7·15(측정 개도)를 client 규약의 역함수(`q = norm × RBY1_GRIPPER_OPEN(−0.045)`)로 관절값으로 바꿔 두 모델에 넣는다. 손가락은 결정 변수가 아니라 **parameter** 다.
+- self-filter 모델에서 `link_left_arm_5` 의 URDF capsule(r 75 mm · L 250 mm)을 빼고 MJCF mesh 표면에 맞춘 덮개 capsule 로 바꿨다 (구 218 → 461).
+
+---
+
+### §3 T28 — 사다리 결과 (2026-09-28 ~ 09-29)
+
+#### Phase 1 (서버 시계 2026-09-28) — 코드 의존 없는 측정
+
+- **E0 (VLA 단독) 이 이 서버에서 이미 100 % 가 아니다.** 녹화 없는 6 회 4/6, 녹화한 6 회 3/6 → 합 **7/12**(grasp 8). ep1807 은 4/4, ep1808 은 4 회 중 1 회. 정책이 비결정적이다 (`T28.verify.partial.json` `phase2.conditions.E0`).
+- **손가락 개도 (P1-3c).** MuJoCo 손가락 collision mesh 의 안쪽 간격 = **99.32 mm** @ joint limit −0.05, **89.32 mm** @ 데이터셋 open 명령 −0.045 (손가락 원점 간격 106.0 / 96.0 mm).
+- **self-filter inflation 0.05 가 사과를 지운다 (P1-3b).**
+
+| 설정 | T14 사과 retention | T14 사과가 통째로 지워진 프레임 | T17 사과 retention | T17 통째로 지워진 프레임 | 로봇 누수(px) T14 / T17 |
+|---|---:|---:|---:|---:|---:|
+| inflation **0.05** | 0.634 | 13 | 0.424 | 19 | 0 / 0 |
+| inflation 0.0, 옛 모델(218 구) | 0.887 | 0 | 0.472 | 17 | 36,037 / 54,106 |
+
+  inflation 을 줄이면 사과는 살지만 로봇이 샌다. 그래서 T29 가 inflation 이 아니라 **구 모델 자체**로 로봇을 덮었다 (아래 Phase 3 오프라인 0e).
+
+[`figures/t28/t28-p13b-selffilter.png`](figures/t28/t28-p13b-selffilter.png) — 그래프 (inflation 별 누수와 사과 보존).
+[`figures/t28/t28-p12-chunk-diagnosis.png`](figures/t28/t28-p12-chunk-diagnosis.png) — 그래프 (T16 HOLD chunk 진단).
+[`figures/t28/t28-p1-tables.png`](figures/t28/t28-p1-tables.png) — 표. [`figures/t28/t28-p1-scene.png`](figures/t28/t28-p1-scene.png) — 실제 씬.
+
+#### Phase 2R (2026-09-29 01:27–01:49 UTC) — E0·E1·E2
+
+| 조건 | 녹화 6 회 | 녹화 없는 2026-09-28 6 회 | 합 | refined − reference (client, 관절 최대) | HOLD · comms HOLD |
+|---|---:|---:|---:|---|---|
+| **E0** VLA | 3/6 | 4/6 | **7/12** | — | — |
+| **E1** TO-only | 3/6 | 3/6 | **6/12** | 12 회 전부 **0.0°** | 0 · 0 |
+| **E2** +objective/limits | **6/6** | — | **6/6** | 3.46–9.38° | 0 · 0 |
+
+- E1 은 refined ≡ reference 이므로 E0 과 **같은 분포**의 결과가 나와야 한다. 7/12 와 6/12 는 그 범위다.
+- **E2 가 6/6** 이다. 목적함수(평활·연속성)와 joint limit 을 얹어도 잡는다. 사다리에서 **깨지는 칸은 거리장을 얹는 E3** 이다.
+- 이 서버에서 지연은 물리에 영향을 주지 않는다: 제어 루프가 동기식이라 추론 중 `mj_step` 이 돌지 않고, 지연은 timeout → HOLD 경로로만 들어온다 (`pi05_infer.py` 의 "sim time is frozen"). 이 실행들의 comms HOLD 는 0.
+
+[`figures/t28/t28-p2-success-grid.png`](figures/t28/t28-p2-success-grid.png) — 표 (조건 × 에피소드).
+[`figures/t28/t28-p2-apple-z.png`](figures/t28/t28-p2-apple-z.png) · [`figures/t28/t28-p2-refined-minus-reference.png`](figures/t28/t28-p2-refined-minus-reference.png) · [`figures/t28/t28-p2-latency.png`](figures/t28/t28-p2-latency.png) — 그래프.
+[`figures/t28/t28-p2-keyframes-E2.png`](figures/t28/t28-p2-keyframes-E2.png) — 실제 씬 (3인칭 keyframe; E0·E1 은 같은 폴더).
+
+#### Phase 3 (2026-09-29 02:13–03:43 UTC) — T26·T29 뒤, 오프라인 먼저
+
+**오프라인 0a/0b — T26 이 crate 를 공으로 만드는 길을 막았나.**
+
+| 재생 | 파지 전 chunk | manipulated 의 최근접이 사과가 아닌 chunk | exclusion ball | 사과 narrowest extent |
+|---|---:|---:|---|---|
+| T14 | 30 | **0** | 반지름 41.1–60.9 mm(중앙 47.3) · 중심의 최근접 물체 apple 30/30 · `invariant_violation` 0 | 최대 65.58 mm → 71.46 mm 까지 **최소 여유 5.88 mm** |
+| T17 | 17 | **0** | — | — |
+
+crate 는 T17 chunk 21 (t=168)에서 `destination` 으로 등록됐다 (extents 152.3·183.3·421.2 mm, `source: registered`). **crate 는 destination 으로만 쓰인다.** 여유 5.88 mm 는 얇다 — 아래 "되돌아올 지점".
+
+**오프라인 0c/0d/0e — T29 손가락과 덮개.**
+
+| 항목 | 값 |
+|---|---|
+| 0c: 모델 손가락 구 ↔ 실제 mesh, 손가락 관절 **옛(0 고정)** | centroid 차이 중앙 **45.5 mm**, 손가락 사이 안쪽 간격 모델 **2.33 mm** vs 실제 **88.96 mm** (T14, 왼손) |
+| 0c: 손가락 관절 **T29(측정 개도)** | centroid 차이 **4.02 mm**, 안쪽 간격 차이 **−3.03 mm** |
+| 0e: inflation 0 + T29 덮개, 로봇 누수 | T14 **1 px** / T17 **2 px** (옛 모델 36,037 / 54,106) |
+| 0e: 사과 retention | T14 **0.9997** / T17 **0.9192** (옛 모델 0.887 / 0.472) |
+| 0e: 사과가 통째로 지워진 프레임 | T14 0 · T17 **0** (옛 모델 T17 17) |
+
+- 0d(T16 HOLD chunk 25 개에서 최악 행의 대상): 통과 기준 "사과 안 최악 점 0" 은 **충족하지 못했다.** T29 손가락 + E3 구 모델(`capsule_radius_scale` 0.05)에서도 최악 점이 사과 안인 chunk 가 **12/25** 이고, 최소 clearance 는 −34.54 → −28.79 → **−17.33 mm** 로 줄었다(0 미만인 chunk 25 → 24 → 23). 이 재생은 **기록된 T16 field**(T16 의 self-filter · 닫힌 손가락으로 만든 것)를 다시 만들지 않고 썼다 — field 를 다시 만드는 것은 depth 가 기록에 없어 못 했다.
+- 옛 P1-2: T16 HOLD chunk 25 개의 최악 행 최근접 물체는 apple 16 · other_fruit 1 · table 8 이었다.
+
+[`figures/t28/t28-p3-offline-table.png`](figures/t28/t28-p3-offline-table.png) — 표. [`figures/t28/t28-p3-offline-grounding.png`](figures/t28/t28-p3-offline-grounding.png) — 그래프.
+
+**오프라인 0f — 회귀 기준선이 움직였다.** 의도한 변경의 결과이고 원인을 가려 두었다.
+
+| 변형 | 위반 시작 | `has_target` | frame0 `clearance_before` | self-filter 구 |
+|---|---:|---:|---:|---:|
+| HEAD `cee8f84` (T26·T27·T29 전) | 13/15 | 15/15 | **+0.185978 mm** | 218 |
+| 작업 트리 (T26+T27+T29) | 14/15 | 15/15 | **−29.031048 mm** | 461 |
+
+원인은 T30b 가 규명한다 (아래 §4-6). **옛 기대값으로 되돌리지 않는다.** skill `regression-baseline` 의 기준값은 갱신 대상이다.
+
+#### Phase 3 폐루프 결과 — E3a 0/6 · E3b 0/6
+
+| | success | grasp | HOLD chunk | would_hold chunk | manipulated ≠ 사과 (파지 전) | comms HOLD |
+|---|---:|---:|---:|---:|---:|---:|
+| E3a (gate off) | **0/6** | 1 | 0 | 135 (`uncertified` 128 · `unverified` 2 · `collision` 10) | 137 | 0 |
+| E3b (gate on) | **0/6** | 0 | **274** (`collision` 153 · `uncertified` 125) | 0 | 240 | 0 |
+
+**사다리 요약 (Q1–Q3 의 답).**
+
+| 칸 | success (N=12 또는 6) | 깨진 곳 |
+|---|---:|---|
+| E0 VLA | 7/12 | — (기준) |
+| E1 TO-only | 6/12 | 깨지지 않음 |
+| E2 +objective/limits | 6/6 | 깨지지 않음 |
+| E3a +ESDF, gate off | **0/6** | **거리장 칸** |
+| E3b +ESDF, gate on | **0/6** | 거리장 칸 + 게이트 (HOLD 274) |
+
+E3a 가 gate off 인데도 0/6 이므로 **원인은 HOLD 규칙만이 아니다** (Q4). 이 결과를 lead 가 서버 기록으로 다시 풀어 원인 다섯(D1–D5)을 세웠고, 사용자가 수정안 F1–F5 를 승인했다 (2026-09-29 04:20). 아래 §4 가 그 원인을 **고친 순서대로** 적는다.
+
+[`figures/t28/t28-p3-success-grid.png`](figures/t28/t28-p3-success-grid.png) — 표. [`figures/t28/t28-p3-apple-z.png`](figures/t28/t28-p3-apple-z.png) · [`figures/t28/t28-p3-bands-E3a.png`](figures/t28/t28-p3-bands-E3a.png) · [`figures/t28/t28-p3-bands-E3b.png`](figures/t28/t28-p3-bands-E3b.png) · [`figures/t28/t28-p3-latency.png`](figures/t28/t28-p3-latency.png) — 그래프. [`figures/t28/t28-p3-keyframes-E3b.png`](figures/t28/t28-p3-keyframes-E3b.png) · [`figures/t28/t28-p3-scene-pregrasp-E3b.png`](figures/t28/t28-p3-scene-pregrasp-E3b.png) — 실제 씬.
+
+---
+
+### §4 E3 실패 원인과 수정 — 고친 순서
+
+먼저 표로 전체를 놓고, 각 항목은 아래에 적는다.
+
+| # | 원인 (ID 한 줄 풀이) | 수정 STEP | 고친 것의 확인 (verify.json) |
+|---|---|---|---|
+| 1 | **F1** — APPROACH 단계의 20 mm 여유가 target-free 행에 되살아난다 | T30a | 반사실: E3b reference 위반 159 → 13 |
+| 2 | **F1b** — target-free 행의 값은 사과 뺀 층, QP 방향은 사과 든 층에서 온다 | T30a | 구현자 자체 점검 |
+| 3 | **F2** — 렌더 지연이 카메라 촬영 시각 차로 읽혀 `camera_transform_stale` | T30c | 관측 카메라 시차 최대 0 |
+| 4 | **F3** — 사과와 이웃 과일이 한 cluster 로 채택된다 (anchor) | T30b | 파지 전 사과 전체 in-ball 187 → 270 |
+| 5 | **T31b** — anchor 만으로 못 가른 병합 cluster 를 attention 으로 가른다 (attention split) | T31b · T32b | 구현자 자체 점검(재생) + T33 S3 오프라인 |
+| 6 | **F4** — 손가락이 아직 움직이는 중에 attach 되는 거짓 attach | T30a | 빈손 sweep 0/24, E3b 1808 r1 attach 0 |
+| 7 | **T29 finger** — 손가락 관절이 0(닫힘)으로 고정 | T29 | 손가락 centroid 차이 45.5 → 4.02 mm |
+| 8 | **inflation 0.05** — self-filter 가 사과와 crate 를 지운다 | T26 · T29 · T30b | 사과 retention · 누수 · crate px |
+| 9 | **G1/G2 (T31a)** — TO limit 이 URDF 라 정책 chunk 가 limit 밖, SQP 는 1 반복 | T31a | URDF vs MJCF 위반 행 · SQP 반복 수 |
+| 10 | **place 요동** — 쥔 사과가 거리장에 남아 손가락 행과 충돌 (T31-diag → H1–H3) | T32a | 요동 지표 E2 수준 |
+| 11 | **H4** — crate 벽 60 mm TSDF truncation 띠 | T32 H4-fix | fine 띠 55.5 → 24.5 mm |
+| 12 | **J1** — 쥔 사과 질의 구가 테이블을 뚫는다 | T34 | 교착 56 → 0 chunk |
+| 13 | **J2** — 거짓 attach 는 발견 뒤에도 남는다 → `attach_revoked` | T34 | 라이브 회수 2 건 |
+
+순서 1–6 은 T30 착수(2026-09-29 04:20)에서, 7–8 은 그 앞(T26·T29)에서 이미 손댔다. **표의 번호는 "먼저 원인이 밝혀진 순서"가 아니라 이 절의 서술 순서**다.
+
+#### 4-1. F1(target-free 행에 phase 여유 20 mm)과 F1b(값과 방향의 층 불일치) — T30a (2026-09-29 05:30 · 06:05)
+
+- **증상.** E3b 에서 TO 잔여 위반이 난 chunk 154 개 중 **101** 이 `target_free`·`target` 층의 행이고(`recorded_refined_lt0_target_free_target`), E3a 는 15 개 중 5 개 (`T30.verify.json` `offline_1`).
+- **원인.** client 가 `--safe-phase approach` 를 에피소드 내내 고정한다. APPROACH 규칙은 권한 손가락에도 사과와 `0.05 × 0.4 = 20 mm` 를 요구한다. 그런데 `linearize` 가 행마다 `|d − d_object| ≤ voxel` 이면 "사과 행"으로 보고 그 20 mm 를 붙인다 — **d 가 사과를 뺀 target-free layer 에서 온 행에도**. 그 층에는 사과가 없으므로 그 판정 자체가 뜻이 없고, 테이블이 우연히 사과와 같은 거리에 있을 때 테이블에 20 mm 가 붙는다.
+- **수정 (F1).** target-free 층에서 답을 받은 권한 행에는 조작 대상 마진을 적용하지 않는다. 그 행의 여유는 `esdf_margin`(+ 목적지 규칙)뿐이다. 권한 없는 행과 `relax` 정책은 값이 그대로다. 판정 분류도 같은 값을 읽으므로 target-free 층 위반은 여전히 `collision` 이다 — 판정이 느슨해지지 않는다.
+- **수정 (F1b).** target-free 행의 QP 방향(gradient)도 target-free 층에서 받는다. 예전에는 값은 target-free 층인데 방향은 사과가 든 본 층 것이라, 사과 옆 테이블 행을 풀 때 손가락이 사과 법선 방향으로 밀렸다. 구현자 자체 점검(impl.md): SQP 1 회에서 손끝이 테이블 위로 2 mm 넘게 움직이고 사과에서 멀어지는 양은 1 mm 미만(옛 방향이면 5 mm 초과).
+- **확인 (반사실, 오프라인 #1).** T28 E3 기록 chunk 를 새 linearizer 로 다시 평가:
+
+| | 평가 chunk | reference 위반 (전 → 후) | 그중 `target_free`·`target` | refined 위반 (전 → 후) |
+|---|---:|---:|---:|---:|
+| E3a | 403 | 19 → **8** | 15 → **0** | 7 → **1** |
+| E3b | 416 | 159 → **13** | 153 → **0** | 149 → **2** |
+
+남은 위반의 GT 최근접은 banana · table · apple · crate 로 이름이 붙는다 (E3b reference 13 중 banana 7 · table 3 · apple 3).
+
+[`figures/t30/t30-off1-f1-counterfactual.png`](figures/t30/t30-off1-f1-counterfactual.png) — 그래프·표.
+
+#### 4-2. F2 — 렌더 지연이 만든 stale stamp — T30c (2026-09-29 05:05)
+
+- **증상.** E3b 에서 `uncertified` HOLD 125 chunk (Phase 3). 서버 응답에 `camera_transform_stale`(한 관측 안 카메라 시각 차 > 100 ms) 사유가 붙는다.
+- **원인.** OSMesa 가 카메라를 **차례로** 렌더하고 client 가 렌더가 끝난 순간마다 벽시계 시각을 찍는다. 시뮬레이션은 그동안 정지해 있으므로 세 이미지는 **같은 순간의 씬**인데, 렌더 시간이 그대로 촬영 지연으로 읽힌다. T30 E3b ep1807 r1 의 카메라별 렌더 시각 폭은 중앙 0.101 s · 최대 0.138 s 였다 (`stamps.render_spread_sec`).
+- **수정.** 관측 하나의 세 카메라 · robot state · extrinsics 에 촬영 시각을 하나만 찍는다 (**`sim_frozen` stamp**: 제어 루프가 `build_obs` 직전에 잰 시각 — 그 순간부터 청크 첫 스텝까지 `mj_step` 이 없으므로 시뮬레이션이 그 관측을 위해 멈춘 순간이다). 옛 카메라별 렌더 끝 시각은 진단 key `ag3s/render_stamp/<cam>` 으로 남긴다. **서버의 신선도 검사와 한도(100 ms)는 건드리지 않았다** — 실기에서는 그 검사가 맞다. `capture_time` 을 안 주면 옛 동작 그대로다.
+- **확인.** T30 E3 전 run 에서 `camera_skew_sec` 최대 **0**, `stamp_mode = sim_frozen` 75/75 (`E3b_ep1807_r1`). T33 precheck 첫 6 chunk 도 skew 0.0, render spread 0.081–0.102 s.
+
+#### 4-3. F3 — 병합 cluster 와 anchor — T30b (2026-09-29 07:10)
+
+- **증상.** manipulated 가 사과에서 이웃 과일(orange · banana)로 넘어간다 (E3 파지 전 manipulated ≠ 사과 chunk: E3a 137 · E3b 240).
+- **원인 정정.** 처음에는 "파지 전에 이웃으로 넘어감"으로 보았으나, 서버 기록을 다시 grounding 하니(구현자 자체 점검 900/900 chunk 일치) **t=0 부터 사과와 이웃이 한 cluster 로 채택**돼 있었다. ep1808 은 사과 + orange (extents 54·67·144 mm), ep1800 은 사과 + banana (59·65·164 mm). 좁은 축이 71.46 mm 안이라 admissible 을 통과했다. 손이 사과를 가리면 덩어리에 이웃만 남아 ball 이 이웃으로 옮겨가고, 사과가 target-free 층에 복귀한다.
+- **수정.** 승인된 F3 (i) centroid 이동 ≤ 물체 반지름 + (ii) extent 비 ≤ 2.5 만으로는 정상 사과의 흔들림(구현자 측정 shift/r 최대 1.09)과 병합 cluster 의 점진적 축소를 가를 문턱이 없다. 그래서 lead 가 (a) 급변 거절 + **(b) anchor** 를 채택했다.
+  - **anchor.** 파지 전에는 exclusion 기하를 `first`/`switch` 에서 채택한 기하에 고정한다. 관측이 anchor 점의 **90 %** 이상을 덮을 때만 갱신하고, 그보다 적게 덮으면 `subset_kept_anchor` 로 처리해 기하·centroid 를 anchor 그대로 둔다 (부분집합으로 교체하지 않는다).
+  - **exclusion ball.** 조작 대상의 중심 + 반지름 공. 이 공 안의 표면 복셀을 target-free layer 의 seed 에서 뺀다 (`_target_ball`). 사과 전체가 공 안에 들어야 손가락이 사과에 대해 자유롭다.
+- **확인 (오프라인 #2).** E3 파지 전·비동결 573 chunk:
+
+| | 옛 | 새 |
+|---|---:|---:|
+| 사과 중심이 ball 안 | 429 | 447 |
+| **사과 전체(중심 + 34 mm)가 ball 안** | 187 | **270** |
+| manipulated ≠ 사과 | 269 | 169 |
+| `subset_kept_anchor` | 0 | 248 |
+| `association_rejected` | 0 | 10 |
+
+  남는 실패(구현자 분석): 사과 단독이라도 한쪽만 관측된 사과의 ball 이 뒷면을 못 담는다 — 아래 T32a S1 이 다룬다.
+
+[`figures/t30/t30-off2-f3-coverage.png`](figures/t30/t30-off2-f3-coverage.png) — 그래프·표.
+
+#### 4-4. T31b·T32b — anchor 로 못 가른 병합을 attention 으로 가른다 (attention split) (2026-09-29 13:50 · 16:10)
+
+- **attention split.** cluster 를 30 mm 연결로 키우면 표면이 30 mm 안으로 붙은 두 과일이 한 덩어리가 된다. 좁은 축 ≤ max_opening < 긴 축인 admissible cluster 를 **15 mm 로 다시 연결**해 보고, 둘 이상으로 갈라지면서 attention 평균비가 **2 이상**이면 나눠 쓴다. attention 질량이 큰 쪽이 target 후보이고 나머지는 별개 cluster(장애물)로 남는다. 파지 중(`frozen`)에는 가르지 않는다.
+- 이 사양의 근거는 구현자 측정(T30b·T31b impl.md, verify.json 에 없음)이다: 병합 cluster 안 attention 의 사과 점유 중앙값 0.75–0.90. 방법 선택도 구현자 자체 점검(impl.md): 2-means · GMM 등은 단일 사과도 항상 갈랐고, 작은 반경 재연결 + attention 비만 단일 사과를 가르지 않았다(파지 전 0/139).
+- 구현자 자체 점검(재생, impl.md): 병합 채택 chunk T28 272 → 42, T30 364 → 158. 부작용 셋(S1 사과 전체 in-ball 감소 · S2 동결 해제 뒤 병합 anchor 잔존 · S3 이웃으로의 switch 가 앞당겨짐)이 생겨 T32 에서 고쳤다.
+  - **S1**: `_target_ball` 의 중심을 관측 표면에 맞춘 구 맞춤(sphere fit)으로. 재생 사과 전체 in-ball T28 42 → 451/573, T30 149 → 484/565 (impl.md).
+  - **S2**: 동결 해제 첫 grounding 에서 anchor 를 한 번 attention split 에 통과. T28 병합 42 → 0, T30 158 → 40 (impl.md).
+  - **S3**: 조작 대상이 **손에 가려진** 동안(손바닥·손가락 구 표면이 anchor 에서 30 mm 안) 도전자 streak 를 세지 않는다.
+- **S3 의 30 mm 는 여유가 얇다 (T33 오프라인 d, 검증).** 파지 전·비동결 1,138 chunk 에서 손–anchor gap 이 30 mm 이하인 chunk 는 **가려진 쪽 564 중 304**, **보이는 쪽 547 중 2** 다. 그러나 25–35 mm 구간에 가려진 chunk 26 개가 걸려 있어 문턱이 경계에 가깝다.
+
+[`figures/t33/t33-off-d-s3-hand-gap.png`](figures/t33/t33-off-d-s3-hand-gap.png) — 그래프.
+
+#### 4-5. F4 — 거짓 attach — T30a (2026-09-29 05:30)
+
+- **증상.** E3b 1808 r1 이 t=120 에 attach 했는데 들림이 없었다. T22 검증의 빈손 MuJoCo sweep 은 **10/24** 에서 attach 했다.
+- **원인.** 파지 확인의 `settled` 가 "닫힘 명령이 3 스텝 이상 적용됨"이라 chunk 경계에서 손가락이 아직 움직이는 중(개도 0.16–0.76)에도 참이 됐다.
+- **수정.** `settled` = 연속 두 요청의 **측정 개도 차 < ε = 0.02**(정규화 개도). 손가락이 멈춰야 attach 한다. 빈손과 쥔 손의 구별(`blocked`·`not_empty`)은 T22 그대로.
+- **확인 (오프라인 #3).** 빈손 sweep attach **0/24**, T14·T16 attach 0, T17 실제 파지 attach 1 회(t=128), E3b 1808 r1 재생 attach 0 (기록에서는 t=120). 대가: T17 attach 시각이 t=120 → 128 로 한 chunk 늦는다 (T22 verify 의 t=120 대비).
+
+[`figures/t30/t30-off3-f4-latch.png`](figures/t30/t30-off3-f4-latch.png) — 그래프·표.
+
+#### 4-6. T29 finger joints 와 self-filter inflation — T26 · T29 · T30b
+
+- **finger joints pinned at 0.** 열린 손의 모델 손가락이 실제 손가락 위치와 어긋난다: 손가락 구 ↔ 실제 mesh centroid 차이 중앙 **45.5 mm**(T29 후 **4.02 mm**), 손가락 사이 안쪽 간격 모델 2.33 mm vs 실제 88.96 mm (오프라인 0c, T14). lead 의 가설은 열린 손의 모델 손가락이 실제보다 안쪽(사과 한가운데)에 있어 손가락 행이 사과와 충돌로 읽힌다는 것이다. T29 가 측정 개도를 두 모델에 넣어 위치 차이를 없앴다 (§2, §3). 다만 오프라인 0d 는 손가락 수정만으로 T16 의 사과 안 최악 점이 사라지지 않음을 보였다 (§3, 12/25).
+- **inflation 이 사과와 crate 를 지운다.** 회귀 기준선(`run_16d_ep1800`, 15 프레임 × 3 카메라)에서 inflation 0.05 가 비로봇 pixel 을 얼마나 지우는가 (`T30.verify.json` `baseline_5_self_filter_leak`):
+
+| | crate | table | apple | banana | 로봇 누수 |
+|---|---:|---:|---:|---:|---:|
+| inflation **0.05** 가 지운 px | **114,808** | 150,395 | 41,499 | 19,564 | 0 / 836,762 |
+| inflation **0.0** 이 지운 px | 0 | 5,459 | 4,463 | 993 | 0 / 836,762 |
+
+- **D5 정정 (2026-09-29 04:40).** Phase 3 직후 lead 는 기준선 이동(+0.186 → −29.031 mm)을 "base 누수 복귀"로 보았다. 재측정은 그것이 틀렸음을 보였다: inflation 0 에서 로봇 누수는 base 를 포함해 **0 px**(base 33,123 px 가 보이고 0 이 샌다)이고, frame0 에서 inflation 0.05 와 0 사이에 갈리는 비로봇 px 는 **전부 crate** 다 (wrist_cam_l 2,787 px · wrist_cam_r 569 px; zed_left 는 없음). 옛 +0.186 mm 는 **실제 crate 를 지운 값**이고, 새 −29.031 mm 는 `link_left_arm_5` 제약 구(r 81.2 mm)와 왼손 옆 실제 crate 의 clearance 라는 것이 구현자 분석(T30b impl.md)이다. `base` 는 덮개에 넣었고(F5) self-filter 구는 461 → **587** 이 됐다 (`T30.verify.json` `baseline_5`). inflation 0 에서 로봇 누수는 0 으로 유지된다.
+- 기준선은 T30 에서 다시 **14/15 · 15/15 · −29.031048 mm** 로 재측정됐고 T33·T34 까지 소수점까지 같다.
+
+[`figures/t28/t28-p3-0f-baseline.png`](figures/t28/t28-p3-0f-baseline.png) — 표 (기준선 변형별).
+
+#### 4-7. T31a — URDF 대 MJCF limit, 그리고 1 반복 SQP (G1 · G2) (2026-09-29 12:40)
+
+- **증상.** T30 뒤 성공은 ep1807 뿐. 1800·1808 의 실패 run 은 HOLD 0 · 접근 구간 충돌 위반 0 인데 TO 가 `left_arm_6` 을 5–8.7° 틀었다.
+- **원인 (G1).** TO 의 joint position limit 은 URDF 에서 왔다(`left_arm_6` ±2.685 rad). 그러나 MuJoCo 제어 대상은 ±2.967 rad 이다. 정책 chunk 가 URDF limit 을 넘으면 TO 가 그것을 위반으로 보고 끌어내린다. reference chunk 의 8 스텝 창에서 position limit 위반이 나는 행 수(`offline_e`, T33 verify):
+
+| 기록 | 행 수 | URDF limit 위반 행 | MJCF limit 위반 행 |
+|---|---:|---:|---:|
+| T28 E3a | 450 | 47 | 13 |
+| T28 E3b | 450 | 90 | 4 |
+| T30 E3a | 675 | 66 | 2 |
+| T30 E3b | 450 | 82 | 4 |
+
+  URDF 로 잰 최대 위반은 T30 E3b 9.81°, MJCF 는 1.37°.
+- **원인 (G2).** T30 기록의 replay 창 chunk 는 **전부 SQP 1 반복**이었다(`sqp_iterations_counts {"1": n}`, T31-diag). 벽시계 예산 안에 첫 linearize 가 끝나지 않아(lead 측정: linearize 67 ms > 예산 50 ms, verify 에는 없음), merit 이 나쁜 **거절된 QP 후보(`best_unaccepted`)** 를 돌려준 chunk 가 창마다 1–2 개 있었다.
+- **수정.**
+  - **G1**: 기본 출처를 서버가 로드한 MJCF 의 `jnt_range`(position actuator `ctrlrange` 와 대조, RB-Y1 14 관절 전부 일치)로. `limits.source: model_xml | urdf | config`. 서버 시작 로그에 관절별 URDF 대 사용값 표를 찍고 다르면 WARNING. 속도·가속도는 MJCF 에 없어 URDF 값 유지. TO 가 움직이는 14 관절 전부 URDF 와 다르다 (arm_0·2·3 은 MJCF 가 더 좁다) — 구현자 자체 점검(impl.md).
+  - **G2-i `min_iterations`**: `sqp.min_iterations`(기본 3)만큼은 벽시계 예산과 무관하게 돈다. 구현자 자체 점검(impl.md): 첫 linearize 121–145 ms, 2·3 번째는 ~3 ms 라서 3 반복이 ≈ 20 ms 만 더 든다.
+  - **G2-ii limit projection**: 받아들여진 후보가 없고 초기 iterate 가 **limit 만** 어겼으면, 거절된 QP 후보 대신 reference 의 최소 투영(position box ∩ 첫 스텝 anchor 로 원소별 clip)을 돌려준다. 투영이 limit 을 전부 지키고 충돌 검사를 통과할 때만이며 `returned = projection` 으로 기록한다.
+- **확인 (T33 precheck).** 서버 로그에 MJCF limit 표(`left_arm_6` −2.9671..+2.9671)가 찍혔고, 기록의 `min_iterations = 3` · SQP 반복 3. T33·T34 E3 12 run 씩 모두에서 `returned` 에 `best_unaccepted` 가 **한 번도 나오지 않았다**(`initial` · `accepted` · `projection` 만).
+
+[`figures/t33/t33-off-e-limit-overshoot.png`](figures/t33/t33-off-e-limit-overshoot.png) — 그래프.
+
+#### 4-8. place 구간 요동 — T31-diag → T32 H1–H3 (2026-09-29 12:10 → 15:50)
+
+사용자 관찰: "place 작업에서 팔의 궤적이 요동친다." verifier 가 기존 기록만으로 진단했다 (T31-diag, 폐루프 실행 없음).
+
+- **crate 가 원인이 아니다.** 손·쥔 질의점이 crate 표면 50 mm 안에 온 chunk 는 4 run 에서 **0**, 최소 거리 67.5–78.4 mm. crate 는 구로 표현되지 않는다: 375 chunk 에서 `n_candidates` 0 · `n_static_shapes` 0 — TSDF/ESDF 복셀 + destination 라벨이다.
+- **요동의 크기.** grasp → release 창, 실행된 왼팔 관절 궤적 (그룹 중앙값은 §5-2 표).
+
+| run | 부호 반전/s (7 관절) | jerk RMS (rad/s³) | refined − reference 창 최대 (°) |
+|---|---:|---:|---:|
+| E2 6 회 | 1.11–2.71 | 3.14–6.04 | 0.60–3.63 |
+| E3a ep1807 (r1 ≡ r2 중복 · r3) | 18.25 · 14.59 | 55.12 · 46.53 | 8.60 · 8.60 |
+| E3b ep1807 r1 · r2 | 5.43 · 4.05 | 27.36 · 26.01 | 8.61 · 8.60 |
+
+- **refined − reference 가 거의 매 chunk 8.6° 다.** 8.6° 는 0.150 rad 이고 SQP **trust radius**(한 반복에서 iterate 가 움직일 수 있는 한도, 0.15 rad — lead 분석)와 같다. 반복이 1 회뿐이라(§4-7) 매번 trust radius 끝까지 갔다.
+- **항별 ablation (T24 고정 입력 도구).** 같은 chunk 를 항 하나씩 끄고 다시 풀었다 (편차 중앙값 °):
+
+| run | replay | collision off | limits off | continuity off | smooth off |
+|---|---:|---:|---:|---:|---:|
+| E3a ep1807 r1 | 8.60 | **3.34** | 8.60 | 8.60 | 8.60 |
+| E3a ep1807 r3 | 8.59 | **2.22** | 7.86 | 8.59 | 8.59 |
+| E3b ep1807 r1 | 8.59 | **2.75** | 8.01 | 8.60 | 8.59 |
+| E3b ep1807 r2 | 8.60 | **3.22** | 8.60 | 8.60 | 8.60 |
+
+  창 chunk 중 편차 ≥ 8° 인 것은 collision off 에서 0 이 된다 (replay 7/8 · 15/24 · 20/24 · 25/31 → 0). **요동은 충돌 행이 만든다.**
+- **그 행의 대상은 쥔 사과다.** replay 창에서 최악 행의 GT 최근접이 사과인 chunk: 7/8 · 23/24 · 23/24 · 30/31 (나머지는 crate 1).
+- **왜 쥔 사과가 장애물로 남는가.**
+  - 쥔 사과는 **반지름 0 인 attached 점** 25 개(또는 33 개)로 표현됐고, seed 제거는 그 점의 복셀만 지웠다. 나머지 사과 표면은 거리장에 남았다 (fine layer 사과 중심 값 < 0 인 chunk 4/8 · 10/24 · 11/24 · 21/31, 최소 −18.9 ~ −24.1 mm).
+  - attached 점의 centroid 가 GT 사과에서 어긋났다: run 별 중앙값 14.1 · 22.3 · 23.6 · 20.4 mm (최소 5.6, 최대 82.7 mm).
+  - **잔상**: E3b ep1807 r1 에서 fine layer 의 "실제 표면 30 mm 안에 GT 표면이 없는 점유 복셀" 이 t=120 의 1,848 개에서 t=296 의 13,506 개로 늘었다 (파지 직전 t=112 는 12,325) — 쥔 사과가 매 프레임 새 위치에 적분되는 것이 lead 의 해석이다.
+- **수정 (T32a, 사용자 승인 H1–H3, 2026-09-29 12:20).**
+  - **H2 — held sphere.** 파지 확인 순간 관측된 사과 점에 **표면 구를 맞춘다**(반지름 [10 mm, max_opening/2], 잔차 중앙 ≤ 4 mm 일 때만; 아니면 centroid 규칙으로 물러남). 부모 frame 은 **손바닥**(`ee_left`) — 손가락 link 는 닫힘에 따라 움직인다. 튀어나온 부분은 작은 구로 덮는다. 질의 구 = fit + 5 mm. 이 쥔 구를 **held sphere** 라 부른다. 구현 중 attached 중심 어긋남의 원인도 찾았다: 기하는 직전 요청에 관측됐는데 스냅샷은 attach 요청의 자세로 찍혀 그 사이 들린 손(25–43 mm)만큼 어긋났다. 이제 **관측된 프레임의 자세**로 스냅샷한다. 구현자 자체 점검(impl.md): 맞춘 중심 오차 1.4–3.5 mm.
+  - **H1 — 쥔 물체는 로봇의 일부 (cuRobo attach 방식).** held sphere 를 **self-filter 구 집합에 더한다** → 쥔 사과의 pixel 이 로봇처럼 지워져 TSDF 에 안 들어간다. 사과가 손 안에서 미끄러지므로(구현자 측정 12–24 mm) self-filter 복사본에만 20 mm 를 더한다(fit + 25 mm).
+  - **H3 — 잔상 제거.** H1 뒤에도 흔적이 남는 것을 측정으로 확인했고(구현자 자체 점검: 테이블 위 사과 자리 fine 복셀 1,400–1,650 개), 쥔 구의 부피를 TSDF 에서 free 로 갱신한다. seed 제외는 결과를 바꾸지 않아 cuRobo 경로에서 은퇴시켰다.
+- **확인 (T33 오프라인).**
+
+| 항목 | 값 |
+|---|---|
+| 쥔 사과 GT 점 중 5 mm 안 (E3b ep1807 r1, grasp → release, 손 안 23 chunk) | 총 **1,831** 점 → H1 뒤 **78** 남음 (쥔 구 질의 반지름만 쓰면 888) |
+| 폐루프 기록 9 run(held chunk 가 있는 run)에서 사과가 손가락 중점 60 mm 안일 때 cloud 에 남은 GT 사과 점 | 모든 run 에서 **0** 점 |
+| H3: "실제 표면 30 mm 안에 GT 표면이 없는" fine 점유 복셀 (E3b ep1807 r1, seq 15 이후) | H3 켬 9–708 개 vs H3 끔 722–1,598 개 |
+| H3 가 crate 를 침식하나 | fine crate 점유 복셀 수가 두 변형에서 **모든 seq 동일**, 벽 폭 측정 차이 0 |
+
+[`figures/t33/t33-off-a-held-points.png`](figures/t33/t33-off-a-held-points.png) — 그래프. [`figures/t33/t33-off-b-crate-free-slices-seq037.png`](figures/t33/t33-off-b-crate-free-slices-seq037.png) · [`…-seq038.png`](figures/t33/t33-off-b-crate-free-slices-seq038.png) — 실제 씬 (ESDF 단면).
+
+**진단 그림 (T31-diag).**
+[`figures/t31/t31-d1-oscillation-metrics.png`](figures/t31/t31-d1-oscillation-metrics.png) · [`figures/t31/t31-d1-oscillation-timeline.png`](figures/t31/t31-d1-oscillation-timeline.png) — 요동 지표. [`figures/t31/t31-d2-ablation.png`](figures/t31/t31-d2-ablation.png) · [`figures/t31/t31-d2-rows-table.png`](figures/t31/t31-d2-rows-table.png) — 항별 ablation. [`figures/t31/t31-d3-held-apple-crate.png`](figures/t31/t31-d3-held-apple-crate.png) · [`figures/t31/t31-d3-representation-table.png`](figures/t31/t31-d3-representation-table.png) — crate 표현 감사. [`figures/t31/t31-d4-layout-E3b_ep1807_r1.png`](figures/t31/t31-d4-layout-E3b_ep1807_r1.png)(배치도) 뒤에 [`figures/t31/t31-d4-slices-E3b_ep1807_r1-t160.png`](figures/t31/t31-d4-slices-E3b_ep1807_r1-t160.png) · [`…-t240.png`](figures/t31/t31-d4-slices-E3b_ep1807_r1-t240.png) — ESDF 단면, [`figures/t31/t31-d4-voxels3d-E3b_ep1807_r1-t240.png`](figures/t31/t31-d4-voxels3d-E3b_ep1807_r1-t240.png) — 점유 복셀 3D, [`figures/t31/t31-d4-anim-E3b_ep1807_r1.mp4`](figures/t31/t31-d4-anim-E3b_ep1807_r1.mp4) — place 구간 애니메이션.
+
+#### 4-9. H4 — crate 벽의 TSDF truncation 띠 — T32 H4 측정 (2026-09-29 13:30) → H4-fix (T32a)
+
+- **증상.** 두께 16 mm (8 mm 벽 둘)인 crate 벽이 fine layer 에서 d < 0 띠 55–58 mm, coarse 46–48 mm 로 보인다 (T31-diag). 벽이 3.5 배 두꺼워 crate 가까이 갈수록 손이 막힌다.
+- **측정 (E3b ep1807 r1 chunk 30, 서버 설정 재구성).** 띠 폭을 정하는 것은 **TSDF truncation** 이다: `EsdfConfig.truncation = truncation_voxels(3) × voxel_size(20 mm) = 60 mm`. **TSDF truncation** 은 TSDF 가 표면 양쪽으로 채우는 띠의 두께(이 밖은 잘라 채우지 않는다)이고, 적분 규칙이 `sdf ≥ −truncation` 이면 적분하는 것이므로, 표면 뒤쪽으로 truncation 만큼 음수 TSDF 가 채워져 벽이 그만큼 두껍게 보인다. fine 5 mm TSDF 에도 coarse voxel 기준 60 mm 가 걸려 있었다.
+
+| 분해 (fine / coarse) | 값 |
+|---|---|
+| GT 벽 두께 (선 위) | 16.0 mm |
+| TSDF d < 0 폭 | 55.0 mm (+39.0 mm) |
+| ESDF 부호 계산이 더한 폭 | fine +0.5 · coarse −8.0 mm |
+| `attached_sign_threshold` 의 기여 | 0 |
+| 기록된 띠 (합) | fine **55.5** · coarse **47.0** mm |
+
+truncation 을 바꾼 재구성 (fine / coarse 폭, mm): 10 → 0 / 0, 15 → 0 / 0, 20 → 12.5 / 0, **30 → 24.5 / 14.0**, 40 → 42.5 / 42.0, 80 → 101.0 / 88.0. 재구성은 기록과 일치한다(같은 선의 기록 fine 55.5 · coarse 47.0). 기록된 필드의 eikonal `|∇d|` 는 fine 중앙 0.999, 0.9–1.1 안 97.5 % 로 필드 자체는 건강하다.
+
+- **수정 (H4-fix, 사용자 승인 2026-09-29 13:40).** fine TSDF 가 자기 truncation 을 갖는다: `esdf.fine_truncation_m` **0.030 m**(하한 4 TSDF 복셀 = 20 mm). cuRobo `Mapper` 를 하나 더 둔다. coarse 는 60 mm TSDF 그대로.
+- **확인 (T33 오프라인 b · c, E3b ep1807 r1).** 서버 기록의 truncation 은 `{coarse 0.06, fine 0.03, separate_fine_tsdf True}`. fine 벽 d < 0 폭: t=160 **23.0** · t=240 **24.5** · t=288 **24.0** mm (truncation 60 mm 변형은 58.0 · 55.5 · 55.0). coarse 는 46.0–47.0 mm 로 그대로다.
+
+[`figures/t32/t32-h4-layout.png`](figures/t32/t32-h4-layout.png)(배치도) · [`figures/t32/t32-h4-slices.png`](figures/t32/t32-h4-slices.png) — 실제 씬. [`figures/t32/t32-h4-profiles.png`](figures/t32/t32-h4-profiles.png) · [`figures/t32/t32-h4-bandwidth-vs-param.png`](figures/t32/t32-h4-bandwidth-vs-param.png) — 그래프. [`figures/t32/t32-h4-table.png`](figures/t32/t32-h4-table.png) — 표. [`figures/t33/t33-off-bc-crate-walls-series.png`](figures/t33/t33-off-bc-crate-walls-series.png) · [`figures/t33/t33-off-c-wall-bands-table.png`](figures/t33/t33-off-c-wall-bands-table.png) — 수정 뒤.
+
+#### 4-10. J1 — 쥔 사과 구가 테이블을 뚫는다 — T34 (2026-09-29 20:30)
+
+- **증상 (T33).** E3b HOLD **59 chunk 전부 `collision`**, 최악 행 = `attached:ee_left[0]`(쥔 사과 질의 구). 그중 ep1800 r2 는 **56 chunk 가 HOLD**(448 control step)로 사과를 들지 못하고 교착했다 (`apple_dz` 최대 1.4 mm).
+- **원인.** attach 9 건 모두에서 attach 요청 자세의 held sphere 바닥이 테이블 면 아래였다 (GT 테이블 간격 −19.42 ~ +2.02 mm; fit + 5 mm pad 가 물체 밑면을 테이블 밑으로 밀어 넣는다).
+- **새로 알아낸 것.** 기록된 fine ESDF 는 테이블을 평면 위 약 9 mm 두께의 d = 0 띠로 본다 — T33 attach 9 건의 재구성에서 띠 중앙값 8.64–8.95 mm. 평면만 넘지 않게 하면 held↔table 행이 여전히 −8.8 mm 로 읽힌다.
+- **수정 (J1, support lift).** 반지름은 그대로 두고 구 중심을 평면 법선 방향으로 올린다. 캡처 자세에서는 **평면** 위에, attach 요청 자세에서는 **평면 + 거리장 표면 띠**(attach 직전 필드에서 잰 90 분위) 위에 오게 한다. self-filter 복사본(fit + 25 mm)은 손대지 않는다.
+- **확인 (오프라인, T33 attach 9 건 재생).**
+
+| | T33 | **T34** |
+|---|---:|---:|
+| attach 요청 자세, 구 바닥 GT 테이블 간격 | −19.42 ~ +2.02 mm | **+9.93 ~ +9.99 mm** |
+| attach chunk 의 held ↔ field 행 최소 (E3b ep1800 r2) | −18.35 mm | **+7.98 mm** |
+| 그 run 의 held chunk 56 개 중 행이 음수인 chunk | 56 | **0** (최소 −18.49 → **+6.69 mm**) |
+
+  대가: 사과 밑면이 질의 구 밖으로 나온다 — 구현자 자체 점검(impl.md) 5.8–12.8 mm (전에는 0.6–5.7 mm).
+- **폐루프 확인.** T34 E3a·E3b 12 run 에서 **held ↔ table HOLD/would_hold 0 chunk**, E3b HOLD **0 chunk**. ep1800 r2 는 E3a·E3b 모두 grasp t=168 · place t=240 으로 성공했다 (T33 에서는 두 조건 모두 실패).
+
+[`figures/t34/t34-j1-offline-table.png`](figures/t34/t34-j1-offline-table.png) — 표. [`figures/t34/t34-attach-scene.png`](figures/t34/t34-attach-scene.png) — 실제 씬 (attach 순간의 구와 테이블). [`figures/t34/t34-held-rows.png`](figures/t34/t34-held-rows.png) — 그래프. [`figures/t34/t34-band-thickness.png`](figures/t34/t34-band-thickness.png) — 그래프 (테이블 d = 0 띠 두께).
+
+#### 4-11. J2 — 거짓 attach 회수 `attach_revoked` — T34 (2026-09-29 20:30)
+
+- **동기.** F4 가 거짓 attach 를 줄였지만 T33 에서도 E3b ep1808 r1 이 t=128 에 attach 했다 (fit 중심이 GT 사과에서 19.0 mm, 들림 없음, t=232 에야 detach, 그동안 손에서 60 mm 넘게 떨어진 사과 점 845 개가 cloud 에 남았다).
+- **수정.** attach 뒤 **실행된 chunk 4 개 동안** 쥐고 있는지 다시 본다. 셋 중 하나라도 어긋나면 **`attach_revoked`**(attach 를 회수) 를 기록하고 detach 한 뒤 latch 를 LATCHED 로 되돌린다 (PLACED 가 아니므로 다시 attach 할 수 있다): (i) **개도** — attach 때보다 더 닫혔거나 명령 개도까지 갔다(`opening_dropped`, 손가락이 물체에 막히지 않았다 = `not_blocked`), (ii) **관측** — 보이는 조작 대상이 쥔 구 밖에 있다(`observed_elsewhere`), (iii) **들기** — 손이 들렸는데 물체가 따라 오르지 않았다(`not_following`).
+- **확인 (오프라인 재생, T33 12 run).** attach 시각은 12 run 모두 T33 기록과 같다. **E3b ep1808 r1 의 거짓 attach 는 t=136 에 회수**된다(T33 detach t=232), 들다 떨어뜨린 **E3a ep1800 r1 은 t=160** 에 회수된다(T33 detach t=272). 성공 run 과 교착 run 은 회수되지 않는다. 관측·들기 검사만 켠 변형에서는 E3b ep1808 r1 이 t=160 (`observed_elsewhere` · `not_following`, 관측 거리 215.4 mm vs 한도 80.7 mm).
+- **확인 (폐루프, 라이브 회수 2 건).**
+
+| run | attach | 회수 | 사유 (개도 하락) | 이후 |
+|---|---:|---:|---|---|
+| E3a ep1808 r1 | t=128 (개도 1.000→0.684) | **t=136** (attach 뒤 chunk 1/4) | `opening_dropped` 0.1296 · `not_blocked` | 재파지 attach t=392 (manipulated id 2) → **grasp 400 · place 472 성공** |
+| E3b ep1800 r1 | t=144 (개도 0.999→0.701) | **t=160** (chunk 2/4) | `opening_dropped` 0.1645 · `not_blocked` | 이후 attach 없음, `apple_dz` 최대 9.7 mm — **실패** |
+
+  회수가 일어난 run 은 위 둘뿐이고 나머지 10 run 에는 회수가 없다. 두 회수는 모두 개도 검사(`opening_dropped`)가 잡았다 — **관측·들기 검사는 12 run 의 회수 창 안에서 값이 한 번도 채워지지 않아 라이브에서는 검증되지 않았다** (미측정).
+
+[`figures/t34/t34-attach-scene.png`](figures/t34/t34-attach-scene.png) · [`figures/t34/t34-keyframes-E3a.png`](figures/t34/t34-keyframes-E3a.png) — 실제 씬.
+
+---
+
+### §5 성공률과 요동의 변화
+
+#### 5-1. 성공 격자 — E3 의 단계별 회복
+
+| 단계 | E3a (gate off) | E3b (gate on) | E3b HOLD chunk | 비고 |
+|---|---:|---:|---:|---|
+| T28 Phase 3 (T26 · T27 · T29 뒤) | **0/6** (grasp 1) | **0/6** (grasp 0) | 274 (`collision` 153 · `uncertified` 125) | |
+| T30 (F1 · F1b · F2 · F3 · F4 · F5) | **2/6** distinct (3/9 전체) | **2/6** | 35 (`collision` 32 · `unverified` 13) | 성공은 전부 ep1807. E3a ep1807 r1 ≡ r2 중복 → distinct 로 셈 |
+| T33 (T31a G1/G2 · T31b · T32 H1–H4 · S1–S3) | **2/6** (grasp 3) | **3/6** (grasp 3) | 59 (`collision` 59) | E3b ep1808 r2 가 E3 에서 ep1808 의 첫 성공 |
+| **T34** (J1 · J2) | **5/6** (grasp 5) | **3/6** (grasp 3) | **0** | 합 8/12, E0 7/12 와 비교 |
+
+**T34 격자 (에피소드 × 반복).** S = success (grasp t / place t), F = 실패 (사과 최대 상승 dz):
+
+| | ep1807 r1 | ep1807 r2 | ep1800 r1 | ep1800 r2 | ep1808 r1 | ep1808 r2 | 합 |
+|---|---|---|---|---|---|---|---:|
+| **E3a T34** | S 112 / 192 | S 144 / 224 | F 0.4 mm | S 168 / 240 | S 400 / 472 | S 416 / 456 | **5/6** |
+| **E3b T34** | S 112 / 200 | S 128 / 208 | F 9.7 mm | S 168 / 240 | F 0.3 mm | F 35.7 mm | **3/6** |
+
+- ep1800 r2 (T33 실패) 와 ep1808 r1 · r2 (E3a) 가 새로 성공했다. E3b 의 ep1808 r2 는 T33 에서 성공했으나 T34 에서 실패했다 (T33: grasp 432 · place 480 → T34: dz 35.7 mm). **같은 조건 두 번이 다르다**(r1 ≠ r2): 정책이 비결정적이고 ESDF 시간 예산이 부하에 민감하다.
+- E3b HOLD 0 · comms HOLD 0 이므로 E3b 실패 3 건은 **HOLD 가 만든 것이 아니다.** 원인은 미측정 (아래 §6).
+- **E3a 와 E3b 의 갈림.** 같은 기하 수정 위에서 gate off 가 5/6, gate on 이 3/6 이다. E3b 실패 3 건에는 HOLD 가 없으므로 게이트 규칙이 만든 차이는 아니다. 그 밖의 원인(정책 비결정성 · 서버 벽시계 예산 · 단독 실행 여부)은 **측정하지 않았다.** 6 회로 두 조건의 차이를 통계적으로 가를 수 없다 (N = 6).
+
+[`figures/t34/t34-success-grid.png`](figures/t34/t34-success-grid.png) — 표 (E0–E3b 전 단계, 이 절의 모든 격자).
+[`figures/t34/t34-apple-z.png`](figures/t34/t34-apple-z.png) — 그래프 (사과 z timeline).
+[`figures/t34/t34-bands-E3a.png`](figures/t34/t34-bands-E3a.png) · [`figures/t34/t34-bands-E3b.png`](figures/t34/t34-bands-E3b.png) — 그래프 (chunk 별 판정 band).
+[`figures/t34/t34-keyframes-E3a.png`](figures/t34/t34-keyframes-E3a.png) · [`figures/t34/t34-keyframes-E3b.png`](figures/t34/t34-keyframes-E3b.png) — 실제 씬 (3인칭 keyframe).
+그 이전 단계: [`figures/t30/t30-success-grid.png`](figures/t30/t30-success-grid.png) · [`figures/t33/t33-success-grid.png`](figures/t33/t33-success-grid.png).
+
+#### 5-2. 요동(oscillation) 지표 — 전과 후
+
+grasp → release 창의 **실행된 왼팔 관절 궤적**에서 잰다 (`qpos` 7 관절, dt = 1/15 s). **부호 반전/s** = 관절 속도(`|v| > 0.02 rad/s` deadband)의 부호가 바뀐 횟수를 창 길이로 나눈 값의 7 관절 합, **jerk RMS** = 3 차 차분(rad/s³)의 제곱평균제곱근, **refined − reference** = 실행 창 8 스텝에서 TO 가 정책 chunk 를 고친 양의 최대. 값은 그룹 중앙값.
+
+| 그룹 | n | 부호 반전/s | jerk RMS | 손끝 평균 곡률 (1/m) | refined − reference 최대 (°) |
+|---|---:|---:|---:|---:|---:|
+| **E2** (기준, T28) | 6 | 1.64 | 5.08 | 10.32 | 2.94 |
+| T30 E3a | 3 | 18.25 | 55.12 | 35.14 | 8.60 |
+| T30 E3b | 2 | 4.74 | 26.69 | 38.06 | 8.61 |
+| T33 E3a | 2 | 1.76 | 5.26 | 10.19 | 3.03 |
+| T33 E3b | 3 | 1.67 | 4.54 | 11.10 | 3.08 |
+| **T34 E3a** | 5 | **1.44** | **5.37** | 10.71 | 2.56 |
+| **T34 E3b** | 3 | **1.44** | **4.35** | 10.11 | 3.27 |
+
+- 요동은 T33(T31a G1/G2 · T32 H1–H3)에서 **E2 수준으로 내려왔고**, T34 에서도 유지된다. E3 의 부호 반전 최대가 T30 E3a 18.25 → T34 1.44, jerk 55.12 → 5.37.
+- T34 의 n 은 grasp → place 가 있는 run 만이다 (ep1800 r1 E3a · E3b, ep1808 r1·r2 E3b 는 창이 없어 제외).
+- 명령(`applied_ctrl.arm`) 쪽 부호 반전/s 도 같이 줄었다: T30 E3a 35.75 · E3b 11.70 → T34 E3a 6.85 · E3b 5.00 (E2 5.42).
+
+[`figures/t34/t34-d1-oscillation-before-after.png`](figures/t34/t34-d1-oscillation-before-after.png) — 그래프 (그룹별 점과 중앙값). [`figures/t33/t33-d1-oscillation-before-after.png`](figures/t33/t33-d1-oscillation-before-after.png) — T33 시점.
+
+#### 5-3. 회귀와 실시간성
+
+- **기준선 불변.** T34 는 **14/15 · 15/15 · −29.031048 mm**, 15 프레임의 `clearance_before` 가 T33 과 같고 `clearance_after` 차이 최대 0.0 mm. (기준선은 legacy 경로라 attach·latch 를 타지 않는다.)
+- **실시간성은 여전히 별도 판정 실패.** 서버 시간(첫 chunk 제외 444 chunk 중앙값): E3a total **3,305.9 ms** (infer 283.3 · AG3S 2,863.9 · TO 142.1 · ESDF 빌드 284.3), p95 4,206.6 ms. E3b total **3,178.5 ms**, 최대 12,139.2 ms. chunk 예산 533 ms 를 넘는다. 이 실험은 동기식 sim 이라 성공률에는 영향이 없다.
+
+[`figures/t34/t34-latency.png`](figures/t34/t34-latency.png) — 그래프.
+
+---
+
+### §6 남은 문제
+
+`T34.verify.json` 의 `not_measured` 와 계획 §5 T34 행에서 그대로 가져왔다. 새로 밝혀진 것이 아니라 **아직 원인을 못 잰 것**의 목록이다.
+
+| # | 남은 것 | 지금 아는 것 | 미측정 |
+|---|---|---|---|
+| 1 | **apple-top 잔상 복셀** | live E3a 에서 held 행 음수 chunk 4 개(ep1807 r1 −1.41 mm · ep1808 r1 −0.74 mm · ep1808 r2 −0.63/−1.83 mm; 앞의 둘은 최근접이 apple, 마지막 둘은 crate). 오프라인에서는 attach chunk 의 최악 행이 사과 위쪽 field 점유(사과 표면 밖 4.9–25.3 mm)를 읽는 예가 ep1807 r1·r2 · E3b ep1807 r1 · ep1808 r1·r2 에 있다 (−13.5 ~ −24.8 mm) | 그 잔상이 어디서 생기는가 |
+| 2 | **E3a ep1800 r2 place 뒤 `uncertified` 27 chunk** | E3a would_hold 28 chunk 중 `uncertified` 27 (ep1800 r2 26 · ep1807 r2 1), `invariant_violation` 27 chunk, 최악 링크 `ee_finger_r2`, 최근접(사과 제외) crate, phase `placed`. 성공 뒤 구간이라 성공/실패는 안 바뀌었다 | **원인 미측정 — 개수만 기록** |
+| 3 | **E3b 실패 3 건** (ep1800 r1 · ep1808 r1 · r2) | HOLD 0 · comms HOLD 0. ep1800 r1 은 t=144 attach 가 t=160 에 회수된 뒤 재attach 없음 | 왜 파지에 실패하는가 (HOLD 가 아님) |
+| 4 | **J2 관측·들기 검사** | 라이브 12 run 의 회수 창에서 `observed_*` 값이 한 번도 채워지지 않음 (`hold_checks` 에 `observed_*` 키 없음). 개도 검사만 라이브에서 작동 | 관측·들기 검사가 실제 상황에서 맞는가 |
+| 5 | **self-filter 복사본이 테이블 점을 지우는 양** (J1 항목) | 구현자 자체 점검(impl.md)만: fused cloud ~6,000 점 중 21–61 점(0.35–1.0 %) | 검증에서 따로 재지 않았다 |
+| 6 | **J3 — coarse layer 의 얇은 벽 구멍** | T33 폐루프 기록(coarse `nx` 벽): 벽 폭 0 인 chunk 가 E3a ep1800 r2 에서 **40/75** (최소 거리 0.0 mm), E3a ep1800 r1 에서 18/75 (그 chunk 의 최소 거리 최대 13.99 mm) | T34 에서는 다시 재지 않았다. 사용자 판정: "J3 는 측정 뒤" |
+| 7 | **`manipulated` ≠ 사과 (파지 전) chunk** | E3a 137 (T28) → 97/333 (T30, distinct) → 44 (T33) → **23** (T34); E3b 240 → 93/332 → 32 → **45**. 정의: manipulated 가 None 이거나 최근접 물체가 apple 이 아닌 chunk | T33·T34 의 분모 미집계. E3b T34 가 늘어난 원인 미측정 (파지 못 한 run 은 파지 전 구간이 길다) |
+| 8 | **N 이 작다** | 조건당 6 회. 같은 조건의 r1 ≠ r2 이므로 E3a 5/6 와 E3b 3/6 의 차이를 통계로 판정할 수 없다 | 더 큰 N 평가 (계획 T25) |
+| 9 | **SQP 반복 수 · 프레임별 여유거리** | 벽시계 예산에 민감해 이 검증에서 인용하지 않았다 | — |
+| 10 | **실시간성** | 서버 total 중앙값 3,306 / 3,179 ms vs 예산 533 ms | AG3S 지각 2,864 ms 가 지배 항 |
+
+**사용자 판정 대기**: T26–T34 커밋(미커밋 상태) · 더 큰 N 평가 · 남은 소결함(1–4, 6)의 우선순위.
+
+---
+
+### 되돌아올 지점 — 고르지 않은 선택지와 전환 신호
+
+| 갈림길 | 고른 것 | 안 고른 것 | 무엇이 보이면 갈아타나 |
+|---|---|---|---|
+| `max_opening` 정의 | 손가락 **구 모델**의 안쪽 간격 **71.46 mm** (fail-closed 방향) | MuJoCo mesh 99.32 mm (`clustering.gripper_max_opening: 0.0993` 한 줄) | 사과 narrowest extent 최대 65.58 mm 까지 **여유 5.88 mm**. 첫 채택 전에 손가락 누수 점이 붙어 5 mm 넘게 넓어져 사과가 `NO_ADMISSIBLE` 이 되는 프레임이 보이면 |
+| S3 의 손 reach | 30 mm | 더 큰 값 | 가려진 쪽 chunk 26 개가 25–35 mm 에 걸려 있다. 이웃으로의 조기 전환이 다시 나타나거나 진짜 전환이 늦으면 |
+| J1 | 중심을 평면 법선으로 **올림** | 반지름을 줄임 | 사과 밑면이 질의 구 밖으로 5.8–12.8 mm 나와 손가락–사과 밑면 충돌이 안 잡히면(구현자 자체 점검) |
+| F1 의 범위 | target-free 층에서 답 받은 권한 행 전부 | 최근접이 사과인 행만 | 마스크 행이 사과 든 fine layer 에서 답을 받아 더 엄격해지는 자리가 문제가 되면 (구현자 분석: esdf_margin 0.05 > 권한 여유 0.02 인 기본 config 에서만 해당) |
+| `--safe-gate` | E3a(off)·E3b(on) 병행 | — | E3b 만 실패하는 원인이 게이트로 밝혀지면 |

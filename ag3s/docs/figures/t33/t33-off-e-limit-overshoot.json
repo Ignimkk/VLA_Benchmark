@@ -1,0 +1,226 @@
+{
+ "source": "outputs/verify/T33/off/e/offline_e.json",
+ "definitions": "T33 offline (e) \u2014 G1: reference-chunk limit overshoot under URDF vs MJCF limits on recorded E3 runs (T28 + T30 E3a/E3b).\n\nPer planning row (local frames.jsonl): Q = layout.chunk_to_trajectory(actions_reference)[:, :8] (the TO plan window, P=K=8),\nq_now = planning-row qpos. Limits = trajopt.limits.build_limits(robot, layout, dt, LimitsConfig(source=...)) with position margin\n0.02 rad (default), velocity/acceleration from URDF in both cases. Overshoot = trajopt.limits.limit_report (position / velocity /\nacceleration, rad) + anchor (|Q[:,0]-q_now| - max_step, as sqp._limit_overshoot). A row 'overshoots' when any entry > 1e-9.\nPer joint: which optimized joint carries the position overshoot (max over steps).",
+ "per_run_position_rows": {
+  "T28/E3a_ep1800_r1": {
+   "urdf": 7,
+   "mjcf": 5
+  },
+  "T28/E3a_ep1800_r2": {
+   "urdf": 3,
+   "mjcf": 0
+  },
+  "T28/E3a_ep1807_r1": {
+   "urdf": 9,
+   "mjcf": 4
+  },
+  "T28/E3a_ep1807_r2": {
+   "urdf": 9,
+   "mjcf": 4
+  },
+  "T28/E3a_ep1808_r1": {
+   "urdf": 10,
+   "mjcf": 0
+  },
+  "T28/E3a_ep1808_r2": {
+   "urdf": 9,
+   "mjcf": 0
+  },
+  "T28/E3b_ep1800_r1": {
+   "urdf": 64,
+   "mjcf": 0
+  },
+  "T28/E3b_ep1800_r2": {
+   "urdf": 3,
+   "mjcf": 0
+  },
+  "T28/E3b_ep1807_r1": {
+   "urdf": 0,
+   "mjcf": 0
+  },
+  "T28/E3b_ep1807_r2": {
+   "urdf": 8,
+   "mjcf": 3
+  },
+  "T28/E3b_ep1808_r1": {
+   "urdf": 7,
+   "mjcf": 0
+  },
+  "T28/E3b_ep1808_r2": {
+   "urdf": 8,
+   "mjcf": 1
+  },
+  "T30/E3a_ep1800_r1": {
+   "urdf": 4,
+   "mjcf": 0
+  },
+  "T30/E3a_ep1800_r2": {
+   "urdf": 4,
+   "mjcf": 0
+  },
+  "T30/E3a_ep1800_r3": {
+   "urdf": 12,
+   "mjcf": 0
+  },
+  "T30/E3a_ep1807_r1": {
+   "urdf": 3,
+   "mjcf": 1
+  },
+  "T30/E3a_ep1807_r2": {
+   "urdf": 3,
+   "mjcf": 0
+  },
+  "T30/E3a_ep1807_r3": {
+   "urdf": 3,
+   "mjcf": 1
+  },
+  "T30/E3a_ep1808_r1": {
+   "urdf": 10,
+   "mjcf": 0
+  },
+  "T30/E3a_ep1808_r2": {
+   "urdf": 10,
+   "mjcf": 0
+  },
+  "T30/E3a_ep1808_r3": {
+   "urdf": 17,
+   "mjcf": 0
+  },
+  "T30/E3b_ep1800_r1": {
+   "urdf": 12,
+   "mjcf": 0
+  },
+  "T30/E3b_ep1800_r2": {
+   "urdf": 13,
+   "mjcf": 0
+  },
+  "T30/E3b_ep1807_r1": {
+   "urdf": 17,
+   "mjcf": 0
+  },
+  "T30/E3b_ep1807_r2": {
+   "urdf": 7,
+   "mjcf": 1
+  },
+  "T30/E3b_ep1808_r1": {
+   "urdf": 13,
+   "mjcf": 0
+  },
+  "T30/E3b_ep1808_r2": {
+   "urdf": 20,
+   "mjcf": 3
+  },
+  "T33/E3a_ep1800_r1": {
+   "urdf": 24,
+   "mjcf": 5
+  },
+  "T33/E3a_ep1800_r2": {
+   "urdf": 17,
+   "mjcf": 4
+  },
+  "T33/E3a_ep1807_r1": {
+   "urdf": 8,
+   "mjcf": 4
+  },
+  "T33/E3a_ep1807_r2": {
+   "urdf": 8,
+   "mjcf": 4
+  },
+  "T33/E3a_ep1808_r1": {
+   "urdf": 20,
+   "mjcf": 8
+  },
+  "T33/E3a_ep1808_r2": {
+   "urdf": 20,
+   "mjcf": 0
+  },
+  "T33/E3b_ep1800_r1": {
+   "urdf": 23,
+   "mjcf": 6
+  },
+  "T33/E3b_ep1800_r2": {
+   "urdf": 0,
+   "mjcf": 0
+  },
+  "T33/E3b_ep1807_r1": {
+   "urdf": 10,
+   "mjcf": 4
+  },
+  "T33/E3b_ep1807_r2": {
+   "urdf": 8,
+   "mjcf": 4
+  },
+  "T33/E3b_ep1808_r1": {
+   "urdf": 19,
+   "mjcf": 8
+  },
+  "T33/E3b_ep1808_r2": {
+   "urdf": 17,
+   "mjcf": 0
+  }
+ },
+ "by_condition": {
+  "T28 E3a": {
+   "rows": 450,
+   "urdf_rows": 47,
+   "urdf_max_deg": 8.378249016814204,
+   "mjcf_rows": 13,
+   "mjcf_max_deg": 5.52628307387076,
+   "mjcf_joints": {
+    "left_arm_1": 13
+   }
+  },
+  "T28 E3b": {
+   "rows": 450,
+   "urdf_rows": 90,
+   "urdf_max_deg": 9.515202306054526,
+   "mjcf_rows": 4,
+   "mjcf_max_deg": 3.667939718645677,
+   "mjcf_joints": {
+    "left_arm_1": 4
+   }
+  },
+  "T30 E3a": {
+   "rows": 675,
+   "urdf_rows": 66,
+   "urdf_max_deg": 9.257212400724805,
+   "mjcf_rows": 2,
+   "mjcf_max_deg": 0.11965367005970212,
+   "mjcf_joints": {
+    "left_arm_1": 2
+   }
+  },
+  "T30 E3b": {
+   "rows": 450,
+   "urdf_rows": 82,
+   "urdf_max_deg": 9.805048213673187,
+   "mjcf_rows": 4,
+   "mjcf_max_deg": 1.3655384447213845,
+   "mjcf_joints": {
+    "left_arm_1": 4
+   }
+  },
+  "T33 E3a": {
+   "rows": 450,
+   "urdf_rows": 97,
+   "urdf_max_deg": 17.52601699486066,
+   "mjcf_rows": 25,
+   "mjcf_max_deg": 2.5260013989007506,
+   "mjcf_joints": {
+    "left_arm_6": 16,
+    "left_arm_1": 9
+   }
+  },
+  "T33 E3b": {
+   "rows": 450,
+   "urdf_rows": 77,
+   "urdf_max_deg": 19.10564850458785,
+   "mjcf_rows": 22,
+   "mjcf_max_deg": 4.105632908627939,
+   "mjcf_joints": {
+    "left_arm_6": 14,
+    "left_arm_1": 8
+   }
+  }
+ }
+}

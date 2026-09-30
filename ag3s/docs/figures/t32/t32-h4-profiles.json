@@ -1,0 +1,66 @@
+{
+ "figure": "benchmark/ag3s/docs/figures/t32/t32-h4-profiles.png",
+ "verify_json": "benchmark/ag3s/docs/handoff/T32.h4.verify.json",
+ "script": "outputs/verify/T32/h4/figs.py",
+ "recorded_band_mm": {
+  "coarse": {
+   "covered": true,
+   "width_lt0_mm": 47.0,
+   "width_lt5mm_mm": 56.0,
+   "min_mm": -35.63179937182363,
+   "segments_lt0_m": [
+    [
+     -0.08549999999999994,
+     -0.06649999999999992
+    ],
+    [
+     0.08350000000000021,
+     0.11050000000000024
+    ]
+   ],
+   "width_lt0_mm_lo": 19.5,
+   "width_lt0_mm_hi": 27.5
+  },
+  "fine": {
+   "covered": true,
+   "width_lt0_mm": 55.5,
+   "width_lt5mm_mm": 78.5,
+   "min_mm": -17.921408750782188,
+   "segments_lt0_m": [
+    [
+     -0.08949999999999994,
+     -0.05749999999999991
+    ],
+    [
+     0.08550000000000021,
+     0.10800000000000023
+    ]
+   ],
+   "width_lt0_mm_lo": 32.5,
+   "width_lt0_mm_hi": 23.0
+  }
+ },
+ "rebuilt_server": {
+  "fine": 55.5,
+  "coarse": 47.0,
+  "tsdf_lt0": 55.0
+ },
+ "synthetic_T16": {
+  "matrix/T16/crate_h/head_1side": {
+   "fine": 40.0,
+   "tsdf_lt0": 45.0
+  },
+  "matrix/T16/crate_h/head_2side": {
+   "fine": 70.0,
+   "tsdf_lt0": 70.0
+  },
+  "matrix/T16/crate_h/normal_1side": {
+   "fine": 50.0,
+   "tsdf_lt0": 60.0
+  },
+  "matrix/T16/crate_h/normal_2side": {
+   "fine": 80.0,
+   "tsdf_lt0": 100.0
+  }
+ }
+}

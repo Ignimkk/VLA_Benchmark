@@ -1,0 +1,152 @@
+{
+ "rows": [
+  "window t",
+  "chunks",
+  "recorded dev ≥ 8°",
+  "recorded dev = 0",
+  "SQP iterations",
+  "returned",
+  "plan-join disc. ≥ 0.14 rad",
+  "ref worst link",
+  "ref worst tier",
+  "ref worst GT nearest",
+  "final worst GT nearest",
+  "ref beyond TO pos. limit (chunks)",
+  "max overshoot (rad)",
+  "ref beyond MuJoCo range (chunks)",
+  "ablation median dev: replay",
+  "ablation median dev: no_collision",
+  "ablation median dev: no_limits",
+  "ablation median dev: no_continuity",
+  "ablation median dev: no_smooth",
+  "ablation median dev: replay_3iter"
+ ],
+ "cols": [
+  "E3a_ep1807_r1",
+  "E3a_ep1807_r3",
+  "E3b_ep1807_r1",
+  "E3b_ep1807_r2"
+ ],
+ "cells": [
+  [
+   "120–179",
+   "144–328",
+   "112–296",
+   "144–384"
+  ],
+  [
+   "8",
+   "24",
+   "24",
+   "31"
+  ],
+  [
+   "8",
+   "15",
+   "20",
+   "25"
+  ],
+  [
+   "0",
+   "7",
+   "1",
+   "3"
+  ],
+  [
+   "{1: 8}",
+   "{1: 24}",
+   "{1: 24}",
+   "{1: 31}"
+  ],
+  [
+   "{accepted: 7, best_unaccepted: 1}",
+   "{accepted: 16, best_unaccepted: 1, initial: 7}",
+   "{accepted: 21, initial: 1, best_unaccepted: 2}",
+   "{accepted: 26, best_unaccepted: 2, initial: 3}"
+  ],
+  [
+   "5",
+   "11",
+   "15",
+   "15"
+  ],
+  [
+   "{held_point: 5, ee_finger_l2: 3}",
+   "{ee_finger_l1: 8, ee_finger_l2: 12, held_point: 4}",
+   "{ee_finger_l1: 5, ee_finger_l2: 11, held_point: 8}",
+   "{ee_finger_l1: 7, ee_finger_l2: 16, held_point: 8}"
+  ],
+  [
+   "{fine: 4, coarse: 4}",
+   "{fine: 15, coarse: 9}",
+   "{fine: 10, coarse: 14}",
+   "{fine: 18, coarse: 13}"
+  ],
+  [
+   "{apple: 7, crate: 1}",
+   "{apple: 23, crate: 1}",
+   "{apple: 23, crate: 1}",
+   "{apple: 30, crate: 1}"
+  ],
+  [
+   "{apple: 7, crate: 1}",
+   "{apple: 23, crate: 1}",
+   "{apple: 23, crate: 1}",
+   "{apple: 30, crate: 1}"
+  ],
+  [
+   "2 {left_arm_1: 2}",
+   "3 {left_arm_1: 2, left_arm_5: 1}",
+   "17 {left_arm_1: 17}",
+   "7 {left_arm_1: 7}"
+  ],
+  [
+   "0.0083",
+   "0.0346",
+   "0.0266",
+   "0.0378"
+  ],
+  [
+   "0",
+   "0",
+   "0",
+   "0"
+  ],
+  [
+   "8.60° (≥8°: 7)",
+   "8.59° (≥8°: 15)",
+   "8.59° (≥8°: 20)",
+   "8.60° (≥8°: 25)"
+  ],
+  [
+   "3.34° (≥8°: 0)",
+   "2.22° (≥8°: 0)",
+   "2.75° (≥8°: 0)",
+   "3.22° (≥8°: 0)"
+  ],
+  [
+   "8.60° (≥8°: 6)",
+   "7.86° (≥8°: 12)",
+   "8.01° (≥8°: 12)",
+   "8.60° (≥8°: 20)"
+  ],
+  [
+   "8.60° (≥8°: 7)",
+   "8.59° (≥8°: 15)",
+   "8.60° (≥8°: 18)",
+   "8.60° (≥8°: 25)"
+  ],
+  [
+   "8.60° (≥8°: 7)",
+   "8.59° (≥8°: 15)",
+   "8.59° (≥8°: 20)",
+   "8.60° (≥8°: 25)"
+  ],
+  [
+   "9.04° (≥8°: 6)",
+   "4.42° (≥8°: 6)",
+   "5.28° (≥8°: 6)",
+   "6.03° (≥8°: 14)"
+  ]
+ ]
+}

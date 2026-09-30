@@ -1,0 +1,111 @@
+{
+ "run": "E3b_ep1807_r1",
+ "definitions": "T33 copy of T31-diag d4_anim.py: T33 records (common33.Run), held object = recorded T32 held spheres on ee_left (circles, reference amber / refined blue),\nwindow = grasp..release from T33/d1/d1_oscillation.json (run key T33_<run>). Output figures/t33/t33-place-esdf-anim-<run>.mp4.\n--- original ---\nT31-diag D4 animation \u2014 composite ESDF (the value the TO reads: CuroboEsdfField.distance = min over covering tiers) on two\nplanes that follow the hand, with reference vs refined 8-step finger trajectories, over grasp..release of one run.\n\nusage: ... d4_anim.py RUN\nPer chunk: plane xz at y = mean left-finger-sphere y of the reference step 0; plane yz at x = the same point's x. Field sampled every\n4 mm. Overlays: reference (amber, dashed) and refined (blue) mean-finger path over 8 steps with the current step's finger spheres\n(circles) and held points; executed fingertip trail (ink; D1 path, ee_finger_l1/l2 body midpoint) up to the current control row;\nGT crate box sections; GT apple centre (green). 8 video frames per chunk (one per control row t..t+7), right panel = the recorded\nthird_person_front.mp4 frame of that control row. Chunk HOLD (E3b gate) is written in the title.\n",
+ "window": [
+  120,
+  200
+ ],
+ "fps": 8,
+ "frames": [
+  {
+   "t": 120,
+   "plane_y": 0.30628664034701963,
+   "plane_x": 0.5866775653625081,
+   "refined_minus_reference_deg": 0.0,
+   "n_executed": 8,
+   "n_control": 8,
+   "gate": "execute"
+  },
+  {
+   "t": 128,
+   "plane_y": 0.303924813375659,
+   "plane_x": 0.5747982939830915,
+   "refined_minus_reference_deg": 0.0,
+   "n_executed": 8,
+   "n_control": 8,
+   "gate": "execute"
+  },
+  {
+   "t": 136,
+   "plane_y": 0.27147549596747045,
+   "plane_x": 0.5618497813590037,
+   "refined_minus_reference_deg": 1.7643571774813573,
+   "n_executed": 8,
+   "n_control": 8,
+   "gate": "execute"
+  },
+  {
+   "t": 144,
+   "plane_y": 0.16901385161672763,
+   "plane_x": 0.5572692961411854,
+   "refined_minus_reference_deg": 0.0,
+   "n_executed": 8,
+   "n_control": 8,
+   "gate": "execute"
+  },
+  {
+   "t": 152,
+   "plane_y": 0.04503998763859822,
+   "plane_x": 0.5361598970481999,
+   "refined_minus_reference_deg": 0.0,
+   "n_executed": 8,
+   "n_control": 8,
+   "gate": "execute"
+  },
+  {
+   "t": 160,
+   "plane_y": -0.06634318281883989,
+   "plane_x": 0.4973319925519522,
+   "refined_minus_reference_deg": 2.5991304114007394,
+   "n_executed": 8,
+   "n_control": 8,
+   "gate": "execute"
+  },
+  {
+   "t": 168,
+   "plane_y": -0.094577113736614,
+   "plane_x": 0.4858152889704275,
+   "refined_minus_reference_deg": 1.931120408213744,
+   "n_executed": 8,
+   "n_control": 8,
+   "gate": "execute"
+  },
+  {
+   "t": 176,
+   "plane_y": -0.09762998281521613,
+   "plane_x": 0.4889643104352462,
+   "refined_minus_reference_deg": 3.1194020354581835,
+   "n_executed": 8,
+   "n_control": 8,
+   "gate": "execute"
+  },
+  {
+   "t": 184,
+   "plane_y": -0.08683596389166096,
+   "plane_x": 0.498270869665856,
+   "refined_minus_reference_deg": 0.9099055282329338,
+   "n_executed": 8,
+   "n_control": 8,
+   "gate": "execute"
+  },
+  {
+   "t": 192,
+   "plane_y": -0.07635591941684218,
+   "plane_x": 0.5044123727558467,
+   "refined_minus_reference_deg": 0.2743243027298071,
+   "n_executed": 8,
+   "n_control": 8,
+   "gate": "execute"
+  },
+  {
+   "t": 200,
+   "plane_y": -0.07749810818065045,
+   "plane_x": 0.4959700436058356,
+   "refined_minus_reference_deg": 0.42716003069259745,
+   "n_executed": 8,
+   "n_control": 8,
+   "gate": "execute"
+  }
+ ],
+ "n_frames": 88
+}

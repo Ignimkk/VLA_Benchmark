@@ -1,0 +1,102 @@
+{
+ "source": [
+  "off_0ab_summary.json",
+  "off_0c.json",
+  "off_0d.json",
+  "off_0e_summary.json",
+  "P1-3/p13b_selffilter_summary.json",
+  "P1-2/p12_records.json"
+ ],
+ "rows": [
+  [
+   "0a t14 A",
+   "manipulated != apple, pre-grasp / post-grasp",
+   "-",
+   "0/30 | 0/0 (switched id 0)"
+  ],
+  [
+   "0a t14 B",
+   "manipulated != apple, pre-grasp / post-grasp",
+   "-",
+   "0/30 | 0/0 (switched id 0)"
+  ],
+  [
+   "0a t14",
+   "apple cluster narrowest extent (mm)",
+   "-",
+   "n 15 min 25.9 p50 45.9 max 65.6; margin 5.9"
+  ],
+  [
+   "0b t14 A",
+   "gate refused (invariant_violation) / ball radius mm",
+   "-",
+   "0 / 41.1-60.9 (centre nearest {'apple': 30})"
+  ],
+  [
+   "0a t17 A",
+   "manipulated != apple, pre-grasp / post-grasp",
+   "-",
+   "0/17 | 57/58 (switched id 27)"
+  ],
+  [
+   "0a t17 B",
+   "manipulated != apple, pre-grasp / post-grasp",
+   "-",
+   "0/17 | 57/58 (switched id 0)"
+  ],
+  [
+   "0a t17",
+   "apple cluster narrowest extent (mm)",
+   "-",
+   "n 12 min 8.6 p50 42.0 max 55.5; margin 15.9"
+  ],
+  [
+   "0b t17 A",
+   "gate refused (invariant_violation) / ball radius mm",
+   "-",
+   "0 / 48.2-100.4 (centre nearest {'pear': 27, 'orange': 30, 'apple': 18})"
+  ],
+  [
+   "0c t14",
+   "E3 finger spheres: centre offset / pair gap model-real (mm, median)",
+   "45.5 / -90.7",
+   "4.0 / -1.0"
+  ],
+  [
+   "0c t16",
+   "E3 finger spheres: centre offset / pair gap model-real (mm, median)",
+   "45.7 / -91.0",
+   "4.0 / -1.0"
+  ],
+  [
+   "0c t17",
+   "E3 finger spheres: centre offset / pair gap model-real (mm, median)",
+   "45.7 / -91.0",
+   "4.0 / -1.0"
+  ],
+  [
+   "0d t16",
+   "HOLD chunks (n=25): worst point inside apple",
+   "T16 model, closed fingers: 5 (P1-2 recorded apple-nearest 16)",
+   "T16 model: 12 | E3 model: 12"
+  ],
+  [
+   "0d t16",
+   "HOLD worst nearest body",
+   "{'apple': 5, 'orange': 1, 'table': 19}",
+   "{'apple': 15, 'crate': 2, 'table': 8} | {'apple': 15, 'crate': 2, 'orange': 2, 'table': 6}"
+  ],
+  [
+   "0e t14",
+   "robot leak px / apple retention / apple whole-deleted frames",
+   "36037 / 0.887 / 0",
+   "1 / 1.000 / 0"
+  ],
+  [
+   "0e t17",
+   "robot leak px / apple retention / apple whole-deleted frames",
+   "54106 / 0.472 / 17",
+   "2 / 0.919 / 0"
+  ]
+ ]
+}

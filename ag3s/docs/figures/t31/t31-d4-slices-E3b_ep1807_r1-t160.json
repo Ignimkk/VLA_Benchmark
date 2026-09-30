@@ -1,0 +1,109 @@
+{
+ "run": "E3b_ep1807_r1",
+ "t": 160,
+ "server_chunk": "server_8206/server_constraints/run_0000/chunk_00020.npz",
+ "attached": true,
+ "crate_centre_base_m": [
+  0.5169838638835123,
+  -0.015509121079819737,
+  0.8799905973343883
+ ],
+ "crate_rim_z_base_m": 0.9399912000455201,
+ "apple_centre_base_m": [
+  0.4951042580665477,
+  -0.08603400038657129,
+  1.1358408662153672
+ ],
+ "fine_window": {
+  "origin": [
+   0.17171981453895568,
+   -0.2560008290410042,
+   0.8129372549057006
+  ],
+  "shape": [
+   128,
+   128,
+   128
+  ],
+  "voxel_m": 0.005
+ },
+ "target_free_recorded": false,
+ "panels": {
+  "fine_0": {
+   "plane_axis": "z",
+   "plane_value_m": 0.93499120004552,
+   "covered_fraction": 0.7748607179328085,
+   "min_mm": -16.378292871642547,
+   "n_samples_lt0": 3797,
+   "n_samples_lt5mm": 6149,
+   "n_samples": 77361
+  },
+  "coarse_0": {
+   "plane_axis": "z",
+   "plane_value_m": 0.93499120004552,
+   "covered_fraction": 1.0,
+   "min_mm": -25.035462958645994,
+   "n_samples_lt0": 2014,
+   "n_samples_lt5mm": 3916,
+   "n_samples": 77361
+  },
+  "fine_1": {
+   "plane_axis": "z",
+   "plane_value_m": 1.1358408662153672,
+   "covered_fraction": 0.7748607179328085,
+   "min_mm": -21.908821862848093,
+   "n_samples_lt0": 1276,
+   "n_samples_lt5mm": 1964,
+   "n_samples": 77361
+  },
+  "coarse_1": {
+   "plane_axis": "z",
+   "plane_value_m": 1.1358408662153672,
+   "covered_fraction": 1.0,
+   "min_mm": -19.561706211977494,
+   "n_samples_lt0": 1104,
+   "n_samples_lt5mm": 1443,
+   "n_samples": 77361
+  },
+  "fine_2": {
+   "plane_axis": "y",
+   "plane_value_m": -0.015509121079819737,
+   "covered_fraction": 0.9061138754498028,
+   "min_mm": -24.879903528791168,
+   "n_samples_lt0": 1852,
+   "n_samples_lt5mm": 3403,
+   "n_samples": 58081
+  },
+  "coarse_2": {
+   "plane_axis": "y",
+   "plane_value_m": -0.015509121079819737,
+   "covered_fraction": 1.0,
+   "min_mm": -53.595464695134,
+   "n_samples_lt0": 4613,
+   "n_samples_lt5mm": 6011,
+   "n_samples": 58081
+  }
+ },
+ "recorded_dev_deg": 8.602490070942245,
+ "wall_profile": {
+  "fine": {
+   "covered": true,
+   "width_lt0_mm": 58.0,
+   "width_lt5mm_mm": 80.5,
+   "width_lt10mm_mm": 113.0,
+   "min_mm": -17.1000929706648,
+   "gt_wall_thickness_mm_each": 8.0,
+   "n_gt_walls_on_line": 2
+  },
+  "coarse": {
+   "covered": true,
+   "width_lt0_mm": 46.0,
+   "width_lt5mm_mm": 54.5,
+   "width_lt10mm_mm": 63.5,
+   "min_mm": -52.53819894062946,
+   "gt_wall_thickness_mm_each": 8.0,
+   "n_gt_walls_on_line": 2
+  }
+ },
+ "crate_box_corners_inside_fine_window": 1.0
+}

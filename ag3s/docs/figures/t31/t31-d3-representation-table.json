@@ -1,0 +1,49 @@
+{
+ "cols": [
+  "object",
+  "distance field (what the TO reads)",
+  "other geometry",
+  "sphere / primitive?",
+  "code"
+ ],
+ "rows": [
+  [
+   "crate (destination)",
+   "TSDF → ESDF voxels (coarse 20 mm + fine 5 mm)",
+   "label 'destination' on its points (margin 20 mm for held points whose nearest label is destination; placed_fn AABB)",
+   "none — n_candidates 0 in 375/375 chunks; n_static_shapes 0 in 375/375",
+   "pipeline.py:878, 1627-1628; linearize.py:697-703; placed.py:51"
+  ],
+  [
+   "table",
+   "voxels (exclude_support_surfaces False)",
+   "support planes built but TO use_support_planes False",
+   "none",
+   "serve_safe.py:713, 1187"
+  ],
+  [
+   "held apple (after attach)",
+   "attached points = query points, radius 0 (25 / 33 pts); seeds removed only at those voxels",
+   "1 bounding sphere (fit_sphere, r 30.6–32.3 mm) used only for the is-object margin test",
+   "1 sphere (held apple, not crate)",
+   "attached.py:177-187; clearance.py:115-155; linearize.py:704-722"
+  ],
+  [
+   "target apple (before grasp)",
+   "voxels + target-free fine layer",
+   "target-free exclusion ball (r 35.6–48.0 mm), nearest GT centre apple (orange after E3b r2 detach)",
+   "ball (target, not crate)",
+   "curobo_builder.py:1002"
+  ],
+  [
+   "robot",
+   "self-filter 587 spheres; constraint 122 spheres (links gripper)",
+   "",
+   "robot spheres",
+   "serve_safe log"
+  ]
+ ],
+ "n_chunks": 375,
+ "n_candidates_0": 375,
+ "n_static_shapes_0": 375
+}

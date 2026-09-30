@@ -1,0 +1,923 @@
+{
+ "source": [
+  "outputs/verify/T34/off/band_T33_E3a.json",
+  "outputs/verify/T34/off/band_T33_E3b.json",
+  "outputs/verify/T34/off/band_T34_E3a.json",
+  "outputs/verify/T34/off/band_T34_E3b.json"
+ ],
+ "definition": "T34 verifier \u2014 thickness of the table's zero-distance band in the recorded FINE ESDF layer (esdf_distance, 5 mm).\n\nPer chunk npz of a run (every STRIDE-th chunk):\n  plane    : TLS plane of support_mask points with base z > 0.5 m (normal up).\n  columns  : xy grid, 20 mm spacing, over the fine layer footprint; kept when\n             (a) >= 3 support points within 10 mm (xy) of the column (table under it),\n             (b) the column is > 90 mm (xy) from every GT fruit centre (apple/banana/orange/pear, planning-row\n                 object_poses -> base frame) and outside the GT crate footprint + 60 mm (crate half-extents from the\n                 recorded destination extents are not used; a 0.25 m radius around the crate centre is excluded),\n             (c) eikonal above the band: d(h) for h = +20..+45 mm (plane normal) fits d = s h + c with s in [0.9, 1.1],\n                 max residual < 1.0 mm (table is the nearest surface).\n  sets     : 'table' = columns passing (a)-(c); 'ring' = the subset 60-120 mm (xy) from the GT apple centre (fruit\n             exclusion (b) not applied to the apple for this set, other fruits still > 90 mm).\n  layers   : 'fine' = recorded esdf_distance (5 mm) alone; 'coarse' = esdf_coarse_distance (20 mm) alone;\n             'combined' = fixed_input_ablation.build_field (min over layers where covered = what the TO reads).\n             (c) is evaluated per layer.\n  profile  : trilinear d(h) at h = -60..+45 mm, step 0.5 mm, along the plane normal.\n  band     : the contiguous run of h with d(h) <= 0.1 mm that contains the h closest to 0 among such h;\n             above_mm = its top h, below_mm = -(its bottom h); bias_mm = 20 - d(+20 mm) (= h - d above the band).\nPer run: pooled columns over the sampled chunks -> median / p90 of above_mm, below_mm, total (above+below), bias_mm.\nusage: band.py REC_DIR PORT RUNS_JSON(analysis json with runs->chunks->server_chunk, or 'scan') OUT.json [STRIDE]\n",
+ "runs": {
+  "T33 E3a_ep1800_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 4.0,
+     "p90": 6.0,
+     "n_columns": 2027
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.98,
+     "p90": 5.95,
+     "n_columns": 2027
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 1948
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.56,
+     "p90": 8.76,
+     "n_columns": 1948
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 1988
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.56,
+     "p90": 8.76,
+     "n_columns": 1988
+    }
+   }
+  },
+  "T33 E3a_ep1800_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 3.0,
+     "p90": 5.0,
+     "n_columns": 2138
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.25,
+     "p90": 5.16,
+     "n_columns": 2138
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 2065
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.51,
+     "p90": 8.75,
+     "n_columns": 2065
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 2093
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.51,
+     "p90": 8.75,
+     "n_columns": 2093
+    }
+   }
+  },
+  "T33 E3a_ep1807_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 4.0,
+     "p90": 5.5,
+     "n_columns": 2776
+    },
+    "bias_at_20mm_mm": {
+     "median": 4.13,
+     "p90": 5.76,
+     "n_columns": 2776
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2829
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.68,
+     "p90": 8.95,
+     "n_columns": 2829
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2791
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.68,
+     "p90": 8.96,
+     "n_columns": 2791
+    }
+   }
+  },
+  "T33 E3a_ep1807_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 4.0,
+     "p90": 6.0,
+     "n_columns": 3199
+    },
+    "bias_at_20mm_mm": {
+     "median": 4.32,
+     "p90": 6.01,
+     "n_columns": 3199
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 3312
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.65,
+     "p90": 8.97,
+     "n_columns": 3312
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 3207
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.66,
+     "p90": 8.97,
+     "n_columns": 3207
+    }
+   }
+  },
+  "T33 E3a_ep1808_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 3.5,
+     "p90": 6.0,
+     "n_columns": 2610
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.74,
+     "p90": 5.9,
+     "n_columns": 2610
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2507
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.64,
+     "p90": 8.91,
+     "n_columns": 2507
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2527
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.64,
+     "p90": 8.9,
+     "n_columns": 2527
+    }
+   }
+  },
+  "T33 E3a_ep1808_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 3.0,
+     "p90": 5.5,
+     "n_columns": 3348
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.41,
+     "p90": 5.5,
+     "n_columns": 3348
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 3241
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.63,
+     "p90": 8.91,
+     "n_columns": 3241
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 3267
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.62,
+     "p90": 8.9,
+     "n_columns": 3267
+    }
+   }
+  },
+  "T33 E3b_ep1800_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 3.5,
+     "p90": 6.0,
+     "n_columns": 1885
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.74,
+     "p90": 5.99,
+     "n_columns": 1885
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 1827
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.54,
+     "p90": 8.73,
+     "n_columns": 1827
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 1868
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.54,
+     "p90": 8.72,
+     "n_columns": 1868
+    }
+   }
+  },
+  "T33 E3b_ep1800_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 2.5,
+     "p90": 5.0,
+     "n_columns": 2086
+    },
+    "bias_at_20mm_mm": {
+     "median": 2.81,
+     "p90": 5.06,
+     "n_columns": 2086
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 1982
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.73,
+     "p90": 8.79,
+     "n_columns": 1982
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 2003
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.73,
+     "p90": 8.79,
+     "n_columns": 2003
+    }
+   }
+  },
+  "T33 E3b_ep1807_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 4.0,
+     "p90": 5.5,
+     "n_columns": 2783
+    },
+    "bias_at_20mm_mm": {
+     "median": 4.27,
+     "p90": 5.62,
+     "n_columns": 2783
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2793
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.69,
+     "p90": 8.96,
+     "n_columns": 2793
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2787
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.69,
+     "p90": 8.96,
+     "n_columns": 2787
+    }
+   }
+  },
+  "T33 E3b_ep1807_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 4.0,
+     "p90": 5.5,
+     "n_columns": 2669
+    },
+    "bias_at_20mm_mm": {
+     "median": 4.31,
+     "p90": 5.81,
+     "n_columns": 2669
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2711
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.66,
+     "p90": 8.91,
+     "n_columns": 2711
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2691
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.66,
+     "p90": 8.91,
+     "n_columns": 2691
+    }
+   }
+  },
+  "T33 E3b_ep1808_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 3.0,
+     "p90": 6.0,
+     "n_columns": 3207
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.95,
+     "p90": 6.16,
+     "n_columns": 3207
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 3101
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.69,
+     "p90": 8.89,
+     "n_columns": 3101
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 3145
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.69,
+     "p90": 8.89,
+     "n_columns": 3145
+    }
+   }
+  },
+  "T33 E3b_ep1808_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 4.0,
+     "p90": 5.5,
+     "n_columns": 2632
+    },
+    "bias_at_20mm_mm": {
+     "median": 4.26,
+     "p90": 5.69,
+     "n_columns": 2632
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2553
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.73,
+     "p90": 8.94,
+     "n_columns": 2553
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2576
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.73,
+     "p90": 8.94,
+     "n_columns": 2576
+    }
+   }
+  },
+  "T34 E3a_ep1800_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 3.5,
+     "p90": 6.0,
+     "n_columns": 1885
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.74,
+     "p90": 5.99,
+     "n_columns": 1885
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 1827
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.54,
+     "p90": 8.73,
+     "n_columns": 1827
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 1868
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.54,
+     "p90": 8.72,
+     "n_columns": 1868
+    }
+   }
+  },
+  "T34 E3a_ep1800_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 3.5,
+     "p90": 5.5,
+     "n_columns": 2857
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.78,
+     "p90": 5.69,
+     "n_columns": 2857
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 2761
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.53,
+     "p90": 8.76,
+     "n_columns": 2761
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 2825
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.53,
+     "p90": 8.76,
+     "n_columns": 2825
+    }
+   }
+  },
+  "T34 E3a_ep1807_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 2.5,
+     "p90": 5.5,
+     "n_columns": 3316
+    },
+    "bias_at_20mm_mm": {
+     "median": 2.84,
+     "p90": 5.55,
+     "n_columns": 3316
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 3307
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.61,
+     "p90": 8.93,
+     "n_columns": 3307
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 3284
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.62,
+     "p90": 8.94,
+     "n_columns": 3284
+    }
+   }
+  },
+  "T34 E3a_ep1807_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 3.0,
+     "p90": 5.0,
+     "n_columns": 2583
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.34,
+     "p90": 5.13,
+     "n_columns": 2583
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2624
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.68,
+     "p90": 8.94,
+     "n_columns": 2624
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2595
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.69,
+     "p90": 8.94,
+     "n_columns": 2595
+    }
+   }
+  },
+  "T34 E3a_ep1808_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 3.5,
+     "p90": 6.0,
+     "n_columns": 2542
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.87,
+     "p90": 6.05,
+     "n_columns": 2542
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2450
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.77,
+     "p90": 8.99,
+     "n_columns": 2450
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2471
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.76,
+     "p90": 8.99,
+     "n_columns": 2471
+    }
+   }
+  },
+  "T34 E3a_ep1808_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 4.0,
+     "p90": 5.5,
+     "n_columns": 2739
+    },
+    "bias_at_20mm_mm": {
+     "median": 4.07,
+     "p90": 5.62,
+     "n_columns": 2739
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2646
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.74,
+     "p90": 8.94,
+     "n_columns": 2646
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2678
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.74,
+     "p90": 8.94,
+     "n_columns": 2678
+    }
+   }
+  },
+  "T34 E3b_ep1800_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 3.0,
+     "p90": 5.5,
+     "n_columns": 1924
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.24,
+     "p90": 5.67,
+     "n_columns": 1924
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 1836
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.55,
+     "p90": 8.78,
+     "n_columns": 1836
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 1873
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.55,
+     "p90": 8.78,
+     "n_columns": 1873
+    }
+   }
+  },
+  "T34 E3b_ep1800_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 4.0,
+     "p90": 5.5,
+     "n_columns": 2251
+    },
+    "bias_at_20mm_mm": {
+     "median": 4.2,
+     "p90": 5.58,
+     "n_columns": 2251
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 2188
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.57,
+     "p90": 8.8,
+     "n_columns": 2188
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 8.5,
+     "n_columns": 2239
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.56,
+     "p90": 8.8,
+     "n_columns": 2239
+    }
+   }
+  },
+  "T34 E3b_ep1807_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 4.0,
+     "p90": 6.0,
+     "n_columns": 3376
+    },
+    "bias_at_20mm_mm": {
+     "median": 4.52,
+     "p90": 6.04,
+     "n_columns": 3376
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 3234
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.65,
+     "p90": 8.93,
+     "n_columns": 3234
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 3375
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.64,
+     "p90": 8.93,
+     "n_columns": 3375
+    }
+   }
+  },
+  "T34 E3b_ep1807_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 3.0,
+     "p90": 6.0,
+     "n_columns": 2486
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.44,
+     "p90": 5.93,
+     "n_columns": 2486
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2531
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.73,
+     "p90": 8.98,
+     "n_columns": 2531
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2537
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.73,
+     "p90": 8.99,
+     "n_columns": 2537
+    }
+   }
+  },
+  "T34 E3b_ep1808_r1": {
+   "fine": {
+    "above_mm": {
+     "median": 3.5,
+     "p90": 6.0,
+     "n_columns": 2610
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.74,
+     "p90": 5.9,
+     "n_columns": 2610
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2507
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.64,
+     "p90": 8.91,
+     "n_columns": 2507
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 2527
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.64,
+     "p90": 8.9,
+     "n_columns": 2527
+    }
+   }
+  },
+  "T34 E3b_ep1808_r2": {
+   "fine": {
+    "above_mm": {
+     "median": 3.0,
+     "p90": 5.5,
+     "n_columns": 3348
+    },
+    "bias_at_20mm_mm": {
+     "median": 3.41,
+     "p90": 5.5,
+     "n_columns": 3348
+    }
+   },
+   "coarse": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 3241
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.63,
+     "p90": 8.91,
+     "n_columns": 3241
+    }
+   },
+   "combined": {
+    "above_mm": {
+     "median": 8.5,
+     "p90": 9.0,
+     "n_columns": 3267
+    },
+    "bias_at_20mm_mm": {
+     "median": 8.62,
+     "p90": 8.9,
+     "n_columns": 3267
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "definitions": "T31-diag D4 \u2014 occupied voxels coloured by GT nearest body (the label layer is not recorded).\n\nusage: MUJOCO_GL=osmesa PYTHONPATH=outputs/verify/T31diag/snap .venv-ag3s/bin/python d4_voxels.py RUN T_FIG [--all]\nOccupied voxel := recorded grid value d <= voxel/2 (surface or inside), per layer (fine 5 mm: whole window; coarse 20 mm: within the\nfine window box + 0.1 m). Voxel centre (base = world here) -> min mj_geomDistance to every collision geom (robot included; geoms\npre-filtered by |centre - p| - rbound < 0.06 m). Class = body of the nearest geom: crate / table / apple / other_fruit / robot /\nother; if that distance > 30 mm the class is 'no_gt_surface_30mm'. With --all: the same counts for every window chunk (fine layer).\n",
+ "t": 240,
+ "fine_n_occupied": 51844,
+ "fine_class_counts": {
+  "crate": 36129,
+  "other_fruit": 818,
+  "table": 296,
+  "no_gt_surface_30mm": 12822,
+  "apple": 1745,
+  "robot": 34
+ },
+ "coarse_n_occupied_in_box": 6160,
+ "coarse_class_counts": {
+  "table": 5053,
+  "crate": 755,
+  "other_fruit": 73,
+  "no_gt_surface_30mm": 246,
+  "apple": 31,
+  "robot": 2
+ },
+ "figure": "/mnt/dev/work/benchmark/ag3s/docs/figures/t31/t31-d4-voxels3d-E3b_ep1807_r1-t240.png"
+}

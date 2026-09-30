@@ -1,0 +1,258 @@
+{
+ "figure": "benchmark/ag3s/docs/figures/t32/t32-h4-bandwidth-vs-param.png",
+ "verify_json": "benchmark/ag3s/docs/handoff/T32.h4.verify.json",
+ "script": "outputs/verify/T32/h4/figs.py",
+ "trunc_chunk30_fine": {
+  "10": 0.0,
+  "15": 0.0,
+  "20": 12.5,
+  "30": 24.5,
+  "40": 42.5,
+  "60": 55.5,
+  "80": 101.0
+ },
+ "trunc_chunk30_coarse": {
+  "10": 0.0,
+  "15": 0.0,
+  "20": 0.0,
+  "30": 14.0,
+  "40": 42.0,
+  "60": 47.0,
+  "80": 88.0
+ },
+ "trunc_chunk30_tsdf": {
+  "10": 15.0,
+  "15": 20.0,
+  "20": 25.0,
+  "30": 35.0,
+  "40": 45.0,
+  "60": 55.0,
+  "80": 100.0
+ },
+ "trunc_chunk16_fine": {
+  "20": 6.5,
+  "30": 11.0,
+  "40": 39.0,
+  "60": 50.0,
+  "80": 97.5
+ },
+ "trunc_chunk20_fine": {
+  "20": 12.5,
+  "30": 23.0,
+  "40": 50.0,
+  "60": 58.0,
+  "80": 103.0
+ },
+ "trunc_chunk36_fine": {
+  "20": 12.5,
+  "30": 24.0,
+  "40": 44.5,
+  "60": 55.0,
+  "80": 98.0
+ },
+ "synth_trunc_head_1side": {
+  "fine": {
+   "10": 0.0,
+   "15": 0.0,
+   "20": 10.0,
+   "30": 18.0,
+   "40": 20.0,
+   "60": 40.0,
+   "80": 55.0
+  },
+  "tsdf": {
+   "10": 10.0,
+   "15": 15.0,
+   "20": 15.0,
+   "30": 20.0,
+   "40": 30.0,
+   "60": 45.0,
+   "80": 65.0
+  }
+ },
+ "synth_trunc_normal_1side": {
+  "fine": {
+   "10": 0.0,
+   "15": 0.0,
+   "20": 10.0,
+   "30": 20.0,
+   "40": 30.0,
+   "60": 50.0,
+   "80": 70.0
+  },
+  "tsdf": {
+   "10": 10.0,
+   "15": 15.0,
+   "20": 20.0,
+   "30": 30.0,
+   "40": 40.0,
+   "60": 60.0,
+   "80": 80.0
+  }
+ },
+ "synth_trunc_head_2side": {
+  "fine": {
+   "10": 0.0,
+   "15": 0.0,
+   "20": 10.0,
+   "30": 22.0,
+   "40": 40.0,
+   "60": 70.0,
+   "80": 80.0
+  },
+  "tsdf": {
+   "10": 20.0,
+   "15": 20.0,
+   "20": 20.0,
+   "30": 25.0,
+   "40": 40.0,
+   "60": 70.0,
+   "80": 100.0
+  }
+ },
+ "tsdf_voxel_fine": {
+  "2.5": 55.0,
+  "4": 50.0,
+  "5": 55.5,
+  "7.5": 42.0,
+  "10": 35.0,
+  "20": 35.5
+ },
+ "tsdf_voxel_coarse": {
+  "2.5": 59.0,
+  "4": 61.0,
+  "5": 47.0,
+  "7.5": 27.5,
+  "10": 28.5,
+  "20": 62.5
+ },
+ "tsdf_voxel_tsdf": {
+  "2.5": 57.5,
+  "4": 60.0,
+  "5": 55.0,
+  "7.5": 60.0,
+  "10": 60.0,
+  "20": 60.0
+ },
+ "fine_esdf_voxel_fine": {
+  "5": 55.5,
+  "10": 51.0
+ },
+ "coarse_esdf_voxel_trunc60_coarse": {
+  "10": 55.5,
+  "20": 47.0,
+  "40": 49.5
+ },
+ "coarse_esdf_voxel_coupled_coarse": {
+  "10": 14.0,
+  "20": 47.0,
+  "40": 81.5
+ },
+ "categorical_fine": {
+  "server": 55.5,
+  "thr_0": 55.5,
+  "thr_1": 55.5,
+  "thr_3": 55.5,
+  "thr_1e+06": 55.5,
+  "no_attached": 55.5,
+  "seeding_scatter": 55.0,
+  "minw_1": 55.5,
+  "minw_10": 55.5,
+  "frames_last1": 55.0,
+  "frames_last5": 55.0,
+  "cams_zed_left": 72.5,
+  "cams_wrist_cam_l+wrist_cam_r": 23.0,
+  "cams_zed_left+wrist_cam_l": 56.5,
+  "cams_zed_left+wrist_cam_r": 72.5
+ },
+ "categorical_coarse": {
+  "server": 47.0,
+  "thr_0": 47.0,
+  "thr_1": 47.0,
+  "thr_3": 47.0,
+  "thr_1e+06": 47.0,
+  "no_attached": 47.0,
+  "seeding_scatter": 33.0,
+  "minw_1": 47.0,
+  "minw_10": 47.0,
+  "frames_last1": 46.5,
+  "frames_last5": 46.5,
+  "cams_zed_left": 52.5,
+  "cams_wrist_cam_l+wrist_cam_r": 26.5,
+  "cams_zed_left+wrist_cam_l": 56.0,
+  "cams_zed_left+wrist_cam_r": 53.0
+ },
+ "categorical_tsdf": {
+  "server": 55.0,
+  "thr_0": 55.0,
+  "thr_1": 55.0,
+  "thr_3": 55.0,
+  "thr_1e+06": 55.0,
+  "no_attached": 55.0,
+  "seeding_scatter": 55.0,
+  "minw_1": 55.0,
+  "minw_10": 55.0,
+  "frames_last1": 55.0,
+  "frames_last5": 55.0,
+  "cams_zed_left": 70.0,
+  "cams_wrist_cam_l+wrist_cam_r": 25.0,
+  "cams_zed_left+wrist_cam_l": 55.0,
+  "cams_zed_left+wrist_cam_r": 70.0
+ },
+ "synth_views_T16": {
+  "fine": {
+   "head_1side": 40.0,
+   "head_2side": 70.0,
+   "normal_1side": 50.0,
+   "normal_2side": 80.0
+  },
+  "tsdf": {
+   "head_1side": 45.0,
+   "head_2side": 70.0,
+   "normal_1side": 60.0,
+   "normal_2side": 100.0
+  }
+ },
+ "synth_views_T8": {
+  "fine": {
+   "head_1side": 40.0,
+   "head_2side": 40.0,
+   "normal_1side": 50.0,
+   "normal_2side": 0.0
+  },
+  "tsdf": {
+   "head_1side": 40.0,
+   "head_2side": 70.0,
+   "normal_1side": 60.0,
+   "normal_2side": 80.0
+  }
+ },
+ "chunks_fine": {
+  "recorded": {
+   "16": 50.0,
+   "20": 58.0,
+   "30": 55.5,
+   "36": 55.0
+  },
+  "rebuilt": {
+   "16": 50.0,
+   "20": 58.0,
+   "30": 55.5,
+   "36": 55.0
+  }
+ },
+ "chunks_coarse": {
+  "recorded": {
+   "16": 46.5,
+   "20": 46.0,
+   "30": 47.0,
+   "36": 47.0
+  },
+  "rebuilt": {
+   "16": 46.5,
+   "20": 46.0,
+   "30": 47.0,
+   "36": 47.0
+  }
+ }
+}

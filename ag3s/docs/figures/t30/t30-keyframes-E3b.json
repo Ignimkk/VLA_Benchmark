@@ -1,0 +1,300 @@
+{
+ "condition": "E3b",
+ "frame_mapping": "mp4 frame k = state after control step k = control row t=k+1; keyframe for row t uses frame max(t-1,0) (p2r/fig_keyframes.py)",
+ "rows": {
+  "E3b_ep1807_r1": {
+   "success": true,
+   "grasp": true,
+   "place": true,
+   "n_frames": 600,
+   "mp4": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1807_r1/third_person_front.mp4",
+   "keyframes": [
+    {
+     "col": "start",
+     "t": 0,
+     "frame": 0,
+     "apple_dz_mm": 0.00022141663647001764,
+     "grip_l_measured": 1.0000000000193399,
+     "finger_to_apple_mm": 137.89087839008334
+    },
+    {
+     "col": "close cmd",
+     "t": 93,
+     "frame": 92,
+     "apple_dz_mm": 0.0009829252896054186,
+     "grip_l_measured": 0.9946155150654143,
+     "finger_to_apple_mm": 0.8402255191770491
+    },
+    {
+     "col": "grasp",
+     "t": 109,
+     "frame": 108,
+     "apple_dz_mm": 51.861958352478425,
+     "grip_l_measured": 0.7201797732717051,
+     "finger_to_apple_mm": -0.0941837332123974
+    },
+    {
+     "col": "max lift",
+     "t": 291,
+     "frame": 290,
+     "apple_dz_mm": 404.34733002604514,
+     "grip_l_measured": 0.7053825644220536,
+     "finger_to_apple_mm": -0.09029844991698494
+    },
+    {
+     "col": "last frame 599",
+     "t": 600,
+     "frame": 599,
+     "apple_dz_mm": 7.805157441559629,
+     "grip_l_measured": 0.3297520694480756,
+     "finger_to_apple_mm": 310.9467400821091
+    }
+   ]
+  },
+  "E3b_ep1807_r2": {
+   "success": true,
+   "grasp": true,
+   "place": true,
+   "n_frames": 600,
+   "mp4": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1807_r2/third_person_front.mp4",
+   "keyframes": [
+    {
+     "col": "start",
+     "t": 0,
+     "frame": 0,
+     "apple_dz_mm": 0.00022141663647001764,
+     "grip_l_measured": 1.0000000000193399,
+     "finger_to_apple_mm": 137.89087839008334
+    },
+    {
+     "col": "close cmd",
+     "t": 123,
+     "frame": 122,
+     "apple_dz_mm": -0.0014251350209937286,
+     "grip_l_measured": 0.9991129871568807,
+     "finger_to_apple_mm": 3.0827750299904224
+    },
+    {
+     "col": "grasp",
+     "t": 138,
+     "frame": 137,
+     "apple_dz_mm": 64.62561122732546,
+     "grip_l_measured": 0.7309031429735894,
+     "finger_to_apple_mm": -0.07329254805020609
+    },
+    {
+     "col": "max lift",
+     "t": 317,
+     "frame": 316,
+     "apple_dz_mm": 435.82468872930536,
+     "grip_l_measured": 0.7094126203914363,
+     "finger_to_apple_mm": -0.2998573057746673
+    },
+    {
+     "col": "last frame 599",
+     "t": 600,
+     "frame": 599,
+     "apple_dz_mm": 7.8053054463242955,
+     "grip_l_measured": 0.9999999884033497,
+     "finger_to_apple_mm": 384.3890067061326
+    }
+   ]
+  },
+  "E3b_ep1800_r1": {
+   "success": false,
+   "grasp": false,
+   "place": false,
+   "n_frames": 600,
+   "mp4": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1800_r1/third_person_front.mp4",
+   "keyframes": [
+    {
+     "col": "start",
+     "t": 0,
+     "frame": 0,
+     "apple_dz_mm": 6.49464032553837e-05,
+     "grip_l_measured": 1.0000000000018694,
+     "finger_to_apple_mm": 148.18460754850867
+    },
+    {
+     "col": "close cmd",
+     "t": 155,
+     "frame": 154,
+     "apple_dz_mm": -0.13412079967212165,
+     "grip_l_measured": 1.0560171527565088,
+     "finger_to_apple_mm": -0.060080064721878414
+    },
+    {
+     "col": "closest (no grasp)",
+     "t": 158,
+     "frame": 157,
+     "apple_dz_mm": -0.07014594253473838,
+     "grip_l_measured": 0.7602414955422826,
+     "finger_to_apple_mm": -0.4924089603599707
+    },
+    {
+     "col": "max lift",
+     "t": 169,
+     "frame": 168,
+     "apple_dz_mm": 1.171856124945747,
+     "grip_l_measured": 0.4459275835514183,
+     "finger_to_apple_mm": 0.007097033523518828
+    },
+    {
+     "col": "last frame 599",
+     "t": 600,
+     "frame": 599,
+     "apple_dz_mm": -0.00048097500038313257,
+     "grip_l_measured": 0.4293344666528124,
+     "finger_to_apple_mm": 203.38079184195954
+    }
+   ]
+  },
+  "E3b_ep1800_r2": {
+   "success": false,
+   "grasp": false,
+   "place": false,
+   "n_frames": 600,
+   "mp4": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1800_r2/third_person_front.mp4",
+   "keyframes": [
+    {
+     "col": "start",
+     "t": 0,
+     "frame": 0,
+     "apple_dz_mm": 6.49464032553837e-05,
+     "grip_l_measured": 1.0000000000018694,
+     "finger_to_apple_mm": 148.18460754850867
+    },
+    {
+     "col": "close cmd",
+     "t": 137,
+     "frame": 136,
+     "apple_dz_mm": 0.002769847338268683,
+     "grip_l_measured": 0.9988045608297214,
+     "finger_to_apple_mm": 4.391116120789131
+    },
+    {
+     "col": "closest (no grasp)",
+     "t": 139,
+     "frame": 138,
+     "apple_dz_mm": 0.2798273772391946,
+     "grip_l_measured": 0.6940861005765262,
+     "finger_to_apple_mm": -2.108958207028686
+    },
+    {
+     "col": "max lift",
+     "t": 148,
+     "frame": 147,
+     "apple_dz_mm": 14.756587732041693,
+     "grip_l_measured": 0.7224318326915461,
+     "finger_to_apple_mm": -0.08777639667247693
+    },
+    {
+     "col": "last frame 599",
+     "t": 600,
+     "frame": 599,
+     "apple_dz_mm": 0.0035469904630103244,
+     "grip_l_measured": 0.48203403038300147,
+     "finger_to_apple_mm": 218.1694507990782
+    }
+   ]
+  },
+  "E3b_ep1808_r1": {
+   "success": false,
+   "grasp": false,
+   "place": false,
+   "n_frames": 600,
+   "mp4": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1808_r1/third_person_front.mp4",
+   "keyframes": [
+    {
+     "col": "start",
+     "t": 0,
+     "frame": 0,
+     "apple_dz_mm": -3.954199156996907e-05,
+     "grip_l_measured": 1.0000000000017888,
+     "finger_to_apple_mm": 131.95741142507222
+    },
+    {
+     "col": "close cmd",
+     "t": 147,
+     "frame": 146,
+     "apple_dz_mm": -0.14589361686989655,
+     "grip_l_measured": 0.9971339611924311,
+     "finger_to_apple_mm": 13.101339784215677
+    },
+    {
+     "col": "closest (no grasp)",
+     "t": 150,
+     "frame": 149,
+     "apple_dz_mm": -0.3069086747153893,
+     "grip_l_measured": 0.5639732915471074,
+     "finger_to_apple_mm": -0.5692665744146855
+    },
+    {
+     "col": "max lift",
+     "t": 106,
+     "frame": 105,
+     "apple_dz_mm": 0.017511920518686885,
+     "grip_l_measured": 0.9986811665355848,
+     "finger_to_apple_mm": 10.25902593443895
+    },
+    {
+     "col": "last frame 599",
+     "t": 600,
+     "frame": 599,
+     "apple_dz_mm": 0.0008038476592142629,
+     "grip_l_measured": 0.9999277819660664,
+     "finger_to_apple_mm": 408.2485076394811
+    }
+   ]
+  },
+  "E3b_ep1808_r2": {
+   "success": false,
+   "grasp": false,
+   "place": false,
+   "n_frames": 600,
+   "mp4": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1808_r2/third_person_front.mp4",
+   "keyframes": [
+    {
+     "col": "start",
+     "t": 0,
+     "frame": 0,
+     "apple_dz_mm": -3.954199156996907e-05,
+     "grip_l_measured": 1.0000000000017888,
+     "finger_to_apple_mm": 131.95741142507222
+    },
+    {
+     "col": "close cmd",
+     "t": 136,
+     "frame": 135,
+     "apple_dz_mm": 0.0034377315005773568,
+     "grip_l_measured": 0.5041602821062671,
+     "finger_to_apple_mm": 75.47052676469676
+    },
+    {
+     "col": "closest (no grasp)",
+     "t": 128,
+     "frame": 127,
+     "apple_dz_mm": 0.00028909752558536894,
+     "grip_l_measured": 0.61953517616328,
+     "finger_to_apple_mm": 7.958254089679481
+    },
+    {
+     "col": "max lift",
+     "t": 47,
+     "frame": 46,
+     "apple_dz_mm": 0.00809612596319731,
+     "grip_l_measured": 0.9999956527900639,
+     "finger_to_apple_mm": 190.3071907684536
+    },
+    {
+     "col": "last frame 599",
+     "t": 600,
+     "frame": 599,
+     "apple_dz_mm": 0.0004389279645300448,
+     "grip_l_measured": 0.44631645422776506,
+     "finger_to_apple_mm": 250.40652276692933
+    }
+   ]
+  }
+ }
+}

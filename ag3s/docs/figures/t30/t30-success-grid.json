@@ -1,0 +1,508 @@
+{
+ "cells": {
+  "E0_rec_ep1807_r1": {
+   "status": "success",
+   "grasp_t": 128,
+   "place_t": 200,
+   "apple_dz_max_mm": 244.65409261611248,
+   "run_dir": "../E0_rec/E0_ep1807_r1"
+  },
+  "E0_rec_ep1807_r2": {
+   "status": "success",
+   "grasp_t": 136,
+   "place_t": 216,
+   "apple_dz_max_mm": 244.86083606570585,
+   "run_dir": "../E0_rec/E0_ep1807_r2"
+  },
+  "E0_rec_ep1800_r1": {
+   "status": "grasp_only",
+   "grasp_t": 136,
+   "place_t": null,
+   "apple_dz_max_mm": 236.25977905474204,
+   "run_dir": "../E0_rec/E0_ep1800_r1"
+  },
+  "E0_rec_ep1800_r2": {
+   "status": "success",
+   "grasp_t": 184,
+   "place_t": 248,
+   "apple_dz_max_mm": 237.3582296529686,
+   "run_dir": "../E0_rec/E0_ep1800_r2"
+  },
+  "E0_rec_ep1808_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.07302626483640662,
+   "run_dir": "../E0_rec/E0_ep1808_r1"
+  },
+  "E0_rec_ep1808_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.7611981136492751,
+   "run_dir": "../E0_rec/E0_ep1808_r2"
+  },
+  "E0_old_ep1807_r1": {
+   "status": "success",
+   "grasp_t": 120,
+   "place_t": 200,
+   "apple_dz_max_mm": 245.69123306277717,
+   "run_dir": "../E0/E0_ep1807_r1"
+  },
+  "E0_old_ep1807_r2": {
+   "status": "success",
+   "grasp_t": 136,
+   "place_t": 216,
+   "apple_dz_max_mm": 237.93101496880453,
+   "run_dir": "../E0/E0_ep1807_r2"
+  },
+  "E0_old_ep1800_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 3.632046802787614,
+   "run_dir": "../E0/E0_ep1800_r1"
+  },
+  "E0_old_ep1800_r2": {
+   "status": "success",
+   "grasp_t": 192,
+   "place_t": 232,
+   "apple_dz_max_mm": 233.12416404364566,
+   "run_dir": "../E0/E0_ep1800_r2"
+  },
+  "E0_old_ep1808_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.7725420900130953,
+   "run_dir": "../E0/E0_ep1808_r1"
+  },
+  "E0_old_ep1808_r2": {
+   "status": "success",
+   "grasp_t": 160,
+   "place_t": 200,
+   "apple_dz_max_mm": 237.69779178909468,
+   "run_dir": "../E0/E0_ep1808_r2"
+  },
+  "E1_rec_ep1807_r1": {
+   "status": "success",
+   "grasp_t": 144,
+   "place_t": 216,
+   "apple_dz_max_mm": 241.91878893570396,
+   "run_dir": "../E1_rec/E1_ep1807_r1"
+  },
+  "E1_rec_ep1807_r2": {
+   "status": "success",
+   "grasp_t": 136,
+   "place_t": 216,
+   "apple_dz_max_mm": 240.14084542311286,
+   "run_dir": "../E1_rec/E1_ep1807_r2"
+  },
+  "E1_rec_ep1800_r1": {
+   "status": "success",
+   "grasp_t": 136,
+   "place_t": 176,
+   "apple_dz_max_mm": 236.46170166588897,
+   "run_dir": "../E1_rec/E1_ep1800_r1"
+  },
+  "E1_rec_ep1800_r2": {
+   "status": "grasp_only",
+   "grasp_t": 208,
+   "place_t": null,
+   "apple_dz_max_mm": 50.38606059147466,
+   "run_dir": "../E1_rec/E1_ep1800_r2"
+  },
+  "E1_rec_ep1808_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.3004307435294784,
+   "run_dir": "../E1_rec/E1_ep1808_r1"
+  },
+  "E1_rec_ep1808_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 25.639111692542183,
+   "run_dir": "../E1_rec/E1_ep1808_r2"
+  },
+  "E1_old_ep1807_r1": {
+   "status": "success",
+   "grasp_t": 152,
+   "place_t": 232,
+   "apple_dz_max_mm": 246.65978152440738,
+   "run_dir": "../E1/E1_ep1807_r1"
+  },
+  "E1_old_ep1807_r2": {
+   "status": "success",
+   "grasp_t": 136,
+   "place_t": 208,
+   "apple_dz_max_mm": 240.42888356007143,
+   "run_dir": "../E1/E1_ep1807_r2"
+  },
+  "E1_old_ep1800_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 3.4192558180984323,
+   "run_dir": "../E1/E1_ep1800_r1"
+  },
+  "E1_old_ep1800_r2": {
+   "status": "success",
+   "grasp_t": 200,
+   "place_t": 272,
+   "apple_dz_max_mm": 235.9695647616582,
+   "run_dir": "../E1/E1_ep1800_r2"
+  },
+  "E1_old_ep1808_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.8050004476854999,
+   "run_dir": "../E1/E1_ep1808_r1"
+  },
+  "E1_old_ep1808_r2": {
+   "status": "grasp_only",
+   "grasp_t": 168,
+   "place_t": null,
+   "apple_dz_max_mm": 113.14510120182564,
+   "run_dir": "../E1/E1_ep1808_r2"
+  },
+  "E2_rec_ep1807_r1": {
+   "status": "success",
+   "grasp_t": 120,
+   "place_t": 208,
+   "apple_dz_max_mm": 243.92178415350952,
+   "run_dir": "../E2_rec/E2_ep1807_r1"
+  },
+  "E2_rec_ep1807_r2": {
+   "status": "success",
+   "grasp_t": 128,
+   "place_t": 232,
+   "apple_dz_max_mm": 243.67999260763273,
+   "run_dir": "../E2_rec/E2_ep1807_r2"
+  },
+  "E2_rec_ep1800_r1": {
+   "status": "success",
+   "grasp_t": 120,
+   "place_t": 192,
+   "apple_dz_max_mm": 230.73911550184457,
+   "run_dir": "../E2_rec/E2_ep1800_r1"
+  },
+  "E2_rec_ep1800_r2": {
+   "status": "success",
+   "grasp_t": 144,
+   "place_t": 200,
+   "apple_dz_max_mm": 238.28132687780544,
+   "run_dir": "../E2_rec/E2_ep1800_r2"
+  },
+  "E2_rec_ep1808_r1": {
+   "status": "success",
+   "grasp_t": 128,
+   "place_t": 200,
+   "apple_dz_max_mm": 246.93609060784073,
+   "run_dir": "../E2_rec/E2_ep1808_r1"
+  },
+  "E2_rec_ep1808_r2": {
+   "status": "success",
+   "grasp_t": 128,
+   "place_t": 208,
+   "apple_dz_max_mm": 234.11509519561602,
+   "run_dir": "../E2_rec/E2_ep1808_r2"
+  },
+  "E3a_pre_ep1807_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.0022195760887022686,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3a_rec/E3a_ep1807_r1"
+  },
+  "_duplicates": {
+   "pre:E3a_ep1807_r2": "r1",
+   "rec:E3a_ep1807_r2": "r1 RNG*",
+   "rec:E3a_ep1800_r2": "r1",
+   "rec:E3a_ep1800_r3": "E3b ep1800 r1",
+   "rec:E3a_ep1808_r2": "r1"
+  },
+  "E3a_pre_ep1807_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.0022195760887022686,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3a_rec/E3a_ep1807_r2"
+  },
+  "E3a_pre_ep1800_r1": {
+   "status": "grasp_only",
+   "grasp_t": 152,
+   "place_t": null,
+   "apple_dz_max_mm": 55.70279733133376,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3a_rec/E3a_ep1800_r1"
+  },
+  "E3a_pre_ep1800_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.23756847979494733,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3a_rec/E3a_ep1800_r2"
+  },
+  "E3a_pre_ep1808_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.17160075916355932,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3a_rec/E3a_ep1808_r1"
+  },
+  "E3a_pre_ep1808_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.20980105336498855,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3a_rec/E3a_ep1808_r2"
+  },
+  "E3b_pre_ep1807_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.0022195760887022686,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3b_rec/E3b_ep1807_r1"
+  },
+  "E3b_pre_ep1807_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.0022195760887022686,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3b_rec/E3b_ep1807_r2"
+  },
+  "E3b_pre_ep1800_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.005596310311495323,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3b_rec/E3b_ep1800_r1"
+  },
+  "E3b_pre_ep1800_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.3877611363193312,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3b_rec/E3b_ep1800_r2"
+  },
+  "E3b_pre_ep1808_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.1426003009211696,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3b_rec/E3b_ep1808_r1"
+  },
+  "E3b_pre_ep1808_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.00809612596319731,
+   "run_dir": "/mnt/dev/work/outputs/verify/T28/E3b_rec/E3b_ep1808_r2"
+  },
+  "E3a_rec_ep1807_r1": {
+   "status": "success",
+   "grasp_t": 120,
+   "place_t": 176,
+   "apple_dz_max_mm": 355.00835954047784,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3a_rec/E3a_ep1807_r1"
+  },
+  "E3a_rec_ep1807_r2": {
+   "status": "success",
+   "grasp_t": 120,
+   "place_t": 176,
+   "apple_dz_max_mm": 355.00835954047784,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3a_rec/E3a_ep1807_r2"
+  },
+  "E3a_rec_ep1807_r3": {
+   "status": "success",
+   "grasp_t": 144,
+   "place_t": 328,
+   "apple_dz_max_mm": 412.24994097266875,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3a_rec/E3a_ep1807_r3"
+  },
+  "E3a_rec_ep1800_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 60.75303211689054,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3a_rec/E3a_ep1800_r1"
+  },
+  "E3a_rec_ep1800_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 60.75303211689054,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3a_rec/E3a_ep1800_r2"
+  },
+  "E3a_rec_ep1800_r3": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 1.171856124945747,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3a_rec/E3a_ep1800_r3"
+  },
+  "E3a_rec_ep1808_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 2.2962801402506283,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3a_rec/E3a_ep1808_r1"
+  },
+  "E3a_rec_ep1808_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 2.2962801402506283,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3a_rec/E3a_ep1808_r2"
+  },
+  "E3a_rec_ep1808_r3": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.20753610033663605,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3a_rec/E3a_ep1808_r3"
+  },
+  "E3b_rec_ep1807_r1": {
+   "status": "success",
+   "grasp_t": 112,
+   "place_t": 296,
+   "apple_dz_max_mm": 404.34733002604514,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1807_r1"
+  },
+  "E3b_rec_ep1807_r2": {
+   "status": "success",
+   "grasp_t": 144,
+   "place_t": 384,
+   "apple_dz_max_mm": 435.82468872930536,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1807_r2"
+  },
+  "E3b_rec_ep1800_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 1.171856124945747,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1800_r1"
+  },
+  "E3b_rec_ep1800_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 14.756587732041693,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1800_r2"
+  },
+  "E3b_rec_ep1808_r1": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.017511920518686885,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1808_r1"
+  },
+  "E3b_rec_ep1808_r2": {
+   "status": "no_grasp",
+   "grasp_t": null,
+   "place_t": null,
+   "apple_dz_max_mm": 0.00809612596319731,
+   "run_dir": "/mnt/dev/work/outputs/verify/T30/E3b_rec/E3b_ep1808_r2"
+  }
+ },
+ "summary": {
+  "E0_rec_distinct": {
+   "n_success": 3,
+   "n_runs": 6,
+   "excluded": []
+  },
+  "E0_rec": {
+   "n_success": 3,
+   "n_grasp": 4,
+   "n_runs": 6
+  },
+  "E0_old_distinct": {
+   "n_success": 4,
+   "n_runs": 6,
+   "excluded": []
+  },
+  "E0_old": {
+   "n_success": 4,
+   "n_grasp": 4,
+   "n_runs": 6
+  },
+  "E1_rec_distinct": {
+   "n_success": 3,
+   "n_runs": 6,
+   "excluded": []
+  },
+  "E1_rec": {
+   "n_success": 3,
+   "n_grasp": 4,
+   "n_runs": 6
+  },
+  "E1_old_distinct": {
+   "n_success": 3,
+   "n_runs": 6,
+   "excluded": []
+  },
+  "E1_old": {
+   "n_success": 3,
+   "n_grasp": 4,
+   "n_runs": 6
+  },
+  "E2_rec_distinct": {
+   "n_success": 6,
+   "n_runs": 6,
+   "excluded": []
+  },
+  "E2_rec": {
+   "n_success": 6,
+   "n_grasp": 6,
+   "n_runs": 6
+  },
+  "E3a_pre_distinct": {
+   "n_success": 0,
+   "n_runs": 5,
+   "excluded": [
+    "E3a_ep1807_r2"
+   ]
+  },
+  "E3a_pre": {
+   "n_success": 0,
+   "n_grasp": 1,
+   "n_runs": 6
+  },
+  "E3b_pre_distinct": {
+   "n_success": 0,
+   "n_runs": 6,
+   "excluded": []
+  },
+  "E3b_pre": {
+   "n_success": 0,
+   "n_grasp": 0,
+   "n_runs": 6
+  },
+  "E3a_rec_distinct": {
+   "n_success": 2,
+   "n_runs": 6,
+   "excluded": [
+    "E3a_ep1800_r2",
+    "E3a_ep1807_r2",
+    "E3a_ep1808_r2"
+   ]
+  },
+  "E3a_rec": {
+   "n_success": 3,
+   "n_grasp": 3,
+   "n_runs": 9
+  },
+  "E3b_rec_distinct": {
+   "n_success": 2,
+   "n_runs": 6,
+   "excluded": []
+  },
+  "E3b_rec": {
+   "n_success": 2,
+   "n_grasp": 2,
+   "n_runs": 6
+  }
+ }
+}

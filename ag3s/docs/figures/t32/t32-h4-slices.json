@@ -1,0 +1,56 @@
+{
+ "figure": "benchmark/ag3s/docs/figures/t32/t32-h4-slices.png",
+ "verify_json": "benchmark/ag3s/docs/handoff/T32.h4.verify.json",
+ "script": "outputs/verify/T32/h4/figs.py",
+ "y_m": -0.015537153627684088,
+ "panels": {
+  "recorded_fine": {
+   "title": "recorded fine 5 mm (server)",
+   "n_lt0": 5378,
+   "n_finite": 80601,
+   "line_row_width_lt0_mm": 55.0
+  },
+  "server_fine": {
+   "title": "rebuilt fine, server (trunc 60 mm)",
+   "n_lt0": 5357,
+   "n_finite": 80601,
+   "line_row_width_lt0_mm": 55.0
+  },
+  "trunc_40mm_fine": {
+   "title": "rebuilt fine, trunc 40 mm",
+   "n_lt0": 3991,
+   "n_finite": 80601,
+   "line_row_width_lt0_mm": 42.0
+  },
+  "trunc_20mm_fine": {
+   "title": "rebuilt fine, trunc 20 mm",
+   "n_lt0": 797,
+   "n_finite": 80601,
+   "line_row_width_lt0_mm": 12.0
+  },
+  "recorded_coarse": {
+   "title": "recorded coarse 20 mm",
+   "n_lt0": 13329,
+   "n_finite": 100651,
+   "line_row_width_lt0_mm": 46.0
+  },
+  "server_tsdf": {
+   "title": "TSDF sdf, server (trunc 60 mm)",
+   "n_lt0": 15470,
+   "n_finite": 64815,
+   "line_row_width_lt0_mm": 55.0
+  },
+  "trunc_20mm_tsdf": {
+   "title": "TSDF sdf, trunc 20 mm",
+   "n_lt0": 10870,
+   "n_finite": 41465,
+   "line_row_width_lt0_mm": 25.0
+  },
+  "cams_zed_left_fine": {
+   "title": "rebuilt fine, zed_left only",
+   "n_lt0": 6188,
+   "n_finite": 80601,
+   "line_row_width_lt0_mm": 72.0
+  }
+ }
+}

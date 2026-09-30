@@ -1,0 +1,155 @@
+{
+ "condition": "E3a",
+ "run": "E3a_ep1808_r1",
+ "seq": 14,
+ "t": 104,
+ "server_chunk": "server_8204/server_constraints/run_0000/chunk_00163.npz",
+ "finger_joints": {
+  "source": "state[7],state[15]",
+  "opening_norm": {
+   "left": 0.9982176514420777,
+   "right": 0.9999711279182721
+  },
+  "joints": {
+   "gripper_finger_l1": -0.0449197943148935,
+   "gripper_finger_l2": 0.0449197943148935,
+   "gripper_finger_r1": -0.044998700756322244,
+   "gripper_finger_r2": 0.044998700756322244
+  },
+  "set_by_caller": true,
+  "applied": {
+   "self_filter": {
+    "gripper_finger_l1": -0.0449197943148935,
+    "gripper_finger_l2": 0.0449197943148935,
+    "gripper_finger_r1": -0.044998700756322244,
+    "gripper_finger_r2": 0.044998700756322244
+   },
+   "constraint": {
+    "gripper_finger_l1": -0.0449197943148935,
+    "gripper_finger_l2": 0.0449197943148935,
+    "gripper_finger_r1": -0.044998700756322244,
+    "gripper_finger_r2": 0.044998700756322244
+   }
+  }
+ },
+ "manipulated": {
+  "id": 0,
+  "state": "occluded",
+  "age_frames": 1,
+  "centroid": [
+   0.5057907233765999,
+   0.3139611408029042,
+   0.8646721594771067
+  ],
+  "radius": 0.07610970348672712,
+  "n_points": 202,
+  "last_seen_frame": 12,
+  "switched_from": null,
+  "frame": 13,
+  "admissibility": {
+   "admissible": true,
+   "reason": "admissible",
+   "graspable": true,
+   "narrowest_extent_mm": 55.52,
+   "extents_mm": [
+    55.5,
+    67.3,
+    144.3
+   ],
+   "max_opening_mm": 71.46,
+   "destination_overlap": 0.0,
+   "overlaps_destination": false,
+   "destination_id": null
+  },
+  "association": null,
+  "anchor": {
+   "manipulated_id": 0,
+   "active": true,
+   "source": "first",
+   "since_frame": 0,
+   "kept_frames": 10,
+   "extents_mm": [
+    54.4,
+    67.3,
+    144.3
+   ],
+   "radius_mm": 75.9,
+   "n_points": 211,
+   "centroid": [
+    0.5056814109330494,
+    0.31445000419432706,
+    0.8644309790311879
+   ],
+   "geometry_source": "refined",
+   "geometry_frame": 2
+  }
+ },
+ "exclusion": {
+  "active": true,
+  "source": "manipulated",
+  "mechanism": [
+   "target_free_layer",
+   "contact_margin"
+  ],
+  "authorized_links": [
+   "ee_finger_l1",
+   "ee_finger_l2",
+   "ee_left"
+  ],
+  "manipulated_id": 0,
+  "manipulated_state": "occluded",
+  "attached_label": null,
+  "grasp_active": false
+ },
+ "ball": {
+  "centre_m": [
+   0.5057907233765999,
+   0.3139611408029042,
+   0.8646721594771067
+  ],
+  "radius_mm": 81.11,
+  "z_min_m": 0.8263153194166271,
+  "n_points": 202,
+  "radius_quantile": 1.0,
+  "radius_raw_mm": 76.11,
+  "pad_mm": 5.0,
+  "support_plane_z_m": 0.821315319416627,
+  "voxel_mm": 5.0
+ },
+ "worst_row": {
+  "link": "ee_finger_l2",
+  "tier": "target_free",
+  "obstacle": null,
+  "clearance_m": 0.006746636944900806
+ },
+ "worst_nearest_body": "apple",
+ "worst_inside_apple": false,
+ "gate": {
+  "mode": "off",
+  "action": "execute",
+  "source": "server",
+  "server_safe": true,
+  "would_hold": false,
+  "kinds": [
+   "budget_only"
+  ],
+  "would_hold_kinds": [],
+  "hold_kinds": []
+ },
+ "latch": {
+  "state": "latched",
+  "attach": false,
+  "detach": false,
+  "rejected": null,
+  "note": ""
+ },
+ "apple_centre_world": [
+  0.5404369621994849,
+  0.3224487506517826,
+  0.8499982841751974
+ ],
+ "n_target_points": 202,
+ "n_cloud_points_within_0.15m_of_apple_drawn": 957,
+ "mp4": "/mnt/dev/work/outputs/verify/T30/E3a_rec/E3a_ep1808_r1/third_person_front.mp4",
+ "mp4_frame": 103
+}

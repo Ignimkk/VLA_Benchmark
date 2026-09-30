@@ -1,0 +1,87 @@
+{
+ "E0_rec_client_round_trip_ms_excl_first": {
+  "n": 444,
+  "median": 117.57528781890869,
+  "p95": 167.10542440414423,
+  "max": 724.0443229675293
+ },
+ "E0_old_client_round_trip_ms_excl_first": {
+  "n": 444,
+  "median": 106.3147783279419,
+  "p95": 121.13496065139769,
+  "max": 199.9356746673584
+ },
+ "E1_rec_client_round_trip_ms_excl_first": {
+  "n": 444,
+  "median": 352.0843982696533,
+  "p95": 432.04607963562006,
+  "max": 999.0518093109131
+ },
+ "E1_old_client_round_trip_ms_excl_first": {
+  "n": 444,
+  "median": 313.60697746276855,
+  "p95": 361.9349479675293,
+  "max": 470.86429595947266
+ },
+ "E2_rec_client_round_trip_ms_excl_first": {
+  "n": 444,
+  "median": 362.75041103363037,
+  "p95": 434.4200015068053,
+  "max": 1195.5325603485107
+ },
+ "E1_rec_server_infer_ms_excl_first": {
+  "n": 444,
+  "median": 110.54754559881985,
+  "p95": 164.40325470175586,
+  "max": 486.37705435976386
+ },
+ "E1_rec_server_trajopt_ms_excl_first": {
+  "n": 444,
+  "median": 7.2505713906139135,
+  "p95": 11.756646889261896,
+  "max": 84.32130375877023
+ },
+ "E1_rec_server_total_ms_excl_first": {
+  "n": 444,
+  "median": 118.72823140583932,
+  "p95": 174.8428372200578,
+  "max": 571.0204700008035
+ },
+ "E1_old_server_infer_ms_excl_first": {
+  "n": 444,
+  "median": 102.18763700686395,
+  "p95": 114.10872391425073,
+  "max": 169.00289617478848
+ },
+ "E1_old_server_trajopt_ms_excl_first": {
+  "n": 444,
+  "median": 5.654551088809967,
+  "p95": 7.155378791503599,
+  "max": 18.265471793711185
+ },
+ "E1_old_server_total_ms_excl_first": {
+  "n": 444,
+  "median": 108.1295465119183,
+  "p95": 120.98881336860359,
+  "max": 182.29419086128473
+ },
+ "E2_rec_server_infer_ms_excl_first": {
+  "n": 444,
+  "median": 116.35105544701219,
+  "p95": 157.1018502116203,
+  "max": 412.4578619375825
+ },
+ "E2_rec_server_trajopt_ms_excl_first": {
+  "n": 444,
+  "median": 14.533793553709984,
+  "p95": 21.87642659991979,
+  "max": 82.15384278446436
+ },
+ "E2_rec_server_total_ms_excl_first": {
+  "n": 444,
+  "median": 131.70360238291323,
+  "p95": 177.60490833315998,
+  "max": 443.6697429046035
+ },
+ "note": "recorded runs (rec) ran E0/E1/E2 concurrently on one GPU (3 servers + 3 clients); unrecorded runs (old) ran one condition at a time"
+}

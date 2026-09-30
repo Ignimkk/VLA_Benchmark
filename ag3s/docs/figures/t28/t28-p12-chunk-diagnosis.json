@@ -1,0 +1,56 @@
+{
+ "source": "outputs/verify/T28/P1-2/p12_records.json",
+ "summary": {
+  "t16": {
+   "n_executed": 9,
+   "n_hold": 25,
+   "hold_kinds": {
+    "violated": 25
+   },
+   "n_timeout": 0,
+   "n_stale": 0,
+   "grasp_attempt_t_first_policy_close_cmd_lt_0p5": 128,
+   "target_first_crate_t": 72,
+   "worst_nearest_category_counts_hold_only": {
+    "table": 8,
+    "apple": 16,
+    "other_fruit": 1
+   },
+   "server_infer_ms": {
+    "first": 44131.29909103736,
+    "median_excl_first": 258.2966601476073,
+    "max_excl_first": 308.37492318823934
+   },
+   "client_policy_infer_ms": {
+    "first": 53545.56131362915,
+    "median_excl_first": 3529.756546020508,
+    "max_excl_first": 3924.652099609375
+   }
+  },
+  "t14": {
+   "n_executed": 28,
+   "n_hold": 2,
+   "hold_kinds": {
+    "violated": 1,
+    "uncertified": 1
+   },
+   "n_timeout": 0,
+   "n_stale": 0,
+   "grasp_attempt_t_first_policy_close_cmd_lt_0p5": 200,
+   "target_first_crate_t": 88,
+   "worst_nearest_category_counts_hold_only": {
+    "apple": 2
+   },
+   "server_infer_ms": {
+    "first": 41409.56696495414,
+    "median_excl_first": 267.82006304711103,
+    "max_excl_first": 297.2701219841838
+   },
+   "client_policy_infer_ms": {
+    "first": 51076.80344581604,
+    "median_excl_first": 3697.514057159424,
+    "max_excl_first": 4049.605131149292
+   }
+  }
+ }
+}
