@@ -1,7 +1,7 @@
 # 세션 상태 — 끊겨도 여기서 이어 간다
 
 > writer: lead (A0). **매 turn 끝에 갱신한다.** 새 세션은 이 파일을 먼저 읽고, 아래 "이어 가는 절차" 를 따른다.
-> 마지막 갱신: 2026-09-30 00:50 UTC — T34 검증 완료 (E3a 5/6 · E3b 3/6). scribe 로 T26–T34 로그 이어쓰기 착수. 커밋은 사용자 승인 대기
+> 마지막 갱신: 2026-09-30 — T26–T34 커밋 완료, T35-diag (E3 남은 실패 원인) 실행 중
 
 ## 1. 지금 무엇을 하고 있나
 
@@ -126,3 +126,4 @@ ls -t ag3s/docs/handoff | head                            # *.progress.md / *.im
 | 2026-09-29 19:40 | **사용자 승인 J1·J2.** `T34.task.md`. implementer 1 (held_object · pipeline · grasp_latch · safe_policy). 끊기면 `T34.progress.md` 부터. 그 뒤 verifier (T34.task.md 검증절) |
 | 2026-09-29 20:30 | **T34 구현 완료** (1676 passed). J1: 쥔 질의 구를 받침 평면 + 테이블 ESDF 0-거리 띠(≈ 8.8 mm, 중앙 8.6–9.0) 위로 **들어올림** (반지름 유지, 7.9–29.4 mm) — T33 attach 9 건 held↔table 행 ≥ 0, ep1800 r2 교착 56 청크 −14.4~−18.5 → +6.7~+10.4 mm. 대가: 사과 밑면이 질의 구 밖으로 최대 5.8–12.8 mm. J2: attach 후 실행 4 청크 안 개도·관측·들림 검사 → `attach_revoked` (1808 r1 거짓 attach t=136 회수, 성공 run 5 건 무회수). lead: 구현 기본값으로 검증 진행. **T34 verifier 착수** (`T34.verify.partial.json`; 끊기면 같은 verifier 재개) |
 | 2026-09-30 00:50 | **T34 검증 완료**: E3a 5/6 · E3b 3/6 (합 8/12 = VLA 단독 E0 7/12 수준 이상), E3b HOLD 0, 요동 E2 수준, 기준선 불변. scribe (A3) 로 `AG3S_T0T6_LOG.md` 에 T26–T34 이어쓰기. 다음 판정: 커밋 (T26–T34 미커밋) · 더 큰 N 평가 · 남은 소결함 |
+| 2026-09-30 | **커밋 (사용자 승인)**: benchmark `421bb71` (코드) · `76f02e0` (handoff·figures·로그) · pi05_TO_hybrid `8a9eae9` (pi05_infer gate off · sim 시각) · 루트 `b74a492` (tests). push 는 사용자. 제외: figures `ag3s-architecture-v2/` · `ppt-0930/` · `r-16d/attention-cell-*` (이번 작업 산출물 아님). **T35-diag 착수** — E3b 1800 r1 · 1808 r1/r2 · E3a 1800 r1 실패 원인 (오프라인, `T35.diag.verify.json`) |
