@@ -158,8 +158,22 @@ class CostConfig:
     # Later steps of the chunk are discarded (only K of H execute) and are also the least certain,
     # so tracking them is worth less. 1.0 keeps the paper-plain behaviour.
     track_decay: float = 1.0
+    # T37 (K1): grasp latch 가 `closing`(닫힘 시도) 또는 `held`(파지 확인) 인 청크에서는 continuity 항을
+    # **그 청크만** 뺀다 (`w_continuity` = 0 과 같은 효과 — 연속성 기준을 넘기지 않는다). 충돌 · limit ·
+    # smoothness 는 그대로다. 근거 (T35.diag `C1_to_ablation`): E3b ep1808 r1 t=120 · r2 t=112 (둘 다
+    # `closing`) 에서 refined − reference 손끝 편차 19.6 / 34.7 mm 가 continuity 만 끄면 0.0 mm —
+    # 연속성 기준(직전 청크의 꼬리)이 닫는 동안 손을 파지 자리에서 끌어낸다. 판단은 `SafePolicy` 가
+    # 한다 (latch 상태를 아는 쪽). `TrajOptChunkRefiner` 를 직접 쓰는 재생 도구에는 영향이 없다.
+    # **O2 (2026-10-01): 기본값 False.** 코드는 남기고 기본만 끈다. 근거 (T37.verify.json 폐루프):
+    # 성공 E3a 3/6 · E3b 3/6 — T34 의 5/6 · 3/6 보다 나아진 게 없고, place 구간 부호 반전은
+    # 1.44 → 2.47 /s (`numbers.D1_oscillation.group_median`) 로 요동이 늘었다.
+    # 켜려면 `{"cost": {"grasp_continuity_off": true}}`.
+    grasp_continuity_off: bool = False
 
     def validate(self) -> None:
+        if not isinstance(self.grasp_continuity_off, bool):
+            raise TrajOptConfigError(
+                f"cost.grasp_continuity_off must be a bool, got {self.grasp_continuity_off!r}")
         for name in ("w_track", "w_smooth", "w_continuity", "w_slack"):
             if getattr(self, name) < 0.0:
                 raise TrajOptConfigError(f"cost.{name} must be >= 0, got {getattr(self, name)}")

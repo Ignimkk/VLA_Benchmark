@@ -156,6 +156,11 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
             template=chunk,
             geometry_certified=certified,
         )
+        # T37 — 이 청크의 목적함수에 continuity 항이 **들어갔나**, 아니면 왜 빠졌나. `metrics` 에 싣는
+        # 이유: 기록(`summary_json.to.metrics`)만 보고 청크마다 셀 수 있어야 한다.
+        result.metrics["continuity_active"] = bool(self.last_continuity.get("used"))
+        result.metrics["continuity_reason"] = str(self.last_continuity.get("source"))
+        result.metrics["continuity_off_by"] = self.last_continuity.get("off_by")
         # The join between the planned window and the untouched tail. It never executes, but it does
         # feed the next chunk's continuity term, so a large step here is worth seeing.
         if planned < chunk.shape[0]:
@@ -219,10 +224,22 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
 
         HOLD 뒤에 K 로 자르면 **날지 않은 궤적의 8 스텝 뒤**를 이어 붙이라고 SQP 를 끌어당긴다 —
         로봇은 그 궤적의 0 행에도 가지 않았는데.
+
+        **T37 (K1) — 청크 하나만 끄는 입구.** `context["continuity_off"]` 가 비어 있지 않은 문자열이면
+        이 청크에는 기준을 주지 않는다 (`None` → `problem.build_problem` 과 merit 에서 항이 빠진다 —
+        `w_continuity = 0` 과 같은 목적함수). 값은 사유이고 `last_continuity["off_by"]` 로 남는다.
+        이 키를 쓰는 것은 `SafePolicy._scene_fn` 이다 — latch 상태는 `scene_fn` 안에서 갱신되므로
+        `refine` 에 들어오기 전에는 모른다. `scene_fn` 은 이 메서드보다 먼저 불리고 같은 `context`
+        dict 를 받는다. 키가 없으면 예전과 같다.
         """
-        self.last_continuity = {"used": False, "source": "none", "aligned_from_step": None}
+        self.last_continuity = {"used": False, "source": "none", "aligned_from_step": None,
+                                "off_by": None}
         if self.config.cost.w_continuity <= 0.0:
             self.last_continuity["source"] = "disabled (w_continuity <= 0)"
+            return None
+        off = None if context is None else context.get("continuity_off")
+        if off:
+            self.last_continuity.update(source=f"disabled for this chunk: {off}", off_by=str(off))
             return None
         previous = None if context is None else context.get("previous_physical_chunk")
         if previous is None:

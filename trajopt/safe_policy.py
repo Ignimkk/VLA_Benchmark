@@ -35,7 +35,8 @@ from benchmark.trajopt.linearize import CollisionLinearizer, scene_from_constrai
 from benchmark.trajopt.refiner import TrajOptChunkRefiner
 from benchmark.trajopt.types import ChunkLayout
 
-__all__ = ["SafePolicy", "classify_violations", "VERDICT_POLICIES"]
+__all__ = ["SafePolicy", "classify_violations", "VERDICT_POLICIES",
+           "GRASP_CONTINUITY_OFF_PHASES", "grasp_continuity_off_reason"]
 
 
 #: 어느 손이 어느 링크로 쥐는가. 로봇마다 다르므로 **주입**이지만, 기본값이 두 곳에서 필요하다 —
@@ -243,6 +244,8 @@ class SafePolicy:
         #: 이번 청크가 받은 실행 피드백과 그것으로 한 일 — 기록(`summary_json`)과 응답 `notes` 용.
         self._last_feedback: dict[str, Any] = wire.no_exec_feedback("no request yet")
         self._last_continuity: dict[str, Any] = {}
+        #: T37 — 지난 청크에서 grasp latch 가 continuity 항을 껐나 (켜짐/꺼짐이 바뀔 때만 로그 한 줄).
+        self._continuity_gate_on = False
         self._last_latch_signal: dict[str, Any] = {}
         self._last_constraint_set = None
         #: 이번 청크의 `SceneSnapshot` — 최적화기가 받은 것 그대로 (T23: 위반 행 분류용).
@@ -304,6 +307,7 @@ class SafePolicy:
         self._last_q_now = None
         self._pending = {}
         self._last_continuity = {}
+        self._continuity_gate_on = False
         self._last_latch_signal = {}
         self._grasp_state_version = 0
         self._grasp_constraint_version = None
@@ -520,6 +524,9 @@ class SafePolicy:
             "time_budget_hit": bool(metrics.get("time_budget_hit", False)),
             "max_iterations_hit": bool(metrics.get("max_iterations_hit", False)),
             "collision_enabled": bool(metrics.get("collision_enabled", True)),
+            # T37 — 이 청크의 목적함수에 continuity 항이 있었나 · 없으면 왜 (로컬 기록에서도 센다).
+            "continuity_active": bool(metrics.get("continuity_active", False)),
+            "continuity_reason": metrics.get("continuity_reason"),
             "reference_deviation": round(
                 float(getattr(result, "reference_deviation", 0.0) or 0.0), 6),
         }
@@ -648,6 +655,14 @@ class SafePolicy:
         self._last_debug = debug
         self._run_latch(constraint_set, observations, manipulators)
         self._finish_grasp_record(constraint_set)
+        # T37 (K1): 이번 청크의 **최종** latch 상태로 continuity 항을 정한다 (`_run_latch` 뒤 — 기록의
+        # `grasp.state` 와 같은 값). refiner 는 `scene_fn` 다음에 같은 `context` 로 기준을 고른다.
+        off = self._grasp_continuity_gate()
+        if context is not None:
+            if off:
+                context["continuity_off"] = off
+            else:
+                context.pop("continuity_off", None)
         self._last_attention_by_camera = {
             o.camera_id: np.asarray(o.attention_map)
             for o in observations if getattr(o, "attention_map", None) is not None
@@ -998,6 +1013,26 @@ class SafePolicy:
         if self._last_grasp_record["transition"]:
             print(f"[safe_policy] grasp {phase_before.value} -> {self._latch.phase.value}: "
                   f"{event.note}")
+
+    def _grasp_continuity_gate(self) -> Optional[str]:
+        """이 청크에서 continuity 항을 끌 사유, 또는 `None` (T37 K1).
+
+        `cost.grasp_continuity_off` (기본 True) 이고 latch 가 `closing` · `held` 이면 끈다.
+        continuity 기준은 직전 청크의 꼬리(정책이 **그때** 낸 손 자리)다. 닫는 동안과 쥔 동안 정책은
+        매 청크 손 자리를 파지에 맞춰 고쳐 내는데, 기준이 손을 옛 자리로 끌어 손끝이 파지 자리에서
+        벗어난다 — T35.diag: E3b ep1808 r1 t=120 · r2 t=112 (`closing`) 의 손끝 편차 19.6 / 34.7 mm
+        가 continuity 만 끄면 0.0 mm. 나머지 항 · 제약(충돌 · limit · smoothness)은 그대로다.
+        상태가 바뀌어 켜짐/꺼짐이 달라질 때 서버 로그에 한 줄 남긴다.
+        """
+        phase = self._latch.phase
+        off = grasp_continuity_off_reason(
+            phase, bool(getattr(self.to_config.cost, "grasp_continuity_off", False)))
+        was = self._continuity_gate_on
+        self._continuity_gate_on = off is not None
+        if self._continuity_gate_on != was:
+            print(f"[safe_policy] continuity term "
+                  f"{'OFF — ' + off if off else 'back ON (grasp latch ' + phase.value + ')'}")
+        return off
 
     def _finish_grasp_record(self, constraint_set) -> None:
         """제약을 지은 뒤 — 이번 제약이 어느 파지 상태로 지어졌는지 기록에 싣는다 (T22).
@@ -1382,6 +1417,28 @@ VERDICT_POLICIES = ("reasons", "legacy")
 #: (단일 격자 — 계층이 하나뿐이다).
 _CONTACT_TIERS = ("fine", None)
 _NOT_TARGET_TIERS = ("target_free", "static")
+
+
+#: T37 (K1) — continuity 항을 끄는 grasp latch 상태. 닫힘 시도(`closing`)와 파지 확인(`held`).
+GRASP_CONTINUITY_OFF_PHASES = (GraspPhase.CLOSING, GraspPhase.HELD)
+
+
+def grasp_continuity_off_reason(phase, enabled: bool = True) -> Optional[str]:
+    """latch 상태 → continuity 항을 끌 사유 문자열, 또는 `None` (끄지 않음). T37 K1.
+
+    `phase` 는 `GraspPhase` 또는 그 값(`"closing"` 등 — 기록의 `summary.grasp.state`). 재생 도구가
+    기록된 상태로 같은 판단을 하도록 순수 함수로 둔다. 사유는 `context["continuity_off"]` 로
+    refiner 에 가고 `metrics.continuity_reason` / `continuity_off_by` 에 남는다.
+    """
+    if not enabled or phase is None:
+        return None
+    try:
+        phase = GraspPhase(phase)
+    except ValueError:
+        return None
+    if phase not in GRASP_CONTINUITY_OFF_PHASES:
+        return None
+    return f"grasp latch {phase.value} (cost.grasp_continuity_off)"
 
 
 def classify_violations(linearizer, trajectory: np.ndarray, q_now: np.ndarray, scene, *,
