@@ -240,6 +240,21 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **`sim_frozen` stamp** | 시뮬레이션이 관측을 만드는 동안 멈춰 있음을 이용해 한 관측의 세 카메라·robot state·extrinsics 에 촬영 시각을 하나만 찍는 모드. 카메라별 렌더 끝 시각은 진단 key `ag3s/render_stamp/<cam>` 으로만 남는다. 실기에서는 카메라 driver 시각을 써야 하므로 서버 신선도 검사는 그대로 (F2, T30c) |
 | **부호 반전/s · jerk RMS (oscillation metrics)** | 실행된 왼팔 관절 궤적의 요동 지표. 부호 반전/s = 관절 속도(deadband 0.02 rad/s)의 부호가 바뀐 횟수를 창 길이로 나눈 7 관절 합, jerk RMS = 3 차 차분(rad/s³)의 제곱평균제곱근 (T31-diag) |
 
+### 접촉 기하 · 기준선 · K1 (T35–T37, 2026-10-01 추가)
+
+| 용어 | 뜻 |
+|---|---|
+| **접촉 중점 (contact midpoint)** | 두 손가락(`ee_finger_l1`·`l2`)이 각각 사과에 가장 가까운 점(witness point)의 중점. 사과 **중심** 대비 z 를 `contact_mid_z` 로 쓴다. 사과 윗면은 중심 + 34 mm. MuJoCo `mj_geomDistance` 로 GT 형상에서 쟀다 (T35) |
+| **`t_settle`** | 첫 닫기 cycle(왼 그리퍼 명령 < 0.5 인 연속 구간)의 마지막 control row. 손가락이 사과를 물고 멈춘 시점 (T35) |
+| **`contact_lost_t` · 첫 파지 유지 (first grasp held)** | `t_settle` 뒤 24 control row 안에서 두 손가락 중 하나라도 사과에서 1 mm 넘게 떨어진 첫 row. 없으면 첫 파지가 유지된 것 (T35) |
+| **TO deviation (`refined − reference`)** | TO 가 정책 chunk(reference)를 고친 양. 관절 편차(°)와 손끝 편차(mm, 실행 창 8 step 중 최대)로 쓴다 (T35) |
+| **ablation 변형 (`replay` · `no_collision` · `no_limits` · `no_continuity` · `no_smooth`)** | 같은 chunk 의 같은 입력을 복원해 TO 를 다시 풀되 항 하나씩만 뺀 것. 어느 항이 손끝을 밀었는지 가른다. chunk 마다 새 solver 라 warm-start 사슬이 아니다 (T35) |
+| **`continuity` 항** | 이번 chunk 의 시작을 직전 chunk 의 꼬리에 잇도록 TO 가 당기는 항(`w_continuity` 0.5). 정책 chunk 가 직전과 크게 다르면 이 항이 손끝을 밀 수 있다 (T35) |
+| **K1 · `grasp_continuity_off`** | latch 가 `closing`(닫힘 시도) 또는 `held`(파지 확인)인 chunk 에서만 `continuity` 항을 빼는 것. 설정 `cost.grasp_continuity_off` (T37, 기본 on 에서 사용자 판정 O2 로 off 로 바뀌는 중) |
+| **비트 단위 재현 (bitwise reproducible)** | 판정 숫자뿐 아니라 15 프레임의 `clearance_before` 가 float64 로 한 자리도 다르지 않은 것. cuRobo 기준선을 단독 4 회로 확인했다 (T36) |
+| **두 기준선 (legacy · cuRobo)** | legacy = numpy ESDF 경로의 회귀 기준선, cuRobo = `--esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005` 경로(서버와 같은 거리장). 기준값이 다르다 — legacy 14/15 · −29.031048, cuRobo 10/15 · −9.171877 (T36) |
+| **첫 닫기 앞뒤 chunk 창** | T35 가 각 run 에서 첫 닫기 명령이 나온 chunk 의 앞 10 · 뒤 11 chunk 를 묶어 TO·인식을 본 구간 |
+
 ---
 
 > **갈림길에서 안 고른 선택지** — 맨 아래 **"선택한 것과 안 고른 것 — 되돌아올 지점"** 절.
@@ -268,11 +283,15 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **T5** shadow 루프 | 판정만 하고 실행은 안 하는 루프가 서나 | **통과**(`T5f`, 사용자 판정 2026-09-26) — 75 chunk 전부 돌고 target 이 한 번도 엉뚱하게 잡히지 않았고 `violated` 7 건이 진짜 충돌이 아니다. **단 핵심 조건인 refined 대 reference clearance 비교는 미측정**(기록에 `actions` 배열이 없다). 회귀 기준선 `has_target` 9/15 → 15/15 갱신 |
 | **T6** 실기 닫힌 루프 | 예산 안에서 실제로 도나 | ~~실행 완료(execute, closed loop, `ep1807`), 집계는 `T6b` 로 측정 중, 기록기 수정은 `T6a` 로 진행 중(담당 A1)~~ → **과제 구간(seq 1-37) collision 위반 0 · closed loop 에서 잡기 실패 · 원인 미확정, `T7` 로 이어짐**(2026-09-26). `T6d` 가 AG3S→cuRobo·cuRobo·TO 세 단계를 전부 결백으로 확인했고(`manipulated_link_margin` 22/120 구 완화 · `unknown_policy=free` 220/225 프레임 100 mm 안 무장애물 · refined 가 reference 보다 나빠진 chunk 0/75), 로컬 GPU 렌더링 재현 여섯 건 중 다섯이 closed-loop 에서 apple 0.0 mm 로 실패한다 |
 | — **실시간성** | 청크 예산 533 ms 안에 드나 | **별도 판정 실패** — P50 2519 ms, 24/24 청크가 4.7 배 |
-| **T26–T34** 닫힌 루프 사다리(E0→E3)와 E3 원인 추적 | VLA 위에 TO·ESDF 를 얹으면 어디서 왜 깨지나, 고치면 어디까지 회복되나 | **T34 검증 완료 · 커밋·N 확대 판정 대기**(2026-09-30 00:50). 사다리 E0 7/12 · E1 6/12 · E2 6/6 · **E3a 0/6 · E3b 0/6**(T28) → T30 2/6 · 2/6 → T33 2/6 · 3/6 → **T34 5/6 · 3/6**. 원인 13 개를 순서대로 고쳤다 — 아래 **"T26–T34"** 절. 남은 것: apple-top 잔상 · E3a ep1800 r2 `uncertified` 27 chunk(원인 미측정) · E3b 실패 3 건 · 실시간성. **(T7–T25 는 `handoff/` 에 있고 이 로그에는 아직 옮기지 않았다)** |
+| **T26–T34** 닫힌 루프 사다리(E0→E3)와 E3 원인 추적 | VLA 위에 TO·ESDF 를 얹으면 어디서 왜 깨지나, 고치면 어디까지 회복되나 | **T34 검증 완료 · ~~커밋·N 확대 판정 대기~~**(2026-09-30 00:50) → 커밋됨(2026-09-30), **T35–T37 완료**(2026-10-01 기준), N 확대는 열린 문제 O1(순서 3). 사다리 E0 7/12 · E1 6/12 · E2 6/6 · **E3a 0/6 · E3b 0/6**(T28) → T30 2/6 · 2/6 → T33 2/6 · 3/6 → **T34 5/6 · 3/6**. 원인 13 개를 순서대로 고쳤다 — 아래 **"T26–T34"** 절. 남은 것: apple-top 잔상 · E3a ep1800 r2 `uncertified` 27 chunk(원인 미측정) · ~~E3b 실패 3 건~~(T35 가 4 run 모두 높은 곳을 쥔 것으로 진단) · 실시간성. **T35–T37 은 아래 "T35-diag · T36 · T37" 절.** **(T7–T25 는 `handoff/` 에 있고 이 로그에는 아직 옮기지 않았다)** |
 | ↳ T28 사다리 | E0–E3 성공 격자 | E0 7/12 · E1 6/12 · E2 6/6 · E3a 0/6 · E3b 0/6 (2026-09-29) |
 | ↳ T30 | F1–F5 (E3 원인 5) | E3a 2/6 · E3b 2/6, 성공은 전부 ep1807 (2026-09-29 11:00) |
 | ↳ T31–T33 | limit 출처·SQP 예산·attention split·요동·crate 벽 | 요동 E2 수준으로 해소, E3a 2/6 · E3b 3/6 (2026-09-29 19:30) |
 | ↳ T34 | J1 쥔 구가 테이블을 뚫음 · J2 거짓 attach 회수 | E3a **5/6** · E3b 3/6, E3b HOLD 0 (2026-09-30 00:50) |
+| ↳ T35-diag | T34 실패 4 run 은 왜 못 드나 (오프라인) | 4 run 모두 접촉 중점이 사과 중심보다 **+3.8 ~ +15.1 mm 위**. 접촉을 잃은 chunk 의 손끝 편차 30.1·35.0 mm 는 `continuity` 를 끄면 0.0 (ep1808), ep1800 r1 은 `collision` 을 끄면 4.8 mm. 같은 에피소드 VLA 단독 E0 도 1800·1808 에서 1/2. `attach_revoked` 는 맞았다 (2026-09-30 10:12) |
+| ↳ T36 | cuRobo 회귀 기준선 (둘째 기준) | cuRobo 단독 4 회 비트 단위 재현 **10/15 · 15/15 · −9.171877401271193 mm**, legacy **14/15 · 15/15 · −29.031048280806342 mm**. 덮지 않는 경로 명시. skill 갱신 (루트 `7348d9e`) (2026-09-30 10:34) |
+| ↳ T37 | K1: 닫기·쥐기 구간 `continuity` off | E3a **3/6** · E3b **3/6** (T34 5/6 · 3/6). closing/held 손끝 편차 중앙 7.8–8.4 → 0.0–0.3 mm 이나 실패 접촉 높이 +3.8 ~ +12.9 mm 그대로 (54 run 중 실패 18/21 이 +3 mm 위), 부호 반전 1.44 → 2.47/s. **사용자 판정 O2: 기본 off** (2026-10-01) |
+| ↳ 열린 문제 O1–O12 | 다음 순서 | (1) O2 + O12 → 전 작업공간 commit + tag → (2) O4 실시간(GPU 병렬) → (3) O1 큰 N (GPU 공유 확인) → (4) O5 → (5) O10·O11 (2026-10-01) |
 
 ### 이 국면에서 쓰는 자산
 
@@ -3181,7 +3200,7 @@ grasp → release 창의 **실행된 왼팔 관절 궤적**에서 잰다 (`qpos`
 |---|---|---|---|
 | 1 | **apple-top 잔상 복셀** | live E3a 에서 held 행 음수 chunk 4 개(ep1807 r1 −1.41 mm · ep1808 r1 −0.74 mm · ep1808 r2 −0.63/−1.83 mm; 앞의 둘은 최근접이 apple, 마지막 둘은 crate). 오프라인에서는 attach chunk 의 최악 행이 사과 위쪽 field 점유(사과 표면 밖 4.9–25.3 mm)를 읽는 예가 ep1807 r1·r2 · E3b ep1807 r1 · ep1808 r1·r2 에 있다 (−13.5 ~ −24.8 mm) | 그 잔상이 어디서 생기는가 |
 | 2 | **E3a ep1800 r2 place 뒤 `uncertified` 27 chunk** | E3a would_hold 28 chunk 중 `uncertified` 27 (ep1800 r2 26 · ep1807 r2 1), `invariant_violation` 27 chunk, 최악 링크 `ee_finger_r2`, 최근접(사과 제외) crate, phase `placed`. 성공 뒤 구간이라 성공/실패는 안 바뀌었다 | **원인 미측정 — 개수만 기록** |
-| 3 | **E3b 실패 3 건** (ep1800 r1 · ep1808 r1 · r2) | HOLD 0 · comms HOLD 0. ep1800 r1 은 t=144 attach 가 t=160 에 회수된 뒤 재attach 없음 | 왜 파지에 실패하는가 (HOLD 가 아님) |
+| 3 | **E3b 실패 3 건** (ep1800 r1 · ep1808 r1 · r2) | HOLD 0 · comms HOLD 0. ep1800 r1 은 t=144 attach 가 t=160 에 회수된 뒤 재attach 없음 | ~~왜 파지에 실패하는가 (HOLD 가 아님)~~ → T35-diag 가 4 run 의 접촉 높이(+3.8 ~ +15.1 mm)·손끝 편차를 쟀다 (아래 T35 절). **파지 높이가 정책에서 오는지는 O1 큰 N 에서 판정** |
 | 4 | **J2 관측·들기 검사** | 라이브 12 run 의 회수 창에서 `observed_*` 값이 한 번도 채워지지 않음 (`hold_checks` 에 `observed_*` 키 없음). 개도 검사만 라이브에서 작동 | 관측·들기 검사가 실제 상황에서 맞는가 |
 | 5 | **self-filter 복사본이 테이블 점을 지우는 양** (J1 항목) | 구현자 자체 점검(impl.md)만: fused cloud ~6,000 점 중 21–61 점(0.35–1.0 %) | 검증에서 따로 재지 않았다 |
 | 6 | **J3 — coarse layer 의 얇은 벽 구멍** | T33 폐루프 기록(coarse `nx` 벽): 벽 폭 0 인 chunk 가 E3a ep1800 r2 에서 **40/75** (최소 거리 0.0 mm), E3a ep1800 r1 에서 18/75 (그 chunk 의 최소 거리 최대 13.99 mm) | T34 에서는 다시 재지 않았다. 사용자 판정: "J3 는 측정 뒤" |
@@ -3190,7 +3209,7 @@ grasp → release 창의 **실행된 왼팔 관절 궤적**에서 잰다 (`qpos`
 | 9 | **SQP 반복 수 · 프레임별 여유거리** | 벽시계 예산에 민감해 이 검증에서 인용하지 않았다 | — |
 | 10 | **실시간성** | 서버 total 중앙값 3,306 / 3,179 ms vs 예산 533 ms | AG3S 지각 2,864 ms 가 지배 항 |
 
-**사용자 판정 대기**: T26–T34 커밋(미커밋 상태) · 더 큰 N 평가 · 남은 소결함(1–4, 6)의 우선순위.
+~~**사용자 판정 대기**: T26–T34 커밋(미커밋 상태) · 더 큰 N 평가 · 남은 소결함(1–4, 6)의 우선순위.~~ → T26–T34 는 커밋됨(2026-09-30). 남은 판정과 순서는 아래 "열린 문제 O1–O12" 절.
 
 ---
 
@@ -3203,3 +3222,376 @@ grasp → release 창의 **실행된 왼팔 관절 궤적**에서 잰다 (`qpos`
 | J1 | 중심을 평면 법선으로 **올림** | 반지름을 줄임 | 사과 밑면이 질의 구 밖으로 5.8–12.8 mm 나와 손가락–사과 밑면 충돌이 안 잡히면(구현자 자체 점검) |
 | F1 의 범위 | target-free 층에서 답 받은 권한 행 전부 | 최근접이 사과인 행만 | 마스크 행이 사과 든 fine layer 에서 답을 받아 더 엄격해지는 자리가 문제가 되면 (구현자 분석: esdf_margin 0.05 > 권한 여유 0.02 인 기본 config 에서만 해당) |
 | `--safe-gate` | E3a(off)·E3b(on) 병행 | — | E3b 만 실패하는 원인이 게이트로 밝혀지면 |
+
+
+---
+
+## T35-diag · T36 · T37 — 실패 4 건의 원인, 두 번째 기준선, K1 (2026-09-30 ~ 2026-10-01)
+
+**이 절이 답하는 물음.** T34 에서 E3 가 8/12 까지 회복됐다. 그런데 남은 실패 4 건은 왜 사과를 못 드는가(T35-diag)? 그 사이에 회귀 기준선은 무엇이 되었고 무엇을 덮지 못하는가(T36)? T35 가 가리킨 원인 하나를 고치면(K1) 성공률이 오르는가(T37)? 그리고 이 결과 뒤에 무엇을 어떤 순서로 할 것인가?
+
+**읽는 법과 출처 규약.**
+
+- 수치는 `handoff/T35.diag.verify.json` · `T36.baseline.verify.json` · `T37.verify.json` 에서 왔다. 구현자가 스스로 점검한 값(`T37.impl.md`)은 **"구현자 자체 점검(impl.md)"** 이라고 그 자리에서 밝혔다. verify.json 에 없는 값은 **미측정**이라고 썼다.
+- 열린 문제 표(O1–O12)와 사용자가 정한 순서는 `handoff/AG3S_GRASP_FIX_PLAN.md` §7 과 `handoff/SESSION_STATE.md` 2026-10-01 행에서 옮겼다.
+- 시각은 verify.json 의 `updated_at`·로그 시각(서버 시계, UTC)이거나 `SESSION_STATE.md` 의 날짜다. **SESSION_STATE 는 날짜만 적은 행이 많아** 시각이 없는 STEP 은 "시각 미기록" 이라고 적었다. 맞추거나 짐작하지 않았다.
+- 앞 절(T26–T34)의 사다리 이름(`E0`–`E3b`)·`attach_revoked`·`held sphere` 는 위 "용어" 절에 있다.
+
+### 타임라인
+
+| 시각 | STEP | 무엇 |
+|---|---|---|
+| 2026-09-30 (시각 미기록) | 커밋 (사용자 승인) · **T35-diag 착수** | benchmark `421bb71` · `76f02e0`, pi05_TO_hybrid `8a9eae9`, 루트 `b74a492` 로 T26–T34 를 커밋했다 (push 는 사용자). 이어 T34 의 실패 4 run 원인 진단을 오프라인으로 시작 |
+| 2026-09-30 (시각 미기록) | **사용자 판정 B** · T36-baseline 착수 | cuRobo 기준선을 둘째 기준으로 둔다. legacy 1 회 확인 + cuRobo 단독 4 회 |
+| 2026-09-30 10:12 | **T35-diag 완료** (`updated_at`) | 실패 4 run 모두 **높은 곳을 쥐고 놓쳤다**. 제안 K1 (닫기·쥐기 구간에서 continuity 항 끄기) |
+| 2026-09-30 10:34 · 10:36 | **T36 완료** (`updated_at`) · skill 커밋 `7348d9e` (10:36:05) | cuRobo 기준선 비트 단위 재현. skill `regression-baseline` 갱신 |
+| 2026-09-30 (시각 미기록) | **사용자 승인 K1 → T37 구현 완료** | 구현자 자체 점검(impl.md) 1706 passed |
+| 2026-09-30 13:40–15:18 (UTC) | **T37 검증** | 기준선 13:40:03–13:42:20, E3a 6 회(한 서버 순차), E3b 6 회(단독, 14:30:40–15:18:01) |
+| 2026-09-30 (시각 미기록) | **T37 검증 완료** | E3a 3/6 · E3b 3/6. K1 은 성공률을 올리지 못했다 |
+| 2026-10-01 (시각 미기록) | 열린 문제 O1–O12 정리 · **사용자 판정 O2** · 순서 확정 | K1 기본값 off. 순서는 아래 "열린 문제" 절 |
+
+---
+
+### T35-diag — 실패 4 건은 왜 사과를 못 들었나 (2026-09-30, verifier A2, 오프라인)
+
+**대상.** T34 의 실패 4 run — E3b ep1800 r1 · E3b ep1808 r1 · E3b ep1808 r2 · E3a ep1800 r1. 이미 있는 기록(`frames.jsonl` · 서버 chunk npz)만 다시 계산했고 **폐루프 실행도 코드 수정도 없다.** 비교 대상은 T28·T34 의 `E0`(VLA 단독) · `E1` · `E2`(TO + objective/limits) · `E3a` · `E3b` 42 run 이다 (녹화 없는 첫 라운드 `E0`·`E1` 과 녹화한 `E0_rec`·`E1_rec` 을 모두 센다).
+
+**용어 (이 절에서 새로 쓴다).**
+
+- **접촉 중점 (contact midpoint).** 왼손 두 손가락(`ee_finger_l1`, `ee_finger_l2`) 각각에서 사과에 가장 가까운 점(witness point)의 중점. MuJoCo `mj_geomDistance` 로 GT 형상에서 쟀다. 사과 **중심** 대비 z 를 `contact_mid_z` 로 쓴다. 사과 윗면은 중심 + 34 mm 이다(d_probe 정의).
+- **`t_settle`.** 첫 닫기 cycle(왼 그리퍼 명령 < 0.5 인 연속 구간)의 **마지막 control row**. 손가락이 사과를 물고 멈춘 시점으로 본다.
+- **`contact_lost_t`.** `t_settle` 뒤 24 control row 중 두 손가락 중 하나라도 사과에서 1 mm 넘게 떨어진 첫 row. 없으면 **첫 파지가 유지된 것**(`first grasp held`).
+- **TO deviation.** `refined − reference`. TO 가 정책 chunk(reference)를 고친 양. 관절 편차(°)와 **손끝 편차**(fingertip displacement, mm, 실행 창 8 step 중 최대)로 쓴다.
+- **ablation 변형 (`replay` · `no_collision` · `no_limits` · `no_continuity` · `no_smooth`).** 같은 chunk 의 같은 입력을 복원해 TO 를 다시 풀되 항 하나씩만 뺀 것. 어느 항이 손끝을 밀었는지 가른다. **`continuity` 항** 은 이번 chunk 의 시작을 직전 chunk 의 꼬리에 잇도록 당기는 항이다.
+
+#### 1. 실패 4 run 은 전부 사과의 높은 곳을 쥐고 닫았다
+
+닫힌 뒤 두 손가락은 모두 사과에 닿아 있었다(`d_l1`, `d_l2` = −0.08 ~ −0.36 mm). 개도는 0.59–0.70 (사과 폭 ≈ 0.70). **그런데 접촉 중점이 사과 중심보다 위다.**
+
+| run | `t_close` | `t_settle` 의 개도 | 접촉 중점 − 사과 중심 (x, y, z mm) | `contact_lost_t` | 사과 dz 최대 (mm) |
+|---|---:|---:|---|---:|---:|
+| E3b ep1800 r1 | 130 | 0.70 | (−0.7, −1.4, **+8.7**) | 152 | 9.7 |
+| E3b ep1808 r1 | 110 | 0.59 | (+6.5, −9.7, **+15.1**) | 124 | 0.34 |
+| E3b ep1808 r2 | 104 | 0.68 | (+6.4, −5.7, **+3.8**) | 120 | 35.7 |
+| E3a ep1800 r1 | 130 | 0.68 | (+4.0, −5.7, **+6.4**) | 148 | 0.43 |
+
+**같은 지표로 42 run 을 조건별로 비교한다** (`T37.verify.json` 의 `contact_height.group_stats_all_runs` 에서 T37 행을 뺀 것. 값의 원천은 `T35.diag.verify.json` 의 `C4_settle_hold.runs`):
+
+| 조건 | n | success | 첫 파지 유지 | 접촉 중점 z 최소 / 중앙 / 최대 (mm) |
+|---|---:|---:|---:|---|
+| E0 | 6 | 4 | 4 | -7.1 / +2.1 / +10.2 |
+| E0_rec | 6 | 3 | 4 | -7.0 / +2.0 / +5.7 |
+| E1 | 6 | 3 | 5 | -6.7 / +1.8 / +21.1 |
+| E1_rec | 6 | 3 | 4 | -6.9 / +2.3 / +11.8 |
+| E2_rec | 6 | 6 | 6 | -7.0 / -3.7 / -0.0 |
+| T34 E3a | 6 | 5 | 3 | -7.0 / +1.8 / +9.1 |
+| T34 E3b | 6 | 3 | 3 | -7.1 / +1.6 / +15.1 |
+
+- 실패 4 run 의 접촉 중점 z 는 **+3.8 ~ +15.1 mm** 다. 위 42 run 의 `C4_settle_hold.runs` 를 이 로그를 쓰면서 세어 보면 성공 27 · 실패 15 이고, **첫 파지가 유지된 성공 25 run 의 접촉 중점 z 는 −7.1 ~ +4.4 mm** 다. 실패 15 run 의 z 는 +0.9 ~ +21.1 mm 로 +3 mm 위가 12 run 이다.
+- ~~SESSION_STATE 2026-09-30 행과 `T37.task.md` 는 "첫 파지가 유지된 성공 18/22 는 −7.1 ~ +2.4 mm" 라고 적었다.~~ 이 집계는 verify.json 에서 **재현되지 않았다** (위에서 센 값은 25 run · −7.1 ~ +4.4 mm). T37 verifier 도 "T35 task 문장의 18/22 집계 정의와 같은지 확인 안 함" 이라고 적었다 (`not_measured`). **이 로그는 verify.json 에서 센 값만 쓴다.** 정의 차이인지 오기인지는 미확인이다.
+- `E2`(VLA + TO, 지각 없음) 6 run 은 모두 성공이고 접촉 중점 z 가 −7.0 ~ −0.0 mm 로 한 번도 위쪽이 아니었다.
+- 같은 에피소드의 성공 횟수 (run 2 회 중 몇 회). **VLA 단독 `E0` 도 ep1800 · ep1808 에서 1/2 이다.**
+
+| 에피소드 | E0 | E0_rec | E1 | E1_rec | E2_rec | E3a_rec | E3b_rec |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| ep1800 | 1/2 | 1/2 | 1/2 | 1/2 | 2/2 | 1/2 | 1/2 |
+| ep1807 | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 |
+| ep1808 | 1/2 | 0/2 | 0/2 | 0/2 | 2/2 | 2/2 | 0/2 |
+
+[`figures/t35/t35-grasp-geometry-all-runs.png`](figures/t35/t35-grasp-geometry-all-runs.png) — 그래프 (42 run 의 접촉 중점 z 와 닫은 뒤 최소 개도, 성공/실패). [`figures/t35/t35-keyframes-failed-vs-E2.png`](figures/t35/t35-keyframes-failed-vs-E2.png) — 실제 씬 (실패 run 대 같은 에피소드의 성공 `E2` run, 손가락 쌍의 옆면). [`figures/t35/t35-facts-table.png`](figures/t35/t35-facts-table.png) — 표 (4 run × 후보 5 개).
+
+#### 2. TO 는 닫기 전에는 거의 안 고쳤다 — 접촉을 잃은 chunk 에서 `continuity` 가 손끝을 밀었다 (C1)
+
+- **닫기 전.** 첫 닫기 직전 10 chunk 의 최대 `refined − reference` 는 **2.16 · 2.34 · 1.40 · 2.25°** (E3b 1800 r1 · 1808 r1 · 1808 r2 · E3a 1800 r1), 곧 **≤ 2.34°** 다. 닫은 뒤 11 chunk 에서는 4.22 · 3.90 · 12.35 · 4.08° 로 커진다.
+- **접촉을 잃은 chunk 의 손끝 편차와 ablation** (mm; 실행 창 8 step 중 최대. `recorded` = 서버가 실제로 낸 refined, 나머지 열은 오프라인 재생):
+
+| run (chunk `t`, 관절 편차) | recorded | replay | no_collision | no_limits | **no_continuity** | no_smooth |
+|---|---:|---:|---:|---:|---:|---:|
+| E3b ep1808 r1 (t120, 3.90°) | 30.1 | 19.6 | 20.6 | 20.1 | **0.0** | 19.6 |
+| E3b ep1808 r2 (t112, 6.34°) | 35.0 | 34.7 | 35.1 | 31.1 | **0.0** | 34.6 |
+| E3b ep1800 r1 (t144, held, 2.41°) | 41.9 | 29.7 | **4.8** | 43.7 | 35.4 | 34.9 |
+| E3a ep1800 r1 (t144, 4.08°) | 34.1 | 25.0 | 25.2 | 23.8 | 25.3 | 21.9 |
+
+- **ep1808 r1 · r2.** `continuity` 를 끄면 접촉을 잃은 chunk 의 손끝 편차가 **0.0 mm** 가 된다. 다른 항을 빼도 줄지 않는다. 곧 이 두 run 에서는 `continuity` 가 단독 원인이다.
+- **E3b ep1800 r1.** 이 chunk 는 `held` 상태(attach 뒤)이고 `collision` 을 끄면 4.8 mm 로 준다. reference 의 최악 행은 `ee_finger_l2` (fine tier, clearance **−16.8 mm**) 이고 GT 최근접 물체는 **banana**(7.3 mm), 사과는 20.5 mm 다. 곧 **쥔 채 이웃 banana 와의 충돌 행**이 손끝을 밀었다. field probe(D)가 이 행의 field 최근접 표면점에서 GT 를 재면 banana 3.2 mm · 사과 24.2 mm 다. 같은 run 의 t152 chunk 는 `continuity` 를 끄면 0.0 mm 로 준다.
+- **E3a ep1800 r1.** 어느 항을 빼도 21.9–25.3 mm 로 남는다 — **단일 항으로는 0 이 되지 않는다.**
+- **한계.** 변형은 chunk 마다 새 solver 로 푼 것이라 warm-start 사슬이 아니다. 같은 입력의 `replay` 와 기록된 refined 는 실행 창에서 최대 **2.20°** 다르다 (`not_measured`).
+
+[`figures/t35/t35-timeline-E3b_ep1808_r1.png`](figures/t35/t35-timeline-E3b_ep1808_r1.png) · [`…-E3b_ep1808_r2.png`](figures/t35/t35-timeline-E3b_ep1808_r2.png) · [`…-E3b_ep1800_r1.png`](figures/t35/t35-timeline-E3b_ep1800_r1.png) · [`…-E3a_ep1800_r1.png`](figures/t35/t35-timeline-E3a_ep1800_r1.png) — 그래프 (run 별 finger–사과 GT 거리 · 그리퍼 개도 · 사과 dz · `refined − reference` · latch 상태).
+
+#### 3. 인식은 원인으로 가려지지 않았다 (C3), 회수는 맞았다 (C5)
+
+- **인식 (C3, 첫 닫기 앞뒤 21 chunk).** target 이 바뀐 chunk 는 4 run 모두 **0** (`n_switched`). `manipulated` 가 사과가 아닌 chunk 는 0 · 4 · 0 · 2 (E3b 1800 r1 · 1808 r1 · 1808 r2 · E3a 1800 r1), 손이 가린 chunk 는 8 · 5 · 3 · 7 이다. 4 run 이 같은 방향의 이상을 보이지 않는다.
+- **`attach_revoked` 는 올바른 회수였다 (C5).** E3b ep1800 r1 은 attach t=144, 회수 t=160 이다. GT 로 보면:
+
+| 구간 (control row) | 손 안 row | 개도 (처음 → 끝) | 두 손가락 중 먼 쪽 사과 거리 최대 |
+|---|---:|---|---:|
+| attach 요청 직전 피드백 t136–143 | 8 / 8 | 0.713 → 0.696 | −0.28 mm (닿음) |
+| attach chunk 실행 t144–151 | 7 / 8 (마지막 손 안 t150) | 0.701 → 0.686 | 14.3 mm |
+| **회수 요청 직전 피드백 t152–159** | **0 / 8** | 0.671 → 0.538 | **26.7 mm** |
+
+  회수를 판정한 chunk 의 피드백 row 에서 사과는 이미 손에서 떨어져 있었다(마지막 손 안 row t=150, 사과 dz 최대 9.7 mm 는 t=147). **회수는 옳았고** 그 뒤 재 attach 가 없었던 것도 사과가 손 밖에 있었기 때문이다. 나머지 세 run(E3b 1808 r1 · r2, E3a 1800 r1)은 attach 가 없어 회수 사건 자체가 없다 — **회수의 옳고 그름은 이 셋에서 미측정**이다.
+
+#### 4. 이 STEP 이 말하는 것과 말하지 않는 것
+
+- 말하는 것: 실패 4 run 모두 **높은 곳을 쥐고 닫았고**(+3.8 ~ +15.1 mm) 닫은 뒤 손가락–사과 거리가 벌어졌다. 접촉을 잃은 chunk 에서 TO 의 `continuity` 항이 손끝을 최대 30–35 mm 밀었던 run 이 둘(ep1808 r1 · r2), `collision` 행이 민 run 이 하나(ep1800 r1), 단일 항이 아닌 run 이 하나(E3a ep1800 r1)다. 같은 에피소드의 VLA 단독 `E0` 도 ep1800 · ep1808 에서 1/2 이다.
+- **말하지 않는 것 (미측정).** 접촉 **힘**·마찰(MuJoCo dynamics 재생을 안 했다 — 형상 거리만 쟀다), 라벨 층·destination margin(기록에 없다), lift 뒤 reference 거리(사과를 실제 위치로 둔 값).
+- **기준선.** 이 STEP 도 legacy 기준선을 확인했다 — **14/15 · 15/15 · −29.031048280806342 mm**, T34 와 소수점까지 같고 `T34 code_md5_at_end` 161 파일이 시작·끝 모두 같다 (코드를 안 고쳤다).
+- **제안 K1 (lead, 사용자 승인 뒤 T37).** 닫기·쥐기 구간(latch `closing` · `held`)에서만 `continuity` 항을 끈다.
+
+---
+
+### T36 — 회귀 기준선이 둘이 되었다 (2026-09-30 10:34, verifier A2)
+
+**사용자 판정 B.** cuRobo 거리장 경로의 기준선을 **둘째 기준**으로 둔다. legacy(numpy ESDF) 기준선은 그대로 둔다. 이전에는 legacy 하나였는데 서버가 실제로 쓰는 경로는 cuRobo 이므로, legacy 만 재면 서버 경로의 회귀를 못 본다.
+
+#### 무엇을 어떻게 쟀나
+
+- **cuRobo 기준선 명령** = legacy 명령(`regression-baseline` skill) + `--esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005`. **`.venv-openpi-live`** 로 돌려야 한다(ag3s 쪽 python 에서는 cuRobo 를 import 할 수 없다). 서버와 같은 거리장 경로(분리된 fine TSDF · fine truncation 0.030 m)를 탄다. 15 프레임 모두 `separate_fine_tsdf` 가 켜졌다.
+- **재현성 실험.** 같은 명령을 **단독으로 4 회** 돌렸다(각 실행 전에 python CPU 5 % 미만 · GPU 비어 있음을 3 회 연속 확인). 과거 R2 에서 4 회 중 1 회가 뒤집힌 전력이 있어(앞 R 절 "재현성 — 1 회 이탈") 비트 단위로 비교했다. **비트 단위 재현(bitwise reproducible)** 은 판정 숫자뿐 아니라 15 프레임의 `clearance_before` 가 float64 로 한 자리도 다르지 않다는 뜻이다.
+- **추가 확인.** 다른 세션의 GPU 작업과 겹친 실행 2 회(`curobo_r0_overlap`·`r0b_overlap`, 4 회에 안 센다)도 판정 숫자가 같았다. AG3S 만 재생한 field 수준 probe 를 서로 다른 프로세스 2 개로 돌려 보니 15 프레임의 tier 거리 배열 sha1 이 같았고 label grid 도 같았다. 15 프레임에서 달라진 key 는 `ag3s_ms` · `to_ms`(시간) 둘뿐이다.
+
+#### 결과
+
+| 기준선 | 위반으로 시작 | `has_target` | frame0 `clearance_before` | 15 프레임 `clearance_before` sha1 |
+|---|---:|---:|---:|---|
+| **legacy** (shim 1 회 + `.venv-openpi-live` 대조 1 회, 동일) | **14/15** | 15/15 | **−29.031048280806342 mm** | `fd943e3e7aa9fc6dd80f3582c67d2d87c0f6caa6` |
+| **cuRobo** (단독 4 회 r1–r4) | **10/15** | 15/15 | **−9.171877401271193 mm** | `247da8a22076ebbabb466b95d70031d4e768be82` (4 회 모두 같음) |
+
+- cuRobo 4 회: 판정 숫자 **4/4 비트 단위 같음**, 15 프레임 `clearance_before` 가 4/4 비트 단위 같음, 차이 난 프레임 없음, 최대 절대 차 **0.0 mm**.
+- legacy: T34 · T35 와 15 프레임 모두 같다 (`per_frame_clearance_before_equal_to_T34`).
+- 코드는 안 고쳤다 (`code_md5_end_vs_start` 변화 없음).
+
+**프레임별 legacy 대 cuRobo.** `clearance_before` 는 SQP 이전 값(그 프레임의 reference 궤적이 장면에 대해 갖는 최소 여유)이라 벽시계에 의존하지 않는다.
+
+| frame | legacy (mm) | cuRobo (mm) | cuRobo − legacy (mm) | legacy 위반 | cuRobo 위반 | cuRobo 가 답한 tier (최악 구 중심) |
+|---:|---:|---:|---:|:---:|:---:|---|
+| 0 | -29.031 | -9.172 | +19.859 | v | v | coarse |
+| 1 | -25.459 | -5.649 | +19.811 | v | v | coarse |
+| 2 | -9.243 | 9.853 | +19.095 | v | - | coarse |
+| 3 | -0.536 | 6.450 | +6.987 | v | - | fine |
+| 4 | -0.515 | 19.553 | +20.068 | v | - | coarse |
+| 5 | -0.655 | 19.502 | +20.157 | v | - | coarse |
+| 6 | 0.145 | 16.687 | +16.542 | - | - | fine |
+| 7 | -7.216 | -4.040 | +3.176 | v | v | fine |
+| 8 | -46.090 | -37.375 | +8.716 | v | v | fine |
+| 9 | -73.887 | -65.559 | +8.328 | v | v | fine |
+| 10 | -105.978 | -100.157 | +5.822 | v | v | fine |
+| 11 | -123.317 | -123.232 | +0.085 | v | v | fine |
+| 12 | -122.633 | -126.170 | -3.537 | v | v | fine |
+| 13 | -124.033 | -125.694 | -1.661 | v | v | coarse |
+| 14 | -127.500 | -124.976 | +2.523 | v | v | fine |
+
+- legacy 만 위반인 프레임은 **2 · 3 · 4 · 5** 이고 cuRobo 만 위반인 프레임은 없다. 최악 구는 frame 0 이 두 backend 모두 `link_left_arm_5` step 2, frame 4 가 `link_right_arm_5` step 1 로 같다 (최악 구 반지름 0.0813 m). 곧 **같은 구가 같은 step 에서 최악인데 값이 frame 0 에서 +19.9 mm 다르다.** 이 차이의 원인은 **측정하지 않았다**(필드 표현·tier 구성이 다르다는 것까지만 안다).
+- `status`(SQP 결과)는 기준이 아니다: legacy `feasible` 15, cuRobo `feasible` 14 · `violated` 1(frame 12). 벽시계 예산 `sqp.time_budget_ms` 에 민감해서 참고로만 적었다.
+
+[`figures/t36/t36-trend.png`](figures/t36/t36-trend.png) — 그래프 (프레임별 `clearance_before`, legacy 와 cuRobo 4 회, 아래 막대는 차이). [`figures/t36/t36-scene.png`](figures/t36/t36-scene.png) — 실제 씬 (frame 0·4 의 worst 구와 두 backend 의 ESDF x–z 단면). [`figures/t36/t36-table.png`](figures/t36/t36-table.png) — 표.
+
+#### 왜 legacy 기준 값이 바뀌었나 — 13/15 · +0.186 mm → 14/15 · −29.031 mm
+
+앞서 기준은 **13/15 · +0.185978 mm** 였다 (T28 오프라인 0f 의 표에 있는 HEAD `cee8f84` 의 값). 지금은 **14/15 · −29.031048 mm** 이다. 코드가 흔들린 것이 아니라 **장면이 달라진 것**이다.
+
+| | 자기 필터 `inflation` | 한 일 | 결과 |
+|---|---|---|---|
+| 옛 기준 (13/15 · +0.186) | **0.05 m** | 로봇 구 반지름에 5 cm 를 더해 로봇 점을 지웠다 | **왼손 옆의 실제 crate 점**까지 지웠다 (frame 0 wrist_cam_l 2,787 px · wrist_cam_r 569 px). crate 가 거리장에서 사라져 팔이 안 부딪힌 것처럼 읽혔다 |
+| 지금 (14/15 · −29.031) | **0.0** (T26 에서 기본값 변경) | 로봇 구 반지름 그대로 | crate 가 거리장에 남는다. `link_left_arm_5` 제약 구(r 81.2 mm) ↔ crate 의 실제 여유가 +21.2 mm, margin 50 mm 를 빼면 **≈ −29.03 mm** (구현자 분석, T30b) |
+
+- 같은 기록 15 프레임 × 3 카메라에서 inflation 0.05 가 지운 non-robot 픽셀은 crate **114,808** · table 150,395 · apple 41,499 · banana 19,564 이고, 0.0 이 지운 것은 crate 0 · table 5,459 · apple 4,463 · banana 993 이다. **로봇 누수는 0.05 · 0.0 모두 0 / 836,762 px** (앞 "4-6" 절, `T30.verify.json`).
+- 그러므로 **옛 값으로 되돌리려고 inflation 을 올리면 실제 물체를 지운다** — T14 에서 사과를 지운 것과 같은 기전이다. 옛 값은 "기준선이 흔들렸다"가 아니라 "결함이 가린 값"이었다.
+- 새 기준은 T30 · T31-diag · T32 H4 · T33 · T34 · T35 · T36 · T37 에서 소수점까지 재현된다.
+
+#### cuRobo 기준선이 덮지 않는 것 (`not_measured` · `flags`)
+
+`esdf_rollout` 에 해당 flag 가 없어서 서버 설정과 **다르게** 돌아간다. 이 경로들은 **폐루프 E3 실행으로만** 검증된다.
+
+| 서버 설정 (T33 `start_server_e3.sh`) | `esdf_rollout` 기준선 | 덮이지 않는 이유 |
+|---|---|---|
+| `--links gripper` (제약을 손바닥·손가락에만) | `--constraint-links arms` | arms 만 고른다 (choices `arms`·`all`) |
+| `--target-field-policy exclude-authorized` | flag 없음 → `relax` | target-free layer 가 **0 개**(15/15 프레임) |
+| `--esdf-margin 0` | 0.05 (skill 명령 유지) | |
+| `--no-self-collision` · `--capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32` | flag 없음 | |
+| 쥔 물체 경로 (held-trace freeing · attached 구) | | **0 점 / 0 attached** (15/15 프레임) |
+| fine window `hand_swept` + hand 입력 | `hand_source = none` (15/15) | |
+| R2 긴 기록(`attention_16d_long.npz`) 재현성 | | 다시 안 돌렸다 |
+
+- 기준선이 지켜 주는 것: `depth → 자기 필터 → attention 배선 → grounding → 필드(coarse + fine) → SQP → QP` 중 위 표가 덮지 않는 칸을 뺀 부분.
+- **skill `regression-baseline` 이 갱신되었다** (루트 커밋 `7348d9e`, 2026-09-30 10:36:05): 두 기준값, cuRobo 명령(`.venv-openpi-live`), 덮지 않는 경로 목록, "옛 값으로 되돌리려고 inflation 을 올리지 마라" 경고.
+- 환경 메모: `.venv-ag3s/bin/python` 은 NFS 에서 `timeout 20` 에 걸려(rc 124) legacy 기준선·오프라인 분석은 scratch shim 으로 돌렸다 (열린 문제 O11).
+
+---
+
+### T37 — K1: 닫기·쥐기 구간에서 `continuity` 를 끈다 (2026-09-30)
+
+#### 구현 (구현자 A1, `T37.impl.md` — 이 절의 구현 서술은 구현자 자체 점검(impl.md))
+
+- **무엇.** grasp latch 상태가 `closing`(닫힘 시도) 또는 `held`(파지 확인)인 chunk 에서만 TO 목적함수의 `continuity` 항을 뺀다. 충돌 · limit · smoothness · tracking 은 그대로다.
+- **어떻게.** 그 chunk 에서 refiner 가 연속성 기준(직전 chunk 의 꼬리)을 SQP 에 넘기지 않는다(`previous_chunk=None`). QP 와 merit 양쪽에서 항이 빠지므로 `w_continuity = 0` 과 **같은 목적함수**다 (단위 시험이 두 궤적이 bit 단위로 같음을 확인한다). 판단은 `SafePolicy._scene_fn` 안에서 `_run_latch` 가 끝난 **최종** 상태로 한다.
+- **스위치와 기록.** `CostConfig.grasp_continuity_off` (기본값 **True**, 이 STEP 시점). bool 이 아니면 `TrajOptConfigError`. chunk 마다 `metrics.continuity_active` · `continuity_reason` · `continuity_off_by` 를 남긴다. 켜짐/꺼짐이 **바뀔 때만** 서버 로그 한 줄. `serve_safe` CLI flag 는 만들지 않았다.
+- **바꾼 파일.** `trajopt/config.py` · `trajopt/refiner.py` · `trajopt/safe_policy.py`. `problem.py` · `sqp.py` 는 안 바꿨다 (`previous_chunk=None` 이 이미 항을 끈다).
+- **단위 시험(구현자 자체 점검).** 새 테스트 30 개(25 + 5), 전체 `tests/ag3s tests/trajopt` **1706 passed · 0 failed · 2 skipped**. T35 의 입력을 복원한 고정 입력 재생:
+
+| run · t · chunk | latch | 손끝 편차 (gate 없음 → 있음, mm) |
+|---|---|---|
+| 1808 r1 · 120 · 00315 | closing | 19.62 → **0.00** |
+| 1808 r2 · 112 · 00389 | closing | 34.66 → **0.00** |
+| 1808 r1 · 112 · 00314 | closing | 10.01 → **14.42** (T35 `no_continuity` 변형과 같음) |
+| 1808 r1 · 40 · 00305 / r2 · 56 · 00382 | latched | 궤적 차 0.0 rad (gate 없는 chunk 는 그대로) |
+
+  closing chunk 라고 모두 0 이 되지는 않는다. 위 세 번째 chunk 는 `no_collision` 변형이 1.5 mm 인 것으로 보아 `continuity` 가 아니라 `collision` 항이 만든 편차다 (T35 값).
+- **미커밋.** T37 코드(위 3 개 파일과 새 테스트 2 개)는 이 STEP 의 검증이 끝난 시점에 커밋되지 않았다 (SESSION_STATE 2026-09-30). 커밋은 O12 순서에서 한다.
+
+#### 검증 설계
+
+- 두 기준선(legacy · cuRobo)을 단독으로 먼저 재서 코드가 기준선을 안 바꿨는지 본다.
+- E3a · E3b 각 6 회(ep1807 · ep1800 · ep1808 × r1·r2)를 **한 서버 순차**로 돌린다 (E3b 는 단독). 병렬은 같은 RNG 순서라 중복 표본이 생긴다 (T30 E3a). 3인칭 녹화.
+- chunk 별 `continuity_active` 를 서버 기록에서 센다. 파지 순간 접촉 중점 높이와 성공률을 T34 와 비교한다.
+- **주의.** E3a 6 회가 도는 동안(13:44–13:50 UTC) 오프라인 CPU 분석(`t37_tipdev.py`)이 겹쳤다. E3b 는 단독(14:30:40–15:18:01)이다. **`grasp_continuity_off=False` 대조 폐루프는 돌리지 않았다** (`serve_safe` 에 flag 가 없다 — `not_measured`). 비교 대상은 T34 의 같은 조건이다.
+
+#### 결과 1 — 기준선은 안 움직였고, K1 gate 는 의도한 chunk 에서만 켜졌다
+
+| 확인 | 값 |
+|---|---|
+| legacy 기준선 | **14/15 · 15/15 · −29.031048280806342 mm** (T36 과 15 프레임 비트 단위 같음) |
+| cuRobo 기준선 | **10/15 · 15/15 · −9.171877401271193 mm** (T36 과 15 프레임 비트 단위 같음) |
+| 서버 기록에 `continuity_*` key 가 있는 chunk | E3a **450/450** · E3b **450/450** |
+| gate 로 continuity 가 꺼진 chunk | E3a **158** (closing 112 · held 46) · E3b **130** (closing 81 · held 49) |
+| 꺼졌는데 closing/held 가 아닌 chunk | **0** |
+| closing/held 인데 안 꺼진 chunk | **0** |
+| E3b HOLD chunk · comms HOLD | **0** · **0** (E3a would_hold 1 chunk, 사유 `unverified`) |
+
+#### 결과 2 — 성공률은 오르지 않았다
+
+| | E3a (gate off) | E3b (gate on) | 비고 |
+|---|---:|---:|---|
+| T34 (K1 전) | **5/6** (grasp 5) | **3/6** (grasp 3) | |
+| **T37 (K1)** | **3/6** (grasp 3) | **3/6** (grasp 4) | E3b ep1808 r2 는 grasp t=128 에 사과가 들렸으나 place 에 못 갔다 (dz 최대 153.3 mm) |
+
+| run | success (grasp t / place t) | apple dz 최대 (mm) | 접촉 중점 − 사과 중심 z (mm) | 첫 파지 유지 | gate 로 continuity 가 꺼진 chunk | attach t / revoke t |
+|---|---|---:|---:|:---:|---:|---|
+| E3a_ep1800_r1 | F (grasp 없음) | 7.7 | +8.7 | 아니오 | 57 | 144 / 152 |
+| E3a_ep1800_r2 | S (168 / 248) | 246.8 | -0.6 | 예 | 15 | 152 / - |
+| E3a_ep1807_r1 | S (112 / 208) | 242.2 | -1.5 | 예 | 17 | 104 / - |
+| E3a_ep1807_r2 | S (128 / 224) | 241.8 | -7.1 | 예 | 16 | 120 / - |
+| E3a_ep1808_r1 | F (grasp 없음) | 0.5 | +12.9 | 아니오 | 27 | - / - |
+| E3a_ep1808_r2 | F (grasp 없음) | 39.7 | +3.8 | 아니오 | 26 | - / - |
+| E3b_ep1800_r1 | F (grasp 없음) | 5.5 | +9.9 | 아니오 | 23 | - / - |
+| E3b_ep1800_r2 | S (176 / 216) | 238.8 | -0.5 | 예 | 16 | 160 / - |
+| E3b_ep1807_r1 | S (120 / 216) | 244.5 | -6.7 | 예 | 16 | 112 / - |
+| E3b_ep1807_r2 | S (128 / 224) | 243.0 | -7.1 | 예 | 16 | 120 / - |
+| E3b_ep1808_r1 | F (grasp 없음) | 5.4 | +12.1 | 아니오 | 25 | - / - |
+| E3b_ep1808_r2 | F (grasp 128, place 없음) | 153.3 | +4.3 | 아니오 | 34 | 120,440 / 136,456 |
+
+- 성공은 ep1807 두 번과 ep1800 r2 (E3a · E3b 모두)이고, 실패는 ep1800 r1 · ep1808 r1 · r2 다.
+- T34 에서 성공했던 E3a ep1808 r1 (t=128 attach 가 t=136 에 회수된 뒤 재 attach t=392, grasp 400)과 r2 (grasp 416)가 T37 에서는 **attach 없이 `closing` 에 머물렀다** (`first_t_by_state`: `closing` t=112 이후 `held` 없음). 이 두 run 에서 gate 로 continuity 가 꺼진 chunk 는 27 · 26 개로 긴 구간이다. **왜 재 attach 가 없었는지는 미측정이다.**
+- r1 과 r2 는 서로 다른 표본이다 (같은 에피소드 두 run 의 `max_abs_qpos_diff` 0.73–1.62, 첫 차이 seq 2; `r1_vs_r2_identical: false`).
+- **N = 6 이므로 E3a 5/6 → 3/6 을 K1 의 효과로 읽지 않는다.** 같은 조건 두 번이 이미 다르고(T34 E3b ep1808 r1 ≠ r2), 대조 폐루프가 없다.
+- 같은 에피소드 비교는 위 T35 절의 표를 본다. 전 조건 요약: `E0_rec` 3/6 · `E0_old` 4/6 · `E1_rec` 3/6 · `E1_old` 3/6 · `E2_rec` 6/6 (`success_grid_all_conditions`).
+
+[`figures/t37/t37-success-grid.png`](figures/t37/t37-success-grid.png) — 표 (E0–E3b 전 단계, T30–T37 의 모든 격자). [`figures/t37/t37-run-table.png`](figures/t37/t37-run-table.png) — 표 (T37 run 별). [`figures/t37/t37-bands-E3a.png`](figures/t37/t37-bands-E3a.png) · [`figures/t37/t37-bands-E3b.png`](figures/t37/t37-bands-E3b.png) — 그래프 (chunk 별 판정 band). [`figures/t37/t37-keyframes-E3a.png`](figures/t37/t37-keyframes-E3a.png) · [`figures/t37/t37-keyframes-E3b.png`](figures/t37/t37-keyframes-E3b.png) — 실제 씬 (3인칭 keyframe). 3인칭 녹화(`outputs/verify/T37/<E3a|E3b>_rec/<run>/third_person_front.mp4`) 12 개.
+
+#### 결과 3 — 손끝 편차는 의도대로 0 으로 줄었다
+
+closing/held chunk 의 `refined − reference` 손끝 편차(`Meter.compare` 의 `fingertip_disp_mm_max`, 실행 창 8 step 중 최대). T34 의 그룹은 **같은 latch 상태 구분을 T34 기록에 소급 적용**한 것이다. 같은 방법으로 T35 의 값 30.1 · 35.0 mm 가 T34 기록에서 30.06 · 34.96 mm 로 재현됐다.
+
+| 조건 | 구분 | n chunk | 중앙값 (mm) | p90 (mm) | 최대 (mm) | 1 mm 초과 chunk |
+|---|---|---:|---:|---:|---:|---:|
+| T34 E3a | closing/held | 122 | 7.77 | 27.1 | 54.0 | 112 |
+| T37 E3a | closing/held | 158 | 0.00 | 14.2 | 49.8 | 30 |
+| T34 E3a | 그 밖 | 328 | 1.44 | 11.3 | 56.2 | 181 |
+| T37 E3a | 그 밖 | 292 | 1.35 | 10.7 | 48.4 | 165 |
+| T34 E3b | closing/held | 114 | 8.38 | 29.3 | 68.3 | 100 |
+| T37 E3b | closing/held | 130 | 0.30 | 17.7 | 52.2 | 33 |
+| T34 E3b | 그 밖 | 336 | 1.63 | 12.7 | 53.1 | 198 |
+| T37 E3b | 그 밖 | 320 | 2.41 | 12.6 | 50.2 | 196 |
+
+- **closing/held 의 중앙값**이 **E3a 7.77 → 0.00 mm · E3b 8.38 → 0.30 mm** 로 줄었다 (1 mm 넘는 chunk 112/122 → 30/158 · 100/114 → 33/130).
+- **남은 꼬리.** p90 은 14.2 · 17.7 mm, 최대는 49.8 · 52.2 mm 로 아직 크다 — `continuity` 가 아닌 항(예: T35 의 `collision` 행)이 민 chunk 가 남아 있다.
+- 그 밖 chunk 는 거의 그대로다 (E3a 중앙값 1.44 → 1.35, E3b 1.63 → 2.41 mm).
+
+[`figures/t37/t37-tipdev.png`](figures/t37/t37-tipdev.png) — 그래프 (chunk 별 손끝 편차, T34 대 T37, closing/held 와 그 밖).
+
+#### 결과 4 — 그러나 접촉 높이는 그대로다
+
+**54 run (T35 의 42 + T37 의 12)** 의 접촉 중점 z:
+
+| 집계 | 값 |
+|---|---:|
+| success | 33 (그중 첫 파지가 유지된 것 31) |
+| failure | 21 |
+| failure 중 접촉 중점 z > +3 mm | **18 / 21** |
+| 첫 파지가 유지된 success 중 z > +3 mm | 1 / 31 |
+| **T37 failure 의 z 범위** | **+3.8 ~ +12.9 mm** |
+| T37 에서 첫 파지가 유지된 success 의 z 범위 | −7.1 ~ −0.5 mm |
+
+- T37 실패 6 run 의 접촉 중점 z 는 +8.7 · +12.9 · +3.8 (E3a) · +9.9 · +12.1 · +4.3 (E3b) mm 로 **여전히 위쪽**이다 (표 위 run 표).
+- 이 정의(`first grasp held` = `t_settle` 뒤 24 row 안에 `contact_lost_t` 없음)가 lead 의 T35 문장 "18/22" 의 정의와 같은지는 확인하지 않았다 (`not_measured`).
+- **관찰 하나 (이 로그를 쓰며 두 verify.json 을 대조한 것, 검증자 확인 전).** T37 12 run 중 4 run 의 접촉 중점 z 가 T35 기록의 한 run 과 **소수점 아홉째 자리까지 같다**: T37 E3a ep1800 r1 = T34 E3b ep1800 r1 (+8.706871219 mm) · T37 E3a ep1807 r1 = T34 E3b ep1807 r1 (−1.525439367) · T37 E3a ep1807 r2 = T34 E3b ep1807 r2 (−7.144325096) · T37 E3a ep1808 r2 = T34 E3b ep1808 r2 (+3.789414448). 새 서버가 같은 정책 sample 순서로 시작하면 첫 닫기까지의 정책 chunk 가 같아 같은 높이를 쥐는 것으로 읽히지만, **원인은 검증자가 확인하지 않았다.** 사실이면 접촉 높이는 K1 이 작동하기 전에 정해진다.
+
+[`figures/t37/t37-contact-height.png`](figures/t37/t37-contact-height.png) — 그래프 (54 run 의 접촉 중점 z 와 닫은 뒤 최소 개도, 음영 = T37).
+
+#### 결과 5 — place 구간 요동이 소폭 늘었다
+
+grasp → release 창의 실행된 왼팔 궤적 (T34 · T37 모두 grasp 와 place 가 있는 run 만; 그룹 중앙값):
+
+| 그룹 | n | 부호 반전/s | 명령 부호 반전/s | jerk RMS | 손끝 평균 곡률 (1/m) | refined − reference 최대 (°) |
+|---|---:|---:|---:|---:|---:|---:|
+| T34 E3a | 5 | 1.44 | 6.85 | 5.37 | 10.71 | 2.56 |
+| T34 E3b | 3 | 1.44 | 5.00 | 4.35 | 10.11 | 3.27 |
+| T37 E3a | 3 | 2.47 | 9.12 | 6.37 | 18.77 | 1.75 |
+| T37 E3b | 3 | 2.47 | 9.12 | 6.48 | 17.34 | 1.80 |
+
+- **부호 반전/s 1.44 → 2.47** (E3a · E3b 모두), 손끝 평균 곡률 10.7 → 18.8 · 10.1 → 17.3 (1/m), jerk RMS 5.37 → 6.37 · 4.35 → 6.48.
+- `refined − reference` 최대는 오히려 2.56 → 1.75°, 3.27 → 1.80° 로 줄었다.
+- T37 그룹은 n = 3 이다 (E3a ep1800 r2 · ep1807 r1 · r2, E3b ep1800 r2 · ep1807 r1 · r2). 요동의 증가 원인은 **측정하지 않았다**: gate 가 켜지는 closing/held 구간이 grasp → release 창과 겹치는 것과 관련이 있을 수 있으나 이 STEP 은 가르지 않았다.
+
+#### `attach_revoked`
+
+E3a 1 건(ep1800 r1, attach t=144 → 회수 t=152, attach 뒤 chunk 1/4, `opening_dropped` · `not_blocked`), E3b 2 건(ep1808 r2, attach t=120 → 회수 t=136 · attach t=440 → 회수 t=456 (`opening_dropped`)). 회수된 run 은 모두 실패다.
+
+#### 사용자 판정 — O2 (2026-10-01)
+
+K1 의 손끝 편차 효과는 확인됐지만 **실패를 고치지 못했고** 요동이 늘었다. 사용자는 **기본값을 off 로** 하고(`grasp_continuity_off: false`) 코드는 유지하기로 했다. 구현자가 이 변경에 착수했고, **이 로그를 쓰는 시점에 그 변경의 verify 는 없다.**
+
+**lead 의 읽기(판정 근거, verify.json 수치가 아니다).** 남은 실패는 TO 가 아니라 정책의 파지 높이이고, N 이 작아 조건 차이를 가를 수 없다 → **같은 에피소드의 E0 대비**로 큰 N 에서 판정한다 (O1).
+
+#### 되돌아올 지점
+
+| 갈림길 | 고른 것 | 안 고른 것 | 무엇이 보이면 갈아타나 |
+|---|---|---|---|
+| K1 (닫기·쥐기 구간 `continuity` off) | **기본 off 로 되돌리고 코드는 유지** (O2) | 기본 on 유지 · K1 코드 삭제 | 큰 N 에서 K1 on/off 대조가 닫기·쥐기 구간 실패를 줄이는 것으로 나오면 다시 켠다 (대조 폐루프는 아직 없다) |
+| 접촉 높이 원인 | 정책 쪽으로 두고 코드로 안 고친다 (O3) | 파지 높이를 TO·latch 에서 보정 | 큰 N 에서 같은 에피소드 `E0` 보다 E3 의 실패가 많으면 |
+
+---
+
+### 열린 문제 O1–O12 와 사용자가 정한 순서 (2026-10-01)
+
+`AG3S_GRASP_FIX_PLAN.md` §7 에서 옮겼다. 근거 수치는 위 각 STEP 과 앞 절(T34 §6)의 값이다. 이 표는 **새 측정이 아니라 정리**이다.
+
+| # | 문제 | 근거 (측정) | 영향 | 할 일 | 우선 |
+|---|---|---|---|---|---|
+| O1 | 표본이 작아 성공률 차이를 판정할 수 없다 | 조건당 6 회, 정책 비결정적. T34 E3a 5/6 → T37 3/6 이 같은 설정 계열에서도 흔들린다. 새로 띄운 서버는 같은 RNG 순서라 병렬 실행은 중복 표본 (T30 E3a) | 모든 판단의 바닥 | E0(VLA) 대 E3b(T34 설정)를 **같은 에피소드 · 한 서버 순차**로 큰 N (예: 10 에피소드 × 2) | 1 |
+| O2 | K1 (파지 중 continuity 끔) 효과 없음 | T37: 성공 E3a 3/6 · E3b 3/6, 손끝 편차는 0 으로 줄었으나 실패 run 접촉 높이 그대로(+3.8 ~ +12.9 mm), place 부호 반전 1.44 → 2.47/s | 요동 소폭 증가 | 기본값 off (`grasp_continuity_off: false`), 코드는 유지·커밋 | 1 (O1 전에) |
+| O3 | 남은 실패 = 정책이 사과를 높게 잡음 | 54 run 중 실패 18/21 이 접촉 중점 > +3 mm, 성공 31/33 은 첫 파지 유지, 1800·1808 은 VLA 단독 E0 도 ≤ 1/2 | E3 성공률 상한 | 코드로 고칠 대상 아님 — O1 에서 같은 에피소드의 E0 대비로 판정 | 기록 |
+| O4 | 실시간이 안 된다 (sim 에서는 가려짐) | 서버 chunk 당 ≈ 3.3 s (AG3S 2.9 s: grounding ≈ 1.5 s · constraint 0.9 s · reconstruction 0.5 s) vs chunk 주기 533 ms (6 배) | 실기 배포 불가 | AG3S 단계별 profile → 병목부터 (GPU 이전 · 중복 계산 제거) | 2 |
+| O5 | coarse 20 mm 층의 얇은 벽 구멍 | T33: crate nx 벽 coarse 폭 0 · 최소거리 14 mm 인 chunk 최대 40/75 | 손이 fine 창 밖일 때 벽을 못 봄 (안전) | coarse truncation·부호 규칙 측정 → 수정 | 2 |
+| O6 | 테이블 ESDF 0-거리 띠 ≈ 8.5 mm (coarse 가 지배) | T34 offline: fine 2.5–4 mm · combined 8.5 mm | J1 이 쥔 구를 띠 위로 올림 → 사과 밑면이 질의 구 밖 최대 5.8–12.8 mm (구현자 자체 점검) | 받침면 행 전용 규칙 또는 coarse 띠 축소 (O5 와 함께) | 3 |
+| O7 | 사과 윗면 잔상 복셀 | T34: held 행 −0.7 ~ −1.8 mm, GT = 사과 윗면 흔적 | 작은 위반, HOLD 0 | H3 비움 범위 확인 | 3 |
+| O8 | identity 경계 사례 | 병합 잔존 40 chunk (T32b) · S3 reach 30 mm 여유 얇음 (실제 바나나 전환 2 건 억제) · J2 늦은 낙하 미검출 (실행 4 chunk 창) | 드묾 | O1 큰 N 에서 빈도 측정 후 판단 | 3 |
+| O9 | 놓은 뒤 `uncertified`/`invariant_violation` 27 chunk (E3a 1800 r2) | T34 — 원인 미측정 | 판정 off 라 영향 없음, E3b 였으면 HOLD | 원인 측정 | 3 |
+| O10 | 로컬 PC 와 코드가 어긋남 | T18–T37 변경이 서버에만. `pi05_infer.py` 는 `client.py` · `wire.py` · `frame_record.py` 와 함께 옮겨야 함 | 로컬 실행 결과가 서버와 다름 | 동기화 목록 + diff 묶음 작성 | 2 |
+| O11 | `.venv-ag3s` 가 NFS 에서 멈춤 | `.python/cpython-3.11.16…` 읽기가 D 상태. VS Code 탐지 프로세스가 계속 재생성. T35–T37 에서 `timeout 20` rc 124 | 오프라인 도구는 로컬 shim 으로 우회 중 | 사용자: NFS 확인 또는 venv 를 로컬 python 으로 재연결 / VS Code 인터프리터 변경 | 2 |
+| O12 | 기록 미완 | T37 코드 미커밋 · 로그는 T34 까지 (이 절이 T35–T37 을 이어 쓴다) · 기준선은 gripper 범위 · target-free · margin 0 · 쥔 물체를 덮지 않음 | 재현·추적 | O2 와 함께 커밋, scribe 로 T35–T37 이어쓰기 | 1 |
+
+**사용자가 정한 순서 (2026-10-01).** 계획서 §7 의 "우선" 열(1·2·3)과는 다르다. 사용자 순서가 우선이다.
+
+| 순서 | 무엇 | 조건·메모 |
+|---|---|---|
+| **(1)** | **O2 + O12** — K1 기본 off · T37 커밋 · scribe 로 T35–T37 기록 (이 절) | 끝나면 **모든 작업공간을 commit + tag** (되돌아올 지점). push 는 사용자 |
+| **(2)** | **O4 실시간** — cuRobo 와 같은 원리로 **GPU 병렬** | tag 뒤에 시작 |
+| **(3)** | **O1 큰 N 평가** | **GPU 일부를 다른 작업이 사용 중이다.** 메모리·GPU 점유를 먼저 확인하고 **그 작업을 중단시키지 않는다** |
+| **(4)** | **O5** coarse 얇은 벽 구멍 | O6 은 계획서상 O5 와 함께 |
+| **(5)** | **O10 · O11** | O10: 로컬 `~/dev_ws/vla/pi0_TO_ws` 는 사용자가 `git pull`. O11: VS Code 인터프리터는 openpi venv 로 설정됨 |
+
+순서 밖: O3(기록), O7 · O8 · O9 (계획서 우선 3, O1 큰 N 에서 빈도를 본 뒤 판단).
+
+~~**사용자 판정 대기**: T26–T34 커밋(미커밋 상태)~~ → 커밋됨 (2026-09-30). 남은 판정은 위 순서의 각 단계 착수 시점이다.

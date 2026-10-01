@@ -1,0 +1,3445 @@
+{
+ "_comment": "ag3s-verifier 가 쓴다. 해석을 쓰지 않는다 — 숫자와 경로만.",
+ "step": "T37",
+ "date": "2026-09-30",
+ "runs": [
+  {
+   "id": "baseline_legacy",
+   "command": "outputs/verify/T37/basel/legacy/legacy_shim.cmd.txt",
+   "venv": "scratchpad venv-ag3s-local shim (.venv-ag3s/bin/python timed out, timeout 20 s rc 124)",
+   "raw_output": "outputs/verify/T37/basel/legacy/legacy_shim.json",
+   "stdout_log": "outputs/verify/T37/basel/legacy/legacy_shim.log"
+  },
+  {
+   "id": "baseline_curobo",
+   "command": "outputs/verify/T37/basel/curobo/curobo_r1.cmd.txt",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T37/basel/curobo/curobo_r1.json",
+   "stdout_log": "outputs/verify/T37/basel/curobo/curobo_r1.log"
+  },
+  {
+   "id": "precheck",
+   "command": "outputs/verify/T37/precheck/precheck_t37.py E3a 8204 E3a_ep1807_r1 6 ... ; same for all chunks E3a/E3b",
+   "venv": ".venv-openpi-live",
+   "raw_output": [
+    "outputs/verify/T37/precheck/precheck_E3a_8204_E3a_ep1807_r1.json",
+    "outputs/verify/T37/precheck/precheck_E3a_8204_all.json",
+    "outputs/verify/T37/precheck/precheck_E3b_8206_all.json"
+   ]
+  },
+  {
+   "id": "E3a",
+   "command": "outputs/verify/T37/p/run_chain_e3.sh E3a 8204 '1807:1 1807:2 1800:1 1800:2 1808:1 1808:2' (one server, sequential; t37_tipdev.py on T34 records ran concurrently ~13:44-13:50, see E3a_rec/concurrency_launch.txt)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T37/E3a_rec/",
+   "stdout_log": "outputs/verify/T37/E3a_rec/serve_safe_8204.log"
+  },
+  {
+   "id": "E3b",
+   "command": "outputs/verify/T37/p/run_chain_e3.sh E3b 8206 '1807:1 1807:2 1800:1 1800:2 1808:1 1808:2' (one server, sequential, alone 14:30:40-15:18:01)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T37/E3b_rec/",
+   "stdout_log": "outputs/verify/T37/E3b_rec/serve_safe_8206.log"
+  },
+  {
+   "id": "analysis",
+   "command": "outputs/verify/T37/p/analyze_all.sh <COND> (analyze_e3_base, summarize_e3, t37_extra, revoke_detail, t37_tipdev, geom/a_runs, geom/a/settle); p/build_frag.py <COND>",
+   "venv": "scratchpad venv-ag3s-local shim (build_frag: python3)",
+   "raw_output": "outputs/verify/T37/p/"
+  },
+  {
+   "id": "tipdev_T34_records",
+   "command": "outputs/verify/T37/p/t37_tipdev.py <COND> T34",
+   "venv": "shim",
+   "raw_output": [
+    "outputs/verify/T37/p/E3a_tipdev_T34.json",
+    "outputs/verify/T37/p/E3b_tipdev_T34.json"
+   ]
+  },
+  {
+   "id": "D1",
+   "command": "outputs/verify/T37/d1/d1_oscillation.py",
+   "venv": "shim",
+   "raw_output": "outputs/verify/T37/d1/d1_oscillation.json"
+  },
+  {
+   "id": "figures",
+   "command": "outputs/verify/T37/p/fig_t37.py",
+   "venv": ".venv-openpi-live",
+   "stdout_log": "outputs/verify/T37/p/fig_t37.log"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "f93569c",
+  "dirty_files": [
+   "trajopt/config.py",
+   "trajopt/refiner.py",
+   "trajopt/safe_policy.py"
+  ],
+  "md5_start": "outputs/verify/T37/code_md5_at_start.txt (vs T34 end: only trajopt/config.py, refiner.py, safe_policy.py differ)",
+  "md5_end": "outputs/verify/T37/code_md5_at_end.txt — identical to start",
+  "python_note": ".venv-ag3s/bin/python timed out on NFS (timeout 20 s, rc 124, 2026-09-30 13:39); baseline legacy + offline analysis used the scratchpad shim; cuRobo baseline, servers, clients, precheck, figures used .venv-openpi-live"
+ },
+ "numbers": {
+  "summary": {
+   "success_grid_T37": {
+    "E3a": {
+     "E3a_ep1800_r1": {
+      "success": false,
+      "grasp_t": null,
+      "place_t": null,
+      "apple_dz_max_mm": 7.677556837334287
+     },
+     "E3a_ep1800_r2": {
+      "success": true,
+      "grasp_t": 168,
+      "place_t": 248,
+      "apple_dz_max_mm": 246.8130798886592
+     },
+     "E3a_ep1807_r1": {
+      "success": true,
+      "grasp_t": 112,
+      "place_t": 208,
+      "apple_dz_max_mm": 242.18137793291473
+     },
+     "E3a_ep1807_r2": {
+      "success": true,
+      "grasp_t": 128,
+      "place_t": 224,
+      "apple_dz_max_mm": 241.76933366117615
+     },
+     "E3a_ep1808_r1": {
+      "success": false,
+      "grasp_t": null,
+      "place_t": null,
+      "apple_dz_max_mm": 0.46516407680474714
+     },
+     "E3a_ep1808_r2": {
+      "success": false,
+      "grasp_t": null,
+      "place_t": null,
+      "apple_dz_max_mm": 39.695176105511095
+     }
+    },
+    "E3b": {
+     "E3b_ep1800_r1": {
+      "success": false,
+      "grasp_t": null,
+      "place_t": null,
+      "apple_dz_max_mm": 5.50085474316242
+     },
+     "E3b_ep1800_r2": {
+      "success": true,
+      "grasp_t": 176,
+      "place_t": 216,
+      "apple_dz_max_mm": 238.84159719679278
+     },
+     "E3b_ep1807_r1": {
+      "success": true,
+      "grasp_t": 120,
+      "place_t": 216,
+      "apple_dz_max_mm": 244.47994675161476
+     },
+     "E3b_ep1807_r2": {
+      "success": true,
+      "grasp_t": 128,
+      "place_t": 224,
+      "apple_dz_max_mm": 242.98847010317348
+     },
+     "E3b_ep1808_r1": {
+      "success": false,
+      "grasp_t": null,
+      "place_t": null,
+      "apple_dz_max_mm": 5.373226351580884
+     },
+     "E3b_ep1808_r2": {
+      "success": false,
+      "grasp_t": 128,
+      "place_t": null,
+      "apple_dz_max_mm": 153.263660731786
+     }
+    }
+   },
+   "E3a_success": "3/6 (grasp 3)",
+   "E3b_success": "3/6 (grasp 4)",
+   "success_grid_all_conditions": {
+    "E0_rec": {
+     "n_success": 3,
+     "n_grasp": 4,
+     "n_runs": 6
+    },
+    "E0_old": {
+     "n_success": 4,
+     "n_grasp": 4,
+     "n_runs": 6
+    },
+    "E1_rec": {
+     "n_success": 3,
+     "n_grasp": 4,
+     "n_runs": 6
+    },
+    "E1_old": {
+     "n_success": 3,
+     "n_grasp": 4,
+     "n_runs": 6
+    },
+    "E2_rec": {
+     "n_success": 6,
+     "n_grasp": 6,
+     "n_runs": 6
+    },
+    "E3a_t30": {
+     "n_success": 3,
+     "n_grasp": 3,
+     "n_runs": 9
+    },
+    "E3b_t30": {
+     "n_success": 2,
+     "n_grasp": 2,
+     "n_runs": 6
+    },
+    "E3a_t33": {
+     "n_success": 2,
+     "n_grasp": 3,
+     "n_runs": 6
+    },
+    "E3b_t33": {
+     "n_success": 3,
+     "n_grasp": 3,
+     "n_runs": 6
+    },
+    "E3a_t34": {
+     "n_success": 5,
+     "n_grasp": 5,
+     "n_runs": 6
+    },
+    "E3b_t34": {
+     "n_success": 3,
+     "n_grasp": 3,
+     "n_runs": 6
+    },
+    "E3a_t37": {
+     "n_success": 3,
+     "n_grasp": 3,
+     "n_runs": 6
+    },
+    "E3b_t37": {
+     "n_success": 3,
+     "n_grasp": 4,
+     "n_runs": 6
+    }
+   },
+   "gate_on_chunks": {
+    "E3a": 158,
+    "E3b": 130,
+    "E3a_by_reason": {
+     "grasp latch closing (cost.grasp_continuity_off)": 112,
+     "grasp latch held (cost.grasp_continuity_off)": 46
+    },
+    "E3b_by_reason": {
+     "grasp latch closing (cost.grasp_continuity_off)": 81,
+     "grasp latch held (cost.grasp_continuity_off)": 49
+    },
+    "gate_on_not_closing_held": 0,
+    "closing_held_without_gate": 0,
+    "per_run": {
+     "E3a_ep1800_r1": 57,
+     "E3a_ep1800_r2": 15,
+     "E3a_ep1807_r1": 17,
+     "E3a_ep1807_r2": 16,
+     "E3a_ep1808_r1": 27,
+     "E3a_ep1808_r2": 26,
+     "E3b_ep1800_r1": 23,
+     "E3b_ep1800_r2": 16,
+     "E3b_ep1807_r1": 16,
+     "E3b_ep1807_r2": 16,
+     "E3b_ep1808_r1": 25,
+     "E3b_ep1808_r2": 34
+    }
+   },
+   "hold": {
+    "E3b_hold_chunks": 0,
+    "E3b_hold_kinds": {},
+    "E3a_would_hold_chunks": 1,
+    "E3a_would_hold_kinds": {
+     "unverified": 1
+    },
+    "comms_timeout_stale_error_total": {
+     "E3a": 0,
+     "E3b": 0
+    },
+    "hold_fixed_chunks_total_E3b": 0
+   },
+   "latch": {
+    "E3a_ep1800_r1": {
+     "attach_t": [
+      144
+     ],
+     "detach_t": [
+      152
+     ],
+     "revoke_t": [
+      152
+     ],
+     "revoke_notes": [
+      "attach_revoked — 쥔 상태가 아니다: opening_dropped, not_blocked (attach 뒤 실행 청크 1/4) — detach(), 대상 잠금은 유지 (feedback seq 19)"
+     ],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 136,
+      "held": 144
+     }
+    },
+    "E3a_ep1800_r2": {
+     "attach_t": [
+      152
+     ],
+     "detach_t": [
+      264
+     ],
+     "revoke_t": [],
+     "revoke_notes": [],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 144,
+      "held": 152,
+      "placed": 264
+     }
+    },
+    "E3a_ep1807_r1": {
+     "attach_t": [
+      104
+     ],
+     "detach_t": [
+      232
+     ],
+     "revoke_t": [],
+     "revoke_notes": [],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 96,
+      "held": 104,
+      "placed": 232
+     }
+    },
+    "E3a_ep1807_r2": {
+     "attach_t": [
+      120
+     ],
+     "detach_t": [
+      240
+     ],
+     "revoke_t": [],
+     "revoke_notes": [],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 112,
+      "held": 120,
+      "placed": 240
+     }
+    },
+    "E3a_ep1808_r1": {
+     "attach_t": [],
+     "detach_t": [],
+     "revoke_t": [],
+     "revoke_notes": [],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 112
+     }
+    },
+    "E3a_ep1808_r2": {
+     "attach_t": [],
+     "detach_t": [],
+     "revoke_t": [],
+     "revoke_notes": [],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 112
+     }
+    },
+    "E3b_ep1800_r1": {
+     "attach_t": [],
+     "detach_t": [],
+     "revoke_t": [],
+     "revoke_notes": [],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 128
+     }
+    },
+    "E3b_ep1800_r2": {
+     "attach_t": [
+      160
+     ],
+     "detach_t": [
+      280
+     ],
+     "revoke_t": [],
+     "revoke_notes": [],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 152,
+      "held": 160,
+      "placed": 280
+     }
+    },
+    "E3b_ep1807_r1": {
+     "attach_t": [
+      112
+     ],
+     "detach_t": [
+      232
+     ],
+     "revoke_t": [],
+     "revoke_notes": [],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 104,
+      "held": 112,
+      "placed": 232
+     }
+    },
+    "E3b_ep1807_r2": {
+     "attach_t": [
+      120
+     ],
+     "detach_t": [
+      240
+     ],
+     "revoke_t": [],
+     "revoke_notes": [],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 112,
+      "held": 120,
+      "placed": 240
+     }
+    },
+    "E3b_ep1808_r1": {
+     "attach_t": [],
+     "detach_t": [],
+     "revoke_t": [],
+     "revoke_notes": [],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 120
+     }
+    },
+    "E3b_ep1808_r2": {
+     "attach_t": [
+      120,
+      440
+     ],
+     "detach_t": [
+      136,
+      456
+     ],
+     "revoke_t": [
+      136,
+      456
+     ],
+     "revoke_notes": [
+      "attach_revoked — 쥔 상태가 아니다: opening_dropped, not_blocked (attach 뒤 실행 청크 2/4) — detach(), 대상 잠금은 유지 (feedback seq 17)",
+      "attach_revoked — 쥔 상태가 아니다: opening_dropped (attach 뒤 실행 청크 2/4) — detach(), 대상 잠금은 유지 (feedback seq 57)"
+     ],
+     "first_t_by_state": {
+      "searching": 0,
+      "latched": 16,
+      "closing": 112,
+      "held": 120
+     }
+    }
+   },
+   "r1_vs_r2_identical": false,
+   "dup_check": "outputs/verify/T37/p/dup_check.json",
+   "previous": {
+    "T34": {
+     "E3a": "5/6 (grasp 5)",
+     "E3b": "3/6 (grasp 3)"
+    },
+    "T33": {
+     "E3a": "2/6 (grasp 3)",
+     "E3b": "3/6 (grasp 3)"
+    },
+    "T30": {
+     "E3a": "3/9 (grasp 3)",
+     "E3b": "2/6 (grasp 2)"
+    }
+   }
+  },
+  "baseline": {
+   "legacy": {
+    "violated_start": 14,
+    "has_target": 15,
+    "n": 15,
+    "frame0_clearance_before_mm": -29.031048280806342,
+    "matches_expected": true,
+    "per_frame_clearance_before_bitwise_equal_to_reference": true,
+    "reference_run": "/mnt/dev/work/outputs/verify/T36/legacy/legacy_shim.json",
+    "raw": "/mnt/dev/work/outputs/verify/T37/basel/legacy/legacy_shim.json",
+    "log": "/mnt/dev/work/outputs/verify/T37/basel/legacy/legacy_shim.log",
+    "pre": "/mnt/dev/work/outputs/verify/T37/basel/legacy/legacy_shim.pre.txt",
+    "status_counts_not_baseline": {
+     "feasible": 15
+    }
+   },
+   "curobo": {
+    "violated_start": 10,
+    "has_target": 15,
+    "n": 15,
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "matches_expected": true,
+    "per_frame_clearance_before_bitwise_equal_to_reference": true,
+    "reference_run": "/mnt/dev/work/outputs/verify/T36/curobo/curobo_r1.json",
+    "raw": "/mnt/dev/work/outputs/verify/T37/basel/curobo/curobo_r1.json",
+    "log": "/mnt/dev/work/outputs/verify/T37/basel/curobo/curobo_r1.log",
+    "pre": "/mnt/dev/work/outputs/verify/T37/basel/curobo/curobo_r1.pre.txt",
+    "status_counts_not_baseline": {
+     "feasible": 14,
+     "violated": 1
+    }
+   },
+   "python": {
+    "legacy": "scratchpad venv-ag3s-local shim (.venv-ag3s/bin/python timed out, timeout 20 s rc 124, 2026-09-30 13:39)",
+    "curobo": ".venv-openpi-live"
+   },
+   "commands": [
+    "outputs/verify/T37/basel/legacy/legacy_shim.cmd.txt",
+    "outputs/verify/T37/basel/curobo/curobo_r1.cmd.txt"
+   ],
+   "run_alone": "each after wait_idle.sh (no python >5% CPU, GPU <100 MiB, 3 x 10 s); legacy 13:40:03-13:40:44, curobo 13:41:04-13:42:20 UTC; loadavg ~20 at start (non-python), see *.pre.txt",
+   "script": "outputs/verify/T37/basel/analyze_base.py -> basel/base_summary.json"
+  },
+  "precheck": {
+   "script": "outputs/verify/T37/precheck/precheck_t37.py (.venv-openpi-live)",
+   "raw": "outputs/verify/T37/precheck/precheck_E3a_8204_E3a_ep1807_r1.json",
+   "run": "E3a_ep1807_r1 (first run of E3a server 8204)",
+   "n_chunk_files": 75,
+   "to_metrics_keys_continuity_active_reason_off_by_present_all_chunks": true,
+   "first_chunks": [
+    {
+     "file": "server_8204/server_constraints/run_0000/chunk_00000.npz",
+     "t_step": 1,
+     "keys_present": true,
+     "continuity_active": false,
+     "continuity_reason": "no previous chunk",
+     "continuity_off_by": null,
+     "exec_continuity_source": "no previous chunk",
+     "exec_continuity_off_by": null,
+     "grasp_state": "searching"
+    },
+    {
+     "file": "server_8204/server_constraints/run_0000/chunk_00001.npz",
+     "t_step": 2,
+     "keys_present": true,
+     "continuity_active": true,
+     "continuity_reason": "feedback",
+     "continuity_off_by": null,
+     "exec_continuity_source": "feedback",
+     "exec_continuity_off_by": null,
+     "grasp_state": "searching"
+    },
+    {
+     "file": "server_8204/server_constraints/run_0000/chunk_00002.npz",
+     "t_step": 3,
+     "keys_present": true,
+     "continuity_active": true,
+     "continuity_reason": "feedback",
+     "continuity_off_by": null,
+     "exec_continuity_source": "feedback",
+     "exec_continuity_off_by": null,
+     "grasp_state": "latched"
+    }
+   ],
+   "n_gate_on_chunks (continuity_off_by != null)": 17,
+   "gate_on_state_reason_off_by_counts": {
+    "('closing', 'disabled for this chunk: grasp latch closing (cost.grasp_continuity_off)', 'grasp latch closing (cost.grasp_continuity_off)')": 1,
+    "('held', 'disabled for this chunk: grasp latch held (cost.grasp_continuity_off)', 'grasp latch held (cost.grasp_continuity_off)')": 16
+   },
+   "gate_on_exec_continuity_source": [
+    "disabled for this chunk: grasp latch closing (cost.grasp_continuity_off)",
+    "disabled for this chunk: grasp latch held (cost.grasp_continuity_off)"
+   ],
+   "server_log_gate_lines": [
+    [
+     145,
+     "[safe_policy] continuity term OFF — grasp latch closing (cost.grasp_continuity_off)"
+    ],
+    [
+     148,
+     "[safe_policy] continuity term back ON (grasp latch placed)"
+    ]
+   ],
+   "local_frames_jsonl_planning_rows_with_to_block": 0,
+   "local_frames_jsonl_planning_rows": 75,
+   "local_note": "client frames.jsonl planning rows have no 'to' key (keys: actions, actions_reference, ag3s_reason_codes, chunk_shape, duplicate_sequence, exec_feedback, field, gate, hold_abort, hold_chunks, hold_reason, ipc, kind, max_violation_pair, object_poses, qpos, safe, seq, t_step, timing_ms, verdict, verdict_reasons, verdict_reasons_source)",
+   "server_log_TO_objective_line": "INFO:root:TO objective: w_track=1 w_smooth=0.05 w_continuity=0.5 w_slack=1000 (전부 기본값) (serve_safe_8204.log:28)",
+   "E3a_all_chunks": {
+    "raw": "outputs/verify/T37/precheck/precheck_E3a_8204_all.json",
+    "n_chunk_files": 450,
+    "keys_present_all": true,
+    "n_gate_on": 158,
+    "n_server_log_gate_lines": 17
+   },
+   "E3b_all_chunks": {
+    "raw": "outputs/verify/T37/precheck/precheck_E3b_8206_all.json",
+    "n_chunk_files": 450,
+    "keys_present_all": true,
+    "n_gate_on": 130,
+    "n_server_log_gate_lines": 20
+   }
+  },
+  "E3a": {
+   "server_port": 8204,
+   "chain_log": "outputs/verify/T37/E3a_rec/chain_8204.log",
+   "chain": [
+    "server up 2026-09-30T13:44:00+00:00",
+    "start E3a_ep1807_r1 2026-09-30T13:44:00+00:00",
+    "end E3a_ep1807_r1 2026-09-30T13:51:52+00:00 exit=0",
+    "start E3a_ep1807_r2 2026-09-30T13:51:52+00:00",
+    "end E3a_ep1807_r2 2026-09-30T13:58:37+00:00 exit=0",
+    "start E3a_ep1800_r1 2026-09-30T13:58:37+00:00",
+    "end E3a_ep1800_r1 2026-09-30T14:06:53+00:00 exit=0",
+    "start E3a_ep1800_r2 2026-09-30T14:06:53+00:00",
+    "end E3a_ep1800_r2 2026-09-30T14:15:06+00:00 exit=0",
+    "start E3a_ep1808_r1 2026-09-30T14:15:06+00:00",
+    "end E3a_ep1808_r1 2026-09-30T14:22:27+00:00 exit=0",
+    "start E3a_ep1808_r2 2026-09-30T14:22:27+00:00",
+    "end E3a_ep1808_r2 2026-09-30T14:29:21+00:00 exit=0",
+    "server killed 2026-09-30T14:29:29+00:00 alive=0",
+    "DONE"
+   ],
+   "concurrency": [
+    "E3a chain launch 2026-09-30T13:43:00+00:00",
+    "loadavg 20.18 20.58 19.77 16/8002 2176429",
+    "D-state procs: 1",
+    "gpu 0 MiB",
+    "other verifier jobs: none (baselines finished 13:42:20)",
+    "2026-09-30T13:47:09+00:00 start t37_tipdev.py E3b T34 (shim, CPU) concurrent with E3a chain",
+    "2026-09-30T13:47:24+00:00 end t37_tipdev.py E3b T34",
+    "2026-09-30T13:47:42+00:00 start t37_tipdev.py E3a T34 (shim, CPU)",
+    "2026-09-30T13:47:54+00:00 end t37_tipdev.py E3a T34",
+    "E3a server 8204 killed 14:29:29; E3a chain ran with CPU jobs t37_tipdev.py on T34 E3b/E3a records concurrently at 13:47-~13:50 (see lines above)"
+   ],
+   "python": {
+    "server_client": ".venv-openpi-live",
+    "analysis": "scratchpad venv-ag3s-local shim (analyze_e3_base, summarize_e3, t37_extra, revoke_detail, t37_tipdev, geom/a_runs, geom/a/settle)"
+   },
+   "raw": {
+    "records": "outputs/verify/T37/E3a_rec/",
+    "server_log": "outputs/verify/T37/E3a_rec/serve_safe_8204.log",
+    "analysis": "outputs/verify/T37/p/E3a_analysis.json",
+    "summary": "outputs/verify/T37/p/E3a_summary.json",
+    "extra": "outputs/verify/T37/p/E3a_t37_extra.json",
+    "tipdev": "outputs/verify/T37/p/E3a_tipdev.json",
+    "revoke_detail": "outputs/verify/T37/p/E3a_revoke_detail.json",
+    "settle": "outputs/verify/T37/geom/a/settle.json",
+    "a_runs": "outputs/verify/T37/geom/a/a_runs.json"
+   },
+   "runs": {
+    "E3a_ep1800_r1": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 75,
+       "unsafe": 0,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": 0,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3a_rec/E3a_ep1800_r1.client.log"
+     },
+     "success": false,
+     "grasp": false,
+     "grasp_t": null,
+     "place_t": null,
+     "release_t": null,
+     "apple_dz_max_mm": 7.677556837334287,
+     "t_first_close_cmd": 130,
+     "n_close_cycles_applied_lt_0p5": 5,
+     "min_grip_l_measured_open_frac": 0.04752351179527244,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1800_r1/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 57,
+      "gate_on_t": [
+       136,
+       144,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       208,
+       216,
+       224,
+       232,
+       240,
+       248,
+       256,
+       264,
+       272,
+       280,
+       288,
+       296,
+       304,
+       312,
+       320,
+       328,
+       336,
+       344,
+       352,
+       360,
+       368,
+       376,
+       384,
+       392,
+       400,
+       408,
+       416,
+       424,
+       432,
+       440,
+       448,
+       456,
+       464,
+       472,
+       480,
+       488,
+       496,
+       504,
+       512,
+       520,
+       528,
+       536,
+       544,
+       552,
+       560,
+       568,
+       576,
+       584,
+       592
+      ],
+      "n_closing": 56,
+      "n_held": 1,
+      "gate_on_by_state": {
+       "closing": 56,
+       "held": 1
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 40.76796321187475,
+      "closing_held_median": 0.0,
+      "closing_max": 10.770083159702816,
+      "held_max": 40.76796321187475,
+      "other_state_max": 17.274672082437167,
+      "n_closing_held_gt_1mm": 3,
+      "closing_held_chunks_gt_1mm": [
+       [
+        144,
+        "held",
+        40.77,
+        "accepted"
+       ],
+       [
+        536,
+        "closing",
+        10.77,
+        "accepted"
+       ],
+       [
+        544,
+        "closing",
+        6.43,
+        "best_unaccepted"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 130,
+      "t_settle": 142,
+      "contact_mid_rel_apple_mm": [
+       -0.7305650628985361,
+       -1.415814908907742,
+       8.706871219333223
+      ],
+      "contact_mid_z_mm": 8.706871219333223,
+      "open_settle": 0.697848705623122,
+      "contact_lost_t": 161,
+      "first_grasp_held": false,
+      "hold_min_open": 0.4340740170363514,
+      "refined_minus_ref_body_mid_norm_mm": 0.0,
+      "ref_minus_measured_body_mid_norm_mm": 7.298655372768129,
+      "n_close_cycles": 5
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 0,
+      "would_hold_kind_counts": {},
+      "timeline": [],
+      "hold_held_table": 0,
+      "comms_hold_from_log": 0,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 75
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [
+       144
+      ],
+      "detach_t": [
+       152
+      ],
+      "revoke_t": [
+       152
+      ],
+      "revoke_notes": [
+       "attach_revoked — 쥔 상태가 아니다: opening_dropped, not_blocked (attach 뒤 실행 청크 1/4) — detach(), 대상 잠금은 유지 (feedback seq 19)"
+      ],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 136,
+       "held": 144
+      }
+     },
+     "to_returned_counts": {
+      "initial": 56,
+      "accepted": 18,
+      "best_unaccepted": 1
+     },
+     "refined_minus_reference_deg": {
+      "max": 2.3875643413642424,
+      "median": 0.0,
+      "grasp_to_release_max": null,
+      "grasp_to_release_median": null
+     },
+     "n_manip_not_apple_pre_grasp": 0,
+     "n_worst_inside_apple": 0,
+     "n_invariant_violation": 0
+    },
+    "E3a_ep1800_r2": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 74,
+       "unsafe": 1,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0,
+       "gate_off_override": 1
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": 0,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3a_rec/E3a_ep1800_r2.client.log"
+     },
+     "success": true,
+     "grasp": true,
+     "grasp_t": 168,
+     "place_t": 248,
+     "release_t": 248,
+     "apple_dz_max_mm": 246.8130798886592,
+     "t_first_close_cmd": 137,
+     "n_close_cycles_applied_lt_0p5": 1,
+     "min_grip_l_measured_open_frac": 0.701983427359978,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1800_r2/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 15,
+      "gate_on_t": [
+       144,
+       152,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       208,
+       216,
+       224,
+       232,
+       240,
+       248,
+       256
+      ],
+      "n_closing": 1,
+      "n_held": 14,
+      "gate_on_by_state": {
+       "closing": 1,
+       "held": 14
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 42.137056144645584,
+      "closing_held_median": 0.0,
+      "closing_max": 0.0,
+      "held_max": 42.137056144645584,
+      "other_state_max": 13.696209588235781,
+      "n_closing_held_gt_1mm": 6,
+      "closing_held_chunks_gt_1mm": [
+       [
+        152,
+        "held",
+        42.14,
+        "accepted"
+       ],
+       [
+        208,
+        "held",
+        2.75,
+        "projection"
+       ],
+       [
+        216,
+        "held",
+        2.55,
+        "projection"
+       ],
+       [
+        232,
+        "held",
+        14.14,
+        "accepted"
+       ],
+       [
+        240,
+        "held",
+        20.78,
+        "accepted"
+       ],
+       [
+        256,
+        "held",
+        23.91,
+        "accepted"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 137,
+      "t_settle": 148,
+      "contact_mid_rel_apple_mm": [
+       5.703230401014558,
+       -3.747976335963188,
+       -0.6198301741152656
+      ],
+      "contact_mid_z_mm": -0.6198301741152656,
+      "open_settle": 0.7188679715109187,
+      "contact_lost_t": null,
+      "first_grasp_held": true,
+      "hold_min_open": 0.718188119302512,
+      "refined_minus_ref_body_mid_norm_mm": 0.0,
+      "ref_minus_measured_body_mid_norm_mm": 7.848264245044357,
+      "n_close_cycles": 1
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 1,
+      "would_hold_kind_counts": {
+       "unverified": 1
+      },
+      "timeline": [
+       {
+        "t": 248,
+        "kinds": [
+         "unverified"
+        ],
+        "latch": "held",
+        "phase": "placed",
+        "worst_link": "ee_finger_l1",
+        "worst_clearance_mm": -3.997259679330685,
+        "worst_nearest": "crate",
+        "worst_nearest_excl_apple": "crate"
+       }
+      ],
+      "hold_held_table": 0,
+      "comms_hold_from_log": 0,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 74,
+       "unsafe": 1
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [
+       152
+      ],
+      "detach_t": [
+       264
+      ],
+      "revoke_t": [],
+      "revoke_notes": [],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 144,
+       "held": 152,
+       "placed": 264
+      }
+     },
+     "to_returned_counts": {
+      "initial": 17,
+      "accepted": 56,
+      "projection": 2
+     },
+     "refined_minus_reference_deg": {
+      "max": 2.3227099876476784,
+      "median": 0.10478876224633563,
+      "grasp_to_release_max": 1.2437501271026419,
+      "grasp_to_release_median": 0.0
+     },
+     "n_manip_not_apple_pre_grasp": 0,
+     "n_worst_inside_apple": 1,
+     "n_invariant_violation": 0
+    },
+    "E3a_ep1807_r1": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 75,
+       "unsafe": 0,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": 0,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3a_rec/E3a_ep1807_r1.client.log"
+     },
+     "success": true,
+     "grasp": true,
+     "grasp_t": 112,
+     "place_t": 208,
+     "release_t": 208,
+     "apple_dz_max_mm": 242.18137793291473,
+     "t_first_close_cmd": 93,
+     "n_close_cycles_applied_lt_0p5": 1,
+     "min_grip_l_measured_open_frac": 0.5340233892639329,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1807_r1/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 17,
+      "gate_on_t": [
+       96,
+       104,
+       112,
+       120,
+       128,
+       136,
+       144,
+       152,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       208,
+       216,
+       224
+      ],
+      "n_closing": 1,
+      "n_held": 16,
+      "gate_on_by_state": {
+       "closing": 1,
+       "held": 16
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 21.269897105061155,
+      "closing_held_median": 0.0,
+      "closing_max": 0.0,
+      "held_max": 21.269897105061155,
+      "other_state_max": 48.18685910479844,
+      "n_closing_held_gt_1mm": 8,
+      "closing_held_chunks_gt_1mm": [
+       [
+        152,
+        "held",
+        18.01,
+        "projection"
+       ],
+       [
+        160,
+        "held",
+        21.27,
+        "projection"
+       ],
+       [
+        168,
+        "held",
+        20.5,
+        "projection"
+       ],
+       [
+        176,
+        "held",
+        21.05,
+        "projection"
+       ],
+       [
+        184,
+        "held",
+        20.84,
+        "projection"
+       ],
+       [
+        192,
+        "held",
+        13.81,
+        "projection"
+       ],
+       [
+        200,
+        "held",
+        5.68,
+        "projection"
+       ],
+       [
+        208,
+        "held",
+        1.4,
+        "projection"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 93,
+      "t_settle": 96,
+      "contact_mid_rel_apple_mm": [
+       -0.15710021121195794,
+       0.11107046870295623,
+       -1.5254393666152
+      ],
+      "contact_mid_z_mm": -1.5254393666152,
+      "open_settle": 0.7126234947811636,
+      "contact_lost_t": null,
+      "first_grasp_held": true,
+      "hold_min_open": 0.7140086709983696,
+      "refined_minus_ref_body_mid_norm_mm": 0.0,
+      "ref_minus_measured_body_mid_norm_mm": 7.260178172381988,
+      "n_close_cycles": 1
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 0,
+      "would_hold_kind_counts": {},
+      "timeline": [],
+      "hold_held_table": 0,
+      "comms_hold_from_log": 0,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 75
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [
+       104
+      ],
+      "detach_t": [
+       232
+      ],
+      "revoke_t": [],
+      "revoke_notes": [],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 96,
+       "held": 104,
+       "placed": 232
+      }
+     },
+     "to_returned_counts": {
+      "initial": 15,
+      "accepted": 52,
+      "projection": 8
+     },
+     "refined_minus_reference_deg": {
+      "max": 7.239597539052485,
+      "median": 0.09830691272399353,
+      "grasp_to_release_max": 2.1000237293121664,
+      "grasp_to_release_median": 0.5025428008496183
+     },
+     "n_manip_not_apple_pre_grasp": 0,
+     "n_worst_inside_apple": 0,
+     "n_invariant_violation": 0
+    },
+    "E3a_ep1807_r2": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 75,
+       "unsafe": 0,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": 0,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3a_rec/E3a_ep1807_r2.client.log"
+     },
+     "success": true,
+     "grasp": true,
+     "grasp_t": 128,
+     "place_t": 224,
+     "release_t": 224,
+     "apple_dz_max_mm": 241.76933366117615,
+     "t_first_close_cmd": 107,
+     "n_close_cycles_applied_lt_0p5": 1,
+     "min_grip_l_measured_open_frac": 0.6947202677265962,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1807_r2/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 16,
+      "gate_on_t": [
+       112,
+       120,
+       128,
+       136,
+       144,
+       152,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       208,
+       216,
+       224,
+       232
+      ],
+      "n_closing": 1,
+      "n_held": 15,
+      "gate_on_by_state": {
+       "closing": 1,
+       "held": 15
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 18.329441579118768,
+      "closing_held_median": 0.499277050909016,
+      "closing_max": 0.0,
+      "held_max": 18.329441579118768,
+      "other_state_max": 16.04911795562573,
+      "n_closing_held_gt_1mm": 7,
+      "closing_held_chunks_gt_1mm": [
+       [
+        168,
+        "held",
+        14.33,
+        "projection"
+       ],
+       [
+        176,
+        "held",
+        16.51,
+        "projection"
+       ],
+       [
+        184,
+        "held",
+        13.65,
+        "projection"
+       ],
+       [
+        192,
+        "held",
+        18.33,
+        "projection"
+       ],
+       [
+        200,
+        "held",
+        14.89,
+        "projection"
+       ],
+       [
+        224,
+        "held",
+        7.24,
+        "accepted"
+       ],
+       [
+        232,
+        "held",
+        1.87,
+        "accepted"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 107,
+      "t_settle": 111,
+      "contact_mid_rel_apple_mm": [
+       2.8749514728080294,
+       0.1706279866469096,
+       -7.144325096216209
+      ],
+      "contact_mid_z_mm": -7.144325096216209,
+      "open_settle": 0.7137451948154211,
+      "contact_lost_t": null,
+      "first_grasp_held": true,
+      "hold_min_open": 0.7139154587216398,
+      "refined_minus_ref_body_mid_norm_mm": 5.876236918451173,
+      "ref_minus_measured_body_mid_norm_mm": 3.8335004814644633,
+      "n_close_cycles": 1
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 0,
+      "would_hold_kind_counts": {},
+      "timeline": [],
+      "hold_held_table": 0,
+      "comms_hold_from_log": 0,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 75
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [
+       120
+      ],
+      "detach_t": [
+       240
+      ],
+      "revoke_t": [],
+      "revoke_notes": [],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 112,
+       "held": 120,
+       "placed": 240
+      }
+     },
+     "to_returned_counts": {
+      "initial": 11,
+      "accepted": 58,
+      "projection": 6
+     },
+     "refined_minus_reference_deg": {
+      "max": 2.782308294255959,
+      "median": 0.0962100446487996,
+      "grasp_to_release_max": 1.7520132113821458,
+      "grasp_to_release_median": 0.08855137487680546
+     },
+     "n_manip_not_apple_pre_grasp": 0,
+     "n_worst_inside_apple": 0,
+     "n_invariant_violation": 0
+    },
+    "E3a_ep1808_r1": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 75,
+       "unsafe": 0,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": 0,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3a_rec/E3a_ep1808_r1.client.log"
+     },
+     "success": false,
+     "grasp": false,
+     "grasp_t": null,
+     "place_t": null,
+     "release_t": null,
+     "apple_dz_max_mm": 0.46516407680474714,
+     "t_first_close_cmd": 110,
+     "n_close_cycles_applied_lt_0p5": 5,
+     "min_grip_l_measured_open_frac": 0.39639138890893844,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1808_r1/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 27,
+      "gate_on_t": [
+       112,
+       120,
+       128,
+       136,
+       144,
+       152,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       208,
+       432,
+       440,
+       448,
+       456,
+       464,
+       472,
+       480,
+       488,
+       496,
+       504,
+       512,
+       520,
+       528,
+       536
+      ],
+      "n_closing": 27,
+      "n_held": 0,
+      "gate_on_by_state": {
+       "closing": 27
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 49.757756738884105,
+      "closing_held_median": 0.0,
+      "closing_max": 49.757756738884105,
+      "held_max": null,
+      "other_state_max": 39.58741205985413,
+      "n_closing_held_gt_1mm": 4,
+      "closing_held_chunks_gt_1mm": [
+       [
+        112,
+        "closing",
+        11.44,
+        "accepted"
+       ],
+       [
+        208,
+        "closing",
+        17.78,
+        "accepted"
+       ],
+       [
+        520,
+        "closing",
+        49.76,
+        "accepted"
+       ],
+       [
+        536,
+        "closing",
+        8.38,
+        "accepted"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 110,
+      "t_settle": 118,
+      "contact_mid_rel_apple_mm": [
+       8.067152703716385,
+       -10.886962198957962,
+       12.888841973006993
+      ],
+      "contact_mid_z_mm": 12.888841973006993,
+      "open_settle": 0.5942358046039482,
+      "contact_lost_t": 124,
+      "first_grasp_held": false,
+      "hold_min_open": 0.43242462695320305,
+      "refined_minus_ref_body_mid_norm_mm": 8.895324378052731,
+      "ref_minus_measured_body_mid_norm_mm": 4.076179539006497,
+      "n_close_cycles": 5
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 0,
+      "would_hold_kind_counts": {},
+      "timeline": [],
+      "hold_held_table": 0,
+      "comms_hold_from_log": 0,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 75
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [],
+      "detach_t": [],
+      "revoke_t": [],
+      "revoke_notes": [],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 112
+      }
+     },
+     "to_returned_counts": {
+      "initial": 28,
+      "accepted": 45,
+      "projection": 2
+     },
+     "refined_minus_reference_deg": {
+      "max": 4.66008097634879,
+      "median": 0.5781208717282192,
+      "grasp_to_release_max": null,
+      "grasp_to_release_median": null
+     },
+     "n_manip_not_apple_pre_grasp": 34,
+     "n_worst_inside_apple": 0,
+     "n_invariant_violation": 0
+    },
+    "E3a_ep1808_r2": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 75,
+       "unsafe": 0,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": 0,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3a_rec/E3a_ep1808_r2.client.log"
+     },
+     "success": false,
+     "grasp": false,
+     "grasp_t": null,
+     "place_t": null,
+     "release_t": null,
+     "apple_dz_max_mm": 39.695176105511095,
+     "t_first_close_cmd": 104,
+     "n_close_cycles_applied_lt_0p5": 3,
+     "min_grip_l_measured_open_frac": 0.40054063780761223,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1808_r2/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 26,
+      "gate_on_t": [
+       112,
+       120,
+       128,
+       136,
+       144,
+       152,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       408,
+       416,
+       424,
+       432,
+       440,
+       448,
+       456,
+       464,
+       472,
+       480,
+       488,
+       496,
+       504,
+       512
+      ],
+      "n_closing": 26,
+      "n_held": 0,
+      "gate_on_by_state": {
+       "closing": 26
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 14.799949809827417,
+      "closing_held_median": 0.29264768473440916,
+      "closing_max": 14.799949809827417,
+      "held_max": null,
+      "other_state_max": 48.42430121237101,
+      "n_closing_held_gt_1mm": 2,
+      "closing_held_chunks_gt_1mm": [
+       [
+        200,
+        "closing",
+        14.12,
+        "accepted"
+       ],
+       [
+        512,
+        "closing",
+        14.8,
+        "accepted"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 104,
+      "t_settle": 111,
+      "contact_mid_rel_apple_mm": [
+       6.43860460409007,
+       -5.721395939689955,
+       3.789414447873951
+      ],
+      "contact_mid_z_mm": 3.789414447873951,
+      "open_settle": 0.6836006280844728,
+      "contact_lost_t": 118,
+      "first_grasp_held": false,
+      "hold_min_open": 0.4334913023808327,
+      "refined_minus_ref_body_mid_norm_mm": 0.0,
+      "ref_minus_measured_body_mid_norm_mm": 11.020145048148107,
+      "n_close_cycles": 3
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 0,
+      "would_hold_kind_counts": {},
+      "timeline": [],
+      "hold_held_table": 0,
+      "comms_hold_from_log": 0,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 75
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [],
+      "detach_t": [],
+      "revoke_t": [],
+      "revoke_notes": [],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 112
+      }
+     },
+     "to_returned_counts": {
+      "initial": 17,
+      "accepted": 58
+     },
+     "refined_minus_reference_deg": {
+      "max": 5.491110092664241,
+      "median": 0.42828701190564955,
+      "grasp_to_release_max": null,
+      "grasp_to_release_median": null
+     },
+     "n_manip_not_apple_pre_grasp": 16,
+     "n_worst_inside_apple": 0,
+     "n_invariant_violation": 0
+    }
+   },
+   "condition": {
+    "n_runs": 6,
+    "n_success": 3,
+    "n_grasp": 3,
+    "n_hold_chunks_total": 0,
+    "n_would_hold_chunks_total": 1,
+    "hold_kind_counts_total": {},
+    "would_hold_kind_counts_total": {
+     "unverified": 1
+    },
+    "comms_hold_total_from_log": 0,
+    "comms_ipc_planning_rows_total": 0,
+    "n_server_chunks": 450,
+    "n_server_chunks_paired": 450,
+    "server_time_ms_pooled_excl_first": {
+     "infer": {
+      "n": 444,
+      "median": 265.19159344024956,
+      "p95": 305.1032638642937,
+      "max": 328.2821411266923
+     },
+     "ag3s": {
+      "n": 444,
+      "median": 2860.875394428149,
+      "p95": 4121.825597528368,
+      "max": 6239.366787020117
+     },
+     "trajopt": {
+      "n": 444,
+      "median": 155.8390634600073,
+      "p95": 191.59276664722708,
+      "max": 251.12853292375803
+     },
+     "total": {
+      "n": 444,
+      "median": 3299.726842204109,
+      "p95": 4568.699609558098,
+      "max": 6686.420090962201
+     }
+    },
+    "n_gate_on_chunks_total": 158,
+    "n_closing_chunks_total": 112,
+    "n_held_chunks_total": 46,
+    "n_gate_on_not_closing_held": 0,
+    "n_closing_held_without_gate": 0,
+    "gate_on_reason_counts": {
+     "grasp latch closing (cost.grasp_continuity_off)": 112,
+     "grasp latch held (cost.grasp_continuity_off)": 46
+    },
+    "continuity_reason_counts_all_chunks": {
+     "no previous chunk": 6,
+     "feedback": 286,
+     "disabled for this chunk: grasp latch closing (cost.grasp_continuity_off)": 112,
+     "disabled for this chunk: grasp latch held (cost.grasp_continuity_off)": 46
+    },
+    "n_revoke": 1,
+    "server_log_gate_lines": {
+     "n_off_lines": 9,
+     "n_back_on_lines": 8,
+     "distinct": {
+      "[safe_policy] continuity term OFF — grasp latch closing (cost.grasp_continuity_off)": 9,
+      "[safe_policy] continuity term back ON (grasp latch placed)": 3,
+      "[safe_policy] continuity term back ON (grasp latch latched)": 5
+     }
+    },
+    "comms_timeout_stale_error_total": 0,
+    "hold_fixed_chunks_total": 0
+   }
+  },
+  "E3b": {
+   "server_port": 8206,
+   "chain_log": "outputs/verify/T37/E3b_rec/chain_8206.log",
+   "chain": [
+    "server up 2026-09-30T14:31:40+00:00",
+    "start E3b_ep1807_r1 2026-09-30T14:31:40+00:00",
+    "end E3b_ep1807_r1 2026-09-30T14:39:33+00:00 exit=0",
+    "start E3b_ep1807_r2 2026-09-30T14:39:33+00:00",
+    "end E3b_ep1807_r2 2026-09-30T14:46:44+00:00 exit=0",
+    "start E3b_ep1800_r1 2026-09-30T14:46:44+00:00",
+    "end E3b_ep1800_r1 2026-09-30T14:54:57+00:00 exit=0",
+    "start E3b_ep1800_r2 2026-09-30T14:54:57+00:00",
+    "end E3b_ep1800_r2 2026-09-30T15:03:01+00:00 exit=0",
+    "start E3b_ep1808_r1 2026-09-30T15:03:01+00:00",
+    "end E3b_ep1808_r1 2026-09-30T15:10:39+00:00 exit=0",
+    "start E3b_ep1808_r2 2026-09-30T15:10:39+00:00",
+    "end E3b_ep1808_r2 2026-09-30T15:17:53+00:00 exit=0",
+    "server killed 2026-09-30T15:18:01+00:00 alive=0",
+    "DONE"
+   ],
+   "concurrency": [
+    "E3b chain launch 2026-09-30T14:30:40+00:00",
+    "loadavg 23.95 23.14 22.40 18/8104 3283207",
+    "D-state procs: 1",
+    "gpu 0 MiB",
+    "python procs >5% cpu: 0 (from basel/wait_idle.sh: idle at 2026-09-30T14:30:40, 3 x 10 s checks)",
+    "other verifier jobs: none; E3a server killed 14:29:29, E3a analysis finished 14:30:07; no verifier job will run until the chain prints DONE",
+    "E3b server 8206 killed 15:18:01 (alive=0); no verifier job ran between 14:30:40 and 15:18:01"
+   ],
+   "python": {
+    "server_client": ".venv-openpi-live",
+    "analysis": "scratchpad venv-ag3s-local shim (analyze_e3_base, summarize_e3, t37_extra, revoke_detail, t37_tipdev, geom/a_runs, geom/a/settle)"
+   },
+   "raw": {
+    "records": "outputs/verify/T37/E3b_rec/",
+    "server_log": "outputs/verify/T37/E3b_rec/serve_safe_8206.log",
+    "analysis": "outputs/verify/T37/p/E3b_analysis.json",
+    "summary": "outputs/verify/T37/p/E3b_summary.json",
+    "extra": "outputs/verify/T37/p/E3b_t37_extra.json",
+    "tipdev": "outputs/verify/T37/p/E3b_tipdev.json",
+    "revoke_detail": "outputs/verify/T37/p/E3b_revoke_detail.json",
+    "settle": "outputs/verify/T37/geom/a/settle.json",
+    "a_runs": "outputs/verify/T37/geom/a/a_runs.json"
+   },
+   "runs": {
+    "E3b_ep1800_r1": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 75,
+       "unsafe": 0,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": null,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3b_rec/E3b_ep1800_r1.client.log"
+     },
+     "success": false,
+     "grasp": false,
+     "grasp_t": null,
+     "place_t": null,
+     "release_t": null,
+     "apple_dz_max_mm": 5.50085474316242,
+     "t_first_close_cmd": 127,
+     "n_close_cycles_applied_lt_0p5": 5,
+     "min_grip_l_measured_open_frac": 0.3986453649564659,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1800_r1/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 23,
+      "gate_on_t": [
+       128,
+       136,
+       144,
+       152,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       208,
+       216,
+       224,
+       232,
+       240,
+       536,
+       544,
+       552,
+       560,
+       568,
+       576,
+       584,
+       592
+      ],
+      "n_closing": 23,
+      "n_held": 0,
+      "gate_on_by_state": {
+       "closing": 23
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 8.74167385518656,
+      "closing_held_median": 0.5094866984795194,
+      "closing_max": 8.74167385518656,
+      "held_max": null,
+      "other_state_max": 35.67479848012796,
+      "n_closing_held_gt_1mm": 4,
+      "closing_held_chunks_gt_1mm": [
+       [
+        224,
+        "closing",
+        1.48,
+        "accepted"
+       ],
+       [
+        232,
+        "closing",
+        8.74,
+        "accepted"
+       ],
+       [
+        544,
+        "closing",
+        1.07,
+        "accepted"
+       ],
+       [
+        552,
+        "closing",
+        1.1,
+        "accepted"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 127,
+      "t_settle": 135,
+      "contact_mid_rel_apple_mm": [
+       -0.9505396962552481,
+       -1.4544735581084045,
+       9.93510383345142
+      ],
+      "contact_mid_z_mm": 9.93510383345142,
+      "open_settle": 0.6927037384250819,
+      "contact_lost_t": 142,
+      "first_grasp_held": false,
+      "hold_min_open": 0.41429601245089304,
+      "refined_minus_ref_body_mid_norm_mm": 0.0,
+      "ref_minus_measured_body_mid_norm_mm": 8.025194078330285,
+      "n_close_cycles": 5
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 0,
+      "would_hold_kind_counts": {},
+      "timeline": [],
+      "hold_held_table": 0,
+      "comms_hold_from_log": null,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 75
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [],
+      "detach_t": [],
+      "revoke_t": [],
+      "revoke_notes": [],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 128
+      }
+     },
+     "to_returned_counts": {
+      "initial": 10,
+      "accepted": 65
+     },
+     "refined_minus_reference_deg": {
+      "max": 3.4751814666822702,
+      "median": 0.4723280716738918,
+      "grasp_to_release_max": null,
+      "grasp_to_release_median": null
+     },
+     "n_manip_not_apple_pre_grasp": 8,
+     "n_worst_inside_apple": 1,
+     "n_invariant_violation": 0
+    },
+    "E3b_ep1800_r2": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 75,
+       "unsafe": 0,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": null,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3b_rec/E3b_ep1800_r2.client.log"
+     },
+     "success": true,
+     "grasp": true,
+     "grasp_t": 176,
+     "place_t": 216,
+     "release_t": 254,
+     "apple_dz_max_mm": 238.84159719679278,
+     "t_first_close_cmd": 147,
+     "n_close_cycles_applied_lt_0p5": 2,
+     "min_grip_l_measured_open_frac": 0.4009245465808784,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1800_r2/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 16,
+      "gate_on_t": [
+       152,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       208,
+       216,
+       224,
+       232,
+       240,
+       248,
+       256,
+       264,
+       272
+      ],
+      "n_closing": 1,
+      "n_held": 15,
+      "gate_on_by_state": {
+       "closing": 1,
+       "held": 15
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 34.869405571506185,
+      "closing_held_median": 0.0,
+      "closing_max": 0.0,
+      "held_max": 34.869405571506185,
+      "other_state_max": 48.04391797500613,
+      "n_closing_held_gt_1mm": 5,
+      "closing_held_chunks_gt_1mm": [
+       [
+        160,
+        "held",
+        20.12,
+        "accepted"
+       ],
+       [
+        240,
+        "held",
+        24.2,
+        "accepted"
+       ],
+       [
+        248,
+        "held",
+        20.92,
+        "accepted"
+       ],
+       [
+        264,
+        "held",
+        34.87,
+        "accepted"
+       ],
+       [
+        272,
+        "held",
+        13.78,
+        "accepted"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 147,
+      "t_settle": 151,
+      "contact_mid_rel_apple_mm": [
+       3.323615621259657,
+       -2.182137935917039,
+       -0.5097330009701251
+      ],
+      "contact_mid_z_mm": -0.5097330009701251,
+      "open_settle": 0.7239828070741531,
+      "contact_lost_t": null,
+      "first_grasp_held": true,
+      "hold_min_open": 0.723280438892332,
+      "refined_minus_ref_body_mid_norm_mm": 3.336210044434977,
+      "ref_minus_measured_body_mid_norm_mm": 11.065680108153257,
+      "n_close_cycles": 2
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 0,
+      "would_hold_kind_counts": {},
+      "timeline": [],
+      "hold_held_table": 0,
+      "comms_hold_from_log": null,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 75
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [
+       160
+      ],
+      "detach_t": [
+       280
+      ],
+      "revoke_t": [],
+      "revoke_notes": [],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 152,
+       "held": 160,
+       "placed": 280
+      }
+     },
+     "to_returned_counts": {
+      "initial": 17,
+      "accepted": 58
+     },
+     "refined_minus_reference_deg": {
+      "max": 4.674719779287419,
+      "median": 0.08161393039248237,
+      "grasp_to_release_max": 1.4711783509911416,
+      "grasp_to_release_median": 0.0
+     },
+     "n_manip_not_apple_pre_grasp": 0,
+     "n_worst_inside_apple": 0,
+     "n_invariant_violation": 0
+    },
+    "E3b_ep1807_r1": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 75,
+       "unsafe": 0,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": null,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3b_rec/E3b_ep1807_r1.client.log"
+     },
+     "success": true,
+     "grasp": true,
+     "grasp_t": 120,
+     "place_t": 216,
+     "release_t": 216,
+     "apple_dz_max_mm": 244.47994675161476,
+     "t_first_close_cmd": 100,
+     "n_close_cycles_applied_lt_0p5": 1,
+     "min_grip_l_measured_open_frac": 0.6987901504216452,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1807_r1/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 16,
+      "gate_on_t": [
+       104,
+       112,
+       120,
+       128,
+       136,
+       144,
+       152,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       208,
+       216,
+       224
+      ],
+      "n_closing": 1,
+      "n_held": 15,
+      "gate_on_by_state": {
+       "closing": 1,
+       "held": 15
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 52.186154238748834,
+      "closing_held_median": 0.9135662763359188,
+      "closing_max": 1.3536510226621292,
+      "held_max": 52.186154238748834,
+      "other_state_max": 50.19080179708659,
+      "n_closing_held_gt_1mm": 8,
+      "closing_held_chunks_gt_1mm": [
+       [
+        104,
+        "closing",
+        1.35,
+        "accepted"
+       ],
+       [
+        112,
+        "held",
+        52.19,
+        "accepted"
+       ],
+       [
+        160,
+        "held",
+        22.78,
+        "projection"
+       ],
+       [
+        168,
+        "held",
+        15.46,
+        "projection"
+       ],
+       [
+        176,
+        "held",
+        18.33,
+        "projection"
+       ],
+       [
+        184,
+        "held",
+        22.66,
+        "projection"
+       ],
+       [
+        192,
+        "held",
+        12.87,
+        "projection"
+       ],
+       [
+        200,
+        "held",
+        3.66,
+        "projection"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 100,
+      "t_settle": 107,
+      "contact_mid_rel_apple_mm": [
+       6.708885973209955,
+       -1.3075705136941784,
+       -6.667781254617977
+      ],
+      "contact_mid_z_mm": -6.667781254617977,
+      "open_settle": 0.7128546836801715,
+      "contact_lost_t": null,
+      "first_grasp_held": true,
+      "hold_min_open": 0.712962564804091,
+      "refined_minus_ref_body_mid_norm_mm": 0.5876634027043236,
+      "ref_minus_measured_body_mid_norm_mm": 9.072393316945046,
+      "n_close_cycles": 1
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 0,
+      "would_hold_kind_counts": {},
+      "timeline": [],
+      "hold_held_table": 0,
+      "comms_hold_from_log": null,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 75
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [
+       112
+      ],
+      "detach_t": [
+       232
+      ],
+      "revoke_t": [],
+      "revoke_notes": [],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 104,
+       "held": 112,
+       "placed": 232
+      }
+     },
+     "to_returned_counts": {
+      "initial": 13,
+      "accepted": 55,
+      "projection": 7
+     },
+     "refined_minus_reference_deg": {
+      "max": 7.007323295947861,
+      "median": 0.09000140269325801,
+      "grasp_to_release_max": 2.2411068361474804,
+      "grasp_to_release_median": 0.040667906813607956
+     },
+     "n_manip_not_apple_pre_grasp": 0,
+     "n_worst_inside_apple": 0,
+     "n_invariant_violation": 0
+    },
+    "E3b_ep1807_r2": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 75,
+       "unsafe": 0,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": null,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3b_rec/E3b_ep1807_r2.client.log"
+     },
+     "success": true,
+     "grasp": true,
+     "grasp_t": 128,
+     "place_t": 224,
+     "release_t": 224,
+     "apple_dz_max_mm": 242.98847010317348,
+     "t_first_close_cmd": 107,
+     "n_close_cycles_applied_lt_0p5": 1,
+     "min_grip_l_measured_open_frac": 0.6985270462269059,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1807_r2/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 16,
+      "gate_on_t": [
+       112,
+       120,
+       128,
+       136,
+       144,
+       152,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       208,
+       216,
+       224,
+       232
+      ],
+      "n_closing": 1,
+      "n_held": 15,
+      "gate_on_by_state": {
+       "closing": 1,
+       "held": 15
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 18.84114142424255,
+      "closing_held_median": 0.3494891158684136,
+      "closing_max": 0.0,
+      "held_max": 18.84114142424255,
+      "other_state_max": 28.69329621587366,
+      "n_closing_held_gt_1mm": 7,
+      "closing_held_chunks_gt_1mm": [
+       [
+        168,
+        "held",
+        17.19,
+        "projection"
+       ],
+       [
+        176,
+        "held",
+        14.61,
+        "projection"
+       ],
+       [
+        184,
+        "held",
+        15.74,
+        "projection"
+       ],
+       [
+        192,
+        "held",
+        18.84,
+        "projection"
+       ],
+       [
+        200,
+        "held",
+        17.89,
+        "projection"
+       ],
+       [
+        208,
+        "held",
+        5.08,
+        "projection"
+       ],
+       [
+        216,
+        "held",
+        1.41,
+        "projection"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 107,
+      "t_settle": 111,
+      "contact_mid_rel_apple_mm": [
+       3.237732868037524,
+       -0.06581846625991483,
+       -7.122323953902554
+      ],
+      "contact_mid_z_mm": -7.122323953902554,
+      "open_settle": 0.7152066687085004,
+      "contact_lost_t": null,
+      "first_grasp_held": true,
+      "hold_min_open": 0.7142442340495222,
+      "refined_minus_ref_body_mid_norm_mm": 4.858203803299133,
+      "ref_minus_measured_body_mid_norm_mm": 4.7127629029638936,
+      "n_close_cycles": 1
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 0,
+      "would_hold_kind_counts": {},
+      "timeline": [],
+      "hold_held_table": 0,
+      "comms_hold_from_log": null,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 75
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [
+       120
+      ],
+      "detach_t": [
+       240
+      ],
+      "revoke_t": [],
+      "revoke_notes": [],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 112,
+       "held": 120,
+       "placed": 240
+      }
+     },
+     "to_returned_counts": {
+      "initial": 11,
+      "accepted": 57,
+      "projection": 7
+     },
+     "refined_minus_reference_deg": {
+      "max": 4.680837921236458,
+      "median": 0.09374776145301002,
+      "grasp_to_release_max": 1.8000877112986922,
+      "grasp_to_release_median": 0.12198344331672538
+     },
+     "n_manip_not_apple_pre_grasp": 0,
+     "n_worst_inside_apple": 0,
+     "n_invariant_violation": 0
+    },
+    "E3b_ep1808_r1": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 75,
+       "unsafe": 0,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": null,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3b_rec/E3b_ep1808_r1.client.log"
+     },
+     "success": false,
+     "grasp": false,
+     "grasp_t": null,
+     "place_t": null,
+     "release_t": null,
+     "apple_dz_max_mm": 5.373226351580884,
+     "t_first_close_cmd": 114,
+     "n_close_cycles_applied_lt_0p5": 7,
+     "min_grip_l_measured_open_frac": 0.16847990881450625,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1808_r1/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 25,
+      "gate_on_t": [
+       120,
+       128,
+       136,
+       144,
+       152,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       208,
+       464,
+       472,
+       480,
+       488,
+       496,
+       504,
+       512,
+       520,
+       528,
+       536,
+       544,
+       552,
+       560
+      ],
+      "n_closing": 25,
+      "n_held": 0,
+      "gate_on_by_state": {
+       "closing": 25
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 39.36747939557487,
+      "closing_held_median": 0.368071481260108,
+      "closing_max": 39.36747939557487,
+      "held_max": null,
+      "other_state_max": 49.62450433303145,
+      "n_closing_held_gt_1mm": 7,
+      "closing_held_chunks_gt_1mm": [
+       [
+        120,
+        "closing",
+        39.37,
+        "accepted"
+       ],
+       [
+        208,
+        "closing",
+        7.83,
+        "accepted"
+       ],
+       [
+        472,
+        "closing",
+        1.07,
+        "accepted"
+       ],
+       [
+        536,
+        "closing",
+        1.16,
+        "accepted"
+       ],
+       [
+        544,
+        "closing",
+        17.67,
+        "accepted"
+       ],
+       [
+        552,
+        "closing",
+        37.69,
+        "accepted"
+       ],
+       [
+        560,
+        "closing",
+        15.8,
+        "accepted"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 114,
+      "t_settle": 125,
+      "contact_mid_rel_apple_mm": [
+       5.474351238198061,
+       -7.689305499458454,
+       12.078620971878395
+      ],
+      "contact_mid_z_mm": 12.078620971878395,
+      "open_settle": 0.6272619813104503,
+      "contact_lost_t": 130,
+      "first_grasp_held": false,
+      "hold_min_open": 0.43702495445635975,
+      "refined_minus_ref_body_mid_norm_mm": 14.834422648748177,
+      "ref_minus_measured_body_mid_norm_mm": 17.8761372756859,
+      "n_close_cycles": 7
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 0,
+      "would_hold_kind_counts": {},
+      "timeline": [],
+      "hold_held_table": 0,
+      "comms_hold_from_log": null,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 75
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [],
+      "detach_t": [],
+      "revoke_t": [],
+      "revoke_notes": [],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 120
+      }
+     },
+     "to_returned_counts": {
+      "initial": 10,
+      "accepted": 62,
+      "projection": 3
+     },
+     "refined_minus_reference_deg": {
+      "max": 5.201192468059295,
+      "median": 0.6424407631422293,
+      "grasp_to_release_max": null,
+      "grasp_to_release_median": null
+     },
+     "n_manip_not_apple_pre_grasp": 25,
+     "n_worst_inside_apple": 0,
+     "n_invariant_violation": 0
+    },
+    "E3b_ep1808_r2": {
+     "client_log": {
+      "client_ipc_stats": {
+       "sent": 75,
+       "safe": 75,
+       "unsafe": 0,
+       "timeout": 0,
+       "stale": 0,
+       "error": 0
+      },
+      "hold_fixed_summary": {
+       "hold_chunks": 0,
+       "hold_steps": 0,
+       "holds": 0,
+       "max_consecutive": 0
+      },
+      "comms_hold_line": null,
+      "comms_timeout_stale_error": 0,
+      "source": "outputs/verify/T37/E3b_rec/E3b_ep1808_r2.client.log"
+     },
+     "success": false,
+     "grasp": true,
+     "grasp_t": 128,
+     "place_t": null,
+     "release_t": null,
+     "apple_dz_max_mm": 153.263660731786,
+     "t_first_close_cmd": 104,
+     "n_close_cycles_applied_lt_0p5": 5,
+     "min_grip_l_measured_open_frac": 0.3940399509511262,
+     "mp4": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1808_r2/third_person_front.mp4",
+     "gate": {
+      "n_gate_on": 34,
+      "gate_on_t": [
+       112,
+       120,
+       128,
+       144,
+       152,
+       160,
+       168,
+       176,
+       184,
+       192,
+       200,
+       208,
+       216,
+       224,
+       432,
+       440,
+       448,
+       464,
+       472,
+       480,
+       488,
+       496,
+       504,
+       512,
+       520,
+       528,
+       536,
+       544,
+       552,
+       560,
+       568,
+       576,
+       584,
+       592
+      ],
+      "n_closing": 30,
+      "n_held": 4,
+      "gate_on_by_state": {
+       "closing": 30,
+       "held": 4
+      }
+     },
+     "fingertip_dev_mm": {
+      "closing_held_max": 27.64672335945452,
+      "closing_held_median": 0.1899837533432127,
+      "closing_max": 14.658405376440687,
+      "held_max": 27.64672335945452,
+      "other_state_max": 28.241282556567512,
+      "n_closing_held_gt_1mm": 2,
+      "closing_held_chunks_gt_1mm": [
+       [
+        216,
+        "closing",
+        14.66,
+        "accepted"
+       ],
+       [
+        440,
+        "held",
+        27.65,
+        "accepted"
+       ]
+      ]
+     },
+     "contact_at_settle": {
+      "t_close": 104,
+      "t_settle": 111,
+      "contact_mid_rel_apple_mm": [
+       4.939229039035986,
+       -5.141466432657282,
+       4.338292929275012
+      ],
+      "contact_mid_z_mm": 4.338292929275012,
+      "open_settle": 0.7000939816450298,
+      "contact_lost_t": 133,
+      "first_grasp_held": false,
+      "hold_min_open": 0.6139164201343796,
+      "refined_minus_ref_body_mid_norm_mm": 0.0,
+      "ref_minus_measured_body_mid_norm_mm": 11.641405585302659,
+      "n_close_cycles": 5
+     },
+     "hold": {
+      "n_hold_chunks": 0,
+      "hold_kind_counts": {},
+      "n_would_hold_chunks": 0,
+      "would_hold_kind_counts": {},
+      "timeline": [],
+      "hold_held_table": 0,
+      "comms_hold_from_log": null,
+      "comms_ipc_planning_rows": 0,
+      "ipc_counts": {
+       "ok": 75
+      },
+      "hold_control_steps": 0
+     },
+     "latch": {
+      "attach_t": [
+       120,
+       440
+      ],
+      "detach_t": [
+       136,
+       456
+      ],
+      "revoke_t": [
+       136,
+       456
+      ],
+      "revoke_notes": [
+       "attach_revoked — 쥔 상태가 아니다: opening_dropped, not_blocked (attach 뒤 실행 청크 2/4) — detach(), 대상 잠금은 유지 (feedback seq 17)",
+       "attach_revoked — 쥔 상태가 아니다: opening_dropped (attach 뒤 실행 청크 2/4) — detach(), 대상 잠금은 유지 (feedback seq 57)"
+      ],
+      "first_t_by_state": {
+       "searching": 0,
+       "latched": 16,
+       "closing": 112,
+       "held": 120
+      }
+     },
+     "to_returned_counts": {
+      "initial": 18,
+      "accepted": 56,
+      "projection": 1
+     },
+     "refined_minus_reference_deg": {
+      "max": 4.760928719444028,
+      "median": 0.34883142129089123,
+      "grasp_to_release_max": 4.760928719444028,
+      "grasp_to_release_median": 0.3333337220641323
+     },
+     "n_manip_not_apple_pre_grasp": 0,
+     "n_worst_inside_apple": 0,
+     "n_invariant_violation": 0
+    }
+   },
+   "condition": {
+    "n_runs": 6,
+    "n_success": 3,
+    "n_grasp": 4,
+    "n_hold_chunks_total": 0,
+    "n_would_hold_chunks_total": 0,
+    "hold_kind_counts_total": {},
+    "would_hold_kind_counts_total": {},
+    "comms_hold_total_from_log": 0,
+    "comms_ipc_planning_rows_total": 0,
+    "n_server_chunks": 450,
+    "n_server_chunks_paired": 450,
+    "server_time_ms_pooled_excl_first": {
+     "infer": {
+      "n": 444,
+      "median": 300.1031877938658,
+      "p95": 321.20420234277844,
+      "max": 394.8752349242568
+     },
+     "ag3s": {
+      "n": 444,
+      "median": 2959.9928851239383,
+      "p95": 4137.606236268765,
+      "max": 7622.901627793908
+     },
+     "trajopt": {
+      "n": 444,
+      "median": 142.50202919356525,
+      "p95": 160.3887777077034,
+      "max": 200.2368401736021
+     },
+     "total": {
+      "n": 444,
+      "median": 3400.9494783822447,
+      "p95": 4591.251466027461,
+      "max": 8077.5286089628935
+     }
+    },
+    "n_gate_on_chunks_total": 130,
+    "n_closing_chunks_total": 81,
+    "n_held_chunks_total": 49,
+    "n_gate_on_not_closing_held": 0,
+    "n_closing_held_without_gate": 0,
+    "gate_on_reason_counts": {
+     "grasp latch closing (cost.grasp_continuity_off)": 81,
+     "grasp latch held (cost.grasp_continuity_off)": 49
+    },
+    "continuity_reason_counts_all_chunks": {
+     "no previous chunk": 6,
+     "feedback": 314,
+     "disabled for this chunk: grasp latch closing (cost.grasp_continuity_off)": 81,
+     "disabled for this chunk: grasp latch held (cost.grasp_continuity_off)": 49
+    },
+    "n_revoke": 2,
+    "server_log_gate_lines": {
+     "n_off_lines": 11,
+     "n_back_on_lines": 9,
+     "distinct": {
+      "[safe_policy] continuity term OFF — grasp latch closing (cost.grasp_continuity_off)": 11,
+      "[safe_policy] continuity term back ON (grasp latch placed)": 3,
+      "[safe_policy] continuity term back ON (grasp latch latched)": 6
+     }
+    },
+    "comms_timeout_stale_error_total": 0,
+    "hold_fixed_chunks_total": 0
+   }
+  },
+  "contact_and_tipdev": {
+   "contact_height": {
+    "metric": "contact_mid_rel_apple_mm[2] at t_settle (T35-diag settle.py); hold_min_open = min measured opening in 24 rows after settle; first_grasp_held = contact_lost_t is None",
+    "scripts": [
+     "outputs/verify/T37/geom/a_runs.py (copy of T35diag/a_runs.py)",
+     "outputs/verify/T37/geom/a/settle.py (copy of T35diag/a/settle.py)"
+    ],
+    "raw": [
+     "outputs/verify/T37/geom/a/a_runs.json",
+     "outputs/verify/T37/geom/a/settle.json",
+     "outputs/verify/T35diag/a/settle.json (42 earlier runs)"
+    ],
+    "group_stats_all_runs": {
+     "E0": {
+      "n": 6,
+      "min": -7.124436914698662,
+      "median": 2.050667563084585,
+      "max": 10.194161987229776,
+      "n_success": 4,
+      "n_first_grasp_held": 4
+     },
+     "E0_rec": {
+      "n": 6,
+      "min": -6.984132265364318,
+      "median": 1.990628638761871,
+      "max": 5.674977884934873,
+      "n_success": 3,
+      "n_first_grasp_held": 4
+     },
+     "E1": {
+      "n": 6,
+      "min": -6.705317063706362,
+      "median": 1.8126476494371158,
+      "max": 21.139084002261388,
+      "n_success": 3,
+      "n_first_grasp_held": 5
+     },
+     "E1_rec": {
+      "n": 6,
+      "min": -6.908010348557925,
+      "median": 2.2517738862741776,
+      "max": 11.785589748242842,
+      "n_success": 3,
+      "n_first_grasp_held": 4
+     },
+     "E2_rec": {
+      "n": 6,
+      "min": -7.00195795241465,
+      "median": -3.742423930856109,
+      "max": -0.0183767855392869,
+      "n_success": 6,
+      "n_first_grasp_held": 6
+     },
+     "T34 E3a": {
+      "n": 6,
+      "min": -6.999182453081398,
+      "median": 1.7690358753788549,
+      "max": 9.129041216213164,
+      "n_success": 5,
+      "n_first_grasp_held": 3
+     },
+     "T34 E3b": {
+      "n": 6,
+      "min": -7.144325096216209,
+      "median": 1.5704304833710214,
+      "max": 15.146907090549778,
+      "n_success": 3,
+      "n_first_grasp_held": 3
+     },
+     "T37 E3a": {
+      "n": 6,
+      "min": -7.144325096216209,
+      "median": 1.5847921368793427,
+      "max": 12.888841973006993,
+      "n_success": 3,
+      "n_first_grasp_held": 3
+     },
+     "T37 E3b": {
+      "n": 6,
+      "min": -7.122323953902554,
+      "median": 1.9142799641524433,
+      "max": 12.078620971878395,
+      "n_success": 3,
+      "n_first_grasp_held": 3
+     }
+    },
+    "T37_runs": {
+     "T37/E3a_rec/E3a_ep1800_r1": {
+      "success": false,
+      "first_grasp_held": false,
+      "contact_mid_z_mm": 8.706871219333223,
+      "hold_min_open": 0.4340740170363514,
+      "t_settle": 142,
+      "contact_lost_t": 161
+     },
+     "T37/E3a_rec/E3a_ep1800_r2": {
+      "success": true,
+      "first_grasp_held": true,
+      "contact_mid_z_mm": -0.6198301741152656,
+      "hold_min_open": 0.718188119302512,
+      "t_settle": 148,
+      "contact_lost_t": null
+     },
+     "T37/E3a_rec/E3a_ep1807_r1": {
+      "success": true,
+      "first_grasp_held": true,
+      "contact_mid_z_mm": -1.5254393666152,
+      "hold_min_open": 0.7140086709983696,
+      "t_settle": 96,
+      "contact_lost_t": null
+     },
+     "T37/E3a_rec/E3a_ep1807_r2": {
+      "success": true,
+      "first_grasp_held": true,
+      "contact_mid_z_mm": -7.144325096216209,
+      "hold_min_open": 0.7139154587216398,
+      "t_settle": 111,
+      "contact_lost_t": null
+     },
+     "T37/E3a_rec/E3a_ep1808_r1": {
+      "success": false,
+      "first_grasp_held": false,
+      "contact_mid_z_mm": 12.888841973006993,
+      "hold_min_open": 0.43242462695320305,
+      "t_settle": 118,
+      "contact_lost_t": 124
+     },
+     "T37/E3a_rec/E3a_ep1808_r2": {
+      "success": false,
+      "first_grasp_held": false,
+      "contact_mid_z_mm": 3.789414447873951,
+      "hold_min_open": 0.4334913023808327,
+      "t_settle": 111,
+      "contact_lost_t": 118
+     },
+     "T37/E3b_rec/E3b_ep1800_r1": {
+      "success": false,
+      "first_grasp_held": false,
+      "contact_mid_z_mm": 9.93510383345142,
+      "hold_min_open": 0.41429601245089304,
+      "t_settle": 135,
+      "contact_lost_t": 142
+     },
+     "T37/E3b_rec/E3b_ep1800_r2": {
+      "success": true,
+      "first_grasp_held": true,
+      "contact_mid_z_mm": -0.5097330009701251,
+      "hold_min_open": 0.723280438892332,
+      "t_settle": 151,
+      "contact_lost_t": null
+     },
+     "T37/E3b_rec/E3b_ep1807_r1": {
+      "success": true,
+      "first_grasp_held": true,
+      "contact_mid_z_mm": -6.667781254617977,
+      "hold_min_open": 0.712962564804091,
+      "t_settle": 107,
+      "contact_lost_t": null
+     },
+     "T37/E3b_rec/E3b_ep1807_r2": {
+      "success": true,
+      "first_grasp_held": true,
+      "contact_mid_z_mm": -7.122323953902554,
+      "hold_min_open": 0.7142442340495222,
+      "t_settle": 111,
+      "contact_lost_t": null
+     },
+     "T37/E3b_rec/E3b_ep1808_r1": {
+      "success": false,
+      "first_grasp_held": false,
+      "contact_mid_z_mm": 12.078620971878395,
+      "hold_min_open": 0.43702495445635975,
+      "t_settle": 125,
+      "contact_lost_t": 130
+     },
+     "T37/E3b_rec/E3b_ep1808_r2": {
+      "success": false,
+      "first_grasp_held": false,
+      "contact_mid_z_mm": 4.338292929275012,
+      "hold_min_open": 0.6139164201343796,
+      "t_settle": 111,
+      "contact_lost_t": 133
+     }
+    },
+    "T37_success_first_grasp_held_z_range_mm": [
+     -7.144325096216209,
+     -0.5097330009701251
+    ],
+    "T37_failure_z_range_mm": [
+     3.789414447873951,
+     12.888841973006993
+    ],
+    "all_runs_counts": {
+     "n_runs": 54,
+     "n_success": 33,
+     "n_success_first_grasp_held": 31,
+     "n_failure": 21,
+     "n_failure_contact_mid_z_gt_3mm": 18,
+     "n_success_first_grasp_held_z_gt_3mm": 1
+    }
+   },
+   "fingertip_dev_closing_held_vs_other": {
+    "metric": "Meter.compare(refined, reference, q_now).fingertip_disp_mm_max over the planned horizon (8 steps)",
+    "script": "outputs/verify/T37/p/t37_tipdev.py (shim)",
+    "raw": [
+     "outputs/verify/T37/p/E3a_tipdev.json",
+     "outputs/verify/T37/p/E3b_tipdev.json",
+     "outputs/verify/T37/p/E3a_tipdev_T34.json",
+     "outputs/verify/T37/p/E3b_tipdev_T34.json"
+    ],
+    "groups": {
+     "T34_E3a_closing_held": {
+      "n": 122,
+      "median": 7.774711893965913,
+      "p90": 27.096376112540547,
+      "max": 53.97034243417827,
+      "n_gt_1mm": 112
+     },
+     "T37_E3a_closing_held": {
+      "n": 158,
+      "median": 0.0,
+      "p90": 14.198456793526626,
+      "max": 49.757756738884105,
+      "n_gt_1mm": 30
+     },
+     "T34_E3b_closing_held": {
+      "n": 114,
+      "median": 8.375219100383244,
+      "p90": 29.32104299653159,
+      "max": 68.34422680050893,
+      "n_gt_1mm": 100
+     },
+     "T37_E3b_closing_held": {
+      "n": 130,
+      "median": 0.29517931582687784,
+      "p90": 17.687418675641357,
+      "max": 52.186154238748834,
+      "n_gt_1mm": 33
+     },
+     "T34_E3a_other": {
+      "n": 328,
+      "median": 1.4425723662753813,
+      "p90": 11.261548549810506,
+      "max": 56.182500341578226,
+      "n_gt_1mm": 181
+     },
+     "T37_E3a_other": {
+      "n": 292,
+      "median": 1.3531002739983031,
+      "p90": 10.671657878565306,
+      "max": 48.42430121237101,
+      "n_gt_1mm": 165
+     },
+     "T34_E3b_other": {
+      "n": 336,
+      "median": 1.6307277412639374,
+      "p90": 12.72328072483469,
+      "max": 53.138537281356136,
+      "n_gt_1mm": 198
+     },
+     "T37_E3b_other": {
+      "n": 320,
+      "median": 2.41188958158752,
+      "p90": 12.607265512548658,
+      "max": 50.19080179708659,
+      "n_gt_1mm": 196
+     }
+    },
+    "check_T35_values_on_T34_records_mm": {
+     "E3b_ep1808_r1_t120_closing": 30.06,
+     "E3b_ep1808_r2_t112_closing": 34.96,
+     "note": "same chunks as T35-diag 30.1 / 35.0 mm"
+    }
+   }
+  },
+  "D1_oscillation": {
+   "script": "outputs/verify/T37/d1/d1_oscillation.py (copy of T34/d1, adds T37 runs; shim)",
+   "raw": "outputs/verify/T37/d1/d1_oscillation.json",
+   "log": "outputs/verify/T37/d1/d1_oscillation.log",
+   "window": "W_all = grasp_t <= t <= release_t (runs with grasp and place only)",
+   "runs": {
+    "T34_E3a_ep1800_r2": {
+     "grasp_t": 168,
+     "place_t": 240,
+     "release_t": 240,
+     "sign_reversals": 7,
+     "sign_reversals_per_s": 1.4383561643835618,
+     "cmd_sign_reversals_per_s": 5.136986301369864,
+     "jerk_rms": 5.014571019332715,
+     "fingertip_path_over_chord": 1.790074693508534,
+     "fingertip_mean_curvature_per_m": 10.895770465979192,
+     "refined_minus_reference_max_deg_in_window": 2.114719201476566,
+     "hold_steps_in_window": 0
+    },
+    "T34_E3a_ep1807_r1": {
+     "grasp_t": 112,
+     "place_t": 192,
+     "release_t": 192,
+     "sign_reversals": 11,
+     "sign_reversals_per_s": 2.0370370370370368,
+     "cmd_sign_reversals_per_s": 6.851851851851851,
+     "jerk_rms": 5.366114093147283,
+     "fingertip_path_over_chord": 1.7971695117641024,
+     "fingertip_mean_curvature_per_m": 10.877316490515957,
+     "refined_minus_reference_max_deg_in_window": 2.5605969387027603,
+     "hold_steps_in_window": 0
+    },
+    "T34_E3a_ep1807_r2": {
+     "grasp_t": 144,
+     "place_t": 224,
+     "release_t": 224,
+     "sign_reversals": 9,
+     "sign_reversals_per_s": 1.6666666666666665,
+     "cmd_sign_reversals_per_s": 7.592592592592592,
+     "jerk_rms": 4.462792486248153,
+     "fingertip_path_over_chord": 1.8106969177113914,
+     "fingertip_mean_curvature_per_m": 10.712736394750666,
+     "refined_minus_reference_max_deg_in_window": 3.1097373177826153,
+     "hold_steps_in_window": 0
+    },
+    "T34_E3a_ep1808_r1": {
+     "grasp_t": 400,
+     "place_t": 472,
+     "release_t": 472,
+     "sign_reversals": 6,
+     "sign_reversals_per_s": 1.2328767123287672,
+     "cmd_sign_reversals_per_s": 5.136986301369864,
+     "jerk_rms": 5.702903050466539,
+     "fingertip_path_over_chord": 1.839771037899321,
+     "fingertip_mean_curvature_per_m": 9.552376216861605,
+     "refined_minus_reference_max_deg_in_window": 4.228836492532524,
+     "hold_steps_in_window": 0
+    },
+    "T34_E3a_ep1808_r2": {
+     "grasp_t": 416,
+     "place_t": 456,
+     "release_t": 456,
+     "sign_reversals": 3,
+     "sign_reversals_per_s": 1.0975609756097562,
+     "cmd_sign_reversals_per_s": 10.97560975609756,
+     "jerk_rms": 6.936261109823648,
+     "fingertip_path_over_chord": 1.591374995774583,
+     "fingertip_mean_curvature_per_m": 9.854592687134673,
+     "refined_minus_reference_max_deg_in_window": 2.275378484246783,
+     "hold_steps_in_window": 0
+    },
+    "T34_E3b_ep1800_r2": {
+     "grasp_t": 168,
+     "place_t": 240,
+     "release_t": 240,
+     "sign_reversals": 7,
+     "sign_reversals_per_s": 1.4383561643835618,
+     "cmd_sign_reversals_per_s": 4.315068493150685,
+     "jerk_rms": 4.3450790806134005,
+     "fingertip_path_over_chord": 1.7726833461438287,
+     "fingertip_mean_curvature_per_m": 10.113718755231002,
+     "refined_minus_reference_max_deg_in_window": 1.7657541646100363,
+     "hold_steps_in_window": 0
+    },
+    "T34_E3b_ep1807_r1": {
+     "grasp_t": 112,
+     "place_t": 200,
+     "release_t": 200,
+     "sign_reversals": 11,
+     "sign_reversals_per_s": 1.8539325842696628,
+     "cmd_sign_reversals_per_s": 6.741573033707865,
+     "jerk_rms": 5.140944295970537,
+     "fingertip_path_over_chord": 1.8667000541791632,
+     "fingertip_mean_curvature_per_m": 11.023972863117853,
+     "refined_minus_reference_max_deg_in_window": 3.265984725235827,
+     "hold_steps_in_window": 0
+    },
+    "T34_E3b_ep1807_r2": {
+     "grasp_t": 128,
+     "place_t": 208,
+     "release_t": 208,
+     "sign_reversals": 7,
+     "sign_reversals_per_s": 1.2962962962962963,
+     "cmd_sign_reversals_per_s": 5.0,
+     "jerk_rms": 4.012625741968511,
+     "fingertip_path_over_chord": 1.7816675518695568,
+     "fingertip_mean_curvature_per_m": 8.549842541272792,
+     "refined_minus_reference_max_deg_in_window": 3.275096197588624,
+     "hold_steps_in_window": 0
+    },
+    "T37_E3a_ep1800_r2": {
+     "grasp_t": 168,
+     "place_t": 248,
+     "release_t": 248,
+     "sign_reversals": 7,
+     "sign_reversals_per_s": 1.2962962962962963,
+     "cmd_sign_reversals_per_s": 8.148148148148147,
+     "jerk_rms": 4.456953245105019,
+     "fingertip_path_over_chord": 1.7307401652052283,
+     "fingertip_mean_curvature_per_m": 13.352520344819533,
+     "refined_minus_reference_max_deg_in_window": 1.2437501271026419,
+     "hold_steps_in_window": 0
+    },
+    "T37_E3a_ep1807_r1": {
+     "grasp_t": 112,
+     "place_t": 208,
+     "release_t": 208,
+     "sign_reversals": 22,
+     "sign_reversals_per_s": 3.402061855670103,
+     "cmd_sign_reversals_per_s": 9.123711340206185,
+     "jerk_rms": 7.1873767363264,
+     "fingertip_path_over_chord": 1.8468988922576681,
+     "fingertip_mean_curvature_per_m": 18.765138202380545,
+     "refined_minus_reference_max_deg_in_window": 2.1000237293121664,
+     "hold_steps_in_window": 0
+    },
+    "T37_E3a_ep1807_r2": {
+     "grasp_t": 128,
+     "place_t": 224,
+     "release_t": 224,
+     "sign_reversals": 16,
+     "sign_reversals_per_s": 2.4742268041237114,
+     "cmd_sign_reversals_per_s": 9.896907216494846,
+     "jerk_rms": 6.370796905094325,
+     "fingertip_path_over_chord": 1.8537344401913953,
+     "fingertip_mean_curvature_per_m": 18.999068071508905,
+     "refined_minus_reference_max_deg_in_window": 1.7520132113821458,
+     "hold_steps_in_window": 0
+    },
+    "T37_E3b_ep1800_r2": {
+     "grasp_t": 176,
+     "place_t": 216,
+     "release_t": 254,
+     "sign_reversals": 7,
+     "sign_reversals_per_s": 1.3291139240506329,
+     "cmd_sign_reversals_per_s": 7.405063291139241,
+     "jerk_rms": 4.908322806171524,
+     "fingertip_path_over_chord": 1.7324105729703587,
+     "fingertip_mean_curvature_per_m": 13.446566134228416,
+     "refined_minus_reference_max_deg_in_window": 1.4711783509911416,
+     "hold_steps_in_window": 0
+    },
+    "T37_E3b_ep1807_r1": {
+     "grasp_t": 120,
+     "place_t": 216,
+     "release_t": 216,
+     "sign_reversals": 18,
+     "sign_reversals_per_s": 2.783505154639175,
+     "cmd_sign_reversals_per_s": 9.896907216494846,
+     "jerk_rms": 7.1608816825792525,
+     "fingertip_path_over_chord": 1.9147841614333374,
+     "fingertip_mean_curvature_per_m": 17.344374592355422,
+     "refined_minus_reference_max_deg_in_window": 2.2411068361474804,
+     "hold_steps_in_window": 0
+    },
+    "T37_E3b_ep1807_r2": {
+     "grasp_t": 128,
+     "place_t": 224,
+     "release_t": 224,
+     "sign_reversals": 16,
+     "sign_reversals_per_s": 2.4742268041237114,
+     "cmd_sign_reversals_per_s": 9.123711340206185,
+     "jerk_rms": 6.480421106659888,
+     "fingertip_path_over_chord": 1.8226819621351673,
+     "fingertip_mean_curvature_per_m": 19.74557569216855,
+     "refined_minus_reference_max_deg_in_window": 1.8000877112986922,
+     "hold_steps_in_window": 0
+    }
+   },
+   "group_median": {
+    "T34_E3a": {
+     "sign_reversals_per_s": 1.4383561643835618,
+     "cmd_sign_reversals_per_s": 6.851851851851851,
+     "jerk_rms": 5.366114093147283,
+     "fingertip_path_over_chord": 1.7971695117641024,
+     "fingertip_mean_curvature_per_m": 10.712736394750666,
+     "refined_minus_reference_max_deg_in_window": 2.5605969387027603,
+     "n": 5
+    },
+    "T34_E3b": {
+     "sign_reversals_per_s": 1.4383561643835618,
+     "cmd_sign_reversals_per_s": 5.0,
+     "jerk_rms": 4.3450790806134005,
+     "fingertip_path_over_chord": 1.7816675518695568,
+     "fingertip_mean_curvature_per_m": 10.113718755231002,
+     "refined_minus_reference_max_deg_in_window": 3.265984725235827,
+     "n": 3
+    },
+    "T37_E3a": {
+     "sign_reversals_per_s": 2.4742268041237114,
+     "cmd_sign_reversals_per_s": 9.123711340206185,
+     "jerk_rms": 6.370796905094325,
+     "fingertip_path_over_chord": 1.8468988922576681,
+     "fingertip_mean_curvature_per_m": 18.765138202380545,
+     "refined_minus_reference_max_deg_in_window": 1.7520132113821458,
+     "n": 3
+    },
+    "T37_E3b": {
+     "sign_reversals_per_s": 2.4742268041237114,
+     "cmd_sign_reversals_per_s": 9.123711340206185,
+     "jerk_rms": 6.480421106659888,
+     "fingertip_path_over_chord": 1.8226819621351673,
+     "fingertip_mean_curvature_per_m": 17.344374592355422,
+     "refined_minus_reference_max_deg_in_window": 1.8000877112986922,
+     "n": 3
+    }
+   }
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t37/t37-success-grid.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t37/t37-success-grid.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t37/t37-run-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t37/t37-run-table.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t37/t37-contact-height.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t37/t37-contact-height.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t37/t37-tipdev.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t37/t37-tipdev.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t37/t37-bands-E3a.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t37/t37-bands-E3a.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t37/t37-bands-E3b.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t37/t37-bands-E3b.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t37/t37-keyframes-E3a.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t37/t37-keyframes-E3a.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t37/t37-keyframes-E3b.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t37/t37-keyframes-E3b.json"
+  }
+ ],
+ "figure_scripts": [
+  "outputs/verify/T37/p/fig_t37.py (.venv-openpi-live)"
+ ],
+ "videos_third_person": {
+  "E3a_ep1800_r1": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1800_r1/third_person_front.mp4",
+  "E3a_ep1800_r2": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1800_r2/third_person_front.mp4",
+  "E3a_ep1807_r1": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1807_r1/third_person_front.mp4",
+  "E3a_ep1807_r2": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1807_r2/third_person_front.mp4",
+  "E3a_ep1808_r1": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1808_r1/third_person_front.mp4",
+  "E3a_ep1808_r2": "/mnt/dev/work/outputs/verify/T37/E3a_rec/E3a_ep1808_r2/third_person_front.mp4",
+  "E3b_ep1800_r1": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1800_r1/third_person_front.mp4",
+  "E3b_ep1800_r2": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1800_r2/third_person_front.mp4",
+  "E3b_ep1807_r1": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1807_r1/third_person_front.mp4",
+  "E3b_ep1807_r2": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1807_r2/third_person_front.mp4",
+  "E3b_ep1808_r1": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1808_r1/third_person_front.mp4",
+  "E3b_ep1808_r2": "/mnt/dev/work/outputs/verify/T37/E3b_rec/E3b_ep1808_r2/third_person_front.mp4"
+ },
+ "baseline_check": {
+  "matched": true,
+  "note": "legacy 14/15 · 15/15 · -29.031048280806342 mm; cuRobo 10/15 · 15/15 · -9.171877401271193 mm; per-frame clearance_before bitwise equal to T36 reference runs",
+  "raw": [
+   "outputs/verify/T37/basel/base_summary.json"
+  ],
+  "run_alone": true
+ },
+ "verdict": "기준선 일치 (legacy · cuRobo 둘 다). E3a 3/6 (grasp 3), E3b 3/6 (grasp 4). gate-off 청크 E3a 158 · E3b 130, 모두 closing/held, closing/held 인데 gate 없는 청크 0. E3b HOLD 0 청크, comms HOLD 0. attach_revoked E3a 1 · E3b 2.",
+ "not_measured": [
+  "local frames.jsonl 에는 응답 'to' 블록(continuity_active/continuity_reason)이 기록되지 않음 — 서버 기록(summary_json.to.metrics)으로만 셈",
+  "'first grasp held' 는 T35-diag settle.py 의 hold window(settle 뒤 24 제어 행) 안 contact_lost_t 없음으로 정의 — T35 task 문장의 18/22 집계 정의와 같은지 확인 안 함",
+  "continuity off 대조군(grasp_continuity_off=False) 폐루프 — serve_safe CLI flag 없음, 이번에 돌리지 않음",
+  "D1 figure 는 새로 그리지 않음 (숫자만: numbers.D1_oscillation)",
+  "SendUserFile 도구가 이 세션에 없어 figure 를 사용자에게 직접 보내지 못함"
+ ]
+}

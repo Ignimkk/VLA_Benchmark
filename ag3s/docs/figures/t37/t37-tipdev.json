@@ -1,0 +1,71 @@
+{
+ "sources": {
+  "T34": [
+   "/mnt/dev/work/outputs/verify/T37/p/E3a_tipdev_T34.json",
+   "/mnt/dev/work/outputs/verify/T37/p/E3b_tipdev_T34.json"
+  ],
+  "T37": [
+   "/mnt/dev/work/outputs/verify/T37/p/E3a_tipdev.json",
+   "/mnt/dev/work/outputs/verify/T37/p/E3b_tipdev.json"
+  ]
+ },
+ "metric": "Meter.compare(refined, reference, q_now).fingertip_disp_mm_max over the planned horizon (8 steps)",
+ "groups": {
+  "T34_E3a_closing_held": {
+   "n": 122,
+   "median": 7.774711893965913,
+   "p90": 27.096376112540547,
+   "max": 53.97034243417827,
+   "n_gt_1mm": 112
+  },
+  "T37_E3a_closing_held": {
+   "n": 158,
+   "median": 0.0,
+   "p90": 14.198456793526626,
+   "max": 49.757756738884105,
+   "n_gt_1mm": 30
+  },
+  "T34_E3b_closing_held": {
+   "n": 114,
+   "median": 8.375219100383244,
+   "p90": 29.32104299653159,
+   "max": 68.34422680050893,
+   "n_gt_1mm": 100
+  },
+  "T37_E3b_closing_held": {
+   "n": 130,
+   "median": 0.29517931582687784,
+   "p90": 17.687418675641357,
+   "max": 52.186154238748834,
+   "n_gt_1mm": 33
+  },
+  "T34_E3a_other": {
+   "n": 328,
+   "median": 1.4425723662753813,
+   "p90": 11.261548549810506,
+   "max": 56.182500341578226,
+   "n_gt_1mm": 181
+  },
+  "T37_E3a_other": {
+   "n": 292,
+   "median": 1.3531002739983031,
+   "p90": 10.671657878565306,
+   "max": 48.42430121237101,
+   "n_gt_1mm": 165
+  },
+  "T34_E3b_other": {
+   "n": 336,
+   "median": 1.6307277412639374,
+   "p90": 12.72328072483469,
+   "max": 53.138537281356136,
+   "n_gt_1mm": 198
+  },
+  "T37_E3b_other": {
+   "n": 320,
+   "median": 2.41188958158752,
+   "p90": 12.607265512548658,
+   "max": 50.19080179708659,
+   "n_gt_1mm": 196
+  }
+ }
+}
