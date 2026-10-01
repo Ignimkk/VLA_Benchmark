@@ -1,7 +1,7 @@
 # 세션 상태 — 끊겨도 여기서 이어 간다
 
 > writer: lead (A0). **매 turn 끝에 갱신한다.** 새 세션은 이 파일을 먼저 읽고, 아래 "이어 가는 절차" 를 따른다.
-> 마지막 갱신: 2026-10-01 — T38 B1+B5 커밋 (브랜치 1a35423), B2 (GPU 로봇 마스크 · 역투영 1 회) 구현 중
+> 마지막 갱신: 2026-10-01 — T38 B3 커밋 (브랜치 044ecc4, AG3S+TO 843 ms), B4 (GPU 재구성 · RANSAC) 구현 중
 
 ## 1. 지금 무엇을 하고 있나
 
@@ -145,3 +145,5 @@ ls -t ag3s/docs/handoff | head                            # *.progress.md / *.im
 | 2026-10-01 | **T38 Phase A 완료**: GPU 시간 ≈ 1 %, 나머지 CPU. grounding 의 대부분은 `cKDTree(workers=-1)` 스레드 생성 비용 (workers=1 이면 grow_region ~1 s → 9 ms). robot mask 6–9 회 672 ms · 역투영 중복 · ESDF D2H 50 MB · linearize `np.gradient` 전체. Phase B 제안 B1–B5 (T38.task.md) — 사용자 판정 대기 |
 | 2026-10-01 | **사용자 승인 Phase B.** 순서 B1 (KD-tree workers=1) · B5 (recorder 비동기) → 커밋 → B2 (로봇 마스크 GPU) → B3 (ESDF GPU 유지 · 질의점 기울기) → B4 (다운샘플·RANSAC GPU). 단계마다 replay 동치 + 기준선 둘, lead 가 브랜치에 단계별 커밋. B1+B5 implementer 착수 (`T38B.progress.md`, 보고 `T38-B1B5.impl.md`). 주의: worktree 코드는 cwd `/mnt/dev/work-o4` + `PYTHONPATH=/mnt/dev/work-o4` 로만 (cwd 가 /mnt/dev/work 면 main 을 import). O4 새 테스트는 루트 `tests/o4/` 에 main 에서 skip 되도록 |
 | 2026-10-01 | **B1+B5 완료·커밋**: 브랜치 `o4-gpu-parallel` `1a35423` · 루트 tests/o4 `d12eca3` · main 문서 `a065b63`. grounding 1,085 → 109 ms, AG3S+TO 2,837 → 1,756 ms, recorder 248 → 22 ms; refined 75/75 · record npz 79/79 비트 동일; 기준선 둘 불변. 테스트는 `--import-mode=append` + `AG3S_ASSET_ROOT=/mnt/dev/work/src` 필요. **B2 착수** (GPU 로봇 마스크 float64 · 카메라당 1 회 · 역투영 공유 · reset 뒤 GPU 메모리 순환 참조) |
+| 2026-10-01 | **B2 완료·커밋**: 브랜치 `305dca1` · 루트 `9a107c6` · main 문서 `83a69d8`. GPU 마스크 float64, CPU 와 비트 동일; robot_sphere_mask 665 → 73 ms; constraint_generation 854 → 253; **AG3S+TO 1,726 → 1,086 ms**; reset GPU 994 → 497 MiB; 재생·기준선 프레임 sha1 불변. **B3 착수** (ESDF tier GPU 유지, TO 거리·기울기 질의점에서만 GPU float64, 라벨 GPU, depth 1 회 업로드) |
+| 2026-10-01 | **B3 완료·커밋**: 브랜치 `044ecc4` · 루트 `4fa71b7` · main `ad825b7`. DeviceEsdfField (질의 칸만 읽음, np.gradient 비트 동일), D2H 51.4 → 3.5 MB; esdf 253 → 68 · TO 130 → 69 · **AG3S+TO 1,087 → 843 ms**; 재생·기준선 불변. **B4 착수** (GPU 역투영 · voxel downsample 대표점 규칙 동일 · FK 청크당 1 회 · RANSAC GPU 채점) — 목표 ≤ 533 ms |
