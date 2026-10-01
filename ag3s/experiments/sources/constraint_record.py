@@ -16,8 +16,13 @@
 
 from __future__ import annotations
 
+import atexit
 import json
+import logging
 import pathlib
+import queue
+import threading
+import traceback
 from typing import Any, Optional, Sequence
 
 import numpy as np
@@ -49,10 +54,26 @@ class ConstraintRecordWriter:
             무작위 표본이 아니라 스트라이드인 이유는, 같은 파일을 두 번 읽어 다른 그림이 나오면
             그림을 신뢰할 수 없기 때문이다. 0 이면 상한 없음.
         meta: 실행 조건. 나중에 두 실행을 비교할 때의 유일한 근거다.
+        background: True 면 npz 쓰기(압축 · 파일 I/O)를 **별도 스레드**에서 한다 (T38 B5).
+            서버 응답 경로에서 청크당 ≈ 245 ms 였고 그 대부분이 `zipfile.write` 였다
+            (T38 Phase A, py-spy). 기록 **내용**은 동기 모드와 같다 — 무엇을 담을지는 여전히
+            `record()` 안에서, 호출 스레드에서, 그 순간의 객체로 정한다 (`summary_json` 직렬화와
+            배열 복사까지). worker 는 이미 정해진 바이트를 디스크에 옮길 뿐이다.
+
+            - 순서: 파일 이름(`chunk_%05d`)은 `record()` 를 부른 순서로 그 자리에서 정하고, worker
+              는 FIFO 하나로 쓴다.
+            - 역압: 큐(`queue_size`)가 차면 `record()` 가 **기다린다** — 버리지 않는다.
+            - 종료: `flush()` 가 큐를 비울 때까지 기다리고, `close()` 는 flush 뒤 worker 를
+              멈춘다. 프로세스 종료(`atexit`)에도 flush 한다.
+            - 실패: worker 의 예외는 기록을 **조용히 버리지 않는다** — 첫 실패는 크게, 이후는 한
+              줄씩 로그에 남기고 `n_failed` · `failed_paths` 에 센다. 실패한 이름은 비어 있는
+              번호로 남는다 (동기 모드는 같은 번호를 다음 청크가 다시 쓴다).
+        queue_size: background 큐의 상한 (청크 수).
     """
 
     def __init__(self, output_dir, *, esdf_mode: str = "full", max_points: int = 200_000,
-                 meta: Optional[dict[str, Any]] = None):
+                 meta: Optional[dict[str, Any]] = None, background: bool = False,
+                 queue_size: int = 8):
         if esdf_mode not in ESDF_MODES:
             raise ValueError(f"esdf_mode must be one of {ESDF_MODES}, got {esdf_mode!r}")
         self.esdf_mode = esdf_mode
@@ -71,7 +92,23 @@ class ConstraintRecordWriter:
             raise RuntimeError(f"no available run directory under {root}")
         self.meta: dict[str, Any] = {"esdf_mode": esdf_mode, "max_points": self.max_points,
                                      **(meta or {})}
+        #: 디스크에 **쓰인** 청크 수 (background 에서는 worker 가 올린다).
         self._count = 0
+        #: background 에서 다음 청크가 받을 번호. 동기 모드는 `_count` 를 그대로 쓴다.
+        self._next_index = 0
+        #: background 에서 쓰기에 실패한 청크 수와 그 파일 이름.
+        self.n_failed = 0
+        self.failed_paths: list[str] = []
+        self._queue: Optional[queue.Queue] = None
+        self._worker: Optional[threading.Thread] = None
+        if background:
+            self._queue = queue.Queue(maxsize=max(1, int(queue_size)))
+            self._worker = threading.Thread(target=self._drain, name="constraint-record-writer",
+                                            daemon=True)
+            self._worker.start()
+            # daemon 스레드는 인터프리터가 끝날 때 그냥 죽는다. 그 전에 큐를 비운다 — atexit 은
+            # daemon 스레드가 아직 살아 있을 때 돈다.
+            atexit.register(self._atexit_flush)
 
     # ----------------------------------------------------------------------------------
     def record(self, *, t_step: int, chunk_index: int, constraint_set, debug: dict[str, Any],
@@ -225,10 +262,103 @@ class ConstraintRecordWriter:
         for key, value in (summary_extra or {}).items():
             summary.setdefault(key, value)
         payload["summary_json"] = np.asarray(json.dumps(summary, ensure_ascii=False))
-        out = self.run_dir / f"chunk_{self._count:05d}.npz"
-        np.savez_compressed(out, **payload)
-        self._count += 1
+        if self._queue is None:
+            out = self.run_dir / f"chunk_{self._count:05d}.npz"
+            np.savez_compressed(out, **payload)
+            self._count += 1
+            return out
+        # background (T38 B5): 이름은 지금 정하고, 배열은 **지금 복사한다**. `np.asarray` 는
+        # dtype 이 같으면 원본을 그대로 돌려주고 `_thin` 은 view 를 돌려주므로, 복사하지 않으면
+        # 다음 청크가 그 버퍼를 고칠 때 아직 안 쓰인 기록이 바뀐다.
+        if not self._worker.is_alive():
+            # 살아 있지 않은 worker 의 큐에 넣으면 아무도 안 쓰고, 큐가 차면 여기서 영원히 선다.
+            # 예외로 올린다 — `SafePolicy._record` 가 세고 크게 말한다.
+            raise RuntimeError(f"constraint record writer thread is not running "
+                               f"({self.pending} chunk(s) unwritten in {self.run_dir})")
+        out = self.run_dir / f"chunk_{self._next_index:05d}.npz"
+        self._next_index += 1
+        snapshot = {k: np.array(v, copy=True) for k, v in payload.items()}
+        self._queue.put((out, snapshot))  # 차 있으면 기다린다 — 버리지 않는다
         return out
+
+    # ----------------------------------------------------------------------------------
+    def _drain(self) -> None:
+        """background worker. 큐에서 하나씩 꺼내 쓴다. 어떤 예외도 루프를 죽이지 않는다."""
+        q = self._queue
+        while True:
+            item = q.get()
+            try:
+                if item is None:
+                    return
+                out, payload = item
+                try:
+                    np.savez_compressed(out, **payload)
+                    self._count += 1
+                except Exception as exc:  # noqa: BLE001 — 세고 크게 말한다; 루프는 산다
+                    self.n_failed += 1
+                    self.failed_paths.append(out.name)
+                    log = logging.getLogger(__name__)
+                    if self.n_failed == 1:
+                        log.error(
+                            "!!! CONSTRAINT RECORD WRITE FAILED (background writer) !!!\n"
+                            "    %s: %s: %s\n    이 청크의 기록은 디스크에 없습니다. 이후 실패도 "
+                            "세어 `n_failed` 로 남깁니다.\n%s",
+                            out, type(exc).__name__, exc, traceback.format_exc())
+                    else:
+                        log.error("[ag3s] constraint record write failed (%d 번째): %s: %s: %s",
+                                  self.n_failed, out.name, type(exc).__name__, exc)
+            finally:
+                # 다음 `get()` 까지 기다리는 동안 이미 쓴 청크의 배열을 쥐고 있지 않는다.
+                item = out = payload = None
+                q.task_done()
+
+    @property
+    def background(self) -> bool:
+        return self._queue is not None
+
+    @property
+    def pending(self) -> int:
+        """아직 디스크에 안 쓰인 청크 수 (background). 동기 모드는 0."""
+        return 0 if self._queue is None else self._queue.unfinished_tasks
+
+    def flush(self) -> None:
+        """background 큐가 빌 때까지 (마지막 청크가 쓰이거나 실패로 세어질 때까지) 기다린다.
+
+        `Queue.join()` 을 그대로 쓰지 않는 이유: worker 가 어떤 이유로든 죽어 있으면 영원히
+        선다 (종료 시 `atexit` 에서 서면 프로세스가 안 끝난다). 그 경우 남은 수를 실패로 센다.
+        """
+        q = self._queue
+        if q is None:
+            return
+        with q.all_tasks_done:
+            while q.unfinished_tasks:
+                if not self._worker.is_alive():
+                    lost = q.unfinished_tasks
+                    self.n_failed += lost
+                    logging.getLogger(__name__).error(
+                        "!!! constraint record writer thread died with %d chunk(s) unwritten "
+                        "in %s !!!", lost, self.run_dir)
+                    return
+                q.all_tasks_done.wait(0.5)
+
+    def _atexit_flush(self) -> None:
+        if self._queue is None:
+            return
+        pending = self.pending
+        self.flush()
+        print(f"[ag3s] constraint recorder flushed at exit ({pending} pending): "
+              f"{self._count} written, {self.n_failed} failed -> {self.run_dir}", flush=True)
+
+    def _stop_worker(self) -> None:
+        if self._queue is None:
+            return
+        self.flush()
+        if self._worker.is_alive():
+            self._queue.put(None)
+            self._worker.join()
+        self._queue = None
+        self._worker = None
+        atexit.unregister(self._atexit_flush)
 
     # ----------------------------------------------------------------------------------
     @staticmethod
@@ -337,7 +467,13 @@ class ConstraintRecordWriter:
         return arr[::stride]
 
     def close(self) -> None:
+        # background 면 남은 것을 다 쓰고 worker 를 멈춘다. 이후 `record()` 는 동기로 쓴다.
+        was_background = self._queue is not None
+        self._stop_worker()
         self.meta["n_chunks"] = self._count
+        if was_background:
+            self.meta["writer"] = {"mode": "background", "n_failed": self.n_failed,
+                                   "failed_paths": list(self.failed_paths)}
         (self.run_dir / "meta.json").write_text(
             json.dumps(self.meta, indent=2, ensure_ascii=False))
         print(f"[ag3s] wrote {self._count} constraint records to {self.run_dir}")

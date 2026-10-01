@@ -25,7 +25,7 @@ from typing import Any, Mapping, Optional, Sequence
 
 import numpy as np
 
-from benchmark.ag3s.config import AG3SConfigError, PointCloudConfig
+from benchmark.ag3s.config import KDTREE_WORKERS, AG3SConfigError, PointCloudConfig
 from benchmark.ag3s.types import PointCloud, RobotCollisionModel
 
 
@@ -169,7 +169,7 @@ def robot_sphere_mask(
     for centre, bare, radius in zip(centers, radii, radii + inflation):
         # Exact rather than bounded: each sphere is queried at its own radius, so nothing relies on a
         # shared upper bound and no second distance test is needed.
-        hits = tree.query_ball_point(centre, float(radius), workers=-1)
+        hits = tree.query_ball_point(centre, float(radius), workers=KDTREE_WORKERS)
         if not hits:
             continue
         if guarded is None:

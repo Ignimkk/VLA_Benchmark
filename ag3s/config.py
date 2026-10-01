@@ -28,6 +28,19 @@ class AG3SConfigError(ValueError):
     """Raised when a configuration is malformed or internally inconsistent."""
 
 
+#: scipy `cKDTree` 질의(`query` · `query_ball_point`)의 `workers` (T38 B1). AG3S 의 KD-tree 질의
+#: 중 worker 수를 정하는 곳은 **모두** 이 값 하나를 쓴다 (나머지는 scipy 기본값 1 이다).
+#:
+#: 1 인 이유: `workers=-1` 은 질의 한 번마다 CPU 코어 수만큼 스레드를 띄우고 거둔다. 이 서버는
+#: 256 코어라 청크당 ≈ 2,138 개였고, 질의 자체는 수천 점이라 µs–ms 인데 스레드 비용이 수백 ms 였다
+#: (T38 Phase A 실측, 같은 입력: `grow_region` 612–1,107 → 9 ms · dbscan 이웃 수 127–170 → 3 ms ·
+#: 최근접 core 125–162 → 0.6 ms). 질의 결과는 worker 수와 무관하다 — 점마다 독립으로 같은 트리를
+#: 읽을 뿐이다 (`tests/o4/test_kdtree_workers.py` 가 -1 과 비트 단위로 같음을 확인한다).
+#:
+#: YAML 필드가 아닌 이유: ablation 축이 아니다 — 결과를 바꾸지 않는 실행 자원 설정이다.
+KDTREE_WORKERS: int = 1
+
+
 # ------------------------------------------------------------------------------------ sections
 
 

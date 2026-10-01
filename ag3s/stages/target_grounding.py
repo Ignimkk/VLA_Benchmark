@@ -97,7 +97,7 @@ from typing import Any, Optional
 
 import numpy as np
 
-from benchmark.ag3s.config import ClusteringConfig
+from benchmark.ag3s.config import KDTREE_WORKERS, ClusteringConfig
 from benchmark.ag3s.stages.admissibility import (
     Admissibility,
     Association,
@@ -162,7 +162,7 @@ def dbscan(points: np.ndarray, eps: float, min_points: int) -> np.ndarray:
         return labels
 
     tree = cKDTree(pts)
-    counts = tree.query_ball_point(pts, eps, return_length=True, workers=-1)
+    counts = tree.query_ball_point(pts, eps, return_length=True, workers=KDTREE_WORKERS)
     core = counts >= min_points
     if not core.any():
         return labels
@@ -181,7 +181,8 @@ def dbscan(points: np.ndarray, eps: float, min_points: int) -> np.ndarray:
     # join the cluster of their nearest core point, which is DBSCAN's rule.
     non_core = np.nonzero(~core)[0]
     if non_core.size:
-        dist, j = core_tree.query(pts[non_core], k=1, distance_upper_bound=eps, workers=-1)
+        dist, j = core_tree.query(pts[non_core], k=1, distance_upper_bound=eps,
+                                  workers=KDTREE_WORKERS)
         hit = np.isfinite(dist)
         labels[non_core[hit]] = comp[j[hit]]
     return labels
@@ -236,7 +237,7 @@ def grow_region(
     tree = cKDTree(pts)
     frontier = seeds
     while frontier.size:
-        neighbours = tree.query_ball_point(pts[frontier], radius, workers=-1)
+        neighbours = tree.query_ball_point(pts[frontier], radius, workers=KDTREE_WORKERS)
         flat = np.fromiter(
             (j for group in neighbours for j in group), np.int64,
             count=sum(len(g) for g in neighbours),
