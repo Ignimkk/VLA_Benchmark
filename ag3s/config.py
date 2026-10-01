@@ -56,6 +56,17 @@ SELF_FILTER_DEVICE: str = "auto"
 #: 잘라 돈다. 행렬 두 장 + bool 한 장이 동시에 살아 있으므로 최대 사용량 ≈ 2.2 × 이 값 + 입력.
 SELF_FILTER_GPU_CHUNK_BYTES: int = 64 * 2**20
 
+#: GPU 에 머무는 ESDF 계층(`fields/device_field.DeviceEsdfField`, T38 B3)이 질의 한 번을 **어디서
+#: 산술하나** 의 경계 (질의점 수). 이보다 적으면 GPU 는 질의점이 쓰는 격자 칸만 `index_select` 로
+#: 꺼내 주고 삼선형 · 중심차분 산술은 host numpy 가 `EsdfField` 와 **같은 코드 · 같은 순서** 로 한다
+#: (kernel 몇 개 · 왕복 한 번). 이상이면 같은 산술을 GPU float64 로 한다 (질의점이 많을 때 빠름).
+#: 두 경로 모두 `EsdfField` 와 비트 단위로 같다 (`tests/o4/test_gpu_esdf_field.py` 가 둘 다 강제로
+#: 시험한다). 1024 는 128³ · 5 mm 격자 마이크로 측정의 교차점이다 (distance 0.32 vs 0.38 ms,
+#: gradient 1.0 vs 1.3 ms @ 1000 점). 이 서버 경로의 호출은 대부분 100–1000 점이다.
+#:
+#: YAML 필드가 아닌 이유: `KDTREE_WORKERS` 와 같다 — 결과를 바꾸지 않는 실행 자원 설정이다.
+ESDF_QUERY_HOST_ARITH_MAX_POINTS: int = 1024
+
 
 # ------------------------------------------------------------------------------------ sections
 

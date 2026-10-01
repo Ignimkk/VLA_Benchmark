@@ -44,6 +44,32 @@ ESDF_MODES = ("none", "occupancy", "full")
 SUPPORTED_ESDF_BACKENDS = ("legacy", "curobo")
 
 
+class _DeferredGrid:
+    """GPU 에 있는 격자를 **쓰는 순간에** host 로 가져오는 자리표시 (T38 B3).
+
+    cuRobo 계층(`DeviceEsdfField`)은 값 격자를 GPU 에 둔다. `--record-constraints-esdf full` 이
+    그 격자를 실을 때, 요청 스레드에서 D2H 하지 않고 이것을 payload 에 넣는다 — background
+    writer 는 worker 스레드에서, 동기 writer 는 `savez` 직전에 `resolve()` 한다.
+
+    잡고 있는 것은 GPU tensor 하나뿐이고 (필드 객체가 아니다) `resolve` 는 **아무것도 바꾸지
+    않는다** — 필드의 host 캐시를 채우지 않고, tensor 는 builder 가 계층마다 새로 만든 사본이라
+    아무도 고치지 않는다. 기록 바이트는 예전과 같다: float32 host 배열 → `np.asarray(…, dtype)`.
+    """
+
+    __slots__ = ("_tensor", "_dtype")
+
+    def __init__(self, tensor, dtype):
+        self._tensor = tensor
+        self._dtype = np.dtype(dtype)
+
+    def resolve(self) -> np.ndarray:
+        return np.asarray(self._tensor.detach().cpu().numpy(), self._dtype)
+
+
+def _resolve_deferred(payload: dict) -> dict:
+    return {k: (v.resolve() if isinstance(v, _DeferredGrid) else v) for k, v in payload.items()}
+
+
 class ConstraintRecordWriter:
     """청크마다 AG3S 의 제약 생성 중간 산출물을 npz 로 쓴다.
 
@@ -264,7 +290,7 @@ class ConstraintRecordWriter:
         payload["summary_json"] = np.asarray(json.dumps(summary, ensure_ascii=False))
         if self._queue is None:
             out = self.run_dir / f"chunk_{self._count:05d}.npz"
-            np.savez_compressed(out, **payload)
+            np.savez_compressed(out, **_resolve_deferred(payload))
             self._count += 1
             return out
         # background (T38 B5): 이름은 지금 정하고, 배열은 **지금 복사한다**. `np.asarray` 는
@@ -277,7 +303,10 @@ class ConstraintRecordWriter:
                                f"({self.pending} chunk(s) unwritten in {self.run_dir})")
         out = self.run_dir / f"chunk_{self._next_index:05d}.npz"
         self._next_index += 1
-        snapshot = {k: np.array(v, copy=True) for k, v in payload.items()}
+        # GPU 격자(`_DeferredGrid`)는 복사하지 않는다 — worker 가 쓰기 직전에 가져온다. 그 tensor 는
+        # builder 가 계층마다 새로 만든 사본이라 다음 청크가 고치지 않는다.
+        snapshot = {k: (v if isinstance(v, _DeferredGrid) else np.array(v, copy=True))
+                    for k, v in payload.items()}
         self._queue.put((out, snapshot))  # 차 있으면 기다린다 — 버리지 않는다
         return out
 
@@ -292,7 +321,7 @@ class ConstraintRecordWriter:
                     return
                 out, payload = item
                 try:
-                    np.savez_compressed(out, **payload)
+                    np.savez_compressed(out, **_resolve_deferred(payload))
                     self._count += 1
                 except Exception as exc:  # noqa: BLE001 — 세고 크게 말한다; 루프는 산다
                     self.n_failed += 1
@@ -438,6 +467,12 @@ class ConstraintRecordWriter:
             if self.esdf_mode == "none":
                 continue
             if self.esdf_mode == "full":
+                device_values = getattr(layer, "values_device", None)
+                if device_values is not None:
+                    # T38 B3: GPU 계층. 격자는 **쓸 때** 가져온다 (`_DeferredGrid`) — 응답 경로에서
+                    # 128³ D2H 를 하지 않는다. 같은 float32 → float16 변환이라 바이트가 같다.
+                    payload[prefix + "distance"] = _DeferredGrid(device_values, np.float16)
+                    continue
                 values = getattr(layer, "distance_grid", None)
                 if values is not None:
                     # float16 은 여기서 안전하다. 이 배열은 진단·시각화용이고, 최적화가 읽는 값은
