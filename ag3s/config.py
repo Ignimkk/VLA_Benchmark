@@ -40,6 +40,22 @@ class AG3SConfigError(ValueError):
 #: YAML 필드가 아닌 이유: ablation 축이 아니다 — 결과를 바꾸지 않는 실행 자원 설정이다.
 KDTREE_WORKERS: int = 1
 
+#: 로봇 self-filter 구 마스크(`stages/robot_filter.robot_sphere_mask` · `sphere_mask_parts`)를 어디서
+#: 계산하나 (T38 B2). ``"auto"`` = torch 가 CUDA 를 보면 GPU, 아니면 CPU · ``"cuda"`` = GPU 필수
+#: (없으면 예외) · ``"cpu"`` = 기존 KD-tree 경로.
+#:
+#: 두 경로의 판정 규칙은 같다 — 점 p 가 구 (c, r, 부풀림 δ) 에 닿는다 ⇔
+#: ``(dx·dx + dy·dy) + dz·dz ≤ (r + δ)·(r + δ)`` (float64, 이 순서). scipy `cKDTree.query_ball_point`
+#: 가 쓰는 산술이 바로 이것이라 GPU 경로는 같은 연산을 같은 순서로, FMA 없이(원소별 kernel 을 나눠)
+#: 한다. `tests/o4/test_gpu_sphere_mask.py` 가 경계 위 점까지 비트 단위로 같음을 확인한다.
+#:
+#: YAML 필드가 아닌 이유: `KDTREE_WORKERS` 와 같다 — 결과를 바꾸지 않는 실행 자원 설정이다.
+SELF_FILTER_DEVICE: str = "auto"
+
+#: GPU 구 마스크가 한 번에 만드는 (점 × 구) float64 행렬 한 장의 상한 (byte). 점 축을 이 크기로
+#: 잘라 돈다. 행렬 두 장 + bool 한 장이 동시에 살아 있으므로 최대 사용량 ≈ 2.2 × 이 값 + 입력.
+SELF_FILTER_GPU_CHUNK_BYTES: int = 64 * 2**20
+
 
 # ------------------------------------------------------------------------------------ sections
 
