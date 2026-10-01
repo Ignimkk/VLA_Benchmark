@@ -1,7 +1,7 @@
 # 세션 상태 — 끊겨도 여기서 이어 간다
 
 > writer: lead (A0). **매 turn 끝에 갱신한다.** 새 세션은 이 파일을 먼저 읽고, 아래 "이어 가는 절차" 를 따른다.
-> 마지막 갱신: 2026-10-01 — 사용자 순서 확정: (1) O2+O12 → 전 작업공간 commit + tag (사용자 push) → (2) O4 GPU 병렬 실시간 → (3) O1 큰 N (GPU 공유 확인) → (4) O5 → (5) O10 · O11
+> 마지막 갱신: 2026-10-01 — (1) O2+O12 완료, 전 작업공간 tag `pre-gpu-parallel-20261001`. 다음 (2) O4 GPU 병렬 실시간
 
 ## 1. 지금 무엇을 하고 있나
 
@@ -139,3 +139,4 @@ ls -t ag3s/docs/handoff | head                            # *.progress.md / *.im
 | 2026-10-01 | **SUBTASK-b 착수 (사용자 승인: "b 를 gpu 에 올려 테스트")** — verifier (A2) 에게 `SUBTASK-b.task.md`. 16D 29999 의 hidden state (Gemma prefix · KV layer sweep · action-expert final · layer 8 attention) 위 logistic probe 로 pick/place/home; M2 = State 의 gripper 값을 1.0 으로 가린 control (State 숫자를 읽는지 image 를 읽는지); M3 rule 기준선. 기준선 생략 (VLA forward 만). 재개: `SUBTASK-b.verify.partial.json` → 없으면 task.md 로 새 verifier |
 | 2026-10-01 | **사용자 순서 확정**: (1) O2 (K1 기본 off) + O12 (T37 커밋 · scribe T35–T37) → 모든 작업공간 commit + **tag** (되돌아올 지점, push 는 사용자) → (2) O4 실시간: cuRobo 와 같은 원리로 GPU 병렬 → (3) O1 큰 N — **GPU 일부를 다른 작업이 사용 중, 메모리·GPU 확인 후 중단시키지 않게** → (4) O5 → (5) O10 (로컬 `~/dev_ws/vla/pi0_TO_ws` 는 사용자가 git pull) · O11 (NFS — VS Code 인터프리터는 openpi venv 로 설정됨). O2 implementer · scribe 착수 |
 | 2026-10-01 | **scribe T35–T37 완료** (로그 3,597 줄). scribe 지적 2 건: (a) "첫 파지 유지 성공 18/22 · −7.1 ~ +2.4 mm" 는 재현 안 됨 — `T35.diag` C4 로 세면 25/42 · −7.1 ~ +4.4 mm (로그는 센 값으로); (b) **T37 의 4 run 접촉 높이가 T34 run 과 소수점 9 자리까지 동일** (예 T37 E3a 1800 r1 = T34 E3b 1800 r1 = +8.706871219 mm) — 새로 띄운 서버는 정책 난수 순서가 같아 조건이 달라도 파지 전까지 같은 궤적. **O1 설계에 반영**: run 마다 정책 seed 를 명시 (seed = f(episode, rep)), 조건 간에는 같은 seed 로 **짝지은 비교**, 조건 안에서는 서로 다른 seed — 서버/정책에 seed 입구가 있는지 먼저 확인 |
+| 2026-10-01 05:10 UTC | **(1) 완료 · tag**: O2 K1 기본 off (1708 passed) · benchmark `f8a2384` (코드) · `1e4d3a4` (T37 문서·figures·로그) · 루트 `d20c176` (tests). **tag `pre-gpu-parallel-20261001`** — benchmark · pi05_TO_hybrid (`8a9eae9`, 변경 없음) · openpi (`df12761`, 변경 없음) · 루트. 다른 세션(SUBTASK-b, GPU 8.8 GB 사용 중)의 미추적 파일은 커밋하지 않음 (ppt-0930 · ag3s-architecture-v2 · r-16d/attention-cell-* · figures/subtask · SUBTASK-*). push 는 사용자 (`git push --tags` 포함) |
