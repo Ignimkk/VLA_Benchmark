@@ -1,7 +1,7 @@
 # 세션 상태 — 끊겨도 여기서 이어 간다
 
 > writer: lead (A0). **매 turn 끝에 갱신한다.** 새 세션은 이 파일을 먼저 읽고, 아래 "이어 가는 절차" 를 따른다.
-> 마지막 갱신: 2026-10-01 — 사용자 승인 T38 Phase B (B1→B5). B1+B5 구현 중 (worktree o4-gpu-parallel)
+> 마지막 갱신: 2026-10-01 — T38 B1+B5 커밋 (브랜치 1a35423), B2 (GPU 로봇 마스크 · 역투영 1 회) 구현 중
 
 ## 1. 지금 무엇을 하고 있나
 
@@ -144,3 +144,4 @@ ls -t ag3s/docs/handoff | head                            # *.progress.md / *.im
 | 2026-10-01 | **SUBTASK-b verify 완료** (`SUBTASK-b.verify.json`, `figures/subtask-b/`). 16D hidden state 의 linear probe 가 pick/place/home 을 val 0.981 · closed-loop 0.959 (kv_L4; ep1807 0.960) 로 가름, gripper 값을 가려도 불변 (0.980) → image 에서 읽음. 오분류는 전환 1–3 sample 지연뿐. 한계: dataset phase 는 frame 시각만으로 1.000 (scripted), closed-loop 참값이 gripper 정의라 rule 이 1.000 — 미끄러짐 run 이 있어야 probe vs rule 비교 가능 (T28 기록엔 policy image 없음). kv_L4 는 AttentionSampler._prefix 의 KV cache 에서 나옴 → 추가 forward 없음. scribe 미통지 (판정 뒤). 판정 대기: 미끄러짐 재현 headless 실행 · AttentionPolicy 에 probe side channel 구현 · 기록 시점. audit §8 |
 | 2026-10-01 | **T38 Phase A 완료**: GPU 시간 ≈ 1 %, 나머지 CPU. grounding 의 대부분은 `cKDTree(workers=-1)` 스레드 생성 비용 (workers=1 이면 grow_region ~1 s → 9 ms). robot mask 6–9 회 672 ms · 역투영 중복 · ESDF D2H 50 MB · linearize `np.gradient` 전체. Phase B 제안 B1–B5 (T38.task.md) — 사용자 판정 대기 |
 | 2026-10-01 | **사용자 승인 Phase B.** 순서 B1 (KD-tree workers=1) · B5 (recorder 비동기) → 커밋 → B2 (로봇 마스크 GPU) → B3 (ESDF GPU 유지 · 질의점 기울기) → B4 (다운샘플·RANSAC GPU). 단계마다 replay 동치 + 기준선 둘, lead 가 브랜치에 단계별 커밋. B1+B5 implementer 착수 (`T38B.progress.md`, 보고 `T38-B1B5.impl.md`). 주의: worktree 코드는 cwd `/mnt/dev/work-o4` + `PYTHONPATH=/mnt/dev/work-o4` 로만 (cwd 가 /mnt/dev/work 면 main 을 import). O4 새 테스트는 루트 `tests/o4/` 에 main 에서 skip 되도록 |
+| 2026-10-01 | **B1+B5 완료·커밋**: 브랜치 `o4-gpu-parallel` `1a35423` · 루트 tests/o4 `d12eca3` · main 문서 `a065b63`. grounding 1,085 → 109 ms, AG3S+TO 2,837 → 1,756 ms, recorder 248 → 22 ms; refined 75/75 · record npz 79/79 비트 동일; 기준선 둘 불변. 테스트는 `--import-mode=append` + `AG3S_ASSET_ROOT=/mnt/dev/work/src` 필요. **B2 착수** (GPU 로봇 마스크 float64 · 카메라당 1 회 · 역투영 공유 · reset 뒤 GPU 메모리 순환 참조) |
