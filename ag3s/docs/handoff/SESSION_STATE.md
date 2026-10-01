@@ -1,7 +1,7 @@
 # 세션 상태 — 끊겨도 여기서 이어 간다
 
 > writer: lead (A0). **매 turn 끝에 갱신한다.** 새 세션은 이 파일을 먼저 읽고, 아래 "이어 가는 절차" 를 따른다.
-> 마지막 갱신: 2026-10-01 — (1) O2+O12 완료, 전 작업공간 tag `pre-gpu-parallel-20261001`. 다음 (2) O4 GPU 병렬 실시간
+> 마지막 갱신: 2026-10-01 — (2) O4 착수: worktree `/mnt/dev/work-o4/benchmark` (브랜치 `o4-gpu-parallel`), T38 Phase A profile 중
 
 ## 1. 지금 무엇을 하고 있나
 
@@ -140,3 +140,4 @@ ls -t ag3s/docs/handoff | head                            # *.progress.md / *.im
 | 2026-10-01 | **사용자 순서 확정**: (1) O2 (K1 기본 off) + O12 (T37 커밋 · scribe T35–T37) → 모든 작업공간 commit + **tag** (되돌아올 지점, push 는 사용자) → (2) O4 실시간: cuRobo 와 같은 원리로 GPU 병렬 → (3) O1 큰 N — **GPU 일부를 다른 작업이 사용 중, 메모리·GPU 확인 후 중단시키지 않게** → (4) O5 → (5) O10 (로컬 `~/dev_ws/vla/pi0_TO_ws` 는 사용자가 git pull) · O11 (NFS — VS Code 인터프리터는 openpi venv 로 설정됨). O2 implementer · scribe 착수 |
 | 2026-10-01 | **scribe T35–T37 완료** (로그 3,597 줄). scribe 지적 2 건: (a) "첫 파지 유지 성공 18/22 · −7.1 ~ +2.4 mm" 는 재현 안 됨 — `T35.diag` C4 로 세면 25/42 · −7.1 ~ +4.4 mm (로그는 센 값으로); (b) **T37 의 4 run 접촉 높이가 T34 run 과 소수점 9 자리까지 동일** (예 T37 E3a 1800 r1 = T34 E3b 1800 r1 = +8.706871219 mm) — 새로 띄운 서버는 정책 난수 순서가 같아 조건이 달라도 파지 전까지 같은 궤적. **O1 설계에 반영**: run 마다 정책 seed 를 명시 (seed = f(episode, rep)), 조건 간에는 같은 seed 로 **짝지은 비교**, 조건 안에서는 서로 다른 seed — 서버/정책에 seed 입구가 있는지 먼저 확인 |
 | 2026-10-01 05:10 UTC | **(1) 완료 · tag**: O2 K1 기본 off (1708 passed) · benchmark `f8a2384` (코드) · `1e4d3a4` (T37 문서·figures·로그) · 루트 `d20c176` (tests). **tag `pre-gpu-parallel-20261001`** — benchmark · pi05_TO_hybrid (`8a9eae9`, 변경 없음) · openpi (`df12761`, 변경 없음) · 루트. 다른 세션(SUBTASK-b, GPU 8.8 GB 사용 중)의 미추적 파일은 커밋하지 않음 (ppt-0930 · ag3s-architecture-v2 · r-16d/attention-cell-* · figures/subtask · SUBTASK-*). push 는 사용자 (`git push --tags` 포함) |
+| 2026-10-01 05:20 UTC | **(2) O4 착수.** 사용자: 코드가 바뀔 repo 에 새 브랜치. lead 판단: benchmark 만, **worktree** `/mnt/dev/work-o4/benchmark` (브랜치 `o4-gpu-parallel`, tag 에서 분기) — main 체크아웃은 SUBTASK-b 세션이 import 하며 GPU 사용 중이라 건드리지 않음. `ag3s/asset/data` symlink. pi05_TO_hybrid 는 서버 작업이라 브랜치 생략 (필요 시 생성). 단계별 시간 (T34 E3b 449 청크 중앙): grounding 1,334 · constraint 845 · reconstruction 534 · esdf 287 · support 86 · TO ≈ 127 ms. `T38.task.md`. Phase A profile verifier 착수 (`T38.profile.verify.json`). 끊기면 같은 verifier 재개 |
