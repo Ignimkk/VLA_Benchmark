@@ -1,0 +1,115 @@
+{
+ "rows": [
+  {
+   "stage": "request",
+   "what": "3 cameras x 640x480 depth (uint16 mm) + 3 x 16x16 attention + q per camera",
+   "median_ms": null,
+   "note": "921,600 depth px per chunk"
+  },
+  {
+   "stage": "scene_reconstruction",
+   "what": "per camera (python loop x3): backproject -> voxel 5 mm\n-> self-filter -> lift attention; then fuse",
+   "median_ms": 472.44101157411933,
+   "note": "backproject 515,318 pts -> voxel 111,651 -> fused 30,784 (seq 22)\nself-filter: 587 spheres, python loop, 1,761 single-point KD queries x3 cams; robot_sphere_mask 210 ms cum (cProfile)"
+  },
+  {
+   "stage": "support_surface",
+   "what": "RANSAC plane fit x2 on the fused cloud (numpy)",
+   "median_ms": 78.32344295457006,
+   "note": "fit_plane_ransac n_in 30,784 / 8,793"
+  },
+  {
+   "stage": "target_grounding",
+   "what": "seeds -> grow_region (KD waves) -> dbscan\n-> split -> score -> confirm",
+   "median_ms": 1018.2567299343646,
+   "note": "grow_region 832 ms on 2,930 pts, dbscan 185 ms on 1,979 pts\ncKDTree workers=-1 on 256 cores: about 2,138 threads started per chunk (cProfile). micro: grow_region 612 ms (workers=-1) vs 9 ms (workers=1), same result"
+  },
+  {
+   "stage": "constraint_generation\n(minus esdf)",
+   "what": "_depth_cameras_from: _robot_mask_for x3 =\nbackproject again + self-filter again (full-res)",
+   "median_ms": 574.820734327659,
+   "note": "_robot_mask_for 573 ms: same depth back-projected a 2nd time (6 backproject calls / chunk),\nself-filter on 515,318 un-voxelised pts (x2 per camera while held: held-sphere mask on the same points); ConstraintBuilder.build 0.2 ms"
+  },
+  {
+   "stage": "esdf (cuRobo)",
+   "what": "integrate depth (coarse + fine TSDF), ESDF tiers,\nlabels, target-free fine tier",
+   "median_ms": 251.00372382439673,
+   "note": "GPU kernels ~6-7 ms + memcpy ~3-4 ms per chunk (torch.profiler); rest is CPU: _labels_from_sites 134, _build_tiers 76, _integrate 15 ms\nH2D 7.5 MB (each depth uploaded twice: coarse + fine mapper), D2H 50.3 MB (3 tiers x (values + site index), 128^3 each)"
+  },
+  {
+   "stage": "TO (trajopt)",
+   "what": "SQP 3 iterations: linearize / assemble / qp (osqp) / check",
+   "median_ms": 134.26616229116917,
+   "note": "linearize 97, check 12, assemble 7, qp 3 ms; cKDTree on manipulated points rebuilt 9x / chunk (same points) before attach"
+  },
+  {
+   "stage": "recorder (_record)",
+   "what": "--record-constraints npz writer, after timing_ms.total",
+   "median_ms": 244.6915644686669,
+   "note": "not in profile_ms / timing_ms; in wall time"
+  }
+ ],
+ "micro": {
+  "quiet_seq2": {
+   "npz": "/mnt/dev/work/outputs/verify/T34/E3b_rec/server_8206/server_constraints/run_0000/chunk_00076.npz",
+   "label": "quiet_seq2",
+   "cpu_count": 256,
+   "loadavg": [
+    22.39501953125,
+    21.31787109375,
+    24.212890625
+   ],
+   "n_fused": 35875,
+   "n_candidates": 3679,
+   "n_seeds": 149,
+   "eps": 0.03,
+   "grow_region_code_workers-1_ms": 1106.739257927984,
+   "n_grown": 2087,
+   "grow_copy_workers1_ms": 9.241519030183554,
+   "waves": 12,
+   "same_result": true,
+   "grow_copy_workers8_ms": 68.5154153034091,
+   "grow_copy_workers-1_ms": 1136.8412198498845,
+   "dbscan_code_ms": 195.242612157017,
+   "dbscan_n_in": 2087,
+   "dbscan_ball_count_workers1_ms": 3.51567380130291,
+   "nn_query_workers1_ms": 0.6032208912074566,
+   "dbscan_ball_count_workers-1_ms": 169.65424828231335,
+   "nn_query_workers-1_ms": 162.098519038409,
+   "587_single_point_ball_queries_workers1_ms": 5.515347234904766,
+   "587_single_point_ball_queries_workers-1_ms": 6.9251288659870625,
+   "587_batched_ball_query_workers1_ms": 4.218417219817638
+  },
+  "quiet_seq22": {
+   "npz": "/mnt/dev/work/outputs/verify/T34/E3b_rec/server_8206/server_constraints/run_0000/chunk_00096.npz",
+   "label": "quiet_seq22",
+   "cpu_count": 256,
+   "loadavg": [
+    22.56884765625,
+    21.31201171875,
+    24.24267578125
+   ],
+   "n_fused": 30788,
+   "n_candidates": 2927,
+   "n_seeds": 614,
+   "eps": 0.03,
+   "grow_region_code_workers-1_ms": 611.897659022361,
+   "n_grown": 1973,
+   "grow_copy_workers1_ms": 9.143006056547165,
+   "waves": 9,
+   "same_result": true,
+   "grow_copy_workers8_ms": 47.42812691256404,
+   "grow_copy_workers-1_ms": 660.0314141251147,
+   "dbscan_code_ms": 186.49275181815028,
+   "dbscan_n_in": 1973,
+   "dbscan_ball_count_workers1_ms": 3.054319880902767,
+   "nn_query_workers1_ms": 0.5488600581884384,
+   "dbscan_ball_count_workers-1_ms": 127.34636990353465,
+   "nn_query_workers-1_ms": 124.68763813376427,
+   "587_single_point_ball_queries_workers1_ms": 4.836882930248976,
+   "587_single_point_ball_queries_workers-1_ms": 6.024581845849752,
+   "587_batched_ball_query_workers1_ms": 3.490402363240719
+  }
+ },
+ "source": "outputs/verify/T38/summary_E3b_ep1807_r2_q2.json"
+}

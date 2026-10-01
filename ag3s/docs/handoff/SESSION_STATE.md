@@ -1,7 +1,7 @@
 # 세션 상태 — 끊겨도 여기서 이어 간다
 
 > writer: lead (A0). **매 turn 끝에 갱신한다.** 새 세션은 이 파일을 먼저 읽고, 아래 "이어 가는 절차" 를 따른다.
-> 마지막 갱신: 2026-10-01 — (2) O4 착수: worktree `/mnt/dev/work-o4/benchmark` (브랜치 `o4-gpu-parallel`), T38 Phase A profile 중
+> 마지막 갱신: 2026-10-01 — 사용자 승인 T38 Phase B (B1→B5). B1+B5 구현 중 (worktree o4-gpu-parallel)
 
 ## 1. 지금 무엇을 하고 있나
 
@@ -141,3 +141,6 @@ ls -t ag3s/docs/handoff | head                            # *.progress.md / *.im
 | 2026-10-01 | **scribe T35–T37 완료** (로그 3,597 줄). scribe 지적 2 건: (a) "첫 파지 유지 성공 18/22 · −7.1 ~ +2.4 mm" 는 재현 안 됨 — `T35.diag` C4 로 세면 25/42 · −7.1 ~ +4.4 mm (로그는 센 값으로); (b) **T37 의 4 run 접촉 높이가 T34 run 과 소수점 9 자리까지 동일** (예 T37 E3a 1800 r1 = T34 E3b 1800 r1 = +8.706871219 mm) — 새로 띄운 서버는 정책 난수 순서가 같아 조건이 달라도 파지 전까지 같은 궤적. **O1 설계에 반영**: run 마다 정책 seed 를 명시 (seed = f(episode, rep)), 조건 간에는 같은 seed 로 **짝지은 비교**, 조건 안에서는 서로 다른 seed — 서버/정책에 seed 입구가 있는지 먼저 확인 |
 | 2026-10-01 05:10 UTC | **(1) 완료 · tag**: O2 K1 기본 off (1708 passed) · benchmark `f8a2384` (코드) · `1e4d3a4` (T37 문서·figures·로그) · 루트 `d20c176` (tests). **tag `pre-gpu-parallel-20261001`** — benchmark · pi05_TO_hybrid (`8a9eae9`, 변경 없음) · openpi (`df12761`, 변경 없음) · 루트. 다른 세션(SUBTASK-b, GPU 8.8 GB 사용 중)의 미추적 파일은 커밋하지 않음 (ppt-0930 · ag3s-architecture-v2 · r-16d/attention-cell-* · figures/subtask · SUBTASK-*). push 는 사용자 (`git push --tags` 포함) |
 | 2026-10-01 05:20 UTC | **(2) O4 착수.** 사용자: 코드가 바뀔 repo 에 새 브랜치. lead 판단: benchmark 만, **worktree** `/mnt/dev/work-o4/benchmark` (브랜치 `o4-gpu-parallel`, tag 에서 분기) — main 체크아웃은 SUBTASK-b 세션이 import 하며 GPU 사용 중이라 건드리지 않음. `ag3s/asset/data` symlink. pi05_TO_hybrid 는 서버 작업이라 브랜치 생략 (필요 시 생성). 단계별 시간 (T34 E3b 449 청크 중앙): grounding 1,334 · constraint 845 · reconstruction 534 · esdf 287 · support 86 · TO ≈ 127 ms. `T38.task.md`. Phase A profile verifier 착수 (`T38.profile.verify.json`). 끊기면 같은 verifier 재개 |
+| 2026-10-01 | **SUBTASK-b verify 완료** (`SUBTASK-b.verify.json`, `figures/subtask-b/`). 16D hidden state 의 linear probe 가 pick/place/home 을 val 0.981 · closed-loop 0.959 (kv_L4; ep1807 0.960) 로 가름, gripper 값을 가려도 불변 (0.980) → image 에서 읽음. 오분류는 전환 1–3 sample 지연뿐. 한계: dataset phase 는 frame 시각만으로 1.000 (scripted), closed-loop 참값이 gripper 정의라 rule 이 1.000 — 미끄러짐 run 이 있어야 probe vs rule 비교 가능 (T28 기록엔 policy image 없음). kv_L4 는 AttentionSampler._prefix 의 KV cache 에서 나옴 → 추가 forward 없음. scribe 미통지 (판정 뒤). 판정 대기: 미끄러짐 재현 headless 실행 · AttentionPolicy 에 probe side channel 구현 · 기록 시점. audit §8 |
+| 2026-10-01 | **T38 Phase A 완료**: GPU 시간 ≈ 1 %, 나머지 CPU. grounding 의 대부분은 `cKDTree(workers=-1)` 스레드 생성 비용 (workers=1 이면 grow_region ~1 s → 9 ms). robot mask 6–9 회 672 ms · 역투영 중복 · ESDF D2H 50 MB · linearize `np.gradient` 전체. Phase B 제안 B1–B5 (T38.task.md) — 사용자 판정 대기 |
+| 2026-10-01 | **사용자 승인 Phase B.** 순서 B1 (KD-tree workers=1) · B5 (recorder 비동기) → 커밋 → B2 (로봇 마스크 GPU) → B3 (ESDF GPU 유지 · 질의점 기울기) → B4 (다운샘플·RANSAC GPU). 단계마다 replay 동치 + 기준선 둘, lead 가 브랜치에 단계별 커밋. B1+B5 implementer 착수 (`T38B.progress.md`, 보고 `T38-B1B5.impl.md`). 주의: worktree 코드는 cwd `/mnt/dev/work-o4` + `PYTHONPATH=/mnt/dev/work-o4` 로만 (cwd 가 /mnt/dev/work 면 main 을 import). O4 새 테스트는 루트 `tests/o4/` 에 main 에서 skip 되도록 |

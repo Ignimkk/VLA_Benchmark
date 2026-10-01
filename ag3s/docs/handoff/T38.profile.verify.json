@@ -1,0 +1,4072 @@
+{
+ "_comment": "ag3s-verifier T38 Phase A (2026-10-01): profile of the AG3S server pipeline (serve_safe SafePolicy.infer, E3b flags) on the worktree /mnt/dev/work-o4 (branch o4-gpu-parallel = tag pre-gpu-parallel-20261001). numbers and paths only.",
+ "step": "T38-profile",
+ "date": "2026-10-01",
+ "code_state": {
+  "worktree": "/mnt/dev/work-o4/benchmark",
+  "branch": "o4-gpu-parallel",
+  "head": "b4f06ec",
+  "tag": "pre-gpu-parallel-20261001",
+  "dirty_files": [
+   "ag3s/asset/data (untracked symlink to main)"
+  ]
+ },
+ "inputs": {
+  "record": "outputs/verify/T34/E3b_rec/E3b_ep1807_r2 (75 planning chunks; server chunks 75-149)",
+  "flags": "outputs/verify/T34/p/start_server_e3.sh (E3b): --esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links gripper --target-field-policy exclude-authorized --esdf-margin 0 --no-self-collision --capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32 --record-constraints; client --safe-phase approach --safe-manipulators left",
+  "depth": "re-rendered per seq from frames.jsonl planning-row qpos (T32 H4 render_real.py method), wire-quantised uint16 mm",
+  "attention": "server-recorded 16x16 maps per camera (float16 in the record)",
+  "policy_chunk": "planning row actions_reference",
+  "exec_feedback": "planning row exec_feedback (as sent)",
+  "stamps": "observation row camera_stamps (sim_frozen)",
+  "selected_chunks_for_profilers": {
+   "2": "approach (searching)",
+   "10": "pre-grasp (latched)",
+   "15": "closing",
+   "16": "attach (held)",
+   "22": "transport (held, lifted)",
+   "28": "held at place",
+   "40": "released (placed)"
+  },
+  "code_differences_vs_T34_server": "T34 E3b ran at benchmark cee8f84 + T33/T34 edits; worktree is b4f06ec (adds T35-T37, K1 continuity gate)"
+ },
+ "runs": [
+  {
+   "id": "render",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work-o4 AG3S_ASSET_ROOT=/mnt/dev/work/src .venv-openpi-live/bin/python outputs/verify/T38/render_requests.py E3b_ep1807_r2 75",
+   "raw_output": "outputs/verify/T38/frames/",
+   "stdout_log": "outputs/verify/T38/render_E3b_ep1807_r2.log"
+  },
+  {
+   "id": "replay_first",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work-o4 AG3S_ASSET_ROOT=/mnt/dev/work/src AG3S_CLIENT_SCRIPT=/mnt/dev/work/pi05_TO_hybrid/rby1_bringup/pi05_infer.py .venv-openpi-live/bin/python outputs/verify/T38/replay_profile.py E3b_ep1807_r2 75 --passes T,S,C,P,W,X --warm 4",
+   "raw_output": [
+    "outputs/verify/T38/passT_E3b_ep1807_r2.jsonl",
+    "outputs/verify/T38/passS_E3b_ep1807_r2.jsonl",
+    "outputs/verify/T38/passC_E3b_ep1807_r2.jsonl"
+   ],
+   "stdout_log": "outputs/verify/T38/replay_E3b_ep1807_r2.log",
+   "contamination": "a foreign CPU process (.venv-curobo probe.py, ~1,400 % CPU) ran from pass S seq 69 on; pass S seq 69-75 wall 5.0-10.8 s, pass C 8.7-15 s (census also adds its own overhead). P/W/X stopped during P (kill of own pid) and re-run as _q2; partial P kept in outputs/verify/T38/contended/. pass T (all 75) ran before the probe started. load samples: outputs/verify/T38/logs/load_samples.txt"
+  },
+  {
+   "id": "replay_q2",
+   "command": "same env; replay_profile.py E3b_ep1807_r2 75 --passes T,S,P,W,X --warm 4 --label _q2",
+   "raw_output": [
+    "outputs/verify/T38/pass{T,S,P,W,X}_E3b_ep1807_r2_q2.jsonl",
+    "outputs/verify/T38/prof/",
+    "outputs/verify/T38/torchprof/"
+   ],
+   "stdout_log": "outputs/verify/T38/replay_E3b_ep1807_r2_q2.log",
+   "alone": "no foreign process > 5 % CPU, GPU 0 MiB before (load_pre_q2.txt, logs/nvidia_smi_pre_E3b_ep1807_r2_q2.txt)"
+  },
+  {
+   "id": "pyspy",
+   "command": "py-spy record --format raw --rate 50 --nonblocking -o outputs/verify/T38/pyspy/replay_T_pyspy.raw.txt -- <replay_profile.py ... --passes T --label _pyspy>",
+   "raw_output": "outputs/verify/T38/pyspy/",
+   "stdout_log": "outputs/verify/T38/pyspy/replay_pyspy.log",
+   "tool": "py-spy 0.4.2 wheel unpacked in the session scratchpad (not installed into any venv); attach by pid is denied (ptrace), so it runs as parent"
+  },
+  {
+   "id": "micro_kdtree",
+   "command": "PYTHONPATH=/mnt/dev/work-o4 .venv-openpi-live/bin/python outputs/verify/T38/micro_kdtree.py <server chunk npz> <label>",
+   "raw_output": "outputs/verify/T38/micro/"
+  },
+  {
+   "id": "reduce",
+   "command": ".venv-openpi-live/bin/python outputs/verify/T38/analyze.py E3b_ep1807_r2 [_q2]",
+   "raw_output": [
+    "outputs/verify/T38/summary_E3b_ep1807_r2.json",
+    "outputs/verify/T38/summary_E3b_ep1807_r2_q2.json"
+   ]
+  }
+ ],
+ "baseline_check": {
+  "env": "MUJOCO_GL=osmesa AG3S_ASSET_ROOT=/mnt/dev/work/src AG3S_CLIENT_SCRIPT=/mnt/dev/work/pi05_TO_hybrid/rby1_bringup/pi05_infer.py PYTHONPATH=/mnt/dev/work-o4, cwd /mnt/dev/work-o4, .venv-openpi-live, --records /mnt/dev/work/run_16d_ep1800",
+  "script": "outputs/verify/T38/baseline/run.sh",
+  "legacy": {
+   "violated_start": 14,
+   "frames": 15,
+   "has_target": 15,
+   "frame0_clearance_before_mm": -29.031048280806342,
+   "raw": "outputs/verify/T38/baseline/legacy.json",
+   "log": "outputs/verify/T38/baseline/legacy.log"
+  },
+  "curobo": {
+   "violated_start": 10,
+   "frames": 15,
+   "has_target": 15,
+   "frame0_clearance_before_mm": -9.171877401271193,
+   "raw": "outputs/verify/T38/baseline/curobo.json",
+   "log": "outputs/verify/T38/baseline/curobo.log"
+  },
+  "matched": true,
+  "alone": "no — another session's GPU process (pid 981255, 8810 MiB, 53-58 % util) ran during both baselines (outputs/verify/T38/baseline/pre.txt, post.txt). The three baseline numbers are pre-SQP values."
+ },
+ "numbers": {
+  "_comment": "all ms are per planning chunk. replay = SafePolicy.infer driven with re-rendered E3b_ep1807_r2 requests (75 chunks); stats over seq 2-75 (seq 1 builds a new cuRobo mapper after reset, reported separately). quiet run = label _q2.",
+  "equivalence_to_recording": {
+   "grasp_state_match": "75/75",
+   "n_clusters_match": "74/75",
+   "n_clusters_mismatch_seq_replay_recorded": [
+    [
+     15,
+     4,
+     3
+    ]
+   ],
+   "has_target": "75/75"
+  },
+  "stage_ms": {
+   "recorded_T34_E3b_all_chunks": {
+    "n_chunks": 450,
+    "scene_reconstruction": {
+     "median": 534.5,
+     "p90": 618.4,
+     "mean": 544.1,
+     "min": 445.4,
+     "max": 1213.3,
+     "n": 450
+    },
+    "support_surface": {
+     "median": 85.6,
+     "p90": 165.9,
+     "mean": 95.4,
+     "min": 18.5,
+     "max": 273.5,
+     "n": 450
+    },
+    "attention_lifting": {
+     "median": 0.0,
+     "p90": 0.0,
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.1,
+     "n": 450
+    },
+    "target_grounding": {
+     "median": 1333.7,
+     "p90": 2251.1,
+     "mean": 1465.7,
+     "min": 393.7,
+     "max": 7300.9,
+     "n": 450
+    },
+    "esdf": {
+     "median": 287.4,
+     "p90": 394.2,
+     "mean": 321.0,
+     "min": 111.0,
+     "max": 6385.4,
+     "n": 450
+    },
+    "constraint_generation": {
+     "median": 844.9,
+     "p90": 934.8,
+     "mean": 884.2,
+     "min": 684.0,
+     "max": 6915.9,
+     "n": 450
+    },
+    "constraint_generation_minus_esdf": {
+     "median": 550.5,
+     "p90": 613.9,
+     "mean": 563.2,
+     "min": 435.4,
+     "max": 1888.0,
+     "n": 450
+    }
+   },
+   "recorded_T34_E3b_ep1807_r2_seq2_75": {
+    "scene_reconstruction": {
+     "median": 583.1,
+     "p90": 617.7,
+     "mean": 554.0,
+     "min": 457.3,
+     "max": 637.4,
+     "n": 74
+    },
+    "support_surface": {
+     "median": 83.2,
+     "p90": 158.8,
+     "mean": 89.5,
+     "min": 19.9,
+     "max": 195.5,
+     "n": 74
+    },
+    "attention_lifting": {
+     "median": 0.0,
+     "p90": 0.0,
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.1,
+     "n": 74
+    },
+    "target_grounding": {
+     "median": 1185.6,
+     "p90": 1499.3,
+     "mean": 1192.9,
+     "min": 781.3,
+     "max": 1661.1,
+     "n": 74
+    },
+    "esdf": {
+     "median": 288.0,
+     "p90": 301.6,
+     "mean": 280.2,
+     "min": 111.0,
+     "max": 460.3,
+     "n": 74
+    },
+    "constraint_generation": {
+     "median": 854.0,
+     "p90": 901.3,
+     "mean": 846.2,
+     "min": 684.0,
+     "max": 1010.5,
+     "n": 74
+    },
+    "constraint_generation_minus_esdf": {
+     "median": 579.0,
+     "p90": 608.3,
+     "mean": 566.0,
+     "min": 463.4,
+     "max": 638.2,
+     "n": 74
+    },
+    "sum_top_level_stages": {
+     "median": 2674.9,
+     "p90": 2988.7,
+     "mean": 2682.6,
+     "min": 2232.2,
+     "max": 3175.9,
+     "n": 74
+    }
+   },
+   "replay_q2_pass_T_no_extra_sync": {
+    "scene_reconstruction": {
+     "median": 472.4,
+     "p90": 562.7,
+     "mean": 489.0,
+     "min": 383.4,
+     "max": 605.5,
+     "n": 74
+    },
+    "support_surface": {
+     "median": 78.3,
+     "p90": 119.4,
+     "mean": 77.9,
+     "min": 15.9,
+     "max": 183.7,
+     "n": 74
+    },
+    "attention_lifting": {
+     "median": 0.0,
+     "p90": 0.0,
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.1,
+     "n": 74
+    },
+    "target_grounding": {
+     "median": 1018.3,
+     "p90": 1219.4,
+     "mean": 1017.3,
+     "min": 616.7,
+     "max": 1366.8,
+     "n": 74
+    },
+    "esdf": {
+     "median": 251.0,
+     "p90": 270.3,
+     "mean": 247.2,
+     "min": 101.4,
+     "max": 375.4,
+     "n": 74
+    },
+    "constraint_generation": {
+     "median": 811.5,
+     "p90": 864.7,
+     "mean": 800.6,
+     "min": 639.9,
+     "max": 896.4,
+     "n": 74
+    },
+    "constraint_generation_minus_esdf": {
+     "median": 574.8,
+     "p90": 609.3,
+     "mean": 553.5,
+     "min": 446.4,
+     "max": 617.9,
+     "n": 74
+    },
+    "sum_top_level_stages": {
+     "median": 2402.2,
+     "p90": 2610.1,
+     "mean": 2384.8,
+     "min": 1934.0,
+     "max": 2789.2,
+     "n": 74
+    }
+   },
+   "replay_q2_pass_S_cuda_synchronize_at_every_stage_boundary": {
+    "scene_reconstruction": {
+     "median": 509.7,
+     "p90": 605.2,
+     "mean": 511.9,
+     "min": 437.9,
+     "max": 632.1,
+     "n": 74
+    },
+    "support_surface": {
+     "median": 81.5,
+     "p90": 167.3,
+     "mean": 84.5,
+     "min": 17.2,
+     "max": 185.1,
+     "n": 74
+    },
+    "attention_lifting": {
+     "median": 0.0,
+     "p90": 0.0,
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.1,
+     "n": 74
+    },
+    "target_grounding": {
+     "median": 1009.1,
+     "p90": 1313.8,
+     "mean": 1036.4,
+     "min": 652.2,
+     "max": 1443.6,
+     "n": 74
+    },
+    "esdf": {
+     "median": 248.0,
+     "p90": 265.8,
+     "mean": 240.6,
+     "min": 94.4,
+     "max": 279.6,
+     "n": 74
+    },
+    "constraint_generation": {
+     "median": 807.2,
+     "p90": 864.7,
+     "mean": 794.8,
+     "min": 665.6,
+     "max": 886.6,
+     "n": 74
+    },
+    "constraint_generation_minus_esdf": {
+     "median": 577.3,
+     "p90": 616.2,
+     "mean": 554.2,
+     "min": 453.2,
+     "max": 628.0,
+     "n": 74
+    },
+    "sum_top_level_stages": {
+     "median": 2437.2,
+     "p90": 2659.3,
+     "mean": 2427.7,
+     "min": 1917.5,
+     "max": 2865.0,
+     "n": 74
+    }
+   },
+   "replay_first_run_pass_T": {
+    "scene_reconstruction": {
+     "median": 507.6,
+     "p90": 598.1,
+     "mean": 512.7,
+     "min": 447.8,
+     "max": 627.0,
+     "n": 74
+    },
+    "support_surface": {
+     "median": 79.3,
+     "p90": 106.7,
+     "mean": 82.2,
+     "min": 18.7,
+     "max": 177.8,
+     "n": 74
+    },
+    "attention_lifting": {
+     "median": 0.0,
+     "p90": 0.0,
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0,
+     "n": 74
+    },
+    "target_grounding": {
+     "median": 974.3,
+     "p90": 1244.4,
+     "mean": 1008.5,
+     "min": 655.9,
+     "max": 1405.3,
+     "n": 74
+    },
+    "esdf": {
+     "median": 261.9,
+     "p90": 296.3,
+     "mean": 261.4,
+     "min": 114.0,
+     "max": 325.6,
+     "n": 74
+    },
+    "constraint_generation": {
+     "median": 840.8,
+     "p90": 891.5,
+     "mean": 833.9,
+     "min": 676.2,
+     "max": 920.8,
+     "n": 74
+    },
+    "constraint_generation_minus_esdf": {
+     "median": 582.7,
+     "p90": 620.8,
+     "mean": 572.5,
+     "min": 459.9,
+     "max": 644.4,
+     "n": 74
+    },
+    "sum_top_level_stages": {
+     "median": 2415.7,
+     "p90": 2695.0,
+     "mean": 2437.3,
+     "min": 1998.5,
+     "max": 2968.9,
+     "n": 74
+    }
+   },
+   "note": "constraint_generation contains esdf (nested profiler stage); constraint_generation_minus_esdf = the rest. attention_lifting ~0: lifting is done inside scene_reconstruction (multiview.process_observation)."
+  },
+  "safe_policy_timing_ms_replay_q2_pass_T": {
+   "ag3s": {
+    "median": 2405.4,
+    "p90": 2611.5,
+    "mean": 2388.5,
+    "min": 1936.3,
+    "max": 2791.1,
+    "n": 74
+   },
+   "trajopt": {
+    "median": 134.3,
+    "p90": 144.5,
+    "mean": 128.0,
+    "min": 70.6,
+    "max": 152.9,
+    "n": 74
+   },
+   "total": {
+    "median": 2547.4,
+    "p90": 2740.8,
+    "mean": 2516.7,
+    "min": 2075.9,
+    "max": 2944.1,
+    "n": 74
+   },
+   "to_linearize": {
+    "median": 97.0,
+    "p90": 107.1,
+    "mean": 92.2,
+    "min": 35.9,
+    "max": 118.3,
+    "n": 74
+   },
+   "to_check": {
+    "median": 11.9,
+    "p90": 12.2,
+    "mean": 11.2,
+    "min": 7.7,
+    "max": 13.9,
+    "n": 74
+   },
+   "to_assemble": {
+    "median": 7.4,
+    "p90": 7.6,
+    "mean": 7.5,
+    "min": 7.2,
+    "max": 8.6,
+    "n": 74
+   },
+   "to_qp": {
+    "median": 2.9,
+    "p90": 3.2,
+    "mean": 2.9,
+    "min": 2.8,
+    "max": 3.6,
+    "n": 74
+   },
+   "to_sum4": {
+    "median": 119.2,
+    "p90": 129.9,
+    "mean": 113.8,
+    "min": 55.6,
+    "max": 138.8,
+    "n": 74
+   },
+   "trajopt_minus_sum4": {
+    "median": 14.6,
+    "p90": 15.8,
+    "mean": 14.2,
+    "min": 9.7,
+    "max": 21.7,
+    "n": 74
+   },
+   "ag3s_minus_stages": {
+    "median": 1.9,
+    "p90": 4.4,
+    "mean": 3.7,
+    "min": 1.4,
+    "max": 51.6,
+    "n": 74
+   },
+   "wall_ms": {
+    "median": 2777.1,
+    "p90": 3007.3,
+    "mean": 2754.9,
+    "min": 2280.6,
+    "max": 3230.2,
+    "n": 74
+   },
+   "ag3s_plus_trajopt": {
+    "median": 2547.3,
+    "p90": 2740.7,
+    "mean": 2516.6,
+    "min": 2075.8,
+    "max": 2944.0,
+    "n": 74
+   }
+  },
+  "to_timing_recorded_all_chunks": {
+   "linearize": {
+    "median": 102.7,
+    "p90": 139.2,
+    "mean": 104.4,
+    "min": 35.6,
+    "max": 404.4,
+    "n": 450
+   },
+   "assemble": {
+    "median": 7.7,
+    "p90": 8.1,
+    "mean": 8.4,
+    "min": 7.3,
+    "max": 183.7,
+    "n": 450
+   },
+   "qp": {
+    "median": 4.1,
+    "p90": 5.1,
+    "mean": 4.7,
+    "min": 3.6,
+    "max": 79.6,
+    "n": 450
+   },
+   "check": {
+    "median": 12.4,
+    "p90": 13.5,
+    "mean": 12.9,
+    "min": 8.4,
+    "max": 188.3,
+    "n": 450
+   }
+  },
+  "first_chunk_after_reset": {
+   "replay_q2_pass_T_seq1": {
+    "profile_ms": {
+     "scene_reconstruction": 453.0,
+     "robot_self_filter": 0.0,
+     "support_surface": 90.5,
+     "attention_lifting": 0.0,
+     "target_grounding": 1220.6,
+     "esdf": 1368.1,
+     "constraint_generation": 1955.1
+    },
+    "timing_ms": {
+     "infer": 0.0,
+     "ag3s": 3722.1,
+     "trajopt": 148.7,
+     "total": 3871.3
+    },
+    "to_timing_ms": {
+     "linearize": 107.1,
+     "assemble": 7.3,
+     "qp": 11.5,
+     "check": 9.8
+    }
+   },
+   "recorded_ep1807_r2_seq1": {
+    "scene_reconstruction": 615.7,
+    "robot_self_filter": 0.0,
+    "support_surface": 85.0,
+    "attention_lifting": 0.0,
+    "target_grounding": 1493.0,
+    "esdf": 1355.2,
+    "constraint_generation": 1961.8
+   },
+   "jit_first_call_warm_seq1_new_process": {
+    "seq": 1,
+    "wall_ms": 9386.2,
+    "profile_ms": {
+     "scene_reconstruction": 462.4,
+     "robot_self_filter": 0.0,
+     "support_surface": 82.4,
+     "attention_lifting": 0.0,
+     "target_grounding": 1214.9,
+     "esdf": 6668.1,
+     "constraint_generation": 7158.7
+    },
+    "timing_ms": {
+     "infer": 0.0,
+     "ag3s": 8920.2,
+     "trajopt": 211.6,
+     "total": 9132.1
+    },
+    "to_timing_ms": {
+     "linearize": 116.8,
+     "assemble": 8.1,
+     "qp": 59.4,
+     "check": 10.0
+    }
+   },
+   "note": "seq 1 of every episode: AG3S.reset drops the cuRobo builder (pipeline.py:368 `_esdf_builder = None`) so the mapper is rebuilt (esdf ~1.37 s). The first chunk of a new process additionally pays warp/cuRobo JIT (esdf 6.7 s, wall 9.4 s); not quoted as steady state."
+  },
+  "function_timers_ms_replay_q2_pass_T": {
+   "AG3S.process_multi_debug": {
+    "median_ms": 2405.4,
+    "p90_ms": 2611.5,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "multiview.fuse_observations": {
+    "median_ms": 472.4,
+    "p90_ms": 562.7,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "multiview.process_observation": {
+    "median_ms": 451.0,
+    "p90_ms": 514.5,
+    "calls_per_chunk_median": 3.0,
+    "chunks": 74
+   },
+   "reconstruction.reconstruct": {
+    "median_ms": 163.1,
+    "p90_ms": 256.3,
+    "calls_per_chunk_median": 3.0,
+    "chunks": 74
+   },
+   "reconstruction.backproject": {
+    "median_ms": 154.7,
+    "p90_ms": 257.5,
+    "calls_per_chunk_median": 6.0,
+    "chunks": 74
+   },
+   "reconstruction.voxel_downsample": {
+    "median_ms": 98.7,
+    "p90_ms": 127.0,
+    "calls_per_chunk_median": 3.0,
+    "chunks": 74
+   },
+   "robot_filter.filter_robot_points": {
+    "median_ms": 229.0,
+    "p90_ms": 288.8,
+    "calls_per_chunk_median": 3.0,
+    "chunks": 74
+   },
+   "robot_filter.robot_sphere_mask": {
+    "median_ms": 671.5,
+    "p90_ms": 759.0,
+    "calls_per_chunk_median": 6.0,
+    "chunks": 74
+   },
+   "attention_lifting.lift": {
+    "median_ms": 14.9,
+    "p90_ms": 88.4,
+    "calls_per_chunk_median": 3.0,
+    "chunks": 74
+   },
+   "multiview.fuse": {
+    "median_ms": 14.4,
+    "p90_ms": 98.4,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "support_surface.fit_support_surfaces": {
+    "median_ms": 78.3,
+    "p90_ms": 119.4,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "support_surface.fit_plane_ransac": {
+    "median_ms": 74.9,
+    "p90_ms": 107.1,
+    "calls_per_chunk_median": 2.0,
+    "chunks": 74
+   },
+   "target_grounding.ground_target": {
+    "median_ms": 1018.3,
+    "p90_ms": 1219.4,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "target_grounding.grow_region": {
+    "median_ms": 832.2,
+    "p90_ms": 1019.3,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "target_grounding.dbscan": {
+    "median_ms": 185.3,
+    "p90_ms": 204.4,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "target_grounding._split_groups": {
+    "median_ms": 0.4,
+    "p90_ms": 1.3,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "TargetConfirm.select": {
+    "median_ms": 1.3,
+    "p90_ms": 1.5,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "AG3S._depth_cameras_from": {
+    "median_ms": 573.5,
+    "p90_ms": 608.1,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "AG3S._robot_mask_for": {
+    "median_ms": 572.8,
+    "p90_ms": 607.3,
+    "calls_per_chunk_median": 3.0,
+    "chunks": 74
+   },
+   "AG3S._build_esdf": {
+    "median_ms": 251.0,
+    "p90_ms": 270.3,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "CuroboFieldBuilder.update": {
+    "median_ms": 239.9,
+    "p90_ms": 258.7,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "CuroboFieldBuilder._integrate": {
+    "median_ms": 14.7,
+    "p90_ms": 15.3,
+    "calls_per_chunk_median": 2.0,
+    "chunks": 74
+   },
+   "CuroboFieldBuilder._build_tiers": {
+    "median_ms": 76.0,
+    "p90_ms": 87.2,
+    "calls_per_chunk_median": 2.0,
+    "chunks": 74
+   },
+   "CuroboFieldBuilder._labels_from_sites": {
+    "median_ms": 133.9,
+    "p90_ms": 142.5,
+    "calls_per_chunk_median": 2.0,
+    "chunks": 74
+   },
+   "CuroboFieldBuilder._free_tsdf_points": {
+    "median_ms": 14.1,
+    "p90_ms": 38.2,
+    "calls_per_chunk_median": 2.0,
+    "chunks": 13
+   },
+   "CuroboFieldBuilder._camera_contribution": {
+    "median_ms": 4.1,
+    "p90_ms": 4.3,
+    "calls_per_chunk_median": 6.0,
+    "chunks": 74
+   },
+   "AG3S._fine_window_request": {
+    "median_ms": 5.4,
+    "p90_ms": 5.8,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "AG3S._esdf_coverage": {
+    "median_ms": 0.7,
+    "p90_ms": 0.7,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "AG3S._constraints": {
+    "median_ms": 0.3,
+    "p90_ms": 0.4,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "to_adapter.build_constraint_set": {
+    "median_ms": 0.3,
+    "p90_ms": 0.4,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "ConstraintBuilder.build": {
+    "median_ms": 0.2,
+    "p90_ms": 0.2,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "linearize.scene_from_constraint_set": {
+    "median_ms": 0.1,
+    "p90_ms": 0.1,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "wire.unpack_camera_observations": {
+    "median_ms": 1.8,
+    "p90_ms": 1.9,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "SafePolicy._apply_finger_state": {
+    "median_ms": 0.4,
+    "p90_ms": 0.5,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "SafePolicy._advance_grasp": {
+    "median_ms": 0.4,
+    "p90_ms": 0.4,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "SafePolicy._run_latch": {
+    "median_ms": 0.1,
+    "p90_ms": 0.1,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "SafePolicy._verdict": {
+    "median_ms": 0.0,
+    "p90_ms": 0.0,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "SafePolicy._record": {
+    "median_ms": 244.7,
+    "p90_ms": 261.7,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   },
+   "refiner.refine": {
+    "median_ms": 2547.3,
+    "p90_ms": 2740.7,
+    "calls_per_chunk_median": 1.0,
+    "chunks": 74
+   }
+  },
+  "cprofile_per_stage": {
+   "scene_reconstruction": {
+    "n_chunks": 7,
+    "self_time_by_where_ms_per_chunk": {
+     "CPU (python, benchmark)": 303.3,
+     "CPU (numpy)": 211.4,
+     "CPU (python/builtin)": 0.4,
+     "harness wrapper": 0.2
+    },
+    "top15_cumulative": [
+     {
+      "function": "benchmark/ag3s/runtime/multiview.py:344(fuse_observations)",
+      "cum_ms_per_chunk": 515.2,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/runtime/multiview.py:356(<listcomp>)",
+      "cum_ms_per_chunk": 488.4,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/runtime/multiview.py:95(process_observation)",
+      "cum_ms_per_chunk": 488.4,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/robot_filter.py:237(filter_robot_points)",
+      "cum_ms_per_chunk": 258.6,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/robot_filter.py:192(self_filter_mask)",
+      "cum_ms_per_chunk": 247.8,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/robot_filter.py:119(robot_sphere_mask)",
+      "cum_ms_per_chunk": 210.3,
+      "self_ms_per_chunk": 155.3,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/reconstruction.py:248(reconstruct)",
+      "cum_ms_per_chunk": 167.5,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "cum_ms_per_chunk": 116.9,
+      "self_ms_per_chunk": 116.9,
+      "calls_per_chunk": 2006.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/reconstruction.py:146(voxel_downsample)",
+      "cum_ms_per_chunk": 87.3,
+      "self_ms_per_chunk": 15.1,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/reconstruction.py:58(backproject)",
+      "cum_ms_per_chunk": 80.2,
+      "self_ms_per_chunk": 38.5,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/attention_lifting.py:236(lift)",
+      "cum_ms_per_chunk": 62.1,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/attention_lifting.py:168(to_pixel_map)",
+      "cum_ms_per_chunk": 48.4,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/attention_lifting.py:39(_resample)",
+      "cum_ms_per_chunk": 48.4,
+      "self_ms_per_chunk": 47.8,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "site:numpy/lib/arraysetops.py:138(unique)",
+      "cum_ms_per_chunk": 46.4,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 7.0,
+      "where": "CPU (numpy)"
+     }
+    ],
+    "top15_self": [
+     {
+      "function": "benchmark/ag3s/stages/robot_filter.py:119(robot_sphere_mask)",
+      "cum_ms_per_chunk": 210.3,
+      "self_ms_per_chunk": 155.3,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "cum_ms_per_chunk": 116.9,
+      "self_ms_per_chunk": 116.9,
+      "calls_per_chunk": 2006.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/attention_lifting.py:39(_resample)",
+      "cum_ms_per_chunk": 48.4,
+      "self_ms_per_chunk": 47.8,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<method 'argsort' of 'numpy.ndarray' objects>",
+      "cum_ms_per_chunk": 39.4,
+      "self_ms_per_chunk": 39.4,
+      "calls_per_chunk": 4.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/reconstruction.py:58(backproject)",
+      "cum_ms_per_chunk": 80.2,
+      "self_ms_per_chunk": 38.5,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<built-in method numpy.asarray>",
+      "cum_ms_per_chunk": 17.9,
+      "self_ms_per_chunk": 17.9,
+      "calls_per_chunk": 1939.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/reconstruction.py:146(voxel_downsample)",
+      "cum_ms_per_chunk": 87.3,
+      "self_ms_per_chunk": 15.1,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/types.py:307(select)",
+      "cum_ms_per_chunk": 13.4,
+      "self_ms_per_chunk": 13.3,
+      "calls_per_chunk": 6.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "site:numpy/core/_methods.py:90(_clip)",
+      "cum_ms_per_chunk": 11.1,
+      "self_ms_per_chunk": 11.1,
+      "calls_per_chunk": 16.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/robot_models/urdf_sphere_chain.py:382(const)",
+      "cum_ms_per_chunk": 9.8,
+      "self_ms_per_chunk": 9.6,
+      "calls_per_chunk": 878.6,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "site:numpy/lib/arraysetops.py:323(_unique1d)",
+      "cum_ms_per_chunk": 46.3,
+      "self_ms_per_chunk": 9.5,
+      "calls_per_chunk": 7.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/robot_models/urdf_sphere_chain.py:1144(sphere_centers_numeric)",
+      "cum_ms_per_chunk": 37.1,
+      "self_ms_per_chunk": 7.1,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/runtime/multiview.py:250(fuse)",
+      "cum_ms_per_chunk": 26.6,
+      "self_ms_per_chunk": 5.7,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "site:numpy/linalg/linalg.py:2383(norm)",
+      "cum_ms_per_chunk": 39.2,
+      "self_ms_per_chunk": 3.7,
+      "calls_per_chunk": 14.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "<method 'nonzero' of 'numpy.ndarray' objects>",
+      "cum_ms_per_chunk": 3.3,
+      "self_ms_per_chunk": 3.3,
+      "calls_per_chunk": 7.0,
+      "where": "CPU (numpy)"
+     }
+    ]
+   },
+   "support_surface": {
+    "n_chunks": 7,
+    "self_time_by_where_ms_per_chunk": {
+     "CPU (python, benchmark)": 53.5,
+     "CPU (numpy)": 13.1,
+     "CPU (python/builtin)": 0.2,
+     "harness wrapper": 0.0
+    },
+    "top15_cumulative": [
+     {
+      "function": "benchmark/ag3s/stages/support_surface.py:139(fit_support_surfaces)",
+      "cum_ms_per_chunk": 66.8,
+      "self_ms_per_chunk": 1.1,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/support_surface.py:71(fit_plane_ransac)",
+      "cum_ms_per_chunk": 65.1,
+      "self_ms_per_chunk": 52.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "cum_ms_per_chunk": 11.3,
+      "self_ms_per_chunk": 11.3,
+      "calls_per_chunk": 23.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "<method 'sum' of 'numpy.ndarray' objects>",
+      "cum_ms_per_chunk": 10.8,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 7.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "site:numpy/core/_methods.py:47(_sum)",
+      "cum_ms_per_chunk": 10.8,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 7.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/support_surface.py:51(_refit)",
+      "cum_ms_per_chunk": 1.4,
+      "self_ms_per_chunk": 0.2,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "site:numpy/linalg/linalg.py:1499(svd)",
+      "cum_ms_per_chunk": 0.6,
+      "self_ms_per_chunk": 0.6,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "<method 'mean' of 'numpy.ndarray' objects>",
+      "cum_ms_per_chunk": 0.6,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 4.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "site:numpy/core/_methods.py:101(_mean)",
+      "cum_ms_per_chunk": 0.6,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 4.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "site:numpy/lib/arraysetops.py:939(setdiff1d)",
+      "cum_ms_per_chunk": 0.5,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "site:numpy/lib/arraysetops.py:524(in1d)",
+      "cum_ms_per_chunk": 0.5,
+      "self_ms_per_chunk": 0.3,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/support_surface.py:42(_plane_from_points)",
+      "cum_ms_per_chunk": 0.3,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<numpy.random._generator.default_rng>",
+      "cum_ms_per_chunk": 0.2,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "site:numpy/core/numeric.py:1468(cross)",
+      "cum_ms_per_chunk": 0.1,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (numpy)"
+     }
+    ],
+    "top15_self": [
+     {
+      "function": "benchmark/ag3s/stages/support_surface.py:71(fit_plane_ransac)",
+      "cum_ms_per_chunk": 65.1,
+      "self_ms_per_chunk": 52.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "cum_ms_per_chunk": 11.3,
+      "self_ms_per_chunk": 11.3,
+      "calls_per_chunk": 23.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/support_surface.py:139(fit_support_surfaces)",
+      "cum_ms_per_chunk": 66.8,
+      "self_ms_per_chunk": 1.1,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "site:numpy/linalg/linalg.py:1499(svd)",
+      "cum_ms_per_chunk": 0.6,
+      "self_ms_per_chunk": 0.6,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "site:numpy/lib/arraysetops.py:524(in1d)",
+      "cum_ms_per_chunk": 0.5,
+      "self_ms_per_chunk": 0.3,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/support_surface.py:51(_refit)",
+      "cum_ms_per_chunk": 1.4,
+      "self_ms_per_chunk": 0.2,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<numpy.random._generator.default_rng>",
+      "cum_ms_per_chunk": 0.2,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "<method 'nonzero' of 'numpy.ndarray' objects>",
+      "cum_ms_per_chunk": 0.1,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 4.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "site:numpy/core/_methods.py:101(_mean)",
+      "cum_ms_per_chunk": 0.6,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 4.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/support_surface.py:42(_plane_from_points)",
+      "cum_ms_per_chunk": 0.3,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "site:numpy/lib/arraysetops.py:939(setdiff1d)",
+      "cum_ms_per_chunk": 0.5,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "site:numpy/core/numeric.py:1468(cross)",
+      "cum_ms_per_chunk": 0.1,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "<function SeedSequence.generate_state at 0x79087e13ab60>",
+      "cum_ms_per_chunk": 0.0,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (python/builtin)"
+     },
+     {
+      "function": "site:numpy/linalg/linalg.py:2383(norm)",
+      "cum_ms_per_chunk": 0.1,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 6.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "<method 'integers' of 'numpy.random._generator.Generator' objects>",
+      "cum_ms_per_chunk": 0.1,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (numpy)"
+     }
+    ]
+   },
+   "target_grounding": {
+    "n_chunks": 7,
+    "self_time_by_where_ms_per_chunk": {
+     "CPU (threads: cKDTree workers=-1)": 1092.9,
+     "CPU (python, benchmark)": 16.8,
+     "CPU (numpy)": 10.5,
+     "CPU (python/builtin)": 2.6,
+     "CPU (scipy)": 1.2,
+     "harness wrapper": 0.1
+    },
+    "top15_cumulative": [
+     {
+      "function": "benchmark/ag3s/stages/target_grounding.py:1308(ground_target)",
+      "cum_ms_per_chunk": 1124.1,
+      "self_ms_per_chunk": 0.2,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:945(start)",
+      "cum_ms_per_chunk": 1071.9,
+      "self_ms_per_chunk": 10.4,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/target_grounding.py:212(grow_region)",
+      "cum_ms_per_chunk": 915.8,
+      "self_ms_per_chunk": 8.1,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:611(wait)",
+      "cum_ms_per_chunk": 906.9,
+      "self_ms_per_chunk": 9.9,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:295(wait)",
+      "cum_ms_per_chunk": 892.7,
+      "self_ms_per_chunk": 12.5,
+      "calls_per_chunk": 2137.6,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "<method 'acquire' of '_thread.lock' objects>",
+      "cum_ms_per_chunk": 873.9,
+      "self_ms_per_chunk": 873.9,
+      "calls_per_chunk": 10688.3,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/target_grounding.py:143(dbscan)",
+      "cum_ms_per_chunk": 202.3,
+      "self_ms_per_chunk": 3.4,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<built-in method _thread.start_new_thread>",
+      "cum_ms_per_chunk": 154.0,
+      "self_ms_per_chunk": 154.0,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:856(__init__)",
+      "cum_ms_per_chunk": 12.6,
+      "self_ms_per_chunk": 5.0,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "<built-in method numpy.fromiter>",
+      "cum_ms_per_chunk": 8.1,
+      "self_ms_per_chunk": 4.3,
+      "calls_per_chunk": 12.7,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:1087(join)",
+      "cum_ms_per_chunk": 6.3,
+      "self_ms_per_chunk": 1.5,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:283(_acquire_restore)",
+      "cum_ms_per_chunk": 5.6,
+      "self_ms_per_chunk": 3.6,
+      "calls_per_chunk": 2137.6,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:562(__init__)",
+      "cum_ms_per_chunk": 4.5,
+      "self_ms_per_chunk": 1.2,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:1125(_wait_for_tstate_lock)",
+      "cum_ms_per_chunk": 4.0,
+      "self_ms_per_chunk": 1.2,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     }
+    ],
+    "top15_self": [
+     {
+      "function": "<method 'acquire' of '_thread.lock' objects>",
+      "cum_ms_per_chunk": 873.9,
+      "self_ms_per_chunk": 873.9,
+      "calls_per_chunk": 10688.3,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "<built-in method _thread.start_new_thread>",
+      "cum_ms_per_chunk": 154.0,
+      "self_ms_per_chunk": 154.0,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:295(wait)",
+      "cum_ms_per_chunk": 892.7,
+      "self_ms_per_chunk": 12.5,
+      "calls_per_chunk": 2137.6,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:945(start)",
+      "cum_ms_per_chunk": 1071.9,
+      "self_ms_per_chunk": 10.4,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:611(wait)",
+      "cum_ms_per_chunk": 906.9,
+      "self_ms_per_chunk": 9.9,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/target_grounding.py:212(grow_region)",
+      "cum_ms_per_chunk": 915.8,
+      "self_ms_per_chunk": 8.1,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:856(__init__)",
+      "cum_ms_per_chunk": 12.6,
+      "self_ms_per_chunk": 5.0,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "<built-in method numpy.fromiter>",
+      "cum_ms_per_chunk": 8.1,
+      "self_ms_per_chunk": 4.3,
+      "calls_per_chunk": 12.7,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/target_grounding.py:241(<genexpr>)",
+      "cum_ms_per_chunk": 3.8,
+      "self_ms_per_chunk": 3.8,
+      "calls_per_chunk": 66795.3,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:283(_acquire_restore)",
+      "cum_ms_per_chunk": 5.6,
+      "self_ms_per_chunk": 3.6,
+      "calls_per_chunk": 2137.6,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/target_grounding.py:143(dbscan)",
+      "cum_ms_per_chunk": 202.3,
+      "self_ms_per_chunk": 3.4,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "site:numpy/core/fromnumeric.py:1332(searchsorted)",
+      "cum_ms_per_chunk": 3.0,
+      "self_ms_per_chunk": 3.0,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:243(__init__)",
+      "cum_ms_per_chunk": 3.0,
+      "self_ms_per_chunk": 3.0,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:1221(daemon)",
+      "cum_ms_per_chunk": 3.4,
+      "self_ms_per_chunk": 2.8,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:274(__exit__)",
+      "cum_ms_per_chunk": 2.3,
+      "self_ms_per_chunk": 1.9,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     }
+    ]
+   },
+   "constraint_generation": {
+    "n_chunks": 7,
+    "self_time_by_where_ms_per_chunk": {
+     "CPU (python, benchmark)": 599.3,
+     "CPU (numpy)": 193.6,
+     "GPU (cuRobo/warp)": 11.2,
+     "GPU (torch)": 9.1,
+     "CPU (python/builtin)": 4.4,
+     "CPU (scipy)": 1.7,
+     "harness wrapper": 0.6,
+     "CPU (threads: cKDTree workers=-1)": 0.0
+    },
+    "top15_cumulative": [
+     {
+      "function": "benchmark/ag3s/runtime/pipeline.py:1933(_depth_cameras_from)",
+      "cum_ms_per_chunk": 589.6,
+      "self_ms_per_chunk": 0.7,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/runtime/pipeline.py:1754(_robot_mask_for)",
+      "cum_ms_per_chunk": 588.8,
+      "self_ms_per_chunk": 2.9,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/robot_filter.py:119(robot_sphere_mask)",
+      "cum_ms_per_chunk": 529.2,
+      "self_ms_per_chunk": 440.1,
+      "calls_per_chunk": 4.3,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/robot_filter.py:192(self_filter_mask)",
+      "cum_ms_per_chunk": 492.9,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/runtime/pipeline.py:1993(_build_esdf)",
+      "cum_ms_per_chunk": 228.5,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/fields/curobo_builder.py:553(update)",
+      "cum_ms_per_chunk": 213.4,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/fields/curobo_builder.py:1181(_labels_from_sites)",
+      "cum_ms_per_chunk": 103.5,
+      "self_ms_per_chunk": 44.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "cum_ms_per_chunk": 81.8,
+      "self_ms_per_chunk": 81.8,
+      "calls_per_chunk": 2219.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "site:numpy/lib/arraysetops.py:138(unique)",
+      "cum_ms_per_chunk": 65.2,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 3.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "site:numpy/lib/arraysetops.py:323(_unique1d)",
+      "cum_ms_per_chunk": 65.1,
+      "self_ms_per_chunk": 2.6,
+      "calls_per_chunk": 3.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/fields/curobo_builder.py:885(_build_tiers)",
+      "cum_ms_per_chunk": 62.9,
+      "self_ms_per_chunk": 0.2,
+      "calls_per_chunk": 1.6,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<method 'sort' of 'numpy.ndarray' objects>",
+      "cum_ms_per_chunk": 59.0,
+      "self_ms_per_chunk": 59.0,
+      "calls_per_chunk": 3.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/fields/curobo_builder.py:100(unpack_site_linear)",
+      "cum_ms_per_chunk": 48.5,
+      "self_ms_per_chunk": 45.0,
+      "calls_per_chunk": 2.6,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/reconstruction.py:58(backproject)",
+      "cum_ms_per_chunk": 45.3,
+      "self_ms_per_chunk": 27.6,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     }
+    ],
+    "top15_self": [
+     {
+      "function": "benchmark/ag3s/stages/robot_filter.py:119(robot_sphere_mask)",
+      "cum_ms_per_chunk": 529.2,
+      "self_ms_per_chunk": 440.1,
+      "calls_per_chunk": 4.3,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "cum_ms_per_chunk": 81.8,
+      "self_ms_per_chunk": 81.8,
+      "calls_per_chunk": 2219.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "<method 'sort' of 'numpy.ndarray' objects>",
+      "cum_ms_per_chunk": 59.0,
+      "self_ms_per_chunk": 59.0,
+      "calls_per_chunk": 3.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/fields/curobo_builder.py:100(unpack_site_linear)",
+      "cum_ms_per_chunk": 48.5,
+      "self_ms_per_chunk": 45.0,
+      "calls_per_chunk": 2.6,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/fields/curobo_builder.py:1181(_labels_from_sites)",
+      "cum_ms_per_chunk": 103.5,
+      "self_ms_per_chunk": 44.1,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/reconstruction.py:58(backproject)",
+      "cum_ms_per_chunk": 45.3,
+      "self_ms_per_chunk": 27.6,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<built-in method numpy.asarray>",
+      "cum_ms_per_chunk": 13.9,
+      "self_ms_per_chunk": 13.9,
+      "calls_per_chunk": 4137.9,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "site:numpy/core/_methods.py:61(_all)",
+      "cum_ms_per_chunk": 29.0,
+      "self_ms_per_chunk": 11.7,
+      "calls_per_chunk": 1783.6,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/fields/curobo_field.py:84(layer_from_arrays)",
+      "cum_ms_per_chunk": 7.9,
+      "self_ms_per_chunk": 7.0,
+      "calls_per_chunk": 2.6,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/fields/observation.py:91(_one)",
+      "cum_ms_per_chunk": 6.1,
+      "self_ms_per_chunk": 5.8,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "site:numpy/linalg/linalg.py:2383(norm)",
+      "cum_ms_per_chunk": 26.4,
+      "self_ms_per_chunk": 5.5,
+      "calls_per_chunk": 99.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/robot_models/urdf_sphere_chain.py:1144(sphere_centers_numeric)",
+      "cum_ms_per_chunk": 19.9,
+      "self_ms_per_chunk": 5.3,
+      "calls_per_chunk": 13.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<method 'cpu' of 'torch._C.TensorBase' objects>",
+      "cum_ms_per_chunk": 4.3,
+      "self_ms_per_chunk": 4.3,
+      "calls_per_chunk": 13.7,
+      "where": "GPU (torch)"
+     },
+     {
+      "function": "<method 'copy' of 'numpy.ndarray' objects>",
+      "cum_ms_per_chunk": 4.0,
+      "self_ms_per_chunk": 4.0,
+      "calls_per_chunk": 61.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/robot_models/urdf_sphere_chain.py:427(_joint_transform)",
+      "cum_ms_per_chunk": 10.8,
+      "self_ms_per_chunk": 3.9,
+      "calls_per_chunk": 1762.4,
+      "where": "CPU (python, benchmark)"
+     }
+    ]
+   },
+   "whole_infer": {
+    "n_chunks": 7,
+    "self_time_by_where_ms_per_chunk": {
+     "CPU (threads: cKDTree workers=-1)": 1165.9,
+     "CPU (python, benchmark)": 1041.0,
+     "CPU (numpy)": 442.1,
+     "CPU (python/builtin)": 16.8,
+     "CPU (scipy)": 12.4,
+     "GPU (cuRobo/warp)": 11.2,
+     "GPU (torch)": 9.3,
+     "CPU (casadi)": 5.1,
+     "CPU (osqp)": 2.4,
+     "harness wrapper": 0.9
+    },
+    "top15_cumulative": [
+     {
+      "function": "benchmark/trajopt/safe_policy.py:320(infer)",
+      "cum_ms_per_chunk": 2707.4,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/trajopt/refiner.py:111(refine)",
+      "cum_ms_per_chunk": 2707.2,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/trajopt/safe_policy.py:606(_scene_fn)",
+      "cum_ms_per_chunk": 2586.4,
+      "self_ms_per_chunk": 0.3,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/runtime/pipeline.py:933(process_multi_debug)",
+      "cum_ms_per_chunk": 2582.0,
+      "self_ms_per_chunk": 0.0,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/runtime/pipeline.py:957(_run)",
+      "cum_ms_per_chunk": 2582.0,
+      "self_ms_per_chunk": 0.2,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/target_grounding.py:1308(ground_target)",
+      "cum_ms_per_chunk": 1193.8,
+      "self_ms_per_chunk": 0.2,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:945(start)",
+      "cum_ms_per_chunk": 1145.5,
+      "self_ms_per_chunk": 17.8,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/target_grounding.py:212(grow_region)",
+      "cum_ms_per_chunk": 976.6,
+      "self_ms_per_chunk": 8.3,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:611(wait)",
+      "cum_ms_per_chunk": 928.6,
+      "self_ms_per_chunk": 10.4,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:295(wait)",
+      "cum_ms_per_chunk": 913.8,
+      "self_ms_per_chunk": 13.2,
+      "calls_per_chunk": 2136.4,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "<method 'acquire' of '_thread.lock' objects>",
+      "cum_ms_per_chunk": 893.7,
+      "self_ms_per_chunk": 893.7,
+      "calls_per_chunk": 10683.7,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/robot_filter.py:192(self_filter_mask)",
+      "cum_ms_per_chunk": 730.2,
+      "self_ms_per_chunk": 0.1,
+      "calls_per_chunk": 6.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/robot_filter.py:119(robot_sphere_mask)",
+      "cum_ms_per_chunk": 728.1,
+      "self_ms_per_chunk": 611.8,
+      "calls_per_chunk": 7.3,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/runtime/pipeline.py:1933(_depth_cameras_from)",
+      "cum_ms_per_chunk": 570.1,
+      "self_ms_per_chunk": 0.7,
+      "calls_per_chunk": 1.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/runtime/pipeline.py:1754(_robot_mask_for)",
+      "cum_ms_per_chunk": 569.4,
+      "self_ms_per_chunk": 2.3,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     }
+    ],
+    "top15_self": [
+     {
+      "function": "<method 'acquire' of '_thread.lock' objects>",
+      "cum_ms_per_chunk": 893.7,
+      "self_ms_per_chunk": 893.7,
+      "calls_per_chunk": 10683.7,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/robot_filter.py:119(robot_sphere_mask)",
+      "cum_ms_per_chunk": 728.1,
+      "self_ms_per_chunk": 611.8,
+      "calls_per_chunk": 7.3,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<built-in method _thread.start_new_thread>",
+      "cum_ms_per_chunk": 198.4,
+      "self_ms_per_chunk": 198.4,
+      "calls_per_chunk": 2138.0,
+      "where": "CPU (threads: cKDTree workers=-1)"
+     },
+     {
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "cum_ms_per_chunk": 165.8,
+      "self_ms_per_chunk": 165.8,
+      "calls_per_chunk": 5025.1,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/reconstruction.py:58(backproject)",
+      "cum_ms_per_chunk": 148.4,
+      "self_ms_per_chunk": 99.1,
+      "calls_per_chunk": 6.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "<method 'sort' of 'numpy.ndarray' objects>",
+      "cum_ms_per_chunk": 66.7,
+      "self_ms_per_chunk": 66.7,
+      "calls_per_chunk": 58.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/support_surface.py:71(fit_plane_ransac)",
+      "cum_ms_per_chunk": 81.9,
+      "self_ms_per_chunk": 65.9,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/fields/curobo_builder.py:100(unpack_site_linear)",
+      "cum_ms_per_chunk": 50.5,
+      "self_ms_per_chunk": 47.0,
+      "calls_per_chunk": 2.6,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "benchmark/ag3s/fields/curobo_builder.py:1181(_labels_from_sites)",
+      "cum_ms_per_chunk": 102.4,
+      "self_ms_per_chunk": 43.7,
+      "calls_per_chunk": 2.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "site:numpy/lib/function_base.py:972(gradient)",
+      "cum_ms_per_chunk": 35.0,
+      "self_ms_per_chunk": 35.0,
+      "calls_per_chunk": 2.4,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/stages/attention_lifting.py:39(_resample)",
+      "cum_ms_per_chunk": 35.1,
+      "self_ms_per_chunk": 34.6,
+      "calls_per_chunk": 3.0,
+      "where": "CPU (python, benchmark)"
+     },
+     {
+      "function": "site:numpy/core/shape_base.py:372(stack)",
+      "cum_ms_per_chunk": 29.7,
+      "self_ms_per_chunk": 29.6,
+      "calls_per_chunk": 20.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "<built-in method numpy.asarray>",
+      "cum_ms_per_chunk": 27.7,
+      "self_ms_per_chunk": 26.6,
+      "calls_per_chunk": 8229.7,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "<method 'argsort' of 'numpy.ndarray' objects>",
+      "cum_ms_per_chunk": 20.5,
+      "self_ms_per_chunk": 20.5,
+      "calls_per_chunk": 5.0,
+      "where": "CPU (numpy)"
+     },
+     {
+      "function": "benchmark/ag3s/robot_models/urdf_sphere_chain.py:1144(sphere_centers_numeric)",
+      "cum_ms_per_chunk": 53.9,
+      "self_ms_per_chunk": 19.4,
+      "calls_per_chunk": 17.0,
+      "where": "CPU (python, benchmark)"
+     }
+    ]
+   }
+  },
+  "pyspy": {
+   "file": "outputs/verify/T38/pyspy/replay_T_pyspy.raw.txt",
+   "aggregate": "outputs/verify/T38/pyspy/replay_T_pyspy.raw.agg.json",
+   "mode": "py-spy 0.4.2 record --format raw --rate 50 --nonblocking (all threads, no --idle); pass T only; wall median 3160 ms under sampling",
+   "total_samples": 12864,
+   "samples_by_stage": {
+    "outside infer": 4228,
+    "scene_reconstruction": 2337,
+    "constraint_generation: depth robot mask": 2177,
+    "esdf": 1372,
+    "target_grounding": 1030,
+    "_record (recorder, outside timing)": 916,
+    "TO (refiner/sqp)": 538,
+    "support_surface": 231,
+    "ag3s other": 21,
+    "safe_policy scene_fn other": 11,
+    "safe_policy.infer other": 3
+   },
+   "top_leaf_lines": {
+    "outside infer": [
+     [
+      "",
+      1728
+     ],
+     [
+      "run (threading.py:982)",
+      546
+     ],
+     [
+      "self_filter_covering_capsules (benchmark/ag3s/experiments/sources/mujoco_source.py:958)",
+      145
+     ],
+     [
+      "set (threading.py:597)",
+      103
+     ],
+     [
+      "norm (numpy/linalg/linalg.py:2583)",
+      93
+     ],
+     [
+      "einsum (numpy/core/einsumfunc.py:1371)",
+      86
+     ]
+    ],
+    "scene_reconstruction": [
+     [
+      "robot_sphere_mask (benchmark/ag3s/stages/robot_filter.py:168)",
+      327
+     ],
+     [
+      "robot_sphere_mask (benchmark/ag3s/stages/robot_filter.py:172)",
+      231
+     ],
+     [
+      "norm (numpy/linalg/linalg.py:2583)",
+      198
+     ],
+     [
+      "_resample (benchmark/ag3s/stages/attention_lifting.py:72)",
+      112
+     ],
+     [
+      "_wrapfunc (numpy/core/fromnumeric.py:59)",
+      105
+     ],
+     [
+      "_resample (benchmark/ag3s/stages/attention_lifting.py:73)",
+      105
+     ]
+    ],
+    "constraint_generation: depth robot mask": [
+     [
+      "robot_sphere_mask (benchmark/ag3s/stages/robot_filter.py:168)",
+      1251
+     ],
+     [
+      "robot_sphere_mask (benchmark/ag3s/stages/robot_filter.py:172)",
+      254
+     ],
+     [
+      "_wrapreduction (numpy/core/fromnumeric.py:88)",
+      106
+     ],
+     [
+      "norm (numpy/linalg/linalg.py:2583)",
+      95
+     ],
+     [
+      "robot_sphere_mask (benchmark/ag3s/stages/robot_filter.py:178)",
+      57
+     ],
+     [
+      "backproject (benchmark/ag3s/stages/reconstruction.py:96)",
+      37
+     ]
+    ],
+    "esdf": [
+     [
+      "_unique1d (numpy/lib/arraysetops.py:336)",
+      247
+     ],
+     [
+      "load_cuda (warp/_src/build.py:151)",
+      159
+     ],
+     [
+      "_labels_from_sites (benchmark/ag3s/fields/curobo_builder.py:1215)",
+      118
+     ],
+     [
+      "unpack_site_linear (benchmark/ag3s/fields/curobo_builder.py:113)",
+      68
+     ],
+     [
+      "unpack_site_linear (benchmark/ag3s/fields/curobo_builder.py:112)",
+      67
+     ],
+     [
+      "_labels_from_sites (benchmark/ag3s/fields/curobo_builder.py:1222)",
+      66
+     ]
+    ],
+    "target_grounding": [
+     [
+      "start (threading.py:964)",
+      755
+     ],
+     [
+      "grow_region (benchmark/ag3s/stages/target_grounding.py:239)",
+      41
+     ],
+     [
+      "_acquire_restore (threading.py:284)",
+      27
+     ],
+     [
+      "_make_invoke_excepthook (threading.py:1340)",
+      20
+     ],
+     [
+      "__exit__ (threading.py:275)",
+      15
+     ],
+     [
+      "start (threading.py:961)",
+      14
+     ]
+    ],
+    "_record (recorder, outside timing)": [
+     [
+      "write (zipfile.py:1194)",
+      747
+     ],
+     [
+      "_write_field (benchmark/ag3s/experiments/sources/constraint_record.py:316)",
+      52
+     ],
+     [
+      "close (zipfile.py:1236)",
+      23
+     ],
+     [
+      "write (zipfile.py:1192)",
+      19
+     ],
+     [
+      "write (zipfile.py:1196)",
+      17
+     ],
+     [
+      "close (zipfile.py:1234)",
+      15
+     ]
+    ],
+    "TO (refiner/sqp)": [
+     [
+      "gradient (numpy/lib/function_base.py:1238)",
+      155
+     ],
+     [
+      "stack (numpy/core/shape_base.py:456)",
+      113
+     ],
+     [
+      "gradient (benchmark/ag3s/fields/esdf.py:442)",
+      50
+     ],
+     [
+      "distance (benchmark/ag3s/fields/esdf.py:377)",
+      22
+     ],
+     [
+      "gradient (benchmark/ag3s/fields/esdf.py:440)",
+      20
+     ],
+     [
+      "_esdf_clearance (benchmark/trajopt/linearize.py:736)",
+      15
+     ]
+    ],
+    "support_surface": [
+     [
+      "fit_plane_ransac (benchmark/ag3s/stages/support_surface.py:120)",
+      125
+     ],
+     [
+      "_sum (numpy/core/_methods.py:49)",
+      27
+     ],
+     [
+      "fit_plane_ransac (benchmark/ag3s/stages/support_surface.py:121)",
+      26
+     ],
+     [
+      "fit_support_surfaces (benchmark/ag3s/stages/support_surface.py:178)",
+      13
+     ],
+     [
+      "fit_plane_ransac (benchmark/ag3s/stages/support_surface.py:132)",
+      9
+     ],
+     [
+      "fit_plane_ransac (benchmark/ag3s/stages/support_surface.py:131)",
+      8
+     ]
+    ],
+    "ag3s other": [
+     [
+      "sphere_centers_numeric (benchmark/ag3s/robot_models/urdf_sphere_chain.py:1157)",
+      5
+     ],
+     [
+      "_joint_transform (benchmark/ag3s/robot_models/urdf_sphere_chain.py:432)",
+      2
+     ],
+     [
+      "matmul (benchmark/ag3s/robot_models/urdf_sphere_chain.py:388)",
+      2
+     ],
+     [
+      "as_pointcloud (benchmark/ag3s/types.py:533)",
+      2
+     ],
+     [
+      "_joint_transform (benchmark/ag3s/robot_models/urdf_sphere_chain.py:434)",
+      1
+     ],
+     [
+      "_sum (numpy/core/_methods.py:49)",
+      1
+     ]
+    ],
+    "safe_policy scene_fn other": [
+     [
+      "unpack_camera_observations (benchmark/trajopt/wire.py:471)",
+      6
+     ],
+     [
+      "const (benchmark/ag3s/robot_models/urdf_sphere_chain.py:384)",
+      1
+     ],
+     [
+      "amin (numpy/core/fromnumeric.py:2970)",
+      1
+     ],
+     [
+      "__init__ (<string>:27)",
+      1
+     ],
+     [
+      "_adjust_scheme_to_bounds (scipy/optimize/_numdiff.py:52)",
+      1
+     ],
+     [
+      "_scene_fn (benchmark/trajopt/safe_policy.py:654)",
+      1
+     ]
+    ],
+    "safe_policy.infer other": [
+     [
+      "pack_response (benchmark/trajopt/wire.py:565)",
+      2
+     ],
+     [
+      "_reasons (benchmark/trajopt/safe_policy.py:1281)",
+      1
+     ]
+    ]
+   },
+   "first_attempt": "--idle --rate 200 (blocking) slowed the process >20x (first chunk 251 s); aborted, kept in outputs/verify/T38/pyspy_try1_idle_200hz_aborted/"
+  },
+  "input_sizes_census_pass_C_75_chunks": {
+   "n_points_raw": {
+    "median": 497980.0,
+    "min": 492977,
+    "max": 559848
+   },
+   "n_points_voxel": {
+    "median": 132763.0,
+    "min": 92069,
+    "max": 151844
+   },
+   "n_points_fused": {
+    "median": 37179.0,
+    "min": 22935,
+    "max": 44380
+   },
+   "n_self_filtered": {
+    "median": 6230.0,
+    "min": 6046,
+    "max": 7554
+   },
+   "n_support_points": {
+    "median": 33588.0,
+    "min": 20585,
+    "max": 40686
+   },
+   "n_seeds": {
+    "median": 240.0,
+    "min": 72,
+    "max": 728
+   },
+   "esdf_n_active_blocks": {
+    "median": 3653.0,
+    "min": 3143,
+    "max": 3656
+   },
+   "n_points_before_fusion": {
+    "median": 132763.0,
+    "min": 92069,
+    "max": 151844
+   },
+   "grow_region_in": {
+    "median": 3592.0,
+    "min": 2343,
+    "max": 3726
+   },
+   "grow_region_out": {
+    "median": 1956.0,
+    "min": 1385,
+    "max": 2306
+   },
+   "dbscan_in": {
+    "median": 1956.0,
+    "min": 1385,
+    "max": 2306
+   },
+   "dbscan_calls_per_chunk": {
+    "1": 75
+   },
+   "grow_region_kd_waves_per_chunk": {
+    "10": 3,
+    "11": 28,
+    "12": 4,
+    "13": 2,
+    "14": 1,
+    "15": 2,
+    "16": 2,
+    "17": 1,
+    "19": 2,
+    "20": 1,
+    "21": 2,
+    "22": 1,
+    "7": 4,
+    "8": 19,
+    "9": 3
+   },
+   "n_clusters_per_chunk": {
+    "1": 1,
+    "2": 40,
+    "3": 4,
+    "4": 20,
+    "5": 10
+   },
+   "kd_builds_per_chunk": {
+    "median": 24.0,
+    "min": 13,
+    "max": 25
+   },
+   "kd_build_points_per_chunk_median": 651333.0,
+   "kd_queries_per_chunk_median": 3553.0,
+   "cameras": 3,
+   "depth_px_per_chunk": 921600,
+   "esdf_tiers_per_chunk": {
+    "2": 13,
+    "3": 62
+   },
+   "esdf_voxels_per_tier": 2097152,
+   "esdf_tier_note": "coarse 20 mm + fine 5 mm (+ target-free fine 5 mm while not holding: _build_tiers 2 calls); 3 tiers in 62 chunks, 2 in 13 (held)",
+   "constraint_spec_params": 5098,
+   "selected_chunks": [
+    {
+     "seq": 2,
+     "grasp": "searching",
+     "depth_px": 921600,
+     "backprojected": 505824,
+     "voxelised": 138466,
+     "per_camera": {
+      "head": {
+       "n_raw": 139044,
+       "n_voxel": 57575,
+       "n_final": 57575,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 5845
+      },
+      "left_wrist": {
+       "n_raw": 181766,
+       "n_voxel": 38633,
+       "n_final": 38633,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 164
+      },
+      "right_wrist": {
+       "n_raw": 185014,
+       "n_voxel": 42258,
+       "n_final": 42258,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 163
+      }
+     },
+     "self_filtered": 6172,
+     "fused": 35876,
+     "support_points": 32202,
+     "seeds": 149,
+     "grow_region": {
+      "n_in": 3674,
+      "n_seeds": 149,
+      "n_grown": 2083,
+      "hash_in": "e0fedeb61aeeafb8/(3674, 3)/float64"
+     },
+     "dbscan": [
+      {
+       "n_in": 2083,
+       "n_labels": 3,
+       "hash_in": "c5b3d686e318980d/(2083, 3)/float64"
+      }
+     ],
+     "clusters": 3,
+     "kd_builds": 24,
+     "kd_build_points": 653692,
+     "kd_builds_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 3,
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+      "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+     },
+     "kd_build_sizes_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+       57575,
+       38633,
+       42258
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+       3674
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+       2083
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+       1986
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": [
+       111
+      ],
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+       108
+      ],
+      "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": [
+       111
+      ],
+      "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": [
+       108
+      ],
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+       139044,
+       181766,
+       185014
+      ],
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+       111,
+       111
+      ],
+      "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": [
+       111,
+       111,
+       111,
+       111,
+       111,
+       111,
+       111,
+       111,
+       111
+      ]
+     },
+     "kd_queries_by_site": {
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1761,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 12,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+      "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+      "query_pairs benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1761,
+      "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+      "query benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+     },
+     "build_tiers_calls": 2,
+     "esdf_tiers": [
+      {
+       "name": "coarse",
+       "voxel_size": 0.02,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        -0.820000011920929,
+        -1.27,
+        -0.46999998807907106
+       ]
+      },
+      {
+       "name": "fine",
+       "voxel_size": 0.005,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        0.15666621446609497,
+        -0.05438516020774842,
+        0.6991685581207274
+       ]
+      }
+     ],
+     "tsdf_active_blocks": 3149,
+     "h2d_bytes": 7474740,
+     "d2h_bytes": 50331792,
+     "kd_same_input_built_more_than_once": {
+      "8796c2b51eab8c52/(111, 3)/float64": [
+       "benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]",
+       "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]",
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]"
+      ],
+      "bcdf235542415fe9/(108, 3)/float64": [
+       "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]",
+       "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]"
+      ]
+     }
+    },
+    {
+     "seq": 10,
+     "grasp": "latched",
+     "depth_px": 921600,
+     "backprojected": 523212,
+     "voxelised": 146055,
+     "per_camera": {
+      "head": {
+       "n_raw": 143161,
+       "n_voxel": 60172,
+       "n_final": 60172,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 6224
+      },
+      "left_wrist": {
+       "n_raw": 193712,
+       "n_voxel": 43478,
+       "n_final": 43478,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 166
+      },
+      "right_wrist": {
+       "n_raw": 186339,
+       "n_voxel": 42405,
+       "n_final": 42405,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 161
+      }
+     },
+     "self_filtered": 6551,
+     "fused": 39634,
+     "support_points": 35963,
+     "seeds": 124,
+     "grow_region": {
+      "n_in": 3671,
+      "n_seeds": 124,
+      "n_grown": 2000,
+      "hash_in": "43fef4f0fab1b68a/(3671, 3)/float64"
+     },
+     "dbscan": [
+      {
+       "n_in": 2000,
+       "n_labels": 2,
+       "hash_in": "a6867eecad1640d4/(2000, 3)/float64"
+      }
+     ],
+     "clusters": 2,
+     "kd_builds": 23,
+     "kd_build_points": 678417,
+     "kd_builds_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 3,
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+      "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+     },
+     "kd_build_sizes_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+       60172,
+       43478,
+       42405
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+       3671
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+       2000
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+       1826
+      ],
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+       119
+      ],
+      "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": [
+       117
+      ],
+      "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": [
+       108
+      ],
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+       143161,
+       193712,
+       186339
+      ],
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+       119,
+       119
+      ],
+      "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": [
+       119,
+       119,
+       119,
+       119,
+       119,
+       119,
+       119,
+       119,
+       119
+      ]
+     },
+     "kd_queries_by_site": {
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1761,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 21,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+      "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1761,
+      "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+      "query benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+     },
+     "build_tiers_calls": 2,
+     "esdf_tiers": [
+      {
+       "name": "coarse",
+       "voxel_size": 0.02,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        -0.820000011920929,
+        -1.27,
+        -0.46999998807907106
+       ]
+      },
+      {
+       "name": "fine",
+       "voxel_size": 0.005,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        0.22473442077636718,
+        0.00020405173301696116,
+        0.6740132522583007
+       ]
+      }
+     ],
+     "tsdf_active_blocks": 3329,
+     "h2d_bytes": 7476036,
+     "d2h_bytes": 50331792,
+     "kd_same_input_built_more_than_once": {
+      "dc2cf194bf27e59a/(119, 3)/float64": [
+       "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]",
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]"
+      ]
+     }
+    },
+    {
+     "seq": 15,
+     "grasp": "closing",
+     "depth_px": 921600,
+     "backprojected": 556028,
+     "voxelised": 111506,
+     "per_camera": {
+      "head": {
+       "n_raw": 132776,
+       "n_voxel": 55528,
+       "n_final": 55528,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 6005
+      },
+      "left_wrist": {
+       "n_raw": 235105,
+       "n_voxel": 13508,
+       "n_final": 13508,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 173
+      },
+      "right_wrist": {
+       "n_raw": 188147,
+       "n_voxel": 42470,
+       "n_final": 42470,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 150
+      }
+     },
+     "self_filtered": 6328,
+     "fused": 27713,
+     "support_points": 24177,
+     "seeds": 167,
+     "grow_region": {
+      "n_in": 3536,
+      "n_seeds": 167,
+      "n_grown": 2048,
+      "hash_in": "cb343c042b29c740/(3536, 3)/float64"
+     },
+     "dbscan": [
+      {
+       "n_in": 2048,
+       "n_labels": 4,
+       "hash_in": "0fd998b3c4ba295a/(2048, 3)/float64"
+      }
+     ],
+     "clusters": 4,
+     "kd_builds": 21,
+     "kd_build_points": 675620,
+     "kd_builds_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 3,
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+      "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+     },
+     "kd_build_sizes_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+       55528,
+       13508,
+       42470
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+       3536
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+       2048
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+       1837
+      ],
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+       115
+      ],
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+       132776,
+       235105,
+       188147
+      ],
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+       50,
+       50
+      ],
+      "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": [
+       50,
+       50,
+       50,
+       50,
+       50,
+       50,
+       50,
+       50,
+       50
+      ]
+     },
+     "kd_queries_by_site": {
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1761,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 15,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+      "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1761,
+      "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+      "query benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+     },
+     "build_tiers_calls": 2,
+     "esdf_tiers": [
+      {
+       "name": "coarse",
+       "voxel_size": 0.02,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        -0.820000011920929,
+        -1.27,
+        -0.46999998807907106
+       ]
+      },
+      {
+       "name": "fine",
+       "voxel_size": 0.005,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        0.222480947971344,
+        -0.0027407455444336004,
+        0.5959325385093688
+       ]
+      }
+     ],
+     "tsdf_active_blocks": 3371,
+     "h2d_bytes": 7459068,
+     "d2h_bytes": 50331792,
+     "kd_same_input_built_more_than_once": {
+      "340b81f947f6eff5/(50, 3)/float64": [
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]"
+      ]
+     }
+    },
+    {
+     "seq": 16,
+     "grasp": "held",
+     "depth_px": 921600,
+     "backprojected": 554406,
+     "voxelised": 112789,
+     "per_camera": {
+      "head": {
+       "n_raw": 133234,
+       "n_voxel": 55706,
+       "n_final": 55706,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 6035
+      },
+      "left_wrist": {
+       "n_raw": 232823,
+       "n_voxel": 14576,
+       "n_final": 14576,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 367
+      },
+      "right_wrist": {
+       "n_raw": 188349,
+       "n_voxel": 42507,
+       "n_final": 42507,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 140
+      }
+     },
+     "self_filtered": 6542,
+     "fused": 28077,
+     "support_points": 24564,
+     "seeds": 295,
+     "grow_region": {
+      "n_in": 3513,
+      "n_seeds": 295,
+      "n_grown": 2022,
+      "hash_in": "0d7f3412e113d65b/(3513, 3)/float64"
+     },
+     "dbscan": [
+      {
+       "n_in": 2022,
+       "n_labels": 2,
+       "hash_in": "982b1e4e8eb348a8/(2022, 3)/float64"
+      }
+     ],
+     "clusters": 2,
+     "kd_builds": 16,
+     "kd_build_points": 1229087,
+     "kd_builds_by_site": {
+      "benchmark/ag3s/constraints/attached.py:253 trim_outliers [(outside stages)]": 2,
+      "benchmark/ag3s/robot_models/held_object.py:235 _clusters [(outside stages)]": 1,
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 6
+     },
+     "kd_build_sizes_by_site": {
+      "benchmark/ag3s/constraints/attached.py:253 trim_outliers [(outside stages)]": [
+       50,
+       29
+      ],
+      "benchmark/ag3s/robot_models/held_object.py:235 _clusters [(outside stages)]": [
+       7
+      ],
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+       55706,
+       14576,
+       42507
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+       3513
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+       2022
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+       1815
+      ],
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+       50
+      ],
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+       133234,
+       133234,
+       232823,
+       232823,
+       188349,
+       188349
+      ]
+     },
+     "kd_queries_by_site": {
+      "query_ball_point benchmark/ag3s/constraints/attached.py:253 trim_outliers [(outside stages)]": 2,
+      "query_pairs benchmark/ag3s/robot_models/held_object.py:235 _clusters [(outside stages)]": 1,
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1767,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 13,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+      "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1773
+     },
+     "build_tiers_calls": 1,
+     "esdf_tiers": [
+      {
+       "name": "coarse",
+       "voxel_size": 0.02,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        -0.820000011920929,
+        -1.27,
+        -0.46999998807907106
+       ]
+      },
+      {
+       "name": "fine",
+       "voxel_size": 0.005,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        0.23026769876480102,
+        -0.002190982103347785,
+        0.6401085805892943
+       ]
+      }
+     ],
+     "tsdf_active_blocks": 3372,
+     "h2d_bytes": 7455980,
+     "d2h_bytes": 36913324,
+     "kd_same_input_built_more_than_once": {
+      "340b81f947f6eff5/(50, 3)/float64": [
+       "benchmark/ag3s/constraints/attached.py:253 trim_outliers [(outside stages)]",
+       "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]"
+      ],
+      "48ca15f1b78eca18/(133234, 3)/float64": [
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+      ],
+      "42679cba30341bc0/(232823, 3)/float64": [
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+      ],
+      "d8ad8944e2176b54/(188349, 3)/float64": [
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+      ]
+     }
+    },
+    {
+     "seq": 22,
+     "grasp": "held",
+     "depth_px": 921600,
+     "backprojected": 515318,
+     "voxelised": 118957,
+     "per_camera": {
+      "head": {
+       "n_raw": 142231,
+       "n_voxel": 46465,
+       "n_final": 46465,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 6806
+      },
+      "left_wrist": {
+       "n_raw": 181127,
+       "n_voxel": 29855,
+       "n_final": 29855,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 353
+      },
+      "right_wrist": {
+       "n_raw": 191960,
+       "n_voxel": 42637,
+       "n_final": 42637,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 147
+      }
+     },
+     "self_filtered": 7306,
+     "fused": 30784,
+     "support_points": 27854,
+     "seeds": 623,
+     "grow_region": {
+      "n_in": 2930,
+      "n_seeds": 623,
+      "n_grown": 1979,
+      "hash_in": "4fe8a7be4fed89cf/(2930, 3)/float64"
+     },
+     "dbscan": [
+      {
+       "n_in": 1979,
+       "n_labels": 2,
+       "hash_in": "46d7c9bdc99cdca7/(1979, 3)/float64"
+      }
+     ],
+     "clusters": 2,
+     "kd_builds": 17,
+     "kd_build_points": 1163550,
+     "kd_builds_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": 1,
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 6,
+      "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": 1,
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2
+     },
+     "kd_build_sizes_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+       46465,
+       29855,
+       42637
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+       2930
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+       1979
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+       1838
+      ],
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+       50
+      ],
+      "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": [
+       1790
+      ],
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+       142231,
+       142231,
+       181127,
+       181127,
+       191960,
+       191960
+      ],
+      "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": [
+       1790
+      ],
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+       1790,
+       1790
+      ]
+     },
+     "kd_queries_by_site": {
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1767,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 9,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+      "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [target_grounding]": 2,
+      "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [(outside stages)]": 1,
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1773,
+      "query benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": 1,
+      "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2
+     },
+     "build_tiers_calls": 1,
+     "esdf_tiers": [
+      {
+       "name": "coarse",
+       "voxel_size": 0.02,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        -0.820000011920929,
+        -1.27,
+        -0.46999998807907106
+       ]
+      },
+      {
+       "name": "fine",
+       "voxel_size": 0.005,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        0.1595439863204956,
+        -0.2538406226038933,
+        0.7468240213394164
+       ]
+      }
+     ],
+     "tsdf_active_blocks": 3507,
+     "h2d_bytes": 7373420,
+     "d2h_bytes": 36913308,
+     "kd_same_input_built_more_than_once": {
+      "af6a50354dd201be/(1790, 3)/float64": [
+       "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]",
+       "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]",
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]"
+      ],
+      "6c45956a9cd89242/(142231, 3)/float64": [
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+      ],
+      "5923d37e3a88c8ab/(181127, 3)/float64": [
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+      ],
+      "929673fedeef6ebc/(191960, 3)/float64": [
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+      ]
+     }
+    },
+    {
+     "seq": 28,
+     "grasp": "held",
+     "depth_px": 921600,
+     "backprojected": 513941,
+     "voxelised": 98817,
+     "per_camera": {
+      "head": {
+       "n_raw": 124937,
+       "n_voxel": 43633,
+       "n_final": 43633,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 5697
+      },
+      "left_wrist": {
+       "n_raw": 196810,
+       "n_voxel": 12207,
+       "n_final": 12207,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 172
+      },
+      "right_wrist": {
+       "n_raw": 192194,
+       "n_voxel": 42977,
+       "n_final": 42977,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 221
+      }
+     },
+     "self_filtered": 6090,
+     "fused": 23071,
+     "support_points": 20608,
+     "seeds": 576,
+     "grow_region": {
+      "n_in": 2463,
+      "n_seeds": 576,
+      "n_grown": 1678,
+      "hash_in": "955e94ab3c374287/(2463, 3)/float64"
+     },
+     "dbscan": [
+      {
+       "n_in": 1678,
+       "n_labels": 4,
+       "hash_in": "9791e3adb9a7973f/(1678, 3)/float64"
+      }
+     ],
+     "clusters": 4,
+     "kd_builds": 17,
+     "kd_build_points": 1137423,
+     "kd_builds_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": 1,
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 6,
+      "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": 1,
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2
+     },
+     "kd_build_sizes_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+       43633,
+       12207,
+       42977
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+       2463
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+       1678
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+       1501
+      ],
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+       50
+      ],
+      "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": [
+       1258
+      ],
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+       124937,
+       124937,
+       196810,
+       196810,
+       192194,
+       192194
+      ],
+      "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": [
+       1258
+      ],
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+       1258,
+       1258
+      ]
+     },
+     "kd_queries_by_site": {
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1767,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 8,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+      "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [target_grounding]": 4,
+      "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [(outside stages)]": 1,
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1773,
+      "query benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": 1,
+      "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2
+     },
+     "build_tiers_calls": 1,
+     "esdf_tiers": [
+      {
+       "name": "coarse",
+       "voxel_size": 0.02,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        -0.820000011920929,
+        -1.27,
+        -0.46999998807907106
+       ]
+      },
+      {
+       "name": "fine",
+       "voxel_size": 0.005,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        0.15414133191108703,
+        -0.24353913694620133,
+        0.6718191456794738
+       ]
+      }
+     ],
+     "tsdf_active_blocks": 3609,
+     "h2d_bytes": 7413148,
+     "d2h_bytes": 36913324,
+     "kd_same_input_built_more_than_once": {
+      "c27058cec04a93e7/(1258, 3)/float64": [
+       "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]",
+       "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]",
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]"
+      ],
+      "227b226777838ac9/(124937, 3)/float64": [
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+      ],
+      "0bdf42cc462b70b8/(196810, 3)/float64": [
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+      ],
+      "cfa421a1da3f7dac/(192194, 3)/float64": [
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+       "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+      ]
+     }
+    },
+    {
+     "seq": 40,
+     "grasp": "placed",
+     "depth_px": 921600,
+     "backprojected": 495969,
+     "voxelised": 139905,
+     "per_camera": {
+      "head": {
+       "n_raw": 143081,
+       "n_voxel": 59321,
+       "n_final": 59321,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 5929
+      },
+      "left_wrist": {
+       "n_raw": 161201,
+       "n_voxel": 37482,
+       "n_final": 37482,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 156
+      },
+      "right_wrist": {
+       "n_raw": 191687,
+       "n_voxel": 43102,
+       "n_final": 43102,
+       "final_voxel_size": 0.005,
+       "capped": false,
+       "n_self_filtered": 145
+      }
+     },
+     "self_filtered": 6230,
+     "fused": 37565,
+     "support_points": 33978,
+     "seeds": 284,
+     "grow_region": {
+      "n_in": 3587,
+      "n_seeds": 284,
+      "n_grown": 2106,
+      "hash_in": "f881ec6ffa03c565/(3587, 3)/float64"
+     },
+     "dbscan": [
+      {
+       "n_in": 2106,
+       "n_labels": 3,
+       "hash_in": "c8adf237d40767d0/(2106, 3)/float64"
+      }
+     ],
+     "clusters": 4,
+     "kd_builds": 25,
+     "kd_build_points": 651040,
+     "kd_builds_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+      "benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+      "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 3,
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+      "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+     },
+     "kd_build_sizes_by_site": {
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+       59321,
+       37482,
+       43102
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+       3587
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+       2106
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+       1988
+      ],
+      "benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": [
+       182
+      ],
+      "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+       138
+      ],
+      "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": [
+       1801
+      ],
+      "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": [
+       106
+      ],
+      "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": [
+       138
+      ],
+      "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+       143081,
+       161201,
+       191687
+      ],
+      "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+       1939,
+       1939
+      ],
+      "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": [
+       138,
+       138,
+       138,
+       138,
+       138,
+       138,
+       138,
+       138,
+       138
+      ]
+     },
+     "kd_queries_by_site": {
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1761,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 11,
+      "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+      "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+      "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+      "query_pairs benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [target_grounding]": 4,
+      "query benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+      "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [(outside stages)]": 1,
+      "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1761,
+      "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+      "query benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+     },
+     "build_tiers_calls": 2,
+     "esdf_tiers": [
+      {
+       "name": "coarse",
+       "voxel_size": 0.02,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        -0.820000011920929,
+        -1.27,
+        -0.46999998807907106
+       ]
+      },
+      {
+       "name": "fine",
+       "voxel_size": 0.005,
+       "shape": [
+        128,
+        128,
+        128
+       ],
+       "origin": [
+        0.1681712520122528,
+        -0.18015748739242554,
+        0.7164515209197997
+       ]
+      }
+     ],
+     "tsdf_active_blocks": 3653,
+     "h2d_bytes": 7485972,
+     "d2h_bytes": 50331792,
+     "kd_same_input_built_more_than_once": {
+      "d08686bdb59271fe/(138, 3)/float64": [
+       "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]",
+       "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+       "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]"
+      ],
+      "5c8a71bfbee20144/(1939, 3)/float64": [
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+       "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]"
+      ]
+     }
+    }
+   ]
+  },
+  "redundancy": {
+   "backproject_calls_per_chunk": {
+    "6": 75
+   },
+   "backproject_note": "3 in scene_reconstruction (reconstruction.py:274 via multiview.process_observation) + 3 in constraint_generation (pipeline.py:1773 _robot_mask_for) on the same depth/K/T of each camera; census hash of the back-projected points identical between voxel_downsample input and the _robot_mask_for robot_sphere_mask input (e.g. seq 2 head 709a80f477aede2f, 139,044 pts)",
+   "robot_sphere_mask_calls_per_chunk": {
+    "6": 62,
+    "9": 13
+   },
+   "robot_sphere_mask_note": "3 on the voxelised per-camera cloud (scene_reconstruction) + 3 on the full-resolution back-projection (_robot_mask_for); while held (13 chunks) +3 more held-sphere masks on the same full-res points (pipeline.py:1789). Each call builds a cKDTree on all points (robot_filter.py:168) and loops in Python over 587 spheres (587 query_ball_point calls per camera, 1,761 per 3 cameras, robot_filter.py:169-172).",
+   "kd_same_input_built_more_than_once_chunks_by_sites": {
+    "_labels_from_sites": 47,
+    "_esdf_clearance + anchor_cover + gap": 41,
+    "robot_sphere_mask": 39,
+    "_held_free_points + _labels_from_sites + tree": 8,
+    "_esdf_clearance + _labels_from_sites + anchor_cover": 5,
+    "_esdf_clearance + _labels_from_sites + gap": 5,
+    "_esdf_clearance + gap": 5,
+    "_esdf_clearance + _labels_from_sites + anchor_cover + connected_components_3d": 3,
+    "_esdf_clearance + _labels_from_sites + connected_components_3d": 1,
+    "anchor_cover + gap": 1,
+    "_esdf_clearance + _labels_from_sites": 1,
+    "gap + trim_outliers": 1,
+    "_held_free_points + _labels_from_sites + dbscan + tree": 1,
+    "_esdf_clearance": 1
+   },
+   "kd_same_input_note": "number of (chunk, array) pairs over the 75 chunks in which an identical array (blake2b of bytes) was KD-treed more than once, keyed by the sites that built it (robot_sphere_mask 39 = 13 held chunks x 3 cameras). _labels_from_sites builds a tree on the same seed points once per tier (coarse + fine); trajopt linearize.py:736 rebuilds a tree on manipulated_points on every linearize/check call (9 builds per chunk before attach) from points already KD-treed in grounding (admissibility gap / anchor_cover).",
+   "depth_upload_note": "each camera depth is uploaded to GPU twice per chunk (curobo_builder.py:815 _integrate, once for the coarse mapper and once for the fine mapper): 6 x 1,228,800 B = 7.37 MB",
+   "per_camera_python_loops": "multiview.fuse_observations list comprehension over 3 cameras (multiview.py:356); _depth_cameras_from loop over 3 cameras (pipeline.py:1957); robot_sphere_mask python loop over 587 spheres per call; grow_region while-loop over BFS waves (7-22 waves); no per-cluster loop of measurable cost (_split_groups / _score_cluster < 1 ms)",
+   "constraint_builder": {
+    "ConstraintBuilder.build_ms_median": 0.18,
+    "build_spec": "pipeline.py:1372 build_spec = primitive_path or bool(surfaces); support surfaces present in 75/75 chunks so the spec is built every chunk (5,098 parameters)",
+    "reader": "only trajopt/linearize.py:1250 scene_from_constraint_set -> SceneSnapshot.from_spec (linearize.py:197); serve_safe trajopt config sets collision.use_support_planes False (serve_safe.py:1335) and backend esdf, so plane_active and candidate_active are zeroed (linearize.py:1363-1374)",
+    "scene_from_constraint_set_census_spec_present_candidate_active_any_plane_active_any": {
+     "(True, False, False)": 75
+    },
+    "other_readers_in_server_path": "none found (to_adapter.refresh / summary / visualization are not called by serve_safe/safe_policy)"
+   },
+   "recorder_note": "SafePolicy._record (--record-constraints) runs after timing_ms.total: median 245 ms, mostly zipfile write (py-spy); not in profile_ms"
+  },
+  "host_device_copies_census": {
+   "h2d_bytes_per_chunk": {
+    "median": 7485660.0,
+    "min": 7373420,
+    "max": 7491900
+   },
+   "d2h_bytes_per_chunk": {
+    "median": 50331792.0,
+    "min": 36913308,
+    "max": 50331864
+   },
+   "n_h2d_per_chunk_median": 24.0,
+   "n_d2h_per_chunk_median": 28.0,
+   "by_site_seq2": {
+    "H2D benchmark/ag3s/fields/curobo_builder.py:815 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 7372800
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:817 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:819 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 384
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:813 _integrate item()": {
+     "n": 6,
+     "bytes": 24
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:914 _build_tiers tensor": {
+     "n": 3,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1063 _origin_of cpu()": {
+     "n": 3,
+     "bytes": 36
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers item()": {
+     "n": 3,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 36
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:941 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 25165824
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:942 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 25165824
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:916 _build_tiers as_tensor": {
+     "n": 2,
+     "bytes": 24
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:1176 _clear_seeds as_tensor": {
+     "n": 1,
+     "bytes": 101304
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1177 _clear_seeds item()": {
+     "n": 1,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1245 _observation_coverage item()": {
+     "n": 6,
+     "bytes": 28
+    }
+   },
+   "by_site_seq22": {
+    "H2D benchmark/ag3s/fields/curobo_builder.py:815 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 7372800
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:817 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:819 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 384
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:813 _integrate item()": {
+     "n": 6,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1016 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1022 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1023 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 2519052
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1024 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 839684
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:914 _build_tiers tensor": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1063 _origin_of cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers item()": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:941 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 16777216
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:942 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 16777216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:916 _build_tiers as_tensor": {
+     "n": 1,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1245 _observation_coverage item()": {
+     "n": 6,
+     "bytes": 28
+    }
+   },
+   "method": "torch.Tensor.cpu/.to/.cuda/.item/.tolist and torch.as_tensor/torch.tensor(device=cuda) wrapped in census pass C; callsite = first benchmark/ frame"
+  },
+  "gpu_device_time_torch_profiler_selected_chunks": {
+   "X_seq002": {
+    "device_self_time_total_ms": 11.7,
+    "kernel_self_time_ms": 7.41,
+    "memcpy": [
+     {
+      "key": "Memcpy HtoD (Pageable -> Device)",
+      "count": 25,
+      "self_device_time_total_us": 211.68099999940023
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pinned)",
+      "count": 16,
+      "self_device_time_total_us": 45.82600000081584
+     },
+     {
+      "key": "Memcpy DtoD (Device -> Device)",
+      "count": 9,
+      "self_device_time_total_us": 18.78500000014901
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pageable)",
+      "count": 12,
+      "self_device_time_total_us": 4007.167000000365
+     }
+    ]
+   },
+   "X_seq010": {
+    "device_self_time_total_ms": 11.7,
+    "kernel_self_time_ms": 7.36,
+    "memcpy": [
+     {
+      "key": "Memcpy HtoD (Pageable -> Device)",
+      "count": 24,
+      "self_device_time_total_us": 180.28899999940768
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pinned)",
+      "count": 16,
+      "self_device_time_total_us": 47.329000000376254
+     },
+     {
+      "key": "Memcpy DtoD (Device -> Device)",
+      "count": 9,
+      "self_device_time_total_us": 18.623999999836087
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pageable)",
+      "count": 12,
+      "self_device_time_total_us": 4093.3430000008084
+     }
+    ]
+   },
+   "X_seq015": {
+    "device_self_time_total_ms": 11.47,
+    "kernel_self_time_ms": 7.38,
+    "memcpy": [
+     {
+      "key": "Memcpy HtoD (Pageable -> Device)",
+      "count": 25,
+      "self_device_time_total_us": 212.57700000237674
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pinned)",
+      "count": 16,
+      "self_device_time_total_us": 45.31300000054762
+     },
+     {
+      "key": "Memcpy DtoD (Device -> Device)",
+      "count": 9,
+      "self_device_time_total_us": 18.527999999932945
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pageable)",
+      "count": 12,
+      "self_device_time_total_us": 3812.797999999486
+     }
+    ]
+   },
+   "X_seq016": {
+    "device_self_time_total_ms": 8.61,
+    "kernel_self_time_ms": 5.73,
+    "memcpy": [
+     {
+      "key": "Memcpy HtoD (Pageable -> Device)",
+      "count": 25,
+      "self_device_time_total_us": 213.34400000050664
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pinned)",
+      "count": 24,
+      "self_device_time_total_us": 68.38299999944866
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pageable)",
+      "count": 16,
+      "self_device_time_total_us": 2591.7659999988973
+     },
+     {
+      "key": "Memcpy DtoD (Device -> Device)",
+      "count": 6,
+      "self_device_time_total_us": 12.510999999474734
+     }
+    ]
+   },
+   "X_seq022": {
+    "device_self_time_total_ms": 8.58,
+    "kernel_self_time_ms": 5.7,
+    "memcpy": [
+     {
+      "key": "Memcpy DtoH (Device -> Pinned)",
+      "count": 14,
+      "self_device_time_total_us": 40.67200000002049
+     },
+     {
+      "key": "Memcpy HtoD (Pageable -> Device)",
+      "count": 18,
+      "self_device_time_total_us": 168.03099999995902
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pageable)",
+      "count": 16,
+      "self_device_time_total_us": 2657.4610000005923
+     },
+     {
+      "key": "Memcpy DtoD (Device -> Device)",
+      "count": 6,
+      "self_device_time_total_us": 12.193000000435859
+     }
+    ]
+   },
+   "X_seq028": {
+    "device_self_time_total_ms": 8.12,
+    "kernel_self_time_ms": 5.55,
+    "memcpy": [
+     {
+      "key": "Memcpy HtoD (Pageable -> Device)",
+      "count": 25,
+      "self_device_time_total_us": 208.67599999927916
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pinned)",
+      "count": 24,
+      "self_device_time_total_us": 67.1379999993369
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pageable)",
+      "count": 16,
+      "self_device_time_total_us": 2282.7339999999385
+     },
+     {
+      "key": "Memcpy DtoD (Device -> Device)",
+      "count": 6,
+      "self_device_time_total_us": 12.447999999392778
+     }
+    ]
+   },
+   "X_seq040": {
+    "device_self_time_total_ms": 11.39,
+    "kernel_self_time_ms": 7.05,
+    "memcpy": [
+     {
+      "key": "Memcpy DtoH (Device -> Pinned)",
+      "count": 16,
+      "self_device_time_total_us": 47.265999999362975
+     },
+     {
+      "key": "Memcpy HtoD (Pageable -> Device)",
+      "count": 22,
+      "self_device_time_total_us": 183.3289999999106
+     },
+     {
+      "key": "Memcpy DtoD (Device -> Device)",
+      "count": 9,
+      "self_device_time_total_us": 18.688999999780208
+     },
+     {
+      "key": "Memcpy DtoH (Device -> Pageable)",
+      "count": 12,
+      "self_device_time_total_us": 4086.7199999997392
+     }
+    ]
+   }
+  },
+  "gpu_note": "GPU kernel time 5.7-7.4 ms and memcpy 2.7-4.4 ms per chunk (torch.profiler CUPTI, warp kernels included); the esdf stage wall (~250 ms) is CPU-side (cProfile: _labels_from_sites np.unique/sort + cKDTree, unpack_site_linear, _build_tiers D2H). Stage medians with and without torch.cuda.synchronize at stage boundaries differ by <= 40 ms (pass S vs pass T).",
+  "to_note": "TO linearize median 97 ms: ESDF gradient cache np.gradient + np.stack over each 128^3 tier on first query per chunk (esdf.py:440-442, py-spy top leaves) and cKDTree on manipulated points (linearize.py:736).",
+  "micro_kdtree": {
+   "contended_seq22": {
+    "npz": "/mnt/dev/work/outputs/verify/T34/E3b_rec/server_8206/server_constraints/run_0000/chunk_00096.npz",
+    "label": "contended_seq22",
+    "cpu_count": 256,
+    "loadavg": [
+     25.85,
+     37.52,
+     32.43
+    ],
+    "n_fused": 30788,
+    "n_candidates": 2927,
+    "n_seeds": 614,
+    "eps": 0.03,
+    "grow_region_code_workers-1_ms": 3711.41,
+    "n_grown": 1973,
+    "grow_copy_workers1_ms": 89.34,
+    "waves": 9,
+    "same_result": true,
+    "grow_copy_workers8_ms": 325.46,
+    "grow_copy_workers-1_ms": 3905.13,
+    "dbscan_code_ms": 838.66,
+    "dbscan_n_in": 1973,
+    "dbscan_ball_count_workers1_ms": 7.17,
+    "nn_query_workers1_ms": 0.84,
+    "dbscan_ball_count_workers-1_ms": 607.56,
+    "nn_query_workers-1_ms": 654.28,
+    "587_single_point_ball_queries_workers1_ms": 5.48,
+    "587_single_point_ball_queries_workers-1_ms": 11.62,
+    "587_batched_ball_query_workers1_ms": 11.14
+   },
+   "quiet_seq2": {
+    "npz": "/mnt/dev/work/outputs/verify/T34/E3b_rec/server_8206/server_constraints/run_0000/chunk_00076.npz",
+    "label": "quiet_seq2",
+    "cpu_count": 256,
+    "loadavg": [
+     22.4,
+     21.32,
+     24.21
+    ],
+    "n_fused": 35875,
+    "n_candidates": 3679,
+    "n_seeds": 149,
+    "eps": 0.03,
+    "grow_region_code_workers-1_ms": 1106.74,
+    "n_grown": 2087,
+    "grow_copy_workers1_ms": 9.24,
+    "waves": 12,
+    "same_result": true,
+    "grow_copy_workers8_ms": 68.52,
+    "grow_copy_workers-1_ms": 1136.84,
+    "dbscan_code_ms": 195.24,
+    "dbscan_n_in": 2087,
+    "dbscan_ball_count_workers1_ms": 3.52,
+    "nn_query_workers1_ms": 0.6,
+    "dbscan_ball_count_workers-1_ms": 169.65,
+    "nn_query_workers-1_ms": 162.1,
+    "587_single_point_ball_queries_workers1_ms": 5.52,
+    "587_single_point_ball_queries_workers-1_ms": 6.93,
+    "587_batched_ball_query_workers1_ms": 4.22
+   },
+   "quiet_seq22": {
+    "npz": "/mnt/dev/work/outputs/verify/T34/E3b_rec/server_8206/server_constraints/run_0000/chunk_00096.npz",
+    "label": "quiet_seq22",
+    "cpu_count": 256,
+    "loadavg": [
+     22.57,
+     21.31,
+     24.24
+    ],
+    "n_fused": 30788,
+    "n_candidates": 2927,
+    "n_seeds": 614,
+    "eps": 0.03,
+    "grow_region_code_workers-1_ms": 611.9,
+    "n_grown": 1973,
+    "grow_copy_workers1_ms": 9.14,
+    "waves": 9,
+    "same_result": true,
+    "grow_copy_workers8_ms": 47.43,
+    "grow_copy_workers-1_ms": 660.03,
+    "dbscan_code_ms": 186.49,
+    "dbscan_n_in": 1973,
+    "dbscan_ball_count_workers1_ms": 3.05,
+    "nn_query_workers1_ms": 0.55,
+    "dbscan_ball_count_workers-1_ms": 127.35,
+    "nn_query_workers-1_ms": 124.69,
+    "587_single_point_ball_queries_workers1_ms": 4.84,
+    "587_single_point_ball_queries_workers-1_ms": 6.02,
+    "587_batched_ball_query_workers1_ms": 3.49
+   }
+  },
+  "micro_note": "same inputs, same result (`same_result`), only scipy cKDTree `workers` changed in a copy of grow_region inside outputs/verify/T38/micro_kdtree.py; cpu_count 256. quiet = after the foreign probe.py ended; contended = while it ran.",
+  "gpu_memory": {
+   "nvidia_smi_used_before_quiet_run_mib": 0,
+   "nvidia_smi_peak_during_quiet_run_mib": 1656,
+   "torch_max_allocated_mib": 1004.5,
+   "torch_max_reserved_mib": 1030.0,
+   "first_run_others_mib": "8,810-10,452 total used while another session's process (pid 981255) held 8,810 MiB",
+   "threshold_80pct_of_140GB_reached": false,
+   "note": "nvidia-smi --query-compute-apps does not list container pids; ours = total used when no other GPU process was present"
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t38/t38-scene.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t38/t38-scene.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t38/t38-stage-bars.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t38/t38-stage-bars.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t38/t38-function-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t38/t38-function-table.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t38/t38-input-sizes.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t38/t38-input-sizes.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t38/t38-pipeline-map.png",
+   "kind": "diagram",
+   "sidecar": "benchmark/ag3s/docs/figures/t38/t38-pipeline-map.json"
+  }
+ ],
+ "verdict": "기준선 일치 (legacy 14/15 · 15/15 · −29.031048280806342 ; cuRobo 10/15 · 15/15 · −9.171877401271193). replay 의 grasp state 75/75 · has_target 75/75 · n_clusters 74/75 가 기록과 같다. 해석·판정은 lead 와 사용자가 한다.",
+ "not_measured": [
+  "pi0.5 inference and attention extraction (stubbed with recorded outputs)",
+  "websocket / msgpack transfer between client and server",
+  "other 5 E3b runs (only E3b_ep1807_r2 replayed)",
+  "per-chunk numbers under the foreign probe.py load beyond pass S seq 69-75 and pass C (kept, flagged)",
+  "SQP iteration counts / per-frame clearances (wall-clock budget dependent, not a baseline)"
+ ]
+}

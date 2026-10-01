@@ -1,0 +1,649 @@
+{
+ "scene_reconstruction": {
+  "rows": [
+   {
+    "function": "benchmark/ag3s/runtime/multiview.py:344(fuse_observations)",
+    "ncalls": 7,
+    "primitive_calls": 7,
+    "tottime_ms": 0.03258757142857143,
+    "cumtime_ms": 515.1826395714286,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 1.0
+   },
+   {
+    "function": "benchmark/ag3s/runtime/multiview.py:356(<listcomp>)",
+    "ncalls": 7,
+    "primitive_calls": 7,
+    "tottime_ms": 0.008432,
+    "cumtime_ms": 488.4402702857143,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 1.0
+   },
+   {
+    "function": "benchmark/ag3s/runtime/multiview.py:95(process_observation)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 0.07402500000000001,
+    "cumtime_ms": 488.41533200000015,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/robot_filter.py:237(filter_robot_points)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 0.06132485714285714,
+    "cumtime_ms": 258.62215885714284,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/robot_filter.py:192(self_filter_mask)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 0.042448142857142865,
+    "cumtime_ms": 247.780592,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/robot_filter.py:119(robot_sphere_mask)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 155.31393457142858,
+    "cumtime_ms": 210.28291614285715,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/reconstruction.py:248(reconstruct)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 0.028206571428571425,
+    "cumtime_ms": 167.52842828571428,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   },
+   {
+    "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+    "ncalls": 14042,
+    "primitive_calls": 14042,
+    "tottime_ms": 116.89023514285714,
+    "cumtime_ms": 116.89023514285714,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 2006.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/reconstruction.py:146(voxel_downsample)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 15.123618857142858,
+    "cumtime_ms": 87.2716242857143,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/reconstruction.py:58(backproject)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 38.47806642857143,
+    "cumtime_ms": 80.15562857142858,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/attention_lifting.py:236(lift)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 0.043314142857142864,
+    "cumtime_ms": 62.084662,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/attention_lifting.py:168(to_pixel_map)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 0.02289242857142857,
+    "cumtime_ms": 48.40342685714286,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   }
+  ],
+  "self_time_by_device_ms_per_chunk": {
+   "CPU (python, benchmark)": 303.2602390000001,
+   "CPU (numpy)": 211.37048757142855,
+   "CPU (python/builtin)": 0.3529534285714285,
+   "harness wrapper": 0.18772528571428568
+  },
+  "files": [
+   "P_seq002_scene_reconstruction.prof",
+   "P_seq010_scene_reconstruction.prof",
+   "P_seq015_scene_reconstruction.prof",
+   "P_seq016_scene_reconstruction.prof",
+   "P_seq022_scene_reconstruction.prof",
+   "P_seq028_scene_reconstruction.prof",
+   "P_seq040_scene_reconstruction.prof"
+  ]
+ },
+ "support_surface": {
+  "rows": [
+   {
+    "function": "benchmark/ag3s/stages/support_surface.py:139(fit_support_surfaces)",
+    "ncalls": 7,
+    "primitive_calls": 7,
+    "tottime_ms": 1.0659895714285714,
+    "cumtime_ms": 66.833167,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 1.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/support_surface.py:71(fit_plane_ransac)",
+    "ncalls": 14,
+    "primitive_calls": 14,
+    "tottime_ms": 52.13448471428571,
+    "cumtime_ms": 65.06308071428572,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 2.0
+   },
+   {
+    "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+    "ncalls": 162,
+    "primitive_calls": 162,
+    "tottime_ms": 11.30628042857143,
+    "cumtime_ms": 11.30628042857143,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 23.142857142857142
+   },
+   {
+    "function": "<method 'sum' of 'numpy.ndarray' objects>",
+    "ncalls": 50,
+    "primitive_calls": 50,
+    "tottime_ms": 0.015817285714285718,
+    "cumtime_ms": 10.825561857142858,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 7.142857142857143
+   },
+   {
+    "function": "site:numpy/core/_methods.py:47(_sum)",
+    "ncalls": 50,
+    "primitive_calls": 50,
+    "tottime_ms": 0.007457714285714285,
+    "cumtime_ms": 10.809744571428572,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 7.142857142857143
+   },
+   {
+    "function": "benchmark/ag3s/stages/support_surface.py:51(_refit)",
+    "ncalls": 14,
+    "primitive_calls": 14,
+    "tottime_ms": 0.22275171428571433,
+    "cumtime_ms": 1.3744794285714286,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 2.0
+   },
+   {
+    "function": "site:numpy/linalg/linalg.py:1499(svd)",
+    "ncalls": 14,
+    "primitive_calls": 14,
+    "tottime_ms": 0.5897382857142858,
+    "cumtime_ms": 0.6255401428571429,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 2.0
+   },
+   {
+    "function": "<method 'mean' of 'numpy.ndarray' objects>",
+    "ncalls": 28,
+    "primitive_calls": 28,
+    "tottime_ms": 0.009276857142857144,
+    "cumtime_ms": 0.5944962857142857,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 4.0
+   },
+   {
+    "function": "site:numpy/core/_methods.py:101(_mean)",
+    "ncalls": 28,
+    "primitive_calls": 28,
+    "tottime_ms": 0.07246128571428571,
+    "cumtime_ms": 0.5852194285714286,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 4.0
+   },
+   {
+    "function": "site:numpy/lib/arraysetops.py:939(setdiff1d)",
+    "ncalls": 14,
+    "primitive_calls": 14,
+    "tottime_ms": 0.06427585714285715,
+    "cumtime_ms": 0.5254598571428571,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 2.0
+   },
+   {
+    "function": "site:numpy/lib/arraysetops.py:524(in1d)",
+    "ncalls": 14,
+    "primitive_calls": 14,
+    "tottime_ms": 0.3365612857142858,
+    "cumtime_ms": 0.46011114285714294,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 2.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/support_surface.py:42(_plane_from_points)",
+    "ncalls": 14,
+    "primitive_calls": 14,
+    "tottime_ms": 0.07113642857142857,
+    "cumtime_ms": 0.2695017142857143,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 2.0
+   }
+  ],
+  "self_time_by_device_ms_per_chunk": {
+   "CPU (python, benchmark)": 53.53468957142856,
+   "CPU (numpy)": 13.131699285714287,
+   "CPU (python/builtin)": 0.15112042857142854,
+   "harness wrapper": 0.039880571428571425
+  },
+  "files": [
+   "P_seq002_support_surface.prof",
+   "P_seq010_support_surface.prof",
+   "P_seq015_support_surface.prof",
+   "P_seq016_support_surface.prof",
+   "P_seq022_support_surface.prof",
+   "P_seq028_support_surface.prof",
+   "P_seq040_support_surface.prof"
+  ]
+ },
+ "target_grounding": {
+  "rows": [
+   {
+    "function": "benchmark/ag3s/stages/target_grounding.py:1308(ground_target)",
+    "ncalls": 7,
+    "primitive_calls": 7,
+    "tottime_ms": 0.16579928571428573,
+    "cumtime_ms": 1124.0832385714286,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 1.0
+   },
+   {
+    "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:945(start)",
+    "ncalls": 14966,
+    "primitive_calls": 14966,
+    "tottime_ms": 10.381625285714287,
+    "cumtime_ms": 1071.9444921428571,
+    "device": "CPU (threads: cKDTree workers=-1)",
+    "ncalls_per_chunk": 2138.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/target_grounding.py:212(grow_region)",
+    "ncalls": 7,
+    "primitive_calls": 7,
+    "tottime_ms": 8.109560857142858,
+    "cumtime_ms": 915.8080605714287,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 1.0
+   },
+   {
+    "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:611(wait)",
+    "ncalls": 14966,
+    "primitive_calls": 14966,
+    "tottime_ms": 9.862084714285714,
+    "cumtime_ms": 906.8702238571432,
+    "device": "CPU (threads: cKDTree workers=-1)",
+    "ncalls_per_chunk": 2138.0
+   },
+   {
+    "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:295(wait)",
+    "ncalls": 14963,
+    "primitive_calls": 14963,
+    "tottime_ms": 12.485992000000001,
+    "cumtime_ms": 892.7204028571431,
+    "device": "CPU (threads: cKDTree workers=-1)",
+    "ncalls_per_chunk": 2137.5714285714284
+   },
+   {
+    "function": "<method 'acquire' of '_thread.lock' objects>",
+    "ncalls": 74818,
+    "primitive_calls": 74818,
+    "tottime_ms": 873.8802132857145,
+    "cumtime_ms": 873.8802132857145,
+    "device": "CPU (threads: cKDTree workers=-1)",
+    "ncalls_per_chunk": 10688.285714285714
+   },
+   {
+    "function": "benchmark/ag3s/stages/target_grounding.py:143(dbscan)",
+    "ncalls": 7,
+    "primitive_calls": 7,
+    "tottime_ms": 3.428974142857143,
+    "cumtime_ms": 202.3142197142857,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 1.0
+   },
+   {
+    "function": "<built-in method _thread.start_new_thread>",
+    "ncalls": 14966,
+    "primitive_calls": 14966,
+    "tottime_ms": 154.00910385714286,
+    "cumtime_ms": 154.00910385714286,
+    "device": "CPU (threads: cKDTree workers=-1)",
+    "ncalls_per_chunk": 2138.0
+   },
+   {
+    "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:856(__init__)",
+    "ncalls": 14966,
+    "primitive_calls": 14966,
+    "tottime_ms": 4.962732142857143,
+    "cumtime_ms": 12.617048857142859,
+    "device": "CPU (threads: cKDTree workers=-1)",
+    "ncalls_per_chunk": 2138.0
+   },
+   {
+    "function": "<built-in method numpy.fromiter>",
+    "ncalls": 89,
+    "primitive_calls": 89,
+    "tottime_ms": 4.290948142857143,
+    "cumtime_ms": 8.064367857142857,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 12.714285714285714
+   },
+   {
+    "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:1087(join)",
+    "ncalls": 14966,
+    "primitive_calls": 14966,
+    "tottime_ms": 1.5067201428571428,
+    "cumtime_ms": 6.303941714285714,
+    "device": "CPU (threads: cKDTree workers=-1)",
+    "ncalls_per_chunk": 2138.0
+   },
+   {
+    "function": "/root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/threading.py:283(_acquire_restore)",
+    "ncalls": 14963,
+    "primitive_calls": 14963,
+    "tottime_ms": 3.6497885714285716,
+    "cumtime_ms": 5.590623,
+    "device": "CPU (threads: cKDTree workers=-1)",
+    "ncalls_per_chunk": 2137.5714285714284
+   }
+  ],
+  "self_time_by_device_ms_per_chunk": {
+   "CPU (threads: cKDTree workers=-1)": 1092.8547230000001,
+   "CPU (python, benchmark)": 16.833944000000002,
+   "CPU (numpy)": 10.496519571428577,
+   "CPU (python/builtin)": 2.571676571428572,
+   "CPU (scipy)": 1.224550285714286,
+   "harness wrapper": 0.10403014285714286
+  },
+  "files": [
+   "P_seq002_target_grounding.prof",
+   "P_seq010_target_grounding.prof",
+   "P_seq015_target_grounding.prof",
+   "P_seq016_target_grounding.prof",
+   "P_seq022_target_grounding.prof",
+   "P_seq028_target_grounding.prof",
+   "P_seq040_target_grounding.prof"
+  ]
+ },
+ "constraint_generation": {
+  "rows": [
+   {
+    "function": "benchmark/ag3s/runtime/pipeline.py:1933(_depth_cameras_from)",
+    "ncalls": 7,
+    "primitive_calls": 7,
+    "tottime_ms": 0.7371860000000001,
+    "cumtime_ms": 589.5812445714286,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 1.0
+   },
+   {
+    "function": "benchmark/ag3s/runtime/pipeline.py:1754(_robot_mask_for)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 2.877024285714286,
+    "cumtime_ms": 588.791198857143,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/robot_filter.py:119(robot_sphere_mask)",
+    "ncalls": 30,
+    "primitive_calls": 30,
+    "tottime_ms": 440.0552397142857,
+    "cumtime_ms": 529.1525897142858,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 4.285714285714286
+   },
+   {
+    "function": "benchmark/ag3s/stages/robot_filter.py:192(self_filter_mask)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 0.043387,
+    "cumtime_ms": 492.8516752857144,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   },
+   {
+    "function": "benchmark/ag3s/runtime/pipeline.py:1993(_build_esdf)",
+    "ncalls": 7,
+    "primitive_calls": 7,
+    "tottime_ms": 0.04609685714285715,
+    "cumtime_ms": 228.48137414285716,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 1.0
+   },
+   {
+    "function": "benchmark/ag3s/fields/curobo_builder.py:553(update)",
+    "ncalls": 7,
+    "primitive_calls": 7,
+    "tottime_ms": 0.11818000000000002,
+    "cumtime_ms": 213.36186914285716,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 1.0
+   },
+   {
+    "function": "benchmark/ag3s/fields/curobo_builder.py:1181(_labels_from_sites)",
+    "ncalls": 14,
+    "primitive_calls": 14,
+    "tottime_ms": 44.08317528571429,
+    "cumtime_ms": 103.50757757142857,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 2.0
+   },
+   {
+    "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+    "ncalls": 15534,
+    "primitive_calls": 15534,
+    "tottime_ms": 81.773229,
+    "cumtime_ms": 81.773229,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 2219.1428571428573
+   },
+   {
+    "function": "site:numpy/lib/arraysetops.py:138(unique)",
+    "ncalls": 22,
+    "primitive_calls": 22,
+    "tottime_ms": 0.02407885714285715,
+    "cumtime_ms": 65.22891,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 3.142857142857143
+   },
+   {
+    "function": "site:numpy/lib/arraysetops.py:323(_unique1d)",
+    "ncalls": 22,
+    "primitive_calls": 22,
+    "tottime_ms": 2.5637997142857145,
+    "cumtime_ms": 65.13358814285714,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 3.142857142857143
+   },
+   {
+    "function": "benchmark/ag3s/fields/curobo_builder.py:885(_build_tiers)",
+    "ncalls": 11,
+    "primitive_calls": 11,
+    "tottime_ms": 0.15870685714285715,
+    "cumtime_ms": 62.86222971428572,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 1.5714285714285714
+   },
+   {
+    "function": "<method 'sort' of 'numpy.ndarray' objects>",
+    "ncalls": 22,
+    "primitive_calls": 22,
+    "tottime_ms": 58.959076571428575,
+    "cumtime_ms": 58.959076571428575,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 3.142857142857143
+   }
+  ],
+  "self_time_by_device_ms_per_chunk": {
+   "CPU (python, benchmark)": 599.26148,
+   "CPU (numpy)": 193.60284285714286,
+   "GPU (cuRobo/warp)": 11.168383857142858,
+   "GPU (torch)": 9.091049571428572,
+   "CPU (python/builtin)": 4.439170571428572,
+   "CPU (scipy)": 1.6759945714285716,
+   "harness wrapper": 0.593584,
+   "CPU (threads: cKDTree workers=-1)": 0.025165714285714288
+  },
+  "files": [
+   "P_seq002_constraint_generation.prof",
+   "P_seq010_constraint_generation.prof",
+   "P_seq015_constraint_generation.prof",
+   "P_seq016_constraint_generation.prof",
+   "P_seq022_constraint_generation.prof",
+   "P_seq028_constraint_generation.prof",
+   "P_seq040_constraint_generation.prof"
+  ]
+ },
+ "whole_infer": {
+  "rows": [
+   {
+    "function": "<method 'acquire' of '_thread.lock' objects>",
+    "ncalls": 74786,
+    "primitive_calls": 74786,
+    "tottime_ms": 893.7467025714286,
+    "cumtime_ms": 893.7467025714286,
+    "device": "CPU (threads: cKDTree workers=-1)",
+    "ncalls_per_chunk": 10683.714285714286
+   },
+   {
+    "function": "benchmark/ag3s/stages/robot_filter.py:119(robot_sphere_mask)",
+    "ncalls": 51,
+    "primitive_calls": 51,
+    "tottime_ms": 611.7561614285714,
+    "cumtime_ms": 728.1106102857145,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 7.285714285714286
+   },
+   {
+    "function": "<built-in method _thread.start_new_thread>",
+    "ncalls": 14966,
+    "primitive_calls": 14966,
+    "tottime_ms": 198.43099500000002,
+    "cumtime_ms": 198.43099500000002,
+    "device": "CPU (threads: cKDTree workers=-1)",
+    "ncalls_per_chunk": 2138.0
+   },
+   {
+    "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+    "ncalls": 35176,
+    "primitive_calls": 35176,
+    "tottime_ms": 165.76250585714288,
+    "cumtime_ms": 165.76250585714288,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 5025.142857142857
+   },
+   {
+    "function": "benchmark/ag3s/stages/reconstruction.py:58(backproject)",
+    "ncalls": 42,
+    "primitive_calls": 42,
+    "tottime_ms": 99.12418942857144,
+    "cumtime_ms": 148.41743985714285,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 6.0
+   },
+   {
+    "function": "<method 'sort' of 'numpy.ndarray' objects>",
+    "ncalls": 406,
+    "primitive_calls": 406,
+    "tottime_ms": 66.72941342857143,
+    "cumtime_ms": 66.72941342857143,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 58.0
+   },
+   {
+    "function": "benchmark/ag3s/stages/support_surface.py:71(fit_plane_ransac)",
+    "ncalls": 14,
+    "primitive_calls": 14,
+    "tottime_ms": 65.86466671428572,
+    "cumtime_ms": 81.93997528571431,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 2.0
+   },
+   {
+    "function": "benchmark/ag3s/fields/curobo_builder.py:100(unpack_site_linear)",
+    "ncalls": 18,
+    "primitive_calls": 18,
+    "tottime_ms": 47.03358528571429,
+    "cumtime_ms": 50.48458328571428,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 2.5714285714285716
+   },
+   {
+    "function": "benchmark/ag3s/fields/curobo_builder.py:1181(_labels_from_sites)",
+    "ncalls": 14,
+    "primitive_calls": 14,
+    "tottime_ms": 43.707530142857145,
+    "cumtime_ms": 102.42329642857143,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 2.0
+   },
+   {
+    "function": "site:numpy/lib/function_base.py:972(gradient)",
+    "ncalls": 17,
+    "primitive_calls": 17,
+    "tottime_ms": 34.99307057142857,
+    "cumtime_ms": 35.04440142857143,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 2.4285714285714284
+   },
+   {
+    "function": "benchmark/ag3s/stages/attention_lifting.py:39(_resample)",
+    "ncalls": 21,
+    "primitive_calls": 21,
+    "tottime_ms": 34.647661285714285,
+    "cumtime_ms": 35.094750142857144,
+    "device": "CPU (python, benchmark)",
+    "ncalls_per_chunk": 3.0
+   },
+   {
+    "function": "site:numpy/core/shape_base.py:372(stack)",
+    "ncalls": 140,
+    "primitive_calls": 140,
+    "tottime_ms": 29.61662985714286,
+    "cumtime_ms": 29.723201,
+    "device": "CPU (numpy)",
+    "ncalls_per_chunk": 20.0
+   }
+  ],
+  "self_time_by_device_ms_per_chunk": {
+   "CPU (threads: cKDTree workers=-1)": 1165.9026731428569,
+   "CPU (python, benchmark)": 1041.0385069999993,
+   "CPU (numpy)": 442.0860165714285,
+   "CPU (python/builtin)": 16.799032999999994,
+   "CPU (scipy)": 12.416536428571424,
+   "GPU (cuRobo/warp)": 11.173517142857145,
+   "GPU (torch)": 9.268583714285716,
+   "CPU (casadi)": 5.146635714285715,
+   "CPU (osqp)": 2.365795285714286,
+   "harness wrapper": 0.9013815714285716
+  },
+  "files": [
+   "W_seq002_infer.prof",
+   "W_seq010_infer.prof",
+   "W_seq015_infer.prof",
+   "W_seq016_infer.prof",
+   "W_seq022_infer.prof",
+   "W_seq028_infer.prof",
+   "W_seq040_infer.prof"
+  ]
+ }
+}

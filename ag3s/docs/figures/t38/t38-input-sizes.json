@@ -1,0 +1,1678 @@
+{
+ "rows": [
+  {
+   "seq": 2,
+   "grasp": "searching",
+   "depth_px": 921600,
+   "backprojected": 505824,
+   "voxelised": 138466,
+   "per_camera": {
+    "head": {
+     "n_raw": 139044,
+     "n_voxel": 57575,
+     "n_final": 57575,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 5845
+    },
+    "left_wrist": {
+     "n_raw": 181766,
+     "n_voxel": 38633,
+     "n_final": 38633,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 164
+    },
+    "right_wrist": {
+     "n_raw": 185014,
+     "n_voxel": 42258,
+     "n_final": 42258,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 163
+    }
+   },
+   "self_filtered": 6172,
+   "fused": 35876,
+   "support_points": 32202,
+   "seeds": 149,
+   "grow_region": {
+    "n_in": 3674,
+    "n_seeds": 149,
+    "n_grown": 2083,
+    "hash_in": "e0fedeb61aeeafb8/(3674, 3)/float64"
+   },
+   "dbscan": [
+    {
+     "n_in": 2083,
+     "n_labels": 3,
+     "hash_in": "c5b3d686e318980d/(2083, 3)/float64"
+    }
+   ],
+   "clusters": 3,
+   "kd_builds": 24,
+   "kd_build_points": 653692,
+   "kd_builds_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 3,
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+    "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+   },
+   "kd_build_sizes_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+     57575,
+     38633,
+     42258
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+     3674
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+     2083
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+     1986
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": [
+     111
+    ],
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+     108
+    ],
+    "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": [
+     111
+    ],
+    "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": [
+     108
+    ],
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+     139044,
+     181766,
+     185014
+    ],
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+     111,
+     111
+    ],
+    "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": [
+     111,
+     111,
+     111,
+     111,
+     111,
+     111,
+     111,
+     111,
+     111
+    ]
+   },
+   "kd_queries_by_site": {
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1761,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 12,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+    "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+    "query_pairs benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1761,
+    "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+    "query benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+   },
+   "build_tiers_calls": 2,
+   "esdf_tiers": [
+    {
+     "name": "coarse",
+     "voxel_size": 0.02,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      -0.820000011920929,
+      -1.27,
+      -0.46999998807907106
+     ]
+    },
+    {
+     "name": "fine",
+     "voxel_size": 0.005,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      0.15666621446609497,
+      -0.05438516020774842,
+      0.6991685581207274
+     ]
+    }
+   ],
+   "tsdf_active_blocks": 3149,
+   "h2d_bytes": 7474740,
+   "d2h_bytes": 50331792,
+   "copies": {
+    "H2D benchmark/ag3s/fields/curobo_builder.py:815 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 7372800
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:817 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:819 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 384
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:813 _integrate item()": {
+     "n": 6,
+     "bytes": 24
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:914 _build_tiers tensor": {
+     "n": 3,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1063 _origin_of cpu()": {
+     "n": 3,
+     "bytes": 36
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers item()": {
+     "n": 3,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 36
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:941 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 25165824
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:942 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 25165824
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:916 _build_tiers as_tensor": {
+     "n": 2,
+     "bytes": 24
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:1176 _clear_seeds as_tensor": {
+     "n": 1,
+     "bytes": 101304
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1177 _clear_seeds item()": {
+     "n": 1,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1245 _observation_coverage item()": {
+     "n": 6,
+     "bytes": 28
+    }
+   },
+   "kd_same_input_built_more_than_once": {
+    "8796c2b51eab8c52/(111, 3)/float64": [
+     "benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]",
+     "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]",
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]"
+    ],
+    "bcdf235542415fe9/(108, 3)/float64": [
+     "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]",
+     "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]"
+    ]
+   }
+  },
+  {
+   "seq": 10,
+   "grasp": "latched",
+   "depth_px": 921600,
+   "backprojected": 523212,
+   "voxelised": 146055,
+   "per_camera": {
+    "head": {
+     "n_raw": 143161,
+     "n_voxel": 60172,
+     "n_final": 60172,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 6224
+    },
+    "left_wrist": {
+     "n_raw": 193712,
+     "n_voxel": 43478,
+     "n_final": 43478,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 166
+    },
+    "right_wrist": {
+     "n_raw": 186339,
+     "n_voxel": 42405,
+     "n_final": 42405,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 161
+    }
+   },
+   "self_filtered": 6551,
+   "fused": 39634,
+   "support_points": 35963,
+   "seeds": 124,
+   "grow_region": {
+    "n_in": 3671,
+    "n_seeds": 124,
+    "n_grown": 2000,
+    "hash_in": "43fef4f0fab1b68a/(3671, 3)/float64"
+   },
+   "dbscan": [
+    {
+     "n_in": 2000,
+     "n_labels": 2,
+     "hash_in": "a6867eecad1640d4/(2000, 3)/float64"
+    }
+   ],
+   "clusters": 2,
+   "kd_builds": 23,
+   "kd_build_points": 678417,
+   "kd_builds_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 3,
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+    "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+   },
+   "kd_build_sizes_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+     60172,
+     43478,
+     42405
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+     3671
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+     2000
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+     1826
+    ],
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+     119
+    ],
+    "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": [
+     117
+    ],
+    "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": [
+     108
+    ],
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+     143161,
+     193712,
+     186339
+    ],
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+     119,
+     119
+    ],
+    "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": [
+     119,
+     119,
+     119,
+     119,
+     119,
+     119,
+     119,
+     119,
+     119
+    ]
+   },
+   "kd_queries_by_site": {
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1761,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 21,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+    "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1761,
+    "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+    "query benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+   },
+   "build_tiers_calls": 2,
+   "esdf_tiers": [
+    {
+     "name": "coarse",
+     "voxel_size": 0.02,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      -0.820000011920929,
+      -1.27,
+      -0.46999998807907106
+     ]
+    },
+    {
+     "name": "fine",
+     "voxel_size": 0.005,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      0.22473442077636718,
+      0.00020405173301696116,
+      0.6740132522583007
+     ]
+    }
+   ],
+   "tsdf_active_blocks": 3329,
+   "h2d_bytes": 7476036,
+   "d2h_bytes": 50331792,
+   "copies": {
+    "H2D benchmark/ag3s/fields/curobo_builder.py:815 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 7372800
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:817 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:819 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 384
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:813 _integrate item()": {
+     "n": 6,
+     "bytes": 24
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:914 _build_tiers tensor": {
+     "n": 3,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1063 _origin_of cpu()": {
+     "n": 3,
+     "bytes": 36
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers item()": {
+     "n": 3,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 36
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:941 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 25165824
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:942 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 25165824
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:916 _build_tiers as_tensor": {
+     "n": 2,
+     "bytes": 24
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:1176 _clear_seeds as_tensor": {
+     "n": 1,
+     "bytes": 102600
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1177 _clear_seeds item()": {
+     "n": 1,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1245 _observation_coverage item()": {
+     "n": 6,
+     "bytes": 28
+    }
+   },
+   "kd_same_input_built_more_than_once": {
+    "dc2cf194bf27e59a/(119, 3)/float64": [
+     "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]",
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]"
+    ]
+   }
+  },
+  {
+   "seq": 15,
+   "grasp": "closing",
+   "depth_px": 921600,
+   "backprojected": 556028,
+   "voxelised": 111506,
+   "per_camera": {
+    "head": {
+     "n_raw": 132776,
+     "n_voxel": 55528,
+     "n_final": 55528,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 6005
+    },
+    "left_wrist": {
+     "n_raw": 235105,
+     "n_voxel": 13508,
+     "n_final": 13508,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 173
+    },
+    "right_wrist": {
+     "n_raw": 188147,
+     "n_voxel": 42470,
+     "n_final": 42470,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 150
+    }
+   },
+   "self_filtered": 6328,
+   "fused": 27713,
+   "support_points": 24177,
+   "seeds": 167,
+   "grow_region": {
+    "n_in": 3536,
+    "n_seeds": 167,
+    "n_grown": 2048,
+    "hash_in": "cb343c042b29c740/(3536, 3)/float64"
+   },
+   "dbscan": [
+    {
+     "n_in": 2048,
+     "n_labels": 4,
+     "hash_in": "0fd998b3c4ba295a/(2048, 3)/float64"
+    }
+   ],
+   "clusters": 4,
+   "kd_builds": 21,
+   "kd_build_points": 675620,
+   "kd_builds_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 3,
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+    "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+   },
+   "kd_build_sizes_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+     55528,
+     13508,
+     42470
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+     3536
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+     2048
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+     1837
+    ],
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+     115
+    ],
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+     132776,
+     235105,
+     188147
+    ],
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+     50,
+     50
+    ],
+    "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": [
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50
+    ]
+   },
+   "kd_queries_by_site": {
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1761,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 15,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+    "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1761,
+    "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+    "query benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+   },
+   "build_tiers_calls": 2,
+   "esdf_tiers": [
+    {
+     "name": "coarse",
+     "voxel_size": 0.02,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      -0.820000011920929,
+      -1.27,
+      -0.46999998807907106
+     ]
+    },
+    {
+     "name": "fine",
+     "voxel_size": 0.005,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      0.222480947971344,
+      -0.0027407455444336004,
+      0.5959325385093688
+     ]
+    }
+   ],
+   "tsdf_active_blocks": 3371,
+   "h2d_bytes": 7459068,
+   "d2h_bytes": 50331792,
+   "copies": {
+    "H2D benchmark/ag3s/fields/curobo_builder.py:815 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 7372800
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:817 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:819 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 384
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:813 _integrate item()": {
+     "n": 6,
+     "bytes": 24
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:914 _build_tiers tensor": {
+     "n": 3,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1063 _origin_of cpu()": {
+     "n": 3,
+     "bytes": 36
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers item()": {
+     "n": 3,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 36
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:941 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 25165824
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:942 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 25165824
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:916 _build_tiers as_tensor": {
+     "n": 2,
+     "bytes": 24
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:1176 _clear_seeds as_tensor": {
+     "n": 1,
+     "bytes": 85632
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1177 _clear_seeds item()": {
+     "n": 1,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1245 _observation_coverage item()": {
+     "n": 6,
+     "bytes": 28
+    }
+   },
+   "kd_same_input_built_more_than_once": {
+    "340b81f947f6eff5/(50, 3)/float64": [
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]"
+    ]
+   }
+  },
+  {
+   "seq": 16,
+   "grasp": "held",
+   "depth_px": 921600,
+   "backprojected": 554406,
+   "voxelised": 112789,
+   "per_camera": {
+    "head": {
+     "n_raw": 133234,
+     "n_voxel": 55706,
+     "n_final": 55706,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 6035
+    },
+    "left_wrist": {
+     "n_raw": 232823,
+     "n_voxel": 14576,
+     "n_final": 14576,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 367
+    },
+    "right_wrist": {
+     "n_raw": 188349,
+     "n_voxel": 42507,
+     "n_final": 42507,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 140
+    }
+   },
+   "self_filtered": 6542,
+   "fused": 28077,
+   "support_points": 24564,
+   "seeds": 295,
+   "grow_region": {
+    "n_in": 3513,
+    "n_seeds": 295,
+    "n_grown": 2022,
+    "hash_in": "0d7f3412e113d65b/(3513, 3)/float64"
+   },
+   "dbscan": [
+    {
+     "n_in": 2022,
+     "n_labels": 2,
+     "hash_in": "982b1e4e8eb348a8/(2022, 3)/float64"
+    }
+   ],
+   "clusters": 2,
+   "kd_builds": 16,
+   "kd_build_points": 1229087,
+   "kd_builds_by_site": {
+    "benchmark/ag3s/constraints/attached.py:253 trim_outliers [(outside stages)]": 2,
+    "benchmark/ag3s/robot_models/held_object.py:235 _clusters [(outside stages)]": 1,
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 6
+   },
+   "kd_build_sizes_by_site": {
+    "benchmark/ag3s/constraints/attached.py:253 trim_outliers [(outside stages)]": [
+     50,
+     29
+    ],
+    "benchmark/ag3s/robot_models/held_object.py:235 _clusters [(outside stages)]": [
+     7
+    ],
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+     55706,
+     14576,
+     42507
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+     3513
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+     2022
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+     1815
+    ],
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+     50
+    ],
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+     133234,
+     133234,
+     232823,
+     232823,
+     188349,
+     188349
+    ]
+   },
+   "kd_queries_by_site": {
+    "query_ball_point benchmark/ag3s/constraints/attached.py:253 trim_outliers [(outside stages)]": 2,
+    "query_pairs benchmark/ag3s/robot_models/held_object.py:235 _clusters [(outside stages)]": 1,
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1767,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 13,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+    "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1773
+   },
+   "build_tiers_calls": 1,
+   "esdf_tiers": [
+    {
+     "name": "coarse",
+     "voxel_size": 0.02,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      -0.820000011920929,
+      -1.27,
+      -0.46999998807907106
+     ]
+    },
+    {
+     "name": "fine",
+     "voxel_size": 0.005,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      0.23026769876480102,
+      -0.002190982103347785,
+      0.6401085805892943
+     ]
+    }
+   ],
+   "tsdf_active_blocks": 3372,
+   "h2d_bytes": 7455980,
+   "d2h_bytes": 36913324,
+   "copies": {
+    "H2D benchmark/ag3s/fields/curobo_builder.py:815 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 7372800
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:817 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:819 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 384
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:813 _integrate item()": {
+     "n": 6,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1016 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1022 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1023 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 2519052
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1024 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 839684
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:1051 _free_tsdf_points as_tensor": {
+     "n": 2,
+     "bytes": 41280
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:1052 _free_tsdf_points as_tensor": {
+     "n": 2,
+     "bytes": 41280
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1058 _free_tsdf_points item()": {
+     "n": 2,
+     "bytes": 16
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:914 _build_tiers tensor": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1063 _origin_of cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers item()": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:941 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 16777216
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:942 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 16777216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:916 _build_tiers as_tensor": {
+     "n": 1,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1245 _observation_coverage item()": {
+     "n": 6,
+     "bytes": 28
+    }
+   },
+   "kd_same_input_built_more_than_once": {
+    "340b81f947f6eff5/(50, 3)/float64": [
+     "benchmark/ag3s/constraints/attached.py:253 trim_outliers [(outside stages)]",
+     "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]"
+    ],
+    "48ca15f1b78eca18/(133234, 3)/float64": [
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+    ],
+    "42679cba30341bc0/(232823, 3)/float64": [
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+    ],
+    "d8ad8944e2176b54/(188349, 3)/float64": [
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+    ]
+   }
+  },
+  {
+   "seq": 22,
+   "grasp": "held",
+   "depth_px": 921600,
+   "backprojected": 515318,
+   "voxelised": 118957,
+   "per_camera": {
+    "head": {
+     "n_raw": 142231,
+     "n_voxel": 46465,
+     "n_final": 46465,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 6806
+    },
+    "left_wrist": {
+     "n_raw": 181127,
+     "n_voxel": 29855,
+     "n_final": 29855,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 353
+    },
+    "right_wrist": {
+     "n_raw": 191960,
+     "n_voxel": 42637,
+     "n_final": 42637,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 147
+    }
+   },
+   "self_filtered": 7306,
+   "fused": 30784,
+   "support_points": 27854,
+   "seeds": 623,
+   "grow_region": {
+    "n_in": 2930,
+    "n_seeds": 623,
+    "n_grown": 1979,
+    "hash_in": "4fe8a7be4fed89cf/(2930, 3)/float64"
+   },
+   "dbscan": [
+    {
+     "n_in": 1979,
+     "n_labels": 2,
+     "hash_in": "46d7c9bdc99cdca7/(1979, 3)/float64"
+    }
+   ],
+   "clusters": 2,
+   "kd_builds": 17,
+   "kd_build_points": 1163550,
+   "kd_builds_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": 1,
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 6,
+    "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": 1,
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2
+   },
+   "kd_build_sizes_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+     46465,
+     29855,
+     42637
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+     2930
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+     1979
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+     1838
+    ],
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+     50
+    ],
+    "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": [
+     1790
+    ],
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+     142231,
+     142231,
+     181127,
+     181127,
+     191960,
+     191960
+    ],
+    "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": [
+     1790
+    ],
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+     1790,
+     1790
+    ]
+   },
+   "kd_queries_by_site": {
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1767,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 9,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+    "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [target_grounding]": 2,
+    "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [(outside stages)]": 1,
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1773,
+    "query benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": 1,
+    "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2
+   },
+   "build_tiers_calls": 1,
+   "esdf_tiers": [
+    {
+     "name": "coarse",
+     "voxel_size": 0.02,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      -0.820000011920929,
+      -1.27,
+      -0.46999998807907106
+     ]
+    },
+    {
+     "name": "fine",
+     "voxel_size": 0.005,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      0.1595439863204956,
+      -0.2538406226038933,
+      0.7468240213394164
+     ]
+    }
+   ],
+   "tsdf_active_blocks": 3507,
+   "h2d_bytes": 7373420,
+   "d2h_bytes": 36913308,
+   "copies": {
+    "H2D benchmark/ag3s/fields/curobo_builder.py:815 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 7372800
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:817 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:819 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 384
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:813 _integrate item()": {
+     "n": 6,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1016 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1022 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1023 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 2519052
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1024 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 839684
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:914 _build_tiers tensor": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1063 _origin_of cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers item()": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:941 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 16777216
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:942 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 16777216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:916 _build_tiers as_tensor": {
+     "n": 1,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1245 _observation_coverage item()": {
+     "n": 6,
+     "bytes": 28
+    }
+   },
+   "kd_same_input_built_more_than_once": {
+    "af6a50354dd201be/(1790, 3)/float64": [
+     "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]",
+     "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]",
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]"
+    ],
+    "6c45956a9cd89242/(142231, 3)/float64": [
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+    ],
+    "5923d37e3a88c8ab/(181127, 3)/float64": [
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+    ],
+    "929673fedeef6ebc/(191960, 3)/float64": [
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+    ]
+   }
+  },
+  {
+   "seq": 28,
+   "grasp": "held",
+   "depth_px": 921600,
+   "backprojected": 513941,
+   "voxelised": 98817,
+   "per_camera": {
+    "head": {
+     "n_raw": 124937,
+     "n_voxel": 43633,
+     "n_final": 43633,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 5697
+    },
+    "left_wrist": {
+     "n_raw": 196810,
+     "n_voxel": 12207,
+     "n_final": 12207,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 172
+    },
+    "right_wrist": {
+     "n_raw": 192194,
+     "n_voxel": 42977,
+     "n_final": 42977,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 221
+    }
+   },
+   "self_filtered": 6090,
+   "fused": 23071,
+   "support_points": 20608,
+   "seeds": 576,
+   "grow_region": {
+    "n_in": 2463,
+    "n_seeds": 576,
+    "n_grown": 1678,
+    "hash_in": "955e94ab3c374287/(2463, 3)/float64"
+   },
+   "dbscan": [
+    {
+     "n_in": 1678,
+     "n_labels": 4,
+     "hash_in": "9791e3adb9a7973f/(1678, 3)/float64"
+    }
+   ],
+   "clusters": 4,
+   "kd_builds": 17,
+   "kd_build_points": 1137423,
+   "kd_builds_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": 1,
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 6,
+    "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": 1,
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2
+   },
+   "kd_build_sizes_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+     43633,
+     12207,
+     42977
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+     2463
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+     1678
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+     1501
+    ],
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+     50
+    ],
+    "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": [
+     1258
+    ],
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+     124937,
+     124937,
+     196810,
+     196810,
+     192194,
+     192194
+    ],
+    "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": [
+     1258
+    ],
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+     1258,
+     1258
+    ]
+   },
+   "kd_queries_by_site": {
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1767,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 8,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+    "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [target_grounding]": 4,
+    "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [(outside stages)]": 1,
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1773,
+    "query benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]": 1,
+    "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2
+   },
+   "build_tiers_calls": 1,
+   "esdf_tiers": [
+    {
+     "name": "coarse",
+     "voxel_size": 0.02,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      -0.820000011920929,
+      -1.27,
+      -0.46999998807907106
+     ]
+    },
+    {
+     "name": "fine",
+     "voxel_size": 0.005,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      0.15414133191108703,
+      -0.24353913694620133,
+      0.6718191456794738
+     ]
+    }
+   ],
+   "tsdf_active_blocks": 3609,
+   "h2d_bytes": 7413148,
+   "d2h_bytes": 36913324,
+   "copies": {
+    "H2D benchmark/ag3s/fields/curobo_builder.py:815 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 7372800
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:817 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:819 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 384
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:813 _integrate item()": {
+     "n": 6,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1016 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1022 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1023 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 2519052
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1024 _free_tsdf_points cpu()": {
+     "n": 2,
+     "bytes": 839684
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:1051 _free_tsdf_points as_tensor": {
+     "n": 2,
+     "bytes": 19864
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:1052 _free_tsdf_points as_tensor": {
+     "n": 2,
+     "bytes": 19864
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1058 _free_tsdf_points item()": {
+     "n": 2,
+     "bytes": 16
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:914 _build_tiers tensor": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1063 _origin_of cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers item()": {
+     "n": 2,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 24
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:941 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 16777216
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:942 _build_tiers cpu()": {
+     "n": 2,
+     "bytes": 16777216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:916 _build_tiers as_tensor": {
+     "n": 1,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1245 _observation_coverage item()": {
+     "n": 6,
+     "bytes": 28
+    }
+   },
+   "kd_same_input_built_more_than_once": {
+    "c27058cec04a93e7/(1258, 3)/float64": [
+     "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]",
+     "benchmark/ag3s/runtime/pipeline.py:2244 _held_free_points [esdf]",
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]"
+    ],
+    "227b226777838ac9/(124937, 3)/float64": [
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+    ],
+    "0bdf42cc462b70b8/(196810, 3)/float64": [
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+    ],
+    "cfa421a1da3f7dac/(192194, 3)/float64": [
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]",
+     "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]"
+    ]
+   }
+  },
+  {
+   "seq": 40,
+   "grasp": "placed",
+   "depth_px": 921600,
+   "backprojected": 495969,
+   "voxelised": 139905,
+   "per_camera": {
+    "head": {
+     "n_raw": 143081,
+     "n_voxel": 59321,
+     "n_final": 59321,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 5929
+    },
+    "left_wrist": {
+     "n_raw": 161201,
+     "n_voxel": 37482,
+     "n_final": 37482,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 156
+    },
+    "right_wrist": {
+     "n_raw": 191687,
+     "n_voxel": 43102,
+     "n_final": 43102,
+     "final_voxel_size": 0.005,
+     "capped": false,
+     "n_self_filtered": 145
+    }
+   },
+   "self_filtered": 6230,
+   "fused": 37565,
+   "support_points": 33978,
+   "seeds": 284,
+   "grow_region": {
+    "n_in": 3587,
+    "n_seeds": 284,
+    "n_grown": 2106,
+    "hash_in": "f881ec6ffa03c565/(3587, 3)/float64"
+   },
+   "dbscan": [
+    {
+     "n_in": 2106,
+     "n_labels": 3,
+     "hash_in": "c8adf237d40767d0/(2106, 3)/float64"
+    }
+   ],
+   "clusters": 4,
+   "kd_builds": 25,
+   "kd_build_points": 651040,
+   "kd_builds_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": 3,
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": 1,
+    "benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+    "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": 3,
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+    "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+   },
+   "kd_build_sizes_by_site": {
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [scene_reconstruction]": [
+     59321,
+     37482,
+     43102
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:236 grow_region [target_grounding]": [
+     3587
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:164 dbscan [target_grounding]": [
+     2106
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:171 dbscan [target_grounding]": [
+     1988
+    ],
+    "benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": [
+     182
+    ],
+    "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": [
+     138
+    ],
+    "benchmark/ag3s/stages/admissibility.py:189 tree [target_grounding]": [
+     1801
+    ],
+    "benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": [
+     106
+    ],
+    "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": [
+     138
+    ],
+    "benchmark/ag3s/stages/robot_filter.py:168 robot_sphere_mask [constraint_generation]": [
+     143081,
+     161201,
+     191687
+    ],
+    "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": [
+     1939,
+     1939
+    ],
+    "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": [
+     138,
+     138,
+     138,
+     138,
+     138,
+     138,
+     138,
+     138,
+     138
+    ]
+   },
+   "kd_queries_by_site": {
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [scene_reconstruction]": 1761,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:239 grow_region [target_grounding]": 11,
+    "query_ball_point benchmark/ag3s/stages/target_grounding.py:165 dbscan [target_grounding]": 1,
+    "query_pairs benchmark/ag3s/stages/target_grounding.py:172 dbscan [target_grounding]": 1,
+    "query benchmark/ag3s/stages/target_grounding.py:184 dbscan [target_grounding]": 1,
+    "query_pairs benchmark/ag3s/stages/target_grounding.py:206 connected_components_3d [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [target_grounding]": 4,
+    "query benchmark/ag3s/stages/admissibility.py:559 anchor_cover [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]": 1,
+    "query benchmark/ag3s/stages/admissibility.py:231 destination_overlap [(outside stages)]": 1,
+    "query_ball_point benchmark/ag3s/stages/robot_filter.py:172 robot_sphere_mask [constraint_generation]": 1761,
+    "query benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]": 2,
+    "query benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]": 9
+   },
+   "build_tiers_calls": 2,
+   "esdf_tiers": [
+    {
+     "name": "coarse",
+     "voxel_size": 0.02,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      -0.820000011920929,
+      -1.27,
+      -0.46999998807907106
+     ]
+    },
+    {
+     "name": "fine",
+     "voxel_size": 0.005,
+     "shape": [
+      128,
+      128,
+      128
+     ],
+     "origin": [
+      0.1681712520122528,
+      -0.18015748739242554,
+      0.7164515209197997
+     ]
+    }
+   ],
+   "tsdf_active_blocks": 3653,
+   "h2d_bytes": 7485972,
+   "d2h_bytes": 50331792,
+   "copies": {
+    "H2D benchmark/ag3s/fields/curobo_builder.py:815 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 7372800
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:817 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 216
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:819 _integrate as_tensor": {
+     "n": 6,
+     "bytes": 384
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:813 _integrate item()": {
+     "n": 6,
+     "bytes": 24
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:914 _build_tiers tensor": {
+     "n": 3,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1063 _origin_of cpu()": {
+     "n": 3,
+     "bytes": 36
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers item()": {
+     "n": 3,
+     "bytes": 12
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:938 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 36
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:941 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 25165824
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:942 _build_tiers cpu()": {
+     "n": 3,
+     "bytes": 25165824
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:916 _build_tiers as_tensor": {
+     "n": 2,
+     "bytes": 24
+    },
+    "H2D benchmark/ag3s/fields/curobo_builder.py:1176 _clear_seeds as_tensor": {
+     "n": 1,
+     "bytes": 112536
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1177 _clear_seeds item()": {
+     "n": 1,
+     "bytes": 8
+    },
+    "D2H benchmark/ag3s/fields/curobo_builder.py:1245 _observation_coverage item()": {
+     "n": 6,
+     "bytes": 28
+    }
+   },
+   "kd_same_input_built_more_than_once": {
+    "d08686bdb59271fe/(138, 3)/float64": [
+     "benchmark/ag3s/stages/admissibility.py:599 gap [target_grounding]",
+     "benchmark/ag3s/stages/admissibility.py:560 anchor_cover [target_grounding]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]",
+     "benchmark/trajopt/linearize.py:736 _esdf_clearance [(outside stages)]"
+    ],
+    "5c8a71bfbee20144/(1939, 3)/float64": [
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]",
+     "benchmark/ag3s/fields/curobo_builder.py:1215 _labels_from_sites [esdf]"
+    ]
+   }
+  }
+ ],
+ "header": [
+  "seq",
+  "grasp",
+  "depth px\n(3 cams)",
+  "back-proj.\npoints",
+  "voxelised\n(5 mm)",
+  "self-filt.\nremoved",
+  "fused\n(fusion vox.)",
+  "support\npoints",
+  "seeds",
+  "grow in ->\ngrown",
+  "DBSCAN\ncalls / in",
+  "clusters",
+  "KD builds\n(points)",
+  "KD queries",
+  "ESDF tiers\n(voxels)",
+  "TSDF\nblocks",
+  "H2D / D2H\nMB"
+ ]
+}
