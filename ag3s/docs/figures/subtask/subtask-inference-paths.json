@@ -1,0 +1,29 @@
+{
+ "paper_path": [
+  "images+instruction",
+  "Gemma prefix forward",
+  "AR decode subtask text",
+  "action expert attends prefix+subtask",
+  "actions"
+ ],
+ "ours_path": [
+  "images+'Task: {instr}, State: {s};\\nAction: ' (tokenizer.py:28)",
+  "Gemma forward once -> KV cache, prefix hidden discarded (pi0.py:245)",
+  "no text generation",
+  "action expert 10 denoise steps attends KV (pi0.py:277)",
+  "actions"
+ ],
+ "training_loss": "action flow-matching MSE only (pi0.py:216)",
+ "ag3s_attention": {
+  "layer": 8,
+  "head": 2,
+  "query": "action tokens",
+  "key": "image tokens",
+  "denoise_step": 0,
+  "agg": "last"
+ },
+ "measured_a": {
+  "served_held_action_token_frames": "30/36",
+  "ep1807_auroc_held_vs_reach": 0.5
+ }
+}
