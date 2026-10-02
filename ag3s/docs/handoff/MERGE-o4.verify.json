@@ -1,0 +1,172 @@
+{
+ "step": "MERGE-o4",
+ "date": "2026-10-02",
+ "runs": [
+  {
+   "id": "legacy",
+   "command": "cwd /mnt/dev/work; XLA_PYTHON_CLIENT_PREALLOCATE=false MUJOCO_GL=osmesa AG3S_ASSET_ROOT=/mnt/dev/work/src AG3S_CLIENT_SCRIPT=/mnt/dev/work/pi05_TO_hybrid/rby1_bringup/pi05_infer.py PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-openpi-live/bin/python outputs/verify/MERGE-o4/wrap.py <imports.json> -- --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/MERGE-o4/legacy.json",
+   "stdout_log": "outputs/verify/MERGE-o4/legacy.log",
+   "imports": "outputs/verify/MERGE-o4/legacy.imports.json",
+   "gpu_samples": "outputs/verify/MERGE-o4/legacy.gpu_samples.txt",
+   "pre_post": [
+    "outputs/verify/MERGE-o4/legacy.pre.txt",
+    "outputs/verify/MERGE-o4/legacy.post.txt"
+   ]
+  },
+  {
+   "id": "curobo",
+   "command": "cwd /mnt/dev/work; XLA_PYTHON_CLIENT_PREALLOCATE=false MUJOCO_GL=osmesa AG3S_ASSET_ROOT=/mnt/dev/work/src AG3S_CLIENT_SCRIPT=/mnt/dev/work/pi05_TO_hybrid/rby1_bringup/pi05_infer.py PYTHONPATH=/mnt/dev/work /mnt/dev/work/.venv-openpi-live/bin/python outputs/verify/MERGE-o4/wrap.py <imports.json> -- --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms --esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/MERGE-o4/curobo.json",
+   "stdout_log": "outputs/verify/MERGE-o4/curobo.log",
+   "imports": "outputs/verify/MERGE-o4/curobo.imports.json",
+   "gpu_samples": "outputs/verify/MERGE-o4/curobo.gpu_samples.txt",
+   "pre_post": [
+    "outputs/verify/MERGE-o4/curobo.pre.txt",
+    "outputs/verify/MERGE-o4/curobo.post.txt"
+   ]
+  }
+ ],
+ "scripts": [
+  "outputs/verify/MERGE-o4/run.sh",
+  "outputs/verify/MERGE-o4/wrap.py",
+  "outputs/verify/MERGE-o4/summarize.py",
+  "outputs/verify/MERGE-o4/make_table.py"
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "checkout": "/mnt/dev/work/benchmark",
+  "head": "5110dbc",
+  "merge_head": "5c72d37",
+  "state": "merge in progress, uncommitted (All conflicts fixed but you are still merging)",
+  "staged_files": [
+   "ag3s/config.py",
+   "ag3s/experiments/sources/constraint_record.py",
+   "ag3s/fields/curobo_builder.py",
+   "ag3s/fields/device_field.py",
+   "ag3s/fields/esdf.py",
+   "ag3s/runtime/multiview.py",
+   "ag3s/runtime/pipeline.py",
+   "ag3s/stages/attention_lifting.py",
+   "ag3s/stages/device_recon.py",
+   "ag3s/stages/reconstruction.py",
+   "ag3s/stages/robot_filter.py",
+   "ag3s/stages/support_surface.py",
+   "ag3s/stages/target_grounding.py",
+   "trajopt/serve_safe.py"
+  ],
+  "dirty_unstaged": [
+   "ag3s/docs/handoff/SESSION_STATE.md"
+  ],
+  "benchmark.__file__": "/mnt/dev/work/benchmark/__init__.py"
+ },
+ "numbers": {
+  "legacy": {
+   "frames": 15,
+   "violated_start": 14,
+   "has_target": 15,
+   "frame0_clearance_before_mm": -29.031048280806342,
+   "clearance_before_15_sha1_12": "40798fb0a4d2",
+   "per_frame_clearance_before_equal_to_T38_V3": 15,
+   "esdf_backend_frames": [
+    "legacy"
+   ],
+   "wall_s": 56.3,
+   "gpu_total_used_MiB_max": 54288,
+   "gpu_total_used_MiB_before": 53338,
+   "gpu_new_process_MiB_max": 950,
+   "gpu_samples_1s": 42,
+   "imported_benchmark_modules": 53,
+   "imported_benchmark_modules_outside_/mnt/dev/work/benchmark": 0,
+   "device_modules_loaded": [
+    "benchmark.ag3s.stages.device_recon"
+   ],
+   "count_line_not_baseline": "전체 구  : 위반으로 시작 14/15  해소 14  개선 15 | 상태: feasible 15"
+  },
+  "curobo": {
+   "frames": 15,
+   "violated_start": 10,
+   "has_target": 15,
+   "frame0_clearance_before_mm": -9.171877401271193,
+   "clearance_before_15_sha1_12": "fe73bd7a6ba6",
+   "per_frame_clearance_before_equal_to_T38_V3": 15,
+   "esdf_backend_frames": [
+    "curobo"
+   ],
+   "wall_s": 57.0,
+   "gpu_total_used_MiB_max": 56062,
+   "gpu_total_used_MiB_before": 53338,
+   "gpu_new_process_MiB_max": 1450,
+   "gpu_samples_1s": 44,
+   "imported_benchmark_modules": 57,
+   "imported_benchmark_modules_outside_/mnt/dev/work/benchmark": 0,
+   "device_modules_loaded": [
+    "benchmark.ag3s.fields.device_field",
+    "benchmark.ag3s.stages.device_recon"
+   ],
+   "count_line_not_baseline": "전체 구  : 위반으로 시작 10/15  해소 9  개선 14 | 상태: feasible 14, violated 1"
+  },
+  "run_order": "legacy then curobo, sequential",
+  "other_gpu_processes_before_each_run_MiB": [
+   17930,
+   17932,
+   8738,
+   8738
+  ],
+  "load_average_1min_pre": {
+   "legacy": 35.86,
+   "curobo": 37.93
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/merge-o4/merge-o4-baseline-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/merge-o4/merge-o4-baseline-table.json"
+  }
+ ],
+ "baseline_check": {
+  "expected_source": "MERGE-o4.task.md §2.3 (T38 V3, outputs/verify/T38/B/partial_V3.json)",
+  "legacy": {
+   "expected": {
+    "violated_start": 14,
+    "has_target": 15,
+    "frame0_clearance_before_mm": -29.031048280806342,
+    "clearance_before_15_sha1_12": "40798fb0a4d2"
+   },
+   "equal": {
+    "violated_start": true,
+    "has_target": true,
+    "frame0_clearance_before_mm": true,
+    "clearance_before_15_sha1_12": true
+   }
+  },
+  "curobo": {
+   "expected": {
+    "violated_start": 10,
+    "has_target": 15,
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "clearance_before_15_sha1_12": "fe73bd7a6ba6"
+   },
+   "equal": {
+    "violated_start": true,
+    "has_target": true,
+    "frame0_clearance_before_mm": true,
+    "clearance_before_15_sha1_12": true
+   }
+  },
+  "sha1_method": "sha1(json.dumps([f['clearance_before_mm'] for f in frames]).encode()).hexdigest()[:12] (T38 partial_V3 recipe; reproduces 40798fb0a4d2 / fe73bd7a6ba6 on T38 raw)",
+  "matched": true,
+  "note": "legacy 4/4 · cuRobo 4/4 기대값과 비트 동일"
+ },
+ "verdict": "기준선 일치 (legacy 4/4, cuRobo 4/4)",
+ "not_measured": [
+  "subtask gate on (기본 off 로만 잼)",
+  "CPU device path (*_DEVICE=cpu)",
+  "feasible/violated/해소 개수 (기준 아님)",
+  "closed-loop E3 경로",
+  "SendUserFile 전송 (이 세션에 도구 없음)"
+ ]
+}
