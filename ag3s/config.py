@@ -67,6 +67,26 @@ SELF_FILTER_GPU_CHUNK_BYTES: int = 64 * 2**20
 #: YAML 필드가 아닌 이유: `KDTREE_WORKERS` 와 같다 — 결과를 바꾸지 않는 실행 자원 설정이다.
 ESDF_QUERY_HOST_ARITH_MAX_POINTS: int = 1024
 
+#: 카메라별 scene reconstruction (역투영 · voxel downsample · cap · self-filter 마스크 · 마스크 적용)
+#: 과 fusion 의 voxel 정렬을 어디서 하나 (T38 B4). ``"auto"`` = torch 가 CUDA 를 보면 GPU,
+#: 아니면 기존 numpy 경로 · ``"cuda"`` = GPU 필수 · ``"cpu"`` = 기존 numpy 경로.
+#:
+#: GPU 경로는 numpy 경로와 **비트 단위로 같다** (`stages/device_recon.py` docstring 이 정본):
+#: 원소별 산술은 같은 연산 · 같은 순서로 하나씩 반올림하고 (`__dsub_rn` · `__dmul_rn` · `__ddiv_rn`,
+#: 나눗셈의 분모는 스칼라가 아니라 CUDA 값), `pts_cam @ R.T` 는 numpy 가 부르는 OpenBLAS dgemm 의
+#: 산술 ``fma(z, r2, fma(y, r1, x·r0))`` 을 그대로 한다 (점 2 개 이상일 때 — 1 개면 numpy 가 gemv
+#: 로 가므로 그 카메라는 numpy 경로). voxel 대표점 = voxel 안 **입력 순서 첫 점** (`np.unique` 의
+#: `return_index`) 은 정수 연산이라 정확하다. `tests/o4/test_gpu_recon.py` 가 확인한다.
+#:
+#: YAML 필드가 아닌 이유: `KDTREE_WORKERS` 와 같다 — 결과를 바꾸지 않는 실행 자원 설정이다.
+RECON_DEVICE: str = "auto"
+
+#: 지지면 RANSAC (`stages/support_surface.fit_plane_ransac`) 의 **가설 점수 매기기** 를 어디서 하나
+#: (T38 B4). 가설(삼중점 · 법선 · 오프셋)은 예전 그대로 numpy RNG · numpy 로 만들고, (점 × 가설)
+#: 거리 · 문턱 비교 · inlier 수만 GPU 에서 센다 — 거리는 numpy dgemm 과 같은 FMA 사슬이라 비트가
+#: 같고, 수는 정수다. 폭 1 짜리 블록(numpy 가 gemv 로 가는 모양)은 CPU 로 센다. 값은 위와 같다.
+SUPPORT_RANSAC_DEVICE: str = "auto"
+
 
 # ------------------------------------------------------------------------------------ sections
 

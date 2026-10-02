@@ -2004,6 +2004,7 @@ class AG3S:
                      else np.asarray(obs.T_base_cam, np.float64))
                 d = np.asarray(d, np.float64)
                 mask = getattr(obs, "robot_mask", None)
+                device_depth = None
                 if mask is None:
                     # Each observation carries the `q` it was captured at, so the mask is built
                     # with *that* configuration — the same rule the fused cloud follows.
@@ -2012,6 +2013,11 @@ class AG3S:
                     if pre is not None:
                         self._note_depth_mask(pre)
                         mask = pre.mask
+                        # T38 B4: the GPU front end already holds this depth (× the same scale)
+                        # and its mask on the device — the TSDF takes it from there.
+                        if (getattr(pre, "device", None) is not None
+                                and float(self._frame_filter_config.pointcloud.depth_scale) == scale):
+                            device_depth = pre.masked_depth_f32_device()
                     else:
                         mask = self._robot_mask_for(d, K, T, getattr(obs, "robot_state", None))
                 # E5 (`docs/AG3S_REVIEW_LOG.md` Step 2): `CameraObservation` names itself via
@@ -2024,7 +2030,7 @@ class AG3S:
                         else str(getattr(obs, "camera", getattr(obs, "name", "camera"))))
                 out.append(CameraDepth(
                     name=name, depth=d * scale, camera_intrinsics=K, T_base_cam=T,
-                    robot_mask=mask))
+                    robot_mask=mask, device_depth=device_depth))
         elif depth is not None and camera_intrinsics is not None and T_base_cam is not None:
             d = np.asarray(depth, np.float64)
             K = np.asarray(camera_intrinsics, np.float64)

@@ -91,6 +91,7 @@ unobserved or a subset *and* a hand sphere (`TargetConfirm.note_hand`) is within
 from __future__ import annotations
 
 import dataclasses
+import itertools
 import time
 from collections.abc import Sequence
 from typing import Any, Optional
@@ -238,9 +239,11 @@ def grow_region(
     frontier = seeds
     while frontier.size:
         neighbours = tree.query_ball_point(pts[frontier], radius, workers=KDTREE_WORKERS)
+        # T38 B4: the same flattening, iterated in C (`chain.from_iterable`) instead of a Python
+        # generator — ≈ 470 k generator steps per frame were most of this function's own time.
         flat = np.fromiter(
-            (j for group in neighbours for j in group), np.int64,
-            count=sum(len(g) for g in neighbours),
+            itertools.chain.from_iterable(neighbours), np.int64,
+            count=sum(map(len, neighbours)),
         )
         if flat.size == 0:
             break

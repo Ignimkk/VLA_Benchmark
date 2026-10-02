@@ -98,6 +98,17 @@ __all__ = ["CuroboFieldBuilder", "TargetBall", "ATTACHED_LABEL", "unpack_site_li
 ATTACHED_LABEL = "__attached__"
 
 
+def _same_cuda_device(a, b) -> bool:
+    """`a` and `b` name the same CUDA device (``"cuda"`` without an index = the current one)."""
+    import torch
+
+    a, b = torch.device(a), torch.device(b)
+    if a.type != "cuda" or b.type != "cuda":
+        return a == b
+    cur = torch.cuda.current_device()
+    return (cur if a.index is None else a.index) == (cur if b.index is None else b.index)
+
+
 def unpack_site_linear(site_index, shape: Sequence[int]):
     """packed `site_index` -> 그 site 복셀의 **선형 인덱스**. `-1` 은 그대로 `-1`.
 
@@ -908,9 +919,17 @@ class CuroboFieldBuilder:
             if (h, w) not in rgb:
                 # geometry-only 적분의 0 RGB (cuRobo `Mapper.integrate` docstring 의 권장). 읽기만 한다.
                 rgb[(h, w)] = torch.zeros((1, h, w, 3), device=dev, dtype=torch.uint8)
+            # T38 B4: scene reconstruction 이 이 depth 를 이미 GPU 에 올려 마스크까지 적용해 두었으면
+            # (같은 값 — `DepthRobotMask.masked_depth_f32_device`) 그것을 쓴다. 아니면 예전처럼 올린다.
+            dd = getattr(cam, "device_depth", None)
+            if (dd is not None and tuple(dd.shape) == (h, w) and dd.dtype == torch.float32
+                    and _same_cuda_device(dd.device, dev)):
+                depth_image = dd.contiguous()[None]
+            else:
+                depth_image = torch.as_tensor(depth, device=dev, dtype=torch.float32)[None]
             obs = CameraObservation(
                 name=str(cam.name),
-                depth_image=torch.as_tensor(depth, device=dev, dtype=torch.float32)[None],
+                depth_image=depth_image,
                 rgb_image=rgb[(h, w)],
                 intrinsics=torch.as_tensor(np.asarray(cam.camera_intrinsics, np.float32),
                                            device=dev, dtype=torch.float32)[None],

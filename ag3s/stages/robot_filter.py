@@ -203,7 +203,14 @@ def sphere_mask_parts(
     cloud's representatives) gets exactly the decisions its members got in the full set.
 
     `device`: ``None`` reads `config.SELF_FILTER_DEVICE` (``"auto" | "cuda" | "cpu"``).
+
+    T38 B4: `points` may also be an ``(N, 3)`` float64 **CUDA tensor** (a back-projection already on the
+    GPU, `device_recon`). Then the same GPU kernel runs where the points are and the parts come back
+    as CUDA bool tensors (`backend == "cuda"`); `device` is not consulted.
     """
+    if _is_cuda_tensor(points):
+        return _sphere_mask_parts_on_device(points, centers, radii, inflation, guard_centre,
+                                            guard_radius, held_columns)
     points = np.asarray(points, np.float64).reshape(-1, 3)
     centers = np.asarray(centers, np.float64).reshape(-1, 3)
     radii = np.asarray(radii, np.float64).reshape(-1)
@@ -232,6 +239,32 @@ def sphere_mask_parts(
     inside, protected, held = _sphere_mask_torch(
         points, centers, radii, radii + inflation, guard, cols, torch_device)
     return SphereMaskParts(inside, protected, held, backend)
+
+
+def _is_cuda_tensor(x) -> bool:
+    return type(x).__module__.startswith("torch") and getattr(getattr(x, "device", None), "type", "") == "cuda"
+
+
+def _sphere_mask_parts_on_device(points, centers, radii, inflation, guard_centre, guard_radius,
+                                 held_columns) -> SphereMaskParts:
+    """`sphere_mask_parts` for points resident on the GPU (T38 B4) — same checks, same rule."""
+    import torch
+
+    if points.dtype != torch.float64 or points.ndim != 2 or points.shape[1] != 3:
+        raise ValueError(f"device points must be (N, 3) float64, got {tuple(points.shape)} {points.dtype}")
+    centers = np.asarray(centers, np.float64).reshape(-1, 3)
+    radii = np.asarray(radii, np.float64).reshape(-1)
+    if centers.shape[0] != radii.shape[0]:
+        raise ValueError(f"{centers.shape[0]} sphere centres but {radii.shape[0]} radii")
+    if np.ndim(inflation) and np.shape(inflation) != radii.shape:
+        raise ValueError(
+            f"inflation has shape {np.shape(inflation)} but there are {radii.shape[0]} spheres")
+    cols = None if held_columns is None else np.asarray(held_columns, np.intp).reshape(-1)
+    guard = None
+    if guard_centre is not None and float(guard_radius) > 0.0:
+        guard = (np.asarray(guard_centre, np.float64).reshape(3), float(guard_radius))
+    inside, protected, held = _sphere_mask_device(points, centers, radii, radii + inflation, guard, cols)
+    return SphereMaskParts(inside, protected, held, "cuda")
 
 
 def _robot_sphere_mask_kdtree(points, centers, radii, inflation, guard):
@@ -310,10 +343,24 @@ def _sphere_mask_torch(points, centers, radii, inflated, guard, cols, device):
     """
     import torch
 
+    P = torch.as_tensor(np.ascontiguousarray(points), device=device)
+    inside, protected, held = _sphere_mask_device(P, centers, radii, inflated, guard, cols)
+    out_held = None if held is None else held.cpu().numpy()
+    return inside.cpu().numpy(), protected.cpu().numpy(), out_held
+
+
+def _sphere_mask_device(P, centers, radii, inflated, guard, cols):
+    """`_sphere_mask_torch` on points already resident on the GPU (T38 B4): ``(N, 3)`` float64 tensor
+    in, ``(inside, protected, held)`` bool **tensors** out. Same kernels, same order."""
+    import torch
+
     from benchmark.ag3s import config as _config
 
-    n, s = points.shape[0], centers.shape[0]
-    P = torch.as_tensor(np.ascontiguousarray(points), device=device)
+    device = P.device
+    n, s = int(P.shape[0]), centers.shape[0]
+    if n == 0 or s == 0:
+        empty = torch.zeros(n, dtype=torch.bool, device=device)
+        return empty, empty.clone(), None if cols is None else empty.clone()
     C = torch.as_tensor(np.ascontiguousarray(centers.T), device=device)          # (3, S)
     R2 = torch.as_tensor(inflated * inflated, device=device)                      # scipy: r * r
     bare = torch.as_tensor(np.ascontiguousarray(radii), device=device)
@@ -365,8 +412,7 @@ def _sphere_mask_torch(points, centers, radii, inflated, guard, cols, device):
                 was = touched.index_select(0, local)
                 inside[a:b].index_copy_(0, local, kept)
                 protected[a:b].index_copy_(0, local, was & ~kept)
-    out_held = None if held is None else held.cpu().numpy()
-    return inside.cpu().numpy(), protected.cpu().numpy(), out_held
+    return inside, protected, held
 
 
 @dataclasses.dataclass
@@ -384,16 +430,38 @@ class DepthRobotMask:
     #: `(H, W)` True where the pixel's back-projected point is the robot (TSDF depth mask).
     mask: np.ndarray
     #: `(H, W)` True where the target guard kept the pixel (see `SphereMaskParts.protected`).
-    protected: np.ndarray
+    #: T38 B4: None when decided on the device (no host reader needs it on that path — the
+    #: counts are taken on the GPU); `protected_mask()` pulls it on demand.
+    protected: Optional[np.ndarray]
     #: Pixels inside the held object's spheres (T32 H1), or None when the model holds nothing.
     n_held_px: Optional[int]
     #: The guard fields `self_filter_mask` reports (`n_guard_protected` = protected pixels).
     guard: dict[str, Any]
     backend: str
+    #: T38 B4: the GPU-resident side when the mask was decided on device points
+    #: (`depth_robot_mask_device`) — per-point `inside` / `protected` of the back-projection, the
+    #: `(H, W)` mask tensor and the device depth in metres. None on the host paths.
+    device: Any = None
+
+    def masked_depth_f32_device(self):
+        """The TSDF's depth on the GPU: ``float32(depth_m)`` with robot pixels set to 0 — the same
+        values `CuroboFieldBuilder._observations` makes on the host (``np.where(mask, 0, f32(d))``)
+        from the same depth, without uploading it again. None without the device side."""
+        if self.device is None:
+            return None
+        import torch
+
+        return self.device.depth_m.to(torch.float32).masked_fill_(self.device.mask, 0.0)
 
     @property
     def n_guard_protected_px(self) -> int:
         return int(self.guard["n_guard_protected"])
+
+    def protected_mask(self) -> np.ndarray:
+        """`protected` on the host, pulled from the device side when it was decided there (B4)."""
+        if self.protected is not None:
+            return self.protected
+        return self.device.protected_px.cpu().numpy()
 
     def filter_cloud(self, cloud: PointCloud) -> tuple[PointCloud, dict[str, Any]]:
         """`filter_robot_points` for a cloud cut from **this** back-projection (needs its `uv`).
@@ -411,7 +479,7 @@ class DepthRobotMask:
             "n_removed": int(inside.sum()),
             "n_out": int(kept.size),
             "enabled": True,
-            **{**self.guard, "n_guard_protected": int(self.protected[v, u].sum())},
+            **{**self.guard, "n_guard_protected": int(self.protected_mask()[v, u].sum())},
         }
 
 
@@ -425,34 +493,23 @@ def depth_robot_mask(
     inflation: float | np.ndarray | None = None,
     guard_centre: Optional[np.ndarray] = None,
     device: Optional[str] = None,
+    fk_cache: Optional[dict] = None,
 ) -> DepthRobotMask:
     """The self-filter of one camera's full-resolution back-projection `cloud`, as pixel masks.
 
     One `sphere_mask_parts` pass over the model's spheres — the robot's and, while attached, the
     held object's (`HeldSphereFilterModel` appends them) — gives the self-filter decision, the guard
     count and the held-sphere count together. `inflation` / `guard_centre`: as `self_filter_mask`.
+
+    `fk_cache` (T38 B4): a dict shared by the cameras of one frame; the sphere FK of a `(model, q)`
+    pair is computed once and reused (`_mask_spheres`).
     """
     q = np.asarray(robot_state, np.float64)
-    centers, radii = robot_model.sphere_centers_numeric(q)
-    centers = np.asarray(centers, np.float64).reshape(-1, 3)
-    radii = np.asarray(radii, np.float64).reshape(-1)
+    centers, radii, held_columns, extra = _mask_spheres(robot_model, q, fk_cache)
     if inflation is None:
         inflation = resolve_self_filter_inflation(_link_names_or_none(robot_model, config), config)
     radius = float(config.self_filter_target_guard_radius)
     active = radius > 0.0 and guard_centre is not None
-
-    held_columns, extra = None, None
-    held_fn = getattr(robot_model, "held_spheres", None)
-    if callable(held_fn):
-        hc, hr = held_fn(q)
-        hc = np.asarray(hc, np.float64).reshape(-1, 3)
-        hr = np.asarray(hr, np.float64).reshape(-1)
-        k = hr.shape[0]
-        if (k <= radii.shape[0] and np.array_equal(centers[radii.shape[0] - k:], hc)
-                and np.array_equal(radii[radii.shape[0] - k:], hr)):
-            held_columns = np.arange(radii.shape[0] - k, radii.shape[0])   # the appended spheres
-        else:
-            extra = (hc, hr)
 
     parts = robot_sphere_mask(
         cloud.points, centers, radii, inflation,
@@ -479,6 +536,111 @@ def depth_robot_mask(
             "n_guard_protected": int(parts.protected.sum()),
         },
         backend=parts.backend)
+
+
+def _mask_spheres(robot_model, q: np.ndarray, fk_cache: Optional[dict] = None):
+    """``(centers, radii, held_columns, extra)`` for the depth robot mask at `q`.
+
+    `held_columns`: the model's own trailing spheres when they are exactly the held object's
+    (`HeldSphereFilterModel` appends them), else None and `extra = (hc, hr)` for a separate count.
+
+    With `fk_cache` the result is memoised per ``(id(robot_model), q bytes)`` — FK is a pure function
+    of `q`, and the three cameras of a frame are usually captured at the same `q` (T38 B4: all 75
+    chunks of the T38 replay). The cache must not outlive the models it keys on (one frame).
+    """
+    key = None
+    if fk_cache is not None:
+        key = (id(robot_model), np.ascontiguousarray(q, np.float64).tobytes())
+        hit = fk_cache.get(key)
+        if hit is not None and hit[0] is robot_model:
+            return hit[1]
+    centers, radii = robot_model.sphere_centers_numeric(q)
+    centers = np.asarray(centers, np.float64).reshape(-1, 3)
+    radii = np.asarray(radii, np.float64).reshape(-1)
+    held_columns, extra = None, None
+    held_fn = getattr(robot_model, "held_spheres", None)
+    if callable(held_fn):
+        hc, hr = held_fn(q)
+        hc = np.asarray(hc, np.float64).reshape(-1, 3)
+        hr = np.asarray(hr, np.float64).reshape(-1)
+        k = hr.shape[0]
+        if (k <= radii.shape[0] and np.array_equal(centers[radii.shape[0] - k:], hc)
+                and np.array_equal(radii[radii.shape[0] - k:], hr)):
+            held_columns = np.arange(radii.shape[0] - k, radii.shape[0])   # the appended spheres
+        else:
+            extra = (hc, hr)
+    out = (centers, radii, held_columns, extra)
+    if key is not None:
+        fk_cache[key] = (robot_model, out)
+    return out
+
+
+@dataclasses.dataclass
+class _DeviceMaskSide:
+    inside: Any       # (N,) bool tensor, per back-projected point
+    protected: Any    # (N,) bool tensor
+    mask: Any         # (H, W) bool tensor
+    protected_px: Any  # (H, W) bool tensor
+    depth_m: Any      # (H, W) float64 tensor, depth × depth_scale
+
+
+def depth_robot_mask_device(
+    full: Any,
+    robot_model: RobotCollisionModel,
+    robot_state: np.ndarray,
+    config: PointCloudConfig,
+    *,
+    inflation: float | np.ndarray | None = None,
+    guard_centre: Optional[np.ndarray] = None,
+    fk_cache: Optional[dict] = None,
+) -> DepthRobotMask:
+    """`depth_robot_mask` for a back-projection resident on the GPU (`device_recon.DeviceCloud`, T38 B4).
+
+    Same spheres (`_mask_spheres`), same kernel (`_sphere_mask_device`, the B2 rule) on the points where
+    they already are — no 12 MB point upload. The `(H, W)` masks come back to the host (the host
+    `CameraDepth.robot_mask` and the counts read them); the per-point decisions stay on the device for
+    the voxel cloud cut (`device_recon.camera_front_end`).
+    """
+    import torch
+
+    q = np.asarray(robot_state, np.float64)
+    centers, radii, held_columns, extra = _mask_spheres(robot_model, q, fk_cache)
+    if inflation is None:
+        inflation = resolve_self_filter_inflation(_link_names_or_none(robot_model, config), config)
+    radius = float(config.self_filter_target_guard_radius)
+    active = radius > 0.0 and guard_centre is not None
+    # Through the one seam every self-filter decision takes (`robot_sphere_mask`), with the points
+    # where they are: a CUDA tensor in, CUDA bool tensors out.
+    parts = robot_sphere_mask(
+        full.points, centers, radii, inflation,
+        guard_centre=guard_centre if active else None, guard_radius=radius,
+        held_columns=held_columns, return_parts=True)
+    inside, protected, held = parts.inside, parts.protected, parts.held
+    if extra is not None:
+        held = robot_sphere_mask(full.points, extra[0], extra[1], 0.0)
+
+    h, w = full.image_hw
+    dev = full.points.device
+    mask = torch.zeros((h, w), dtype=torch.bool, device=dev)
+    prot = torch.zeros((h, w), dtype=torch.bool, device=dev)
+    mask[full.rows[inside], full.cols[inside]] = True
+    prot[full.rows[protected], full.cols[protected]] = True
+    counts = torch.stack([protected.sum(), (held.sum() if held is not None
+                                            else torch.zeros((), dtype=torch.int64, device=dev))])
+    n_prot, n_held = (int(x) for x in counts.tolist())
+    return DepthRobotMask(
+        mask=mask.cpu().numpy(), protected=None,
+        n_held_px=None if held is None else n_held,
+        guard={
+            "guard_enabled": radius > 0.0,
+            "guard_active": bool(active),
+            "guard_radius": radius,
+            "guard_centroid": (None if not active
+                               else [float(x) for x in np.asarray(guard_centre).reshape(3)]),
+            "n_guard_protected": n_prot,
+        },
+        backend="cuda",
+        device=_DeviceMaskSide(inside, protected, mask, prot, full.depth_m))
 
 
 def self_filter_mask(
@@ -581,6 +743,7 @@ __all__ = [
     "DepthRobotMask",
     "SphereMaskParts",
     "depth_robot_mask",
+    "depth_robot_mask_device",
     "filter_robot_points",
     "inflation_link_groups",
     "inflation_table",

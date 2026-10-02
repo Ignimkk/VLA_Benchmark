@@ -68,6 +68,69 @@ def _orient(normal: np.ndarray, offset: float, reference: np.ndarray) -> tuple[n
     return normal, offset
 
 
+#: Hypotheses per scoring block — the numpy block width (memory: N × 32 doubles per block).
+_BLOCK = 32
+
+
+def _hypothesis_counts(pts: np.ndarray, normals: np.ndarray, offsets: np.ndarray,
+                       threshold: float) -> np.ndarray:
+    """Inliers per hypothesis: ``#{i : |p_i · n_j − d_j| ≤ threshold}``, as int64 `(M,)`.
+
+    The numpy definition is the block loop below — ``np.abs(pts @ normals[block].T − offsets[block])``
+    in blocks of 32. T38 B4 counts the same thing on the GPU when `config.SUPPORT_RANSAC_DEVICE` resolves
+    to CUDA: the distance is the k-ordered FMA chain numpy's dgemm computes for ``(N, 3) @ (3, m)`` with
+    N ≥ 2 and m ≥ 2 (`device_recon` docstring), the subtraction · `abs` · comparison are single IEEE
+    ops, and the count is an integer — so the counts are equal, not close. A block of width 1 is a
+    gemv in numpy (different rounding) and is counted on the CPU with the numpy expression; so is
+    everything when N < 2. Hypotheses themselves (RNG · triplets · normals · offsets) never leave numpy.
+    """
+    m = normals.shape[0]
+    out = np.zeros(m, np.int64)
+    n = pts.shape[0]
+    from benchmark.ag3s import config as _config
+    from benchmark.ag3s.stages import device_recon
+
+    dev = None if n < 2 else device_recon.torch_device(_config.SUPPORT_RANSAC_DEVICE,
+                                                       what="SUPPORT_RANSAC")
+    gpu_upto = 0
+    if dev is not None:
+        # Every full or ≥ 2-wide block goes to the GPU; a trailing 1-wide block stays in numpy.
+        gpu_upto = m if (m % _BLOCK) != 1 else m - 1
+        if gpu_upto >= 2:
+            out[:gpu_upto] = _hypothesis_counts_device(pts, normals[:gpu_upto], offsets[:gpu_upto],
+                                                       threshold, dev)
+        else:
+            gpu_upto = 0
+    for start in range(gpu_upto, m, _BLOCK):
+        block = slice(start, start + _BLOCK)
+        distance = np.abs(pts @ normals[block].T - offsets[block])
+        out[block] = (distance <= threshold).sum(axis=0)
+    return out
+
+
+def _hypothesis_counts_device(pts, normals, offsets, threshold, device) -> np.ndarray:
+    """The GPU side of `_hypothesis_counts` (needs N ≥ 2 and M ≥ 2)."""
+    import torch
+
+    from benchmark.ag3s.stages import device_recon
+
+    dot3 = device_recon.kernel("dot3")
+    P = torch.as_tensor(np.ascontiguousarray(pts), device=device)
+    Nm = torch.as_tensor(np.ascontiguousarray(normals), device=device)
+    off = torch.as_tensor(np.ascontiguousarray(offsets), device=device)
+    m = int(Nm.shape[0])
+    counts = torch.empty(m, dtype=torch.int64, device=device)
+    px, py, pz = (P[:, k:k + 1] for k in range(3))
+    for start in range(0, m, 64):
+        stop = min(m, start + 64)
+        nb = Nm[start:stop]
+        d = dot3(px, py, pz, nb[:, 0][None], nb[:, 1][None], nb[:, 2][None])   # (N, b)
+        d.sub_(off[start:stop][None])
+        d.abs_()
+        counts[start:stop] = (d <= threshold).sum(dim=0)
+    return counts.cpu().numpy()
+
+
 def fit_plane_ransac(
     points: np.ndarray,
     config: SupportSurfaceConfig | None = None,
@@ -114,14 +177,11 @@ def fit_plane_ransac(
     if normals.shape[0] == 0:
         return None, 0.0, np.zeros(0, np.int64)
 
-    best_count, best_hypothesis = -1, -1
-    for start in range(0, normals.shape[0], 32):
-        block = slice(start, start + 32)
-        distance = np.abs(pts @ normals[block].T - offsets[block])
-        counts = (distance <= cfg.distance_threshold).sum(axis=0)
-        local = int(np.argmax(counts))
-        if int(counts[local]) > best_count:
-            best_count, best_hypothesis = int(counts[local]), start + local
+    counts = _hypothesis_counts(pts, normals, offsets, float(cfg.distance_threshold))
+    # The first hypothesis with the most inliers: what the block loop's per-block `argmax` (first
+    # maximum) plus the strictly-greater update across blocks selects.
+    best_hypothesis = int(np.argmax(counts))
+    best_count = int(counts[best_hypothesis])
 
     gate = max(cfg.min_inliers, int(cfg.min_inlier_ratio * n)) if min_inliers is None else int(min_inliers)
     if best_count < gate:
