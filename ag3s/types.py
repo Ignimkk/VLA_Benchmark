@@ -154,6 +154,10 @@ class GroundingStatus(str, enum.Enum):
     #: only thing attention finds is the crate. Distinct from NO_CLUSTER (nothing clustered) and
     #: NO_SEED; the leader is *not* named, whatever its score.
     NO_ADMISSIBLE = "no_admissible"
+    #: Nothing is manipulated yet and the confirmed subtask label is `place` / `home` with
+    #: `clustering.subtask_gate` on (SUBTASK-c): the leader is not adopted, so nothing is carved.
+    #: Only reachable with the gate on.
+    SUBTASK_GATED = "subtask_gated"
 
     @property
     def ok(self) -> bool:

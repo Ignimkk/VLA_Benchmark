@@ -14,6 +14,12 @@ is the caller's own, untouched, called exactly as it would be without this wrapp
 from a wholly separate model object, a separate forward pass, and is merged into the result dict
 afterward. There is no shared state that a bug here could feed back into the action path.
 
+**Subtask label (SUBTASK-c).** The same prefix pass also yields the `kv_L4` feature (prefix KV
+cache, no extra forward), and the exported linear probe (`benchmark/ag3s/asset/subtask_probe/`,
+`benchmark/ag3s/stages/subtask_probe.py`) turns it into `result["subtask"] =
+{"p": {"pick", "place", "home"}, "argmax": str, "probe": "kv_L4_v1"}`. Like the attention, a
+failure there is logged and leaves the key out; it never fails the policy call.
+
 **Cost.** Only Euler step 0 is sampled — the (layer, head, agg) cell `step-01-attention.json` scored
 best used `denoise=0` — so this is one prefix+suffix pass, not the full ~10-step denoising loop.
 """
@@ -22,7 +28,7 @@ from __future__ import annotations
 
 import logging
 import traceback
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 
@@ -50,14 +56,20 @@ class AttentionPolicy:
 
     `attention` is `{policy camera name: [16, 16] float32}` — raw softmax mass, not normalized or
     thresholded (`AG3S` does that itself, and it needs the peak on the true scale to do it).
+
+    `subtask_probe`: `"default"` loads the shipped `kv_L4_v1` asset, a path loads that asset, a
+    `SubtaskProbe` is used as is, None turns the label off (no `result["subtask"]`). A probe that
+    fails to load is logged and turned off — the attention path is unaffected.
     """
 
-    def __init__(self, policy, attn_model, *, num_denoise_steps: int = 10, noise_seed: int = 0):
+    def __init__(self, policy, attn_model, *, num_denoise_steps: int = 10, noise_seed: int = 0,
+                 subtask_probe: Any = "default"):
         from benchmark.ag3s.experiments.sources.pi05_attention import AttentionSampler
 
         self._policy = policy
         self._sampler = AttentionSampler(attn_model, num_steps=num_denoise_steps)
         self._noise_seed = int(noise_seed)
+        self._subtask_probe = _load_probe(subtask_probe)
 
     @property
     def metadata(self) -> dict[str, Any]:
@@ -68,16 +80,32 @@ class AttentionPolicy:
         if callable(reset):
             reset()
 
+    @property
+    def subtask_probe(self):
+        """The probe in use (`SubtaskProbe`), or None when the label is off."""
+        return self._subtask_probe
+
     def infer(self, obs: dict[str, Any], **kwargs) -> dict[str, Any]:
         result = self._policy.infer(obs, **kwargs)
         try:
             result = dict(result)
-            result["attention"] = self._attention(obs)
+            attention, feature = self._attention_and_feature(obs)
+            result["attention"] = attention
         except Exception:  # noqa: BLE001 — attention failing must not fail the policy call
             logging.warning("attention extraction failed:\n%s", traceback.format_exc())
+            return result
+        if feature is not None:
+            try:
+                result["subtask"] = self._subtask_probe.predict(feature)
+            except Exception:  # noqa: BLE001 — the label failing must not fail the policy call
+                logging.warning("subtask probe failed:\n%s", traceback.format_exc())
         return result
 
     def _attention(self, obs: dict[str, Any]) -> dict[str, np.ndarray]:
+        return self._attention_and_feature(obs, with_feature=False)[0]
+
+    def _attention_and_feature(self, obs: dict[str, Any], *, with_feature: Optional[bool] = None):
+        """`(attention dict, kv_L4 feature or None)` from one prefix pass."""
         import jax
         import jax.numpy as jnp
 
@@ -90,7 +118,15 @@ class AttentionPolicy:
         inputs = jax.tree.map(lambda x: jnp.asarray(x)[None, ...], inputs)
         model_obs = _model.Observation.from_dict(inputs)
 
-        blocks = self._sampler.attention(model_obs, [_DENOISE_STEP], noise_seed=self._noise_seed)
+        if with_feature is None:
+            with_feature = self._subtask_probe is not None
+        if with_feature:
+            blocks, feature = self._sampler.attention_and_subtask_feature(
+                model_obs, [_DENOISE_STEP], noise_seed=self._noise_seed)
+        else:
+            blocks = self._sampler.attention(model_obs, [_DENOISE_STEP],
+                                             noise_seed=self._noise_seed)
+            feature = None
         pooled = AGGREGATIONS[_AGG](blocks[_DENOISE_STEP])  # [L, heads, 768]
         cell = np.asarray(pooled[_LAYER, _HEAD])  # [768]
 
@@ -98,4 +134,23 @@ class AttentionPolicy:
         for camera in POLICY_CAMERA_NAMES:
             lo, hi = CAMERA_BINDINGS[camera][2]
             out[camera] = cell[lo:hi].reshape(ATTENTION_GRID, ATTENTION_GRID)
-        return out
+        return out, feature
+
+
+def _load_probe(spec: Any):
+    """`AttentionPolicy(subtask_probe=...)` → a `SubtaskProbe` or None (logged, never raised)."""
+    if spec is None or spec is False:
+        return None
+    try:
+        from benchmark.ag3s.stages.subtask_probe import SubtaskProbe
+
+        if isinstance(spec, SubtaskProbe):
+            return spec
+        probe = SubtaskProbe.load(None if spec == "default" else spec)
+        logging.info("subtask probe %s loaded (classes %s, dim %d)", probe.name,
+                     list(probe.classes), probe.dim)
+        return probe
+    except Exception:  # noqa: BLE001 — no label is a degraded mode, not a failed server
+        logging.warning("subtask probe could not be loaded (%r) — result['subtask'] is off:\n%s",
+                        spec, traceback.format_exc())
+        return None

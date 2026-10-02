@@ -632,7 +632,9 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
                target_field_policy: str = "relax",
                plan_horizon_steps: int | None = None,
                rows_per_step: int | None = None,
-               self_filter: dict | None = None):
+               self_filter: dict | None = None,
+               subtask_gate: bool = False,
+               subtask_probe_path: str | None = None):
     """서버가 쓸 AG3S. 자기 필터는 전신, 제약은 `links` (T27 부터 기본 `gripper` — 손바닥 + 손가락).
 
     **두 모델은 일부러 다르다.** 자기 필터는 바퀴·베이스까지 있어야 한다 — 머리 카메라가 자기
@@ -658,6 +660,9 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     `self_filter` 는 `self_filter_options(args)` — **준 것만** `pointcloud` 에 얹는다 (T19). 비면
     `pointcloud` 는 예전과 글자 그대로 `{"range_max": ...}` 이다. 실제 유효 inflation 표는
     `announce_self_filter` 가 찍는다.
+
+    `subtask_gate` · `subtask_probe_path` (SUBTASK-c) 도 **기본이 아닐 때만** `clustering` 에
+    얹는다 — 끄고 경로를 안 주면 config 는 예전과 글자 그대로다.
     """
     import mujoco
 
@@ -733,6 +738,11 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
         # `ConstraintConfig` 와 두 곳이 되고, 갈라지는 날 갈라진 쪽이 안전 판정이다
         # (`sphere_options` 와 같은 규약). 두 flag 가 같은 section 을 쓰므로 한 dict 로 모은다.
         **({"constraint": constraint_section} if constraint_section else {}),
+        # SUBTASK-c — 같은 규약: 기본(끔 · 동봉 asset)이면 키를 넣지 않는다.
+        **({"clustering": {
+            **({"subtask_gate": True} if subtask_gate else {}),
+            **({"subtask_probe_path": str(subtask_probe_path)} if subtask_probe_path else {})}}
+           if (subtask_gate or subtask_probe_path) else {}),
     })
     logging.info("AG3S: self-filter %d spheres, constraints %d spheres (%s)",
                  filter_robot.n_spheres, constraint_robot.n_spheres, links_label)
@@ -1054,6 +1064,14 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--no-attention", action="store_true",
                     help="attention 추출을 끈다 (체크포인트를 한 번 더 로드하지 않는다). AG3S 는 "
                          "target 없이 돌아 제약이 더 보수적이 된다")
+    ap.add_argument("--subtask-gate", action="store_true",
+                    help="SUBTASK-c: subtask label (kv_L4 probe, attention 서버가 싣는다) 이 확정 "
+                         "place/home 이면 AG3S 가 새 조작 대상을 채택하지도 바꾸지도 않는다 "
+                         "(attention target 을 carve 하지 않는다). PLACED 뒤 home 이면 놓인 대상을 "
+                         "푼다. 기본 끔 = 지금과 같다 (label 은 기록만)")
+    ap.add_argument("--subtask-probe", default=None, metavar="NPZ",
+                    help="subtask probe asset (`clustering.subtask_probe_path`). 안 주면 동봉 "
+                         "benchmark/ag3s/asset/subtask_probe/kv_L4_v1.npz")
     ap.add_argument("--record-constraints", default=None, metavar="DIR",
                     help="청크마다 AG3S 중간 산출물(attention·grounding·거리장·제약 여유)을 "
                          "npz 로 남긴다. `--safe-remote` 청크는 이것들을 응답에 싣지 않으므로, "
@@ -1127,6 +1145,15 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         ap.error("--w-* 는 최적화기의 목적함수를 고치는 flag 입니다 (--no-safe 는 최적화기를 "
                  "아예 안 돌립니다). 그대로 띄우면 목적함수를 바꿨다고 믿게 되는데, 실은 "
                  "정책 청크가 그대로 나가는 서버가 뜹니다")
+    if getattr(args, "subtask_gate", False) and (args.no_safe or args.no_attention
+                                                 or getattr(args, "no_perception", False)):
+        ap.error("--subtask-gate 는 attention 서버가 싣는 subtask label 을 AG3S 가 읽어야 뜻이 "
+                 "있습니다 (--no-safe · --no-attention · --no-perception 은 그 중 하나를 끕니다). "
+                 "그대로 띄우면 label 이 늘 없어 gate 가 아무것도 막지 않는데 켰다고 믿게 됩니다")
+    if getattr(args, "subtask_probe", None) and (args.no_safe or args.no_attention
+                                                 or getattr(args, "no_perception", False)):
+        ap.error("--subtask-probe 는 attention 서버의 probe 를 고르는 flag 입니다 (--no-safe · "
+                 "--no-attention · --no-perception 은 attention 서버를 안 만듭니다)")
     if args.target_field_policy != "relax" and args.no_safe:
         ap.error("--target-field-policy 는 안전 계층의 거리장 질의를 고치는 flag 입니다 "
                  "(--no-safe 는 그 계층을 아예 안 만듭니다). 그대로 띄우면 target 을 필드에서 "
@@ -1450,7 +1477,15 @@ def main() -> None:
 
             logging.info("loading a second copy of the checkpoint for attention extraction")
             attn_model = load_attention_model(args.config, args.checkpoint)
-            served_policy = AttentionPolicy(policy, attn_model)
+            # SUBTASK-c — 같은 prefix pass 에서 subtask label 을 싣는다 (`clustering.subtask_probe_path`).
+            served_policy = AttentionPolicy(policy, attn_model,
+                                            subtask_probe=args.subtask_probe or "default")
+            probe = served_policy.subtask_probe
+            logging.info("subtask label: %s · gate %s",
+                         "OFF (probe 를 못 읽었다 — label 없음)" if probe is None
+                         else f"probe {probe.name} ({args.subtask_probe or 'shipped asset'})",
+                         "ON (place/home → 새 조작 대상 없음 · PLACED 뒤 home → 해제)"
+                         if args.subtask_gate else "off (기록만)")
 
         recorder = None
         if args.record_constraints:
@@ -1492,7 +1527,10 @@ def main() -> None:
                       **({"sphere_options": sphere_options(args)}
                          if sphere_options(args) else {}),
                       **({"self_filter": self_filter_options(args)}
-                         if self_filter_options(args) else {})})
+                         if self_filter_options(args) else {}),
+                      # SUBTASK-c — **항상 남긴다**: 이 키가 없는 기록은 SUBTASK-c 전이다.
+                      "subtask": {"gate": bool(args.subtask_gate),
+                                  "probe": args.subtask_probe or "shipped:kv_L4_v1"}})
             # **시작할 때 거절한다.** 기록기가 이 backend 의 거리장을 실을 수 없으면 청크마다
             # 예외가 나고, 예전에는 그것이 `print` 한 줄이라 75 chunk 를 돌리고도 빈 디렉토리가
             # 남았다 (2026-09-28). 여기서 죽으면 체크포인트를 올리기 전이다.
@@ -1556,7 +1594,9 @@ def main() -> None:
                             target_field_policy=args.target_field_policy,
                             plan_horizon_steps=horizon.planned,
                             rows_per_step=to_config.reduction.rows_per_step,
-                            self_filter=self_filter_options(args)),
+                            self_filter=self_filter_options(args),
+                            subtask_gate=args.subtask_gate,
+                            subtask_probe_path=args.subtask_probe),
             static_geometry=load_static_geometry(args.static_geometry, args.model_xml,
                                                  links=args.links),
             to_config=to_config,

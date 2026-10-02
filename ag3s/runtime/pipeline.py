@@ -177,6 +177,9 @@ class AG3S:
         #: T26: a grasp is in progress (closing … held) — set by the caller that owns the grasp
         #: (`SafePolicy`). Challengers do not count while it is set, and while an object is attached.
         self._grasp_active = False
+        #: SUBTASK-c: this request's subtask probabilities (`set_subtask`), handed to
+        #: `TargetConfirm.note_subtask` by the next grounding call and consumed by it.
+        self._subtask_p: Optional[dict[str, float]] = None
         #: The **manipulated object** after the latest frame (T20): id, observation state
         #: (`visible | occluded | lost`) and last observed geometry, as `TargetConfirm` left it.
         #: Contact permission (`manipulated_link_margin`), target exclusion (`target_field_exclude`,
@@ -354,6 +357,7 @@ class AG3S:
         self._manipulated = None
         self._gated_manipulated = None
         self._grasp_active = False
+        self._subtask_p = None
         self.frame_index = 0
         self._attached = None
         self._held_record = None
@@ -392,6 +396,31 @@ class AG3S:
         set (and whenever an object is attached) challengers do not count toward a switch.
         """
         self._grasp_active = bool(active)
+
+    def set_subtask(self, p: Optional[Mapping[str, Any]]) -> None:
+        """This request's subtask label probabilities (SUBTASK-c), as `set_grasp_active` is given.
+
+        `p`: `{"pick": .., "place": .., "home": ..}` — or the whole `result["subtask"]` record
+        (`{"p": {...}, "argmax": .., "probe": ..}`) — or None (no label this request). The next
+        grounding call hands it to `TargetConfirm.note_subtask` (debounced there) and consumes it;
+        a request without a call counts as None. Only `clustering.subtask_gate` lets the confirmed
+        label change a decision: under `place` / `home` no new manipulated object is taken.
+        """
+        if p is not None and isinstance(p.get("p"), Mapping):
+            p = p["p"]
+        self._subtask_p = None if p is None else {str(k): float(v) for k, v in p.items()}
+
+    @property
+    def subtask_label(self) -> Optional[str]:
+        """The confirmed subtask label after the latest grounding call (None before one)."""
+        return self._target_confirm.subtask_label
+
+    def set_placed(self, placed: bool) -> None:
+        """The caller that owns the grasp latch says it is in PLACED (SUBTASK-c B3), given where
+        `set_grasp_active` is. Sticky for the episode (`reset()` clears it). With
+        `clustering.subtask_gate` on and a confirmed `home` label, the placed manipulated object is
+        then released — nothing is carved from it on. A revoked false attach is not PLACED."""
+        self._target_confirm.note_placed(bool(placed))
 
     def set_finger_joints(self, values: Optional[Mapping[str, float]], *,
                           record: Optional[dict[str, Any]] = None) -> dict[str, Any]:
@@ -1116,6 +1145,9 @@ class AG3S:
             self._target_confirm.inject_destination(destination_points)
         # T26 §4: no switch while a grasp is in progress or an object is attached.
         self._target_confirm.freeze(self._grasp_active or self._attached is not None)
+        # SUBTASK-c: this request's subtask label (consumed here; None when the caller gave none).
+        self._target_confirm.note_subtask(self._subtask_p)
+        self._subtask_p = None
         # T32b S3: the hands at this frame's state — challengers do not count while the manipulated
         # object is hidden by the hand (`TargetConfirm.note_hand`, consumed by this grounding call).
         self._target_confirm.note_hand(self._hand_for_grounding(robot_state))
@@ -1184,6 +1216,15 @@ class AG3S:
                 f"(> clustering.target_lost_frames={self._target_confirm.lost_frames}); "
                 "no challenger is named in its place"
             )
+        if self._target_confirm.subtask_released is not None:
+            notes.append(
+                f"subtask gate: confirmed 'home' after PLACED — manipulated id="
+                f"{self._target_confirm.subtask_released} released (no exclusion from it on)")
+        if self._target_confirm.subtask_blocked is not None:
+            notes.append(
+                f"subtask gate: confirmed label {self._target_confirm.subtask_label!r} — "
+                f"{self._target_confirm.subtask_blocked} blocked (no new manipulated object while "
+                "placing / homing; the current one is kept)")
         if grounding.target is None:
             notes.append(
                 f"no target ({grounding.status.value}); all geometry held at full clearance"
@@ -1409,6 +1450,8 @@ class AG3S:
                     # T29: the finger joints both models used this frame (self-filter and
                     # constraint FK) and their provenance (`set_finger_joints`).
                     "finger_joints": self._finger_frame_record(),
+                    # SUBTASK-c: the subtask label this frame and what the gate did with it.
+                    "subtask": self._subtask_frame_record(),
                     # T32 H2: the held object's spheres (fit, pad, frame link) or None.
                     "held_object": self.held_record,
                     "invariant_violation": invariant,
@@ -1505,6 +1548,23 @@ class AG3S:
             raise ExclusionInvariantViolation(record["detail"], record)
         logging.getLogger(__name__).error("invariant_violation: %s", record["detail"])
         return None, record
+
+    def _subtask_frame_record(self) -> dict[str, Any]:
+        """`metrics["subtask"]` — `{p, argmax, label, gate, blocked, would_block, streak, frames}`.
+
+        `label` is the confirmed (debounced) label; `blocked` what the gate blocked this frame
+        (`first` | `switch` | None, always None with the gate off); `would_block` the same question
+        answered with the gate on — the shadow record for a gate-off run.
+        """
+        tc = self._target_confirm
+        rec = tc.subtask.record()
+        return {"p": rec["p"], "argmax": rec["argmax"], "label": rec["label"],
+                "gate": bool(tc.subtask_gate), "blocked": tc.subtask_blocked,
+                "would_block": tc.subtask_would_block, "streak": rec["streak"],
+                "frames": rec["frames"],
+                # B3: released the placed manipulated object this frame (and which id).
+                "released": tc.subtask_released is not None,
+                "released_id": tc.subtask_released, "placed_seen": bool(tc.placed_seen)}
 
     def _admissibility_frame_record(self) -> Optional[dict]:
         """This frame's clusters' admissibility, score order — the evidence behind `first`/`switch`."""

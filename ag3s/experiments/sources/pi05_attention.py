@@ -88,6 +88,9 @@ class AttentionSampler:
         self._action_dim = int(model.action_dim)
         self._jit_prefix = jax.jit(self._prefix)
         self._jit_suffix = jax.jit(self._suffix)
+        # SUBTASK-c: the kv_L4 subtask feature, reduced on device from the cache `_prefix` already
+        # built. A separate executable so the prefix pass itself (and the attention) is unchanged.
+        self._jit_kv_feature = jax.jit(self._kv_feature)
 
     def _prefix(self, state, obs):
         import jax.numpy as jnp
@@ -100,6 +103,24 @@ class AttentionSampler:
         positions = jnp.cumsum(mask, axis=1) - 1
         kv = model.PaliGemma.llm([tokens, None], mask=attn, positions=positions)[1]
         return kv, mask
+
+    @staticmethod
+    def _kv_feature(kv, prefix_mask):
+        """`kv_L4` (SUBTASK-b `extract.py:86-106`): V cache, layer 4, batch 0, head 0 → `(S, 256)`;
+        `[mean over valid text tokens | mean over the 768 image tokens]` → 512 float32.
+
+        The numpy reference is `benchmark.ag3s.stages.subtask_probe.kv_feature`.
+        """
+        import jax.numpy as jnp
+
+        from benchmark.ag3s.stages.subtask_probe import KV_HEAD, KV_LAYER, N_IMAGE_TOKENS
+
+        v = kv[1]  # (L, B, S, K, H)
+        vl = v[KV_LAYER, 0, :, KV_HEAD, :].astype(jnp.float32)  # (S, 256)
+        tm = prefix_mask[0, N_IMAGE_TOKENS:].astype(jnp.float32)
+        txt = (vl[N_IMAGE_TOKENS:] * tm[:, None]).sum(0) / tm.sum()
+        img = vl[:N_IMAGE_TOKENS].mean(0)
+        return jnp.concatenate([txt, img])
 
     def _suffix(self, state, obs, x_t, time, kv, prefix_mask):
         import einops
@@ -143,6 +164,18 @@ class AttentionSampler:
         recoverable, so what this can offer is reproducibility rather than an exact replay. Pass
         several seeds to check the ranking does not depend on the draw.
         """
+        return self._sample(obs, denoise_steps, noise_seed=noise_seed, subtask_feature=False)[0]
+
+    def attention_and_subtask_feature(self, obs, denoise_steps, *, noise_seed: int = 0):
+        """`(attention(...), kv_L4)` from **one** prefix pass (SUBTASK-c).
+
+        The attention dict is exactly what `attention()` returns for the same arguments; the
+        feature (`(512,)` float32, batch 0) is reduced from the KV cache that pass already built —
+        no extra forward. See `benchmark/ag3s/stages/subtask_probe.py` for the probe it feeds.
+        """
+        return self._sample(obs, denoise_steps, noise_seed=noise_seed, subtask_feature=True)
+
+    def _sample(self, obs, denoise_steps, *, noise_seed: int, subtask_feature: bool):
         import jax
         import jax.numpy as jnp
 
@@ -151,6 +184,8 @@ class AttentionSampler:
         # preprocess_observation is not idempotent -- exactly once, before the prefix pass.
         obs = _model.preprocess_observation(None, obs, train=False)
         kv, prefix_mask = self._jit_prefix(self._state, obs)
+        feature = (np.asarray(self._jit_kv_feature(kv, prefix_mask), np.float32)
+                   if subtask_feature else None)
 
         wanted = set(int(s) for s in denoise_steps)
         dt = -1.0 / self._num_steps
@@ -168,7 +203,7 @@ class AttentionSampler:
                 out[step] = np.asarray(probs)
             x_t = x_t + dt * v_t
             time = time + dt
-        return out
+        return out, feature
 
 
 def observation_from_step(policy, step, prompt):

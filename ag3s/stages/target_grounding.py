@@ -112,6 +112,7 @@ from benchmark.ag3s.stages.admissibility import (
 )
 from benchmark.ag3s.stages.attention_split import SplitDecision, split_by_attention
 from benchmark.ag3s.stages.geometry import fit_sphere, rms_radius
+from benchmark.ag3s.stages.subtask_probe import SubtaskDebounce
 from benchmark.ag3s.types import AttentionPointCloud, GroundingStatus, TargetGeometry
 
 _EPS = 1e-9
@@ -135,6 +136,9 @@ SUBSET_KEPT_ANCHOR = "subset_kept_anchor"
 #: and the cluster at its place is a cluster that may again be several objects but could not be
 #: split this frame — the anchor is kept, the object counts as seen (T31b).
 UNSPLIT_KEPT_ANCHOR = "unsplit_kept_anchor"
+#: `ConfirmDecision.mode` (and `reason`) when nothing is held, a cluster is admissible, and the
+#: subtask gate is on with a confirmed `place` / `home` label — no first target (SUBTASK-c).
+SUBTASK_GATED = "subtask_gated"
 
 
 # ----------------------------------------------------------------------------- clustering
@@ -492,6 +496,12 @@ class ConfirmDecision:
     hand_occluded: bool = False
     #: T32b: nearest hand sphere surface ↔ the standing geometry (m), or None without a hand.
     hand_gap_m: Optional[float] = None
+    #: SUBTASK-c: the confirmed subtask label at this decision (`pick|place|home`, None = none yet).
+    subtask_label: Optional[str] = None
+    #: SUBTASK-c: what the subtask gate blocked this frame — `first` (no first adoption) or
+    #: `switch` (a challenger frame that would have counted did not) — None when it blocked nothing
+    #: (always None with `clustering.subtask_gate` off).
+    subtask_blocked: Optional[str] = None
 
 
 class TargetConfirm:
@@ -545,6 +555,23 @@ class TargetConfirm:
     observation unsplit; on the first call after the freeze is released that geometry goes through
     the T31b attention split once (`split_anchor_on_release`), so the neighbour a failed grasp
     left merged with the apple does not become the anchor.
+
+    **A place / home subtask takes no new target (SUBTASK-c).** The caller feeds the subtask
+    probe's probabilities once per request (`note_subtask`); `SubtaskDebounce` confirms a label
+    after `clustering.subtask_confirm_frames` agreeing requests. With `clustering.subtask_gate` on
+    and the confirmed label `place` or `home`, nothing new becomes the manipulated object: no
+    `first` adoption (`subtask_gated`, no target) and no challenger counts (a gap, as while
+    frozen). The current manipulated object, admissibility, the destination registry and the
+    freeze are untouched — the label can only withhold a carve, never add one. With the gate off
+    the decisions are the ungated ones; `subtask_would_block` still says what it would have done.
+
+    **Home after a placement releases the placed object (SUBTASK-c B3, user ruling 2026-10-02).**
+    With the gate on, once the grasp latch has reached PLACED this episode (`note_placed`, sticky
+    until `reset()`) and the confirmed label is `home`, the standing manipulated object is let go
+    at the start of the next grounding call (not while frozen): there is no manipulated object, so
+    nothing is carved, and while `home` lasts the gate also refuses a new `first`. The condition is
+    PLACED, not a detach — a revoked false attach (T34) detaches without placing anything. A label
+    back to `pick` reopens `first` under the usual rule, under a fresh id.
     """
 
     def __init__(
@@ -564,9 +591,23 @@ class TargetConfirm:
         anchor_distance: Optional[float] = None,
         hand_reach: Any = _FROM_CONFIG,
         split_on_release: Optional[bool] = None,
+        subtask_gate: Optional[bool] = None,
+        subtask_frames: Optional[int] = None,
     ):
         cfg = config or ClusteringConfig()
         self.frames = int(cfg.target_confirm_frames if frames is None else frames)
+        # --- subtask gate (SUBTASK-c) ---
+        self.subtask_gate = bool(cfg.subtask_gate if subtask_gate is None else subtask_gate)
+        sf = cfg.subtask_confirm_frames if subtask_frames is None else subtask_frames
+        #: The confirmed subtask label (`note_subtask`); cleared by `reset()`.
+        self.subtask = SubtaskDebounce(self.frames if sf is None else int(sf))
+        #: This frame's gate effect: what it blocked (gate on) / would have blocked (always).
+        self._subtask_blocked: Optional[str] = None
+        self._subtask_would: Optional[str] = None
+        #: B3: the grasp latch reached PLACED this episode (`note_placed`), and the id released by
+        #: the latest grounding call (None when nothing was released).
+        self._placed_seen = False
+        self._released_id: Optional[int] = None
         self.tolerance = float(cfg.target_identity_tolerance if tolerance is None else tolerance)
         self.switch_min_score = float(
             cfg.target_switch_min_score if switch_min_score is None else switch_min_score)
@@ -731,12 +772,40 @@ class TargetConfirm:
             hand=None if self._hand_record is None else dict(self._hand_record),
         )
 
+    @property
+    def subtask_label(self) -> Optional[str]:
+        """The confirmed subtask label (`pick|place|home`), None before the first confirmation."""
+        return self.subtask.label
+
+    @property
+    def subtask_blocked(self) -> Optional[str]:
+        """What the gate blocked in the latest grounding call: `first` | `switch` | None."""
+        return self._subtask_blocked
+
+    @property
+    def placed_seen(self) -> bool:
+        """B3: the grasp latch has reached PLACED this episode (`note_placed`)."""
+        return self._placed_seen
+
+    @property
+    def subtask_released(self) -> Optional[int]:
+        """B3: the manipulated id released at the start of the latest grounding call, or None."""
+        return self._released_id
+
+    @property
+    def subtask_would_block(self) -> Optional[str]:
+        """What the gate *would* have blocked in the latest call, on or off (shadow record)."""
+        return self._subtask_would
+
     def reset(self, destination_points: Optional[np.ndarray] = None) -> None:
         """Episode boundary. The next frame's leader is taken with no argument, under a fresh id.
 
         `destination_points` (T26): the caller knows the destination — injected, it takes
         precedence over anything perception would register and is never replaced by it.
         """
+        self.subtask.reset()
+        self._subtask_blocked = self._subtask_would = None
+        self._placed_seen, self._released_id = False, None
         self._held = self._challenger = None
         self._streak = 0
         self._id = None
@@ -780,6 +849,45 @@ class TargetConfirm:
         self.frozen = on
         if self.frozen:
             self._challenger, self._streak = None, 0
+
+    def note_subtask(self, p: Optional[Any]) -> Optional[str]:
+        """This request's subtask probabilities `{pick, place, home}` (or None = no label).
+
+        Call once per request, before the grounding call (as `freeze`). Returns the confirmed
+        label after it (`SubtaskDebounce`). Only `subtask_gate` makes the label change a decision.
+        """
+        return self.subtask.update(p)
+
+    def note_placed(self, placed: bool) -> None:
+        """The grasp latch is in PLACED now (SUBTASK-c B3). Sticky: once seen, it stays until
+        `reset()`. Give it with `freeze`, before each grounding call."""
+        if bool(placed):
+            self._placed_seen = True
+
+    def _release_if_placed_home(self) -> None:
+        """B3: gate on ∧ PLACED seen ∧ confirmed `home` ∧ not frozen ∧ something manipulated →
+        let the manipulated object go (no exclusion from it on). Ids keep counting."""
+        self._released_id = None
+        if not (self.subtask_gate and self._placed_seen and self.subtask.label == "home"
+                and not self.frozen and self._held is not None):
+            return
+        self._released_id = self._id
+        self._held = self._challenger = None
+        self._streak = 0
+        self._id = None
+        self._switched_from = None
+        self._geometry = None
+        self._admissibility = None
+        self._age = 0
+        self._last_seen_frame = -1
+        self._last_seen_time = None
+        self._association = None
+        self._anchor_geom, self._anchor_extents = None, None
+        self._anchor_source, self._anchor_frame, self._anchor_kept = None, -1, 0
+        self._geometry_source, self._geometry_frame = None, -1
+        self._keep_anchor = False
+        self._release_pending, self._geometry_attention = False, None
+        self._release_split, self._release_event = None, None
 
     def note_hand(self, hand: Optional[HandSpheres]) -> None:
         """The hands' collision spheres at this frame's robot state, in the cloud frame (T32b S3).
@@ -906,15 +1014,27 @@ class TargetConfirm:
         self._frame += 1
         self._association = None
         self._keep_anchor = False
+        self._subtask_blocked = self._subtask_would = None
+        self._release_if_placed_home()
         self._hand_occluded, self._hand_gap = False, self._take_hand()
         adm = self._assess_frame(clusters, points)
         candidates = (list(range(len(clusters))) if adm is None
                       else [i for i, a in enumerate(adm) if a.admissible])
+        # SUBTASK-c: a confirmed place / home label means no new manipulated object. Not while a
+        # grasp is in progress (frozen): then the latch decides, whatever the label says.
+        subtask_gated = self.subtask.gated and not self.frozen
 
         if self._held is None:
             self._challenger, self._streak = None, 0
             if not candidates:
                 return self._record(None, -1, NO_ADMISSIBLE, reason=NO_ADMISSIBLE)
+            if subtask_gated:
+                self._subtask_would = "first"
+                if self.subtask_gate:
+                    # The leader is not adopted: nothing becomes the manipulated object, so nothing
+                    # is carved. The admissibility and the destination registry above still ran.
+                    self._subtask_blocked = "first"
+                    return self._record(None, -1, SUBTASK_GATED, reason=SUBTASK_GATED)
             first = candidates[0]
             self._adopt(clusters[first], switched_from=None, adm=_at(adm, first))
             return self._record(clusters[first], first, "first")
@@ -968,8 +1088,15 @@ class TargetConfirm:
             return self._record(clusters[held_rank], held_rank, "keep", reason=reason)
 
         challenger = clusters[lead] if lead is not None else None
-        if (challenger is not None and not self.frozen and not self._hand_occluded
-                and float(challenger.target_score) >= self.switch_min_score):
+        counts = (challenger is not None and not self.frozen and not self._hand_occluded
+                  and float(challenger.target_score) >= self.switch_min_score)
+        if counts and subtask_gated:
+            # SUBTASK-c: under place / home a challenger frame is a gap, as while frozen.
+            self._subtask_would = "switch"
+            if self.subtask_gate:
+                self._subtask_blocked = "switch"
+                counts = False
+        if counts:
             if self._challenger is not None and self._within(challenger.centroid, self._challenger):
                 self._streak += 1
             else:
@@ -978,8 +1105,9 @@ class TargetConfirm:
         else:
             # A challenger under the minimum does not count, and it breaks the run: "N frames
             # running at or above the minimum" is the rule, so a sub-minimum frame is a gap. No
-            # admissible challenger at all is a gap too, and so is a frozen (grasping) frame and a
-            # frame where the hand hides the held object (T32b).
+            # admissible challenger at all is a gap too, and so is a frozen (grasping) frame, a
+            # frame where the hand hides the held object (T32b) and a gated place / home frame
+            # (SUBTASK-c).
             self._challenger, self._streak = None, 0
 
         if self._streak >= self.frames:
@@ -1009,6 +1137,8 @@ class TargetConfirm:
         """
         self._frame += 1
         self.last_admissibility = None
+        self._subtask_blocked = self._subtask_would = None
+        self._release_if_placed_home()
         self._hand_occluded, self._hand_gap = False, self._take_hand()
         if self._held is None:
             return None
@@ -1231,7 +1361,8 @@ class TargetConfirm:
             manipulated_id=self._id, age_frames=int(self._age), reason=reason, admissibility=admissibility,
             n_admissible=None if adm is None else sum(1 for a in adm if a.admissible),
             frozen=bool(self.frozen), association=self._association,
-            hand_occluded=bool(self._hand_occluded), hand_gap_m=self._hand_gap)
+            hand_occluded=bool(self._hand_occluded), hand_gap_m=self._hand_gap,
+            subtask_label=self.subtask.label, subtask_blocked=self._subtask_blocked)
         return self.last
 
     def _within(self, a, b) -> bool:
@@ -1453,6 +1584,11 @@ def ground_target(
         # Nothing held yet and no cluster may become the manipulated object (T26) — e.g. the crate
         # is all attention found. The leader is not named, whatever its score.
         return GroundingResult(None, GroundingStatus.NO_ADMISSIBLE, tuple(clusters), seeds,
+                               peak_index, best.target_score, splits=splits)
+    if decision is not None and decision.mode == SUBTASK_GATED:
+        # Nothing held yet and the subtask is place / home with the gate on (SUBTASK-c): the
+        # leader is not adopted, so it is not named and nothing is carved.
+        return GroundingResult(None, GroundingStatus.SUBTASK_GATED, tuple(clusters), seeds,
                                peak_index, best.target_score, splits=splits)
     if decision is not None and decision.cluster is None:
         # The manipulated object is not among this frame's clusters (T20). The leader is *not*
@@ -1693,6 +1829,7 @@ __all__ = [
     "SUBSET_KEPT_ANCHOR",
     "UNSPLIT_KEPT_ANCHOR",
     "INADMISSIBLE_MATCH",
+    "SUBTASK_GATED",
     "NO_ADMISSIBLE",
     "UNCHECKED",
     "ClusterInfo",

@@ -368,7 +368,9 @@ class SafePolicy:
         self._pending = {"scene": scene, "attention": attention, "timing": timing,
                          "chunk": chunk, "exec_feedback": feedback,
                          # T29: 정책 관측의 16D state — gripper 열이 촬영 시점 측정 개도다.
-                         "state": policy_obs.get("state")}
+                         "state": policy_obs.get("state"),
+                         # SUBTASK-c: `AttentionPolicy` 가 실은 subtask label (없으면 None).
+                         "subtask": result.get("subtask") if isinstance(result, dict) else None}
 
         previous, executed_steps = self._continuity_input(feedback)
         context: dict[str, Any] = {"t_step": seq, "previous_physical_chunk": previous}
@@ -649,6 +651,16 @@ class SafePolicy:
         set_grasp = getattr(self.ag3s, "set_grasp_active", None)
         if callable(set_grasp):
             set_grasp(self._latch.phase in (GraspPhase.CLOSING, GraspPhase.HELD))
+        # SUBTASK-c: 이번 요청의 subtask label 과 latch 가 PLACED 인지 (B3). label 이 없으면 None —
+        # AG3S 는 그것을 "label 없음" 으로 센다. **PLACED 만** 넘긴다: T34 의 거짓 attach 회수도
+        # detach 지만 놓은 것이 아니다 (회수 뒤 phase 는 LATCHED). gate (`clustering.subtask_gate`)
+        # 가 꺼져 있으면 AG3S 는 기록만 한다.
+        set_subtask = getattr(self.ag3s, "set_subtask", None)
+        if callable(set_subtask):
+            set_subtask(_subtask_probabilities(self._pending.get("subtask")))
+        set_placed = getattr(self.ag3s, "set_placed", None)
+        if callable(set_placed):
+            set_placed(self._latch.phase is GraspPhase.PLACED)
 
         newest = max(observations, key=lambda o: o.timestamp)
         execution_path = self._execution_path(np.asarray(newest.robot_state, np.float64))
@@ -1441,6 +1453,23 @@ _NOT_TARGET_TIERS = ("target_free", "static")
 
 
 #: T37 (K1) — continuity 항을 끄는 grasp latch 상태. 닫힘 시도(`closing`)와 파지 확인(`held`).
+def _subtask_probabilities(subtask: Any) -> Optional[dict[str, float]]:
+    """`result["subtask"]` (`{"p": {...}, "argmax", "probe"}`) → `{"pick", "place", "home"}` 확률.
+
+    없거나 모양이 틀리면 None (= 이 요청은 label 없음). 예외를 내지 않는다 — label 이 정책 호출이나
+    지각을 죽이면 안 된다 (attention 과 같은 규칙).
+    """
+    if not isinstance(subtask, dict):
+        return None
+    p = subtask.get("p")
+    if not isinstance(p, dict) or not p:
+        return None
+    try:
+        return {str(k): float(v) for k, v in p.items()}
+    except (TypeError, ValueError):
+        return None
+
+
 GRASP_CONTINUITY_OFF_PHASES = (GraspPhase.CLOSING, GraspPhase.HELD)
 
 

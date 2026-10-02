@@ -204,6 +204,22 @@ class ClusteringConfig:
     #: hand reaching the banana beside the apple, grasped at t=440), the rest ≥ 45 mm, most ≥ 90.
     #: 50 mm already blocks two genuine switches (t=432 · t=480). The margin is thin (25 → 31 mm).
     hand_occlusion_reach: float | None = 0.03
+    #: **Subtask gate (SUBTASK-c, user spec 2026-10-02).** True = while the confirmed subtask label
+    #: (`TargetConfirm.note_subtask`, from the kv_L4 probe) is `place` or `home`, the attention
+    #: target is not carved: `TargetConfirm` adopts no first target and counts no challenger (the
+    #: frame is a gap, as while frozen). The current manipulated object is kept; its carve, attach
+    #: and detach follow the existing rules (the grasp latch decides carve → attach, not the label).
+    #: `pick` or no confirmed label = the ungated behaviour. The label can only *block* a new carve,
+    #: never add one. **False (default) = bit-identical to before** (the label is still recorded,
+    #: with what the gate would have blocked).
+    subtask_gate: bool = False
+    #: Consecutive requests the probe's argmax must agree before the confirmed label changes.
+    #: `None` = `target_confirm_frames` (3).
+    subtask_confirm_frames: int | None = None
+    #: The probe asset (`.npz`, `stages/subtask_probe.SubtaskProbe`). `None` = the shipped
+    #: `benchmark/ag3s/asset/subtask_probe/kv_L4_v1.npz`. Read by the policy side that computes the
+    #: label (`trajopt/attention_policy.AttentionPolicy`); the gate itself only sees probabilities.
+    subtask_probe_path: str | None = None
     w_attention: float = 0.7
     w_geometry: float = 0.3
     max_seed_points: int = 4000  # cap on seeds fed to the connectivity search, for latency
@@ -290,6 +306,19 @@ class ClusteringConfig:
             raise AG3SConfigError(
                 f"clustering.hand_occlusion_reach must be null (off) or a finite distance >= 0 "
                 f"in metres, got {hr!r}")
+        if not isinstance(self.subtask_gate, bool):
+            raise AG3SConfigError(
+                f"clustering.subtask_gate must be true or false, got {self.subtask_gate!r}")
+        sf = self.subtask_confirm_frames
+        if sf is not None and (isinstance(sf, bool) or not isinstance(sf, (int, float))
+                               or not float(sf).is_integer() or sf < 1):
+            raise AG3SConfigError(
+                f"clustering.subtask_confirm_frames must be null (= target_confirm_frames) or an "
+                f"integer >= 1, got {sf!r}")
+        sp = self.subtask_probe_path
+        if sp is not None and not (isinstance(sp, str) and sp):
+            raise AG3SConfigError(
+                f"clustering.subtask_probe_path must be null (shipped asset) or a path, got {sp!r}")
         lost = self.target_lost_frames
         if lost is not None and (
                 isinstance(lost, bool) or not isinstance(lost, (int, float))

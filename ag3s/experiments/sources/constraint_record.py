@@ -156,8 +156,9 @@ class ConstraintRecordWriter:
         # T26: 제외 연속성 (`{active, source, mechanism, ...}`) · destination · 불변식 위반 ·
         # 이번 프레임 cluster 들의 admissibility — 기록 키 추가만 (T20 의 `manipulated` 와 같은 방식).
         # T29: `finger_joints` — 이 프레임의 FK 가 쓴 손가락 관절값과 그 출처.
+        # SUBTASK-c: `subtask` — label (p · argmax · 확정) · gate · blocked · released · placed_seen.
         for key in ("exclusion", "destination", "invariant_violation", "admissibility",
-                    "gripper_max_opening", "finger_joints"):
+                    "gripper_max_opening", "finger_joints", "subtask"):
             summary[key] = (getattr(constraint_set, "metrics", None) or {}).get(key)
         target = getattr(constraint_set, "target", None)
         if target is not None:
