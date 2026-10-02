@@ -276,6 +276,23 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **negative control** | 비교기가 정말 차이를 잡는지 확인하려고 **일부러 다른 두 기록**을 같은 비교기에 넣어 보는 것. 여기서 차이가 안 나오면 "전부 같다" 는 결과를 믿을 수 없다 |
 | **dual check** | 같은 코드 안에서 GPU 경로와 CPU 경로를 **매 호출마다 같이 계산해** 비교하는 구현자의 검사 (B2 · B4) |
 
+
+### 큰 N 짝지은 평가 (T39, 2026-10-02 추가)
+
+| 용어 | 뜻 |
+|---|---|
+| **policy seed (정책 seed)** | 정책(π0.5)이 action chunk 를 뽑을 때 쓰는 sampling noise 의 난수 시작값. T39 의 `--policy-seed S` 는 에피소드 첫 요청에 `policy_seed` 를 싣고, 서버는 그 요청의 추론 직전에 정책 RNG 를 `jax.random.key(S)` 로 다시 놓은 뒤 이후 요청은 거기서 이어 split 한다. 이전에는 서버 시작 때의 `key(0)` 에서 요청 순서대로 흘렀다. seed 를 안 주면 요청 바이트와 서버 동작이 T39 전과 같다 (S1) |
+| **짝지은 비교 (paired comparison)** | 두 조건을 **같은 (episode, seed)** 로 묶어 한 쌍 안에서 두 조건의 결과를 견주는 비교. 쌍 안에서는 초기 상태와 정책 noise 가 같도록 설계했다. T39 는 24 episode × 2 seed = 48 쌍 |
+| **McNemar test (exact)** | 짝지은 이분형 결과 (성공 / 실패) 에서 **두 조건이 갈린 쌍**의 수만 쓰는 검정. 갈린 쌍이 b + c 개일 때, 어느 쪽이 이길 확률이 같다는 가정 아래 이항분포로 계산한 양측 p 가 exact 형이다. 둘 다 성공하거나 둘 다 실패한 쌍은 계산에 들어가지 않는다. T39 success: 8 대 7 → p = 1.0 |
+| **discordant pair (갈린 쌍)** | 짝지은 비교에서 두 조건의 결과가 다른 쌍. T39 success 기준 15 쌍 (E0 만 성공 8 + E3b 만 성공 7). 결과가 같은 쌍 (둘 다 성공 22 · 둘 다 실패 11) 은 concordant |
+| **XLA autotune** | XLA 가 GPU 에서 컴파일할 때 후보 kernel 여러 개를 실제로 돌려 보고 빠른 것을 고르는 단계. 고른 kernel 이 **서버 프로세스마다 다를 수 있고**, kernel 이 다르면 부동소수 결과가 조금 다르다. `XLA_FLAGS` 의 `--xla_gpu_autotune_level=0` 은 이 탐색을 끈다 (T39 에서 같은 seed 가 서버 프로세스 사이에서도 비트 동일이 되게 하려고 켰다) |
+| **immutable snapshot (불변 사본)** | 다른 세션이 같은 파일을 고치는 main 체크아웃 대신, 브랜치를 `git archive` 로 별도 디렉터리에 풀어 놓은 파일 복사본. 실행 도중 코드가 바뀔 수 없다. T39 는 `/mnt/dev/work-o1` (브랜치 `o1-eval` `9fab500`, tag `t39-eval-9fab500`) 를 썼고 파일 md5 목록으로 확인한다 |
+| **deterministic warmup (`--warmup-steps N`)** | 첫 추론 전에 시뮬레이션을 벽시계 시간 (`--start-delay`) 이 아니라 **정확히 N step** 진행하는 것. 같은 episode 가 같은 t=0 상태에서 출발하게 한다 (`--start-delay 2.0` 에 해당하는 값이 1000) |
+| **chunk seq k** | 한 run 의 k 번째 정책 chunk (1 부터). 8 control step 씩이라 chunk k 는 step 8(k−1) … 8k−1 이다. 한 run 은 75 chunk |
+| **a · b · c (분기 지표, S2-3b)** | 짝 (같은 episode · seed) 의 한 chunk 에서 **a** = TO · gate 가 정책 출력을 바꾼 양 (E3b 실행 chunk − E3b 정책 원출력), **b** = 두 조건의 정책 출력 차이 (E3b 정책 원출력 − E0 실행 chunk), **c** = 두 조건의 chunk 시작 상태 차이 (qpos 66 차원). 모두 최대 절대 차 |
+| **first-divergence chunk (처음 갈라진 chunk)** | 한 쌍에서 E0 와 E3b 의 **실행된 action** 의 차이가 처음 문턱 (T39 는 1e-3, 1e-2, 1e-1) 을 넘은 step 이 속한 chunk |
+| **HOLD · HOLD kind** | `--safe-gate reasons` 에서 서버 verdict 가 chunk 를 막는 것 (`gate_action = hold`, IPC 응답 `unsafe`). 막은 사유의 분류가 HOLD kind (`collision` · `uncertified` · `unverified`). 한 chunk 가 둘 이상의 kind 를 가질 수 있다 |
+
 ---
 
 > **갈림길에서 안 고른 선택지** — 맨 아래 **"선택한 것과 안 고른 것 — 되돌아올 지점"** 절.
@@ -313,6 +330,7 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | ↳ T36 | cuRobo 회귀 기준선 (둘째 기준) | cuRobo 단독 4 회 비트 단위 재현 **10/15 · 15/15 · −9.171877401271193 mm**, legacy **14/15 · 15/15 · −29.031048280806342 mm**. 덮지 않는 경로 명시. skill 갱신 (루트 `7348d9e`) (2026-09-30 10:34) |
 | ↳ T37 | K1: 닫기·쥐기 구간 `continuity` off | E3a **3/6** · E3b **3/6** (T34 5/6 · 3/6). closing/held 손끝 편차 중앙 7.8–8.4 → 0.0–0.3 mm 이나 실패 접촉 높이 +3.8 ~ +12.9 mm 그대로 (54 run 중 실패 18/21 이 +3 mm 위), 부호 반전 1.44 → 2.47/s. **사용자 판정 O2: 기본 off** (2026-10-01) |
 | ↳ T38 | **O4 실시간: AG3S 를 GPU 로** (cuRobo 와 같은 원리). Phase A profile → Phase B B1–B5 → 독립 검증 V1–V5 | **O4 완료 — 브랜치 `o4-gpu-parallel` 에서, main 병합 대기**(2026-10-02). replay 의 AG3S + TO 중앙 **2,934.6 → 314.5 ms** (p90 375.2), chunk period 533 ms 안 **74/74** (tag 0/74). 5 기록 × 14 항목 **bit-identical**, 두 기준선 동일, CPU fallback 동일. **미측정: 5c72d37 로 닫힌 루프(MuJoCo client) · π0.5 추론 · 전송.** 아래 **"T38"** 절 |
+| ↳ T39 | **O1 큰 N**: E0 (VLA 단독) 대 E3b (AG3S + ESDF + TO, gate · HOLD) 를 같은 (episode, seed) 로 짝지어 24 episode × 2 seed = 48 쌍 (96 run). S1 = policy seed 입구 · deterministic warmup, S2-1 = 서로 다른 서버 둘에서 비트 동일 수락 | **O1 측정 완료**(2026-10-02, 판정 대기) — 96 run 전부 완료 (실패 시도 0). success **E0 30/48 · E3b 29/48**, 짝 2×2 (둘 다 22 · E0 만 8 · E3b 만 7 · 둘 다 아님 11), exact McNemar p = **1.0**. E3b HOLD 294 chunk (18 run). 갈린 15 쌍의 first-divergence chunk 는 15/15 가 chunk 2, 그 chunk 에서 gate `execute` · 최대 위반 0.0 m. 미측정은 재측정 대기 11–16 (server infer 분해 · E0 server 시간 …). 위 "열린 문제 O1–O12" 행의 순서 (3) O1 은 이 행으로 측정됐다 |
 | ↳ 열린 문제 O1–O12 | 다음 순서 | (1) O2 + O12 → 전 작업공간 commit + tag → (2) O4 실시간(GPU 병렬) → (3) O1 큰 N (GPU 공유 확인) → (4) O5 → (5) O10·O11 (2026-10-01) |
 
 ### 이 국면에서 쓰는 자산
@@ -355,6 +373,9 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | T38 — GPU 로 옮긴 AG3S 연산은 CPU 경로와 **bit-identical** 이어야 한다 | 허용오차를 두지 않는다. 비결은 (1) 연산마다 반올림을 고정한 jiterator kernel (2) 스칼라 나눗셈 금지 — torch CUDA 는 CPU 스칼라로 나누면 `a·(1/b)` 로 바꾼다 (3) numpy dgemm 의 FMA chain 을 측정해 그대로 재현하고 gemv 모양(폭 1)은 CPU 에 맡긴다. 이 가정은 기계·BLAS 의존이라 단위 테스트가 매 실행 다시 잰다 (`test_numpy_dgemm_is_the_fma_chain_the_kernels_compute`). 다른 numpy/OpenBLAS 에서 테스트가 깨지면 `RECON_DEVICE` 등을 `"cpu"` 로 | 16D 경로 |
 | T38 — KD-tree 질의는 `workers=1` (`KDTREE_WORKERS`) | 256 코어 기계에서 `workers=-1` 은 청크당 스레드 ≈ 2,138 개를 만든다. 결과는 같다 (같은 입력 · `same_result: true`). **병렬이 이득인 오프라인 스크립트는 건드리지 않았다** | 16D 경로 |
 | T38 — 실행 자원 설정은 YAML 이 아니라 `config.py` 모듈 상수 | `KDTREE_WORKERS` · `SELF_FILTER_DEVICE` · `RECON_DEVICE` · `SUPPORT_RANSAC_DEVICE` · `ESDF_QUERY_HOST_ARITH_MAX_POINTS`. 결과 불변이라 ablation 축이 아니기 때문 (구현자 판단) | 16D 경로 |
+| T39 — 짝지은 비교의 "같은 noise" 는 `(episode, seed)` 로 정한다 | `seed = 10·ep + rep` (rep = 1, 2), 첫 요청에만 싣고 이후 요청은 이어 split. seed 가 없으면 요청 바이트가 T39 전과 같다. 같은 서버 프로세스를 다시 띄우면 같은 난수 순서가 흐르던 문제 (6 run 이 독립 표본이 아니던 이유) 를 없앤다 (S1) | 16D |
+| T39 — 평가 서버의 `XLA_FLAGS` 에 `--xla_gpu_autotune_level=0` 을 더한다 (두 조건 모두) | CLAUDE.md 의 `--xla_gpu_enable_command_buffer=` 는 그대로 두고 하나 더한다. 없으면 같은 seed 도 **서버 프로세스가 다르면** chunk 0 부터 3–5e-3 다르다 (구현자). 기본 kernel 과는 수치가 4–14e-3 다르므로 (구현자) T34 · T37 의 옛 run 과 비트 비교하지 않는다 (lead 판단, 2026-10-02) | 16D |
+| T39 — 평가 코드는 immutable snapshot 에서 돌린다 | 브랜치 `o1-eval` `9fab500` (tag `t39-eval-9fab500`) 를 `/mnt/dev/work-o1` 에 풀어 96 run 내내 코드를 고정. main 체크아웃은 다른 세션이 같은 파일을 고치는 중이었다 | 16D |
 
 원 측정: [`AG3S_REVIEW_LOG.md`](AG3S_REVIEW_LOG.md) 의 **"누적 발견"** 표와 각 발견의 절.
 
@@ -376,6 +397,12 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | 8 | (T38 이 추가) tag 코드의 서버 시간 — T0 실시간성 P50 2519 ms · T34 청크 ≈ 3.1 s | 14D 아님. T38 이전(tag `b4f06ec`) 코드의 값 | replay 로는 `5c72d37` 이 AG3S + TO **314.5 ms**. **닫힌 루프로 재측정 대기** — `5c72d37` 로 MuJoCo client 를 돌린 적이 없고, π0.5 추론 · websocket 전송은 replay 에서 빠져 있다 |
 | 9 | (T38 이 추가) 청크마다 ≈ 70–90 ms 의 정체가 단계를 옮겨 다닌다 | 구현자 관찰 (verify.json 에는 이 크기가 없다) | **원인 미확정.** 구현자는 GC · recorder · GPU 깨어남을 배제했다고 보고했으나 verifier 는 따로 확인하지 않았다 |
 | 10 | (T38 이 추가) background recorder 큐의 장기 거동 | verifier replay 에서 infer 직후 큐에 남은 항목 중앙 9 · 최대 9 (75 chunk) | 장기 run 에서 큐가 한도(구현자 보고: `queue_size` 8)에 붙으면 응답 경로가 기다린다. **미측정** |
+| 11 | (T39 가 추가) E3b server `infer` 를 policy forward 와 attention-copy forward 로 가른 시간 | 가른 기록이 없다. 합친 한 타이머의 중앙 561.4 ms · p95 836.4 ms (3,552 chunk, `safe_policy.py:342-345`) | **측정 안 됨** — 타이머를 둘로 나누면 잴 수 있다 |
+| 12 | (T39 가 추가) E0 의 server 시간 | 기록 없음 (`--no-safe` 서버가 timing 을 남기지 않는다). E0 round trip 중앙 222.9 ms · p95 486.2 ms 는 정책 시간의 상한 | **측정 안 됨** |
+| 13 | (T39 가 추가) chunk 2 에서 b (두 조건의 정책 출력 차이) 와 c (시작 상태 차이) 의 간격 | b 중앙 1.36e-3, c 중앙 2.23e-8 (48 쌍). 원인은 `verify.json` 에 없다 | **원인 미확정** |
+| 14 | (T39 가 추가) S2-2 중 서버별 GPU 메모리 | 총량만 있다 (nvidia-smi 의 pid 를 서버에 귀속할 수 없었다). S2-1 의 서버 하나당 peak 증가는 E0 8,732–8,738 MiB · E3b 17,930–19,476 MiB | **측정 안 됨** (S2-2 구간) |
+| 15 | (T39 가 추가) regression baseline 의 cuRobo 변형 | legacy 만 돌렸다 (14/15 · 15/15 · −29.031048280806342 mm, 일치). cuRobo 변형은 안 돌렸다 | **측정 안 됨** |
+| 16 | (T39 가 추가) 재측정 대기 8 (닫힌 루프 서버 시간) 과 T39 의 닫힌 루프 수치 | T39 의 E3b server AG3S 중앙 353.5 ms · TO 79.0 ms · server total 1,071.0 ms · round trip 1,292.2 ms. T38 replay 의 AG3S + TO 314.5 ms 와 구간 정의를 맞춰 비교하지 않았고, 조건도 다르다 (`autotune_level=0` · 서버 4 개 동시 · `--record-constraints`) | **분리해 재지 않았다** — 8 번 행은 닫히지 않았다 |
 
 ~~재측정이 끝나면 이 표의 `상태` 를 값과 함께 갱신하고, 값이 달라진 것은 **왜 달라졌는지**를
 같은 자리에 적는다. 값이 같으면 그것도 적는다 — "모델을 바꿔도 안 바뀌었다" 는 결과다.~~
@@ -4034,3 +4061,401 @@ verifier 수치 (chain a · b · c):
 - figure: `figures/t38/` — Phase A `t38-stage-bars` · `t38-pipeline-map` · `t38-function-table` · `t38-input-sizes` · `t38-scene`, Phase B `t38b-stage-chain` · `t38b-chunk-total` · `t38b-equivalence` · `t38b-scene-mask` (각각 `.json` sidecar 가 있다).
 
 **다음 판정은 사용자에게 있다:** (1) 브랜치를 main 에 병합할 것인가, (2) 병합 전에 `5c72d37` 로 닫힌 루프를 한 번 돌릴 것인가, (3) 정체의 원인을 따로 STEP 으로 쫓을 것인가. 열린 문제 표의 O4 행(위 T35–T37 절, "실시간이 안 된다")은 이 절 앞의 상태 기록이다.
+
+
+---
+
+## T39 — O1 큰 N: E0 (VLA 단독) 대 E3b (AG3S + cuRobo ESDF + TO, gate · HOLD) 를 같은 noise 로 짝지어 (2026-10-02)
+
+**이 절이 답하는 물음.** O1(표본이 작아 성공률 차이를 판정할 수 없다 — 조건당 6 run, 정책이 비결정적이고 새로 띄운 서버는 같은 난수 순서라 병렬 run 이 중복 표본이다)을 어떻게 푸는가. (1) 정책 난수를 run 마다 **고정할 수 있는가** (S1). (2) 고정한 노이즈로 24 episode × 2 seed × 2 조건 = 96 run 을 돌리면 E0 와 E3b 가 **짝(같은 episode · 같은 seed)** 안에서 어떻게 갈리는가 (S2). (3) 갈리는 쌍은 **어느 chunk 에서 처음 갈라지는가** (S2-3b).
+
+**읽는 법과 출처 규약.**
+
+- 수치는 `handoff/T39.verify.json` 의 `numbers` (그 안의 `s2_3b` 포함) 에서 왔다. 이 파일에 없는 수치는 쓰지 않았다.
+- 설계와 S1 의 구현 내용은 `handoff/T39.task.md` (lead) 와 `handoff/T39-S1.impl.md` (구현자) 에서 왔다. **구현자 보고에만 있는 수치는 "(구현자)"** 라고 밝혔다.
+- 시각은 git commit 시각과 파일 수정 시각이다 (서버 시계, UTC). `verify.json` 자체에는 시각 필드가 없다 (T38 절과 같은 규약).
+- 아래 표의 **"verify.json 에서 센 값"** 은 `verify.json` 의 행 목록(`matrix` · `divergence_all_pairs` · `discordant_pairs`)을 그대로 세어 얻은 개수이며, 이 파일에 합계로는 적혀 있지 않다는 뜻이다.
+- **이 절은 무엇이 어떻게 측정됐는지만 적는다.** 쌍이 갈린 *이유* 는 `verify.json` 에 없으므로 적지 않는다.
+- 새 용어(policy seed · 짝지은 비교 · McNemar test · discordant pair · XLA autotune · immutable snapshot · first-divergence chunk · a·b·c · deterministic warmup · HOLD)는 위 **"용어 → 큰 N 짝지은 평가 (T39)"** 에 있다.
+
+### 결과 한 장 (96 run, 48 쌍)
+
+| 항목 | E0 (VLA 단독) | E3b (AG3S + ESDF + TO, gate · HOLD) |
+|---|---|---|
+| run 수 | 48 | 48 |
+| **success** (grasp 와 place 모두) | **30 / 48** | **29 / 48** |
+| grasp | 34 / 48 | 35 / 48 |
+| place | 30 / 48 | 29 / 48 |
+| success · grasp 만 · 둘 다 아님 (`matrix` 에서 센 값) | 30 · 4 · 14 | 29 · 6 · 13 |
+| HOLD chunk 총수 (3,600 chunk 중) | 0 | **294** |
+| HOLD 가 한 번이라도 있는 run | 0 | **18** |
+| run 당 wall (s) 중앙 · p95 · 최대 | 186 · 217.5 · 250 | 254.5 · 310.6 · 348 |
+
+**짝지은 2×2 (success).** 같은 (episode, seed) 의 E0 결과와 E3b 결과를 한 쌍으로 묶었다.
+
+| | E3b success | E3b 실패 |
+|---|---|---|
+| **E0 success** | 22 (둘 다) | **8** (E0 만) |
+| **E0 실패** | **7** (E3b 만) | 11 (둘 다 아님) |
+
+**exact McNemar p = 1.0** (갈린 쌍 8 대 7, n = 48 쌍). grasp 와 place 의 2×2 는 아래 표와 같다. place 의 표는 success 의 표와 같다.
+
+| 지표 | 둘 다 | E0 만 | E3b 만 | 둘 다 아님 | exact McNemar p |
+|---|---|---|---|---|---|
+| success | 22 | 8 | 7 | 11 | 1.0 |
+| grasp | 29 | 5 | 6 | 8 | 1.0 |
+| place | 22 | 8 | 7 | 11 | 1.0 |
+
+![T39 요약 표](figures/t39/t39-summary-table.png)
+
+[`figures/t39/t39-summary-table.png`](figures/t39/t39-summary-table.png) — 표. 위 두 표의 수치와 지연 요약을 한 장에 모은 것.
+
+![짝지은 2×2](figures/t39/t39-paired-2x2.png)
+
+[`figures/t39/t39-paired-2x2.png`](figures/t39/t39-paired-2x2.png) — 표. 왼쪽부터 success · grasp · place 의 짝지은 2×2 와 exact McNemar p.
+
+### 타임라인
+
+| 시각 (UTC, 2026-10-02) | STEP | 무엇 |
+|---|---|---|
+| 08:50 (파일 수정) | **S1** 구현 완료 (`T39-S1.impl.md`) | 정책 seed 입구와 deterministic warmup. 구현자 기록은 KST 16:50–17:55 |
+| 08:53 | 커밋 | benchmark main `e01b7bf` (seed) · 루트 `48314a9` (테스트) · pi05_TO_hybrid `22d8dae` (client flag) |
+| 08:54 | 브랜치 `o1-eval` `9fab500` | 서버 코드. 이후 tag `t39-eval-9fab500` (lead) |
+| 09:36:47 (raw `runs/launch.out`, `verify.json` 에는 없다) | **S2-2** 시작 | 체인 4 개 |
+| 09:19–09:35 (`s21/` 디렉터리 수정 시각) | **S2-1** 수락 | 서로 다른 서버 둘에서 같은 run 이 비트 동일한가. E0 · E3b 모두 통과 |
+| 09:50:43–09:52:48 | work-dd GPU window | 다른 세션 (work-dd) 의 GPU 회귀 기준선이 같은 GPU 에서 돈 구간 (아래 "work-dd GPU window") |
+| ≤ 11:25:38 | **S2-2** 96 run 완료 | 체인 4 개 모두 `rc=0`. 마지막 체인 종료 11:25:38 (`verify.json` `run_health.chains_rc`) |
+| 18:37 → 18:45 (파일 수정) | **S2-3 · S2-3b** 분석 | `analysis.json` 18:37, `s23b.json` 18:44, `T39.verify.json` 18:45 |
+| 18:44 · 18:47 | 결과 커밋 | benchmark main `318c343` (S2 · figure) · `80dc4cd` (S2-3b) |
+
+T38 의 GPU 가속 코드(브랜치 `o4-gpu-parallel`)는 이 사이에 다른 세션이 main `2016f30` 으로 병합했다. T39 의 E3b 서버 코드는 그 병합 이전의 `o4-gpu-parallel` (T38 B4 `5c72d37`) 위에 seed 커밋을 얹은 `o1-eval` 이다. **여기서는 문맥으로만 적는다.**
+
+### 왜 새 입구가 필요했나 — S1 (seed 입구 + deterministic warmup)
+
+**S1** 은 "정책 난수를 run 마다 고정하는 입구를 만든다" 는 구현 단계다 (이하 S2-0 = 준비, S2-1 = 수락, S2-2 = 본 실행 96 run, S2-3 = 분석 · figure, S2-3b = S2-3 뒤에 덧붙인 후속 측정 — 전부 `T39.task.md` 의 단계 이름이다).
+
+**동기 (`T39.task.md`).** 이전의 E0 / E3b 비교는 episode 3 개 × 2 회 = 6 run 이었다. 서버는 시작할 때 `jax.random.key(0)` 으로 난수를 만들고 요청마다 split 하는데 재설정이 없어서, **같은 서버를 새로 띄우면 조건이 달라도 파지 전까지 같은 궤적이 나왔다** (T30 · T37 에서 소수점 9 자리 일치). seed 를 넣을 입구는 CLI · env · wire 필드 · client 어디에도 없었다. 그래서 6 run 은 독립 표본이 아니다.
+
+| 구현 (구현자) | 내용 |
+|---|---|
+| client `--policy-seed S` | 에피소드의 **첫 요청 (t_step 0)** 에만 `policy_seed` 를 싣는다. safe · E0 (`--no-safe`) 두 모드 모두. manifest 에 `policy_seed` |
+| 서버 | 그 요청의 `policy.infer` 바로 앞에서 정책 RNG 를 `jax.random.key(S)` 로 다시 놓는다. 이후 요청은 거기서 이어 split 한다. openpi 는 고치지 않았고 benchmark 쪽 얇은 wrapper (`SeededPolicy`) 가 `Policy._rng` 를 바꾼다 (`_rng` 가 없으면 크게 실패) |
+| client `--warmup-steps N` | `--start-delay` 의 wall-clock 진행 대신 **정확히 N step**. `--start-delay 2.0` 에 해당하는 값이 1000 (timestep 0.002). 같은 episode 는 같은 t=0 상태가 된다 |
+| 호환 | seed 를 안 주면 요청 바이트가 T39 전과 같다 (골든 sha256 테스트). 옛 서버에 `--policy-seed` 를 주면 client 가 첫 응답에서 죽는다 |
+| 단위 검증 | `tests/trajopt/test_t39_policy_seed.py` 33 개 통과 (openpi-live, JAX CPU) (구현자) |
+
+**smoke 에서 나온 발견 (구현자).** 같은 seed 라도 **서버 프로세스가 다르면** t=0 상태는 비트 동일인데 첫 chunk 가 3–5e-3 달랐다. 원인으로 XLA autotune 을 의심했고, `XLA_FLAGS` 에 `--xla_gpu_autotune_level=0` 을 더하면 서로 다른 두 서버가 E0 · E3b 모두 6 chunk 비트 동일이었다 (구현자, `--max-steps 48`). 기본 kernel 대비 수치는 4–14e-3 다르다 (구현자). **lead 판단: S2 는 두 조건 모두 `XLA_FLAGS="--xla_gpu_enable_command_buffer= --xla_gpu_autotune_level=0"`** (`verify.json` `code_state.xla_flags`). 두 조건이 같은 kernel 이라 짝지은 비교는 공정하다.
+
+**코드를 고정했다.** main 체크아웃은 다른 세션 (SUBTASK-c) 이 같은 파일을 고치는 중이어서, 96 run 도중 코드가 바뀌지 않도록 **immutable snapshot** (`/mnt/dev/work-o1`, 브랜치 `o1-eval` 을 `git archive` 로 푼 것) 에서 돌렸다 (`verify.json` `code_state`: `o1-eval` `9fab500`, `rby1_bringup` `22d8dae`, 파일 md5 목록 `outputs/verify/T39/p/code_md5_s20.txt`).
+
+### S2-1 수락 — 서로 다른 서버에서 비트 동일 (verifier)
+
+ep1807, seed 18071. 같은 조건을 **서로 다른 서버 프로세스 둘**(a · b)에서 돌려 비교했다. E0 는 `--trajectory-out` npz, E3b 는 frames · record · actions 를 비교했다.
+
+| 항목 | E0 a | E0 b | E3b a | E3b b |
+|---|---|---|---|---|
+| 서버 GPU 메모리 peak 증가 (MiB) | 8,738 | 8,732 | 17,930 | 19,476 |
+| run wall (s) | 226 | 195 | 268 | 260 |
+| 서버 기동 (s) | 40 | 30 | 55 | 65 |
+| **a 와 b 가 비트 동일** | **E0: 예** | | **E3b: 예** | |
+
+본 실행의 E3b ep1807 seed 18071 도 S2-1 과 같았다 (`run_health.s22_cross_check_E3b_ep1807_s18071_vs_s21: true`).
+
+### 실행 설계 (S2-2)
+
+| 항목 | 값 |
+|---|---|
+| episode | 사과 + 왼팔 test episode 24 개: 1800 1807 1808 1818 1819 1824 1828 1836 1863 1878 1887 1888 1896 1914 1925 1927 1939 1965 1967 1968 1976 1982 1983 1995 |
+| seed | episode 당 2 개, `seed = 10·ep + rep` (rep = 1, 2). 조건 안에서는 서로 다르고 **조건 사이에서는 같다** |
+| 조건 | **E0** = VLA 단독 (`--no-safe`). **E3b** = T34 설정 (gripper links · exclude-authorized · margin 0 · capsule 0.05) + `--safe-gate reasons --safe-hold-mode fixed` + `--safe-phase approach --safe-manipulators left` |
+| run | 24 × 2 × 2 = **96 run (48 쌍)**, 모두 3rd person 녹화 (`--record … --view front`, osmesa). 한 run = 75 chunk (`--max-steps 600`, chunk 당 8 step) |
+| 병렬 | 서버 4 개 (체인 4 개). seed 가 정하므로 서버가 겹쳐도 표본이 중복되지 않는다 |
+| 성공 판정 | grasp = 사과 z ≥ 초기 + 50 mm. place = 마지막 planning row 에서 사과 중심이 crate 안. success = 둘 다 (T28 `analyze_e0.py` 규칙) |
+
+**run 건강 (`run_health`).**
+
+| 항목 | 값 |
+|---|---|
+| 완료 run | 96 (`s2_2_runs.done`), 실패한 시도 0 |
+| 실패 디렉터리 · 재시도 줄 | 0 · 0 |
+| 종료 코드가 0 이 아닌 client 로그 · traceback | 0 · 0 |
+| 체인 | 4 개 모두 `rc=0` |
+| E3b IPC timeout · stale error | 0 |
+| E3b 서버 기록과 client 가 받은 chunk 가 어긋난 수 | 0 (서버 기록 48 run 과 짝 지어 확인, `n_server_refined_mismatch`) |
+| 기준선 (S2-2 뒤, snapshot 코드, CPU shim) | legacy 기준선 일치: 14/15 · 15/15 · −29.031048280806342 mm (`regression_baseline_legacy.matched: true`) |
+
+### 성공 격자 — episode × seed × 조건
+
+기호: **S** = success, **g** = grasp 만 (place 못 함), **-** = grasp 못 함. 칸의 `E0 → E3b`, † = 갈린 쌍 (E0 와 E3b 의 success 가 다르다).
+
+| episode | seed 10·ep+1 | seed 10·ep+2 |
+|---|---|---|
+| 1800 | - → S † | g → - |
+| 1807 | S → S | S → - † |
+| 1808 | - → - | - → - |
+| 1818 | - → - | - → - |
+| 1819 | S → S | - → S † |
+| 1824 | g → S † | S → S |
+| 1828 | S → S | S → S |
+| 1836 | S → S | S → S |
+| 1863 | S → S | S → g † |
+| 1878 | - → S † | S → S |
+| 1887 | S → g † | g → S † |
+| 1888 | S → S | - → - |
+| 1896 | - → - | S → - † |
+| 1914 | g → - | - → S † |
+| 1925 | S → S | S → S |
+| 1927 | S → g † | - → g |
+| 1939 | S → S | S → S |
+| 1965 | - → - | - → - |
+| 1967 | S → - † | S → S |
+| 1968 | S → S | S → S |
+| 1976 | - → S † | S → S |
+| 1982 | S → g † | S → S |
+| 1983 | S → g † | S → S |
+| 1995 | S → S | S → S |
+
+![성공 격자](figures/t39/t39-success-matrix.png)
+
+[`figures/t39/t39-success-matrix.png`](figures/t39/t39-success-matrix.png) — 표. episode × seed × 조건 heatmap, x 표시 = 갈린 쌍.
+
+### HOLD — E3b 의 gate 가 막은 chunk
+
+**HOLD** 는 E3b (`--safe-gate reasons`) 에서 서버 verdict 가 그 chunk 를 막은 경우다 (`gate_action = hold`, IPC 응답 `unsafe`). E0 는 gate 가 없으므로 0 이다.
+
+| 항목 | 값 |
+|---|---|
+| gate action (3,600 chunk) | `execute` 3,306 · **`hold` 294** |
+| HOLD 가 있는 run | **18 / 48** |
+| run 당 HOLD chunk | 중앙 0 · 평균 6.1 · p95 46.5 · 최대 57 |
+| HOLD kind 별 chunk 수 | `collision` 198 · `uncertified` 89 · `unverified` 62 |
+| verdict reason kind 별 chunk 수 (3,600 chunk 전체) | `budget_only` 3,374 · `allowed_contact` 85 · `collision` 198 · `uncertified` 89 · `unverified` 62 · `occluded_target` 5 |
+
+kind 별 chunk 수의 합 (349) 이 HOLD 294 보다 큰 것은 한 chunk 가 둘 이상의 kind 를 가질 수 있기 때문이다 (예: `hold:allowed_contact+collision+unverified` 55 chunk — 아래 표).
+
+![HOLD · verdict](figures/t39/t39-hold-verdict.png)
+
+[`figures/t39/t39-hold-verdict.png`](figures/t39/t39-hold-verdict.png) — 그래프. 왼쪽: run 별 HOLD chunk 수 (75 중). 가운데: HOLD kind 별 chunk 수. 오른쪽: verdict reason kind 별 chunk 수.
+
+**HOLD 와 결과 (같은 48 개 E3b run 을 HOLD 유무로 나눈 것).**
+
+| E3b run 의 HOLD | run 수 | success | grasp | place |
+|---|---|---|---|---|
+| 1 chunk 이상 있다 | 18 | 13 | 15 | 13 |
+| 없다 | 30 | 16 | 20 | 16 |
+
+| HOLD kind (그 kind 가 1 chunk 이상 있는 run) | run 수 | success | grasp | place |
+|---|---|---|---|---|
+| `collision` | 10 | 6 | 8 | 6 |
+| `uncertified` | 5 | 4 | 5 | 4 |
+| `unverified` | 6 | 3 | 3 | 3 |
+
+(한 run 이 둘 이상의 kind 를 가질 수 있어 run 수의 합 21 이 18 보다 크다.)
+
+**갈린 쌍 15 개 중 E3b 에 HOLD 가 있었던 쌍.** E3b 만 실패한 8 쌍 중 3, E0 만 실패한 7 쌍 중 3 (`discordant_hold_counts`). 쌍마다:
+
+| 갈린 방향 | episode · seed | E3b HOLD chunk 수 | HOLD kind 별 chunk 수 | 첫 HOLD t | E3b grasp t | 첫 HOLD − grasp (step) | E0 grasp t |
+|---|---|---|---|---|---|---|---|
+| E3b 만 실패 | 1807 · 18072 | 57 | collision 55, unverified 57 | 144 | — | — | 176 |
+| E3b 만 실패 | 1863 · 18632 | 17 | collision 14, uncertified 3 | 296 | 128 | 168 | 152 |
+| E3b 만 실패 | 1887 · 18871 | 0 | — | — | 136 | — | 136 |
+| E3b 만 실패 | 1896 · 18962 | 0 | — | — | — | — | 312 |
+| E3b 만 실패 | 1927 · 19271 | 0 | — | — | 136 | — | 160 |
+| E3b 만 실패 | 1967 · 19671 | 0 | — | — | — | — | 152 |
+| E3b 만 실패 | 1982 · 19821 | 0 | — | — | 160 | — | 192 |
+| E3b 만 실패 | 1983 · 19831 | 12 | collision 12 | 160 | 136 | 24 | 152 |
+| E0 만 실패 | 1800 · 18001 | 1 | unverified 1 | 216 | 128 | 88 | — |
+| E0 만 실패 | 1819 · 18192 | 0 | — | — | 128 | — | — |
+| E0 만 실패 | 1824 · 18241 | 2 | uncertified 2 | 280 | 120 | 160 | 112 |
+| E0 만 실패 | 1878 · 18781 | 0 | — | — | 128 | — | — |
+| E0 만 실패 | 1887 · 18872 | 1 | unverified 1 | 568 | 488 | 80 | 128 |
+| E0 만 실패 | 1914 · 19142 | 0 | — | — | 168 | — | — |
+| E0 만 실패 | 1976 · 19761 | 0 | — | — | 160 | — | — |
+
+(— = 해당 없음: HOLD 가 없거나 grasp 가 없다. t 는 control step.)
+
+### 파지 접촉 높이
+
+접촉 높이는 첫 닫기 cycle 이 끝난 시점(`t_settle`)의 두 손가락 접촉 중점 z 에서 사과 중심 z 를 뺀 값이다 (mm, T35 정의 — 위 용어 "접촉 중점").
+
+| 항목 (mm) | E0 (n = 48) | E3b (n = 48) |
+|---|---|---|
+| 중앙 | 0.37 | 1.04 |
+| 평균 | 5.18 | 4.29 |
+| p95 | 12.58 | 9.24 |
+| 최소 | −6.97 | −6.56 |
+| 최대 | 123.35 | 127.75 |
+| 첫 파지가 유지된 run (`first_grasp_held`) | 35 | 30 |
+
+![접촉 높이](figures/t39/t39-contact-height.png)
+
+[`figures/t39/t39-contact-height.png`](figures/t39/t39-contact-height.png) — 그래프. 조건별 접촉 높이 분포 (선 = 중앙값). 색 = success · grasp 만 · 실패, 마커 = 첫 파지 유지 / 24 row 안에 접촉을 잃음. 오른쪽은 −15 ~ 25 mm 확대 (3 점은 범위 밖).
+
+### 분기 분석 — 짝이 어느 chunk 에서 처음 갈라지나 (S2-3b)
+
+**S2-3b** 는 S2-2 기록 위에서 CPU 로만 더 잰 후속 측정이다 (`T39.verify.json` `numbers.s2_3b`, 스크립트 `outputs/verify/T39/p/s23b.py`). 쌍마다 chunk seq k = 1…5 (k 번째 chunk = control step 8(k−1) … 8k−1) 에서 세 양을 쟀다.
+
+| 기호 | 쉬운 말 | 정확한 정의 |
+|---|---|---|
+| **a** | **TO · gate 가 정책 출력을 얼마나 바꿨나** | max abs ( E3b 가 실제 실행한 chunk − 그 chunk 의 정책 원출력 `actions_reference` ), 16 열 모두 (rad, gripper 는 명령값) |
+| **b** | **두 조건의 정책 출력이 얼마나 다른가** | max abs ( E3b 의 `actions_reference` − E0 가 실행한 chunk ), rows 0–7. E0 에는 TO 가 없다 |
+| **c** | **두 조건의 chunk 시작 상태가 얼마나 다른가** | max abs ( E0 planning-row qpos − E3b planning-row qpos ), 66 차원. 정책이 보는 16D state 의 차이도 쟀는데 두 값은 같다 (k = 2, 3 에서만 측정) |
+
+**48 쌍 요약 (중앙 / 최대, 단위 rad 또는 명령값).**
+
+| chunk k (control step) | a 중앙 / 최대 | b 중앙 / 최대 | c 중앙 / 최대 (66D = 16D) | b > 1e-4 인 쌍 | a > 1e-3 이고 b < 1e-4 인 쌍 |
+|---|---|---|---|---|---|
+| 1 (t=0–7) | 0.00e+0 / 0.00e+0 | 5.87e-8 / 8.24e-8 | — | 0 / 48 | 0 / 48 |
+| 2 (t=8–15) | 2.65e-2 / 6.65e-2 | 1.36e-3 / 1.89e-3 | 2.23e-8 / 4.77e-8 | 48 / 48 | 0 / 48 |
+| 3 (t=16–23) | 1.67e-2 / 1.04e-1 | 2.78e-2 / 1.23e-1 | 1.65e-2 / 4.67e-2 | 48 / 48 | 0 / 48 |
+| 4 (t=24–31) | 1.48e-2 / 6.77e-2 | 5.13e-2 / 2.48e-1 | — | 48 / 48 | 0 / 48 |
+| 5 (t=32–39) | 1.48e-2 / 7.05e-2 | 1.01e-1 / 3.33e-1 | — | 48 / 48 | 0 / 48 |
+
+- **chunk 1.** a 는 48 쌍 모두 정확히 0 이다. b 는 8.2e-8 이하다.
+- **chunk 2.** a 는 중앙 2.65e-2 인데 b 는 중앙 1.36e-3 (최소 9.54e-4, 최대 1.89e-3, 48 쌍 모두 1e-4 초과) 이고 c 는 중앙 2.23e-8 (최대 4.77e-8) 이다. **b 는 1e-3 크기이고 c 는 1e-8 크기다. 이 간격의 원인은 `verify.json` 에 없다** (재측정 대기 13).
+- **chunk 3 이후.** c 는 chunk 3 에서 중앙 1.65e-2 (최대 4.67e-2) 이고, b 는 2.78e-2 → 5.13e-2 → 1.01e-1 (중앙, k = 3, 4, 5) 이다.
+- **"a 는 크고 b 는 작은" 쌍** (TO 가 바꿨는데 정책 출력은 같은 쌍) 은 모든 chunk 에서 0 / 48 이다.
+
+![분기 분석](figures/t39/t39-s23b-divergence.png)
+
+[`figures/t39/t39-s23b-divergence.png`](figures/t39/t39-s23b-divergence.png) — 그래프. 왼쪽: 쌍별 a · b · c 를 chunk 1–5 에 찍은 것 (로그 y축, 1e-9 미만은 1e-9 에 그림, 점선 = 1e-3 · 1e-4). 오른쪽: E3b 의 3,600 chunk 전체에서 a 를 latch 상태와 gate action 별로 본 분포 (점 = 중앙, 눈금 = p95, 선 = 최소–최대).
+
+**first-divergence chunk (처음 갈라진 chunk).** 쌍마다 E0 와 E3b 의 **실행된 action** 이 처음 문턱을 넘어 다른 step 이 속한 chunk 다. 48 쌍 전체 (`divergence_all_pairs`, verify.json 에서 센 값):
+
+| 문턱 | first-divergence chunk | 처음 넘은 step |
+|---|---|---|
+| 1e-3 | **chunk 2 가 48 / 48 쌍** (그 chunk 에서 E3b 의 gate action 은 48 쌍 모두 `execute`) | step 8 이 45 쌍, step 13 이 1 쌍, step 15 가 2 쌍 |
+| 1e-2 | — | 최소 8 · 중앙 11 · 최대 28 |
+| 1e-1 | — | 최소 23 · 중앙 39 · 최대 175 |
+
+실행된 action 의 차이는 48 쌍 모두 step 0 부터 0 이 아니다 (`first_step_gt0 = 0`; 크기는 chunk 1 의 b 와 같은 1e-7 이하). chunk 1 에서 E0 의 정책 원출력과 E3b 의 `actions_reference` 의 최대 차는 모든 쌍에서 1.19e-7 이하다.
+
+**갈린 쌍 15 개의 first-divergence (문턱 1e-3).** 모두 chunk 2 (t = 8) 이고, 그 chunk 에서 E3b 의 gate 는 `execute`, 최대 위반 (max violation) 은 0.0 m, 조작 대상은 15 개 모두 `apple` (`visible`) 이다. 표의 `최악 링크` 는 그 chunk 의 verdict 에서 clearance 가 가장 작은 링크이고 `tier` 는 그 값을 낸 ESDF 계층이다.
+
+| 갈린 방향 | episode · seed | E0 | E3b | first-divergence chunk | b (rad) | a (rad, 그 chunk) | 최악 링크 · tier | 최악 clearance (mm) | 1e-1 을 처음 넘은 chunk |
+|---|---|---|---|---|---|---|---|---|---|
+| E3b 만 실패 | 1807 · 18072 | S | - | 2 (t=8) | 1.22e-3 | 0.0301 | ee_finger_l1 · target_free | 36.5 | 6 |
+| E3b 만 실패 | 1863 · 18632 | S | g | 2 (t=8) | 9.76e-4 | 0.0183 | ee_finger_l1 · target_free | 38.8 | 9 |
+| E3b 만 실패 | 1887 · 18871 | S | g | 2 (t=8) | 9.76e-4 | 0.0420 | ee_finger_r2 · coarse | 44.8 | 8 |
+| E3b 만 실패 | 1896 · 18962 | S | - | 2 (t=8) | 1.24e-3 | 0.0461 | ee_finger_r2 · coarse | 21.9 | 4 |
+| E3b 만 실패 | 1927 · 19271 | S | g | 2 (t=8) | 1.36e-3 | 0.0362 | ee_finger_r2 · coarse | 39.6 | 4 |
+| E3b 만 실패 | 1967 · 19671 | S | - | 2 (t=8) | 1.63e-3 | 0.0283 | ee_finger_l1 · target_free | 31.2 | 5 |
+| E3b 만 실패 | 1982 · 19821 | S | g | 2 (t=8) | 1.36e-3 | 0.0152 | ee_finger_l1 · target_free | 38.7 | 7 |
+| E3b 만 실패 | 1983 · 19831 | S | g | 2 (t=8) | 1.36e-3 | 0.0577 | ee_finger_r2 · coarse | 46.7 | 5 |
+| E0 만 실패 | 1800 · 18001 | - | S | 2 (t=8) | 1.63e-3 | 0.0328 | ee_finger_l1 · target_free | 30.1 | 6 |
+| E0 만 실패 | 1819 · 18192 | - | S | 2 (t=8) | 9.76e-4 | 0.0436 | ee_finger_l1 · target_free | 36.8 | 3 |
+| E0 만 실패 | 1824 · 18241 | g | S | 2 (t=8) | 1.71e-3 | 0.0189 | ee_finger_l1 · target_free | 40.1 | 13 |
+| E0 만 실패 | 1878 · 18781 | - | S | 2 (t=8) | 1.01e-3 | 0.0353 | ee_finger_l1 · target_free | 40.5 | 4 |
+| E0 만 실패 | 1887 · 18872 | g | S | 2 (t=8) | 1.22e-3 | 0.0324 | ee_finger_r2 · coarse | 44.1 | 7 |
+| E0 만 실패 | 1914 · 19142 | - | S | 2 (t=8) | 1.36e-3 | 0.0143 | ee_finger_r2 · coarse | 30.0 | 8 |
+| E0 만 실패 | 1976 · 19761 | - | S | 2 (t=8) | 1.52e-3 | 0.0134 | ee_finger_l1 · target_free | 44.0 | 9 |
+
+(E0 · E3b 열: S = success, g = grasp 만, - = grasp 못 함. 15 쌍 모두 1e-1 을 처음 넘은 chunk 에서도 gate 는 `execute`, 최대 위반 0.0 m 이다.)
+
+**E3b 의 3,600 chunk 에서 a 의 분포 (latch 상태 · gate action 별).** latch 상태는 서버 기록의 grasp state 다.
+
+| 구분 | chunk 수 | a 중앙 | a p95 | a 최대 |
+|---|---|---|---|---|
+| latch `closing` | 694 | 3.24e-2 | 2.14e-1 | 5.66e-1 |
+| latch `held` | 426 | 1.65e-2 | 5.68e-1 | 5.90e-1 |
+| latch `latched` | 1,333 | 1.19e-2 | 6.11e-2 | 2.74e-1 |
+| latch `placed` | 1,051 | 1.61e-3 | 1.60e-1 | 3.58e-1 |
+| latch `searching` | 96 | 0.00e+0 | 4.45e-2 | 6.65e-2 |
+| gate `execute` | 3,306 | 9.03e-3 | 6.56e-2 | 3.00e-1 |
+| gate `hold` | 294 | 1.99e-1 | 5.70e-1 | 5.90e-1 |
+
+| gate · verdict reason kind 조합 | chunk 수 | a 중앙 | a p95 | a 최대 |
+|---|---|---|---|---|
+| `execute:allowed_contact+budget_only` | 22 | 1.74e-2 | 4.14e-2 | 9.83e-2 |
+| `execute:budget_only` | 3,258 | 9.07e-3 | 6.57e-2 | 3.00e-1 |
+| `execute:budget_only+occluded_target` | 5 | 2.84e-2 | 6.44e-2 | 7.30e-2 |
+| `execute:none` | 21 | 1.49e-3 | 5.13e-3 | 2.64e-2 |
+| `hold:allowed_contact+collision` | 2 | 3.07e-1 | 5.40e-1 | 5.66e-1 |
+| `hold:allowed_contact+collision+unverified` | 55 | 5.62e-1 | 5.76e-1 | 5.90e-1 |
+| `hold:allowed_contact+unverified` | 6 | 5.04e-2 | 5.67e-1 | 5.83e-1 |
+| `hold:budget_only+uncertified` | 89 | 1.62e-1 | 1.94e-1 | 3.58e-1 |
+| `hold:collision` | 141 | 2.03e-1 | 2.32e-1 | 5.66e-1 |
+| `hold:unverified` | 1 | 3.01e-1 | 3.01e-1 | 3.01e-1 |
+
+**실제 씬 (규칙 A).** 갈린 쌍 15 개 각각에 대해, 같은 시각의 3rd person frame 을 위쪽 = E0, 아래쪽 = E3b 로 나란히 놓았다. 다섯 열은 start (t=0) · 실행 action 차이가 처음 1e-3 을 넘은 chunk · 처음 1e-1 을 넘은 chunk · grasp 시각 (열 이름에 어느 조건의 grasp 인지 적혀 있다) · 마지막 (t=600) 이다. 테두리 색은 결과 (초록 = success, 주황 = grasp 만, 빨강 = grasp 못 함) 다.
+
+![ep1807 seed 18072 — E0 만 성공](figures/t39/t39-scene-1807_18072.png)
+
+[`figures/t39/t39-scene-1807_18072.png`](figures/t39/t39-scene-1807_18072.png) — 실제 씬. E0 success / E3b grasp 못 함. 제목: |exec diff| > 1e-3 은 step 8 부터, > 1e-1 은 step 46 부터, 그 chunk 에서 E3b gate `execute`, 조작 대상 `apple`, 최대 위반 0.0.
+
+![ep1800 seed 18001 — E3b 만 성공](figures/t39/t39-scene-1800_18001.png)
+
+[`figures/t39/t39-scene-1800_18001.png`](figures/t39/t39-scene-1800_18001.png) — 실제 씬. E0 grasp 못 함 / E3b success. 제목: |exec diff| > 1e-3 은 step 8 부터, > 1e-1 은 step 43 부터 (그림의 열 이름 `t=40` 은 그 chunk 의 시작 step).
+
+나머지 13 개 (같은 형식):
+
+| E3b 만 실패한 쌍 | E0 만 실패한 쌍 |
+|---|---|
+| [1863 · 18632](figures/t39/t39-scene-1863_18632.png) · [1887 · 18871](figures/t39/t39-scene-1887_18871.png) · [1896 · 18962](figures/t39/t39-scene-1896_18962.png) · [1927 · 19271](figures/t39/t39-scene-1927_19271.png) · [1967 · 19671](figures/t39/t39-scene-1967_19671.png) · [1982 · 19821](figures/t39/t39-scene-1982_19821.png) · [1983 · 19831](figures/t39/t39-scene-1983_19831.png) | [1819 · 18192](figures/t39/t39-scene-1819_18192.png) · [1824 · 18241](figures/t39/t39-scene-1824_18241.png) · [1878 · 18781](figures/t39/t39-scene-1878_18781.png) · [1887 · 18872](figures/t39/t39-scene-1887_18872.png) · [1914 · 19142](figures/t39/t39-scene-1914_19142.png) · [1976 · 19761](figures/t39/t39-scene-1976_19761.png) |
+
+### 지연 — chunk 한 번에 걸리는 시간
+
+first chunk (reset 직후, 첫 요청의 JIT 등이 얹힌다) 는 run 마다 제외했다 (각 조건 48 run × 74 chunk = 3,552 chunk). 단위 ms. **E0 는 server 시간을 기록하지 않는다** (`--no-safe` 서버가 timing 을 남기지 않는다) — E0 의 round trip 은 정책 시간의 **상한**이다.
+
+| 구간 | chunk 수 | 중앙 | p95 | 최대 | 비고 |
+|---|---|---|---|---|---|
+| E3b round trip (client `timing_ms.policy_infer`) | 3,552 | 1,292.2 | 1,644.5 | 3,686.9 |  |
+| 　server total (`verdict.timing_ms.total`) | 3,552 | 1,071.0 | 1,423.6 | 2,922.2 |  |
+| 　　server infer (policy forward + attention-copy forward, 타이머 하나) | 3,552 | 561.4 | 836.4 | 1,793.4 |  |
+| 　　server AG3S | 3,552 | 353.5 | 585.9 | 1,408.5 |  |
+| 　　server TO (trajopt) | 3,552 | 79.0 | 237.0 | 892.9 |  |
+| 　　ESDF (`esdf_ms`) | 3,552 | 135.8 | 284.7 | 590.9 | 다른 항목과의 포함 관계는 verify.json 에 없다 |
+| 　round trip − server total (전송 + client 쪽) | 3,552 | 214.0 | 286.6 | 1,245.4 |  |
+| E0 round trip (서버 시간 없음) | 3,552 | 222.9 | 486.2 | 691.6 | 정책 시간의 상한 |
+
+- **round trip** = client 가 요청을 보내고 응답을 받을 때까지 (`timing_ms.policy_infer`).
+- **server infer** = `AttentionPolicy.infer` 를 감싼 **타이머 하나** (`safe_policy.py:342-345`) — 정책 forward 와 attention 을 뽑는 forward 를 합친 시간이다. **둘로 가른 기록이 어디에도 없다** (재측정 대기 11).
+- **전송 + client** = round trip − server total. 둘로 가르지 않았다.
+- chunk period 는 533.3 ms (8 / 15 s, 위 용어). 이 값을 넘은 round trip 은 **E0 82 / 3,552, E3b 3,552 / 3,552** 이다.
+- 첫 chunk 의 round trip (참고): E0 중앙 315.9 · p95 591.9 · 최대 11,636.4, E3b 중앙 2,774.1 · p95 5,741.4 · 최대 21,760.8.
+- 서버 시간 항목 4 개의 중앙값을 더한 값은 쓰지 않는다 (중앙값의 합은 합의 중앙값이 아니다).
+
+![chunk 시간](figures/t39/t39-chunk-time.png)
+
+[`figures/t39/t39-chunk-time.png`](figures/t39/t39-chunk-time.png) — 그래프. 왼쪽: E0 · E3b 의 round trip 분포 (점선 = 533 ms). 가운데: E3b 서버의 infer · ag3s · trajopt · total 상자 그림. 오른쪽: S2-2 의 wall clock (UTC) 위에 찍은 chunk 별 round trip 과 아래 두 GPU 창.
+
+### work-dd GPU window — 다른 세션이 같은 GPU 를 쓴 구간
+
+공유 GPU 라서 **다른 세션 (work-dd) 이 같은 GPU 에서 회귀 기준선을 돌린 구간**이 S2-2 안에 있었다 (`verify.json` `gpu_windows[0]`, 라벨 "work-dd GPU regression baselines (MERGE-o4 samples)"). 기록된 대로 적는다.
+
+| 창 | 시각 (UTC) | 기록된 라벨 | 그 창에 첫 control row 가 들어간 chunk |
+|---|---|---|---|
+| **work-dd GPU window** | 09:50:43 – 09:52:48 | work-dd GPU regression baselines (MERGE-o4 samples) | E0 **78** chunk (run `E0_ep1807_s18071` · `E0_ep1808_s18081`), E3b **49** chunk (run `E3b_ep1818_s18181` · `E3b_ep1819_s18191` · `E3b_ep1828_s18281`) |
+| 귀속 불명 | 11:21:34 – 11:25:33 | 라벨 그대로: "unattributed +1588 MiB (our samples, last E3b server only)". **귀속하지 못했다** | 창 안의 chunk 수는 `verify.json` 에 없다 |
+
+**창 안의 chunk 를 뺀 값과 전체의 비교** (chunk 수 · 중앙 · p95, ms). 첫 chunk 는 두 열 모두 제외.
+
+| 구간 | 전체 | work-dd 창의 chunk 를 뺀 것 |
+|---|---|---|
+| E0 round trip | 3,552 · 222.9 · 486.2 | 3,474 · 222.7 · 481.0 |
+| E3b round trip | 3,552 · 1,292.2 · 1,644.5 | 3,503 · 1,289.7 · 1,636.5 |
+| E3b server infer | 3,552 · 561.4 · 836.4 | 3,503 · 560.4 · 827.5 |
+| E3b server AG3S | 3,552 · 353.5 · 585.9 | 3,503 · 353.1 · 581.6 |
+| E3b server TO | 3,552 · 79.0 · 237.0 | 3,503 · 78.8 · 234.8 |
+| E3b server total | 3,552 · 1,071.0 · 1,423.6 | 3,503 · 1,069.0 · 1,414.7 |
+
+(위 중앙 · p95 표는 `time_ms_excl_first_and_work_dd_window` 를 `time_ms_excl_first` 와 나란히 놓은 것이다. 이 비교가 창의 영향을 얼마나 설명하는지는 따로 재지 않았다.)
+
+### 아직 모르는 것 (`not_measured` 와 이 절에서 드러난 것)
+
+| 항목 | 상태 |
+|---|---|
+| E3b 의 server infer 를 policy forward 와 attention-copy forward 로 가른 시간 | **기록 없음** — 타이머가 하나다 (재측정 대기 11) |
+| E0 의 server 시간 | **기록 없음** — `--no-safe` 서버가 timing 을 남기지 않는다. round trip (중앙 222.9 ms) 이 상한 (재측정 대기 12) |
+| chunk 2 에서 b (≈ 1e-3) 와 c (≈ 1e-8) 의 간격의 원인 | `verify.json` 에 없다 (재측정 대기 13) |
+| 갈린 쌍 15 개가 갈린 이유 | **쓰지 않는다.** 위 분기 분석은 어디서 갈라지는지까지만 안다 |
+| S2-2 중 서버별 GPU 메모리 | 총량만 있다. nvidia-smi 의 pid 를 서버에 귀속할 수 없었다 (`s23/gpu_samples_merged_s22.txt`, 재측정 대기 14) |
+| regression baseline 의 cuRobo 변형 | legacy 만 돌렸다 (S2-2 뒤, snapshot 코드, CPU shim, GPU 0 MiB). cuRobo 변형은 안 돌렸다 (재측정 대기 15) |
+| T38 replay 의 AG3S + TO 314.5 ms 와의 직접 비교 | 구간 정의를 맞춰 재지 않았다. 조건도 다르다 — `autotune_level=0`, 서버 4 개 동시, E3b 는 `--record-constraints` (재측정 대기 16) |
+
+### 이 STEP 의 산출물
+
+- 코드 (T39 S1): benchmark main `e01b7bf` · 루트 `48314a9` (`tests/trajopt/test_t39_policy_seed.py`) · pi05_TO_hybrid `22d8dae` (`rby1_bringup/pi05_infer.py`). 평가에 쓴 서버 코드는 `o1-eval` `9fab500` = tag `t39-eval-9fab500` (immutable snapshot `/mnt/dev/work-o1` 은 이 tag 로 재생성할 수 있다).
+- 결과 커밋: benchmark main `318c343` (S2 · figure) · `80dc4cd` (S2-3b).
+- 측정: `handoff/T39.verify.json` (`numbers.s2_3b` 포함) · 설계 `handoff/T39.task.md` · 구현 보고 `handoff/T39-S1.impl.md` · 진행 `handoff/T39.progress.md`. raw 는 `outputs/verify/T39/` (`s21/` · `runs/` · `s23/` · `p/`).
+- figure: `figures/t39/` — `t39-summary-table` · `t39-paired-2x2` · `t39-success-matrix` · `t39-hold-verdict` · `t39-contact-height` · `t39-chunk-time` · `t39-s23b-divergence` · 갈린 쌍 15 개의 `t39-scene-<episode>_<seed>` (각각 `.json` sidecar 가 있다).
