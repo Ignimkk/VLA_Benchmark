@@ -1,0 +1,56 @@
+{
+ "excluded": "first chunk of each run",
+ "chunk_period_ms": 533.3333333333334,
+ "series": {
+  "E0_round_trip": {
+   "n": 3552,
+   "median": 222.86462783813477,
+   "p95": 486.19830608367903,
+   "max": 691.6389465332031,
+   "n_gt_period": 82
+  },
+  "E3b_round_trip": {
+   "n": 3552,
+   "median": 1292.1794652938843,
+   "p95": 1644.5107817649841,
+   "max": 3686.872720718384,
+   "n_gt_period": 3552
+  },
+  "E3b_server_infer": {
+   "n": 3552,
+   "median": 561.3856562413275,
+   "p95": 836.38269349467,
+   "max": 1793.4009870514274
+  },
+  "E3b_server_ag3s": {
+   "n": 3552,
+   "median": 353.540217038244,
+   "p95": 585.9201773069799,
+   "max": 1408.5268802009523
+  },
+  "E3b_server_trajopt": {
+   "n": 3552,
+   "median": 78.99432093836367,
+   "p95": 236.9866416091099,
+   "max": 892.8997335024178
+  },
+  "E3b_server_total": {
+   "n": 3552,
+   "median": 1070.9984733257443,
+   "p95": 1423.5524180112402,
+   "max": 2922.1580661833286
+  }
+ },
+ "marked_windows": [
+  {
+   "start_epoch": 1790934643.058,
+   "end_epoch": 1790934768.983,
+   "label": "work-dd GPU regression baselines (MERGE-o4 samples)"
+  },
+  {
+   "start_epoch": 1790940094,
+   "end_epoch": 1790940333,
+   "label": "unattributed +1588 MiB (our samples, last E3b server only)"
+  }
+ ]
+}

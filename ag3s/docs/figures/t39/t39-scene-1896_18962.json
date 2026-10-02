@@ -1,0 +1,181 @@
+{
+ "pair": {
+  "episode": 1896,
+  "key": 18962,
+  "E0_run": "E0/E0_ep1896_s18962",
+  "E3b_run": "E3b/E3b_ep1896_s18962",
+  "E0": {
+   "success": true,
+   "grasp": true,
+   "place": true
+  },
+  "E3b": {
+   "success": false,
+   "grasp": false,
+   "place": false
+  },
+  "discordant_success": true,
+  "divergence": {
+   "n_steps_compared": 600,
+   "max_abs_overall": 1.7379975167762973,
+   "first_step_gt0": 0,
+   "first_step_gt_tol": 8,
+   "tol": 0.001,
+   "by_threshold": {
+    "0.01": {
+     "first_step": 12,
+     "chunk_seq": 2,
+     "chunk_t": 8,
+     "E3b_gate_action": "execute",
+     "E3b_hold_kinds": [],
+     "E3b_max_violation_m": 0.0,
+     "E3b_worst": {
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle": null,
+      "clearance_m": 0.021921159770038407,
+      "block": "esdf"
+     },
+     "E3b_refined_minus_reference_rad_rows0_7": 0.046134114265441895,
+     "E3b_manipulated": {
+      "id": 0,
+      "state": "visible",
+      "nearest_centre": "apple",
+      "to_apple_mm": 17.185461530019307
+     }
+    },
+    "0.1": {
+     "first_step": 31,
+     "chunk_seq": 4,
+     "chunk_t": 24,
+     "E3b_gate_action": "execute",
+     "E3b_hold_kinds": [],
+     "E3b_max_violation_m": 0.0,
+     "E3b_worst": {
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle": null,
+      "clearance_m": 0.021763589059081496,
+      "block": "esdf"
+     },
+     "E3b_refined_minus_reference_rad_rows0_7": 0.05939745903015137,
+     "E3b_manipulated": {
+      "id": 0,
+      "state": "visible",
+      "nearest_centre": "apple",
+      "to_apple_mm": 17.88118171723559
+     }
+    }
+   },
+   "E3b_first_hold_chunk_seq": null,
+   "chunk_seq": 2,
+   "chunk_t": 8,
+   "max_abs_at_step": 0.004913152448322355,
+   "E3b_chunk": {
+    "gate_action": "execute",
+    "hold": false,
+    "hold_kinds": [],
+    "hold_reason": null,
+    "max_violation_m": 0.0,
+    "worst": {
+     "link": "ee_finger_r2",
+     "tier": "coarse",
+     "obstacle": null,
+     "clearance_m": 0.021921159770038407,
+     "block": "esdf"
+    },
+    "verdict_reason_kinds": [
+     "budget_only"
+    ],
+    "verdict_reason_hold_kinds": [],
+    "trajopt_status": "feasible",
+    "ag3s_status": "ok",
+    "refined_minus_reference_rad_rows0_7": 0.046134114265441895,
+    "manipulated": {
+     "id": 0,
+     "state": "visible",
+     "nearest_centre": "apple",
+     "to_apple_mm": 17.185461530019307
+    },
+    "server_verdict_kinds": [
+     "budget_only"
+    ],
+    "ipc": "ok"
+   },
+   "E0_predicted_minus_E3b_reference_rad_rows0_7": 0.0012356749784945276,
+   "chunk1_E0_predicted_minus_E3b_reference_max_abs": 1.0671697658892754e-07
+  }
+ },
+ "frames": [
+  {
+   "cond": "E0",
+   "label": "start",
+   "t": 0,
+   "mp4_frame": 0,
+   "mp4": "/mnt/dev/work/outputs/verify/T39/runs/E0/E0_ep1896_s18962/third_person_front.mp4"
+  },
+  {
+   "cond": "E3b",
+   "label": "start",
+   "t": 0,
+   "mp4_frame": 0,
+   "mp4": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1896_s18962/third_person_front.mp4"
+  },
+  {
+   "cond": "E0",
+   "label": "exec diff > 1e-3",
+   "t": 8,
+   "mp4_frame": 7,
+   "mp4": "/mnt/dev/work/outputs/verify/T39/runs/E0/E0_ep1896_s18962/third_person_front.mp4"
+  },
+  {
+   "cond": "E3b",
+   "label": "exec diff > 1e-3",
+   "t": 8,
+   "mp4_frame": 7,
+   "mp4": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1896_s18962/third_person_front.mp4"
+  },
+  {
+   "cond": "E0",
+   "label": "exec diff > 1e-1",
+   "t": 24,
+   "mp4_frame": 23,
+   "mp4": "/mnt/dev/work/outputs/verify/T39/runs/E0/E0_ep1896_s18962/third_person_front.mp4"
+  },
+  {
+   "cond": "E3b",
+   "label": "exec diff > 1e-1",
+   "t": 24,
+   "mp4_frame": 23,
+   "mp4": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1896_s18962/third_person_front.mp4"
+  },
+  {
+   "cond": "E0",
+   "label": "E0 grasp t",
+   "t": 312,
+   "mp4_frame": 311,
+   "mp4": "/mnt/dev/work/outputs/verify/T39/runs/E0/E0_ep1896_s18962/third_person_front.mp4"
+  },
+  {
+   "cond": "E3b",
+   "label": "E0 grasp t",
+   "t": 312,
+   "mp4_frame": 311,
+   "mp4": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1896_s18962/third_person_front.mp4"
+  },
+  {
+   "cond": "E0",
+   "label": "last",
+   "t": 600,
+   "mp4_frame": 599,
+   "mp4": "/mnt/dev/work/outputs/verify/T39/runs/E0/E0_ep1896_s18962/third_person_front.mp4"
+  },
+  {
+   "cond": "E3b",
+   "label": "last",
+   "t": 600,
+   "mp4_frame": 599,
+   "mp4": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1896_s18962/third_person_front.mp4"
+  }
+ ]
+}
