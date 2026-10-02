@@ -255,6 +255,27 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **두 기준선 (legacy · cuRobo)** | legacy = numpy ESDF 경로의 회귀 기준선, cuRobo = `--esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005` 경로(서버와 같은 거리장). 기준값이 다르다 — legacy 14/15 · −29.031048, cuRobo 10/15 · −9.171877 (T36) |
 | **첫 닫기 앞뒤 chunk 창** | T35 가 각 run 에서 첫 닫기 명령이 나온 chunk 의 앞 10 · 뒤 11 chunk 를 묶어 TO·인식을 본 구간 |
 
+### GPU 병렬화 · 비트 동일 (T38, 2026-10-02 추가)
+
+| 용어 | 뜻 |
+|---|---|
+| **chunk period (청크 주기) 533 ms** | 정책이 한 번에 내는 8 step 을 15 Hz 로 실행하는 시간(8 / 15 s). 서버가 한 chunk 의 AG3S + TO 를 이 안에 끝내야 실시간이다. T38 의 "≤ 533 ms" 는 **AG3S + TO 만**을 말하며 π0.5 추론과 client–server 전송은 포함하지 않는다 |
+| **tag `pre-gpu-parallel-20261001` (= `b4f06ec`)** | T38 이전 코드의 되돌아올 지점. T38 의 모든 "before" 는 이 tag 를 `git archive` 한 사본이다 |
+| **worktree · 브랜치 `o4-gpu-parallel`** | main 을 건드리지 않으려고 `/mnt/dev/work-o4` 에 따로 둔 작업 사본. T38 코드는 여기에만 있고 **main 에 병합되지 않았다** (병합은 사용자 판정) |
+| **bit-identical (비트 동일)** | 허용오차(`1e-9` 같은 것) 없이 출력 바이트가 한 비트도 다르지 않은 것. T38 은 refined actions (float32 바이트), ESDF tier 의 sha256, record npz 배열 전부에서 이것을 요구했다. 앞의 "비트 단위 재현" 은 같은 코드를 여러 번 돌려도 같다는 뜻이고, 이쪽은 **코드를 바꿨는데도** 같다는 뜻이다 |
+| **H2D / D2H** | Host-to-Device / Device-to-Host. CPU 메모리 → GPU 메모리 복사, 그 반대. PCIe 를 건너므로 호출마다 고정비가 있고 크기에 비례해 시간이 든다. T38 은 청크당 D2H 50 MB 를 줄이는 것을 목표 중 하나로 삼았다 |
+| **KD-tree `workers`** | `scipy.spatial.cKDTree` 의 `query` · `query_ball_point` 가 질의를 나눠 돌릴 스레드 수. `-1` 은 "모든 코어" 라서 256 코어 기계에서는 **질의마다 스레드 수천 개를 만들고 거둔다.** 결과는 `workers` 와 무관하게 같고 비용만 다르다 |
+| **jiterator / rounding-fixed kernel** | `torch.cuda.jiterator` 는 CUDA 소스 한 줄을 런타임(NVRTC)에 컴파일해 원소별 kernel 로 만든다. T38 은 여기에 `__dmul_rn` (곱) · `__dadd_rn` (합) · `__fma_rn` (FMA) 같은 intrinsic 을 써서, 컴파일러가 연산을 몰래 합쳐 반올림을 바꾸는 여지를 없앴다. 이렇게 **연산 하나하나의 반올림 방식을 고정한 kernel** 을 rounding-fixed kernel 이라 부른다 |
+| **FMA · FMA chain** | Fused Multiply-Add. `a·b + c` 를 반올림 **한 번**으로 계산하는 연산 (곱과 합을 따로 하면 반올림이 두 번). 결과의 마지막 비트가 달라질 수 있다. FMA chain 은 내적 `x·a + y·b + z·c` 를 `fma(z,c, fma(y,b, x·a))` 처럼 FMA 를 이어 붙여 계산하는 순서 — OpenBLAS 의 dgemm 이 하는 것을 측정해 GPU kernel 이 그대로 흉내 냈다 (B4) |
+| **gemv vs dgemm** | numpy 의 `@` 가 부르는 BLAS 루틴. 두 행렬 모두 폭이 2 이상이면 dgemm (행렬 × 행렬), 한 쪽이 1 이면 gemv (행렬 × 벡터). 두 루틴은 합산 순서·FMA 사용이 달라 **같은 입력에도 결과 비트가 다르다.** 그래서 GPU 경로는 점 1 개 또는 가설 1 개(폭 1)인 경우를 numpy 에 맡긴다 (B4) |
+| **background recorder** | `--record-constraints` 의 npz 쓰기(대부분 zip 압축)를 응답 경로 밖 스레드로 옮긴 것. **무엇을 기록할지는 요청 스레드에서 그 순간에 정하고** (배열 복사까지) 스레드는 정해진 바이트를 디스크에 옮기기만 한다. 큐가 가득 차면 버리지 않고 기다린다 (B5) |
+| **CPU fallback** | GPU 경로를 끄고 T38 이전의 numpy/scipy 경로로 돌아가는 스위치. `RECON_DEVICE` · `SUPPORT_RANSAC_DEVICE` · `SELF_FILTER_DEVICE` 를 `"cpu"` 로 두면 된다 (YAML 이 아니라 `benchmark/ag3s/config.py` 의 모듈 상수). torch 나 CUDA 가 없으면 `"auto"` 가 알아서 이쪽으로 간다 |
+| **replay (T38 방식)** | 서버를 띄우지 않고 `SafePolicy.infer` 에 기록된 요청을 직접 먹이는 재생. depth 는 `frames.jsonl` 의 qpos 로 3 카메라를 다시 렌더하고, attention 16×16 과 정책 chunk 는 기록 그대로 쓴다. π0.5 추론과 websocket 은 빠진다 |
+| **warm pass · pass T** | 측정 전에 seq 1–4 를 한 번 돌려 JIT·allocator 를 데우는 것 (warm pass), 그 뒤 seq 1–75 를 재는 것 (pass T). 통계는 seq 2–75 (74 chunk) 이고 seq 1 은 reset 직후 cuRobo mapper 를 새로 지어 따로 본다 |
+| **GPU alone / co-tenancy** | "alone" = 실행 전후 `nvidia-smi` 에 다른 세션의 GPU 프로세스가 없던 실행. 공유 서버라 다른 세션이 GPU 를 쓰고 있으면 시간이 흔들리므로 실행마다 이 상태를 기록한다 |
+| **negative control** | 비교기가 정말 차이를 잡는지 확인하려고 **일부러 다른 두 기록**을 같은 비교기에 넣어 보는 것. 여기서 차이가 안 나오면 "전부 같다" 는 결과를 믿을 수 없다 |
+| **dual check** | 같은 코드 안에서 GPU 경로와 CPU 경로를 **매 호출마다 같이 계산해** 비교하는 구현자의 검사 (B2 · B4) |
+
 ---
 
 > **갈림길에서 안 고른 선택지** — 맨 아래 **"선택한 것과 안 고른 것 — 되돌아올 지점"** 절.
@@ -291,6 +312,7 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | ↳ T35-diag | T34 실패 4 run 은 왜 못 드나 (오프라인) | 4 run 모두 접촉 중점이 사과 중심보다 **+3.8 ~ +15.1 mm 위**. 접촉을 잃은 chunk 의 손끝 편차 30.1·35.0 mm 는 `continuity` 를 끄면 0.0 (ep1808), ep1800 r1 은 `collision` 을 끄면 4.8 mm. 같은 에피소드 VLA 단독 E0 도 1800·1808 에서 1/2. `attach_revoked` 는 맞았다 (2026-09-30 10:12) |
 | ↳ T36 | cuRobo 회귀 기준선 (둘째 기준) | cuRobo 단독 4 회 비트 단위 재현 **10/15 · 15/15 · −9.171877401271193 mm**, legacy **14/15 · 15/15 · −29.031048280806342 mm**. 덮지 않는 경로 명시. skill 갱신 (루트 `7348d9e`) (2026-09-30 10:34) |
 | ↳ T37 | K1: 닫기·쥐기 구간 `continuity` off | E3a **3/6** · E3b **3/6** (T34 5/6 · 3/6). closing/held 손끝 편차 중앙 7.8–8.4 → 0.0–0.3 mm 이나 실패 접촉 높이 +3.8 ~ +12.9 mm 그대로 (54 run 중 실패 18/21 이 +3 mm 위), 부호 반전 1.44 → 2.47/s. **사용자 판정 O2: 기본 off** (2026-10-01) |
+| ↳ T38 | **O4 실시간: AG3S 를 GPU 로** (cuRobo 와 같은 원리). Phase A profile → Phase B B1–B5 → 독립 검증 V1–V5 | **O4 완료 — 브랜치 `o4-gpu-parallel` 에서, main 병합 대기**(2026-10-02). replay 의 AG3S + TO 중앙 **2,934.6 → 314.5 ms** (p90 375.2), chunk period 533 ms 안 **74/74** (tag 0/74). 5 기록 × 14 항목 **bit-identical**, 두 기준선 동일, CPU fallback 동일. **미측정: 5c72d37 로 닫힌 루프(MuJoCo client) · π0.5 추론 · 전송.** 아래 **"T38"** 절 |
 | ↳ 열린 문제 O1–O12 | 다음 순서 | (1) O2 + O12 → 전 작업공간 commit + tag → (2) O4 실시간(GPU 병렬) → (3) O1 큰 N (GPU 공유 확인) → (4) O5 → (5) O10·O11 (2026-10-01) |
 
 ### 이 국면에서 쓰는 자산
@@ -330,6 +352,9 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | ~~쥔 물체 — seed 제외 + **순수 복셀 부호 교정**~~ | ~~cuRobo 는 부호를 질의 복셀의 TSDF 에서 가져오므로 seed 만 지우면 더 나빠진다~~ → **T32a 에서 cuRobo 경로의 seed 제외를 은퇴**시켰다: 쥔 물체 pixel 은 self-filter 구 집합(H1)으로 TSDF 에 안 들어가고, 이미 적분된 흔적은 TSDF free 갱신(H3)으로 지운다 (구현자 자체 점검; 검증은 T33 오프라인) | 14D |
 | T0 — legacy 생성 0 을 **불변식**으로 | 출처 도장은 *쓰인* 필드만 말한다 | 16D |
 | ~~아키텍처 — T1~T4 는 서버 쪽 AG3S 유지, T5·T6 에서 AG3S 를 클라이언트 in-process 로 옮긴다~~ | ~~T0~T4 가 프레임별 IPC 기록을 요구하고, 한 프로세스 안에서는 IPC 가 없어진다~~ | **철회 — 사용자 판정 2026-09-25 (T5 절 참고).** AG3S·cuRobo·TO 는 **서버에 둔다.** 로컬은 `--safe-remote` 로 관측·프롬프트만 보내고 action 을 받는다. 근거는 IPC 가 왕복 2725 ms 중 약 206 ms(7.6 %)뿐이라 옮겨도 청크 예산 533 ms 를 못 맞추고, 지배 항은 AG3S 지각 1943 ms(서버 시간의 77 %)라는 T0 실시간성 절의 수치다 |
+| T38 — GPU 로 옮긴 AG3S 연산은 CPU 경로와 **bit-identical** 이어야 한다 | 허용오차를 두지 않는다. 비결은 (1) 연산마다 반올림을 고정한 jiterator kernel (2) 스칼라 나눗셈 금지 — torch CUDA 는 CPU 스칼라로 나누면 `a·(1/b)` 로 바꾼다 (3) numpy dgemm 의 FMA chain 을 측정해 그대로 재현하고 gemv 모양(폭 1)은 CPU 에 맡긴다. 이 가정은 기계·BLAS 의존이라 단위 테스트가 매 실행 다시 잰다 (`test_numpy_dgemm_is_the_fma_chain_the_kernels_compute`). 다른 numpy/OpenBLAS 에서 테스트가 깨지면 `RECON_DEVICE` 등을 `"cpu"` 로 | 16D 경로 |
+| T38 — KD-tree 질의는 `workers=1` (`KDTREE_WORKERS`) | 256 코어 기계에서 `workers=-1` 은 청크당 스레드 ≈ 2,138 개를 만든다. 결과는 같다 (같은 입력 · `same_result: true`). **병렬이 이득인 오프라인 스크립트는 건드리지 않았다** | 16D 경로 |
+| T38 — 실행 자원 설정은 YAML 이 아니라 `config.py` 모듈 상수 | `KDTREE_WORKERS` · `SELF_FILTER_DEVICE` · `RECON_DEVICE` · `SUPPORT_RANSAC_DEVICE` · `ESDF_QUERY_HOST_ARITH_MAX_POINTS`. 결과 불변이라 ablation 축이 아니기 때문 (구현자 판단) | 16D 경로 |
 
 원 측정: [`AG3S_REVIEW_LOG.md`](AG3S_REVIEW_LOG.md) 의 **"누적 발견"** 표와 각 발견의 절.
 
@@ -348,6 +373,9 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | 5 | C3 — 미세 창 경계 불연속 | 중앙 +4.5 mm, 최대 +41.6 mm | 재측정 대기 |
 | 6 | N1 · N2 · F20 잠복 값 | self-collision 여유 185.6 mm · 해석적 채널 낙관 0 · decay 잔상 −6.7 mm | **N2 는 16D 로 새로 쟀다**(2026-09-25 — 아래 R 절). N1·F20 은 재측정 대기 |
 | 7 | F14 — 상태 지연 피해 시작점 | **16 ms** 에서 로봇 점 851 개가 샌다 | 재측정 대기 |
+| 8 | (T38 이 추가) tag 코드의 서버 시간 — T0 실시간성 P50 2519 ms · T34 청크 ≈ 3.1 s | 14D 아님. T38 이전(tag `b4f06ec`) 코드의 값 | replay 로는 `5c72d37` 이 AG3S + TO **314.5 ms**. **닫힌 루프로 재측정 대기** — `5c72d37` 로 MuJoCo client 를 돌린 적이 없고, π0.5 추론 · websocket 전송은 replay 에서 빠져 있다 |
+| 9 | (T38 이 추가) 청크마다 ≈ 70–90 ms 의 정체가 단계를 옮겨 다닌다 | 구현자 관찰 (verify.json 에는 이 크기가 없다) | **원인 미확정.** 구현자는 GC · recorder · GPU 깨어남을 배제했다고 보고했으나 verifier 는 따로 확인하지 않았다 |
+| 10 | (T38 이 추가) background recorder 큐의 장기 거동 | verifier replay 에서 infer 직후 큐에 남은 항목 중앙 9 · 최대 9 (75 chunk) | 장기 run 에서 큐가 한도(구현자 보고: `queue_size` 8)에 붙으면 응답 경로가 기다린다. **미측정** |
 
 ~~재측정이 끝나면 이 표의 `상태` 를 값과 함께 갱신하고, 값이 달라진 것은 **왜 달라졌는지**를
 같은 자리에 적는다. 값이 같으면 그것도 적는다 — "모델을 바꿔도 안 바뀌었다" 는 결과다.~~
@@ -3595,3 +3623,414 @@ K1 의 손끝 편차 효과는 확인됐지만 **실패를 고치지 못했고**
 순서 밖: O3(기록), O7 · O8 · O9 (계획서 우선 3, O1 큰 N 에서 빈도를 본 뒤 판단).
 
 ~~**사용자 판정 대기**: T26–T34 커밋(미커밋 상태)~~ → 커밋됨 (2026-09-30). 남은 판정은 위 순서의 각 단계 착수 시점이다.
+
+---
+
+## T38 — O4 실시간: AG3S 를 GPU 로, cuRobo 와 같은 원리 (2026-10-01 ~ 2026-10-02)
+
+**이 절이 답하는 물음.** O4(실시간이 안 된다 — 서버가 chunk 하나에 AG3S + TO 로 약 3 s 를 쓰는데 chunk period 는 533 ms 다)를 어떻게 푸는가. (1) 3 s 는 정확히 어디에 쓰이는가(Phase A, profile). (2) 그 병목을 GPU 로 옮기되 **결과를 한 비트도 바꾸지 않을 수 있는가**(Phase B, 구현 B1–B5). (3) 구현자 자신이 아닌 **독립 검증**(V1–V5)에서도 그것이 성립하는가.
+
+**읽는 법과 출처 규약.**
+
+- 수치는 `handoff/T38.profile.verify.json`(Phase A) 과 `handoff/T38.verify.json`(Phase B 독립 검증) 의 `numbers` 에서 왔다. 두 파일에 없는 수치는 **미측정**이라고 썼다.
+- 구현자 보고(`T38-B1B5.impl.md` · `T38-B2.impl.md` · `T38-B3.impl.md` · `T38-B4.impl.md`)에만 있는 수치는 **"(구현자)"** 라고 그 자리에서 밝혔다. 구현자 수치는 설명용이고, 같은 양을 verifier 가 쟀으면 verifier 수치만 본문에 쓴다.
+- 시각은 git commit 시각과 verify.json 파일의 수정 시각이다 (서버 시계, UTC). verify.json 자체에는 시각 필드가 없고 날짜만 있다.
+- 새로 쓰는 용어(bit-identical · jiterator · FMA chain · H2D/D2H · KD-tree `workers` · background recorder · CPU fallback · gemv vs dgemm · replay · warm pass …)는 위 **"용어 → GPU 병렬화 · 비트 동일 (T38)"** 에 있다.
+- **"≤ 533 ms" 는 AG3S + TO 만이다.** π0.5 추론과 client–server 전송은 replay 에 들어 있지 않다 (`not_measured`). 닫힌 루프 시간은 이 절이 말하지 않는다.
+
+### 결과 한 장 (verifier 독립 검증, 같은 기록 · 단독 실행)
+
+기록 `E3b_ep1807_r2`, seq 2–75 (74 chunk), warm 4, GPU alone(chain c). 앞의 tag `b4f06ec` 와 뒤의 B4 `5c72d37`. 단위 ms, 중앙값.
+
+| 항목 | tag `b4f06ec` | B4 `5c72d37` |
+|---|---|---|
+| scene_reconstruction | 541.4 | **53.4** |
+| support_surface | 80.3 | **8.0** |
+| target_grounding | 1,327.5 | **58.2** |
+| esdf (cuRobo) | 273.9 | 139.6 |
+| constraint_generation − esdf | 573.7 | **3.1** |
+| TO (trajopt) | 137.8 | 71.3 |
+| **AG3S + TO (`timing.total`)** | **2,934.6** | **314.5** |
+| 같은 양의 p90 | 3,293.8 | 375.2 |
+| 같은 양의 최댓값 | 3,613.6 | 393.5 |
+| **≤ 533 ms 인 chunk** | **0 / 74** | **74 / 74** |
+| 응답 전체 `wall` (recorder 포함) | 3,183.3 | 329.5 |
+| reset 직후 첫 chunk (seq 1) 의 total | 4,304.6 | **1,625.2** |
+
+- **AG3S + TO 는 2,934.6 → 314.5 ms (약 9.3 배 짧다).** 정확도는 그대로다 — 5 개 기록 × 14 항목이 **bit-identical** 이다(V1).
+- **첫 chunk 는 아직 533 ms 를 넘는다.** AG3S 의 reset 이 cuRobo mapper 를 새로 짓기 때문이다 (seq 1: 1,625.2 ms). 새 프로세스의 첫 호출은 warp/cuRobo JIT 가 더 얹히는데 B4 코드로는 재지 않았다(`not_measured`).
+- esdf 는 B3 에서 67.9 ms 까지 내려갔다가 B4 에서 139.6 ms 로 **올랐다.** 아래 "청크마다 70–90 ms 정체" 절의 미확정 문제다.
+
+![T38 단계별 시간 사슬](figures/t38/t38b-stage-chain.png)
+
+[`figures/t38/t38b-stage-chain.png`](figures/t38/t38b-stage-chain.png) — 그래프. 다섯 코드(tag · B1 · B2 · B3 · B4)의 stage 별 중앙값 누적 막대, 점선 = chunk period 533 ms. 마커는 co-tenancy 가 있었던 chain a · b 의 total 중앙값이다.
+
+### 타임라인
+
+| 시각 (UTC) | STEP | 무엇 |
+|---|---|---|
+| 2026-10-01 05:05 | **tag `pre-gpu-parallel-20261001`** (`b4f06ec`) | 네 repo 에 되돌아올 지점. 이 뒤의 코드는 worktree `/mnt/dev/work-o4` 의 브랜치 `o4-gpu-parallel` 에만 있다 (main 은 다른 세션이 import 중) |
+| 2026-10-01 (≈ 06:27, 파일 수정 시각) | **Phase A 완료** (`T38.profile.verify.json`) | 3 s 의 정체를 함수·입력 크기·복사량까지 분해 |
+| 2026-10-01 09:05 | **B1 · B5** `1a35423` (루트 테스트 `d12eca3`) | KD-tree `workers=1` · recorder 를 응답 경로 밖으로 |
+| 2026-10-01 09:50 | **B2** `305dca1` (`9a107c6`) | 로봇 self-filter 마스크를 카메라당 1 회, GPU 로 |
+| 2026-10-01 11:01 | **B3** `044ecc4` (`4fa71b7`) | ESDF tier 를 GPU 에 두고 질의점에서만 답한다 |
+| 2026-10-02 07:31 | **B4** `5c72d37` (`0339914`) | scene reconstruction · support RANSAC 을 GPU 로 |
+| 2026-10-02 (≈ 09:11, 파일 수정 시각) | **독립 검증 완료** (`T38.verify.json`) | V1–V5, 모든 비교에서 차이 없음 |
+
+main 에는 병합하지 않았다. 병합은 사용자 판정이다.
+
+---
+
+### Phase A — 3 s 는 어디에 쓰이는가 (verifier, 2026-10-01, 측정만)
+
+**입력.** T34 E3b 의 `E3b_ep1807_r2`(planning chunk 75 개)를 replay 했다. depth 는 `frames.jsonl` 의 qpos 로 3 카메라를 다시 렌더해 wire 와 같이 uint16 mm 로 양자화했고, attention 16×16 은 서버가 기록한 것, 정책 chunk 는 기록의 `actions_reference` 다. 서버 플래그는 E3b 와 같다(`--esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links gripper --target-field-policy exclude-authorized …`). 코드는 tag(`b4f06ec`) 이고, T34 서버 때의 코드(`cee8f84` + T33/T34)에 T35–T37 의 K1 continuity gate 가 더해진 것이다.
+
+**측정 오염 한 건.** 첫 replay 도중 다른 세션의 CPU 프로세스(`.venv-curobo probe.py`, 약 1,400 % CPU)가 pass S 의 seq 69 부터 돌았다. 그래서 외부 프로세스가 없던 **quiet 재실행(`_q2`)** 을 기준으로 삼고, 오염된 실행은 따로 보관했다. 아래 Phase A 표는 모두 `_q2` pass T (stage 경계에 `torch.cuda.synchronize` 를 넣지 않은 실행)다.
+
+#### P1 · 단계별 시간
+
+| 단계 | replay 중앙 (p90) | T34 서버 기록 450 chunk 중앙 (p90) |
+|---|---|---|
+| scene_reconstruction | 472.4 (562.7) | 534.5 (618.4) |
+| support_surface | 78.3 (119.4) | 85.6 (165.9) |
+| **target_grounding** | **1,018.3 (1,219.4)** | 1,333.7 (2,251.1) |
+| constraint_generation − esdf | 574.8 (609.3) | 550.5 (613.9) |
+| esdf (cuRobo) | 251.0 (270.3) | 287.4 (394.2) |
+| TO — linearize · check · assemble · qp | 97.0 · 11.9 · 7.4 · 2.9 | 102.7 · 12.4 · 7.7 · 4.1 |
+| **AG3S** (`timing.ag3s`) | 2,405.4 (2,611.5) | — |
+| **trajopt** (`timing.trajopt`) | 134.3 (144.5) | — |
+| **AG3S + TO (`timing.total`)** | **2,547.4 (2,740.8)** | — |
+| recorder `_record` (응답 시간 밖, wall 에는 들어간다) | 245 (py-spy 에서 대부분 zipfile write) | — |
+
+- replay 의 stage 중앙값이 T34 서버 기록과 같은 크기이므로 replay 는 서버를 대표한다. `grasp_state` 는 75/75, `has_target` 은 75/75 가 기록과 같고, `n_clusters` 는 74/75 가 같다(seq 15 에서 replay 4 · 기록 3 — 코드가 T35–T37 만큼 다르다).
+- stage 경계마다 `torch.cuda.synchronize` 를 넣은 pass S 와 넣지 않은 pass T 의 중앙값은 최대 40 ms 안에서 같다. **측정을 위한 동기화가 시간을 왜곡하지 않았다.**
+- reset 직후 chunk(seq 1)는 cuRobo mapper 를 새로 지어 esdf 가 1,368.1 ms (`timing.total` 3,871.3 ms)다. 새 프로세스의 첫 chunk 는 warp/cuRobo JIT 까지 더해 esdf 6,668.1 ms, wall 9,386.2 ms 다. 정상 상태 수치로 인용하지 않는다.
+
+![Phase A 단계별 시간과 chunk 별 누적](figures/t38/t38-stage-bars.png)
+
+[`figures/t38/t38-stage-bars.png`](figures/t38/t38-stage-bars.png) — 그래프. 왼쪽: 단계별 중앙값(막대)과 p90(눈금), replay 대 T34 서버 기록, 점선 = 533 ms. 오른쪽: seq 별 누적, 파지 상태(latched · closing · held · placed) 표시.
+
+#### P2 · 3 s 는 GPU 가 아니라 CPU 다
+
+| 구분 (cProfile self time, 7 chunk 평균, chunk 당 ms) | ms |
+|---|---|
+| CPU 스레드 — `cKDTree(workers=-1)` 의 스레드 시작·대기·종료 | 1,165.9 |
+| CPU Python (`benchmark/` 코드 자체) | 1,041.0 |
+| CPU numpy | 442.1 |
+| CPU scipy · Python builtin · casadi · osqp | 12.4 · 16.8 · 5.1 · 2.4 |
+| **GPU** warp/cuRobo · torch | **11.2 · 9.3** |
+
+cProfile 이 붙으면 느려지므로 합이 2,547 ms 보다 크다. 비율을 보는 표다. `torch.profiler`(CUPTI)로 7 개 선택 chunk 의 GPU 쪽을 직접 재면 **kernel 5.55–7.41 ms · memcpy 2.7–4.4 ms, device self time 합 8.1–11.7 ms** 다 (replay `timing.total` 2,547.4 ms 의 약 0.3–0.5 %). esdf stage 의 약 250 ms 도 GPU 시간이 아니라 CPU 쪽이다(`_labels_from_sites` 134 ms · `_build_tiers` 76 ms · `_integrate` 15 ms). **"AG3S 를 GPU 로" 는 GPU 가 느려서 고치는 것이 아니라, GPU 가 거의 놀고 있어서 일을 옮기는 것이다.**
+
+#### P3 · grounding 1 s 의 대부분은 계산이 아니라 스레드 생성이다
+
+`cKDTree(…).query(…, workers=-1)` 는 "모든 코어" 로 질의를 나눈다. 이 기계는 256 코어라서 **chunk 당 스레드를 2,138 개 시작하고 거둔다**(cProfile `threading.start` 호출 수). 같은 입력으로 `grow_region` 의 복사본에서 `workers` 만 바꿔 쟀다 — 결과는 같다(`same_result: true`).
+
+| 측정 (ms) | `workers=-1` (현 코드) | `workers=1` | `workers=8` |
+|---|---|---|---|
+| quiet seq 2 `grow_region` (전체 코드 / 복사본) | 1,106.7 / 1,136.8 | **9.2** | 68.5 |
+| quiet seq 22 `grow_region` | 611.9 / 660.0 | **9.1** | 47.4 |
+| contended seq 22 `grow_region` (외부 CPU 부하 중) | 3,711.4 / 3,905.1 | **89.3** | 325.5 |
+| quiet seq 2 `dbscan` 이웃 수 질의 | 169.7 | **3.5** | — |
+| quiet seq 2 nearest-core 질의 | 162.1 | **0.6** | — |
+| quiet seq 22 `dbscan` · nearest-core | 127.4 · 124.7 | 3.1 · 0.6 | — |
+
+`workers=8` 도 `workers=1` 보다 느리다 — 이 질의는 점 수천 개짜리라 병렬이 이득이 아니다. 외부 부하가 있으면 `workers=-1` 은 3.7 s 까지 늘어난다.
+
+#### P4 · 같은 일을 여러 번 한다
+
+| 중복 | 측정 |
+|---|---|
+| **depth 역투영 2 회** | 같은 depth/K/T 를 chunk 당 6 번 back-project 한다 (scene_reconstruction 3 + constraint_generation 의 `_robot_mask_for` 3). 두 호출의 점군 해시가 같다 (seq 2 head `709a80f477aede2f`, 139,044 점) |
+| **`robot_sphere_mask` 6 회** (잡고 있을 때 9 회) | voxel 로 줄인 점 13 만 개에 3 회, full-res 50 만 점에 3 회 (잡는 13 chunk 는 held sphere 용 3 회 더). 호출마다 KD-tree 를 새로 짓고 Python 으로 구 587 개를 돈다(질의 1,761 회/chunk). chunk 당 중앙 **671.5 ms** |
+| **KD-tree build 24 회/chunk** | 중앙 24 회 · 점 651,333 개. 같은 배열을 두 번 이상 KD-tree 한 chunk: `_labels_from_sites`(tier 마다 같은 seed) 47, `_esdf_clearance + anchor_cover + gap` 41, `robot_sphere_mask` 39 |
+| **depth 업로드 2 회** | 각 camera depth 를 coarse · fine mapper 가 따로 GPU 로 올린다 (6 × 1,228,800 B = 7.37 MB) |
+| TO linearize 의 `np.gradient` | 97.0 ms 의 대부분이 128³ tier 마다 격자 전체 `np.gradient` + `np.stack` (py-spy top leaf). TO 가 실제로 묻는 점은 chunk 당 몇천 개다 |
+
+**쓰이지 않는 산출물(가설)은 확인했고 비용이 없었다.** `constraint_generation` 안의 CasADi `ConstraintBuilder.build` 는 trajopt 경로(`collision.use_support_planes False`, backend esdf)에서 `plane_active`·`candidate_active` 가 0 으로 눌려 쓰이지 않는다. 그러나 chunk 당 **0.18 ms** 라 없애도 이득이 없다 — T38 은 건드리지 않았다.
+
+#### P5 · host ↔ device 복사
+
+| 방향 | chunk 당 중앙 | 호출 수 |
+|---|---|---|
+| H2D | 7.49 MB (depth 업로드 2 회 7.37 MB 가 대부분) | 24 |
+| **D2H** | **50.33 MB** (tier 3 개 × 값 + site 128³ × 4 B 가 대부분) | 28 |
+
+D2H 50 MB 는 cuRobo 가 만든 ESDF tier 를 host 로 내려 `np.unique` · `np.gradient` 를 돌리기 위한 것이다. GPU 에서 끝낼 수 있으면 내릴 이유가 없다.
+
+#### P6 · 입력 크기 (T38 이전 코드, 75 chunk)
+
+| 양 | 중앙 (최소–최대) |
+|---|---|
+| depth pixel / chunk (3 카메라) | 921,600 |
+| back-project 점 (raw) | 497,980 (492,977–559,848) |
+| voxel 5 mm 뒤 | 132,763 (92,069–151,844) |
+| fused cloud | 37,179 (22,935–44,380) |
+| self-filter 로 지워진 점 | 6,230 (6,046–7,554) |
+| `grow_region` 입력 → 출력 | 3,592 → 1,956 |
+| `grow_region` 의 KD wave 수 | 7–22 |
+| ESDF tier 수 · tier 당 voxel | 2–3 (잡을 때 2) · 2,097,152 (128³) |
+
+![Phase A 파이프라인 지도](figures/t38/t38-pipeline-map.png)
+
+[`figures/t38/t38-pipeline-map.png`](figures/t38/t38-pipeline-map.png) — 도식. 서버 경로의 단계별 시간과 병목 주석(CPU = 하늘색, GPU stage = 초록, recorder = 회색).
+
+![Phase A 함수별 시간 표](figures/t38/t38-function-table.png)
+
+[`figures/t38/t38-function-table.png`](figures/t38/t38-function-table.png) — 표. 단계별 cProfile 상위 함수와 CPU/GPU 구분. [`figures/t38/t38-input-sizes.png`](figures/t38/t38-input-sizes.png) — 표. 입력 크기. [`figures/t38/t38-scene.png`](figures/t38/t38-scene.png) — 실제 씬. replay 입력(seq 22, 파지 후 들어 올린 상태)의 3 카메라 depth 와 attention 상위 5 % 셀, 서버가 기록한 fused cloud(30,788 점)의 top view.
+
+**Phase A 의 기준선 확인.** 측정만 했으므로 코드는 바뀌지 않았고 두 기준선은 그대로다 — legacy **14/15 · 15/15 · −29.031048280806342 mm**, cuRobo **10/15 · 15/15 · −9.171877401271193 mm**. 다른 세션의 GPU 프로세스(pid 981255, 8,810 MiB, util 53–58 %)가 두 기준선 실행 내내 있었다. 세 기준 수치는 SQP 이전 값이다.
+
+**Phase A 에서 읽은 범위 (lead 제안, `T38.task.md`).** 병목은 (a) KD-tree 스레드, (b) 로봇 마스크의 Python 루프와 중복, (c) ESDF tier 의 D2H 와 전체 `np.gradient`, (d) reconstruction · RANSAC 의 numpy, (e) recorder 였다. 이것이 B1–B5 가 되었다.
+
+---
+
+### Phase B — 구현 B1–B5 (implementer, 2026-10-01 ~ 10-02)
+
+**용어.** B1 = KD-tree `workers=1`, B2 = 로봇 self-filter 마스크 GPU, B3 = ESDF tier GPU, B4 = scene reconstruction · support RANSAC GPU, B5 = recorder background. 순서는 B1 → B2 → B3 → B4 → B5 로 계획했으나 B1 과 B5 를 한 commit 에 묶었다.
+
+**원칙 (`T38.task.md`).** 점군 단위 연산을 GPU 에 배치하고, 카메라·cluster 단위 반복을 벡터화하고, 쓰이지 않는 산출물을 만들지 않고, cuRobo 와 같은 GPU 텐서를 공유해 host↔device 복사를 줄인다. **결과 동치성은 허용오차가 아니라 bit-identical 로 정했다** (아래 "왜 비트 동일이 가능했나").
+
+| 단계 | commit (브랜치 / 루트 테스트) | Phase A 의 어느 병목을 | 무엇을 바꿨나 |
+|---|---|---|---|
+| **B1** | `1a35423` / `d12eca3` | P3 | `KDTREE_WORKERS = 1` 하나로 서버 경로의 `workers=-1` 4 곳을 바꿨다 — `dbscan` 이웃 수 질의 · `dbscan` nearest-core · `grow_region` wave 질의 · `robot_sphere_mask` 구별 질의. 나머지 서버 경로 질의는 이미 기본값 1 이다. 오프라인 스크립트 2 곳은 그대로 |
+| **B5** | `1a35423` / `d12eca3` | P2 (recorder 245 ms) | `ConstraintRecordWriter(background=True)`. **무엇을 기록할지는 요청 스레드에서 그 순간에** 정한다 — `summary_json` 직렬화와 payload 배열의 `np.array(copy=True)` snapshot 까지. 스레드는 FIFO 로 `np.savez_compressed` 만 한다. 큐가 가득 차면 버리지 않고 기다린다. 쓰기 실패는 `n_failed` 로 세고 첫 실패는 크게 로그한다. `serve_safe` 만 background 이고 다른 호출자(`bringup.py` 등)는 동기 그대로다. SIGTERM → `SystemExit(143)` 으로 바꿔 `atexit` flush 가 돌게 했다 |
+| **B2** | `305dca1` / `9a107c6` | P4 (마스크 6 회 · 역투영 2 회) | 카메라마다 depth 를 full-res 로 **한 번** 역투영하고, (점 × 구 587 개) 판정을 GPU 에서 float64 로 한 번 계산해 픽셀 마스크를 만든다. TSDF 는 이 마스크를 그대로 받고, voxel 대표점은 **자기 픽셀의 판정**을 읽는다(대표점이 곧 그 역투영 점이므로 예전에 대표점을 직접 시험하던 것과 정의상 같다). 쥔 구(held sphere)는 같은 pass 의 열로 나온다. CPU KD-tree 구현은 `_robot_sphere_mask_kdtree` 로 남겼다(CPU fallback). `AG3S.reset` 에서 builder 가 있었을 때만 `gc.collect()` — 버려진 cuRobo mapper 가 순환 참조에 걸려 GPU 메모리를 쥐고 있던 것을 푼다 |
+| **B3** | `044ecc4` / `4fa71b7` | P5 (D2H 50 MB) · P4 (`np.gradient` · 라벨 · depth 2 회) | cuRobo 가 만든 tier 를 `DeviceEsdfField` 로 **GPU 에 남긴다.** `distance` · `gradient` · `label` 은 질의점이 쓰는 voxel 코너만 읽어 답한다(격자 전체 `np.gradient` 제거). 질의점이 1,024 개 미만이면 GPU 가 질의 칸의 값만 넘기고 host numpy 가 같은 식으로 산술하고, 그 이상이면 GPU 에서 산술한다(`ESDF_QUERY_HOST_ARITH_MAX_POINTS`). 라벨 층은 GPU scatter, depth 는 카메라당 한 번 올려 두 mapper 가 같은 관측을 쓴다(cuRobo 는 관측을 읽기만 한다). `--record-constraints-esdf full` 은 GPU 격자를 **쓰는 순간에** 가져온다 |
+| **B4** | `5c72d37` / `0339914` | P2 · P4 (numpy 역투영 · voxel · attention · RANSAC) | 새 파일 `ag3s/stages/device_recon.py`. depth 를 한 번 올려 역투영 · voxel 대표점 · cap · self-filter · 대표점 자르기를 GPU 에서 끝내고, CPU 가 쓰는 것(kept voxel cloud 의 점과 pixel, `(H, W)` 로봇 마스크, 몇 개의 수)만 내린다. 같은 GPU depth 가 cuRobo TSDF 의 입력이 된다. 구 FK 는 chunk 당 1 회(3 카메라 q 동일). attention 은 cloud 가 쓰는 pixel 만 계산한다. support RANSAC 은 가설 생성(numpy RNG)을 그대로 두고 **(점 × 가설) inlier 수만** GPU 로 센다. `grow_region` 의 평탄화는 `itertools.chain.from_iterable` 로 |
+
+**바꾸지 않은 것.** `fuse`(CPU) · `_refit`(SVD) · RANSAC 의 최종 inlier 선택(`pts @ normal`, gemv) · 가설 생성 · `normalize_attention` · grounding 의 나머지 · TO 의 QP/assemble · ESDF 의 cuRobo 적분 자체 · legacy `EsdfBuilder`/`EsdfField`(numpy 경로는 한 줄도 안 고쳤다) · `curobo_field.py` 의 tier 합성 규칙.
+
+#### 왜 비트 동일이 가능했나
+
+GPU 가 CPU 와 같은 답을 내려면 연산의 종류, 순서, **반올림 횟수**가 같아야 한다. 구현자가 지킨 세 가지를 표로 둔다. 숫자는 모두 구현자 측정이다.
+
+| 함정 | 구현자가 측정한 것 | 처리 |
+|---|---|---|
+| **컴파일러가 곱과 합을 FMA 로 합친다.** FMA 는 반올림이 한 번 줄어 마지막 비트가 달라진다 | — | 원소별 연산마다 kernel 을 따로 두거나(`d*=d; t*=t; d+=t …`), jiterator 로 `__dmul_rn` · `__dadd_rn` · `__ddiv_rn` · `__fma_rn` 을 직접 써서 반올림 방식을 고정했다 (rounding-fixed kernel) |
+| **torch CUDA 는 CPU 스칼라로 나누면 `a·(1/b)` 로 바꾼다** | 100 만 개 중 133,303 개가 1 ulp 다름 (분모를 CUDA 텐서나 0-d CUDA 텐서로 주면 0 개) | 분모는 항상 CUDA 텐서 (`floor(p / vs_t)`, `torch.where(edge, h_t, 2h_t)`) |
+| **numpy 의 `@` 는 BLAS 가 하고, BLAS 의 산술은 문서에 없다** | OpenBLAS 0.3.23 의 dgemm 이 `fma(z, r2, fma(y, r1, x·r0))` 의 FMA chain 이다 (`(N,3) @ R.T`, N = 5 … 505,824 의 8 크기에서 chain 과 0 개 다름, FMA 없는 `(xa + yb) + zc` 는 N 의 50–60 % 가 다름). **N = 1 또는 m = 1 이면 gemv 로 가서 다르다** | GPU kernel 이 FMA chain 을 그대로 재현한다. 점 1 개 이하의 역투영, 폭 1 인 RANSAC 가설 블록(가설 수 ≡ 1 mod 32)은 numpy 에 맡긴다. **이 가정은 기계·BLAS 의존이므로 단위 테스트가 매 실행 다시 재서 어긋나면 깨진다** |
+
+그 밖에: scipy `query_ball_point` 와 같은 판정 `(dx²+dy²)+dz² ≤ R²` (제곱근 비교로 쓰면 경계 위 점에서 41 개 불일치, 구현자), `np.gradient(edge_order=1)` 의 voxel 별 식을 코너 voxel 에서만 같은 피연산자 · 같은 순서로 계산, float32 → float64 → float32 의 round-to-nearest-even 일치 등이 있다. 상세는 각 impl.md 의 "같다 의 근거" 에 있다.
+
+**구현자 측정 (impl.md, verifier 가 재지 않은 것) — 설명용.**
+
+| 항목 | 값 |
+|---|---|
+| 단위 테스트 (GPU venv, `--import-mode=append`, cwd `/mnt/dev/work-o4`) | B1·B5 1,719 passed (CPU shim) · B2 1,748 · B3 1,779 · **B4 1,860 passed · 12 skipped · 0 failed** (GPU venv; skip 12 = cwd 상대 URDF) |
+| 새 테스트 | B1 11 + B5 12 · B2 22 · B3 31 · B4 81 (`tests/o4/`, main 에서는 모두 skip) |
+| D2H / chunk (pass C census) | tag 50.33 MB (verifier, Phase A) → B3 3.5 MB → B4 7.69 MB (구현자; B4 는 voxel cloud 가 GPU 에서 만들어지므로 CPU 소비자용이 다시 내려온다) |
+| H2D / chunk | B3 코드 19.61 MB → B4 12.50 MB (구현자) |
+| `AG3S.reset` 뒤 torch 상시 할당 | 994 → 497 MiB (B2 의 `gc.collect()`) |
+| 마스크 GPU pass 호출 중앙 | 5.8 ms (B2, 동기화로 잰 값) |
+| 발견 | `PYTHONPATH=/mnt/dev/work-o4 pytest /mnt/dev/work/tests/…` 형태의 테스트 명령은 pytest 기본 `prepend` 모드가 `/mnt/dev/work` 를 `sys.path[0]` 에 넣어 **main 의 `benchmark`** 를 import 한다(o4 테스트가 skip 되어 발견). `--import-mode=append` 필수 |
+
+구현자의 단계별 before/after 시간은 각 impl.md 에 있으나 **본문은 verifier 의 V2(아래)만 쓴다.**
+
+---
+
+### 독립 검증 V1–V5 (verifier, 2026-10-02)
+
+**설계.** 구현자는 `E3b_ep1807_r2` **한 기록**으로만 동치를 확인했다. verifier 는 다섯 코드(tag · B1 · B2 · B3 · B4)를 `git archive` 로 각각 따로 풀어 같은 harness 로 돌리고, **비교 코드를 직접 새로 썼다**(구현자의 `compare_b4.py` 를 믿지 않았다; 입력 재현용 harness 의 `build_server` · `load_requests` · `StubPolicy` 만 빌렸다). worktree 코드 확인은 `git archive` 사본과 worktree 가 `diff -rq` 로 `.ruff_cache` 만 다름을 보였다.
+
+| # | 묻는 것 |
+|---|---|
+| **V1** | 구현자가 쓰지 않은 **다른 기록**에서도 tag 와 B4 의 출력이 한 비트도 다르지 않은가 |
+| **V2** | 다섯 코드의 stage 별 시간 사슬. 어느 step 이 얼마를 줄였나 |
+| **V3** | 두 회귀 기준선(legacy · cuRobo)이 B4 에서 그대로인가 |
+| **V4** | GPU 메모리 사용량 (공유 서버라 우리 상한을 기록) |
+| **V5** | CPU fallback 이 tag 와 같은 actions 를 내는가 |
+
+#### V1 · 다섯 기록에서의 동치
+
+비교는 pass T seq 1–75 (warm 4 뒤). tag 와 B4 모두 `E3b` 서버 플래그, recorder 켬(tag 는 동기 writer, B4 는 background).
+
+![V1 동치 표](figures/t38/t38b-equivalence.png)
+
+[`figures/t38/t38b-equivalence.png`](figures/t38/t38b-equivalence.png) — 표. 항목(행) × 기록(열). 마지막 열이 V5.
+
+| 기록 | replay 한 grasp state (chunk 수) | 14 항목 같음 | mask XOR | record npz 배열 byte 동일 | 비교한 배열 수 | summary 비시간 leaf |
+|---|---|---|---|---|---|---|
+| `E3b_ep1800_r1` | searching 2 · latched 49 · closing 22 · held 2 | **75/75** | 0 px (225 쌍) | **79/79** | 2,520 | 79/79 |
+| `E3b_ep1808_r1` | searching 2 · latched 48 · closing 25 | **75/75** | 0 px | **79/79** | 2,528 | 79/79 |
+| `E3b_ep1800_r2` | searching 2 · latched 16 · closing 1 · held 14 · placed 42 | **75/75** | 0 px | **79/79** | 2,472 | 79/79 |
+| `E3b_ep1807_r1` | searching 2 · latched 10 · closing 1 · held 14 · placed 48 | **75/75** | 0 px | **79/79** | 2,472 | 79/79 |
+| `E3b_ep1807_r2` (구현자 기록, verifier 코드로 재확인) | searching 2 · latched 12 · closing 1 · held 13 · placed 47 | **75/75** | 0 px | **79/79** | 2,476 | 79/79 |
+
+14 항목: refined actions(float32 byte) · verdict(`safe` · status · certified · reasons) · worst row(`max_violation_pair`) · `max_violation_m` · grasp record · `has_target` · AG3S status · 조작 대상(id · state · centroid · geometry) · target 점 · ESDF tier(distance + label sha256) · fused cloud(CSR 7 배열 + attention) · 카메라별 voxel cloud(점 · uv · attention) · 카메라별 depth 로봇 마스크 · 전체 응답의 비시간 leaf. "mask XOR 0 px" 는 카메라 쌍 225 개(75 chunk × 3 카메라)의 로봇 마스크를 tag 와 B4 에서 XOR 한 pixel 수의 합이다.
+
+- **기록 선택에 대해.** 과제는 `E3b_ep1800_r1` · `E3b_ep1808_r1` 을 지정했으나, 이 두 기록은 파지 · 운반 · 놓기 단계가 다 있지 않다 (`held` 2 chunk 또는 없음, `placed` 없음). **`held` 14 · `placed` 42–48 chunk 가 있는 `E3b_ep1800_r2` · `E3b_ep1807_r1` 을 verifier 가 추가했다.** ESDF tier 가 2 개로 줄어드는 held 경로(`n_tiers` 2 가 ep1800_r2 14 · ep1807_r1 14 · ep1807_r2 13 chunk)와 쥔 구 마스크 경로가 이 세 기록으로 덮인다.
+- **time-like leaf 는 비교에서 제외했다** (key 가 `…_ms` · `_at` · `time` · `stamp` · `wall` 에 걸리는 것). 실제로 달랐던 것은 `profile_ms.*` · `to.solve_ms` · `to.metrics.timing_ms.*` · `esdf_stats.target_free.build_ms` · `grasp.attached.attached_at` · 응답의 `timing_ms.*` · `field.built_at` 뿐이다.
+
+**Negative control — 비교기가 차이를 잡는가.** 일부러 다른 두 기록(`tag × E3b_ep1800_r1` 대 `B4 × E3b_ep1808_r1`)을 같은 비교기에 넣었다.
+
+| 항목 | 같음 (75 chunk 중) |
+|---|---|
+| refined actions byte · worst row · 조작 대상 · target 점 · ESDF tier · fused cloud · 카메라별 cloud · depth 마스크 · 응답 비시간 leaf | **0 / 75** |
+| verdict · `max_violation_m` · `has_target` · AG3S status | 75 / 75 (**다른 기록인데도 같다**) |
+| grasp record | 1 / 75 |
+| depth 마스크 XOR | 4,855,002 px |
+| 다른 record 배열 | 1,718 |
+
+**교훈.** `verdict` · `max_violation_m` · `has_target` 같은 판정 요약은 다른 기록끼리도 같아서 **동치를 보이는 힘이 없다.** 힘이 있는 것은 byte 수준의 항목(actions · tier sha · cloud · 마스크 · record 배열)이다. V1 의 "75/75" 는 이쪽이 같았다는 것이다.
+
+![V1 실제 씬 — GPU 경로와 tag 경로의 마스크](figures/t38/t38b-scene-mask.png)
+
+[`figures/t38/t38b-scene-mask.png`](figures/t38/t38b-scene-mask.png) — 실제 씬. `E3b_ep1800_r2` seq 18 (latched, closing 직전 chunk)의 카메라별 depth 위에 self-filter 로봇 마스크(주황)와 kept voxel pixel(초록)을 그렸다. 열 순서: B4 GPU 경로 · tag 경로 · 로봇 마스크 XOR · kept voxel pixel XOR. head 마스크 52,505 px · kept 54,841, left_wrist 15,810 · 10,522, right_wrist 9,993 · 41,584 로 두 경로가 같고, XOR 이 세 카메라에서 모두 **0 px** 이다(depth 입력이 다른 pixel 도 0).
+
+#### V2 · 단계별 시간 사슬
+
+같은 기록 `E3b_ep1807_r2` seq 2–75 를 다섯 코드로 **같은 조건**(단독, recorder background, warm 4)에서 재생했다. tag 는 background recorder 옵션이 없어 **동기 writer** 로 돌았다. 세 번 반복했다 — 세 chain 은 다른 세션의 부하가 다르다.
+
+| chain | 코드 순서 | 환경 |
+|---|---|---|
+| **a** | tag → B1 → B2 → B3 → B4 | 다른 세션의 GPU 프로세스 있음 (시작 시 pid 3071029 105,544 MiB; B1–B4 동안 pid 450012 8,810 MiB · pid 614960 17,000–19,106 MiB) |
+| **b** | B4 → B3 → B2 → B1 → tag (역순) | 일부 구간 다른 세션 GPU 사용 (nvidia-smi 최대 37–38 GB, util 최대 100 %, tag · B1 구간) |
+| **c** | tag → B1 → B2 → B3 → B4 | **GPU alone** (실행 전후 0 MiB). 단 호스트 CPU load average 18–51 (다른 세션의 CPU 프로세스는 이 컨테이너에서 보이지 않는다) |
+
+**본문은 GPU alone 인 chain c 를 기준으로 한다.** 모든 코드의 actions 는 tag 와 75/75 같았다(V2 15 실행 전부).
+
+| 코드 (chain c) | scene_recon | support | grounding | esdf | cgen − esdf | TO | **total 중앙 (p90)** | 최댓값 | ≤ 533 ms | `wall` | seq 1 total |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| tag `b4f06ec` | 541.4 | 80.3 | 1,327.5 | 273.9 | 573.7 | 137.8 | **2,934.6 (3,293.8)** | 3,613.6 | 0/74 | 3,183.3 | 4,304.6 |
+| B1 · B5 `1a35423` | 512.4 | 90.0 | 109.1 | 281.8 | 596.7 | 137.6 | **1,733.2 (1,842.8)** | 1,969.8 | 0/74 | 1,753.6 | 2,922.7 |
+| B2 `305dca1` | 470.8 | 96.3 | 111.6 | 252.0 | 2.1 | 131.3 | **1,086.4 (1,181.1)** | 1,537.8 | 0/74 | 1,105.6 | 2,222.7 |
+| B3 `044ecc4` | 470.4 | 93.0 | 107.5 | 67.9 | 2.7 | 64.2 | **828.4 (916.1)** | 955.6 | 0/74 | 833.0 | 2,124.2 |
+| B4 `5c72d37` | 53.4 | 8.0 | 58.2 | 139.6 | 3.1 | 71.3 | **314.5 (375.2)** | 393.5 | **74/74** | 329.5 | 1,625.2 |
+
+(`cgen − esdf` = `constraint_generation` 에서 그 안에 들어 있는 esdf 를 뺀 것. 단위 ms, stage 는 중앙값. total 은 `timing.ag3s + timing.trajopt`.)
+
+각 step 이 줄인 양 (chain c total 중앙값의 차이):
+
+| step | total 중앙 | 감소 | 줄어든 stage (chain c) |
+|---|---|---|---|
+| B1 · B5 | 2,934.6 → 1,733.2 | −1,201.4 | grounding 1,327.5 → 109.1. 응답 `wall` 과 total 의 중앙값 차는 248.7 → 20.4 (recorder 가 응답 경로 밖으로) |
+| B2 | 1,733.2 → 1,086.4 | −646.8 | cgen − esdf 596.7 → 2.1, scene_recon 512.4 → 470.8 |
+| B3 | 1,086.4 → 828.4 | −258.0 | esdf 252.0 → 67.9, TO 131.3 → 64.2 |
+| B4 | 828.4 → 314.5 | −513.9 | scene_recon 470.4 → 53.4, support 93.0 → 8.0, grounding 107.5 → 58.2. **esdf 67.9 → 139.6 (+71.7), TO 64.2 → 71.3 (+7.1) 는 올랐다** |
+
+![chunk 별 total](figures/t38/t38b-chunk-total.png)
+
+[`figures/t38/t38b-chunk-total.png`](figures/t38/t38b-chunk-total.png) — 그래프. 다섯 코드의 chunk(seq) 별 AG3S + TO 시간(로그 축), 점선 = 533 ms, 세로선 = 파지 상태 전환. **B4 선만 533 ms 아래에 있고, 단계 전환(latched → closing → held → placed)에 따른 추세 변화가 없다.**
+
+**co-tenancy 가 있었던 chain 의 total (참고).** 같은 기록, 같은 순서 외의 변수는 다른 세션이다.
+
+| 코드 | chain a total 중앙 (p90) · ≤ 533 | chain b total 중앙 (p90) · ≤ 533 |
+|---|---|---|
+| tag | 3,067.1 (3,686.7) · 0/74 | 2,951.0 (3,329.9) · 0/74 |
+| B1 | 1,788.7 (2,391.8) · 0/74 | 1,784.8 (2,703.4) · 0/74 |
+| B2 | 1,146.2 (1,424.5) · 0/74 | 1,147.4 (1,320.1) · 0/74 |
+| B3 | 922.7 (1,098.8) · 0/74 | 869.0 (1,008.5) · 0/74 |
+| B4 | 367.4 (606.0) · **62/74** (최댓값 740.0) | 309.3 (331.0) · **74/74** (최댓값 458.5) |
+
+- 세 chain 에서 **B4 중앙값은 309.3–367.4 ms** 로 모두 533 ms 안이다. 그러나 **다른 세션이 GPU · CPU 를 쓰던 chain a 에서는 62/74 chunk 만 533 ms 안**이다 (최댓값 740.0 ms). GPU 가 공유되는 실기 환경에서는 여유가 chain c 만큼 크지 않을 수 있다는 뜻이고, 이 부분은 서버 실제 운영에서 다시 봐야 한다.
+- tag 와 B1 은 chain 마다 p90 이 크게 흔들린다 (B1 p90 1,842.8 · 2,391.8 · 2,703.4). 개별 step 의 절감량은 chain 을 가로질러 중앙값 기준 방향이 같다.
+- B4 의 total p90 − 중앙값은 chain 별로 238.6 (a) · 21.7 (b) · 60.7 (c) ms 다.
+
+#### V3 · 두 회귀 기준선 (B4, worktree HEAD `5c72d37`, 깨끗한 tree)
+
+skill `regression-baseline` 그대로. 두 기준선 모두 새 GPU front end 를 탄다(`esdf_rollout` 이 `collision_backend: esdf` 로 `process_multi` 를 부른다).
+
+| 기준선 | 위반으로 시작 | `has_target` | frame 0 `clearance_before` (mm) | 15 프레임 sha1[:12] | skill 값 |
+|---|---|---|---|---|---|
+| legacy | **14/15** | **15/15** | **−29.031048280806342** | `40798fb0a4d2` | 14/15 · 15/15 · −29.031048280806342 · `40798fb0a4d2` — **일치** |
+| cuRobo | **10/15** | **15/15** | **−9.171877401271193** | `fe73bd7a6ba6` | 10/15 · 15/15 · −9.171877401271193 · `fe73bd7a6ba6` — **일치** |
+
+프레임별 `clearance_before` 15 개가 Phase A(tag) 와 15/15 같다. 다른 세션의 GPU 프로세스(pid 3071029, 105,544 MiB, util 0 %)가 실행 전후 있었고 건드리지 않았다. 호스트 load average 25.04 → 42.76.
+
+#### V4 · GPU 메모리
+
+기록 `E3b_ep1807_r2` pass T seq 2–75, 네 실행 모두 GPU alone (전후 0 MiB). nvidia-smi 의 process pid 가 컨테이너 pid 와 달라 프로세스별 사용량 대신 `memory.used` 합을 읽었다(다른 프로세스가 없었으므로 우리 사용량).
+
+| 실행 | torch 최대 할당 / chunk — 중앙 (p90) · 최대 | torch reserved 최대 | torch 할당 (infer 직후) 중앙 | **nvidia-smi 최대** |
+|---|---|---|---|---|
+| tag, 기록 (동기) | 505.0 (505.0) · 994.4 MiB | 1,028 MiB | 497.0 MiB | **1,640 MiB** |
+| tag, 무기록 | 505.0 (505.0) · 994.4 MiB | 1,028 MiB | 497.0 MiB | 1,640 MiB |
+| B4, 기록 (background) | 906.7 (931.7) · 933.1 MiB | 1,096 MiB | 723.7 MiB | **1,710 MiB** |
+| B4, 무기록 | 739.1 (740.3) · 782.5 MiB | 904 MiB | 555.1 MiB | 1,518 MiB |
+
+- **우리 사용량 상한은 nvidia-smi 기준 1,710 MiB** 다(Phase A 의 80 % of 140 GB 기준에도 한참 아래). tag 대비 +70 MiB(기록), −122 MiB(무기록).
+- 기록을 켜면 B4 의 torch 할당이 +168 MiB 다. background recorder 큐에 대기 중인 기록이 GPU 격자(B3 의 deferred grid)를 쥐고 있기 때문이다 (원인은 구현자 설명). **infer 직후 큐에 남은 기록은 중앙 9 · 최대 9 개** 다 (verifier, 75 chunk, 한도는 구현자 보고로 `queue_size` 8). verifier 의 replay 는 chunk 를 쉬지 않고 연달아 먹이므로 실제 서버(533 ms 주기)보다 빠르다. 그래도 **writer 가 장기적으로 따라오는지, 큐가 가득 차 응답 경로가 기다리는 일이 생기는지는 이 75 chunk 로 알 수 없다** (미측정).
+
+#### V5 · CPU fallback
+
+`5c72d37` 의 `RECON_DEVICE` · `SUPPORT_RANSAC_DEVICE` · `SELF_FILTER_DEVICE` 를 모두 `"cpu"` 로 두고(`build_server` 전에 설정) `E3b_ep1800_r2` seq 1–40 을 재생해 같은 기록의 tag 와 비교했다.
+
+| 항목 | 같음 |
+|---|---|
+| 14 항목 (V1 과 같은 것) | **40/40** 전부 |
+| depth 마스크 XOR | 0 px (120 쌍) |
+| record npz 배열 byte 동일 · summary 비시간 leaf | 44/44 · 44/44 |
+| **GPU 경로 호출 수** (`camera_front_end` + `_sphere_mask_device` + `_hypothesis_counts_device`) | **0** (40 chunk 합). 같은 seq 에서 `auto` 는 chunk 당 3 · 3 · 2 회 |
+
+CPU fallback 의 total 중앙은 1,079.3 ms (seq 2–40, 이 기록)다. 기록·구간이 달라 tag 의 값과 직접 비교하지 않는다. **GPU 경로를 끄면 tag 와 같은 actions 로 돌아가므로 문제가 생겼을 때의 되돌아올 길이 있다.**
+
+---
+
+### 청크마다 ≈ 70–90 ms 의 정체 — 원인 미확정
+
+**이것은 결론이 아니라 열린 관찰이다.** B4 의 total 중앙값은 목표를 넘겼지만, step 이 쌓여 갈수록 **chunk 마다 몇십 ms 짜리 정체가 단계를 옮겨 다니며** 떨어진다는 관찰이 구현자에게서 나왔다.
+
+| 출처 | 내용 |
+|---|---|
+| **구현자 (B4 impl.md)** | 같은 코드의 두 실행에서 `grow_region` 중앙이 12 ↔ 89 ms, `fuse` 87 ↔ 14 ms 로 갈리고, B4 에서는 grounding (17 ↔ 80) · `_integrate` (6 ↔ 85) 로 옮겨 다닌다. 크기는 chunk 당 **≈ 70–90 ms**. B3 도 `multiview.backproject` 가 코드와 무관하게 58 ↔ 130 ms 로 흔들렸다고 보고했다. 구현자가 배제했다고 보고한 것: GC (gen-2 수집 0 회), recorder 경합(무기록 실행에도 있음), GPU 깨어남 지연. 구현자의 해석은 "256 코어 공유 서버의 스케줄링으로 보인다" 였다 — **추측이다** |
+| **verifier (V2)** | 이 크기(70–90 ms)를 직접 재지 않았다. 다만 다음 수치가 같은 방향이다 |
+
+verifier 수치 (chain a · b · c):
+
+| 양 | a | b | c |
+|---|---|---|---|
+| B3 → B4 esdf 중앙 (ms) | 70.4 → 143.8 | 67.5 → 140.1 | 67.9 → 139.6 |
+| B4 의 cgen − esdf 중앙 → p90 (ms) | 3.3 → 7.8 | 2.0 → 23.4 | 3.1 → 24.3 |
+| B4 의 `wall` − total 중앙 차 (ms) | 23.2 | 70.3 | 15.0 |
+
+- esdf 는 세 chain 모두에서 B3 → B4 때 약 2 배(+70 ms 안팎)가 되었다. 구현자 설명에 따르면 B4 는 `CuroboFieldBuilder.update` 를 depth 출처 외에는 바꾸지 않았다(`_integrate` 중앙 6.5 ms). 즉 **코드가 줄인 것이 아니라 다른 곳으로 옮겨 앉은 정체가 esdf 에 떨어진 것일 수 있다.**
+- 평소 2–3 ms 인 `cgen − esdf` 의 p90 이 b · c 에서 23–24 ms 다 — 3 ms 짜리 구간이 가끔 20 ms 이상 걸린다.
+- **그러나 verifier 는 이것을 단계 간 이동으로 확인하지 않았다.** 원인(OS 스케줄링 · NUMA · allocator · 어떤 lock · 그 밖)도 가리지 않았다. 요약: 원인 미확정, 크기 70–90 ms 는 구현자 관찰, 74/74 chunk 가 533 ms 안인 것은 정체를 포함한 결과다 (chain b · c).
+
+재측정 대기 표 9 번에 올렸다.
+
+---
+
+### 판정 (verifier 가 확인한 것과 아직 아닌 것)
+
+| 확인된 것 | 근거 |
+|---|---|
+| T38 의 GPU 경로는 5 개 기록 × 14 항목에서 tag 와 **bit-identical** 이다 (actions · tier · cloud · 마스크 · record 배열) | V1, negative control 포함 |
+| 두 회귀 기준선이 skill 값 그대로다 (소수점 · sha1 까지) | V3 |
+| GPU 경로를 끄면 tag 와 같은 actions 가 나온다 | V5 |
+| replay 의 AG3S + TO 는 GPU alone 에서 2,934.6 → 314.5 ms, 74/74 chunk 가 533 ms 안이다 | V2 chain c (b 도 74/74) |
+| 우리 GPU 사용량 상한은 nvidia-smi 1,710 MiB | V4 |
+
+| 확인되지 않은 것 (`not_measured` 와 이 절에서 드러난 것) | 비고 |
+|---|---|
+| **`5c72d37` 로 닫힌 루프(MuJoCo client) 를 돌리지 않았다** | 지연이 줄었을 때 정책·TO 의 행동이 어떻게 달라지는지는 모른다. bit-identical 은 같은 입력에 대한 같은 출력일 뿐이다 |
+| π0.5 추론 · attention 추출 · websocket/msgpack 전송 | replay 에서 stub / 제외. 533 ms 판정은 AG3S + TO 만이다 |
+| 새 프로세스 첫 호출의 JIT 비용 (B4 코드) | warm pass 가 가렸다. reset 직후 chunk(seq 1)는 1,625.2 ms 로 533 ms 를 넘는다 |
+| GPU/CPU 공유 부하에서의 여유 | chain a 는 62/74. chain c(단독)만 74/74 가 확실하다 |
+| 70–90 ms 정체의 원인 | 위 절 |
+| background recorder 의 장기 거동 | 큐 깊이 9, 75 chunk 만 |
+| tag 의 recorded V2/V4 는 동기 writer | tag 에는 background 옵션이 없다 |
+| 단위 테스트 | 구현자 보고(B4 1,860 passed). verifier 는 단위 테스트를 다시 돌리지 않았다 |
+| 다른 numpy/OpenBLAS 에서의 bit-identical | dgemm FMA chain 가정은 이 기계 · `.venv-openpi-live` 에서 성립. 환경이 바뀌면 테스트가 먼저 깨지고, 그때는 CPU fallback |
+
+### 되돌아올 지점
+
+| 갈림길 | 고른 것 | 안 고른 것 | 전환 신호 |
+|---|---|---|---|
+| 동치의 정의 | **bit-identical** — 반올림을 고정한 kernel · FMA chain 재현 · gemv 모양은 CPU. 허용오차 정의를 필요로 하지 않았다 (B2 에서 `T38.task.md` 가 허용오차 정의를 예고했으나 쓰이지 않았다 — 구현자 dual check 에서 237 호출 차이 0) | 허용오차 안에서만 같은 GPU 연산 (빠르지만 판정이 chunk 마다 달라질 수 있다) | 다른 환경에서 dgemm 테스트가 깨지면 `RECON_DEVICE` 등을 `"cpu"` 로 하거나 허용오차를 새로 정의 |
+| KD-tree 병렬 | `workers=1` | `workers=-1`(기존) · `workers=8` (micro: 9.2 → 68.5 ms 로 오히려 느림) | 질의 점 수가 수십만으로 커지면 (grounding 입력이 지금 3–4 천 점) |
+| GPU 로 옮기는 범위 | 점군 · tier · RANSAC 수 세기. `fuse`(CPU 15 ms) · SVD refit · 최종 inlier 선택은 CPU | `fuse` 를 GPU 로 (구현자 제안: 15 → ≈ 4 ms, D2H ≈ 1.2 MB 감소 — 목표 안이라 안 함) · 3 카메라 batched 적분 (적분 의미가 바뀔 수 있어 안 함) | 533 ms 여유가 모자라질 때 (chain a 의 62/74) |
+| `ConstraintBuilder` (CasADi) | 그대로 둠 (0.18 ms) | 제거 | 비용이 커질 때 |
+| **병합** | **브랜치 `o4-gpu-parallel` 에서 멈춤** (main 은 병합 전) | 병합 | **사용자 판정.** 병합 전에 닫힌 루프 시험(재측정 대기 8)을 권한다 |
+
+**되돌아오는 방법.** tag `pre-gpu-parallel-20261001` (`b4f06ec`) 로 돌아가면 T38 이전이다. 브랜치 안에서는 `RECON_DEVICE` · `SUPPORT_RANSAC_DEVICE` · `SELF_FILTER_DEVICE = "cpu"` (V5 가 확인) 와 `KDTREE_WORKERS` · `ESDF_QUERY_HOST_ARITH_MAX_POINTS` 가 각각 단일 설정점이다. B5 background recorder 는 `ConstraintRecordWriter(background=False)` 가 기본값이고 `serve_safe` 만 `True` 로 만든다.
+
+### 이 STEP 의 산출물
+
+- 코드: 브랜치 `o4-gpu-parallel` 의 `1a35423` · `305dca1` · `044ecc4` · `5c72d37` (benchmark repo, **main 미병합**). 루트 repo 테스트 `d12eca3` · `9a107c6` · `4fa71b7` · `0339914` (`tests/o4/`, main 에서는 skip). 되돌아올 지점: tag `pre-gpu-parallel-20261001`.
+- 측정: `handoff/T38.profile.verify.json` · `handoff/T38.verify.json`. raw 는 `outputs/verify/T38/` (Phase A) · `outputs/verify/T38/B/` (V1–V5: `runs/` · `cmp/` · `baseline/`).
+- 구현 보고: `handoff/T38-B1B5.impl.md` · `T38-B2.impl.md` · `T38-B3.impl.md` · `T38-B4.impl.md`.
+- figure: `figures/t38/` — Phase A `t38-stage-bars` · `t38-pipeline-map` · `t38-function-table` · `t38-input-sizes` · `t38-scene`, Phase B `t38b-stage-chain` · `t38b-chunk-total` · `t38b-equivalence` · `t38b-scene-mask` (각각 `.json` sidecar 가 있다).
+
+**다음 판정은 사용자에게 있다:** (1) 브랜치를 main 에 병합할 것인가, (2) 병합 전에 `5c72d37` 로 닫힌 루프를 한 번 돌릴 것인가, (3) 정체의 원인을 따로 STEP 으로 쫓을 것인가. 열린 문제 표의 O4 행(위 T35–T37 절, "실시간이 안 된다")은 이 절 앞의 상태 기록이다.
