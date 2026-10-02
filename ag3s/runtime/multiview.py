@@ -45,8 +45,9 @@ import numpy as np
 from benchmark.ag3s.stages.attention_lifting import lift, make_adapter, normalize_attention
 from benchmark.ag3s.config import AG3SConfig, AttentionConfig
 from benchmark.ag3s.runtime.degradation import reason
-from benchmark.ag3s.stages.reconstruction import reconstruct
-from benchmark.ag3s.stages.robot_filter import filter_robot_points
+from benchmark.ag3s.stages import device_recon
+from benchmark.ag3s.stages.reconstruction import backproject, downsample_and_cap, reconstruct
+from benchmark.ag3s.stages.robot_filter import DepthRobotMask, depth_robot_mask, filter_robot_points
 from benchmark.ag3s.types import (
     CameraID,
     CameraObservation,
@@ -70,6 +71,13 @@ class CameraResult:
     had_attention: bool
     stats: dict[str, Any] = dataclasses.field(default_factory=dict)
     notes: list[str] = dataclasses.field(default_factory=list)
+    #: T38 B2: this camera's self-filter as full-resolution pixel masks, when the caller asked for
+    #: it (`with_depth_mask`) and it could be decided — the TSDF depth mask `AG3S` reuses instead
+    #: of back-projecting and masking the same depth a second time. None otherwise.
+    depth_mask: Optional[DepthRobotMask] = None
+    #: T38 B4: `cloud.points` resident on the GPU (`(N, 3)` float64 tensor) when the GPU front end
+    #: produced this camera (`device_recon.camera_front_end`) — fusion keys it there. None otherwise.
+    points_device: Any = None
 
 
 @dataclasses.dataclass
@@ -100,6 +108,8 @@ def process_observation(
     attention_adapter: Any = None,
     self_filter_inflation: Any = None,
     self_filter_guard_centre: Optional[np.ndarray] = None,
+    with_depth_mask: bool = False,
+    fk_cache: Optional[dict] = None,
 ) -> CameraResult:
     """Reconstruct, self-filter and lift attention for one camera, in its own capture instant.
 
@@ -110,21 +120,72 @@ def process_observation(
     `self_filter_inflation` / `self_filter_guard_centre` are handed through to
     `filter_robot_points` untouched (T19). `AG3S` passes the same inflation object and the same guard
     centroid to its depth robot mask, so the cloud and the TSDF remove the same robot.
+
+    `with_depth_mask` (T38 B2): decide the self-filter **once**, per pixel of the full-resolution
+    back-projection, and return it as `CameraResult.depth_mask` for the TSDF. The voxel cloud is
+    cut from that same back-projection and each representative reads its own pixel's decision —
+    the decision the cloud filter makes on that point anyway (`DepthRobotMask`). Only for depth
+    input with the self-filter applicable; otherwise the cloud is filtered as before.
+
+    T38 B4: on that path, with `config.RECON_DEVICE` resolving to CUDA, the whole chain (back-project
+    → voxel → cap → mask → cut) runs on the GPU from one depth upload (`device_recon`), with the numpy
+    chain's exact bits. `fk_cache`: shared by the cameras of a frame (sphere FK once per `q`).
     """
     T_base_cam = observation.resolve_T_base_cam(robot_model)
-    cloud, recon_stats = reconstruct(
-        depth=observation.depth,
-        pointcloud=observation.pointcloud,
-        camera_intrinsics=observation.camera_intrinsics,
-        T_base_cam=T_base_cam,
-        uv=observation.uv,
-        config=config.pointcloud,
-        frame_id=config.frame_id,
-    )
-    cloud, filter_stats = filter_robot_points(
-        cloud, robot_model, observation.robot_state, config.pointcloud,
-        inflation=self_filter_inflation, guard_centre=self_filter_guard_centre,
-    )
+    pc_cfg = config.pointcloud
+    depth_mask = None
+    points_device = None
+    front = None
+    if (with_depth_mask and observation.depth is not None and observation.pointcloud is None
+            and observation.camera_intrinsics is not None and pc_cfg.self_filter
+            and robot_model is not None and observation.robot_state is not None):
+        q = np.asarray(observation.robot_state, np.float64).reshape(-1)
+        dev = device_recon.recon_device()
+        if dev is not None:
+            if q.shape[0] != int(robot_model.nq):
+                raise ValueError(f"robot_state has {q.shape[0]} entries but the robot model expects "
+                                 f"nq={int(robot_model.nq)}")
+            front = device_recon.camera_front_end(
+                observation.depth, observation.camera_intrinsics, T_base_cam, pc_cfg, robot_model, q,
+                inflation=self_filter_inflation, guard_centre=self_filter_guard_centre,
+                fk_cache=fk_cache, frame_id=config.frame_id, device=dev)
+    if front is not None:
+        cloud, recon_stats, filter_stats = front.cloud, front.recon_stats, front.filter_stats
+        depth_mask, points_device = front.depth_mask, front.points_device
+    elif (with_depth_mask and observation.depth is not None and observation.pointcloud is None
+            and observation.camera_intrinsics is not None and pc_cfg.self_filter
+            and robot_model is not None and observation.robot_state is not None):
+        full = backproject(observation.depth, observation.camera_intrinsics, T_base_cam, pc_cfg,
+                           frame_id=config.frame_id)
+        cloud, recon_stats = downsample_and_cap(full, pc_cfg)
+        if not full.is_empty:
+            q = np.asarray(observation.robot_state, np.float64).reshape(-1)
+            if q.shape[0] != int(robot_model.nq):
+                raise ValueError(f"robot_state has {q.shape[0]} entries but the robot model expects "
+                                 f"nq={int(robot_model.nq)}")
+            depth_mask = depth_robot_mask(
+                full, np.shape(observation.depth), robot_model, q, pc_cfg,
+                inflation=self_filter_inflation, guard_centre=self_filter_guard_centre,
+                fk_cache=fk_cache)
+            cloud, filter_stats = depth_mask.filter_cloud(cloud)
+        else:
+            cloud, filter_stats = filter_robot_points(
+                cloud, robot_model, observation.robot_state, pc_cfg,
+                inflation=self_filter_inflation, guard_centre=self_filter_guard_centre)
+    else:
+        cloud, recon_stats = reconstruct(
+            depth=observation.depth,
+            pointcloud=observation.pointcloud,
+            camera_intrinsics=observation.camera_intrinsics,
+            T_base_cam=T_base_cam,
+            uv=observation.uv,
+            config=pc_cfg,
+            frame_id=config.frame_id,
+        )
+        cloud, filter_stats = filter_robot_points(
+            cloud, robot_model, observation.robot_state, pc_cfg,
+            inflation=self_filter_inflation, guard_centre=self_filter_guard_centre,
+        )
 
     notes: list[str] = []
     if observation.has_attention and not cloud.is_empty:
@@ -169,6 +230,8 @@ def process_observation(
         stats={**recon_stats, "n_self_filtered": filter_stats["n_removed"],
                "n_self_filter_guard_protected": filter_stats["n_guard_protected"]},
         notes=notes,
+        depth_mask=depth_mask,
+        points_device=points_device,
     )
 
 
@@ -350,17 +413,25 @@ def fuse_observations(
     now: Optional[float] = None,
     self_filter_inflation: Any = None,
     self_filter_guard_centre: Optional[np.ndarray] = None,
+    with_depth_mask: bool = False,
 ) -> FusionResult:
-    """The whole multi-camera front end: per-camera processing, freshness checks, fusion."""
+    """The whole multi-camera front end: per-camera processing, freshness checks, fusion.
+
+    `with_depth_mask`: see `process_observation` (T38 B2).
+    """
     validity, notes, metrics = check_freshness(observations, config, now=now)
+    fk_cache: dict = {}   # T38 B4: sphere FK once per (model, q) for this frame's cameras
     results = [
         process_observation(
             obs, config, robot_model=robot_model, attention_adapter=attention_adapter,
             self_filter_inflation=self_filter_inflation,
             self_filter_guard_centre=self_filter_guard_centre,
+            with_depth_mask=with_depth_mask,
+            fk_cache=fk_cache,
         )
         for obs in observations
     ]
+    del fk_cache
     for result in results:
         notes.extend(result.notes)
 

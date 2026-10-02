@@ -275,6 +275,19 @@ def reconstruct(
     else:
         cloud = from_pointcloud(pointcloud, cfg, T_base_cam=T_base_cam, uv=uv, frame_id=frame_id)
 
+    return downsample_and_cap(cloud, cfg)
+
+
+def downsample_and_cap(
+    cloud: PointCloud, config: PointCloudConfig | None = None
+) -> tuple[PointCloud, dict[str, int | bool]]:
+    """The second half of `reconstruct`: voxel-downsample and cap an already reconstructed cloud.
+
+    Split out (T38 B2) so a caller that needs the full-resolution back-projection anyway — the
+    per-camera self-filter, which decides once per pixel — back-projects once and hands the same
+    cloud here. Every point it returns is one of `cloud`'s points, `(u, v)` included.
+    """
+    cfg = config or PointCloudConfig()
     n_raw = len(cloud)
     cloud = voxel_downsample(cloud, cfg.voxel_size)
     n_voxel = len(cloud)
@@ -300,6 +313,7 @@ __all__ = [
     "backproject",
     "cap_points",
     "coverage_preserving_cap",
+    "downsample_and_cap",
     "from_pointcloud",
     "reconstruct",
     "voxel_downsample",

@@ -74,6 +74,49 @@ def _resample(src: np.ndarray, out_hw: tuple[int, int], mode: str) -> np.ndarray
     return (top * (1.0 - wy) + bot * wy).astype(np.float32)
 
 
+def _resample_at(src: np.ndarray, out_hw: tuple[int, int], mode: str, rows: np.ndarray,
+                 cols: np.ndarray) -> np.ndarray:
+    """``_resample(src, out_hw, mode)[rows, cols]`` without building the `(H, W)` map (T38 B4).
+
+    Every output pixel of `_resample` is an elementwise float32 expression of its own row factors
+    (`y0`, `y1`, `wy`) and column factors (`x0`, `x1`, `wx`) — no reduction, no neighbour. So the
+    same 1-D tables, indexed at the requested pixels, and the same float32 expression in the same
+    order give the same bits as reading the full map (`tests/o4/test_gpu_recon.py` compares every
+    pixel). Three cameras × 640×480 maps were ≈ 48 ms per frame; ≈ 40 k pixels are read.
+    """
+    src = np.asarray(src, np.float32)
+    if src.ndim != 2:
+        raise ValueError(f"attention map must be 2-D, got shape {src.shape}")
+    h, w = src.shape
+    H, W = int(out_hw[0]), int(out_hw[1])
+    rows = np.asarray(rows, np.int64)
+    cols = np.asarray(cols, np.int64)
+    if (h, w) == (H, W):
+        return src[rows, cols]
+
+    if mode == "nearest":
+        gy = np.minimum((np.arange(H) * h) // H, h - 1)
+        gx = np.minimum((np.arange(W) * w) // W, w - 1)
+        return src[gy[rows], gx[cols]]
+
+    if mode != "bilinear":
+        raise ValueError(f"unknown interpolation {mode!r}")
+
+    fy = np.clip((np.arange(H) + 0.5) * h / H - 0.5, 0.0, h - 1.0)
+    fx = np.clip((np.arange(W) + 0.5) * w / W - 0.5, 0.0, w - 1.0)
+    y0 = np.floor(fy).astype(np.int64)
+    x0 = np.floor(fx).astype(np.int64)
+    y1 = np.minimum(y0 + 1, h - 1)
+    x1 = np.minimum(x0 + 1, w - 1)
+    wy = (fy - y0).astype(np.float32)[rows]
+    wx = (fx - x0).astype(np.float32)[cols]
+    r0, r1, c0, c1 = y0[rows], y1[rows], x0[cols], x1[cols]
+
+    top = src[r0, c0] * (1.0 - wx) + src[r0, c1] * wx
+    bot = src[r1, c0] * (1.0 - wx) + src[r1, c1] * wx
+    return (top * (1.0 - wy) + bot * wy).astype(np.float32)
+
+
 def _sample_at(pixel_map: np.ndarray, uv: np.ndarray, mode: str) -> np.ndarray:
     """Read the map at `(u, v)`. Integer `uv` is an exact lookup; float `uv` is interpolated."""
     H, W = pixel_map.shape
@@ -106,6 +149,11 @@ class DenseAttentionAdapter:
 
     def to_pixel_map(self, raw: Any, out_hw: tuple[int, int]) -> np.ndarray:
         return _resample(np.asarray(raw, np.float32), out_hw, self.interpolation)
+
+    def sample_pixels(self, raw: Any, out_hw: tuple[int, int], rows: np.ndarray,
+                      cols: np.ndarray) -> np.ndarray:
+        """``to_pixel_map(raw, out_hw)[rows, cols]``, reading only those pixels (T38 B4)."""
+        return _resample_at(np.asarray(raw, np.float32), out_hw, self.interpolation, rows, cols)
 
 
 class GridAttentionAdapter:
@@ -167,6 +215,11 @@ class GridAttentionAdapter:
 
     def to_pixel_map(self, raw: Any, out_hw: tuple[int, int]) -> np.ndarray:
         return _resample(self.to_grid(raw), out_hw, self.interpolation)
+
+    def sample_pixels(self, raw: Any, out_hw: tuple[int, int], rows: np.ndarray,
+                      cols: np.ndarray) -> np.ndarray:
+        """``to_pixel_map(raw, out_hw)[rows, cols]``, reading only those pixels (T38 B4)."""
+        return _resample_at(self.to_grid(raw), out_hw, self.interpolation, rows, cols)
 
 
 def make_adapter(raw: Any, config: AttentionConfig) -> Any:
@@ -273,8 +326,17 @@ def lift(
         hw = image_hw
         uv = _project(cloud.points, camera_intrinsics, T_base_cam)
 
-    pixel_map = adapter.to_pixel_map(attention, hw)
-    raw_values = _sample_at(pixel_map, uv, cfg.interpolation)
+    sample_pixels = getattr(adapter, "sample_pixels", None)
+    if callable(sample_pixels) and np.issubdtype(np.asarray(uv).dtype, np.integer):
+        # T38 B4: integer pixels read the map exactly (`_sample_at`'s integer branch: clip, then
+        # look up), so only those pixels of the map are computed.
+        H, W = int(hw[0]), int(hw[1])
+        u = np.clip(uv[:, 0], 0, W - 1)
+        v = np.clip(uv[:, 1], 0, H - 1)
+        raw_values = np.asarray(sample_pixels(attention, hw, v, u)).astype(np.float32)
+    else:
+        pixel_map = adapter.to_pixel_map(attention, hw)
+        raw_values = _sample_at(pixel_map, uv, cfg.interpolation)
     # Both are kept: normalization is lossy at the top (percentile clipping creates ties), and
     # `target_grounding` needs an unambiguous peak. See `AttentionPointCloud`.
     return AttentionPointCloud(cloud, normalize_attention(raw_values, cfg), raw_values)

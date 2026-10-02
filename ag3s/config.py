@@ -28,6 +28,66 @@ class AG3SConfigError(ValueError):
     """Raised when a configuration is malformed or internally inconsistent."""
 
 
+#: scipy `cKDTree` 질의(`query` · `query_ball_point`)의 `workers` (T38 B1). AG3S 의 KD-tree 질의
+#: 중 worker 수를 정하는 곳은 **모두** 이 값 하나를 쓴다 (나머지는 scipy 기본값 1 이다).
+#:
+#: 1 인 이유: `workers=-1` 은 질의 한 번마다 CPU 코어 수만큼 스레드를 띄우고 거둔다. 이 서버는
+#: 256 코어라 청크당 ≈ 2,138 개였고, 질의 자체는 수천 점이라 µs–ms 인데 스레드 비용이 수백 ms 였다
+#: (T38 Phase A 실측, 같은 입력: `grow_region` 612–1,107 → 9 ms · dbscan 이웃 수 127–170 → 3 ms ·
+#: 최근접 core 125–162 → 0.6 ms). 질의 결과는 worker 수와 무관하다 — 점마다 독립으로 같은 트리를
+#: 읽을 뿐이다 (`tests/o4/test_kdtree_workers.py` 가 -1 과 비트 단위로 같음을 확인한다).
+#:
+#: YAML 필드가 아닌 이유: ablation 축이 아니다 — 결과를 바꾸지 않는 실행 자원 설정이다.
+KDTREE_WORKERS: int = 1
+
+#: 로봇 self-filter 구 마스크(`stages/robot_filter.robot_sphere_mask` · `sphere_mask_parts`)를 어디서
+#: 계산하나 (T38 B2). ``"auto"`` = torch 가 CUDA 를 보면 GPU, 아니면 CPU · ``"cuda"`` = GPU 필수
+#: (없으면 예외) · ``"cpu"`` = 기존 KD-tree 경로.
+#:
+#: 두 경로의 판정 규칙은 같다 — 점 p 가 구 (c, r, 부풀림 δ) 에 닿는다 ⇔
+#: ``(dx·dx + dy·dy) + dz·dz ≤ (r + δ)·(r + δ)`` (float64, 이 순서). scipy `cKDTree.query_ball_point`
+#: 가 쓰는 산술이 바로 이것이라 GPU 경로는 같은 연산을 같은 순서로, FMA 없이(원소별 kernel 을 나눠)
+#: 한다. `tests/o4/test_gpu_sphere_mask.py` 가 경계 위 점까지 비트 단위로 같음을 확인한다.
+#:
+#: YAML 필드가 아닌 이유: `KDTREE_WORKERS` 와 같다 — 결과를 바꾸지 않는 실행 자원 설정이다.
+SELF_FILTER_DEVICE: str = "auto"
+
+#: GPU 구 마스크가 한 번에 만드는 (점 × 구) float64 행렬 한 장의 상한 (byte). 점 축을 이 크기로
+#: 잘라 돈다. 행렬 두 장 + bool 한 장이 동시에 살아 있으므로 최대 사용량 ≈ 2.2 × 이 값 + 입력.
+SELF_FILTER_GPU_CHUNK_BYTES: int = 64 * 2**20
+
+#: GPU 에 머무는 ESDF 계층(`fields/device_field.DeviceEsdfField`, T38 B3)이 질의 한 번을 **어디서
+#: 산술하나** 의 경계 (질의점 수). 이보다 적으면 GPU 는 질의점이 쓰는 격자 칸만 `index_select` 로
+#: 꺼내 주고 삼선형 · 중심차분 산술은 host numpy 가 `EsdfField` 와 **같은 코드 · 같은 순서** 로 한다
+#: (kernel 몇 개 · 왕복 한 번). 이상이면 같은 산술을 GPU float64 로 한다 (질의점이 많을 때 빠름).
+#: 두 경로 모두 `EsdfField` 와 비트 단위로 같다 (`tests/o4/test_gpu_esdf_field.py` 가 둘 다 강제로
+#: 시험한다). 1024 는 128³ · 5 mm 격자 마이크로 측정의 교차점이다 (distance 0.32 vs 0.38 ms,
+#: gradient 1.0 vs 1.3 ms @ 1000 점). 이 서버 경로의 호출은 대부분 100–1000 점이다.
+#:
+#: YAML 필드가 아닌 이유: `KDTREE_WORKERS` 와 같다 — 결과를 바꾸지 않는 실행 자원 설정이다.
+ESDF_QUERY_HOST_ARITH_MAX_POINTS: int = 1024
+
+#: 카메라별 scene reconstruction (역투영 · voxel downsample · cap · self-filter 마스크 · 마스크 적용)
+#: 과 fusion 의 voxel 정렬을 어디서 하나 (T38 B4). ``"auto"`` = torch 가 CUDA 를 보면 GPU,
+#: 아니면 기존 numpy 경로 · ``"cuda"`` = GPU 필수 · ``"cpu"`` = 기존 numpy 경로.
+#:
+#: GPU 경로는 numpy 경로와 **비트 단위로 같다** (`stages/device_recon.py` docstring 이 정본):
+#: 원소별 산술은 같은 연산 · 같은 순서로 하나씩 반올림하고 (`__dsub_rn` · `__dmul_rn` · `__ddiv_rn`,
+#: 나눗셈의 분모는 스칼라가 아니라 CUDA 값), `pts_cam @ R.T` 는 numpy 가 부르는 OpenBLAS dgemm 의
+#: 산술 ``fma(z, r2, fma(y, r1, x·r0))`` 을 그대로 한다 (점 2 개 이상일 때 — 1 개면 numpy 가 gemv
+#: 로 가므로 그 카메라는 numpy 경로). voxel 대표점 = voxel 안 **입력 순서 첫 점** (`np.unique` 의
+#: `return_index`) 은 정수 연산이라 정확하다. `tests/o4/test_gpu_recon.py` 가 확인한다.
+#:
+#: YAML 필드가 아닌 이유: `KDTREE_WORKERS` 와 같다 — 결과를 바꾸지 않는 실행 자원 설정이다.
+RECON_DEVICE: str = "auto"
+
+#: 지지면 RANSAC (`stages/support_surface.fit_plane_ransac`) 의 **가설 점수 매기기** 를 어디서 하나
+#: (T38 B4). 가설(삼중점 · 법선 · 오프셋)은 예전 그대로 numpy RNG · numpy 로 만들고, (점 × 가설)
+#: 거리 · 문턱 비교 · inlier 수만 GPU 에서 센다 — 거리는 numpy dgemm 과 같은 FMA 사슬이라 비트가
+#: 같고, 수는 정수다. 폭 1 짜리 블록(numpy 가 gemv 로 가는 모양)은 CPU 로 센다. 값은 위와 같다.
+SUPPORT_RANSAC_DEVICE: str = "auto"
+
+
 # ------------------------------------------------------------------------------------ sections
 
 

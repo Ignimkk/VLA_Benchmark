@@ -30,6 +30,7 @@ Phase is an injected argument at every level. AG3S never infers it.
 from __future__ import annotations
 
 import dataclasses
+import gc
 import logging
 import os
 import time
@@ -44,10 +45,10 @@ from benchmark.ag3s.config import AG3SConfig
 from benchmark.ag3s.runtime.profiler import StageProfiler
 from benchmark.ag3s.stages.reconstruction import reconstruct
 from benchmark.ag3s.stages.robot_filter import (
+    depth_robot_mask,
     filter_robot_points,
     inflation_table,
     resolve_self_filter_inflation,
-    self_filter_mask,
 )
 from benchmark.ag3s.runtime.multiview import fuse_observations
 from benchmark.ag3s.stages.support_surface import fit_support_surfaces
@@ -209,6 +210,11 @@ class AG3S:
         self._frame_filter_config: AG3SConfig = self.config
         #: Pixels the guard kept out of this frame's depth robot masks, one entry per mask built.
         self._mask_guard_px: list[int] = []
+        #: T38 B2: this frame's per-camera depth robot masks, decided once in scene reconstruction
+        #: (`CameraResult.depth_mask`) — `(observation, CameraResult)` pairs that
+        #: `_depth_cameras_from` takes instead of back-projecting and masking the same depth again.
+        #: Filled after fusion, emptied when taken and at the start of every frame.
+        self._frame_depth_masks: list[tuple[Any, Any]] = []
         #: Kept across frames so the ESDF's local update has something to be incremental against.
         self._esdf_builder = None
         self.profiler = StageProfiler(
@@ -369,7 +375,17 @@ class AG3S:
         self._held_check_ref = None
         self._last_support_surfaces = []
         self._last_esdf_field = None
+        self._frame_depth_masks = []
+        released = self._esdf_builder is not None
         self._esdf_builder = None
+        if released:
+            # T38 B2: the dropped builder's cuRobo mappers (≈ 497 MiB of TSDF/ESDF on the GPU) sit in
+            # reference cycles **inside cuRobo/warp** — `GraphExecutor(capture_fn=self.
+            # _compute_esdf_impl)` on each ESDF integrator, warp codegen structs holding their
+            # arrays — so refcounting never frees them and they waited for a generation-2 GC: the
+            # next episode ran with both copies (994 MiB). We do not own those classes, so the
+            # cycle is collected here, once per episode boundary, instead of being broken.
+            gc.collect()
 
     @property
     def manipulated(self) -> Optional[ManipulatedIdentity]:
@@ -1037,6 +1053,7 @@ class AG3S:
             if self._frame_guard_radius > 0.0 and self._gated_manipulated is not None else None)
         self._frame_filter_config = self._config_with_guard_radius(self._frame_guard_radius)
         self._mask_guard_px = []
+        self._frame_depth_masks = []
         # T32 H1: while an object is held, its spheres are part of the robot for the self-filter.
         self._prepare_frame_filter()
 
@@ -1054,7 +1071,11 @@ class AG3S:
                     now=timestamp,
                     self_filter_inflation=self._frame_filter_inflation,
                     self_filter_guard_centre=self._frame_guard_centre,
+                    # T38 B2: decide the self-filter once per camera at full resolution; the TSDF
+                    # (stage 8) reuses the same pixel masks.
+                    with_depth_mask=cfg.collision_backend in ("esdf", "both"),
                 )
+                self._frame_depth_masks = list(zip(observations, fusion.per_camera))
             cloud = fusion.pointcloud
             recon_stats = self._fused_recon_stats(fusion)
             filter_enabled = cfg.pointcloud.self_filter and self.robot_model is not None
@@ -1310,6 +1331,7 @@ class AG3S:
             if cfg.collision_backend in ("esdf", "both"):
                 cameras = self._depth_cameras_from(
                     observations, depth, camera_intrinsics, T_base_cam, robot_state)
+                self._frame_depth_masks = []
                 with profiler.stage("esdf"):
                     esdf_field, esdf_notes = self._build_esdf(
                         # T20: the manipulated object's geometry (last observed when occluded) —
@@ -1821,7 +1843,19 @@ class AG3S:
 
         The masked rays become **unobserved**, not free. What is behind the arm this frame is not
         something the camera saw.
+
+        In the fused path this is no longer called per frame (T38 B2): scene reconstruction decides
+        the same mask once per camera and `_depth_cameras_from` takes it from there. It stays the
+        entry point for the single-camera path and for callers outside `_run`.
         """
+        result = self._depth_robot_mask(depth, K, T_base_cam, robot_state)
+        if result is None:
+            return None
+        self._note_depth_mask(result)
+        return result.mask
+
+    def _depth_robot_mask(self, depth, K, T_base_cam, robot_state):
+        """`DepthRobotMask` of one depth image under this frame's self-filter, or None."""
         from benchmark.ag3s.stages.reconstruction import backproject
 
         model = self._frame_filter_model
@@ -1834,23 +1868,26 @@ class AG3S:
         if cloud.uv is None or len(cloud) == 0:
             return None
         # Same decision as the cloud filter (T19): the inflation object resolved at construction
-        # and this frame's guard centroid, both through `self_filter_mask`. T32 H1: the model
-        # carries the held spheres while attached (`_prepare_frame_filter`).
-        q = np.asarray(robot_state, np.float64)
-        inside, guard = self_filter_mask(
-            cloud.points, model, q, self._frame_filter_config.pointcloud,
+        # and this frame's guard centroid. T32 H1: the model carries the held spheres while attached
+        # (`_prepare_frame_filter`); their pixel count comes out of the same pass.
+        return depth_robot_mask(
+            cloud, np.asarray(depth).shape, model, np.asarray(robot_state, np.float64),
+            self._frame_filter_config.pointcloud,
             inflation=self._frame_filter_inflation, guard_centre=self._frame_guard_centre)
-        self._mask_guard_px.append(int(guard["n_guard_protected"]))
-        held_fn = getattr(model, "held_spheres", None)
-        if callable(held_fn):
-            from benchmark.ag3s.stages.robot_filter import robot_sphere_mask
 
-            hc, hr = held_fn(q)
-            self._mask_held_px.append(int(robot_sphere_mask(cloud.points, hc, hr, 0.0).sum()))
-        mask = np.zeros(np.asarray(depth).shape, bool)
-        uv = cloud.uv[inside]
-        mask[uv[:, 1], uv[:, 0]] = True
-        return mask
+    def _note_depth_mask(self, result) -> None:
+        """Count one depth robot mask into this frame's metrics (guard · held pixels)."""
+        self._mask_guard_px.append(result.n_guard_protected_px)
+        if result.n_held_px is not None:
+            self._mask_held_px.append(result.n_held_px)
+
+    def _take_frame_depth_mask(self, obs):
+        """This frame's precomputed `DepthRobotMask` for `obs` (T38 B2), removed once taken."""
+        for i, (seen, result) in enumerate(self._frame_depth_masks):
+            if seen is obs:
+                del self._frame_depth_masks[i]
+                return getattr(result, "depth_mask", None)
+        return None
 
     def _hand_for_grounding(self, robot_state):
         """`HandSpheres` for T32b S3 at `robot_state`, or None (S3 then suppresses nothing).
@@ -2027,10 +2064,22 @@ class AG3S:
                      else np.asarray(obs.T_base_cam, np.float64))
                 d = np.asarray(d, np.float64)
                 mask = getattr(obs, "robot_mask", None)
+                device_depth = None
                 if mask is None:
                     # Each observation carries the `q` it was captured at, so the mask is built
                     # with *that* configuration — the same rule the fused cloud follows.
-                    mask = self._robot_mask_for(d, K, T, getattr(obs, "robot_state", None))
+                    # T38 B2: scene reconstruction already decided it for this observation.
+                    pre = self._take_frame_depth_mask(obs)
+                    if pre is not None:
+                        self._note_depth_mask(pre)
+                        mask = pre.mask
+                        # T38 B4: the GPU front end already holds this depth (× the same scale)
+                        # and its mask on the device — the TSDF takes it from there.
+                        if (getattr(pre, "device", None) is not None
+                                and float(self._frame_filter_config.pointcloud.depth_scale) == scale):
+                            device_depth = pre.masked_depth_f32_device()
+                    else:
+                        mask = self._robot_mask_for(d, K, T, getattr(obs, "robot_state", None))
                 # E5 (`docs/AG3S_REVIEW_LOG.md` Step 2): `CameraObservation` names itself via
                 # `camera_id`, not `camera`/`name` — those two never existed on it, so all three
                 # real cameras fell back to the same literal `"camera"` and silently overwrote each
@@ -2041,7 +2090,7 @@ class AG3S:
                         else str(getattr(obs, "camera", getattr(obs, "name", "camera"))))
                 out.append(CameraDepth(
                     name=name, depth=d * scale, camera_intrinsics=K, T_base_cam=T,
-                    robot_mask=mask))
+                    robot_mask=mask, device_depth=device_depth))
         elif depth is not None and camera_intrinsics is not None and T_base_cam is not None:
             d = np.asarray(depth, np.float64)
             K = np.asarray(camera_intrinsics, np.float64)

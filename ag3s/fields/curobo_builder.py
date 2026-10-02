@@ -84,7 +84,8 @@ from typing import Any, Optional, Sequence
 import numpy as np
 
 from benchmark.ag3s.config import EsdfConfig
-from benchmark.ag3s.fields.curobo_field import CuroboEsdfField, layer_from_arrays
+from benchmark.ag3s.fields.curobo_field import CuroboEsdfField
+from benchmark.ag3s.fields.device_field import layer_from_device
 from benchmark.ag3s.fields.esdf import CameraDepth, VoxelGrid, default_bounds
 from benchmark.ag3s.fields.observation import probe_from_cameras
 from benchmark.ag3s.fields.provenance import FieldProvenance
@@ -97,15 +98,38 @@ __all__ = ["CuroboFieldBuilder", "TargetBall", "ATTACHED_LABEL", "unpack_site_li
 ATTACHED_LABEL = "__attached__"
 
 
-def unpack_site_linear(site_index: np.ndarray, shape: Sequence[int]) -> np.ndarray:
+def _same_cuda_device(a, b) -> bool:
+    """`a` and `b` name the same CUDA device (``"cuda"`` without an index = the current one)."""
+    import torch
+
+    a, b = torch.device(a), torch.device(b)
+    if a.type != "cuda" or b.type != "cuda":
+        return a == b
+    cur = torch.cuda.current_device()
+    return (cur if a.index is None else a.index) == (cur if b.index is None else b.index)
+
+
+def unpack_site_linear(site_index, shape: Sequence[int]):
     """packed `site_index` -> 그 site 복셀의 **선형 인덱스**. `-1` 은 그대로 `-1`.
 
     포장은 `(z<<20) | (y<<10) | x` 이고 축마다 10 비트다 (`utils_quantization.pack_site_coords`).
     선형화는 `(x*ny + y)*nz + z` — numpy 의 C 순서이고 `feature_tensor` 의 `(nx, ny, nz)` 와
     같다 (X 가 가장 느리고 Z 가 가장 빠르다는 cuRobo 주석).
+
+    torch tensor 가 오면 **그 device 에서** 같은 정수 연산을 하고 int64 tensor 를 돌려준다 (T38 B3 —
+    격자를 host 로 내리지 않는다). numpy 면 예전 그대로 numpy.
     """
-    packed = np.asarray(site_index, np.int64)
     nx, ny, nz = (int(v) for v in shape)
+    if not isinstance(site_index, np.ndarray) and hasattr(site_index, "device"):
+        import torch
+
+        packed = site_index.to(torch.int64)
+        x = packed & 0x3FF
+        y = (packed >> 10) & 0x3FF
+        z = (packed >> 20) & 0x3FF
+        lin = (x * ny + y) * nz + z
+        return torch.where(packed < 0, torch.full_like(lin, -1), lin)
+    packed = np.asarray(site_index, np.int64)
     x = packed & 0x3FF
     y = (packed >> 10) & 0x3FF
     z = (packed >> 20) & 0x3FF
@@ -412,13 +436,78 @@ def place_fine_window(request: FineWindowRequest, *, shape: Sequence[int],
 
 @dataclasses.dataclass
 class _Tier:
-    """한 계층의 산출물. 전부 **복사된** 배열이다 (함정 4)."""
+    """한 계층의 산출물. 전부 **복사된** 배열이다 (함정 4).
+
+    T38 B3: `values` · `site_linear` 는 **GPU tensor** 다 (cuRobo 버퍼의 device 사본). 격자 전체를
+    host 로 내리지 않는다 — 필드는 `DeviceEsdfField` 로 질의점에서만 답한다. 테스트·오프라인
+    호출자가 numpy 로 만든 `_Tier` 도 그대로 받는다 (`_labels_from_sites` 가 둘 다 안다).
+    """
     name: str
-    values: np.ndarray
-    site_linear: np.ndarray
+    values: Any
+    site_linear: Any
     origin: np.ndarray
     voxel_size: float
     extra: dict = dataclasses.field(default_factory=dict)
+
+
+class _SeedIndex:
+    """라벨 씨앗 점들의 KD-tree — `update` 당 **한 번** 짓고 계층마다 쓴다 (T38 B3).
+
+    예전 `_labels_from_sites` 는 계층마다 같은 씨앗 점으로 `cKDTree` 를 다시 지었다. 트리는 점이
+    같으면 같고 질의는 결정적이므로 하나를 나눠 써도 답은 같다.
+
+    **씨앗 상자 밖의 site 는 묻지 않는다.** 씨앗은 작은 물체(target · 쥔 것)인데 site 는 작업공간
+    전체의 표면이라, 질의의 대부분이 "스냅 반경 밖" 이라는 답을 받으려고 트리를 끝까지 내려갔다
+    (T38 B3 cProfile: 계층당 ≈ 14 ms). 씨앗 AABB 를 `snap · (1 + 1e-6)` 만큼 부풀린 상자 밖의 점은
+    어느 축에서 모든 씨앗과 그만큼 떨어져 있으므로 유클리드 거리가 `snap` 보다 크다 — 그 점의
+    `hit` 은 묻지 않아도 False 다. 상자 안의 점은 **같은 트리 · 같은 `query(k=1)`** 로 묻고
+    (scipy 는 질의점마다 독립적이다), 그래서 `hit` · `owner` 가 전부 묻는 것과 같다.
+    """
+
+    #: 상자 여유의 상대값. 부동소수 비교의 반올림 (≈ 1e-16 상대) 보다 열 자릿수 크다.
+    BOX_MARGIN_REL = 1e-6
+
+    def __init__(self, pts: np.ndarray, owner: np.ndarray):
+        self.pts = pts
+        self.owner = owner
+        self._tree = None
+        self._lo = pts.min(axis=0) if len(pts) else None
+        self._hi = pts.max(axis=0) if len(pts) else None
+
+    @classmethod
+    def build(cls, seeds: dict, label_names: tuple) -> Optional["_SeedIndex"]:
+        if not seeds:
+            return None
+        pts = np.concatenate([seeds[n] for n in label_names], axis=0)
+        owner = np.concatenate([np.full(len(seeds[n]), i, np.int32)
+                                for i, n in enumerate(label_names)])
+        return cls(pts, owner)
+
+    def snap(self, centres: np.ndarray, snap: float, *,
+             box_filter: bool = True) -> tuple[np.ndarray, np.ndarray]:
+        """`(hit (M,) bool, owner[near[hit]] int32)` — 예전 식 그대로 (`dist <= snap`).
+
+        `box_filter=False` 면 모든 점을 묻는다 (예전 그대로 — 동치 테스트의 기준).
+        """
+        if self._tree is None:
+            from scipy.spatial import cKDTree
+
+            self._tree = cKDTree(self.pts)
+        centres = np.asarray(centres, np.float64).reshape(-1, 3)
+        if not box_filter:
+            dist, near = self._tree.query(centres, k=1)
+            hit = dist <= snap
+            return hit, self.owner[near[hit]]
+        margin = float(snap) * (1.0 + self.BOX_MARGIN_REL)
+        cand = np.flatnonzero(np.all((centres >= self._lo - margin)
+                                     & (centres <= self._hi + margin), axis=1))
+        hit = np.zeros(len(centres), bool)
+        if not cand.size:
+            return hit, self.owner[:0]
+        dist, near = self._tree.query(centres[cand], k=1)
+        ok = dist <= snap
+        hit[cand[ok]] = True
+        return hit, self.owner[near[ok]]       # cand 는 오름차순 — `used[hit]` 와 같은 순서
 
 
 class CuroboFieldBuilder:
@@ -609,13 +698,19 @@ class CuroboFieldBuilder:
         itg = mapper.integrator
         dev = mapper._device if hasattr(mapper, "_device") else "cuda:0"
 
-        per_camera = self._integrate(mapper, cameras, dev)
+        # T38 B3: depth 는 카메라마다 **한 번** GPU 로 올리고 두 mapper 가 같은 관측을 쓴다
+        # (예전에는 mapper 마다 다시 올렸다 — 청크당 6 × 1.2 MB). cuRobo 의 적분은 관측 tensor 를
+        # 읽기만 한다 (`CameraProjectIntegrator.integrate` 는 `wp.from_torch` 로 읽는다; 테스트가
+        # 적분 전후 바이트와 두 업로드 대비 TSDF 비트 동일을 확인한다).
+        prepared = self._observations(cameras, dev)
+        per_camera = self._integrate(mapper, prepared)
         # T32 H4-fix: the fine tiers read their own TSDF (fine truncation), integrated from the
         # same depth. `None` = one TSDF for all tiers (the pre-T32 build).
         itg_fine = None
         if self._fine_mapper is not None:
-            self._integrate(self._fine_mapper, cameras, dev)
+            self._integrate(self._fine_mapper, prepared, contribution=False)
             itg_fine = self._fine_mapper.integrator
+        del prepared
         # T32 H3: the held object's old traces are set **free** in the TSDF(s) — after this frame's
         # integration, before the tiers are seeded (see `_free_tsdf_points`).
         freed = {}
@@ -684,21 +779,26 @@ class CuroboFieldBuilder:
                                             ball=target_free_ball)
 
         layers = []
-        label_grids = []
+        # 씨앗 KD-tree 는 **update 당 한 번** 짓는다 (T38 B3). 예전에는 계층마다 같은 점으로
+        # 다시 지었다 — 트리는 점이 같으면 같으므로 답도 같다.
+        seed_index = _SeedIndex.build(seeds, label_names)
         for tier in tiers:
             grid = VoxelGrid(origin=tier.origin,
                              shape=tuple(int(v) for v in tier.values.shape),
                              voxel_size=tier.voxel_size)
-            label_grid = self._labels_from_sites(tier, grid, seeds, label_names)
-            label_grids.append(label_grid)
-            layer = layer_from_arrays(tier.values, tier.origin, tier.voxel_size)
-            layer.label_grid = label_grid
-            layer.label_names = label_names
+            label_grid = self._labels_from_sites(tier, grid, seeds, label_names,
+                                                 seed_index=seed_index)
+            # 격자는 GPU 에 남는다 — 필드는 질의점에서만 답한다 (`DeviceEsdfField`).
+            layer = layer_from_device(tier.values, tier.origin, tier.voxel_size,
+                                      labels=label_grid, label_names=label_names)
             layers.append(layer)
+            tier.site_linear = None   # 라벨을 만들었으면 site 격자는 더 쓰지 않는다 (GPU 메모리)
         # target 없는 계층에는 **라벨을 달지 않는다.** 라벨은 "가장 가까운 표면이 무엇인가" 인데
         # 이 계층에는 그 판정의 주인공(target)이 없다. 라벨이 필요한 질문은 본 계층이 답한다.
-        free_layers = tuple(layer_from_arrays(t.values, t.origin, t.voxel_size)
+        free_layers = tuple(layer_from_device(t.values, t.origin, t.voxel_size)
                             for t in free_tiers)
+        for t in free_tiers:
+            t.site_linear = None
 
         # 격자 밖은 격자 안의 UNKNOWN 과 같은 것이므로 같은 정책을 따른다 (E4).
         outside = (cfg.max_distance if cfg.unknown_policy == "free"
@@ -797,12 +897,18 @@ class CuroboFieldBuilder:
                 "manipulated 물체를 빼는 계층이므로 그 물체가 없으면 뺄 것이 없습니다 — 두 인자는 "
                 "같은 프레임의 같은 manipulated 기하에서 와야 합니다")
 
-    def _integrate(self, mapper, cameras, dev) -> dict:
+    def _observations(self, cameras, dev) -> list:
+        """카메라마다 `(cam, host depth, CameraObservation)` — **GPU 업로드는 여기서 한 번** (T38 B3).
+
+        두 mapper (coarse truncation / fine truncation) 가 같은 관측을 적분한다. 예전에는
+        `_integrate` 가 mapper 마다 depth · rgb · intrinsics · pose 를 다시 올렸다.
+        """
         import torch
         from curobo._src.types.camera import CameraObservation
         from curobo._src.types.pose import Pose
 
-        per_camera = {}
+        out = []
+        rgb = {}
         for cam in cameras:
             depth = np.asarray(cam.depth, np.float32)
             if cam.robot_mask is not None:
@@ -810,17 +916,41 @@ class CuroboFieldBuilder:
                 # 넣으면 로봇이 자기 몸을 장애물로 본다 (C1 — 구 120 중 105 가 자기 충돌).
                 depth = np.where(np.asarray(cam.robot_mask, bool), np.float32(0.0), depth)
             h, w = depth.shape
-            mapper.integrate(CameraObservation(
+            if (h, w) not in rgb:
+                # geometry-only 적분의 0 RGB (cuRobo `Mapper.integrate` docstring 의 권장). 읽기만 한다.
+                rgb[(h, w)] = torch.zeros((1, h, w, 3), device=dev, dtype=torch.uint8)
+            # T38 B4: scene reconstruction 이 이 depth 를 이미 GPU 에 올려 마스크까지 적용해 두었으면
+            # (같은 값 — `DepthRobotMask.masked_depth_f32_device`) 그것을 쓴다. 아니면 예전처럼 올린다.
+            dd = getattr(cam, "device_depth", None)
+            if (dd is not None and tuple(dd.shape) == (h, w) and dd.dtype == torch.float32
+                    and _same_cuda_device(dd.device, dev)):
+                depth_image = dd.contiguous()[None]
+            else:
+                depth_image = torch.as_tensor(depth, device=dev, dtype=torch.float32)[None]
+            obs = CameraObservation(
                 name=str(cam.name),
-                depth_image=torch.as_tensor(depth, device=dev, dtype=torch.float32)[None],
-                rgb_image=torch.zeros((1, h, w, 3), device=dev, dtype=torch.uint8),
+                depth_image=depth_image,
+                rgb_image=rgb[(h, w)],
                 intrinsics=torch.as_tensor(np.asarray(cam.camera_intrinsics, np.float32),
                                            device=dev, dtype=torch.float32)[None],
                 pose=Pose.from_matrix(torch.as_tensor(
                     np.asarray(cam.T_base_cam, np.float32), device=dev,
                     dtype=torch.float32)),
-                depth_to_meter=1.0))
-            per_camera[str(cam.name)] = self._camera_contribution(cam, depth)
+                depth_to_meter=1.0)
+            out.append((cam, depth, obs))
+        return out
+
+    def _integrate(self, mapper, prepared, *, contribution: bool = True) -> dict:
+        """`_observations` 가 만든 관측을 이 mapper 에 적분한다. 카메라 순서는 예전과 같다.
+
+        `contribution` 이면 카메라별 G3 기여(`_camera_contribution`)를 센다 — 같은 depth 라
+        mapper 마다 다시 셀 필요가 없다 (예전에는 fine mapper 몫을 세고 버렸다).
+        """
+        per_camera = {}
+        for cam, depth, obs in prepared:
+            mapper.integrate(obs)
+            if contribution:
+                per_camera[str(cam.name)] = self._camera_contribution(cam, depth)
         return per_camera
 
     def _camera_contribution(self, cam, depth: np.ndarray) -> dict:
@@ -938,14 +1068,16 @@ class CuroboFieldBuilder:
             vg = itg.get_voxel_grid()
             # 함정 4 — `feature_tensor` 와 `_site_index` 는 **둘 다** 재사용 버퍼다
             # (실측: 두 계층의 site_index 가 다르다). 다음 계층 전에 복사한다.
-            values = vg.feature_tensor.detach().float().cpu().numpy().copy()
-            site = itg._site_index.detach().cpu().numpy().copy()
+            # T38 B3: 복사는 **device 안에서** 한다. 예전에는 여기서 계층마다 128³ 값 + 128³ site 를
+            # host 로 내렸다 (청크당 37–50 MB D2H) — 필드는 이제 GPU 에서 질의점에만 답한다.
+            values = vg.feature_tensor.detach().to(torch.float32).clone(
+                memory_format=torch.contiguous_format)
+            site_linear = unpack_site_linear(itg._site_index.detach(), tuple(values.shape))
             sign = self._force_sign_on_pure_voxels(
                 values, att_idx, vs,
                 threshold_voxels=float(getattr(
                     self.config, "attached_sign_threshold_voxels", 1.5)))
-            tier = _Tier(name=name, values=values,
-                         site_linear=unpack_site_linear(site, values.shape),
+            tier = _Tier(name=name, values=values, site_linear=site_linear,
                          origin=org, voxel_size=float(vs))
             tier.extra["tsdf_truncation_m"] = (self.coarse_truncation if itg is itg_coarse
                                                else self.fine_truncation)
@@ -1086,9 +1218,27 @@ class CuroboFieldBuilder:
             return {"n_attached_voxels": 0, "n_sign_forced": 0,
                     "n_shared_left_alone": 0,
                     "threshold_voxels": float(threshold_voxels)}
+        thr = float(threshold_voxels) * float(voxel_size)
+        if not isinstance(values, np.ndarray) and hasattr(values, "device"):
+            # T38 B3: GPU 격자 그대로 고친다. 판정 산술은 numpy 와 같다 — float32 `|d|` 와
+            # **float32 로 반올림한 임계** 의 비교 (numpy 는 float32 배열 대 Python float 비교에서
+            # 스칼라를 float32 로 바꾼다; 그래서 임계를 명시적으로 float32 tensor 로 둔다).
+            import torch
+
+            t = torch.as_tensor(np.asarray(att_idx, np.int64), device=values.device)
+            i, j, k = t[:, 0], t[:, 1], t[:, 2]
+            d = values[i, j, k]
+            thr32 = torch.tensor(np.float32(thr), dtype=torch.float32, device=values.device)
+            pure = d.abs() > thr32
+            values[i[pure], j[pure], k[pure]] = d[pure].abs()
+            n_pure = int(pure.sum().item())
+            return {"n_attached_voxels": int(len(att_idx)),
+                    "n_sign_forced": n_pure,
+                    "n_shared_left_alone": int(len(att_idx)) - n_pure,
+                    "threshold_voxels": float(threshold_voxels),
+                    "threshold_m": thr}
         i, j, k = att_idx[:, 0], att_idx[:, 1], att_idx[:, 2]
         d = values[i, j, k]
-        thr = float(threshold_voxels) * float(voxel_size)
         pure = np.abs(d) > thr
         values[i[pure], j[pure], k[pure]] = np.abs(d[pure])
         return {"n_attached_voxels": int(len(att_idx)),
@@ -1180,7 +1330,7 @@ class CuroboFieldBuilder:
 
     @staticmethod
     def _labels_from_sites(tier: _Tier, grid: VoxelGrid, seeds: dict,
-                           label_names: tuple) -> Optional[np.ndarray]:
+                           label_names: tuple, *, seed_index: Optional["_SeedIndex"] = None):
         """`site_index` 조회로 라벨 격자를 만든다.
 
         절차는 셋이다.
@@ -1189,37 +1339,72 @@ class CuroboFieldBuilder:
            `label_snap_voxels` 가 그 반경이다 — 씨앗 점이 떨어진 복셀과 TSDF 영교차가 정한
            표면 복셀이 같지 않기 때문에 스냅이 필요하다 (라벨 스냅).
         3. 복셀마다 `site_label[site_index[복셀]]` 을 읽는다.
+
+        **T38 B3 — `site_linear` 가 GPU tensor 면 1 · 3 을 GPU 에서 한다** (결과도 GPU int32 tensor).
+        1 의 `np.unique` (청크당 정렬 2 백만 × 계층 수 — Phase A 에서 이 함수 134 ms 의 대부분) 는
+        "쓰인 site 표시 → `nonzero`" 로 바꾼다: 같은 집합 · 같은 오름차순이다. 2 의 KD-tree 질의는
+        CPU 그대로 (scipy, 같은 트리 · 같은 질의점 · 같은 순서) 이고, 내려오는 것은 쓰인 site 의
+        인덱스(표면 복셀 수)뿐이다. 트리는 `seed_index` 로 update 당 한 번 짓는다.
+        numpy `_Tier` 면 예전 경로 그대로 (numpy 배열을 돌려준다).
         """
         if not seeds:
             return None
-        from scipy.spatial import cKDTree
+        if seed_index is None:
+            seed_index = _SeedIndex.build(seeds, label_names)
+        site_lin = tier.site_linear
+        if not isinstance(site_lin, np.ndarray) and hasattr(site_lin, "device"):
+            return CuroboFieldBuilder._labels_from_sites_device(tier, seed_index)
 
         shape = tuple(int(v) for v in tier.values.shape)
         n_vox = int(np.prod(shape))
-        site_lin = tier.site_linear.reshape(-1)
+        site_lin = site_lin.reshape(-1)
         used = np.unique(site_lin[site_lin >= 0])
         if not used.size:
             return None
 
-        nx, ny, nz = shape
-        sx = used // (ny * nz)
-        sy = (used // nz) % ny
-        sz = used % nz
-        centres = (tier.origin
-                   + np.stack([sx, sy, sz], axis=1).astype(float) * tier.voxel_size)
-
-        pts = np.concatenate([seeds[n] for n in label_names], axis=0)
-        owner = np.concatenate([np.full(len(seeds[n]), i, np.int32)
-                                for i, n in enumerate(label_names)])
-        snap = 2.0 * tier.voxel_size
-        dist, near = cKDTree(pts).query(centres, k=1)
+        centres = CuroboFieldBuilder._site_centres(used, shape, tier.origin, tier.voxel_size)
+        hit, owner = seed_index.snap(centres, 2.0 * tier.voxel_size)
         site_label = np.full(n_vox, -1, np.int32)
-        hit = dist <= snap
-        site_label[used[hit]] = owner[near[hit]]
+        site_label[used[hit]] = owner
 
         out = np.full(n_vox, -1, np.int32)
         valid = site_lin >= 0
         out[valid] = site_label[site_lin[valid]]
+        return out.reshape(shape)
+
+    @staticmethod
+    def _site_centres(used: np.ndarray, shape, origin, voxel_size: float) -> np.ndarray:
+        """쓰인 site 의 선형 인덱스 → 복셀 **중심** (host, float64). 두 경로가 같은 식을 쓴다."""
+        nx, ny, nz = (int(v) for v in shape)
+        sx = used // (ny * nz)
+        sy = (used // nz) % ny
+        sz = used % nz
+        return (origin + np.stack([sx, sy, sz], axis=1).astype(float) * voxel_size)
+
+    @staticmethod
+    def _labels_from_sites_device(tier: _Tier, seed_index: "_SeedIndex"):
+        """GPU 판 — `_labels_from_sites` 의 docstring 참고. `(nx, ny, nz)` int32 tensor 또는 `None`."""
+        import torch
+
+        site_lin = tier.site_linear.reshape(-1)
+        shape = tuple(int(v) for v in tier.values.shape)
+        n_vox = int(np.prod(shape))
+        dev = site_lin.device
+        valid = site_lin >= 0
+        marked = torch.zeros(n_vox, dtype=torch.bool, device=dev)
+        marked[site_lin[valid]] = True
+        used_d = torch.nonzero(marked).reshape(-1)          # = np.unique(...) — 정렬 · 중복 없음
+        if not used_d.numel():
+            return None
+        used = used_d.cpu().numpy()
+        centres = CuroboFieldBuilder._site_centres(used, shape, tier.origin, tier.voxel_size)
+        hit, owner = seed_index.snap(centres, 2.0 * tier.voxel_size)
+        site_label = torch.full((n_vox,), -1, dtype=torch.int32, device=dev)
+        if hit.any():
+            site_label[used_d[torch.as_tensor(hit, device=dev)]] = torch.as_tensor(
+                owner, dtype=torch.int32, device=dev)
+        out = torch.where(valid, site_label[site_lin.clamp(min=0)],
+                          torch.full((), -1, dtype=torch.int32, device=dev))
         return out.reshape(shape)
 
     def _observation_coverage(self, coarse: _Tier) -> dict:

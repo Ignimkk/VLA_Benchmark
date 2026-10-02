@@ -1440,6 +1440,20 @@ def build_to_only_policy(policy, args):
     return served
 
 
+def exit_cleanly_on_sigterm() -> None:
+    """SIGTERM 을 `SystemExit` 으로 바꾼다 (T38 B5) — 그래야 `atexit` 이 돈다.
+
+    기록기가 background 로 쓰므로(`ConstraintRecordWriter(background=True)`), 종료 순간 큐에
+    남은 청크는 `atexit` flush 가 써야 디스크에 남는다. 기본 SIGTERM 은 `atexit` 없이 프로세스를
+    끝내고, 실험 스크립트는 서버를 `kill $PID` (SIGTERM) 로 멈춘다 (`outputs/verify/T34/p/
+    run_chain_e3.sh`). 누가 이미 handler 를 달았으면 건드리지 않는다.
+    """
+    import signal
+
+    if signal.getsignal(signal.SIGTERM) is signal.SIG_DFL:
+        signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(128 + signum))
+
+
 def main() -> None:
     ap = build_parser()
     args = ap.parse_args()
@@ -1459,6 +1473,7 @@ def main() -> None:
     policy = _policy_config.create_trained_policy(
         _config.get_config(args.config), args.checkpoint, default_prompt=args.default_prompt)
 
+    recorder = None  # SafePolicy 의 `ConstraintRecordWriter` (아래 else 분기에서만 생긴다)
     if args.no_safe:
         from benchmark.trajopt.policy_seed import SeededPolicy
 
@@ -1487,14 +1502,16 @@ def main() -> None:
                          "ON (place/home → 새 조작 대상 없음 · PLACED 뒤 home → 해제)"
                          if args.subtask_gate else "off (기록만)")
 
-        recorder = None
         if args.record_constraints:
             from benchmark.ag3s.experiments.sources.constraint_record import ConstraintRecordWriter
 
             meta_to_config = trajopt_config_from_args(args)
 
+            # T38 B5 — npz 쓰기(≈ 245 ms/청크, 대부분 zipfile 압축)를 응답 경로 밖 스레드로.
+            # 기록 내용 · 순서는 같다; 종료 시 flush (`exit_cleanly_on_sigterm` 참고).
             recorder = ConstraintRecordWriter(
                 args.record_constraints, esdf_mode=args.record_constraints_esdf,
+                background=True,
                 meta={"config": args.config, "checkpoint": args.checkpoint,
                       "model_xml": args.model_xml, "links": args.links,
                       # shadow·exclude 일 때만 더한다 — 기본 기록을 T0 때와 같은 키 집합으로
@@ -1612,6 +1629,8 @@ def main() -> None:
         announce_joint_limits(served.constraint_robot_model, served.layout, to_config.limits)
         announce_sqp_budget(to_config.sqp)
 
+    if recorder is not None:
+        exit_cleanly_on_sigterm()
     # T39 — seed 입구가 정책 RNG 에 닿는가. 못 닿아도 서버는 뜬다 (seed 를 안 보내는 실행은 그대로) —
     # seed 를 실은 요청이 오면 그때 크게 실패한다.
     import os

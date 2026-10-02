@@ -767,6 +767,11 @@ class CameraDepth:
     #: 바뀌는 복셀이 팔뿐이면 국소 갱신이 실제로 싸지는데, 팔을 남기면 바뀐 복셀이 격자 전체에
     #: 퍼져 국소 갱신이 이름만 남는다.
     robot_mask: Optional[np.ndarray] = None
+    #: T38 B4: 이 카메라의 depth 가 이미 GPU 에 있을 때 그 **마스크 적용된 float32 depth** (H, W)
+    #: torch tensor — ``float32(depth)`` 에서 `robot_mask` 픽셀을 0 으로 둔 것과 같은 값이다
+    #: (`DepthRobotMask.masked_depth_f32_device`). cuRobo builder 는 이것을 다시 올리지 않고 쓴다.
+    #: legacy builder 는 읽지 않는다. `None` 이면 예전처럼 host depth 를 올린다.
+    device_depth: Optional[Any] = None
 
 
 def default_bounds(reach: float = 1.5, height: tuple[float, float] = (0.0, 1.60)):
