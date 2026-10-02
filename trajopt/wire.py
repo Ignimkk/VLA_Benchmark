@@ -25,6 +25,7 @@
 | `ag3s/reset` | True 면 SEAM·AG3S·TO 의 내부 상태와 warm-start 를 모두 버린다 |
 | `ag3s/seq` | 요청 일련번호. 응답에 그대로 돌아오고, 오래된 응답을 버리는 근거가 된다 |
 | `ag3s/exec_feedback` | **직전 청크의 실행 사실** (T18). 아래 |
+| `ag3s/policy_seed` | **선택.** 정책 RNG seed (int, T39). 서버가 이 요청의 `policy.infer` 직전에 정책 RNG 를 `jax.random.key(seed)` 로 다시 놓는다. 아래 |
 
 카메라마다 `robot_state` 를 따로 싣는 것이 이 형식의 핵심이다. 손목 카메라는 팔과 함께
 움직이므로 80 ms 전 프레임은 80 ms 전 자세에 놓여야 한다. 하나의 `q_now` 로 세 대를 변환하면
@@ -86,6 +87,24 @@ T28 E3b 에서 `uncertified` HOLD 125 청크가 `camera_transform_stale` 이었�
 (`stamp_mode = "render_end"`) — 한 순간을 **주장**하는 것은 시뮬레이션이 멈춰 있음을 아는 호출자뿐이다.
 틀린 한 순간은 진짜 지연을 숨기고(위험한 쪽), 틀린 카메라별 순간은 HOLD 를 낳는다(안전한 쪽).
 
+### `ag3s/policy_seed` — `(episode, seed)` 가 run 을 정한다 (T39, 2026-10-02)
+
+π0.5 정책의 RNG 는 서버 시작 때 `jax.random.key(0)` 이고 요청마다 split 될 뿐 **다시 놓이지 않는다**
+(`openpi/policies/policy.py:65, 75`). 그래서 run 의 noise 는 그 run 이 서버 요청 순서의 몇 번째인가가
+정했다 — 같은 서버를 새로 띄우면 조건이 달라도 파지 전까지 같은 궤적이 나온 이유다 (T30 · T37).
+O1 은 조건 간에 **같은 noise 로 짝짓기** 위해 seed 를 명시한다.
+
+- **선택 키다.** 없으면 요청 바이트가 T39 전과 같고 서버 동작도 같다 (RNG 는 이어서 split).
+- 클라이언트는 에피소드의 **첫 요청에만** 싣는다 (`pi05_infer.py --policy-seed`). 서버는 그 요청의
+  `policy.infer` 직전에 정책 RNG 를 `jax.random.key(seed)` 로 놓고, 이후 요청은 거기서 이어 split 한다.
+  그러면 요청 n 의 key 가 `(seed, n)` 만의 함수다.
+- **소비하는 것은 서버다** — 정책 관측에는 들어가지 않는다 (`ag3s/` 접두는 `strip_request` 가 벗기고,
+  `--no-safe` 서버는 맨 키 `policy_seed` 를 `trajopt.policy_seed.SeededPolicy` 가 벗긴다).
+- 응답에 **같은 이름의 키로 되돌려준다** (`policy_seed`, 적용한 요청에만). 클라이언트는 보낸 seed 가
+  돌아오지 않으면 죽는다 — 이 키를 모르는 옛 서버는 seed 를 조용히 무시하고, 그러면 짝지은 비교가
+  짝이 아닌 채로 기록된다.
+- 범위: `0 ≤ seed < 2**32` 정수 (bool 거절). 정책의 `_rng` 를 못 찾으면 서버가 크게 실패한다.
+
 ## 응답
 
 `actions` 외에 안전 판정을 싣는다. 로컬은 이 판정이 유효할 때만 실행한다.
@@ -96,6 +115,7 @@ T28 E3b 에서 `uncertified` HOLD 125 청크가 `camera_transform_stale` 이었�
 | `actions_reference` | 정책의 **원본** 청크. **2026-09-26 부터 closed loop 에서도 실린다.** 아래 |
 | `shadow` | **모드**. `actions_reference` 가 아니라 **이 키**가 shadow 서버의 신호다. 아래 |
 | `seq` | 요청의 일련번호를 그대로 돌려준다. 오래된 응답을 버리는 근거 |
+| `policy_seed` | **선택** (T39). 그 요청에 정책 RNG seed 를 적용했으면 그 값. 위 `ag3s/policy_seed` 절 |
 | `timing_ms` | 단계별 시간 (서버 시계) |
 | `ag3s_status` · `geometry_certified` · `trajopt_status` · `max_violation_m` · `safe` · `notes` | 안전 판정 |
 | `field` | **거리장의 출처** — `sequence` · `backend` · `observed_at` · `state` · 계층. 아래 |
@@ -257,6 +277,8 @@ __all__ = [
     "exec_feedback_jsonable",
     "VERDICT_REASONS", "REASON_KINDS", "GATE_DEFAULT", "GATE_ACTIONS", "COMMS_KINDS",
     "make_reason", "gate_decision", "unpack_verdict_reasons", "derive_verdict_reasons",
+    "POLICY_SEED", "POLICY_SEED_LIMIT", "check_policy_seed", "unpack_policy_seed",
+    "unpack_policy_seed_echo",
 ]
 
 PREFIX = "ag3s/"
@@ -299,6 +321,13 @@ STAMP_MODE = "stamp_mode"
 #: `sim_frozen`: 시뮬레이션이 관측을 위해 멈춘 한 순간 (모든 카메라 같은 값).
 #: `render_end`: 카메라마다 렌더가 끝난 순간 (T30c 전 동작, 호출자가 순간을 주지 않을 때).
 STAMP_MODES = ("sim_frozen", "render_end")
+
+#: 요청 키 (`ag3s/` 접두 뒤, `--no-safe` 요청은 맨 키) 이자 응답 키 — **정책 RNG seed** (T39).
+#: 머리말의 `ag3s/policy_seed` 절. 응답의 같은 이름 키는 서버가 그 seed 를 **적용했다** 는 회신이다.
+POLICY_SEED = "policy_seed"
+#: seed 의 상한 (배타). `jax.random.key` 는 64 비트도 받지만 x64 가 꺼진 JAX 에서 상위 비트가 어떻게
+#: 접히는지에 기대지 않는다 — O1 의 seed 는 `10·ep + rep` (≈ 2·10⁴) 이다.
+POLICY_SEED_LIMIT = 2 ** 32
 
 #: HOLD 사유의 종류. `SafeRemoteClient.last_ipc` 의 값 중 `ok` 를 뺀 것과 같다 — 사유를 새로
 #: 지어내지 않고 로컬이 이미 쓰는 이름을 그대로 싣는다.
@@ -380,7 +409,8 @@ def pack_request(obs: dict[str, Any], *, cameras: Sequence[str],
                  reset: bool = False, seq: int = 0,
                  exec_feedback: Optional[dict[str, Any]] = None,
                  render_stamps: Optional[dict[str, float]] = None,
-                 stamp_mode: Optional[str] = None) -> dict[str, Any]:
+                 stamp_mode: Optional[str] = None,
+                 policy_seed: Optional[int] = None) -> dict[str, Any]:
     """정책 관측에 AG3S 가 필요한 것을 더한다. `obs` 는 제자리에서 바뀌지 않는다.
 
     `exec_feedback` 은 `make_exec_feedback` / `no_exec_feedback` 의 결과다. **`None` 이면 키를
@@ -389,6 +419,9 @@ def pack_request(obs: dict[str, Any], *, cameras: Sequence[str],
 
     `render_stamps` · `stamp_mode` (T30c) 도 **주었을 때만** 키가 생긴다 — 옛 호출자의 요청은 키
     집합이 그대로다. `stamps` 가 판정에 쓰이는 촬영 순간이고, `render_stamps` 는 진단용이다.
+
+    `policy_seed` (T39) 도 **주었을 때만** `ag3s/policy_seed` 가 생긴다 — `None` 이면 요청이 T39 전과
+    바이트까지 같다. 값은 `check_policy_seed` 로 검사한다 (보내기 전에 죽는다).
     """
     if stamp_mode is not None and stamp_mode not in STAMP_MODES:
         raise ValueError(f"stamp_mode must be one of {STAMP_MODES}, got {stamp_mode!r}")
@@ -402,6 +435,8 @@ def pack_request(obs: dict[str, Any], *, cameras: Sequence[str],
     out[PREFIX + "active_manipulators"] = list(active_manipulators)
     out[PREFIX + "reset"] = bool(reset)
     out[PREFIX + "seq"] = int(seq)
+    if policy_seed is not None:
+        out[PREFIX + POLICY_SEED] = check_policy_seed(policy_seed)
     for cam in cameras:
         d = np.asarray(depth[cam], np.float64)
         out[f"{PREFIX}depth/{cam}"] = np.clip(
@@ -413,6 +448,37 @@ def pack_request(obs: dict[str, Any], *, cameras: Sequence[str],
         if render_stamps is not None:
             out[f"{PREFIX}render_stamp/{cam}"] = float(render_stamps[cam])
     return out
+
+
+def check_policy_seed(value: Any) -> int:
+    """정책 RNG seed 를 `int` 로. 정수가 아니거나 (`bool` 포함) `[0, POLICY_SEED_LIMIT)` 밖이면 예외.
+
+    조용히 고치지 않는다 — `1.5` 를 `1` 로, `-1` 을 `2**32-1` 로 바꿔 쓰면 기록의 seed 와 실제 noise 가
+    갈라지고, 짝지은 비교가 짝이 아닌 채로 남는다.
+    """
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer)):
+        raise TypeError(f"{POLICY_SEED} must be an int, got {type(value).__name__} {value!r}")
+    seed = int(value)
+    if not 0 <= seed < POLICY_SEED_LIMIT:
+        raise ValueError(f"{POLICY_SEED} must be in [0, 2**32), got {seed}")
+    return seed
+
+
+def unpack_policy_seed(scene: dict[str, Any]) -> Optional[int]:
+    """요청의 정책 RNG seed (T39). `scene` 은 `strip_request` 의 두 번째 값 (접두 없는 키).
+
+    키가 없으면 `None` — seed 를 모르는 클라이언트이거나 에피소드의 첫 요청이 아니다. 값이 틀리면
+    `check_policy_seed` 의 예외 그대로 (서버가 크게 실패한다).
+    """
+    if POLICY_SEED not in scene:
+        return None
+    return check_policy_seed(scene[POLICY_SEED])
+
+
+def unpack_policy_seed_echo(response: dict[str, Any]) -> Optional[int]:
+    """응답의 seed 회신 (T39). 서버가 그 요청에 seed 를 **적용했을 때만** 있다. 없으면 `None`."""
+    value = response.get(POLICY_SEED)
+    return None if value is None else int(value)
 
 
 def unpack_stamps(scene: dict[str, Any]) -> dict[str, Any]:

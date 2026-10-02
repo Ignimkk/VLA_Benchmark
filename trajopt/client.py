@@ -156,6 +156,8 @@ class SafeRemoteClient:
         self.last_render_stamps: dict[str, float] = {}
         #: `last_stamps` 가 무엇인가 (`wire.STAMP_MODES`): `sim_frozen` | `render_end`. 요청 전 `none`.
         self.last_stamp_mode = "none"
+        #: 마지막 요청에 실은 정책 RNG seed (T39). 싣지 않았으면 `None`.
+        self.last_policy_seed: Optional[int] = None
         #: 마지막 응답의 `ag3s` 블록 (`{}` 면 인증됐거나 옛 서버다). **hold 일 때도 붙든다** —
         #: 왜 멈췄는지를 적으려면 그 프레임의 지각 사유가 무엇이었는지 알아야 한다.
         #: `last_verdict` 에 합치지 않는 것은 그 딕셔너리의 키 집합이 T0 기록의 `verdict` 이고,
@@ -235,7 +237,8 @@ class SafeRemoteClient:
     # ----------------------------------------------------------------------------------
     def infer(self, obs: dict[str, Any], *, reset: bool = False,
               exec_feedback: Optional[dict[str, Any]] = None,
-              capture_time: Optional[float] = None) -> dict[str, Any]:
+              capture_time: Optional[float] = None,
+              policy_seed: Optional[int] = None) -> dict[str, Any]:
         """한 청크 — `_infer_once` 를 부르고 판정 사유를 센다 (T23). 계약은 `_infer_once` 에.
 
         `capture_time` (T30c): **시뮬레이션이 이 관측을 위해 멈춘 순간** (`time.monotonic()`).
@@ -243,6 +246,11 @@ class SafeRemoteClient:
         (`stamp_mode = "sim_frozen"`). 호출자는 그 순간부터 `infer` 가 돌아올 때까지 `mj_step` 을
         하지 않았음을 **보증**한다. `None` 이면 예전처럼 카메라별 렌더 끝 순간이다 (`render_end`) —
         실제 카메라처럼 순간이 정말로 다른 경우를 한 순간으로 뭉개지 않으려는 기본값이다.
+
+        `policy_seed` (T39): 주면 이 요청에 `ag3s/policy_seed` 를 싣고, 서버는 이 요청의 `policy.infer`
+        직전에 정책 RNG 를 `jax.random.key(seed)` 로 놓는다. 에피소드 첫 요청에만 준다. 서버가 회신하지
+        않으면 (`policy_seed` 를 모르는 옛 서버) **즉시 죽는다** — seed 가 조용히 무시된 run 을 짝지은
+        비교에 넣으면 안 된다. `None` 이면 요청이 T39 전과 같다.
         """
         self.last_reasons = []
         self.last_reasons_source = "none"
@@ -251,7 +259,7 @@ class SafeRemoteClient:
             # 지난 에피소드의 명령으로 HOLD 청크를 만들지 않는다.
             self.last_command = None
         out = self._infer_once(obs, reset=reset, exec_feedback=exec_feedback,
-                               capture_time=capture_time)
+                               capture_time=capture_time, policy_seed=policy_seed)
         for kind in {str(r.get("kind")) for r in self.last_reasons}:
             self.reason_stats[kind] = self.reason_stats.get(kind, 0) + 1
         return out
@@ -265,7 +273,8 @@ class SafeRemoteClient:
 
     def _infer_once(self, obs: dict[str, Any], *, reset: bool = False,
                     exec_feedback: Optional[dict[str, Any]] = None,
-                    capture_time: Optional[float] = None) -> dict[str, Any]:
+                    capture_time: Optional[float] = None,
+                    policy_seed: Optional[int] = None) -> dict[str, Any]:
         """한 청크. 무슨 일이 있어도 `{"actions": [H, 14]}` 를 돌려준다.
 
         `exec_feedback` 은 **직전 청크의 실행 사실**이다 (T18, `ExecutionLog.close()`). 이
@@ -283,12 +292,15 @@ class SafeRemoteClient:
         self._seq += 1
         seq = self._seq
         self.stats["sent"] += 1
+        # T39 — 보내기 전에 검사한다 (틀린 seed 는 hold 가 아니라 호출자의 버그다).
+        self.last_policy_seed = (None if policy_seed is None
+                                 else wire.check_policy_seed(policy_seed))
         if self._trace is not None:
             self._trace.begin_chunk(seq)
 
         try:
             request = self._pack(obs, reset=reset, seq=seq, exec_feedback=exec_feedback,
-                                 capture_time=capture_time)
+                                 capture_time=capture_time, policy_seed=self.last_policy_seed)
         except Exception as exc:  # noqa: BLE001 — 카메라 렌더 실패도 hold 로 간다
             return self._hold(f"could not capture the cameras ({exc})", "error", comms="error")
 
@@ -309,6 +321,9 @@ class SafeRemoteClient:
         got = int(result.get("seq", -1))
         if got != seq:
             return self._hold(f"stale response: asked for seq {seq}, got {got}", "stale", result)
+
+        # T39 — seed 를 보냈으면 회신이 와야 한다. 설정 오류라 hold 가 아니라 죽는다 (shadow 짝과 같다).
+        self._check_policy_seed_echo(self.last_policy_seed, result)
 
         actions = np.asarray(result.get("actions"))
         if actions.ndim != 2 or actions.shape[1] != wire.ACTION_WIDTH:
@@ -464,6 +479,19 @@ class SafeRemoteClient:
         """
         return self.last_executed_chunk != "none"
 
+    @staticmethod
+    def _check_policy_seed_echo(sent: Optional[int], result: dict[str, Any]) -> None:
+        """보낸 seed 와 서버의 회신이 같은가 (T39). 보내지 않았으면 검사하지 않는다."""
+        if sent is None:
+            return
+        echo = wire.unpack_policy_seed_echo(result)
+        if echo != sent:
+            raise RuntimeError(
+                f"sent {wire.POLICY_SEED}={sent} but the server replied {echo!r}. The server does "
+                "not apply policy seeds (pre-T39 benchmark code?) — its RNG kept running in "
+                "request order, so this run is NOT determined by (episode, seed). Restart the "
+                "server from code that has benchmark/trajopt/policy_seed.py")
+
     def _check_server_metadata(self) -> None:
         """접속 즉시 서버가 shadow 인지 본다. 전송 계층이 메타데이터를 안 주면 넘어간다.
 
@@ -547,7 +575,8 @@ class SafeRemoteClient:
     # ----------------------------------------------------------------------------------
     def _pack(self, obs: dict[str, Any], *, reset: bool, seq: int,
               exec_feedback: Optional[dict[str, Any]] = None,
-              capture_time: Optional[float] = None) -> dict[str, Any]:
+              capture_time: Optional[float] = None,
+              policy_seed: Optional[int] = None) -> dict[str, Any]:
         """세 카메라를 **지금** 찍어 요청에 싣는다.
 
         카메라마다 `robot_state` 와 촬영 시각을 따로 담는다. 손목 카메라는 팔과 함께 움직이므로
@@ -598,7 +627,7 @@ class SafeRemoteClient:
             robot_state=state, stamps=stamps, phase=self.phase,
             active_manipulators=self.active_manipulators, reset=reset, seq=seq,
             exec_feedback=self.last_exec_feedback,
-            render_stamps=render_stamps, stamp_mode=mode)
+            render_stamps=render_stamps, stamp_mode=mode, policy_seed=policy_seed)
 
     def _hold(self, reason: str, kind: str,
               result: Optional[dict] = None, *, comms: Optional[str] = None) -> dict[str, Any]:

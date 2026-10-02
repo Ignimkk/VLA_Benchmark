@@ -200,6 +200,11 @@ class ToOnlyPolicy:
         if scene.get("reset"):
             self.reset()
 
+        # T39 — 정책 RNG seed (`SafePolicy.infer` 와 같은 자리 · 같은 계약).
+        from benchmark.trajopt.policy_seed import apply_request_seed
+
+        seed = apply_request_seed(self._policy, scene, seq=seq)
+
         t = time.monotonic()
         result = self._policy.infer(policy_obs, **kwargs)
         chunk = np.asarray(result["actions"], np.float64)
@@ -231,6 +236,8 @@ class ToOnlyPolicy:
         from benchmark.ag3s.fields.provenance import FieldProvenance
 
         extra = {k: v for k, v in result.items() if k != "actions"}
+        if seed is not None:
+            extra[wire.POLICY_SEED] = seed
         return wire.pack_response(
             refined, verdict, seq=seq, timing_ms=timing,
             field=FieldProvenance.unavailable(

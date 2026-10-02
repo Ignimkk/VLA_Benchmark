@@ -32,6 +32,7 @@ from benchmark.trajopt.grasp_latch import (
     grasp_signal_from_feedback,
 )
 from benchmark.trajopt.linearize import CollisionLinearizer, scene_from_constraint_set
+from benchmark.trajopt.policy_seed import apply_request_seed
 from benchmark.trajopt.refiner import TrajOptChunkRefiner
 from benchmark.trajopt.types import ChunkLayout
 
@@ -260,6 +261,10 @@ class SafePolicy:
         #: 기록 실패 횟수. **첫 실패만 크게 외치고** 그 뒤는 한 줄씩 — 같은 문장을 75 번
         #: 읽게 하면 읽는 사람이 로그를 건너뛰기 시작한다.
         self._record_failures = 0
+        #: 정책 RNG seed (T39). `_seed_applied` 는 **이 요청**에 적용한 값, `_episode_seed` 는 이
+        #: 에피소드(마지막 reset 뒤)에 적용한 값. 둘 다 없으면 `None` — RNG 가 서버 순서대로 이어진다.
+        self._seed_applied: Optional[int] = None
+        self._episode_seed: Optional[int] = None
 
     # --- BasePolicy 인터페이스 -----------------------------------------------------------
     @property
@@ -308,6 +313,7 @@ class SafePolicy:
         self._pending = {}
         self._last_continuity = {}
         self._continuity_gate_on = False
+        self._episode_seed = None
         self._last_latch_signal = {}
         self._grasp_state_version = 0
         self._grasp_constraint_version = None
@@ -325,6 +331,14 @@ class SafePolicy:
 
         if scene.get("reset"):
             self.reset()
+
+        # T39 — 정책 RNG seed. **이 요청의 `policy.infer` 바로 앞**에서 다시 놓는다 (reset 뒤). 없으면
+        # 아무것도 안 한다 — RNG 는 서버 순서대로 이어진다 (T39 전 동작).
+        self._seed_applied = apply_request_seed(self._policy, scene, seq=seq)
+        if self._seed_applied is not None:
+            self._episode_seed = self._seed_applied
+            print(f"[safe_policy] seq={seq} policy_seed={self._seed_applied} "
+                  "(policy RNG re-keyed before this request's infer)")
 
         t = time.monotonic()
         result = self._policy.infer(policy_obs, **kwargs)
@@ -408,6 +422,9 @@ class SafePolicy:
                   + "; ".join(f"{r['kind']}: {r['detail']}" for r in self._last_reasons))
 
         extra = {k: v for k, v in result.items() if k != "actions"}
+        if self._seed_applied is not None:
+            # T39 — 적용했다는 회신. 적용한 요청에만 — 없는 요청의 응답은 T39 전과 같다.
+            extra[wire.POLICY_SEED] = self._seed_applied
         # **`actions` 는 shadow 에서도 refined 다.** 서버는 자기가 계산한 것을 그대로 말하고,
         # 무엇을 실행할지는 로컬이 고른다 — `SafetyVerdict` 가 판정이지 명령이 아닌 것과 같은
         # 계약이다.
@@ -1017,7 +1034,8 @@ class SafePolicy:
     def _grasp_continuity_gate(self) -> Optional[str]:
         """이 청크에서 continuity 항을 끌 사유, 또는 `None` (T37 K1).
 
-        `cost.grasp_continuity_off` (기본 True) 이고 latch 가 `closing` · `held` 이면 끈다.
+        `cost.grasp_continuity_off` (기본 False — O2 · T37 K1 뒤 기본 off, 켜려면
+        `{"cost": {"grasp_continuity_off": true}}`) 가 True 이고 latch 가 `closing` · `held` 이면 끈다.
         continuity 기준은 직전 청크의 꼬리(정책이 **그때** 낸 손 자리)다. 닫는 동안과 쥔 동안 정책은
         매 청크 손 자리를 파지에 맞춰 고쳐 내는데, 기준이 손을 옛 자리로 끌어 손끝이 파지 자리에서
         벗어난다 — T35.diag: E3b ep1808 r1 t=120 · r2 t=112 (`closing`) 의 손끝 편차 19.6 / 34.7 mm
@@ -1169,6 +1187,9 @@ class SafePolicy:
             "execution_path": _jsonable(self._last_execution_path or {}),
             # T29 — 손가락 관절: 측정 개도 · 출처 · 관절값 · TO 창의 스텝별 개도.
             "finger_joints": _jsonable(self._last_finger or {}),
+            # T39 — 정책 RNG seed. `applied` 는 이 요청에 적용한 값, `episode` 는 이 에피소드의 값.
+            # 둘 다 `null` 이면 seed 없이 서버 순서대로 이어진 noise 다.
+            "policy_seed": {"applied": self._seed_applied, "episode": self._episode_seed},
             # T23 — 판정 사유와 위반 행 분류. `reasons` 가 `None` 이면 판정 전(기록 순서상 없음).
             "verdict": _jsonable({
                 "policy": self.verdict_policy,

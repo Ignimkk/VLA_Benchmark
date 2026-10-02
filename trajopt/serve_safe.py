@@ -11,7 +11,12 @@ openpi 는 vendored 서브모듈이라 손대면 다음 sync 에서 충돌하고
         --model-xml <RB-Y1 씬 XML> --port 8000
 
 `--no-safe` 로 띄우면 감싸지 않는다 — 기존 서빙과 같은 동작이라, 문제가 안전 계층에 있는지
-아닌지를 플래그 하나로 가를 수 있다.
+아닌지를 플래그 하나로 가를 수 있다. (T39 부터 `SeededPolicy` 한 겹만 — 요청에 `policy_seed` 가 없으면
+요청을 그대로 넘기는 감싸개다. `trajopt/policy_seed.py`.)
+
+**정책 RNG seed (T39).** 요청에 seed (`ag3s/policy_seed`, `--no-safe` 는 맨 키 `policy_seed`) 가 있으면
+그 요청의 `policy.infer` 직전에 정책 RNG 를 `jax.random.key(seed)` 로 다시 놓는다. 없으면 RNG 는 서버
+시작 때의 `jax.random.key(0)` 에서 요청마다 이어 split 된다 (T39 전 동작). `wire.py` 머리말.
 
 `--no-perception` (T27) 은 그 사이다: π0.5 → **TO 만** 돌리고 AG3S·depth·ESDF·attention 두 번째
 사본·grasp latch 를 하나도 만들지 않는다 (`trajopt/to_only_policy.py`). `--no-limits` 는 TO 에서 joint
@@ -1428,8 +1433,11 @@ def main() -> None:
         _config.get_config(args.config), args.checkpoint, default_prompt=args.default_prompt)
 
     if args.no_safe:
+        from benchmark.trajopt.policy_seed import SeededPolicy
+
         logging.info("safety layer OFF — serving the bare policy")
-        served = policy
+        # T39 — 요청의 맨 키 `policy_seed` 를 벗겨 소비하는 감싸개. 키가 없으면 obs 를 그대로 넘긴다.
+        served = SeededPolicy(policy)
     elif args.no_perception:
         # T27 — π0.5 → TO 만. attention 두 번째 사본을 **올리지 않는다** (필요 없다).
         served = build_to_only_policy(policy, args)
@@ -1564,6 +1572,14 @@ def main() -> None:
         announce_joint_limits(served.constraint_robot_model, served.layout, to_config.limits)
         announce_sqp_budget(to_config.sqp)
 
+    # T39 — seed 입구가 정책 RNG 에 닿는가. 못 닿아도 서버는 뜬다 (seed 를 안 보내는 실행은 그대로) —
+    # seed 를 실은 요청이 오면 그때 크게 실패한다.
+    import os
+
+    from benchmark.trajopt.policy_seed import describe_rng_owner, describe_xla_determinism
+
+    logging.info("%s", describe_rng_owner(served))
+    logging.info("%s", describe_xla_determinism(os.environ.get("XLA_FLAGS")))
     logging.info("serving on port %d", args.port)
     websocket_policy_server.WebsocketPolicyServer(
         policy=served, host="0.0.0.0", port=args.port,
