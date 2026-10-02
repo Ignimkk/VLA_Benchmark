@@ -1,0 +1,1612 @@
+{
+ "_comment": "ag3s-verifier T38 Phase B verification (2026-10-02). numbers and paths only.",
+ "step": "T38-phaseB-verify",
+ "date": "2026-10-02",
+ "code_state": {
+  "repo": "benchmark (worktree /mnt/dev/work-o4/benchmark, branch o4-gpu-parallel)",
+  "head": "5c72d37",
+  "dirty_files": [],
+  "tag": "pre-gpu-parallel-20261001 = b4f06ec",
+  "code_copies": "git archive <commit> -> scratchpad/t38v/code/{tag=b4f06ec,b1=1a35423,b2=305dca1,b3=044ecc4,b4=5c72d37}/benchmark (+ ag3s/asset/data symlink to main); b4 copy = worktree (diff -rq: only .ruff_cache)",
+  "baselines_V3_ran_on": "worktree /mnt/dev/work-o4 itself (HEAD 5c72d37, git status clean)"
+ },
+ "inputs": {
+  "requests": "re-rendered per seq with outputs/verify/T38/render_requests.py (Phase A method: frames.jsonl planning-row qpos -> 3 cameras depth uint16 mm, server-recorded 16x16 attention, actions_reference policy chunk) -> outputs/verify/T38/frames/E3b_{ep1800_r1,ep1808_r1,ep1800_r2,ep1807_r1}/ (new) and E3b_ep1807_r2 (Phase A)",
+  "render_logs": "outputs/verify/T38/B/logs/render_*.log",
+  "recordings_V1": [
+   "E3b_ep1800_r1",
+   "E3b_ep1808_r1",
+   "E3b_ep1800_r2",
+   "E3b_ep1807_r1",
+   "E3b_ep1807_r2"
+  ],
+  "recorded_grasp_states_per_recording": {
+   "ep1800_r1": {
+    "searching": 2,
+    "latched": 49,
+    "closing": 22,
+    "held": 2
+   },
+   "ep1808_r1": {
+    "searching": 2,
+    "latched": 48,
+    "closing": 25
+   },
+   "ep1800_r2": {
+    "searching": 2,
+    "latched": 16,
+    "closing": 1,
+    "held": 14,
+    "placed": 42
+   },
+   "ep1807_r1": {
+    "searching": 2,
+    "latched": 10,
+    "closing": 1,
+    "held": 14,
+    "placed": 48
+   },
+   "ep1807_r2": {
+    "searching": 2,
+    "latched": 12,
+    "closing": 1,
+    "held": 13,
+    "placed": 47
+   }
+  },
+  "note_task_recordings": "task named E3b_ep1800_r1 and E3b_ep1808_r1; their recorded grasp states contain no lifted/placed (ep1800_r1: searching 2 latched 49 closing 22 held 2; ep1808_r1: searching 2 latched 48 closing 25). E3b_ep1800_r2 and E3b_ep1807_r1 (held + placed present) were added; E3b_ep1807_r2 (implementer's recording) re-checked with the verifier's code.",
+  "harness_use": "scratchpad/t38b4/replay_b4.py imported only for build_server / load_requests / StubPolicy (input reproduction); its stage patches, digests and compare_b4.py were not used",
+  "driver": "outputs/verify/T38/B/vreplay.py (capture), outputs/verify/T38/B/compare.py (comparison), outputs/verify/T38/B/v2_summary.py (timing)",
+  "replay_protocol": "build server (E3b flags) -> warm pass seq 1-4 -> pass T seq 1-75 (seq 1 reset); recorder on in warm and T (79 record chunks)"
+ },
+ "runs": [
+  {
+   "id": "V1",
+   "command": "MUJOCO_GL=osmesa AG3S_ASSET_ROOT=/mnt/dev/work/src AG3S_CLIENT_SCRIPT=/mnt/dev/work/pi05_TO_hybrid/rby1_bringup/pi05_infer.py, cwd /mnt/dev/work-o4, PYTHONPATH=<code copy>, /mnt/dev/work/.venv-openpi-live/bin/python; outputs/verify/T38/B/run.sh v1_{tag,b4}_<rec> {tag,b4} E3b_<rec> 75 {sync,bg} 1",
+   "raw_output": "outputs/verify/T38/B/runs/v1_*/ , outputs/verify/T38/B/cmp/v1_*.json",
+   "stdout_log": "outputs/verify/T38/B/runs/v1_*/stdout.log"
+  },
+  {
+   "id": "V2",
+   "command": "MUJOCO_GL=osmesa AG3S_ASSET_ROOT=/mnt/dev/work/src AG3S_CLIENT_SCRIPT=/mnt/dev/work/pi05_TO_hybrid/rby1_bringup/pi05_infer.py, cwd /mnt/dev/work-o4, PYTHONPATH=<code copy>, /mnt/dev/work/.venv-openpi-live/bin/python; outputs/verify/T38/B/run.sh v2{a,b,c}_<code> <code> E3b_ep1807_r2 75 {sync for tag, bg otherwise} 0",
+   "raw_output": "outputs/verify/T38/B/runs/v2{a,b,c}_*/pass_T.jsonl, outputs/verify/T38/B/cmp/v2{a,b,c}_summary.json"
+  },
+  {
+   "id": "V3",
+   "command": "outputs/verify/T38/B/baseline/run.sh",
+   "raw_output": "outputs/verify/T38/B/baseline/{legacy,curobo}.json",
+   "stdout_log": "outputs/verify/T38/B/baseline/{legacy,curobo}.log"
+  },
+  {
+   "id": "V4",
+   "command": "run.sh v4_{tag,b4}_norec {tag,b4} E3b_ep1807_r2 75 none 0 (+ v2c_tag / v2c_b4 for recorded)",
+   "raw_output": "outputs/verify/T38/B/cmp/v4_norec_summary.json, runs/v4_*/gpu_samples.jsonl"
+  },
+  {
+   "id": "V5",
+   "command": "run.sh v5_b4cpu_ep1800_r2 b4 E3b_ep1800_r2 40 bg 1 1 (VR_CPU=1 sets config RECON_DEVICE / SUPPORT_RANSAC_DEVICE / SELF_FILTER_DEVICE = cpu)",
+   "raw_output": "outputs/verify/T38/B/cmp/v5_ep1800_r2_tag_vs_b4cpu.json"
+  },
+  {
+   "id": "negative_control",
+   "command": "compare.py runs/v1_tag_ep1800_r1 runs/v1_b4_ep1808_r1",
+   "raw_output": "outputs/verify/T38/B/cmp/negative_control_tag1800_vs_b4_1808.json"
+  }
+ ],
+ "numbers": {
+  "_comment": "all from outputs/verify/T38/B. V1/V5 counts = chunks of pass T equal tag vs 5c72d37 (sha256 of raw bytes / exact value equality of float hex). 'non-time' = leaves whose key does not match compare.py TIME_KEY (…_ms, _at, time, stamp, wall, …); the time-like keys that differed are listed.",
+  "V1": {
+   "ep1800_r1": {
+    "n_chunks": 75,
+    "same_count": {
+     "actions_bytes": 75,
+     "verdict": 75,
+     "worst_row": 75,
+     "max_violation_m": 75,
+     "grasp": 75,
+     "has_target": 75,
+     "ag3s_status": 75,
+     "manipulated": 75,
+     "target_points": 75,
+     "esdf_tiers": 75,
+     "fused_cloud": 75,
+     "per_camera_cloud": 75,
+     "depth_masks": 75,
+     "response_non_time": 75
+    },
+    "depth_mask_pixels": {
+     "pairs": 225,
+     "xor_px_total": 0,
+     "pairs_nonzero": 0
+    },
+    "record_chunks_arrays_identical": "79/79",
+    "record_arrays_compared": 2520,
+    "record_summary_non_time_identical": "79/79",
+    "raw": "/mnt/dev/work/outputs/verify/T38/B/cmp/v1_ep1800_r1.json"
+   },
+   "ep1800_r2": {
+    "n_chunks": 75,
+    "same_count": {
+     "actions_bytes": 75,
+     "verdict": 75,
+     "worst_row": 75,
+     "max_violation_m": 75,
+     "grasp": 75,
+     "has_target": 75,
+     "ag3s_status": 75,
+     "manipulated": 75,
+     "target_points": 75,
+     "esdf_tiers": 75,
+     "fused_cloud": 75,
+     "per_camera_cloud": 75,
+     "depth_masks": 75,
+     "response_non_time": 75
+    },
+    "depth_mask_pixels": {
+     "pairs": 225,
+     "xor_px_total": 0,
+     "pairs_nonzero": 0
+    },
+    "record_chunks_arrays_identical": "79/79",
+    "record_arrays_compared": 2472,
+    "record_summary_non_time_identical": "79/79",
+    "raw": "/mnt/dev/work/outputs/verify/T38/B/cmp/v1_ep1800_r2.json"
+   },
+   "ep1807_r1": {
+    "n_chunks": 75,
+    "same_count": {
+     "actions_bytes": 75,
+     "verdict": 75,
+     "worst_row": 75,
+     "max_violation_m": 75,
+     "grasp": 75,
+     "has_target": 75,
+     "ag3s_status": 75,
+     "manipulated": 75,
+     "target_points": 75,
+     "esdf_tiers": 75,
+     "fused_cloud": 75,
+     "per_camera_cloud": 75,
+     "depth_masks": 75,
+     "response_non_time": 75
+    },
+    "depth_mask_pixels": {
+     "pairs": 225,
+     "xor_px_total": 0,
+     "pairs_nonzero": 0
+    },
+    "record_chunks_arrays_identical": "79/79",
+    "record_arrays_compared": 2472,
+    "record_summary_non_time_identical": "79/79",
+    "raw": "/mnt/dev/work/outputs/verify/T38/B/cmp/v1_ep1807_r1.json"
+   },
+   "ep1807_r2": {
+    "n_chunks": 75,
+    "same_count": {
+     "actions_bytes": 75,
+     "verdict": 75,
+     "worst_row": 75,
+     "max_violation_m": 75,
+     "grasp": 75,
+     "has_target": 75,
+     "ag3s_status": 75,
+     "manipulated": 75,
+     "target_points": 75,
+     "esdf_tiers": 75,
+     "fused_cloud": 75,
+     "per_camera_cloud": 75,
+     "depth_masks": 75,
+     "response_non_time": 75
+    },
+    "depth_mask_pixels": {
+     "pairs": 225,
+     "xor_px_total": 0,
+     "pairs_nonzero": 0
+    },
+    "record_chunks_arrays_identical": "79/79",
+    "record_arrays_compared": 2476,
+    "record_summary_non_time_identical": "79/79",
+    "raw": "/mnt/dev/work/outputs/verify/T38/B/cmp/v1_ep1807_r2.json"
+   },
+   "ep1808_r1": {
+    "n_chunks": 75,
+    "same_count": {
+     "actions_bytes": 75,
+     "verdict": 75,
+     "worst_row": 75,
+     "max_violation_m": 75,
+     "grasp": 75,
+     "has_target": 75,
+     "ag3s_status": 75,
+     "manipulated": 75,
+     "target_points": 75,
+     "esdf_tiers": 75,
+     "fused_cloud": 75,
+     "per_camera_cloud": 75,
+     "depth_masks": 75,
+     "response_non_time": 75
+    },
+    "depth_mask_pixels": {
+     "pairs": 225,
+     "xor_px_total": 0,
+     "pairs_nonzero": 0
+    },
+    "record_chunks_arrays_identical": "79/79",
+    "record_arrays_compared": 2528,
+    "record_summary_non_time_identical": "79/79",
+    "raw": "/mnt/dev/work/outputs/verify/T38/B/cmp/v1_ep1808_r1.json"
+   }
+  },
+  "V1_coverage": {
+   "ep1800_r1": {
+    "replay_grasp_states": {
+     "searching": 2,
+     "latched": 49,
+     "closing": 22,
+     "held": 2
+    },
+    "recorded_grasp_states": {
+     "searching": 2,
+     "latched": 49,
+     "closing": 22,
+     "held": 2
+    },
+    "grasp_state_match_recorded": 75,
+    "has_target": 75,
+    "n_tiers_hist": {
+     "3": 73,
+     "2": 2
+    }
+   },
+   "ep1808_r1": {
+    "replay_grasp_states": {
+     "searching": 2,
+     "latched": 48,
+     "closing": 25
+    },
+    "recorded_grasp_states": {
+     "searching": 2,
+     "latched": 48,
+     "closing": 25
+    },
+    "grasp_state_match_recorded": 75,
+    "has_target": 75,
+    "n_tiers_hist": {
+     "3": 75
+    }
+   },
+   "ep1800_r2": {
+    "replay_grasp_states": {
+     "searching": 2,
+     "latched": 16,
+     "closing": 1,
+     "held": 14,
+     "placed": 42
+    },
+    "recorded_grasp_states": {
+     "searching": 2,
+     "latched": 16,
+     "closing": 1,
+     "held": 14,
+     "placed": 42
+    },
+    "grasp_state_match_recorded": 75,
+    "has_target": 75,
+    "n_tiers_hist": {
+     "3": 61,
+     "2": 14
+    }
+   },
+   "ep1807_r1": {
+    "replay_grasp_states": {
+     "searching": 2,
+     "latched": 10,
+     "closing": 1,
+     "held": 14,
+     "placed": 48
+    },
+    "recorded_grasp_states": {
+     "searching": 2,
+     "latched": 10,
+     "closing": 1,
+     "held": 14,
+     "placed": 48
+    },
+    "grasp_state_match_recorded": 75,
+    "has_target": 75,
+    "n_tiers_hist": {
+     "3": 61,
+     "2": 14
+    }
+   },
+   "ep1807_r2": {
+    "replay_grasp_states": {
+     "searching": 2,
+     "latched": 12,
+     "closing": 1,
+     "held": 13,
+     "placed": 47
+    },
+    "recorded_grasp_states": {
+     "searching": 2,
+     "latched": 12,
+     "closing": 1,
+     "held": 13,
+     "placed": 47
+    },
+    "grasp_state_match_recorded": 75,
+    "has_target": 75,
+    "n_tiers_hist": {
+     "3": 62,
+     "2": 13
+    }
+   }
+  },
+  "V1_time_like_keys_differing_record_summary": [
+   ".esdf_stats.target_free<repr>.build_ms",
+   ".grasp.attached.attached_at",
+   ".profile_ms.attention_lifting",
+   ".profile_ms.constraint_generation",
+   ".profile_ms.esdf",
+   ".profile_ms.scene_reconstruction",
+   ".profile_ms.support_surface",
+   ".profile_ms.target_grounding",
+   ".to.metrics.timing_ms<repr>.assemble",
+   ".to.metrics.timing_ms<repr>.check",
+   ".to.metrics.timing_ms<repr>.linearize",
+   ".to.metrics.timing_ms<repr>.qp",
+   ".to.solve_ms"
+  ],
+  "V1_time_like_keys_differing_response": [
+   "grasp.attached.attached_at.f",
+   "resp.field.built_at.f",
+   "resp.timing_ms.ag3s.f",
+   "resp.timing_ms.infer.f",
+   "resp.timing_ms.total.f",
+   "resp.timing_ms.trajopt.f",
+   "resp.to.solve_ms.f"
+  ],
+  "V1_negative_control_different_recordings": {
+   "same_count": {
+    "actions_bytes": 0,
+    "verdict": 75,
+    "worst_row": 0,
+    "max_violation_m": 75,
+    "grasp": 1,
+    "has_target": 75,
+    "ag3s_status": 75,
+    "manipulated": 0,
+    "target_points": 0,
+    "esdf_tiers": 0,
+    "fused_cloud": 0,
+    "per_camera_cloud": 0,
+    "depth_masks": 0,
+    "response_non_time": 0
+   },
+   "depth_mask_xor_px": 4855002,
+   "record_arrays_differing": 1718
+  },
+  "V2": {
+   "recording": "E3b_ep1807_r2, pass T seq 2-75 (74 chunks) after warm seq 1-4; seq 1 of pass T (new mapper after reset) excluded",
+   "recorder": "tag: synchronous writer (tag has no background option); 1a35423..5c72d37: background writer (serve_safe default)",
+   "capture": "light (actions sha + timing only, vreplay VR_HEAVY=0)",
+   "p90": "numpy.percentile linear",
+   "chains": {
+    "a": {
+     "order": "tag,b1,b2,b3,b4",
+     "codes": {
+      "tag": {
+       "commit": "b4f06ec",
+       "scene_reconstruction": {
+        "median": 550.2,
+        "p90": 635.3
+       },
+       "support_surface": {
+        "median": 83.0,
+        "p90": 160.9
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 1345.7,
+        "p90": 1821.6
+       },
+       "esdf": {
+        "median": 275.2,
+        "p90": 383.5
+       },
+       "constraint_generation": {
+        "median": 854.2,
+        "p90": 1109.8
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 577.1,
+        "p90": 655.6
+       },
+       "timing.ag3s": {
+        "median": 2922.6,
+        "p90": 3463.3
+       },
+       "timing.trajopt": {
+        "median": 137.7,
+        "p90": 239.8
+       },
+       "timing.total": {
+        "median": 3067.1,
+        "p90": 3686.7
+       },
+       "wall": {
+        "median": 3325.2,
+        "p90": 4004.2
+       },
+       "ag3s_minus_stages": {
+        "median": 2.1,
+        "p90": 4.4
+       },
+       "total_max": 12734.1,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 5796.5,
+       "env": {
+        "pre_check_gpu": [
+         "105544 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 115972,
+        "gpu_util_max_pct": null,
+        "load1_range": null
+       }
+      },
+      "b1": {
+       "commit": "1a35423",
+       "scene_reconstruction": {
+        "median": 541.5,
+        "p90": 627.6
+       },
+       "support_surface": {
+        "median": 89.3,
+        "p90": 167.5
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 109.5,
+        "p90": 194.1
+       },
+       "esdf": {
+        "median": 269.8,
+        "p90": 383.7
+       },
+       "constraint_generation": {
+        "median": 865.9,
+        "p90": 1078.9
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 605.0,
+        "p90": 721.0
+       },
+       "timing.ag3s": {
+        "median": 1634.6,
+        "p90": 2252.7
+       },
+       "timing.trajopt": {
+        "median": 137.7,
+        "p90": 299.6
+       },
+       "timing.total": {
+        "median": 1788.7,
+        "p90": 2391.8
+       },
+       "wall": {
+        "median": 1812.4,
+        "p90": 2414.3
+       },
+       "ag3s_minus_stages": {
+        "median": 2.2,
+        "p90": 4.9
+       },
+       "total_max": 22700.2,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 2984.8,
+       "env": {
+        "pre_check_gpu": [
+         "8810 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 18994,
+        "gpu_util_max_pct": null,
+        "load1_range": null
+       }
+      },
+      "b2": {
+       "commit": "305dca1",
+       "scene_reconstruction": {
+        "median": 488.0,
+        "p90": 587.3
+       },
+       "support_surface": {
+        "median": 91.9,
+        "p90": 190.5
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 113.0,
+        "p90": 194.3
+       },
+       "esdf": {
+        "median": 259.2,
+        "p90": 439.5
+       },
+       "constraint_generation": {
+        "median": 261.3,
+        "p90": 441.6
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 2.1,
+        "p90": 2.8
+       },
+       "timing.ag3s": {
+        "median": 1011.8,
+        "p90": 1211.5
+       },
+       "timing.trajopt": {
+        "median": 134.3,
+        "p90": 235.7
+       },
+       "timing.total": {
+        "median": 1146.2,
+        "p90": 1424.5
+       },
+       "wall": {
+        "median": 1164.8,
+        "p90": 1449.8
+       },
+       "ag3s_minus_stages": {
+        "median": 2.3,
+        "p90": 4.6
+       },
+       "total_max": 1702.8,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 2274.4,
+       "env": {
+        "pre_check_gpu": [
+         "17000 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 20460,
+        "gpu_util_max_pct": null,
+        "load1_range": null
+       }
+      },
+      "b3": {
+       "commit": "044ecc4",
+       "scene_reconstruction": {
+        "median": 513.8,
+        "p90": 619.1
+       },
+       "support_surface": {
+        "median": 95.6,
+        "p90": 171.9
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 121.2,
+        "p90": 198.1
+       },
+       "esdf": {
+        "median": 70.4,
+        "p90": 155.8
+       },
+       "constraint_generation": {
+        "median": 73.3,
+        "p90": 159.0
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 2.7,
+        "p90": 3.3
+       },
+       "timing.ag3s": {
+        "median": 842.0,
+        "p90": 1014.2
+       },
+       "timing.trajopt": {
+        "median": 67.8,
+        "p90": 78.7
+       },
+       "timing.total": {
+        "median": 922.7,
+        "p90": 1098.8
+       },
+       "wall": {
+        "median": 927.3,
+        "p90": 1104.5
+       },
+       "ag3s_minus_stages": {
+        "median": 2.3,
+        "p90": 4.7
+       },
+       "total_max": 1474.6,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 2357.7,
+       "env": {
+        "pre_check_gpu": [
+         "18122 MiB, 4 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 20538,
+        "gpu_util_max_pct": null,
+        "load1_range": null
+       }
+      },
+      "b4": {
+       "commit": "5c72d37",
+       "scene_reconstruction": {
+        "median": 55.5,
+        "p90": 130.4
+       },
+       "support_surface": {
+        "median": 8.2,
+        "p90": 18.6
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 88.7,
+        "p90": 119.7
+       },
+       "esdf": {
+        "median": 143.8,
+        "p90": 179.8
+       },
+       "constraint_generation": {
+        "median": 149.2,
+        "p90": 189.8
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 3.3,
+        "p90": 7.8
+       },
+       "timing.ag3s": {
+        "median": 289.8,
+        "p90": 445.6
+       },
+       "timing.trajopt": {
+        "median": 77.3,
+        "p90": 145.0
+       },
+       "timing.total": {
+        "median": 367.4,
+        "p90": 606.0
+       },
+       "wall": {
+        "median": 390.6,
+        "p90": 610.9
+       },
+       "ag3s_minus_stages": {
+        "median": 1.9,
+        "p90": 2.3
+       },
+       "total_max": 740.0,
+       "chunks_total_le_533ms": "62/74",
+       "seq1_total_ms": 1828.8,
+       "env": {
+        "pre_check_gpu": [
+         "19106 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 20862,
+        "gpu_util_max_pct": null,
+        "load1_range": null
+       }
+      }
+     },
+     "co_tenancy": "another session's GPU process present (pid 3071029 105,544 MiB at tag start; pid 450012 8,810 MiB; pid 614960 17,000-19,106 MiB during b1-b4); per-run pre/post in runs/v2a_*/pre_check.txt"
+    },
+    "b": {
+     "order": "b4,b3,b2,b1,tag",
+     "codes": {
+      "tag": {
+       "commit": "b4f06ec",
+       "scene_reconstruction": {
+        "median": 542.2,
+        "p90": 623.7
+       },
+       "support_surface": {
+        "median": 79.0,
+        "p90": 111.8
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 1320.9,
+        "p90": 1737.7
+       },
+       "esdf": {
+        "median": 275.1,
+        "p90": 286.7
+       },
+       "constraint_generation": {
+        "median": 834.9,
+        "p90": 898.3
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 578.2,
+        "p90": 618.2
+       },
+       "timing.ag3s": {
+        "median": 2806.3,
+        "p90": 3192.5
+       },
+       "timing.trajopt": {
+        "median": 140.1,
+        "p90": 152.6
+       },
+       "timing.total": {
+        "median": 2951.0,
+        "p90": 3329.9
+       },
+       "wall": {
+        "median": 3206.2,
+        "p90": 3599.1
+       },
+       "ag3s_minus_stages": {
+        "median": 1.9,
+        "p90": 2.9
+       },
+       "total_max": 3606.6,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 4566.6,
+       "env": {
+        "pre_check_gpu": [
+         "33876 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 38396,
+        "gpu_util_max_pct": 70,
+        "load1_range": [
+         21.2,
+         29.3
+        ]
+       }
+      },
+      "b1": {
+       "commit": "1a35423",
+       "scene_reconstruction": {
+        "median": 558.1,
+        "p90": 631.1
+       },
+       "support_surface": {
+        "median": 92.0,
+        "p90": 177.1
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 114.9,
+        "p90": 193.4
+       },
+       "esdf": {
+        "median": 278.8,
+        "p90": 523.4
+       },
+       "constraint_generation": {
+        "median": 874.0,
+        "p90": 1231.8
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 601.9,
+        "p90": 786.6
+       },
+       "timing.ag3s": {
+        "median": 1657.7,
+        "p90": 2453.4
+       },
+       "timing.trajopt": {
+        "median": 139.7,
+        "p90": 263.3
+       },
+       "timing.total": {
+        "median": 1784.8,
+        "p90": 2703.4
+       },
+       "wall": {
+        "median": 1807.0,
+        "p90": 2723.8
+       },
+       "ag3s_minus_stages": {
+        "median": 2.3,
+        "p90": 4.6
+       },
+       "total_max": 8054.7,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 3048.6,
+       "env": {
+        "pre_check_gpu": [
+         "17464 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 37144,
+        "gpu_util_max_pct": 100,
+        "load1_range": [
+         24.0,
+         42.5
+        ]
+       }
+      },
+      "b2": {
+       "commit": "305dca1",
+       "scene_reconstruction": {
+        "median": 519.5,
+        "p90": 589.0
+       },
+       "support_surface": {
+        "median": 83.4,
+        "p90": 176.9
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 113.2,
+        "p90": 177.6
+       },
+       "esdf": {
+        "median": 286.5,
+        "p90": 358.8
+       },
+       "constraint_generation": {
+        "median": 289.3,
+        "p90": 361.5
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 2.7,
+        "p90": 3.1
+       },
+       "timing.ag3s": {
+        "median": 1013.4,
+        "p90": 1168.7
+       },
+       "timing.trajopt": {
+        "median": 137.9,
+        "p90": 148.2
+       },
+       "timing.total": {
+        "median": 1147.4,
+        "p90": 1320.1
+       },
+       "wall": {
+        "median": 1170.7,
+        "p90": 1343.7
+       },
+       "ag3s_minus_stages": {
+        "median": 2.0,
+        "p90": 4.6
+       },
+       "total_max": 1627.5,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 2526.6,
+       "env": {
+        "pre_check_gpu": [
+         "9428 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 18884,
+        "gpu_util_max_pct": 49,
+        "load1_range": [
+         22.8,
+         32.7
+        ]
+       }
+      },
+      "b3": {
+       "commit": "044ecc4",
+       "scene_reconstruction": {
+        "median": 487.3,
+        "p90": 572.5
+       },
+       "support_surface": {
+        "median": 89.0,
+        "p90": 179.5
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 113.3,
+        "p90": 188.7
+       },
+       "esdf": {
+        "median": 67.5,
+        "p90": 157.4
+       },
+       "constraint_generation": {
+        "median": 70.1,
+        "p90": 160.2
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 2.6,
+        "p90": 3.1
+       },
+       "timing.ag3s": {
+        "median": 799.5,
+        "p90": 920.0
+       },
+       "timing.trajopt": {
+        "median": 68.0,
+        "p90": 86.0
+       },
+       "timing.total": {
+        "median": 869.0,
+        "p90": 1008.5
+       },
+       "wall": {
+        "median": 873.4,
+        "p90": 1013.0
+       },
+       "ag3s_minus_stages": {
+        "median": 2.2,
+        "p90": 5.3
+       },
+       "total_max": 12869.1,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 2186.5,
+       "env": {
+        "pre_check_gpu": [
+         "0 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 10658,
+        "gpu_util_max_pct": 43,
+        "load1_range": [
+         23.9,
+         43.1
+        ]
+       }
+      },
+      "b4": {
+       "commit": "5c72d37",
+       "scene_reconstruction": {
+        "median": 43.0,
+        "p90": 45.4
+       },
+       "support_surface": {
+        "median": 6.0,
+        "p90": 6.6
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 51.2,
+        "p90": 85.2
+       },
+       "esdf": {
+        "median": 140.1,
+        "p90": 187.8
+       },
+       "constraint_generation": {
+        "median": 144.6,
+        "p90": 192.9
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 2.0,
+        "p90": 23.4
+       },
+       "timing.ag3s": {
+        "median": 256.9,
+        "p90": 274.8
+       },
+       "timing.trajopt": {
+        "median": 56.4,
+        "p90": 60.0
+       },
+       "timing.total": {
+        "median": 309.3,
+        "p90": 331.0
+       },
+       "wall": {
+        "median": 379.6,
+        "p90": 407.9
+       },
+       "ag3s_minus_stages": {
+        "median": 1.6,
+        "p90": 1.8
+       },
+       "total_max": 458.5,
+       "chunks_total_le_533ms": "74/74",
+       "seq1_total_ms": 1430.3,
+       "env": {
+        "pre_check_gpu": [
+         "19106 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 19106,
+        "gpu_util_max_pct": 18,
+        "load1_range": [
+         22.9,
+         29.5
+        ]
+       }
+      }
+     },
+     "co_tenancy": "another session's GPU process present for part of the chain (nvsmi used max 37-38 GB during b1/tag, util up to 100 %); per-sample in runs/v2b_*/gpu_samples.jsonl"
+    },
+    "c": {
+     "order": "tag,b1,b2,b3,b4",
+     "codes": {
+      "tag": {
+       "commit": "b4f06ec",
+       "scene_reconstruction": {
+        "median": 541.4,
+        "p90": 625.6
+       },
+       "support_surface": {
+        "median": 80.3,
+        "p90": 130.1
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 1327.5,
+        "p90": 1721.9
+       },
+       "esdf": {
+        "median": 273.9,
+        "p90": 290.2
+       },
+       "constraint_generation": {
+        "median": 834.8,
+        "p90": 896.4
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 573.7,
+        "p90": 623.9
+       },
+       "timing.ag3s": {
+        "median": 2797.3,
+        "p90": 3161.7
+       },
+       "timing.trajopt": {
+        "median": 137.8,
+        "p90": 147.5
+       },
+       "timing.total": {
+        "median": 2934.6,
+        "p90": 3293.8
+       },
+       "wall": {
+        "median": 3183.3,
+        "p90": 3578.1
+       },
+       "ag3s_minus_stages": {
+        "median": 1.9,
+        "p90": 3.8
+       },
+       "total_max": 3613.6,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 4304.6,
+       "env": {
+        "pre_check_gpu": [
+         "0 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 1640,
+        "gpu_util_max_pct": 5,
+        "load1_range": [
+         18.0,
+         35.6
+        ]
+       }
+      },
+      "b1": {
+       "commit": "1a35423",
+       "scene_reconstruction": {
+        "median": 512.4,
+        "p90": 609.5
+       },
+       "support_surface": {
+        "median": 90.0,
+        "p90": 166.4
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 109.1,
+        "p90": 172.5
+       },
+       "esdf": {
+        "median": 281.8,
+        "p90": 297.5
+       },
+       "constraint_generation": {
+        "median": 862.6,
+        "p90": 948.8
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 596.7,
+        "p90": 693.4
+       },
+       "timing.ag3s": {
+        "median": 1601.0,
+        "p90": 1695.3
+       },
+       "timing.trajopt": {
+        "median": 137.6,
+        "p90": 150.3
+       },
+       "timing.total": {
+        "median": 1733.2,
+        "p90": 1842.8
+       },
+       "wall": {
+        "median": 1753.6,
+        "p90": 1866.8
+       },
+       "ag3s_minus_stages": {
+        "median": 2.1,
+        "p90": 4.3
+       },
+       "total_max": 1969.8,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 2922.7,
+       "env": {
+        "pre_check_gpu": [
+         "0 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 1640,
+        "gpu_util_max_pct": 5,
+        "load1_range": [
+         19.9,
+         25.9
+        ]
+       }
+      },
+      "b2": {
+       "commit": "305dca1",
+       "scene_reconstruction": {
+        "median": 470.8,
+        "p90": 523.2
+       },
+       "support_surface": {
+        "median": 96.3,
+        "p90": 192.8
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 111.6,
+        "p90": 189.2
+       },
+       "esdf": {
+        "median": 252.0,
+        "p90": 279.4
+       },
+       "constraint_generation": {
+        "median": 255.0,
+        "p90": 298.5
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 2.1,
+        "p90": 3.1
+       },
+       "timing.ag3s": {
+        "median": 951.6,
+        "p90": 1053.7
+       },
+       "timing.trajopt": {
+        "median": 131.3,
+        "p90": 148.9
+       },
+       "timing.total": {
+        "median": 1086.4,
+        "p90": 1181.1
+       },
+       "wall": {
+        "median": 1105.6,
+        "p90": 1199.7
+       },
+       "ag3s_minus_stages": {
+        "median": 2.6,
+        "p90": 4.6
+       },
+       "total_max": 1537.8,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 2222.7,
+       "env": {
+        "pre_check_gpu": [
+         "0 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 1420,
+        "gpu_util_max_pct": 5,
+        "load1_range": [
+         24.8,
+         51.2
+        ]
+       }
+      },
+      "b3": {
+       "commit": "044ecc4",
+       "scene_reconstruction": {
+        "median": 470.4,
+        "p90": 522.3
+       },
+       "support_surface": {
+        "median": 93.0,
+        "p90": 169.9
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 107.5,
+        "p90": 172.5
+       },
+       "esdf": {
+        "median": 67.9,
+        "p90": 136.5
+       },
+       "constraint_generation": {
+        "median": 70.8,
+        "p90": 143.5
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 2.7,
+        "p90": 3.3
+       },
+       "timing.ag3s": {
+        "median": 766.1,
+        "p90": 850.6
+       },
+       "timing.trajopt": {
+        "median": 64.2,
+        "p90": 72.5
+       },
+       "timing.total": {
+        "median": 828.4,
+        "p90": 916.1
+       },
+       "wall": {
+        "median": 833.0,
+        "p90": 920.5
+       },
+       "ag3s_minus_stages": {
+        "median": 2.0,
+        "p90": 4.5
+       },
+       "total_max": 955.6,
+       "chunks_total_le_533ms": "0/74",
+       "seq1_total_ms": 2124.2,
+       "env": {
+        "pre_check_gpu": [
+         "0 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 1432,
+        "gpu_util_max_pct": 6,
+        "load1_range": [
+         26.1,
+         39.5
+        ]
+       }
+      },
+      "b4": {
+       "commit": "5c72d37",
+       "scene_reconstruction": {
+        "median": 53.4,
+        "p90": 56.9
+       },
+       "support_surface": {
+        "median": 8.0,
+        "p90": 9.2
+       },
+       "attention_lifting": {
+        "median": 0.0,
+        "p90": 0.0
+       },
+       "target_grounding": {
+        "median": 58.2,
+        "p90": 106.0
+       },
+       "esdf": {
+        "median": 139.6,
+        "p90": 158.6
+       },
+       "constraint_generation": {
+        "median": 151.4,
+        "p90": 165.7
+       },
+       "constraint_generation_minus_esdf": {
+        "median": 3.1,
+        "p90": 24.3
+       },
+       "timing.ag3s": {
+        "median": 245.2,
+        "p90": 302.3
+       },
+       "timing.trajopt": {
+        "median": 71.3,
+        "p90": 74.6
+       },
+       "timing.total": {
+        "median": 314.5,
+        "p90": 375.2
+       },
+       "wall": {
+        "median": 329.5,
+        "p90": 403.2
+       },
+       "ag3s_minus_stages": {
+        "median": 1.6,
+        "p90": 2.1
+       },
+       "total_max": 393.5,
+       "chunks_total_le_533ms": "74/74",
+       "seq1_total_ms": 1625.2,
+       "env": {
+        "pre_check_gpu": [
+         "0 MiB, 0 %",
+         "pid, used_gpu_memory [MiB], process_name"
+        ],
+        "nvsmi_used_max_mib": 1710,
+        "gpu_util_max_pct": 21,
+        "load1_range": [
+         22.7,
+         25.5
+        ]
+       }
+      }
+     },
+     "co_tenancy": "no other GPU process before/after any run (pre/post 0 MiB); nvsmi used max = this process; CPU load1 18-51 (host shared, other sessions' CPU not visible from this container)"
+    }
+   },
+   "actions_equal_to_tag_all_runs": {
+    "v2a_tag": "75/75",
+    "v2a_b1": "75/75",
+    "v2a_b2": "75/75",
+    "v2a_b3": "75/75",
+    "v2a_b4": "75/75",
+    "v2b_tag": "75/75",
+    "v2b_b1": "75/75",
+    "v2b_b2": "75/75",
+    "v2b_b3": "75/75",
+    "v2b_b4": "75/75",
+    "v2c_tag": "75/75",
+    "v2c_b1": "75/75",
+    "v2c_b2": "75/75",
+    "v2c_b3": "75/75",
+    "v2c_b4": "75/75",
+    "v4_tag_norec": "75/75",
+    "v4_b4_norec": "75/75",
+    "v1_tag_ep1807_r2": "75/75",
+    "v1_b4_ep1807_r2": "75/75"
+   },
+   "raw": [
+    "outputs/verify/T38/B/cmp/v2a_summary.json",
+    "outputs/verify/T38/B/cmp/v2b_summary.json",
+    "outputs/verify/T38/B/cmp/v2c_summary.json",
+    "outputs/verify/T38/B/runs/v2{a,b,c}_{tag,b1,b2,b3,b4}/pass_T.jsonl"
+   ]
+  },
+  "V3": {
+   "code": "worktree /mnt/dev/work-o4 HEAD 5c72d37 (clean), cwd /mnt/dev/work-o4, PYTHONPATH=/mnt/dev/work-o4, .venv-openpi-live",
+   "script": "outputs/verify/T38/B/baseline/run.sh",
+   "legacy": {
+    "violated_start": "14/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -29.031048280806342,
+    "clearance_before_15_sha1_12": "40798fb0a4d2",
+    "per_frame_clearance_before_equal_to_phaseA": "15/15",
+    "raw": "outputs/verify/T38/B/baseline/legacy.json",
+    "log": "outputs/verify/T38/B/baseline/legacy.log"
+   },
+   "curobo": {
+    "violated_start": "10/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "clearance_before_15_sha1_12": "fe73bd7a6ba6",
+    "per_frame_clearance_before_equal_to_phaseA": "15/15",
+    "raw": "outputs/verify/T38/B/baseline/curobo.json",
+    "log": "outputs/verify/T38/B/baseline/curobo.log"
+   },
+   "sha1_method": "sha1(json.dumps([frame.clearance_before_mm for 15 frames])).hexdigest()[:12] -- reproduces 40798fb0a4d2 / fe73bd7a6ba6 on Phase A outputs/verify/T38/baseline/*.json",
+   "gpu_other_process": "pid 3071029 105,544 MiB, util 0 % before and after (B/baseline/pre.txt, post.txt); not touched",
+   "load_avg_pre_post": [
+    "25.04",
+    "42.76"
+   ]
+  },
+  "V4": {
+   "recording": "E3b_ep1807_r2 pass T seq 2-75",
+   "gpu_alone": "yes for all four runs (pre/post 0 MiB, no other process)",
+   "nvsmi_note": "nvidia-smi process pid != container pid, so 'ours' is read as total memory.used while no other process was listed",
+   "tag_recorded_sync": {
+    "torch_max_alloc_per_chunk_mib": {
+     "median": 505.0,
+     "p90": 505.0,
+     "max": 994.4
+    },
+    "torch_max_reserved_per_chunk_mib": {
+     "median": 1028.0,
+     "p90": 1028.0,
+     "max": 1028.0
+    },
+    "torch_alloc_after_infer_mib": {
+     "median": 497.0,
+     "max": 497.0
+    },
+    "nvsmi_used_max_mib": 1640,
+    "nvsmi_samples": 443,
+    "run": "outputs/verify/T38/B/runs/v2c_tag"
+   },
+   "b4_recorded_background": {
+    "torch_max_alloc_per_chunk_mib": {
+     "median": 906.7,
+     "p90": 931.7,
+     "max": 933.1
+    },
+    "torch_max_reserved_per_chunk_mib": {
+     "median": 1032.0,
+     "p90": 1096.0,
+     "max": 1096.0
+    },
+    "torch_alloc_after_infer_mib": {
+     "median": 723.7,
+     "max": 749.1
+    },
+    "nvsmi_used_max_mib": 1710,
+    "nvsmi_samples": 95,
+    "run": "outputs/verify/T38/B/runs/v2c_b4"
+   },
+   "tag_no_recorder": {
+    "torch_max_alloc_per_chunk_mib": {
+     "median": 505.0,
+     "p90": 505.0,
+     "max": 994.4
+    },
+    "torch_max_reserved_per_chunk_mib": {
+     "median": 1028.0,
+     "p90": 1028.0,
+     "max": 1028.0
+    },
+    "torch_alloc_after_infer_mib": {
+     "median": 497.0,
+     "max": 497.0
+    },
+    "nvsmi_used_max_mib": 1640,
+    "nvsmi_samples": 405,
+    "run": "outputs/verify/T38/B/runs/v4_tag_norec"
+   },
+   "b4_no_recorder": {
+    "torch_max_alloc_per_chunk_mib": {
+     "median": 739.1,
+     "p90": 740.3,
+     "max": 782.5
+    },
+    "torch_max_reserved_per_chunk_mib": {
+     "median": 904.0,
+     "p90": 904.0,
+     "max": 904.0
+    },
+    "torch_alloc_after_infer_mib": {
+     "median": 555.1,
+     "max": 556.9
+    },
+    "nvsmi_used_max_mib": 1518,
+    "nvsmi_samples": 87,
+    "run": "outputs/verify/T38/B/runs/v4_b4_norec"
+   },
+   "b4_recorder_pending_after_infer": {
+    "median": 9.0,
+    "max": 9
+   }
+  },
+  "V5": {
+   "code": "5c72d37 (archive copy), benchmark.ag3s.config RECON_DEVICE=SUPPORT_RANSAC_DEVICE=SELF_FILTER_DEVICE=\"cpu\" set before build_server",
+   "recording": "E3b_ep1800_r2 seq 1-40 (warm 4 first)",
+   "reference": "tag b4f06ec V1 run on the same recording, seq 1-40",
+   "same_count": {
+    "actions_bytes": 40,
+    "verdict": 40,
+    "worst_row": 40,
+    "max_violation_m": 40,
+    "grasp": 40,
+    "has_target": 40,
+    "ag3s_status": 40,
+    "manipulated": 40,
+    "target_points": 40,
+    "esdf_tiers": 40,
+    "fused_cloud": 40,
+    "per_camera_cloud": 40,
+    "depth_masks": 40,
+    "response_non_time": 40
+   },
+   "n_chunks": 40,
+   "depth_mask_pixels": {
+    "pairs": 120,
+    "xor_px_total": 0,
+    "pairs_nonzero": 0
+   },
+   "record_chunks_arrays_identical": "44/44",
+   "record_summary_non_time_identical": "44/44",
+   "gpu_path_calls_per_chunk_cpu_fallback": {
+    "camera_front_end+_sphere_mask_device+_hypothesis_counts_device total over 40 chunks": 0
+   },
+   "gpu_path_calls_per_chunk_auto_same_seqs": {
+    "camera_front_end": [
+     3
+    ],
+    "_sphere_mask_device": [
+     3
+    ],
+    "_hypothesis_counts_device": [
+     2
+    ]
+   },
+   "total_ms_median_seq2_40_cpu_fallback": 1079.2684047482908,
+   "raw": "outputs/verify/T38/B/cmp/v5_ep1800_r2_tag_vs_b4cpu.json",
+   "run_dir": "outputs/verify/T38/B/runs/v5_b4cpu_ep1800_r2"
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t38/t38b-scene-mask.png",
+   "kind": "scene",
+   "sidecar": "t38b-scene-mask.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t38/t38b-stage-chain.png",
+   "kind": "graph",
+   "sidecar": "t38b-stage-chain.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t38/t38b-chunk-total.png",
+   "kind": "graph",
+   "sidecar": "t38b-chunk-total.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t38/t38b-equivalence.png",
+   "kind": "table",
+   "sidecar": "t38b-equivalence.json"
+  }
+ ],
+ "figure_script": "outputs/verify/T38/B/figs.py",
+ "baseline_check": {
+  "matched": true,
+  "note": "5c72d37: legacy 14/15 · 15/15 · -29.031048280806342 · 40798fb0a4d2; cuRobo 10/15 · 15/15 · -9.171877401271193 · fe73bd7a6ba6; per-frame clearance_before 15/15 equal to Phase A; another session's GPU process (pid 3071029, 105,544 MiB, util 0 %) present during both"
+ },
+ "verdict": "V1: 5 recordings x 14 items 75/75 equal, mask XOR 0 px, record npz 79/79 byte-equal, summary non-time leaves 79/79 equal. V3: both baselines equal to the skill values. V5: 40/40 equal to tag, 0 GPU-path calls. V2/V4: numbers only. No comparison differed.",
+ "not_measured": [
+  "V2 chains a and b ran with another session's GPU/CPU load (recorded per run); chain c ran with no other GPU process but host CPU load avg 18-51 (other sessions' CPU processes are not visible from this container)",
+  "tag (b4f06ec) has no background recorder; its V2/V4 recorded runs use the synchronous writer",
+  "nvidia-smi per-process memory: container pid differs from nvidia-smi pid; memory.used total is reported (valid as 'ours' only in the GPU-alone runs)",
+  "first-call JIT costs (warm pass) not reported",
+  "closed-loop (MuJoCo client) run on 5c72d37 not performed"
+ ]
+}

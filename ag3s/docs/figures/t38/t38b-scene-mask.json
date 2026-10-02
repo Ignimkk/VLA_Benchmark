@@ -1,0 +1,44 @@
+{
+ "run": "E3b_ep1800_r2",
+ "seq": 18,
+ "state": "latched (seq 19 = closing)",
+ "source": [
+  "outputs/verify/T38/B/runs/v1_b4_ep1800_r2/keep_T.npz",
+  "outputs/verify/T38/B/runs/v1_tag_ep1800_r2/keep_T.npz"
+ ],
+ "cameras": {
+  "head": {
+   "robot_mask_px_gpu": 52505,
+   "robot_mask_px_tag": 52505,
+   "mask_xor_px": 0,
+   "kept_px_gpu": 54841,
+   "kept_px_tag": 54841,
+   "kept_xor_px": 0,
+   "depth_input_differing_px": 0,
+   "uv_points_arrays": "equal",
+   "n_kept_points": 54841
+  },
+  "left_wrist": {
+   "robot_mask_px_gpu": 15810,
+   "robot_mask_px_tag": 15810,
+   "mask_xor_px": 0,
+   "kept_px_gpu": 10522,
+   "kept_px_tag": 10522,
+   "kept_xor_px": 0,
+   "depth_input_differing_px": 0,
+   "uv_points_arrays": "equal",
+   "n_kept_points": 10522
+  },
+  "right_wrist": {
+   "robot_mask_px_gpu": 9993,
+   "robot_mask_px_tag": 9993,
+   "mask_xor_px": 0,
+   "kept_px_gpu": 41584,
+   "kept_px_tag": 41584,
+   "kept_xor_px": 0,
+   "depth_input_differing_px": 0,
+   "uv_points_arrays": "equal",
+   "n_kept_points": 41584
+  }
+ }
+}

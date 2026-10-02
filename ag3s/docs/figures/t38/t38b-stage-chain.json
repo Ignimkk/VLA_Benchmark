@@ -1,0 +1,76 @@
+{
+ "source": "outputs/verify/T38/B/cmp/v2{a,b,c}_summary.json",
+ "bars": "chain c (GPU alone), median per stage, seq 2-75",
+ "codes": {
+  "b4f06ec (tag)": {
+   "scene_reconstruction": 541.4,
+   "support_surface": 80.3,
+   "target_grounding": 1327.5,
+   "esdf": 273.9,
+   "constraint_generation_minus_esdf": 573.7,
+   "timing.trajopt": 137.8,
+   "ag3s_minus_stages": 1.9,
+   "total_median": 2934.6,
+   "total_p90": 3293.8,
+   "le_533": "0/74",
+   "total_median_chain_a": 3067.1,
+   "total_median_chain_b": 2951.0
+  },
+  "1a35423 B1+B5": {
+   "scene_reconstruction": 512.4,
+   "support_surface": 90.0,
+   "target_grounding": 109.1,
+   "esdf": 281.8,
+   "constraint_generation_minus_esdf": 596.7,
+   "timing.trajopt": 137.6,
+   "ag3s_minus_stages": 2.1,
+   "total_median": 1733.2,
+   "total_p90": 1842.8,
+   "le_533": "0/74",
+   "total_median_chain_a": 1788.7,
+   "total_median_chain_b": 1784.8
+  },
+  "305dca1 B2": {
+   "scene_reconstruction": 470.8,
+   "support_surface": 96.3,
+   "target_grounding": 111.6,
+   "esdf": 252.0,
+   "constraint_generation_minus_esdf": 2.1,
+   "timing.trajopt": 131.3,
+   "ag3s_minus_stages": 2.6,
+   "total_median": 1086.4,
+   "total_p90": 1181.1,
+   "le_533": "0/74",
+   "total_median_chain_a": 1146.2,
+   "total_median_chain_b": 1147.4
+  },
+  "044ecc4 B3": {
+   "scene_reconstruction": 470.4,
+   "support_surface": 93.0,
+   "target_grounding": 107.5,
+   "esdf": 67.9,
+   "constraint_generation_minus_esdf": 2.7,
+   "timing.trajopt": 64.2,
+   "ag3s_minus_stages": 2.0,
+   "total_median": 828.4,
+   "total_p90": 916.1,
+   "le_533": "0/74",
+   "total_median_chain_a": 922.7,
+   "total_median_chain_b": 869.0
+  },
+  "5c72d37 B4": {
+   "scene_reconstruction": 53.4,
+   "support_surface": 8.0,
+   "target_grounding": 58.2,
+   "esdf": 139.6,
+   "constraint_generation_minus_esdf": 3.1,
+   "timing.trajopt": 71.3,
+   "ag3s_minus_stages": 1.6,
+   "total_median": 314.5,
+   "total_p90": 375.2,
+   "le_533": "74/74",
+   "total_median_chain_a": 367.4,
+   "total_median_chain_b": 309.3
+  }
+ }
+}
