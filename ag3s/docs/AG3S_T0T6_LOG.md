@@ -261,7 +261,7 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 |---|---|
 | **chunk period (청크 주기) 533 ms** | 정책이 한 번에 내는 8 step 을 15 Hz 로 실행하는 시간(8 / 15 s). 서버가 한 chunk 의 AG3S + TO 를 이 안에 끝내야 실시간이다. T38 의 "≤ 533 ms" 는 **AG3S + TO 만**을 말하며 π0.5 추론과 client–server 전송은 포함하지 않는다 |
 | **tag `pre-gpu-parallel-20261001` (= `b4f06ec`)** | T38 이전 코드의 되돌아올 지점. T38 의 모든 "before" 는 이 tag 를 `git archive` 한 사본이다 |
-| **worktree · 브랜치 `o4-gpu-parallel`** | main 을 건드리지 않으려고 `/mnt/dev/work-o4` 에 따로 둔 작업 사본. T38 코드는 여기에만 있고 **main 에 병합되지 않았다** (병합은 사용자 판정) |
+| **worktree · 브랜치 `o4-gpu-parallel`** | main 을 건드리지 않으려고 `/mnt/dev/work-o4` 에 따로 둔 작업 사본. T38 코드는 여기에만 있고 ~~**main 에 병합되지 않았다** (병합은 사용자 판정)~~ → main 에 merge 됨 (`2016f30`, 2026-10-02, 다른 세션 work-dd; 회귀 · 기준선 비트 동일 — `MERGE-o4` 문서, `handoff/MERGE-o4.verify.json`: 기준선 일치 legacy 4/4 · cuRobo 4/4) |
 | **bit-identical (비트 동일)** | 허용오차(`1e-9` 같은 것) 없이 출력 바이트가 한 비트도 다르지 않은 것. T38 은 refined actions (float32 바이트), ESDF tier 의 sha256, record npz 배열 전부에서 이것을 요구했다. 앞의 "비트 단위 재현" 은 같은 코드를 여러 번 돌려도 같다는 뜻이고, 이쪽은 **코드를 바꿨는데도** 같다는 뜻이다 |
 | **H2D / D2H** | Host-to-Device / Device-to-Host. CPU 메모리 → GPU 메모리 복사, 그 반대. PCIe 를 건너므로 호출마다 고정비가 있고 크기에 비례해 시간이 든다. T38 은 청크당 D2H 50 MB 를 줄이는 것을 목표 중 하나로 삼았다 |
 | **KD-tree `workers`** | `scipy.spatial.cKDTree` 의 `query` · `query_ball_point` 가 질의를 나눠 돌릴 스레드 수. `-1` 은 "모든 코어" 라서 256 코어 기계에서는 **질의마다 스레드 수천 개를 만들고 거둔다.** 결과는 `workers` 와 무관하게 같고 비용만 다르다 |
@@ -329,9 +329,13 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | ↳ T35-diag | T34 실패 4 run 은 왜 못 드나 (오프라인) | 4 run 모두 접촉 중점이 사과 중심보다 **+3.8 ~ +15.1 mm 위**. 접촉을 잃은 chunk 의 손끝 편차 30.1·35.0 mm 는 `continuity` 를 끄면 0.0 (ep1808), ep1800 r1 은 `collision` 을 끄면 4.8 mm. 같은 에피소드 VLA 단독 E0 도 1800·1808 에서 1/2. `attach_revoked` 는 맞았다 (2026-09-30 10:12) |
 | ↳ T36 | cuRobo 회귀 기준선 (둘째 기준) | cuRobo 단독 4 회 비트 단위 재현 **10/15 · 15/15 · −9.171877401271193 mm**, legacy **14/15 · 15/15 · −29.031048280806342 mm**. 덮지 않는 경로 명시. skill 갱신 (루트 `7348d9e`) (2026-09-30 10:34) |
 | ↳ T37 | K1: 닫기·쥐기 구간 `continuity` off | E3a **3/6** · E3b **3/6** (T34 5/6 · 3/6). closing/held 손끝 편차 중앙 7.8–8.4 → 0.0–0.3 mm 이나 실패 접촉 높이 +3.8 ~ +12.9 mm 그대로 (54 run 중 실패 18/21 이 +3 mm 위), 부호 반전 1.44 → 2.47/s. **사용자 판정 O2: 기본 off** (2026-10-01) |
-| ↳ T38 | **O4 실시간: AG3S 를 GPU 로** (cuRobo 와 같은 원리). Phase A profile → Phase B B1–B5 → 독립 검증 V1–V5 | **O4 완료 — 브랜치 `o4-gpu-parallel` 에서, main 병합 대기**(2026-10-02). replay 의 AG3S + TO 중앙 **2,934.6 → 314.5 ms** (p90 375.2), chunk period 533 ms 안 **74/74** (tag 0/74). 5 기록 × 14 항목 **bit-identical**, 두 기준선 동일, CPU fallback 동일. **미측정: 5c72d37 로 닫힌 루프(MuJoCo client) · π0.5 추론 · 전송.** 아래 **"T38"** 절 |
+| ↳ T38 | **O4 실시간: AG3S 를 GPU 로** (cuRobo 와 같은 원리). Phase A profile → Phase B B1–B5 → 독립 검증 V1–V5 | **O4 완료**(2026-10-02) — ~~브랜치 `o4-gpu-parallel` 에서, main 병합 대기~~ → main 에 merge 됨 (`2016f30`, 2026-10-02, 다른 세션 work-dd; 회귀 · 기준선 비트 동일 — `MERGE-o4` 문서, `handoff/MERGE-o4.verify.json`: 기준선 일치 legacy 4/4 · cuRobo 4/4). replay 의 AG3S + TO 중앙 **2,934.6 → 314.5 ms** (p90 375.2), chunk period 533 ms 안 **74/74** (tag 0/74). 5 기록 × 14 항목 **bit-identical**, 두 기준선 동일, CPU fallback 동일. **미측정: 5c72d37 로 닫힌 루프(MuJoCo client) · π0.5 추론 · 전송.** 아래 **"T38"** 절 |
 | ↳ T39 | **O1 큰 N**: E0 (VLA 단독) 대 E3b (AG3S + ESDF + TO, gate · HOLD) 를 같은 (episode, seed) 로 짝지어 24 episode × 2 seed = 48 쌍 (96 run). S1 = policy seed 입구 · deterministic warmup, S2-1 = 서로 다른 서버 둘에서 비트 동일 수락 | **O1 측정 완료**(2026-10-02, 판정 대기) — 96 run 전부 완료 (실패 시도 0). success **E0 30/48 · E3b 29/48**, 짝 2×2 (둘 다 22 · E0 만 8 · E3b 만 7 · 둘 다 아님 11), exact McNemar p = **1.0**. E3b HOLD 294 chunk (18 run). 갈린 15 쌍의 first-divergence chunk 는 15/15 가 chunk 2, 그 chunk 에서 gate `execute` · 최대 위반 0.0 m. 미측정은 재측정 대기 11–16 (server infer 분해 · E0 server 시간 …). 위 "열린 문제 O1–O12" 행의 순서 (3) O1 은 이 행으로 측정됐다 |
-| ↳ 열린 문제 O1–O12 | 다음 순서 | (1) O2 + O12 → 전 작업공간 commit + tag → (2) O4 실시간(GPU 병렬) → (3) O1 큰 N (GPU 공유 확인) → (4) O5 → (5) O10·O11 (2026-10-01) |
+| ↳ 열린 문제 O1–O12 | 다음 순서 | ~~(1) O2 + O12 → 전 작업공간 commit + tag → (2) O4 실시간(GPU 병렬) → (3) O1 큰 N (GPU 공유 확인) → (4) O5 → (5) O10·O11 (2026-10-01)~~ → **O1 측정 완료 (T39, 2026-10-02) — E0 30/48 · E3b 29/48, McNemar p 1.0** (순서 (2) O4 는 위 T38 행 — main 에 merge 됨) |
+| ↳ O13 | **end-to-end 는 아직 실시간이 아니다** (T38 의 533 ms 는 AG3S + TO 만) | **열림** (T39, `AG3S_GRASP_FIX_PLAN.md` §7) — E3b chunk round trip 중앙 1,292.2 ms · p95 1,644.5 ms 가 533.3 ms chunk period 를 3,552 / 3,552 chunk 에서 넘는다. 구성은 `verify.json` 기준 server infer 561.4 · AG3S 353.5 · TO 79.0 · 전송 + client 214.0 ms (중앙). infer 분해는 재측정 대기 11 |
+| ↳ O14 | TO 가 execute chunk 에서도 정책 action 을 바꾼다 | **열림** (T39, plan §7) — a (E3b 실행 chunk − 정책 원출력) gate `execute` chunk 3,306 개에서 중앙 9.03e-3 · 최대 0.300. 바뀐 양을 목적 항별로 분해한 측정은 없다 |
+| ↳ O15 | 짝지은 비교의 한계: 같은 seed · 같은 상태에서도 두 조건의 정책 출력이 다르다 | **열림** (T39, plan §7) — b 중앙 chunk 1 5.87e-8 · chunk 2 1.36e-3 (c 2.23e-8) · chunk 5 0.101. 갈린 15 쌍의 원인은 이 기록으로 가릴 수 없다 (재측정 대기 13) |
+| ↳ O16 | 새 episode 에서 HOLD 가 난다 | **열림** (T39, plan §7) — E3b 18 / 48 run · 294 chunk (`collision` 198 · `uncertified` 89 · `unverified` 62). HOLD 가 있는 run success 13 / 18, 없는 run 16 / 30. 사유별 대표 chunk 확인은 안 했다 |
 
 ### 이 국면에서 쓰는 자산
 
@@ -3704,7 +3708,7 @@ K1 의 손끝 편차 효과는 확인됐지만 **실패를 고치지 못했고**
 | 2026-10-02 07:31 | **B4** `5c72d37` (`0339914`) | scene reconstruction · support RANSAC 을 GPU 로 |
 | 2026-10-02 (≈ 09:11, 파일 수정 시각) | **독립 검증 완료** (`T38.verify.json`) | V1–V5, 모든 비교에서 차이 없음 |
 
-main 에는 병합하지 않았다. 병합은 사용자 판정이다.
+~~main 에는 병합하지 않았다. 병합은 사용자 판정이다.~~ → main 에 merge 됨 (`2016f30`, 2026-10-02, 다른 세션 work-dd; 회귀 · 기준선 비트 동일 — `MERGE-o4` 문서, `handoff/MERGE-o4.verify.json`: 기준선 일치 legacy 4/4 · cuRobo 4/4).
 
 ---
 
@@ -4049,18 +4053,18 @@ verifier 수치 (chain a · b · c):
 | KD-tree 병렬 | `workers=1` | `workers=-1`(기존) · `workers=8` (micro: 9.2 → 68.5 ms 로 오히려 느림) | 질의 점 수가 수십만으로 커지면 (grounding 입력이 지금 3–4 천 점) |
 | GPU 로 옮기는 범위 | 점군 · tier · RANSAC 수 세기. `fuse`(CPU 15 ms) · SVD refit · 최종 inlier 선택은 CPU | `fuse` 를 GPU 로 (구현자 제안: 15 → ≈ 4 ms, D2H ≈ 1.2 MB 감소 — 목표 안이라 안 함) · 3 카메라 batched 적분 (적분 의미가 바뀔 수 있어 안 함) | 533 ms 여유가 모자라질 때 (chain a 의 62/74) |
 | `ConstraintBuilder` (CasADi) | 그대로 둠 (0.18 ms) | 제거 | 비용이 커질 때 |
-| **병합** | **브랜치 `o4-gpu-parallel` 에서 멈춤** (main 은 병합 전) | 병합 | **사용자 판정.** 병합 전에 닫힌 루프 시험(재측정 대기 8)을 권한다 |
+| **병합** | ~~**브랜치 `o4-gpu-parallel` 에서 멈춤** (main 은 병합 전)~~ → main 에 merge 됨 (`2016f30`, 2026-10-02, 다른 세션 work-dd; 회귀 · 기준선 비트 동일 — `MERGE-o4` 문서, `handoff/MERGE-o4.verify.json`: 기준선 일치 legacy 4/4 · cuRobo 4/4) | 병합 | **사용자 판정.** 병합 전에 닫힌 루프 시험(재측정 대기 8)을 권한다 |
 
 **되돌아오는 방법.** tag `pre-gpu-parallel-20261001` (`b4f06ec`) 로 돌아가면 T38 이전이다. 브랜치 안에서는 `RECON_DEVICE` · `SUPPORT_RANSAC_DEVICE` · `SELF_FILTER_DEVICE = "cpu"` (V5 가 확인) 와 `KDTREE_WORKERS` · `ESDF_QUERY_HOST_ARITH_MAX_POINTS` 가 각각 단일 설정점이다. B5 background recorder 는 `ConstraintRecordWriter(background=False)` 가 기본값이고 `serve_safe` 만 `True` 로 만든다.
 
 ### 이 STEP 의 산출물
 
-- 코드: 브랜치 `o4-gpu-parallel` 의 `1a35423` · `305dca1` · `044ecc4` · `5c72d37` (benchmark repo, **main 미병합**). 루트 repo 테스트 `d12eca3` · `9a107c6` · `4fa71b7` · `0339914` (`tests/o4/`, main 에서는 skip). 되돌아올 지점: tag `pre-gpu-parallel-20261001`.
+- 코드: 브랜치 `o4-gpu-parallel` 의 `1a35423` · `305dca1` · `044ecc4` · `5c72d37` (benchmark repo, ~~**main 미병합**~~ → main 에 merge 됨 (`2016f30`, 2026-10-02, 다른 세션 work-dd; 회귀 · 기준선 비트 동일 — `MERGE-o4` 문서, `handoff/MERGE-o4.verify.json`: 기준선 일치 legacy 4/4 · cuRobo 4/4)). 루트 repo 테스트 `d12eca3` · `9a107c6` · `4fa71b7` · `0339914` (`tests/o4/`, main 에서는 skip). 되돌아올 지점: tag `pre-gpu-parallel-20261001`.
 - 측정: `handoff/T38.profile.verify.json` · `handoff/T38.verify.json`. raw 는 `outputs/verify/T38/` (Phase A) · `outputs/verify/T38/B/` (V1–V5: `runs/` · `cmp/` · `baseline/`).
 - 구현 보고: `handoff/T38-B1B5.impl.md` · `T38-B2.impl.md` · `T38-B3.impl.md` · `T38-B4.impl.md`.
 - figure: `figures/t38/` — Phase A `t38-stage-bars` · `t38-pipeline-map` · `t38-function-table` · `t38-input-sizes` · `t38-scene`, Phase B `t38b-stage-chain` · `t38b-chunk-total` · `t38b-equivalence` · `t38b-scene-mask` (각각 `.json` sidecar 가 있다).
 
-**다음 판정은 사용자에게 있다:** (1) 브랜치를 main 에 병합할 것인가, (2) 병합 전에 `5c72d37` 로 닫힌 루프를 한 번 돌릴 것인가, (3) 정체의 원인을 따로 STEP 으로 쫓을 것인가. 열린 문제 표의 O4 행(위 T35–T37 절, "실시간이 안 된다")은 이 절 앞의 상태 기록이다.
+**다음 판정은 사용자에게 있다:** ~~(1) 브랜치를 main 에 병합할 것인가,~~ (→ main 에 merge 됨 (`2016f30`, 2026-10-02, 다른 세션 work-dd; 회귀 · 기준선 비트 동일 — `MERGE-o4` 문서, `handoff/MERGE-o4.verify.json`: 기준선 일치 legacy 4/4 · cuRobo 4/4)) (2) 병합 전에 `5c72d37` 로 닫힌 루프를 한 번 돌릴 것인가, (3) 정체의 원인을 따로 STEP 으로 쫓을 것인가. 열린 문제 표의 O4 행(위 T35–T37 절, "실시간이 안 된다")은 이 절 앞의 상태 기록이다.
 
 
 ---
