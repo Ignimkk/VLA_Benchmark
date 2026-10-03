@@ -1,0 +1,318 @@
+{
+ "pair": {
+  "episode": 1828,
+  "seed": 18282,
+  "on_d_run": "/mnt/dev/work/outputs/verify/SUBTASK-d/runs/E3bG/E3bG_ep1828_s18282",
+  "on_e_run": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/E3bG_ep1828_s18282"
+ },
+ "cells": [
+  {
+   "side": "on_d",
+   "label": "\ud574\uc81c -1 chunk",
+   "t": 31,
+   "mp4_frame": 247,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-d/runs/E3bG/server_8232_20261002T190400/server_constraints/run_0000/chunk_00555.npz",
+   "latch": "placed",
+   "subtask_label": "place",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "ok",
+   "server_verdict_reason_kinds": [
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only"
+   ],
+   "hold": false,
+   "hold_kinds": [],
+   "gate_action": "execute",
+   "clearance_min_mm": 48.26463386416435,
+   "manipulated_id": 0,
+   "exclusion": {
+    "active": true,
+    "source": "manipulated",
+    "mechanism": [
+     "target_free_layer",
+     "contact_margin"
+    ]
+   },
+   "esdf_slice_z_m": 0.857841486930847,
+   "apple_true_base": [
+    0.57040551427916,
+    -0.024676952365708982,
+    0.8594914274638613
+   ],
+   "n_target_points": 37
+  },
+  {
+   "side": "on_d",
+   "label": "\ud574\uc81c chunk",
+   "t": 32,
+   "mp4_frame": 255,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-d/runs/E3bG/server_8232_20261002T190400/server_constraints/run_0000/chunk_00556.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": "first",
+   "released": true,
+   "grounding_status": "subtask_gated",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 4.2218840681016445,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8586126899719237,
+   "apple_true_base": [
+    0.5708904621381725,
+    -0.024591500531769124,
+    0.8594574154582241
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_d",
+   "label": "\ud574\uc81c +3 chunk",
+   "t": 35,
+   "mp4_frame": 279,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-d/runs/E3bG/server_8232_20261002T190400/server_constraints/run_0000/chunk_00559.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": "first",
+   "released": false,
+   "grounding_status": "subtask_gated",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 2.770800609141588,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8583120393753051,
+   "apple_true_base": [
+    0.5709391998355478,
+    -0.024549576383960856,
+    0.859496608349414
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_d",
+   "label": "\ud574\uc81c +43 chunk",
+   "t": 75,
+   "mp4_frame": 599,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-d/runs/E3bG/server_8232_20261002T190400/server_constraints/run_0000/chunk_00599.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": "first",
+   "released": false,
+   "grounding_status": "subtask_gated",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 3.743025939911604,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8579092264175414,
+   "apple_true_base": [
+    0.5708193537367682,
+    -0.02449350168516054,
+    0.8594954627161555
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_e",
+   "label": "\ud574\uc81c -1 chunk",
+   "t": 31,
+   "mp4_frame": 247,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8232_20261003T052013/server_constraints/run_0000/chunk_00555.npz",
+   "latch": "placed",
+   "subtask_label": "place",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "ok",
+   "server_verdict_reason_kinds": [
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only"
+   ],
+   "hold": false,
+   "hold_kinds": [],
+   "gate_action": "execute",
+   "clearance_min_mm": 48.26463386416435,
+   "manipulated_id": 0,
+   "exclusion": {
+    "active": true,
+    "source": "manipulated",
+    "mechanism": [
+     "target_free_layer",
+     "contact_margin"
+    ]
+   },
+   "esdf_slice_z_m": 0.857841486930847,
+   "apple_true_base": [
+    0.57040551427916,
+    -0.024676952365708982,
+    0.8594914274638613
+   ],
+   "n_target_points": 37
+  },
+  {
+   "side": "on_e",
+   "label": "\ud574\uc81c chunk",
+   "t": 32,
+   "mp4_frame": 255,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8232_20261003T052013/server_constraints/run_0000/chunk_00556.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": "first",
+   "released": true,
+   "grounding_status": "subtask_gated",
+   "server_verdict_reason_kinds": [
+    "subtask_no_target",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "subtask_no_target"
+   ],
+   "hold": false,
+   "hold_kinds": [],
+   "gate_action": "execute",
+   "clearance_min_mm": 4.2218840681016445,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8586126899719237,
+   "apple_true_base": [
+    0.5708904621381725,
+    -0.024591500531769124,
+    0.8594574154582241
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_e",
+   "label": "\ud574\uc81c +3 chunk",
+   "t": 35,
+   "mp4_frame": 279,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8232_20261003T052013/server_constraints/run_0000/chunk_00559.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 52.07418650388718,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8573111772537231,
+   "apple_true_base": [
+    0.5708906990529719,
+    -0.02446061180978447,
+    0.859496608349414
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_e",
+   "label": "\ud574\uc81c +43 chunk",
+   "t": 75,
+   "mp4_frame": 599,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8232_20261003T052013/server_constraints/run_0000/chunk_00599.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 51.310766488313675,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8589836835861205,
+   "apple_true_base": [
+    0.5708193537367682,
+    -0.02449350168516054,
+    0.8594954627161555
+   ],
+   "n_target_points": 0
+  }
+ ]
+}

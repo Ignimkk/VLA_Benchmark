@@ -1,0 +1,275 @@
+{
+ "paired_2x2": {
+  "off_vs_on_e:success": {
+   "both": 28,
+   "off_only": 1,
+   "on_e_only": 0,
+   "neither": 19,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "off_vs_on_e:grasp": {
+   "both": 34,
+   "off_only": 1,
+   "on_e_only": 0,
+   "neither": 13,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "off_vs_on_e:place": {
+   "both": 28,
+   "off_only": 1,
+   "on_e_only": 0,
+   "neither": 19,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "on_d_vs_on_e:success": {
+   "both": 28,
+   "on_d_only": 0,
+   "on_e_only": 0,
+   "neither": 20,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "on_d_vs_on_e:grasp": {
+   "both": 34,
+   "on_d_only": 0,
+   "on_e_only": 0,
+   "neither": 14,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "on_d_vs_on_e:place": {
+   "both": 28,
+   "on_d_only": 0,
+   "on_e_only": 0,
+   "neither": 20,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "off_vs_on_d:success": {
+   "both": 28,
+   "off_only": 1,
+   "on_d_only": 0,
+   "neither": 19,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "off_vs_on_d:grasp": {
+   "both": 34,
+   "off_only": 1,
+   "on_d_only": 0,
+   "neither": 13,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "off_vs_on_d:place": {
+   "both": 28,
+   "off_only": 1,
+   "on_d_only": 0,
+   "neither": 19,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  }
+ },
+ "identity_summary": {
+  "n_pairs": 48,
+  "n_fully_identical": 24,
+  "n_identical_before_t_gh_d": 48,
+  "n_identical_before_t_rel_d": 48,
+  "n_pairs_with_t_rel_d": 24,
+  "n_pairs_with_t_gh_d": 24,
+  "earliest_minus_t_gh_d": {
+   "0": 24
+  },
+  "t_gh_d_minus_t_rel_d": {
+   "0": 23,
+   "1": 1
+  },
+  "n_t_rel_e_equal_t_rel_d": 48,
+  "exec_first_chunk_minus_t_gh_d": {
+   "0": 24
+  },
+  "decision_first_t_minus_t_gh_d": {
+   "0": 24
+  },
+  "decision_fields_at_first": {
+   "to_status": 24
+  },
+  "pairs_without_t_gh_d_but_differing": []
+ },
+ "top": [
+  [
+   "baseline legacy",
+   "14/15 \u00b7 15/15 \u00b7 -29.031048280806342",
+   "True"
+  ],
+  [
+   "baseline curobo",
+   "10/15 \u00b7 15/15 \u00b7 -9.171877401271193",
+   "True"
+  ],
+  [
+   "V0 gate off E3b_ep1807_s18071 vs T39",
+   "executed True \u00b7 planning True \u00b7 npz other [] \u00b7 frames other []",
+   "True"
+  ],
+  [
+   "V0 gate off E3b_ep1800_s18001 vs T39",
+   "executed True \u00b7 planning True \u00b7 npz other [] \u00b7 frames other []",
+   "True"
+  ],
+  [
+   "on_e vs on_d identity",
+   "fully identical 24/48 \u00b7 identical before first gated HOLD (t_gh_d) 48/48 \u00b7 before release (t_rel_d) 48/48",
+   "first diff - t_gh_d: {\"0\": 24}"
+  ]
+ ],
+ "rows": [
+  [
+   "runs",
+   "48",
+   "48",
+   "48"
+  ],
+  [
+   "success / grasp / place",
+   "29 / 35 / 29",
+   "28 / 34 / 28",
+   "28 / 34 / 28"
+  ],
+  [
+   "runs latch PLACED / runs released",
+   "25 / 0",
+   "24 / 24",
+   "24 / 24"
+  ],
+  [
+   "HOLD chunks / runs with HOLD",
+   "294 / 18",
+   "1198 / 34",
+   "446 / 24"
+  ],
+  [
+   "HOLD kinds (all chunks)",
+   "{\"collision\": 198, \"uncertified\": 89, \"unverified\": 62}",
+   "{\"collision\": 209, \"uncertified\": 984, \"unverified\": 62}",
+   "{\"collision\": 207, \"uncertified\": 232, \"unverified\": 62}"
+  ],
+  [
+   "from release: HOLD / chunks",
+   "0 / 0",
+   "984 / 984",
+   "232 / 984"
+  ],
+  [
+   "from release: HOLD kinds",
+   "{}",
+   "{\"collision\": 2, \"uncertified\": 984}",
+   "{\"uncertified\": 232}"
+  ],
+  [
+   "from release: grounding_status",
+   "{}",
+   "{\"no_admissible\": 1, \"subtask_gated\": 983}",
+   "{\"no_admissible\": 232, \"subtask_gated\": 752}"
+  ],
+  [
+   "from release: TO status",
+   "{}",
+   "{\"violated\": 984}",
+   "{\"feasible\": 733, \"optimal\": 19, \"violated\": 232}"
+  ],
+  [
+   "from release: clearance min mm / chunks < 0",
+   "- / 0",
+   "-1.4 / 2",
+   "0.2 / 0"
+  ],
+  [
+   "before release: HOLD / chunks",
+   "294 / 3600",
+   "214 / 2616",
+   "214 / 2616"
+  ],
+  [
+   "subtask_no_target chunks (client / server) / runs",
+   "0 / 0 / 0",
+   "0 / 0 / 0",
+   "752 / 752 / 24"
+  ],
+  [
+   "subtask_no_target by region",
+   "{}",
+   "{}",
+   "{\"from_release\": 752}"
+  ],
+  [
+   "subtask_no_target by blocked",
+   "{}",
+   "{}",
+   "{\"first\": 752}"
+  ],
+  [
+   "subtask_no_target chunks that are HOLD",
+   "0",
+   "0",
+   "0"
+  ],
+  [
+   "gate blocked = first chunks (all)",
+   "0",
+   "983",
+   "752"
+  ],
+  [
+   "pose: ||q_L - q_ready|| at ref, median rad",
+   "1.37",
+   "1.16",
+   "1.15"
+  ],
+  [
+   "pose: ||q_L - q_ready|| last step, median rad",
+   "0.12",
+   "1.15",
+   "0.11"
+  ],
+  [
+   "pose: EE distance to step 0, last step, median mm",
+   "25",
+   "312",
+   "25"
+  ],
+  [
+   "pose: left-arm path from ref, median rad",
+   "1.96",
+   "0.05",
+   "1.31"
+  ],
+  [
+   "pose: ref kind (runs)",
+   "{\"placed\": 25}",
+   "{\"release\": 24}",
+   "{\"release\": 24}"
+  ],
+  [
+   "MuJoCo contact steps from ref (robot vs object)",
+   "{}",
+   "{}",
+   "{}"
+  ],
+  [
+   "clearance min over runs mm / chunks < 0",
+   "-47.1 / 329",
+   "-47.1 / 339",
+   "-47.1 / 337"
+  ],
+  [
+   "SQP time-budget hits (chunks)",
+   "0",
+   "0",
+   "0"
+  ]
+ ]
+}
