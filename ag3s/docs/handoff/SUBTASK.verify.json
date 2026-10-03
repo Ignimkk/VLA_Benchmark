@@ -1,0 +1,526 @@
+{
+ "_comment": "ag3s-verifier. SUBTASK (a) numbers (2026-09-30 text-decode / score probe) recomputed from raw json; numbers and paths only.",
+ "step": "SUBTASK",
+ "date": "2026-10-02T20:17:04+00:00",
+ "runs": [
+  {
+   "id": "recompute_a",
+   "command": "python3 outputs/verify/SUBTASK-d/s4/recompute_subtask_a.py",
+   "venv": "system python3 (numpy)",
+   "inputs": [
+    "outputs/verify/subtask_probe/episode.json",
+    "outputs/verify/subtask_probe/discover.json",
+    "outputs/verify/subtask_probe/smoke.json",
+    "outputs/verify/subtask_probe/auroc.json",
+    "benchmark/ag3s/docs/figures/subtask/subtask-accuracy-table.json"
+   ],
+   "raw_output": "outputs/verify/SUBTASK-d/s4/subtask_a_recomputed.json"
+  },
+  {
+   "id": "llm_weight_diff",
+   "command": "JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= XLA_PYTHON_CLIENT_PREALLOCATE=false .venv-openpi-live/bin/python outputs/verify/SUBTASK-d/s4/llm_weight_diff.py",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/SUBTASK-d/s4/llm_weight_diff.json",
+   "stdout_log": "outputs/verify/SUBTASK-d/s4/llm_weight_diff.log"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "73dcb37",
+  "dirty_files": [],
+  "note": "no code modified; scripts only under outputs/verify/SUBTASK-d/s4/"
+ },
+ "numbers": {
+  "frames": {
+   "total": 246,
+   "per_run": {
+    "ep1807_apple": {
+     "n": 75,
+     "phase_counts": {
+      "reach": 19,
+      "held": 13,
+      "released": 43
+     }
+    },
+    "ep0_orange": {
+     "n": 57,
+     "phase_counts": {
+      "reach": 8,
+      "held": 7,
+      "released": 42
+     }
+    },
+    "ep500_banana": {
+     "n": 57,
+     "phase_counts": {
+      "reach": 7,
+      "held": 8,
+      "released": 42
+     }
+    },
+    "ep1200_pear": {
+     "n": 57,
+     "phase_counts": {
+      "reach": 18,
+      "held": 8,
+      "released": 31
+     }
+    }
+   },
+   "released_frames": 158
+  },
+  "template_discovery": {
+   "n_templates": 14,
+   "frames_t_step": [
+    0,
+    200,
+    320
+   ],
+   "variants": [
+    "base",
+    "ft16d",
+    "ft_nolora"
+   ],
+   "class_counts": {
+    "base": {
+     "english": 27,
+     "empty": 6,
+     "non_english(action tokens)": 9
+    },
+    "ft16d": {
+     "english": 10,
+     "empty": 2,
+     "non_english(action tokens)": 30
+    },
+    "ft_nolora": {
+     "english": 15,
+     "empty": 1,
+     "non_english(action tokens)": 26
+    }
+   },
+   "class_rule": "english = non-empty and < 20 % of characters with ord > 127; empty = whitespace only; else non_english (action tokens)",
+   "table": "outputs/verify/SUBTASK-d/s4/subtask_a_recomputed.json#template_discovery"
+  },
+  "generation_246_frames": {
+   "base": {
+    "T;nl": {
+     "n": 246,
+     "n_correct": 60,
+     "accuracy": 0.24390243902439024,
+     "n_action_tokens": 33,
+     "action_token_rate": 0.13414634146341464,
+     "object_name_n": 207,
+     "object_name_ok_n": 111,
+     "object_name_ok": 0.5362318840579711,
+     "held_action_tokens_by_run": {
+      "ep1807_apple": [
+       0,
+       13
+      ],
+      "ep0_orange": [
+       0,
+       7
+      ],
+      "ep500_banana": [
+       0,
+       8
+      ],
+      "ep1200_pear": [
+       0,
+       8
+      ]
+     }
+    },
+    "p_nl": {
+     "n": 246,
+     "n_correct": 51,
+     "accuracy": 0.2073170731707317,
+     "n_action_tokens": 0,
+     "action_token_rate": 0.0,
+     "object_name_n": 230,
+     "object_name_ok_n": 130,
+     "object_name_ok": 0.5652173913043478,
+     "held_action_tokens_by_run": {
+      "ep1807_apple": [
+       0,
+       13
+      ],
+      "ep0_orange": [
+       0,
+       7
+      ],
+      "ep500_banana": [
+       0,
+       8
+      ],
+      "ep1200_pear": [
+       0,
+       8
+      ]
+     }
+    },
+    "T.Sub_causal": {
+     "n": 246,
+     "n_correct": 50,
+     "accuracy": 0.2032520325203252,
+     "n_action_tokens": 18,
+     "action_token_rate": 0.07317073170731707,
+     "object_name_n": 224,
+     "object_name_ok_n": 67,
+     "object_name_ok": 0.29910714285714285,
+     "held_action_tokens_by_run": {
+      "ep1807_apple": [
+       1,
+       13
+      ],
+      "ep0_orange": [
+       2,
+       7
+      ],
+      "ep500_banana": [
+       0,
+       8
+      ],
+      "ep1200_pear": [
+       0,
+       8
+      ]
+     }
+    }
+   },
+   "ft16d": {
+    "T;nl": {
+     "n": 246,
+     "n_correct": 42,
+     "accuracy": 0.17073170731707318,
+     "n_action_tokens": 118,
+     "action_token_rate": 0.4796747967479675,
+     "object_name_n": 71,
+     "object_name_ok_n": 0,
+     "object_name_ok": 0.0,
+     "held_action_tokens_by_run": {
+      "ep1807_apple": [
+       13,
+       13
+      ],
+      "ep0_orange": [
+       7,
+       7
+      ],
+      "ep500_banana": [
+       3,
+       8
+      ],
+      "ep1200_pear": [
+       7,
+       8
+      ]
+     }
+    },
+    "p_nl": {
+     "n": 246,
+     "n_correct": 87,
+     "accuracy": 0.35365853658536583,
+     "n_action_tokens": 58,
+     "action_token_rate": 0.23577235772357724,
+     "object_name_n": 65,
+     "object_name_ok_n": 6,
+     "object_name_ok": 0.09230769230769231,
+     "held_action_tokens_by_run": {
+      "ep1807_apple": [
+       13,
+       13
+      ],
+      "ep0_orange": [
+       7,
+       7
+      ],
+      "ep500_banana": [
+       3,
+       8
+      ],
+      "ep1200_pear": [
+       7,
+       8
+      ]
+     }
+    },
+    "T.Sub_causal": {
+     "n": 246,
+     "n_correct": 27,
+     "accuracy": 0.10975609756097561,
+     "n_action_tokens": 169,
+     "action_token_rate": 0.6869918699186992,
+     "object_name_n": 50,
+     "object_name_ok_n": 0,
+     "object_name_ok": 0.0,
+     "held_action_tokens_by_run": {
+      "ep1807_apple": [
+       13,
+       13
+      ],
+      "ep0_orange": [
+       7,
+       7
+      ],
+      "ep500_banana": [
+       7,
+       8
+      ],
+      "ep1200_pear": [
+       8,
+       8
+      ]
+     }
+    }
+   },
+   "ft_nolora": {
+    "T;nl": {
+     "n": 246,
+     "n_correct": 59,
+     "accuracy": 0.23983739837398374,
+     "n_action_tokens": 71,
+     "action_token_rate": 0.2886178861788618,
+     "object_name_n": 98,
+     "object_name_ok_n": 1,
+     "object_name_ok": 0.01020408163265306,
+     "held_action_tokens_by_run": {
+      "ep1807_apple": [
+       12,
+       13
+      ],
+      "ep0_orange": [
+       7,
+       7
+      ],
+      "ep500_banana": [
+       2,
+       8
+      ],
+      "ep1200_pear": [
+       2,
+       8
+      ]
+     }
+    },
+    "p_nl": {
+     "n": 246,
+     "n_correct": 117,
+     "accuracy": 0.47560975609756095,
+     "n_action_tokens": 31,
+     "action_token_rate": 0.12601626016260162,
+     "object_name_n": 108,
+     "object_name_ok_n": 8,
+     "object_name_ok": 0.07407407407407407,
+     "held_action_tokens_by_run": {
+      "ep1807_apple": [
+       12,
+       13
+      ],
+      "ep0_orange": [
+       6,
+       7
+      ],
+      "ep500_banana": [
+       2,
+       8
+      ],
+      "ep1200_pear": [
+       0,
+       8
+      ]
+     }
+    },
+    "T.Sub_causal": {
+     "n": 246,
+     "n_correct": 95,
+     "accuracy": 0.3861788617886179,
+     "n_action_tokens": 44,
+     "action_token_rate": 0.17886178861788618,
+     "object_name_n": 143,
+     "object_name_ok_n": 0,
+     "object_name_ok": 0.0,
+     "held_action_tokens_by_run": {
+      "ep1807_apple": [
+       8,
+       13
+      ],
+      "ep0_orange": [
+       6,
+       7
+      ],
+      "ep500_banana": [
+       5,
+       8
+      ],
+      "ep1200_pear": [
+       5,
+       8
+      ]
+     }
+    }
+   }
+  },
+  "generation_templates": {
+   "T;nl": "Task: {p};\n",
+   "p_nl": "{p}\n",
+   "T.Sub_causal": "Task: {p}. Subtask: "
+  },
+  "score_argmax_home_frames": {
+   "base": 246,
+   "ft16d": 246,
+   "ft_nolora": 246
+  },
+  "auroc": {
+   "base": {
+    "ep1807_apple": {
+     "held_vs_reach": 0.631578947368421,
+     "released_vs_rest": 0.9353197674418605
+    },
+    "ep0_orange": {
+     "held_vs_reach": 0.9642857142857143,
+     "released_vs_rest": 0.4936507936507937
+    },
+    "ep500_banana": {
+     "held_vs_reach": 1.0,
+     "released_vs_rest": 0.33174603174603173
+    },
+    "ep1200_pear": {
+     "held_vs_reach": 0.8680555555555556,
+     "released_vs_rest": 0.3548387096774194
+    }
+   },
+   "ft16d": {
+    "ep1807_apple": {
+     "held_vs_reach": 0.5020242914979757,
+     "released_vs_rest": 0.9520348837209303
+    },
+    "ep0_orange": {
+     "held_vs_reach": 0.5714285714285714,
+     "released_vs_rest": 0.8476190476190476
+    },
+    "ep500_banana": {
+     "held_vs_reach": 0.75,
+     "released_vs_rest": 0.8809523809523809
+    },
+    "ep1200_pear": {
+     "held_vs_reach": 0.8541666666666666,
+     "released_vs_rest": 0.8684863523573201
+    }
+   },
+   "ft_nolora": {
+    "ep1807_apple": {
+     "held_vs_reach": 0.5303643724696356,
+     "released_vs_rest": 0.8844476744186046
+    },
+    "ep0_orange": {
+     "held_vs_reach": 0.6785714285714286,
+     "released_vs_rest": 0.6936507936507936
+    },
+    "ep500_banana": {
+     "held_vs_reach": 0.5892857142857143,
+     "released_vs_rest": 0.7952380952380952
+    },
+    "ep1200_pear": {
+     "held_vs_reach": 0.8263888888888888,
+     "released_vs_rest": 0.9193548387096774
+    }
+   }
+  },
+  "auroc_definitions": {
+   "held_vs_reach": "score delta log p(place) - log p(pick), held frames positive vs reach frames",
+   "released_vs_rest": "home - max(pick, place), released frames vs the rest"
+  },
+  "fast_token_share": {
+   "n_fast": 187,
+   "n_tok": 192,
+   "share": 0.9739583333333334,
+   "pooled_over": "smoke.json, ep1807 t_step 0 and 200, models ft16d + base, templates openpi_action ('Task: {p}, State: {s};\\nAction: ') and state_subtask ('Task: {p}, State: {s};\\nSubtask: '), 24 generated tokens each",
+   "openpi_action_only": {
+    "n_fast": 93,
+    "n_tok": 96,
+    "share": 0.96875
+   },
+   "fast_id_range": [
+    254976,
+    257023
+   ]
+  },
+  "latency_ms_per_token": {
+   "median": 21.048196125775576,
+   "p90": 22.17741757631302,
+   "n": 23619,
+   "note": "naive decoding: one full prefix+text forward (768 image + 128 text tokens) per token, no KV cache, H200, bf16"
+  },
+  "weights_16d_vs_pi05_base": {
+   "rel_definition": "||w_16d - w_base|| / ||w_base|| per leaf (float64), LoRA leaves excluded (only in 16D: 20)",
+   "gemma_2b_llm": {
+    "n": 9,
+    "pooled_rel": 0.0016612749612124802,
+    "max_rel": 0.001661549722731906,
+    "min_rel": 0.0015434336531470318
+   },
+   "action_expert_llm_1": {
+    "n": 11,
+    "pooled_rel": 0.0016617973367784504,
+    "max_rel": 0.0017269294448895957,
+    "min_rel": 0.001657724067080475
+   },
+   "siglip_img": {
+    "n_leaves": 23,
+    "pooled_rel": 0.05848879665666662,
+    "median_rel": 0.00844017464504657,
+    "max_rel": 0.17321068231319292,
+    "max_rel_leaf": "PaliGemma/img/head/kernel",
+    "min_rel": 0.0012408350770900776
+   },
+   "other": {
+    "n_leaves": 8,
+    "pooled_rel": 0.08131485684680868,
+    "max_rel": 0.5955979181473223,
+    "max_rel_leaf": "action_out_proj/bias"
+   },
+   "dtypes_16d": [
+    "bfloat16",
+    "float32"
+   ],
+   "dtypes_base": [
+    "float32"
+   ]
+  }
+ },
+ "differences_vs_audit_and_sidecars": {
+  "sidecars": "AUROC (24 values) and pooled generation numbers equal figures/subtask/subtask-accuracy-table.json exactly (diffs_vs_sidecars = [])",
+  "auroc_json": "auroc.json held_vs_reach equal; auroc.json 'auroc_released' equal to released_vs_rest",
+  "audit_fast_97.4": "audit SUBTASK.audit.md:20 attributes 97.4 % (192 tokens) to the openpi prompt 'Task: ..., State: ...;\\nAction: '. 187/192 = 0.9740 is the pool of openpi_action AND state_subtask; openpi_action alone = 93/96 = 0.96875",
+  "audit_llm_1.7e-3": "Gemma 2B LLM leaves max rel 1.6615e-3, pooled 1.6613e-3; 1.7e-3 matches the max over all PaliGemma/llm leaves incl. action expert (1.7269e-3, final_norm_1 bias)",
+  "audit_siglip_17pct": "max per-leaf rel 0.1732 (PaliGemma/img/head/kernel); pooled over SigLIP 0.0585"
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/subtask/subtask-template-discovery.png",
+   "kind": "table"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/subtask/subtask-scene-ep1807.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/subtask/subtask-timeline.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/subtask/subtask-accuracy-table.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "regression baseline run in SUBTASK-d session on snapshot 73dcb37 (outputs/verify/SUBTASK-d/baseline/judge.json); this file only recomputes recorded numbers"
+ },
+ "verdict": "recomputed values equal figure sidecars; two audit wordings differ in scope (FAST pool, LLM max leaf) as listed",
+ "not_measured": [
+  "KV-cache decoding latency",
+  "new model forward passes (recompute only, except the checkpoint weight comparison)"
+ ]
+}

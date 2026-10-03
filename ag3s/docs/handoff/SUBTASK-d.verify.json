@@ -1,0 +1,2699 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only; no interpretation.",
+ "step": "SUBTASK-d",
+ "date": "2026-10-02T20:18:05+00:00",
+ "runs": [
+  {
+   "id": "baseline",
+   "command": "cwd /mnt/dev/work-sd: MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work-sd .venv-openpi-live/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records /mnt/dev/work/run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms [--esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005]",
+   "venv": ".venv-openpi-live (.venv-ag3s not used: NFS stall)",
+   "raw_output": [
+    "outputs/verify/SUBTASK-d/baseline/legacy.json",
+    "outputs/verify/SUBTASK-d/baseline/curobo.json"
+   ],
+   "stdout_log": [
+    "outputs/verify/SUBTASK-d/baseline/legacy.log",
+    "outputs/verify/SUBTASK-d/baseline/curobo.log"
+   ],
+   "judge": "outputs/verify/SUBTASK-d/baseline/judge.json"
+  },
+  {
+   "id": "V0",
+   "command": "nohup setsid outputs/verify/SUBTASK-d/p/launch_v0.sh (gate off E3b, port 8230, ep1807 s18071 + ep1800 s18001, then p/compare_v0.py)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/SUBTASK-d/v0/",
+   "stdout_log": "outputs/verify/SUBTASK-d/v0/launch.out"
+  },
+  {
+   "id": "V1",
+   "command": "nohup setsid outputs/verify/SUBTASK-d/p/launch_v1.sh 4 (gate on E3bG = E3b server flags + --subtask-gate, ports 8231-8234, lists p/lists/E3bG_1..4.txt)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/SUBTASK-d/runs/E3bG/",
+   "stdout_log": "outputs/verify/SUBTASK-d/runs/launch.out"
+  },
+  {
+   "id": "V2",
+   "command": "JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= MUJOCO_GL=osmesa .venv-openpi-live/bin/python p/analyze_v2.py v2/analysis.json --off outputs/verify/T39/runs/E3b --on runs/E3bG --extra-off v0/E3b; python3 p/summarize_v2.py v2/analysis.json v2/summary_extra.json",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": [
+    "outputs/verify/SUBTASK-d/v2/analysis.json",
+    "outputs/verify/SUBTASK-d/v2/summary_extra.json"
+   ],
+   "stdout_log": "outputs/verify/SUBTASK-d/v2/analysis.log"
+  },
+  {
+   "id": "figures",
+   "command": "p/fig_v2.py v2/analysis.json benchmark/ag3s/docs/figures/subtask-d 1800 18001 v0/v0_summary.json; same with 1925 19251 --only=scene",
+   "stdout_log": "outputs/verify/SUBTASK-d/v2/fig.log"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "73dcb37",
+  "snapshot": {
+   "root": "/mnt/dev/work-sd",
+   "benchmark": {
+    "source": "git -C /mnt/dev/work/benchmark archive 73dcb3757c7f4b048b92d90d403fae03991689ed",
+    "commit": "73dcb3757c7f4b048b92d90d403fae03991689ed",
+    "symlinks": {
+     "benchmark/ag3s/asset/data": "/mnt/dev/work/benchmark/ag3s/asset/data"
+    },
+    "subtask_probe_in_archive": [
+     "benchmark/ag3s/asset/subtask_probe/kv_L4_v1.json",
+     "benchmark/ag3s/asset/subtask_probe/kv_L4_v1.npz"
+    ]
+   },
+   "pi05_TO_hybrid": {
+    "rby1_bringup": "git -C /mnt/dev/work/pi05_TO_hybrid archive 22d8dae rby1_bringup",
+    "commit": "22d8dae4f2cf5632b3f68b505cf18880033e6ada",
+    "other_top_level": "symlinks to /mnt/dev/work/pi05_TO_hybrid/*"
+   },
+   "extra_symlink": {
+    "/mnt/dev/work-sd/src": "/mnt/dev/work-sd/pi05_TO_hybrid"
+   },
+   "code_md5_file": "/mnt/dev/work/outputs/verify/SUBTASK-d/p/code_md5_sd.txt",
+   "code_md5_n_files": 390,
+   "code_md5_file_md5": "924ea75f48aab117911eb0fc3dad1a3a",
+   "import_check_first_server": "/mnt/dev/work/outputs/verify/SUBTASK-d/v0/E3b/preflight_8230_20261002T184905.import_server.json",
+   "import_check_first_client": "/mnt/dev/work/outputs/verify/SUBTASK-d/v0/E3b/preflight_8230_20261002T184905.import_client.json",
+   "grep_work_o1_work_o4_o1_eval_in_p": 0,
+   "diff_vs_t39_snapshot": {
+    "rby1_bringup": "/mnt/dev/work/outputs/verify/SUBTASK-d/s0/diff_rby1_bringup_o1_vs_sd.txt",
+    "benchmark": "/mnt/dev/work/outputs/verify/SUBTASK-d/s0/diff_benchmark_o1_vs_sd.txt"
+   }
+  },
+  "dirty_files": [],
+  "client": "pi05_TO_hybrid 22d8dae rby1_bringup (archive), same as T39; rby1_bringup diff vs T39 snapshot: only __pycache__",
+  "t39_gate_off_code": "o1-eval 9fab500 (T39.verify.partial.json s2_0.snapshot)",
+  "scripts": "outputs/verify/SUBTASK-d/p/ (grep work-o1|work-o4|o1-eval: 0 lines)"
+ },
+ "setup": {
+  "server_flags_E3b": "--esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links gripper --target-field-policy exclude-authorized --esdf-margin 0 --no-self-collision --capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32 --record-constraints",
+  "server_flags_E3bG": "E3b + --subtask-gate",
+  "xla_flags": "--xla_gpu_enable_command_buffer= --xla_gpu_autotune_level=0",
+  "client_flags": "--max-steps 600 --headless --warmup-steps 1000 --policy-seed 10*ep+rep --record-frames --record third_person_front.mp4 --view front --trajectory-out traj.npz --safe-remote --safe-timeout 120 --safe-phase approach --safe-manipulators left --safe-gate reasons --safe-hold-mode fixed",
+  "episodes": 24,
+  "seeds_per_episode": 2,
+  "parallel_servers_V1": 4,
+  "parallel_servers_T39_S2_2": "4 (2 E3b + 2 E0)",
+  "gpu_peak_total_used_mib_per_V1_server_file": [
+   {
+    "file": "/mnt/dev/work/outputs/verify/SUBTASK-d/runs/E3bG/server_8231_20261002T190000/gpu_samples.txt",
+    "max_total_used_mib": 73262
+   },
+   {
+    "file": "/mnt/dev/work/outputs/verify/SUBTASK-d/runs/E3bG/server_8232_20261002T190400/gpu_samples.txt",
+    "max_total_used_mib": 72388
+   },
+   {
+    "file": "/mnt/dev/work/outputs/verify/SUBTASK-d/runs/E3bG/server_8233_20261002T190800/gpu_samples.txt",
+    "max_total_used_mib": 73262
+   },
+   {
+    "file": "/mnt/dev/work/outputs/verify/SUBTASK-d/runs/E3bG/server_8234_20261002T191200/gpu_samples.txt",
+    "max_total_used_mib": 73262
+   }
+  ]
+ },
+ "numbers": {
+  "baseline": {
+   "legacy": {
+    "violated_start": "14/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -29.031048280806342,
+    "matched": true
+   },
+   "curobo": {
+    "violated_start": "10/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "matched": true
+   }
+  },
+  "V0": {
+   "runs": {
+    "E3b_ep1807_s18071": {
+     "run_t39": "/mnt/dev/work/outputs/verify/T39/s21/E3b_a/E3b_ep1807_s18071",
+     "run_new": "/mnt/dev/work/outputs/verify/SUBTASK-d/v0/E3b/E3b_ep1807_s18071",
+     "executed_actions_equal": true,
+     "planning_actions_equal": true,
+     "traj_npz_keys_differing": [
+      "inference_ms"
+     ],
+     "traj_npz_differ_other": [],
+     "frames_rows": [
+      750,
+      750
+     ],
+     "frames_other_leaf_diff": [],
+     "manifest_other_leaf_diff": [
+      "scene.model_xml"
+     ],
+     "server_n_chunks": [
+      75,
+      75
+     ],
+     "server_array_diff": {},
+     "server_summary_other_leaf_diff": [],
+     "server_summary_subtask_leaf_diff": [
+      "subtask.argmax",
+      "subtask.frames",
+      "subtask.gate",
+      "subtask.label",
+      "subtask.p.home",
+      "subtask.p.pick",
+      "subtask.p.place",
+      "subtask.placed_seen",
+      "subtask.released",
+      "subtask.streak",
+      "subtask.would_block"
+     ],
+     "server_summary_control_vary_leaf_diff": [
+      "grasp.alignment.geometry_time",
+      "grasp.alignment.q_stamp",
+      "grasp.attached.attached_at",
+      "profile_ms.attention_lifting",
+      "profile_ms.constraint_generation",
+      "profile_ms.esdf",
+      "profile_ms.scene_reconstruction",
+      "profile_ms.support_surface",
+      "profile_ms.target_grounding",
+      "to.metrics.timing_ms",
+      "to.solve_ms"
+     ],
+     "named_per_chunk": {
+      "grasp_state_equal": true,
+      "manipulated_id_equal": true,
+      "exclusion_equal": true,
+      "refined_chunk_equal": true,
+      "subtask_key_in_t39": 0,
+      "subtask_key_in_new": 75
+     },
+     "other_values": {
+      "manifest scene.model_xml": {
+       "t39": "/mnt/dev/work-o1/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+       "new": "/mnt/dev/work-sd/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml"
+      }
+     }
+    },
+    "E3b_ep1800_s18001": {
+     "run_t39": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1800_s18001",
+     "run_new": "/mnt/dev/work/outputs/verify/SUBTASK-d/v0/E3b/E3b_ep1800_s18001",
+     "executed_actions_equal": true,
+     "planning_actions_equal": true,
+     "traj_npz_keys_differing": [
+      "inference_ms"
+     ],
+     "traj_npz_differ_other": [],
+     "frames_rows": [
+      750,
+      750
+     ],
+     "frames_other_leaf_diff": [],
+     "manifest_other_leaf_diff": [
+      "scene.model_xml"
+     ],
+     "server_n_chunks": [
+      75,
+      75
+     ],
+     "server_array_diff": {
+      "chunk_index": {
+       "n_chunks": 75,
+       "first_chunk": 0
+      }
+     },
+     "server_summary_other_leaf_diff": [
+      "chunk_index"
+     ],
+     "server_summary_subtask_leaf_diff": [
+      "subtask.argmax",
+      "subtask.frames",
+      "subtask.gate",
+      "subtask.label",
+      "subtask.p.home",
+      "subtask.p.pick",
+      "subtask.p.place",
+      "subtask.placed_seen",
+      "subtask.released",
+      "subtask.streak",
+      "subtask.would_block"
+     ],
+     "server_summary_control_vary_leaf_diff": [
+      "grasp.alignment.geometry_time",
+      "grasp.alignment.q_stamp",
+      "grasp.attached.attached_at",
+      "profile_ms.attention_lifting",
+      "profile_ms.constraint_generation",
+      "profile_ms.esdf",
+      "profile_ms.scene_reconstruction",
+      "profile_ms.support_surface",
+      "profile_ms.target_grounding",
+      "to.metrics.timing_ms",
+      "to.solve_ms"
+     ],
+     "named_per_chunk": {
+      "grasp_state_equal": true,
+      "manipulated_id_equal": true,
+      "exclusion_equal": true,
+      "refined_chunk_equal": true,
+      "subtask_key_in_t39": 0,
+      "subtask_key_in_new": 75
+     },
+     "other_values": {
+      "manifest scene.model_xml": {
+       "t39": "/mnt/dev/work-o1/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+       "new": "/mnt/dev/work-sd/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml"
+      },
+      "server chunk_index (first chunk of the segment)": {
+       "t39": 0,
+       "new": 75,
+       "t39_file": "/mnt/dev/work/outputs/verify/T39/runs/E3b/server_8226_20261002T093647/server_constraints/run_0000/chunk_00000.npz",
+       "new_file": "/mnt/dev/work/outputs/verify/SUBTASK-d/v0/E3b/server_8230_20261002T184905/server_constraints/run_0000/chunk_00075.npz",
+       "t_step_first": [
+        1,
+        1
+       ]
+      }
+     }
+    }
+   },
+   "control_set_file": "outputs/verify/SUBTASK-d/v0/control_T39_s21.json (T39 S2-1 E3b_a vs E3b_b, same code, two server processes)",
+   "leaves_outside_control_and_subtask": {
+    "manifest scene.model_xml": "path string: /mnt/dev/work-o1/... vs /mnt/dev/work-sd/... (both snapshot entries symlink to /mnt/dev/work/pi05_TO_hybrid/rby1_description)",
+    "server chunk_index (ep1800 s18001 only)": "T39 0..74 (1st run on server 8226) vs V0 75..149 (2nd run on server 8230); t_step 1..75 on both"
+   },
+   "lead_decision_2026-10-02": "both leaves treated as bookkeeping; V1 continued; V2 pairs chunks by (episode, seed, t_step)",
+   "summary_file": "outputs/verify/SUBTASK-d/v0/v0_summary.json"
+  },
+  "V1": {
+   "n_runs_done": 48,
+   "n_runs_expected": 48,
+   "n_failed_attempts": 0,
+   "wall_s": {
+    "min": 229.0,
+    "max": 327.0,
+    "mean": 293.1041666666667
+   },
+   "start": "2026-10-02T19:00:00+00:00",
+   "end": "2026-10-02T20:11:40+00:00"
+  },
+  "V2_paired_2x2_off_vs_on": {
+   "success": {
+    "both": 28,
+    "off_only": 1,
+    "on_only": 0,
+    "neither": 19,
+    "n_pairs": 48,
+    "mcnemar_exact_p": 1.0
+   },
+   "grasp": {
+    "both": 34,
+    "off_only": 1,
+    "on_only": 0,
+    "neither": 13,
+    "n_pairs": 48,
+    "mcnemar_exact_p": 1.0
+   },
+   "place": {
+    "both": 28,
+    "off_only": 1,
+    "on_only": 0,
+    "neither": 19,
+    "n_pairs": 48,
+    "mcnemar_exact_p": 1.0
+   }
+  },
+  "V2_summary_gate_off_T39": {
+   "n_runs": 48,
+   "n_success": 29,
+   "n_grasp": 35,
+   "n_place": 29,
+   "n_placed_latch": 25,
+   "n_placed_runs_with_switch_after": 21,
+   "n_switch_after_placed_total": 29,
+   "after_placed_chunks_total": 1051,
+   "after_placed_excl_active_total": 965,
+   "after_placed_excl_source_counts": {
+    "manipulated|True|target_free_layer+contact_margin": 965,
+    "none|False|": 86
+   },
+   "after_placed_carved_nearest_counts": {
+    "banana": 224,
+    "orange": 119,
+    "pear": 200,
+    "apple": 422
+   },
+   "after_placed_carved_to_apple_mm": {
+    "n": 965,
+    "median": 218.68011639469006,
+    "p95": 417.71672372960575,
+    "max": 440.01367937734784,
+    "min": 11.079760599909806,
+    "mean": 182.98259921294172
+   },
+   "after_placed_carved_to_apple_initial_mm": {
+    "n": 965,
+    "median": 355.68346495550236,
+    "p95": 631.7606414226944,
+    "max": 644.9185553351862,
+    "min": 16.797672075819463,
+    "mean": 333.86621162280113
+   },
+   "after_placed_carved_to_nearest_mm": {
+    "n": 965,
+    "median": 19.393246173061133,
+    "p95": 127.20688374136569,
+    "max": 173.568613581117,
+    "min": 11.079760599909806,
+    "mean": 43.14182174541137
+   },
+   "n_runs_released": 0,
+   "n_released_chunks_total": 0,
+   "placed_to_release_chunks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "placed_to_first_switch_chunks": [
+    null,
+    42,
+    2,
+    null,
+    4,
+    2,
+    null,
+    null,
+    4,
+    2,
+    7,
+    2,
+    2,
+    2,
+    2,
+    4,
+    2,
+    6,
+    2,
+    5,
+    25,
+    2,
+    3,
+    2,
+    2
+   ],
+   "release_chunk_minus_place_chunk": [],
+   "n_switch_before_placed_total": 42,
+   "n_switch_total": 71,
+   "blocked_counts_all": {},
+   "n_subtask_gated_status": 0,
+   "first_adoption_t": {
+    "1": 48
+   },
+   "label_x_latch": {},
+   "argmax_x_latch": {},
+   "delay_pick_to_place_chunks": {
+    "None": 45
+   },
+   "delay_place_to_home_chunks": {
+    "None": 25
+   },
+   "n_label_home_before_placed": 0,
+   "n_hold_chunks_total": 294,
+   "n_runs_with_hold": 18,
+   "n_hold_after_placed_total": 86,
+   "n_hold_from_release_total": 0,
+   "n_chunks_from_release_total": 0,
+   "hold_kind_from_release": {},
+   "hold_kind_counts": {
+    "unverified": 62,
+    "collision": 198,
+    "uncertified": 89
+   },
+   "hold_latch_counts": {
+    "held": 64,
+    "placed": 86,
+    "closing": 125,
+    "latched": 19
+   },
+   "gate_action_counts": {
+    "execute": 3306,
+    "hold": 294
+   },
+   "reason_kind_counts": {
+    "allowed_contact": 85,
+    "budget_only": 3374,
+    "unverified": 62,
+    "collision": 198,
+    "uncertified": 89,
+    "occluded_target": 5
+   },
+   "clearance_min_mm": {
+    "n": 48,
+    "median": -6.222138646990061,
+    "p95": -1.0845164069905877,
+    "max": 3.12250480055809,
+    "min": -47.13409021496773,
+    "mean": -8.791629596089479
+   },
+   "clearance_min_mm_overall": -47.13409021496773,
+   "n_chunks_clearance_lt0": 329,
+   "n_budget_hit": 0,
+   "to_status_counts": {
+    "feasible": 3258,
+    "violated": 321,
+    "optimal": 21
+   },
+   "time_ms_pooled_excl_first": {
+    "round_trip": {
+     "n": 3552,
+     "median": 1292.1794652938843,
+     "p95": 1644.5107817649841,
+     "max": 3686.872720718384,
+     "min": 804.7072887420654,
+     "mean": 1289.4032550556165
+    },
+    "server_infer": {
+     "n": 3552,
+     "median": 561.3856562413275,
+     "p95": 836.38269349467,
+     "max": 1793.4009870514274,
+     "min": 360.334272030741,
+     "mean": 579.0768058837899
+    },
+    "server_ag3s": {
+     "n": 3552,
+     "median": 353.540217038244,
+     "p95": 585.9201773069799,
+     "max": 1408.5268802009523,
+     "min": 186.6430970840156,
+     "mean": 379.49232314123356
+    },
+    "server_trajopt": {
+     "n": 3552,
+     "median": 78.99432093836367,
+     "p95": 236.9866416091099,
+     "max": 892.8997335024178,
+     "min": 36.229337099939585,
+     "mean": 105.9098933527911
+    },
+    "server_total": {
+     "n": 3552,
+     "median": 1070.9984733257443,
+     "p95": 1423.5524180112402,
+     "max": 2922.1580661833286,
+     "min": 600.2496210858226,
+     "mean": 1065.3960026644888
+    }
+   },
+   "n_refined_mismatch": 0,
+   "n_runs_segment_found": 48,
+   "n_runs_with_subtask_record": 0
+  },
+  "V2_summary_gate_on": {
+   "n_runs": 48,
+   "n_success": 28,
+   "n_grasp": 34,
+   "n_place": 28,
+   "n_placed_latch": 24,
+   "n_placed_runs_with_switch_after": 0,
+   "n_switch_after_placed_total": 0,
+   "after_placed_chunks_total": 1041,
+   "after_placed_excl_active_total": 57,
+   "after_placed_excl_source_counts": {
+    "manipulated|True|target_free_layer+contact_margin": 57,
+    "none|False|": 984
+   },
+   "after_placed_carved_nearest_counts": {
+    "banana": 23,
+    "orange": 20,
+    "pear": 14
+   },
+   "after_placed_carved_to_apple_mm": {
+    "n": 57,
+    "median": 362.7169270477348,
+    "p95": 417.74404364642555,
+    "max": 440.01367937734784,
+    "min": 286.0237600461771,
+    "mean": 364.44267283460744
+   },
+   "after_placed_carved_to_apple_initial_mm": {
+    "n": 57,
+    "median": 28.440888544040007,
+    "p95": 33.37041975510015,
+    "max": 63.07354587732853,
+    "min": 16.797672075819463,
+    "mean": 28.62418987839395
+   },
+   "after_placed_carved_to_nearest_mm": {
+    "n": 57,
+    "median": 108.24373573440651,
+    "p95": 127.2681986924303,
+    "max": 132.2818331188313,
+    "min": 79.0113398295611,
+    "mean": 105.48566150806725
+   },
+   "n_runs_released": 24,
+   "n_released_chunks_total": 24,
+   "placed_to_release_chunks": [
+    3,
+    2,
+    3,
+    3,
+    2,
+    3,
+    2,
+    3,
+    2,
+    2,
+    2,
+    3,
+    2,
+    3,
+    2,
+    3,
+    2,
+    2,
+    2,
+    2,
+    2,
+    3,
+    2,
+    2
+   ],
+   "placed_to_first_switch_chunks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "release_chunk_minus_place_chunk": [
+    7,
+    4,
+    5,
+    12,
+    5,
+    5,
+    4,
+    5,
+    4,
+    4,
+    4,
+    5,
+    3,
+    5,
+    4,
+    5,
+    9,
+    5,
+    4,
+    10,
+    9,
+    5,
+    4,
+    4
+   ],
+   "n_switch_before_placed_total": 5,
+   "n_switch_total": 5,
+   "blocked_counts_all": {
+    "first": 983,
+    "switch": 239
+   },
+   "n_subtask_gated_status": 983,
+   "first_adoption_t": {
+    "1": 48
+   },
+   "label_x_latch": {
+    "None|searching": 96,
+    "home|placed": 984,
+    "pick|closing": 139,
+    "pick|held": 107,
+    "pick|latched": 993,
+    "place|held": 309,
+    "place|placed": 57,
+    "home|latched": 215,
+    "place|closing": 554,
+    "place|latched": 116,
+    "home|closing": 30
+   },
+   "argmax_x_latch": {
+    "home|placed": 1032,
+    "pick|closing": 68,
+    "pick|latched": 1028,
+    "pick|searching": 96,
+    "place|held": 358,
+    "place|placed": 9,
+    "home|latched": 230,
+    "place|closing": 621,
+    "place|latched": 66,
+    "pick|held": 55,
+    "home|held": 3,
+    "home|closing": 34
+   },
+   "delay_pick_to_place_chunks": {
+    "0": 1,
+    "1": 17,
+    "2": 13,
+    "3": 9,
+    "4": 1,
+    "5": 2,
+    "6": 2
+   },
+   "delay_place_to_home_chunks": {
+    "2": 15,
+    "3": 9
+   },
+   "n_label_home_before_placed": 1,
+   "n_hold_chunks_total": 1198,
+   "n_runs_with_hold": 34,
+   "n_hold_after_placed_total": 984,
+   "n_hold_from_release_total": 984,
+   "n_chunks_from_release_total": 984,
+   "hold_kind_from_release": {
+    "uncertified": 984,
+    "collision": 2
+   },
+   "hold_kind_counts": {
+    "uncertified": 984,
+    "unverified": 62,
+    "collision": 209
+   },
+   "hold_latch_counts": {
+    "held": 64,
+    "placed": 984,
+    "closing": 127,
+    "latched": 23
+   },
+   "gate_action_counts": {
+    "execute": 2402,
+    "hold": 1198
+   },
+   "reason_kind_counts": {
+    "allowed_contact": 85,
+    "budget_only": 3376,
+    "uncertified": 984,
+    "unverified": 62,
+    "collision": 209,
+    "occluded_target": 3
+   },
+   "clearance_min_mm": {
+    "n": 48,
+    "median": -6.802247371524572,
+    "p95": -1.0845164069905877,
+    "max": 0.43517519952729344,
+    "min": -47.13409021496773,
+    "mean": -9.318961195579808
+   },
+   "clearance_min_mm_overall": -47.13409021496773,
+   "n_chunks_clearance_lt0": 339,
+   "n_budget_hit": 0,
+   "to_status_counts": {
+    "feasible": 2369,
+    "violated": 1223,
+    "optimal": 8
+   },
+   "time_ms_pooled_excl_first": {
+    "round_trip": {
+     "n": 3552,
+     "median": 1922.5398302078247,
+     "p95": 2303.553795814514,
+     "max": 4213.688373565674,
+     "min": 761.9452476501465,
+     "mean": 1776.1024395087818
+    },
+    "server_infer": {
+     "n": 3552,
+     "median": 925.70068128407,
+     "p95": 1244.2261598538607,
+     "max": 1796.1339657194912,
+     "min": 357.0877853780985,
+     "mean": 876.1396586709092
+    },
+    "server_ag3s": {
+     "n": 3552,
+     "median": 554.1315912269056,
+     "p95": 839.3912355415523,
+     "max": 1514.5821049809456,
+     "min": 183.1391961313784,
+     "mean": 539.8055401956873
+    },
+    "server_trajopt": {
+     "n": 3552,
+     "median": 90.41884541511536,
+     "p95": 380.20354094915075,
+     "max": 933.8525841012597,
+     "min": 34.39306607469916,
+     "mean": 138.11188046757533
+    },
+    "server_total": {
+     "n": 3552,
+     "median": 1702.922682510689,
+     "p95": 2091.2653744919226,
+     "max": 3116.939067840576,
+     "min": 596.7110153287649,
+     "mean": 1555.28812490465
+    }
+   },
+   "n_refined_mismatch": 0,
+   "n_runs_segment_found": 48,
+   "n_runs_with_subtask_record": 48
+  },
+  "V2_v0_gate_off_rerun_with_subtask_record": {
+   "n_runs": 2,
+   "label_x_latch": {
+    "None|searching": 4,
+    "home|placed": 85,
+    "pick|closing": 2,
+    "pick|held": 4,
+    "pick|latched": 28,
+    "place|held": 22,
+    "place|placed": 5
+   },
+   "argmax_x_latch": {
+    "home|placed": 89,
+    "pick|closing": 2,
+    "pick|latched": 28,
+    "pick|searching": 4,
+    "place|held": 26,
+    "place|placed": 1
+   },
+   "delay_pick_to_place_chunks": {
+    "2": 2
+   },
+   "delay_place_to_home_chunks": {
+    "2": 1,
+    "3": 1
+   },
+   "n_placed_runs_with_switch_after": 1,
+   "after_placed_excl_active_total": 90,
+   "after_placed_chunks_total": 90
+  },
+  "V2_divergence": {
+   "n_pairs": 48,
+   "n_no_executed_difference": 6,
+   "first_diff_chunk": [
+    32,
+    35,
+    32,
+    33,
+    42,
+    39,
+    28,
+    33,
+    31,
+    32,
+    30,
+    32,
+    34,
+    31,
+    31,
+    30,
+    24,
+    75,
+    39,
+    34,
+    37,
+    36,
+    35,
+    32,
+    29,
+    32,
+    43,
+    32,
+    28,
+    36,
+    37,
+    38,
+    35,
+    34,
+    33,
+    36,
+    47,
+    45,
+    36,
+    36,
+    30,
+    35
+   ],
+   "latch_at_first_diff": {
+    "off=placed|on=placed": 24,
+    "off=latched|on=latched": 18
+   },
+   "on_state_at_first_diff": {
+    "blocked=first|released=True|label=home": 18,
+    "blocked=switch|released=False|label=place": 13,
+    "blocked=switch|released=False|label=home": 8,
+    "blocked=None|released=False|label=pick": 1,
+    "blocked=None|released=False|label=place": 1,
+    "blocked=None|released=True|label=home": 1
+   },
+   "first_diff_chunk_minus_on_t_placed": [
+    3,
+    2,
+    2,
+    3,
+    2,
+    2,
+    2,
+    3,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    3,
+    2,
+    2
+   ],
+   "first_decision_diff_equals_first_action_diff_chunk": 39,
+   "first_decision_diff_before": 3,
+   "first_diff_chunk_stats": {
+    "min": 24,
+    "median": 34.0,
+    "max": 75
+   }
+  },
+  "V2_gate_blocked_before_placed": {
+   "n_runs_with_block_before_placed": 21,
+   "n_chunks": 191,
+   "by_kind": {
+    "switch": 191
+   },
+   "by_latch": {
+    "latched": 191
+   },
+   "by_label": {
+    "place": 66,
+    "home": 125
+   },
+   "by_latch_label": {
+    "latched|place": 66,
+    "latched|home": 125
+   },
+   "runs": [
+    {
+     "run": "E3bG_ep1800_s18002",
+     "n_blocked": 7,
+     "first_t": 35,
+     "t_first_held": 19,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 7
+     }
+    },
+    {
+     "run": "E3bG_ep1808_s18081",
+     "n_blocked": 17,
+     "first_t": 30,
+     "t_first_held": 18,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 17
+     }
+    },
+    {
+     "run": "E3bG_ep1808_s18082",
+     "n_blocked": 10,
+     "first_t": 31,
+     "t_first_held": 18,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 10
+     }
+    },
+    {
+     "run": "E3bG_ep1818_s18181",
+     "n_blocked": 4,
+     "first_t": 39,
+     "t_first_held": null,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 4
+     }
+    },
+    {
+     "run": "E3bG_ep1818_s18182",
+     "n_blocked": 6,
+     "first_t": 37,
+     "t_first_held": 20,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 6
+     }
+    },
+    {
+     "run": "E3bG_ep1828_s18281",
+     "n_blocked": 11,
+     "first_t": 28,
+     "t_first_held": 58,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 11
+     }
+    },
+    {
+     "run": "E3bG_ep1863_s18632",
+     "n_blocked": 18,
+     "first_t": 29,
+     "t_first_held": null,
+     "t_placed": null,
+     "grasp": true,
+     "success": false,
+     "kinds": {
+      "switch": 18
+     }
+    },
+    {
+     "run": "E3bG_ep1887_s18871",
+     "n_blocked": 4,
+     "first_t": 19,
+     "t_first_held": 17,
+     "t_placed": null,
+     "grasp": true,
+     "success": false,
+     "kinds": {
+      "switch": 4
+     }
+    },
+    {
+     "run": "E3bG_ep1888_s18881",
+     "n_blocked": 1,
+     "first_t": 17,
+     "t_first_held": 15,
+     "t_placed": null,
+     "grasp": true,
+     "success": true,
+     "kinds": {
+      "switch": 1
+     }
+    },
+    {
+     "run": "E3bG_ep1888_s18882",
+     "n_blocked": 6,
+     "first_t": 37,
+     "t_first_held": 19,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 6
+     }
+    },
+    {
+     "run": "E3bG_ep1896_s18961",
+     "n_blocked": 8,
+     "first_t": 31,
+     "t_first_held": null,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 8
+     }
+    },
+    {
+     "run": "E3bG_ep1896_s18962",
+     "n_blocked": 9,
+     "first_t": 35,
+     "t_first_held": 21,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 9
+     }
+    },
+    {
+     "run": "E3bG_ep1914_s19141",
+     "n_blocked": 5,
+     "first_t": 34,
+     "t_first_held": 59,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 5
+     }
+    },
+    {
+     "run": "E3bG_ep1927_s19271",
+     "n_blocked": 12,
+     "first_t": 19,
+     "t_first_held": 16,
+     "t_placed": null,
+     "grasp": true,
+     "success": false,
+     "kinds": {
+      "switch": 12
+     }
+    },
+    {
+     "run": "E3bG_ep1927_s19272",
+     "n_blocked": 13,
+     "first_t": 41,
+     "t_first_held": 20,
+     "t_placed": null,
+     "grasp": true,
+     "success": false,
+     "kinds": {
+      "switch": 13
+     }
+    },
+    {
+     "run": "E3bG_ep1965_s19651",
+     "n_blocked": 7,
+     "first_t": 33,
+     "t_first_held": 17,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 7
+     }
+    },
+    {
+     "run": "E3bG_ep1965_s19652",
+     "n_blocked": 7,
+     "first_t": 33,
+     "t_first_held": 16,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 7
+     }
+    },
+    {
+     "run": "E3bG_ep1967_s19671",
+     "n_blocked": 7,
+     "first_t": 36,
+     "t_first_held": 21,
+     "t_placed": null,
+     "grasp": false,
+     "success": false,
+     "kinds": {
+      "switch": 7
+     }
+    },
+    {
+     "run": "E3bG_ep1982_s19821",
+     "n_blocked": 5,
+     "first_t": 22,
+     "t_first_held": 19,
+     "t_placed": null,
+     "grasp": true,
+     "success": false,
+     "kinds": {
+      "switch": 5
+     }
+    },
+    {
+     "run": "E3bG_ep1983_s19831",
+     "n_blocked": 3,
+     "first_t": 19,
+     "t_first_held": 17,
+     "t_placed": null,
+     "grasp": true,
+     "success": false,
+     "kinds": {
+      "switch": 3
+     }
+    },
+    {
+     "run": "E3bG_ep1983_s19832",
+     "n_blocked": 31,
+     "first_t": 19,
+     "t_first_held": 17,
+     "t_placed": null,
+     "grasp": true,
+     "success": true,
+     "kinds": {
+      "switch": 31
+     }
+    }
+   ],
+   "n_runs_block_before_first_held": 5
+  },
+  "V2_first_adoption": {
+   "t": {
+    "off": {
+     "1": 48
+    },
+    "on": {
+     "1": 48
+    }
+   },
+   "same_t_all_pairs": true,
+   "same_manip_id_all_pairs": true
+  },
+  "V2_pairs_decisions_identical_before_first_held": {
+   "n_same": 43,
+   "n_pairs": 48,
+   "definition": "manipulated id, decision mode, exclusion active equal at every chunk t < min(first 'held' chunk of the two runs; 76 if neither)"
+  },
+  "V2_discordant_pairs": [
+   {
+    "episode": 1828,
+    "seed": 18281,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": 66,
+    "on_t_placed": null,
+    "first_exec_diff_step": 232,
+    "first_decision_diff_t": 30,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     10,
+     10
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   }
+  ],
+  "V2_pair_table": [
+   {
+    "episode": 1800,
+    "seed": 18001,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 29,
+    "on_t_placed": 29,
+    "first_exec_diff_step": 248,
+    "first_decision_diff_t": 32,
+    "on_release_t": 32,
+    "off_after_placed_excl": [
+     47,
+     47
+    ],
+    "on_after_placed_excl": [
+     3,
+     47
+    ],
+    "off_hold": 1,
+    "on_hold": 45
+   },
+   {
+    "episode": 1800,
+    "seed": 18002,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": null,
+    "first_decision_diff_t": null,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1807,
+    "seed": 18071,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 33,
+    "on_t_placed": 33,
+    "first_exec_diff_step": 272,
+    "first_decision_diff_t": 35,
+    "on_release_t": 35,
+    "off_after_placed_excl": [
+     43,
+     43
+    ],
+    "on_after_placed_excl": [
+     2,
+     43
+    ],
+    "off_hold": 0,
+    "on_hold": 41
+   },
+   {
+    "episode": 1807,
+    "seed": 18072,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": null,
+    "first_decision_diff_t": null,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 57,
+    "on_hold": 57
+   },
+   {
+    "episode": 1808,
+    "seed": 18081,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 248,
+    "first_decision_diff_t": 32,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1808,
+    "seed": 18082,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 256,
+    "first_decision_diff_t": 33,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1818,
+    "seed": 18181,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 328,
+    "first_decision_diff_t": 42,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1818,
+    "seed": 18182,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 304,
+    "first_decision_diff_t": 39,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 1,
+    "on_hold": 1
+   },
+   {
+    "episode": 1819,
+    "seed": 18191,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 26,
+    "on_t_placed": 26,
+    "first_exec_diff_step": 216,
+    "first_decision_diff_t": 28,
+    "on_release_t": 29,
+    "off_after_placed_excl": [
+     50,
+     50
+    ],
+    "on_after_placed_excl": [
+     3,
+     50
+    ],
+    "off_hold": 0,
+    "on_hold": 47
+   },
+   {
+    "episode": 1819,
+    "seed": 18192,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 30,
+    "on_t_placed": 30,
+    "first_exec_diff_step": 256,
+    "first_decision_diff_t": 33,
+    "on_release_t": 33,
+    "off_after_placed_excl": [
+     46,
+     46
+    ],
+    "on_after_placed_excl": [
+     3,
+     46
+    ],
+    "off_hold": 0,
+    "on_hold": 43
+   },
+   {
+    "episode": 1824,
+    "seed": 18241,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 29,
+    "on_t_placed": 29,
+    "first_exec_diff_step": 240,
+    "first_decision_diff_t": 31,
+    "on_release_t": 31,
+    "off_after_placed_excl": [
+     45,
+     47
+    ],
+    "on_after_placed_excl": [
+     2,
+     47
+    ],
+    "off_hold": 2,
+    "on_hold": 45
+   },
+   {
+    "episode": 1824,
+    "seed": 18242,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 30,
+    "on_t_placed": 30,
+    "first_exec_diff_step": 248,
+    "first_decision_diff_t": 32,
+    "on_release_t": 33,
+    "off_after_placed_excl": [
+     46,
+     46
+    ],
+    "on_after_placed_excl": [
+     3,
+     46
+    ],
+    "off_hold": 0,
+    "on_hold": 43
+   },
+   {
+    "episode": 1828,
+    "seed": 18281,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": 66,
+    "on_t_placed": null,
+    "first_exec_diff_step": 232,
+    "first_decision_diff_t": 30,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     10,
+     10
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1828,
+    "seed": 18282,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 30,
+    "on_t_placed": 30,
+    "first_exec_diff_step": 248,
+    "first_decision_diff_t": 32,
+    "on_release_t": 32,
+    "off_after_placed_excl": [
+     46,
+     46
+    ],
+    "on_after_placed_excl": [
+     2,
+     46
+    ],
+    "off_hold": 0,
+    "on_hold": 44
+   },
+   {
+    "episode": 1836,
+    "seed": 18361,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": null,
+    "first_decision_diff_t": null,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 50,
+    "on_hold": 50
+   },
+   {
+    "episode": 1836,
+    "seed": 18362,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": null,
+    "first_decision_diff_t": null,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 7,
+    "on_hold": 7
+   },
+   {
+    "episode": 1863,
+    "seed": 18631,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 31,
+    "on_t_placed": 31,
+    "first_exec_diff_step": 264,
+    "first_decision_diff_t": 34,
+    "on_release_t": 34,
+    "off_after_placed_excl": [
+     5,
+     45
+    ],
+    "on_after_placed_excl": [
+     3,
+     45
+    ],
+    "off_hold": 40,
+    "on_hold": 42
+   },
+   {
+    "episode": 1863,
+    "seed": 18632,
+    "off": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 240,
+    "first_decision_diff_t": 31,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 17,
+    "on_hold": 21
+   },
+   {
+    "episode": 1878,
+    "seed": 18781,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 29,
+    "on_t_placed": 29,
+    "first_exec_diff_step": 240,
+    "first_decision_diff_t": 31,
+    "on_release_t": 31,
+    "off_after_placed_excl": [
+     47,
+     47
+    ],
+    "on_after_placed_excl": [
+     2,
+     47
+    ],
+    "off_hold": 0,
+    "on_hold": 45
+   },
+   {
+    "episode": 1878,
+    "seed": 18782,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 28,
+    "on_t_placed": 28,
+    "first_exec_diff_step": 232,
+    "first_decision_diff_t": 30,
+    "on_release_t": 30,
+    "off_after_placed_excl": [
+     48,
+     48
+    ],
+    "on_after_placed_excl": [
+     2,
+     48
+    ],
+    "off_hold": 0,
+    "on_hold": 46
+   },
+   {
+    "episode": 1887,
+    "seed": 18871,
+    "off": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 184,
+    "first_decision_diff_t": 22,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1887,
+    "seed": 18872,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 73,
+    "on_t_placed": 73,
+    "first_exec_diff_step": 592,
+    "first_decision_diff_t": 75,
+    "on_release_t": 75,
+    "off_after_placed_excl": [
+     3,
+     3
+    ],
+    "on_after_placed_excl": [
+     2,
+     3
+    ],
+    "off_hold": 1,
+    "on_hold": 2
+   },
+   {
+    "episode": 1888,
+    "seed": 18881,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": null,
+    "first_decision_diff_t": null,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 55,
+    "on_hold": 55
+   },
+   {
+    "episode": 1888,
+    "seed": 18882,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 304,
+    "first_decision_diff_t": 39,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 2,
+    "on_hold": 2
+   },
+   {
+    "episode": 1896,
+    "seed": 18961,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 264,
+    "first_decision_diff_t": 33,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1896,
+    "seed": 18962,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 288,
+    "first_decision_diff_t": 37,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1914,
+    "seed": 19141,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 280,
+    "first_decision_diff_t": 36,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1914,
+    "seed": 19142,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 33,
+    "on_t_placed": 33,
+    "first_exec_diff_step": 272,
+    "first_decision_diff_t": 35,
+    "on_release_t": 36,
+    "off_after_placed_excl": [
+     43,
+     43
+    ],
+    "on_after_placed_excl": [
+     3,
+     43
+    ],
+    "off_hold": 0,
+    "on_hold": 40
+   },
+   {
+    "episode": 1925,
+    "seed": 19251,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 30,
+    "on_t_placed": 30,
+    "first_exec_diff_step": 248,
+    "first_decision_diff_t": 32,
+    "on_release_t": 32,
+    "off_after_placed_excl": [
+     46,
+     46
+    ],
+    "on_after_placed_excl": [
+     2,
+     46
+    ],
+    "off_hold": 0,
+    "on_hold": 44
+   },
+   {
+    "episode": 1925,
+    "seed": 19252,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 27,
+    "on_t_placed": 27,
+    "first_exec_diff_step": 224,
+    "first_decision_diff_t": 29,
+    "on_release_t": 30,
+    "off_after_placed_excl": [
+     49,
+     49
+    ],
+    "on_after_placed_excl": [
+     3,
+     49
+    ],
+    "off_hold": 1,
+    "on_hold": 47
+   },
+   {
+    "episode": 1927,
+    "seed": 19271,
+    "off": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 248,
+    "first_decision_diff_t": 32,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1927,
+    "seed": 19272,
+    "off": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 336,
+    "first_decision_diff_t": 43,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 2
+   },
+   {
+    "episode": 1939,
+    "seed": 19391,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 30,
+    "on_t_placed": 30,
+    "first_exec_diff_step": 248,
+    "first_decision_diff_t": 32,
+    "on_release_t": 32,
+    "off_after_placed_excl": [
+     11,
+     46
+    ],
+    "on_after_placed_excl": [
+     2,
+     46
+    ],
+    "off_hold": 35,
+    "on_hold": 44
+   },
+   {
+    "episode": 1939,
+    "seed": 19392,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 26,
+    "on_t_placed": 26,
+    "first_exec_diff_step": 216,
+    "first_decision_diff_t": 28,
+    "on_release_t": 29,
+    "off_after_placed_excl": [
+     50,
+     50
+    ],
+    "on_after_placed_excl": [
+     3,
+     50
+    ],
+    "off_hold": 0,
+    "on_hold": 47
+   },
+   {
+    "episode": 1965,
+    "seed": 19651,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 280,
+    "first_decision_diff_t": 36,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1965,
+    "seed": 19652,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 288,
+    "first_decision_diff_t": 37,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1967,
+    "seed": 19671,
+    "off": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": false,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 296,
+    "first_decision_diff_t": 38,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1967,
+    "seed": 19672,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 33,
+    "on_t_placed": 33,
+    "first_exec_diff_step": 272,
+    "first_decision_diff_t": 35,
+    "on_release_t": 35,
+    "off_after_placed_excl": [
+     43,
+     43
+    ],
+    "on_after_placed_excl": [
+     2,
+     43
+    ],
+    "off_hold": 1,
+    "on_hold": 42
+   },
+   {
+    "episode": 1968,
+    "seed": 19681,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 32,
+    "on_t_placed": 32,
+    "first_exec_diff_step": 264,
+    "first_decision_diff_t": 34,
+    "on_release_t": 34,
+    "off_after_placed_excl": [
+     44,
+     44
+    ],
+    "on_after_placed_excl": [
+     2,
+     44
+    ],
+    "off_hold": 0,
+    "on_hold": 42
+   },
+   {
+    "episode": 1968,
+    "seed": 19682,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 31,
+    "on_t_placed": 31,
+    "first_exec_diff_step": 256,
+    "first_decision_diff_t": 33,
+    "on_release_t": 33,
+    "off_after_placed_excl": [
+     45,
+     45
+    ],
+    "on_after_placed_excl": [
+     2,
+     45
+    ],
+    "off_hold": 0,
+    "on_hold": 43
+   },
+   {
+    "episode": 1976,
+    "seed": 19761,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 34,
+    "on_t_placed": 34,
+    "first_exec_diff_step": 280,
+    "first_decision_diff_t": 36,
+    "on_release_t": 36,
+    "off_after_placed_excl": [
+     42,
+     42
+    ],
+    "on_after_placed_excl": [
+     2,
+     42
+    ],
+    "off_hold": 0,
+    "on_hold": 40
+   },
+   {
+    "episode": 1976,
+    "seed": 19762,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 45,
+    "on_t_placed": 45,
+    "first_exec_diff_step": 368,
+    "first_decision_diff_t": 47,
+    "on_release_t": 47,
+    "off_after_placed_excl": [
+     31,
+     31
+    ],
+    "on_after_placed_excl": [
+     2,
+     31
+    ],
+    "off_hold": 0,
+    "on_hold": 29
+   },
+   {
+    "episode": 1982,
+    "seed": 19821,
+    "off": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 352,
+    "first_decision_diff_t": 45,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 0,
+    "on_hold": 0
+   },
+   {
+    "episode": 1982,
+    "seed": 19822,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 33,
+    "on_t_placed": 33,
+    "first_exec_diff_step": 280,
+    "first_decision_diff_t": 36,
+    "on_release_t": 36,
+    "off_after_placed_excl": [
+     34,
+     43
+    ],
+    "on_after_placed_excl": [
+     3,
+     43
+    ],
+    "off_hold": 9,
+    "on_hold": 40
+   },
+   {
+    "episode": 1983,
+    "seed": 19831,
+    "off": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "on": {
+     "success": false,
+     "grasp": true,
+     "place": false
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": null,
+    "first_decision_diff_t": null,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 12,
+    "on_hold": 12
+   },
+   {
+    "episode": 1983,
+    "seed": 19832,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": null,
+    "on_t_placed": null,
+    "first_exec_diff_step": 280,
+    "first_decision_diff_t": 35,
+    "on_release_t": null,
+    "off_after_placed_excl": [
+     0,
+     0
+    ],
+    "on_after_placed_excl": [
+     0,
+     0
+    ],
+    "off_hold": 2,
+    "on_hold": 2
+   },
+   {
+    "episode": 1995,
+    "seed": 19951,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 28,
+    "on_t_placed": 28,
+    "first_exec_diff_step": 232,
+    "first_decision_diff_t": 30,
+    "on_release_t": 30,
+    "off_after_placed_excl": [
+     48,
+     48
+    ],
+    "on_after_placed_excl": [
+     2,
+     48
+    ],
+    "off_hold": 0,
+    "on_hold": 46
+   },
+   {
+    "episode": 1995,
+    "seed": 19952,
+    "off": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "on": {
+     "success": true,
+     "grasp": true,
+     "place": true
+    },
+    "off_t_placed": 33,
+    "on_t_placed": 33,
+    "first_exec_diff_step": 272,
+    "first_decision_diff_t": 35,
+    "on_release_t": 35,
+    "off_after_placed_excl": [
+     43,
+     43
+    ],
+    "on_after_placed_excl": [
+     2,
+     43
+    ],
+    "off_hold": 1,
+    "on_hold": 42
+   }
+  ],
+  "V2_cross_check_T39_analysis": {
+   "T39_s23_E3b": {
+    "n_success": 29,
+    "n_grasp": 35,
+    "n_place": 29,
+    "n_hold_chunks_total": 294,
+    "gate_action": {
+     "execute": 3306,
+     "hold": 294
+    }
+   },
+   "this_analysis_gate_off": {
+    "n_success": 29,
+    "n_grasp": 35,
+    "n_place": 29,
+    "n_hold_chunks_total": 294,
+    "gate_action": {
+     "execute": 3306,
+     "hold": 294
+    }
+   },
+   "file": "outputs/verify/T39/s23/analysis.json"
+  },
+  "definitions": "outputs/verify/SUBTASK-d/p/analyze_v2.py docstring (also in v2/analysis.json 'definitions')"
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/subtask-d/subtask-d-scene-1800_s18001.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/subtask-d/subtask-d-scene-1800_s18001.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/subtask-d/subtask-d-scene-1925_s19251.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/subtask-d/subtask-d-scene-1925_s19251.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/subtask-d/subtask-d-timeline.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/subtask-d/subtask-d-timeline.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/subtask-d/subtask-d-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/subtask-d/subtask-d-table.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "legacy 14/15 · 15/15 · -29.031048280806342; cuRobo 10/15 · 15/15 · -9.171877401271193; 15 clearance_before values equal T36 for both"
+ },
+ "verdict": "baseline matched. V0: executed actions, planning actions, traj.npz arrays (except inference_ms), latch / manipulated id / exclusion per chunk and server arrays (except chunk_index) equal for both runs. V1 48/48 runs done.",
+ "not_measured": [
+  "T39 gate-off server records have no 'subtask' key (o1-eval code): label x latch, transition delays and would_block exist only for gate-on runs and the 2 V0 gate-off reruns",
+  "chunk time comparison: V1 ran 4 E3bG servers at once, T39 S2-2 ran 2 E3b + 2 E0 servers at once (different load); time numbers are listed, not paired",
+  "ESDF slice in the scene figure is the 5 mm main tier only (coarse tier not drawn)",
+  "SendUserFile not available to this agent: figures are reported by path"
+ ]
+}

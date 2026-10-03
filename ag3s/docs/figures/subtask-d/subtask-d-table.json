@@ -1,0 +1,191 @@
+{
+ "paired_2x2": {
+  "success": {
+   "both": 28,
+   "off_only": 1,
+   "on_only": 0,
+   "neither": 19,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "grasp": {
+   "both": 34,
+   "off_only": 1,
+   "on_only": 0,
+   "neither": 13,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "place": {
+   "both": 28,
+   "off_only": 1,
+   "on_only": 0,
+   "neither": 19,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  }
+ },
+ "rows": [
+  [
+   "runs (pairs)",
+   48,
+   48
+  ],
+  [
+   "success / grasp / place",
+   "29 / 35 / 29",
+   "28 / 34 / 28"
+  ],
+  [
+   "runs reaching latch PLACED",
+   25,
+   24
+  ],
+  [
+   "  of those, runs with switch after PLACED",
+   21,
+   0
+  ],
+  [
+   "  switch decisions after PLACED",
+   29,
+   0
+  ],
+  [
+   "  exclusion active / chunks after PLACED",
+   "965 / 1051",
+   "57 / 1041"
+  ],
+  [
+   "  carve centre: nearest object (counts)",
+   "{\"banana\": 224, \"orange\": 119, \"pear\": 200, \"apple\": 422}",
+   "{\"banana\": 23, \"orange\": 20, \"pear\": 14}"
+  ],
+  [
+   "  carve centre to apple, median mm",
+   "218.7",
+   "362.7"
+  ],
+  [
+   "runs with released / released chunks",
+   "0 / 0",
+   "24 / 24"
+  ],
+  [
+   "switch decisions before PLACED",
+   42,
+   5
+  ],
+  [
+   "gate blocked before PLACED (chunks)",
+   0,
+   191
+  ],
+  [
+   "gate blocked all chunks",
+   "{}",
+   "{\"first\": 983, \"switch\": 239}"
+  ],
+  [
+   "HOLD chunks after PLACED / from first release",
+   "86 / 0",
+   "984 / 984 (of 984)"
+  ],
+  [
+   "HOLD kinds from first release",
+   "{}",
+   "{\"uncertified\": 984, \"collision\": 2}"
+  ],
+  [
+   "HOLD kinds all chunks",
+   "{\"unverified\": 62, \"collision\": 198, \"uncertified\": 89}",
+   "{\"uncertified\": 984, \"unverified\": 62, \"collision\": 209}"
+  ],
+  [
+   "release chunk - place chunk (runs)",
+   "-",
+   "[3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 9, 9, 10, 12]"
+  ],
+  [
+   "HOLD chunks / runs with HOLD",
+   "294 / 18",
+   "1198 / 34"
+  ],
+  [
+   "gate action (execute / hold)",
+   "3306 / 294",
+   "2402 / 1198"
+  ],
+  [
+   "clearance min over runs, mm",
+   "-47.1",
+   "-47.1"
+  ],
+  [
+   "chunks with clearance < 0",
+   329,
+   339
+  ],
+  [
+   "SQP time-budget hits (chunks)",
+   0,
+   0
+  ],
+  [
+   "round trip median / p95 ms (excl. 1st)",
+   "1292.2 / 1644.5",
+   "1922.5 / 2303.6"
+  ],
+  [
+   "server ag3s / trajopt / infer median ms",
+   "353.5/79.0/561.4",
+   "554.1/90.4/925.7"
+  ]
+ ],
+ "v0": {
+  "E3b_ep1807_s18071": {
+   "executed_actions_equal": true,
+   "named_per_chunk": {
+    "grasp_state_equal": true,
+    "manipulated_id_equal": true,
+    "exclusion_equal": true,
+    "refined_chunk_equal": true,
+    "subtask_key_in_t39": 0,
+    "subtask_key_in_new": 75
+   },
+   "other_values": {
+    "manifest scene.model_xml": {
+     "t39": "/mnt/dev/work-o1/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+     "new": "/mnt/dev/work-sd/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml"
+    }
+   }
+  },
+  "E3b_ep1800_s18001": {
+   "executed_actions_equal": true,
+   "named_per_chunk": {
+    "grasp_state_equal": true,
+    "manipulated_id_equal": true,
+    "exclusion_equal": true,
+    "refined_chunk_equal": true,
+    "subtask_key_in_t39": 0,
+    "subtask_key_in_new": 75
+   },
+   "other_values": {
+    "manifest scene.model_xml": {
+     "t39": "/mnt/dev/work-o1/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+     "new": "/mnt/dev/work-sd/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml"
+    },
+    "server chunk_index (first chunk of the segment)": {
+     "t39": 0,
+     "new": 75,
+     "t39_file": "/mnt/dev/work/outputs/verify/T39/runs/E3b/server_8226_20261002T093647/server_constraints/run_0000/chunk_00000.npz",
+     "new_file": "/mnt/dev/work/outputs/verify/SUBTASK-d/v0/E3b/server_8230_20261002T184905/server_constraints/run_0000/chunk_00075.npz",
+     "t_step_first": [
+      1,
+      1
+     ]
+    }
+   }
+  }
+ }
+}

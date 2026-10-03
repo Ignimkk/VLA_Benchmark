@@ -1,0 +1,260 @@
+{
+ "pair": {
+  "episode": 1925,
+  "seed": 19251,
+  "off_run": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1925_s19251",
+  "on_run": "runs/E3bG/E3bG_ep1925_s19251"
+ },
+ "cells": [
+  {
+   "gate": "off",
+   "label": "before PLACED",
+   "t": 29,
+   "mp4_frame": 224,
+   "server_chunk": "/mnt/dev/work/outputs/verify/T39/runs/E3b/server_8226_20261002T093647/server_constraints/run_0000/chunk_00553.npz",
+   "latch": "held",
+   "subtask_label": null,
+   "blocked": null,
+   "released": null,
+   "manipulated_id": 0,
+   "manipulated_centroid_base": [
+    0.5719394116532287,
+    0.29526139635653087,
+    0.8633286695748511
+   ],
+   "exclusion": {
+    "active": true,
+    "source": "attached",
+    "mechanism": [
+     "attached_query",
+     "held_free",
+     "self_filter"
+    ]
+   },
+   "target_free_ball": null,
+   "esdf_slice_z_m": 0.8550143766403198,
+   "n_freed_voxels_in_slice": 0,
+   "apple_true_base": [
+    0.4736531610098443,
+    -0.030431907191555505,
+    0.8556931424776737
+   ],
+   "n_target_points": 34
+  },
+  {
+   "gate": "off",
+   "label": "gate-on release",
+   "t": 32,
+   "mp4_frame": 248,
+   "server_chunk": "/mnt/dev/work/outputs/verify/T39/runs/E3b/server_8226_20261002T093647/server_constraints/run_0000/chunk_00556.npz",
+   "latch": "placed",
+   "subtask_label": null,
+   "blocked": null,
+   "released": null,
+   "manipulated_id": 1,
+   "manipulated_centroid_base": [
+    0.4931267787057263,
+    -0.05728067911729618,
+    0.8786234661827002
+   ],
+   "exclusion": {
+    "active": true,
+    "source": "manipulated",
+    "mechanism": [
+     "target_free_layer",
+     "contact_margin"
+    ]
+   },
+   "target_free_ball": {
+    "centre_m": [
+     0.490314098885769,
+     -0.05537721233071062,
+     0.8591551801090888
+    ],
+    "radius_mm": 54.725,
+    "z_min_m": 0.8269232255984764,
+    "n_points": 108,
+    "radius_quantile": 1.0,
+    "radius_raw_mm": 49.725,
+    "centre_method": "surface_fit",
+    "fit": {
+     "method": "surface_fit",
+     "centre_m": [
+      0.490314,
+      -0.055377,
+      0.859155
+     ],
+     "radius_mm": 33.526,
+     "n_points": 108,
+     "residual_median_mm": 0.816,
+     "radius_capped": false,
+     "shift_from_centroid_mm": 19.762,
+     "reason": null
+    },
+    "pad_mm": 5.0,
+    "support_plane_z_m": 0.8219232255984764,
+    "voxel_mm": 5.0
+   },
+   "esdf_slice_z_m": 0.8586041688919066,
+   "n_freed_voxels_in_slice": 338,
+   "apple_true_base": [
+    0.4899621330276193,
+    -0.05665036481650659,
+    0.8597193585271802
+   ],
+   "n_target_points": 108
+  },
+  {
+   "gate": "off",
+   "label": "release +10",
+   "t": 42,
+   "mp4_frame": 328,
+   "server_chunk": "/mnt/dev/work/outputs/verify/T39/runs/E3b/server_8226_20261002T093647/server_constraints/run_0000/chunk_00566.npz",
+   "latch": "placed",
+   "subtask_label": null,
+   "blocked": null,
+   "released": null,
+   "manipulated_id": 1,
+   "manipulated_centroid_base": [
+    0.4927690498902006,
+    -0.05423939872616381,
+    0.8788681909213014
+   ],
+   "exclusion": {
+    "active": true,
+    "source": "manipulated",
+    "mechanism": [
+     "target_free_layer",
+     "contact_margin"
+    ]
+   },
+   "target_free_ball": {
+    "centre_m": [
+     0.49046499038136115,
+     -0.05448639270325144,
+     0.8597167992444008
+    ],
+    "radius_mm": 54.825,
+    "z_min_m": 0.8263107239969733,
+    "n_points": 113,
+    "radius_quantile": 1.0,
+    "radius_raw_mm": 49.825,
+    "centre_method": "surface_fit",
+    "fit": {
+     "method": "surface_fit",
+     "centre_m": [
+      0.490465,
+      -0.054486,
+      0.859717
+     ],
+     "radius_mm": 33.555,
+     "n_points": 113,
+     "residual_median_mm": 0.788,
+     "radius_capped": false,
+     "shift_from_centroid_mm": 19.291,
+     "reason": null
+    },
+    "pad_mm": 5.0,
+    "support_plane_z_m": 0.8213107239969732,
+    "voxel_mm": 5.0
+   },
+   "esdf_slice_z_m": 0.858174328804016,
+   "n_freed_voxels_in_slice": 366,
+   "apple_true_base": [
+    0.4901408954636587,
+    -0.05635263184885547,
+    0.8597695695404114
+   ],
+   "n_target_points": 113
+  },
+  {
+   "gate": "on",
+   "label": "before PLACED",
+   "t": 29,
+   "mp4_frame": 224,
+   "server_chunk": "runs/E3bG/server_8232_20261002T190400/server_constraints/run_0000/chunk_00253.npz",
+   "latch": "held",
+   "subtask_label": "place",
+   "blocked": null,
+   "released": false,
+   "manipulated_id": 0,
+   "manipulated_centroid_base": [
+    0.5719394116532287,
+    0.29526139635653087,
+    0.8633286695748511
+   ],
+   "exclusion": {
+    "active": true,
+    "source": "attached",
+    "mechanism": [
+     "attached_query",
+     "held_free",
+     "self_filter"
+    ]
+   },
+   "target_free_ball": null,
+   "esdf_slice_z_m": 0.8550143766403198,
+   "n_freed_voxels_in_slice": 0,
+   "apple_true_base": [
+    0.4736531610098443,
+    -0.030431907191555505,
+    0.8556931424776737
+   ],
+   "n_target_points": 34
+  },
+  {
+   "gate": "on",
+   "label": "gate-on release",
+   "t": 32,
+   "mp4_frame": 248,
+   "server_chunk": "runs/E3bG/server_8232_20261002T190400/server_constraints/run_0000/chunk_00256.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": "first",
+   "released": true,
+   "manipulated_id": null,
+   "manipulated_centroid_base": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "target_free_ball": null,
+   "esdf_slice_z_m": 0.8599313831329345,
+   "n_freed_voxels_in_slice": 0,
+   "apple_true_base": [
+    0.4899621330276193,
+    -0.05665036481650659,
+    0.8597193585271802
+   ],
+   "n_target_points": 0
+  },
+  {
+   "gate": "on",
+   "label": "release +10",
+   "t": 42,
+   "mp4_frame": 328,
+   "server_chunk": "runs/E3bG/server_8232_20261002T190400/server_constraints/run_0000/chunk_00266.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": "first",
+   "released": false,
+   "manipulated_id": null,
+   "manipulated_centroid_base": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "target_free_ball": null,
+   "esdf_slice_z_m": 0.8615688323974608,
+   "n_freed_voxels_in_slice": 0,
+   "apple_true_base": [
+    0.49013985748188343,
+    -0.056355812792654794,
+    0.8597695695404115
+   ],
+   "n_target_points": 0
+  }
+ ]
+}

@@ -198,3 +198,11 @@ home phase 는 place 와 같이 처리 (지우지 않음).
 - 빈칸: spec "home 이면 지우지 않는다" 를 다 지키려면 **"home 확정 + 이번 episode 에서 detach 가 있었음 → 기존 manipulated 해제 (carve 없음)"** 가 하나 더 필요. 사용자 판정 대기.
 - (2026-10-02) **사용자 판정: 안 (b)** — "사과가 놓이기 전에 home 이 나올 수도 있는 상황에 대비". 규칙: gate on ∧ 확정 home ∧ latch 가 이번 episode 에 **PLACED** 도달 → 기존 manipulated 해제 (carve 없음).
   "detach" 대신 PLACED 로 좁힌 이유: T34 attach_revoked (거짓 attach 회수) 도 detach 지만 사과는 놓이지 않았다. → `SUBTASK-c.task.md` Part B · B3.
+
+## 11. SUBTASK-d 해석 정정 (2026-10-03, 사용자 지적)
+
+lead 가 "문제 2 — PLACED 전 LATCHED 에서 label place/home 으로 switch 를 막아 ep1828 을 잃었다" 고 보고했으나 **틀렸다.**
+기록 (server_8232 · T39 server_8226, chunk 14–35): ep1828 s18281 은 chunk 14–27 CLOSING (파지 확인 안 됨) → 28 LATCHED, label 은 16 부터 place.
+chunk 30 에 gate off 는 manipulated 를 사과 (id 0, ≈(0.56, 0.32)) 에서 **id 1 (0.464, −0.299) — 탁자 반대편, 사과에서 약 0.6 m 떨어진 다른 물체** 로 바꿨고,
+gate on 은 그 교체를 막아 사과를 계속 carve 했다. 사용자 원칙 ("쥐기 전 + place 면 사과는 이미 지워져 있고, 바구니는 안 지운다") 그대로의 동작이다.
+불일치 1 쌍은 그 뒤 재파지 결과가 갈린 것 (McNemar p 1.0). → 문제 2 와 "HELD 이후에만 막기" 제안은 철회. 남은 수정은 문제 1 (해제 뒤 uncertified HOLD) 하나.
