@@ -967,6 +967,14 @@ class CollisionConstraintSet:
         """
         return self.validity.certified
 
+    @property
+    def subtask_no_target(self) -> bool:
+        """The subtask gate emptied the target on purpose and nothing is carved (SUBTASK-e).
+
+        `subtask_no_target(self)` — see the function for the exact rule.
+        """
+        return subtask_no_target(self)
+
     def enabled_candidates(self) -> list[CollisionCandidate]:
         return [c for c in self.candidates if c.collision_enabled]
 
@@ -1030,6 +1038,57 @@ class AttentionAdapter(Protocol):
         ...
 
 
+# ------------------------------------------------------------------- SUBTASK-e: certification
+
+#: The names whose being set means something is carved out of the field or exempted from it this
+#: frame: the attention target, the manipulated object (contact margin / target-free layer), the
+#: attached (held) object, and the two per-sphere arrays that carry those exemptions.
+_CARVE_FIELDS = ("target", "manipulated", "attached", "target_field_exclude",
+                 "manipulated_link_margin")
+
+
+def _enum_value(value: Any) -> Any:
+    return getattr(value, "value", value)
+
+
+def subtask_no_target(constraint_set: Any) -> bool:
+    """True when the frame has no target **because the subtask gate decided so**, and the field
+    carves nothing — the one `no_target` a TO may treat as certified geometry (SUBTASK-e).
+
+    `PipelineStatus.NO_TARGET` normally means "grounding could not name the object", and the caller
+    holds: it does not know what it is about to touch. `GroundingStatus.SUBTASK_GATED` is different —
+    the confirmed subtask label is place / home, so there is nothing to carve, and the field that
+    results is the most conservative one AG3S builds (every object at full clearance). All of:
+
+    - `status == no_target` and `grounding_status == subtask_gated` (only reachable with
+      `clustering.subtask_gate` on — gate off, this is always False);
+    - `validity == valid` (a degraded / incomplete frame stays uncertified, gated or not);
+    - nothing is carved: no target, no manipulated object (`manipulated` and the identity record
+      `metrics["manipulated"]`), nothing attached, no target-free mask, no contact margin, and the
+      exclusion record (`metrics["exclusion"]`) is present and says `source == "none"`, inactive.
+
+    Duck-typed (reads `.value` when present) so a caller holding a record-shaped object gets the
+    same answer as one holding a `CollisionConstraintSet`. Any field it cannot read → False.
+    """
+    cs = constraint_set
+    if cs is None:
+        return False
+    if _enum_value(getattr(cs, "status", None)) != PipelineStatus.NO_TARGET.value:
+        return False
+    if _enum_value(getattr(cs, "grounding_status", None)) != GroundingStatus.SUBTASK_GATED.value:
+        return False
+    if _enum_value(getattr(cs, "validity", None)) != ConstraintValidity.VALID.value:
+        return False
+    if any(getattr(cs, name, None) is not None for name in _CARVE_FIELDS):
+        return False
+    metrics = getattr(cs, "metrics", None)
+    if not isinstance(metrics, dict) or metrics.get("manipulated") is not None:
+        return False
+    exclusion = metrics.get("exclusion")
+    return (isinstance(exclusion, dict) and exclusion.get("source") == "none"
+            and not exclusion.get("active", True))
+
+
 __all__ = [
     "AttachedCollisionGeometry",
     "AttentionAdapter",
@@ -1053,4 +1112,5 @@ __all__ = [
     "SourceType",
     "SupportSurface",
     "TargetGeometry",
+    "subtask_no_target",
 ]

@@ -22,6 +22,7 @@ from typing import Any, Callable, Optional, Sequence
 
 import numpy as np
 
+from benchmark.ag3s.types import subtask_no_target
 from benchmark.trajopt import wire
 from benchmark.trajopt.config import TrajOptConfig
 from benchmark.trajopt.grasp_latch import (
@@ -706,7 +707,9 @@ class SafePolicy:
         q_now = np.asarray(
             max(observations, key=lambda o: o.timestamp).robot_state, np.float64)
         self._last_q_now = q_now
-        certified = constraint_set.status.value == "ok"
+        # SUBTASK-e: 판정(`_verdict`)과 **같은 규칙**. 여기서 다르면 sqp 가 `violated` 로 내린 청크를
+        # 판정이 인증됐다고 읽는다 (또는 그 반대) — HOLD 를 만드는 두 곳이 같은 술어를 쓴다.
+        certified = geometry_certified(constraint_set)
         return snapshot, q_now, certified
 
     # --- T29: finger joints ---------------------------------------------------------------
@@ -1236,7 +1239,7 @@ class SafePolicy:
         result = self.refiner.last_result
         cs = self._last_constraint_set
         ag3s_status = getattr(getattr(cs, "status", None), "value", "no_geometry")
-        certified = bool(cs is not None and ag3s_status == "ok")
+        certified = geometry_certified(cs)
         notes = list(getattr(result, "notes", ()) or ())
         self._last_reasons = None
         self._last_classification = {}
@@ -1300,6 +1303,9 @@ class SafePolicy:
 
         if not certified:
             reasons.append(self._certification_reason(cs))
+        elif subtask_no_target(cs):
+            # SUBTASK-e: 인증된 기하지만 target 이 없다 — 실행되는 청크에도 "왜" 가 남게.
+            reasons.append(self._subtask_no_target_reason(cs))
         if status in ("solver_failed", "unconstrained"):
             reasons.append(wire.make_reason(
                 "unverified", f"trajopt_status={status}: the returned chunk was not checked "
@@ -1368,6 +1374,30 @@ class SafePolicy:
             "uncertified", f"AG3S could not certify the geometry (status={status}, "
             f"grounding={grounding}, validity={validity}"
             + (f", manipulated {man.get('state')}" if man.get("state") else "") + ")", **evidence)
+
+    def _subtask_no_target_reason(self, cs) -> dict[str, Any]:
+        """`subtask_no_target` — target 이 없는데 실행하는 이유를 기록에 남긴다 (SUBTASK-e).
+
+        증거는 `_certification_reason` 과 같은 키에 subtask label (`metrics["subtask"]`) 을 더한다 —
+        "gate 가 무엇을 보고 비웠나" (label · released · placed_seen) 가 같은 줄에 있게.
+        """
+        status = getattr(getattr(cs, "status", None), "value", "unknown")
+        grounding = getattr(getattr(cs, "grounding_status", None), "value", "unknown")
+        validity = getattr(getattr(cs, "validity", None), "value", "unknown")
+        metrics = getattr(cs, "metrics", None) or {}
+        sub = metrics.get("subtask") if isinstance(metrics.get("subtask"), dict) else {}
+        exclusion = metrics.get("exclusion") if isinstance(metrics.get("exclusion"), dict) else {}
+        return wire.make_reason(
+            "subtask_no_target",
+            f"no target this frame because the subtask gate withheld it (label="
+            f"{sub.get('label')}, blocked={sub.get('blocked')}, released={sub.get('released')}); "
+            "nothing is carved, so the field holds every object at full clearance and the "
+            "geometry is certified",
+            ag3s_status=status, grounding_status=grounding, validity=validity,
+            subtask_label=sub.get("label"), subtask_blocked=sub.get("blocked"),
+            subtask_released=sub.get("released"), subtask_released_id=sub.get("released_id"),
+            placed_seen=sub.get("placed_seen"), exclusion_source=exclusion.get("source"),
+            exclusion_active=exclusion.get("active"))
 
     def _authorized_links(self, cs) -> frozenset:
         """접촉 권한이 있는 link — 제약을 지을 때 쓴 **같은** 집합 (`ClearancePolicy.authorized_links`)."""
@@ -1453,6 +1483,21 @@ _NOT_TARGET_TIERS = ("target_free", "static")
 
 
 #: T37 (K1) — continuity 항을 끄는 grasp latch 상태. 닫힘 시도(`closing`)와 파지 확인(`held`).
+def geometry_certified(constraint_set: Any) -> bool:
+    """이 제약 집합의 기하를 TO 가 **인증된 것으로** 읽어도 되나 — `_scene_fn` (→ sqp) 과
+    `_verdict` (→ 사유) 가 같이 쓰는 술어 하나.
+
+    `status == ok` 이거나, SUBTASK-e: target 이 없는 이유가 subtask gate 이고 carve 중인 것이 없다
+    (`ag3s.types.subtask_no_target`). 그 밖의 `no_target` (`no_seed` · `low_score` · `lost` …) ·
+    degraded · incomplete 는 지금처럼 미인증이다. gate off 에서는 `subtask_gated` 가 생기지 않으므로
+    이 값은 `status == ok` 와 같다.
+    """
+    if constraint_set is None:
+        return False
+    status = getattr(getattr(constraint_set, "status", None), "value", None)
+    return bool(status == "ok" or subtask_no_target(constraint_set))
+
+
 def _subtask_probabilities(subtask: Any) -> Optional[dict[str, float]]:
     """`result["subtask"]` (`{"p": {...}, "argmax", "probe"}`) → `{"pick", "place", "home"}` 확률.
 

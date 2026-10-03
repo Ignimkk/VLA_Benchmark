@@ -26,6 +26,7 @@ from benchmark.ag3s.runtime.pipeline import AG3S
 from benchmark.ag3s.types import CameraObservation
 from benchmark.trajopt.config import TrajOptConfig
 from benchmark.trajopt.linearize import CollisionLinearizer, scene_from_constraint_set
+from benchmark.trajopt.safe_policy import geometry_certified
 from benchmark.trajopt.refiner import TrajOptChunkRefiner
 from benchmark.trajopt.types import ChunkLayout
 
@@ -90,7 +91,8 @@ class LivePipeline:
         scene = scene_from_constraint_set(
             constraint_set, self.linearizer.robot_radii, self.to_config
         )
-        certified = constraint_set.status.value == "ok"
+        # SUBTASK-e: SafePolicy 와 같은 술어 — gate 가 일부러 비운 target 은 인증된 기하다.
+        certified = geometry_certified(constraint_set)
         return scene, q_now, certified
 
     # ----------------------------------------------------------------------------------

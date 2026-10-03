@@ -136,8 +136,9 @@ T16 에서 `--no-collision` 인데도 34 청크 중 25 개가 HOLD 였다. 이�
 | `budget_only` | 예산/반복 상한으로 끝났지만 최종 검사 통과 | 실행 |
 | `occluded_target` | 미인증의 이유가 target 없음(`no_target`) 하나뿐이고 manipulated 가 `occluded` 다 (T20) | 실행 |
 | `uncertified_waived` | 기하 미인증이지만 서버가 `require_certified_geometry=False` 로 떠 있다 | 실행 |
+| `subtask_no_target` | target 이 없는 이유가 **subtask gate** 다 (`grounding_status=subtask_gated` · `validity=valid` · carve 중인 대상 없음, `ag3s.types.subtask_no_target`). 이 기하는 **인증된 것으로 본다** (`geometry_certified=True`) — 이 사유는 "target 이 없는데 왜 실행했나" 를 남기는 기록이다 (SUBTASK-e) | 실행 |
 | `collision` | 권한 없는 link, 또는 manipulated 가 아닌 물체와의 관통 (> tolerance) | HOLD |
-| `uncertified` | `geometry_certified=False` (위 `occluded_target` 이 아닌 것 전부) | HOLD |
+| `uncertified` | `geometry_certified=False` (위 `occluded_target` 이 아닌 것 전부. `subtask_no_target` 은 미인증이 아니다) | HOLD |
 | `unverified` | 최적화기가 검사하지 못했다 (`solver_failed` · `unconstrained`) | HOLD |
 | `comms` | **클라이언트가 만든다** — `timeout` · `stale` · `dimension` · `error` (`evidence.ipc`) | HOLD |
 | `no_perception` | 서버가 `--no-perception` 으로 떠 있다 (T27, `to_only_policy`) — AG3S·ESDF 가 없고 **아무것도 검사하지 않았다** | HOLD |
@@ -339,8 +340,11 @@ EXECUTED_CHUNKS = ("refined", "reference", "none")
 #: 응답의 **선택 키** — `safe` 의 사유 목록 (T23). 머리말의 `verdict_reasons` 절.
 VERDICT_REASONS = "verdict_reasons"
 
-#: 사유의 종류. 머리말 표의 순서 그대로 — 앞 넷이 실행, 뒤 다섯이 HOLD 다 (`GATE_DEFAULT`).
+#: 사유의 종류. 머리말 표의 순서 그대로 — 앞 다섯이 실행, 뒤 다섯이 HOLD 다 (`GATE_DEFAULT`).
+#: `subtask_no_target` (SUBTASK-e) 는 끝이 아니라 실행 쪽 자리에 넣었다 — 이 튜플의 순서를 읽는
+#: 곳은 없고 (`GATE_DEFAULT` 가 처리를 정한다), 표와 같은 순서가 읽기 쉽다.
 REASON_KINDS = ("allowed_contact", "budget_only", "occluded_target", "uncertified_waived",
+                "subtask_no_target",
                 "collision", "uncertified", "unverified", "comms", "no_perception")
 
 #: 게이트의 처리 두 가지. **정지(abort)는 여기 없다** — 한 청크의 사유가 아니라 연속 HOLD 수가
@@ -353,6 +357,9 @@ GATE_DEFAULT: dict[str, str] = {
     "budget_only": "execute",
     "occluded_target": "execute",
     "uncertified_waived": "execute",
+    # SUBTASK-e — gate 가 일부러 비운 target. 기하는 인증됐다 (carve 없는 가장 보수적인 field).
+    # 이 kind 를 모르는 옛 클라이언트는 HOLD 한다 (fail closed) — 서버와 같은 wire 를 써야 실행된다.
+    "subtask_no_target": "execute",
     "collision": "hold",
     "uncertified": "hold",
     "unverified": "hold",
