@@ -1,0 +1,496 @@
+{
+ "pair": {
+  "episode": 1976,
+  "seed": 19761,
+  "on_e_run": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/E3bG_ep1976_s19761",
+  "on_f_run": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/E3bG_ep1976_s19761"
+ },
+ "identity": {
+  "exec_first_step": 280,
+  "exec_first_chunk": 36,
+  "exec_max_abs": 0.21714752819389105,
+  "planning_actions_first_t": 37,
+  "refined_chunk_first_t": 37,
+  "decision_first_t": 36,
+  "decision_fields_at_first": [
+   "to_status"
+  ],
+  "gate_first_t": 36,
+  "reason_first_t": 36,
+  "rows_at_gate_first": {
+   "on_f": {
+    "t": 36,
+    "region": "from_release",
+    "hold": false,
+    "hold_kinds": [],
+    "reason_kinds": [
+     "budget_only",
+     "subtask_no_target"
+    ],
+    "gate_action": "execute",
+    "latch": "placed",
+    "label": "home",
+    "placed_seen": true,
+    "blocked": null,
+    "released": true,
+    "grounding_status": "no_admissible",
+    "snt_gs": "no_admissible",
+    "mode": "no_admissible",
+    "manip_id": null,
+    "excl_active": false,
+    "to_status": "feasible",
+    "clearance_min_mm": 43.256860226392746
+   },
+   "on_e": {
+    "t": 36,
+    "region": "from_release",
+    "hold": true,
+    "hold_kinds": [
+     "uncertified"
+    ],
+    "reason_kinds": [
+     "budget_only",
+     "uncertified"
+    ],
+    "gate_action": "hold",
+    "latch": "placed",
+    "label": "home",
+    "placed_seen": true,
+    "blocked": null,
+    "released": true,
+    "grounding_status": "no_admissible",
+    "snt_gs": null,
+    "mode": "no_admissible",
+    "manip_id": null,
+    "excl_active": false,
+    "to_status": "violated",
+    "clearance_min_mm": 43.256860226392746
+   }
+  },
+  "rows_before_gate_first": {
+   "on_f": {
+    "t": 35,
+    "region": "placed_before_release",
+    "hold": false,
+    "hold_kinds": [],
+    "reason_kinds": [
+     "budget_only"
+    ],
+    "gate_action": "execute",
+    "latch": "placed",
+    "label": "place",
+    "placed_seen": true,
+    "blocked": null,
+    "released": false,
+    "grounding_status": "ok",
+    "snt_gs": null,
+    "mode": "occluded",
+    "manip_id": 0,
+    "excl_active": true,
+    "to_status": "feasible",
+    "clearance_min_mm": 42.99484193325043
+   },
+   "on_e": {
+    "t": 35,
+    "region": "placed_before_release",
+    "hold": false,
+    "hold_kinds": [],
+    "reason_kinds": [
+     "budget_only"
+    ],
+    "gate_action": "execute",
+    "latch": "placed",
+    "label": "place",
+    "placed_seen": true,
+    "blocked": null,
+    "released": false,
+    "grounding_status": "ok",
+    "snt_gs": null,
+    "mode": "occluded",
+    "manip_id": 0,
+    "excl_active": true,
+    "to_status": "feasible",
+    "clearance_min_mm": 42.99484193325043
+   }
+  },
+  "on_e_at_gate_first_is_no_admissible_hold": true,
+  "on_e_at_gate_first_home_placed_seen": true,
+  "on_f_at_gate_first_new_chunk": true,
+  "rows_at_exec_first_chunk": {
+   "on_f": {
+    "t": 36,
+    "region": "from_release",
+    "hold": false,
+    "hold_kinds": [],
+    "reason_kinds": [
+     "budget_only",
+     "subtask_no_target"
+    ],
+    "gate_action": "execute",
+    "latch": "placed",
+    "label": "home",
+    "placed_seen": true,
+    "blocked": null,
+    "released": true,
+    "grounding_status": "no_admissible",
+    "snt_gs": "no_admissible",
+    "mode": "no_admissible",
+    "manip_id": null,
+    "excl_active": false,
+    "to_status": "feasible",
+    "clearance_min_mm": 43.256860226392746
+   },
+   "on_e": {
+    "t": 36,
+    "region": "from_release",
+    "hold": true,
+    "hold_kinds": [
+     "uncertified"
+    ],
+    "reason_kinds": [
+     "budget_only",
+     "uncertified"
+    ],
+    "gate_action": "hold",
+    "latch": "placed",
+    "label": "home",
+    "placed_seen": true,
+    "blocked": null,
+    "released": true,
+    "grounding_status": "no_admissible",
+    "snt_gs": null,
+    "mode": "no_admissible",
+    "manip_id": null,
+    "excl_active": false,
+    "to_status": "violated",
+    "clearance_min_mm": 43.256860226392746
+   }
+  },
+  "t_na_e": 36,
+  "t_first_new_f": 36,
+  "t_rel_e": 36,
+  "t_rel_f": 36,
+  "t_placed_e": 34,
+  "t_placed_f": 34,
+  "earliest_any_t": 36,
+  "identical_before_t_na_e": true
+ },
+ "cells": [
+  {
+   "side": "on_e",
+   "label": "\uac08\ub9bc -1 chunk",
+   "t": 35,
+   "mp4_frame": 279,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8231_20261003T051613/server_constraints/run_0000/chunk_00409.npz",
+   "latch": "placed",
+   "subtask_label": "place",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "ok",
+   "server_verdict_reason_kinds": [
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only"
+   ],
+   "snt_evidence_grounding": null,
+   "hold": false,
+   "hold_kinds": [],
+   "gate_action": "execute",
+   "clearance_min_mm": 42.99484193325043,
+   "manipulated_id": 0,
+   "exclusion": {
+    "active": true,
+    "source": "manipulated",
+    "mechanism": [
+     "target_free_layer",
+     "contact_margin"
+    ]
+   },
+   "esdf_slice_z_m": 0.8562909078598021,
+   "apple_true_base": [
+    0.46763825816451043,
+    -0.08940542363229838,
+    0.8578049456137511
+   ],
+   "n_target_points": 38
+  },
+  {
+   "side": "on_e",
+   "label": "\uccab \uac08\ub9bc chunk",
+   "t": 36,
+   "mp4_frame": 287,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8231_20261003T051613/server_constraints/run_0000/chunk_00410.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": true,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "snt_evidence_grounding": null,
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 43.256860226392746,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8578309059143066,
+   "apple_true_base": [
+    0.4676499506634461,
+    -0.0894015309006292,
+    0.8578044420775933
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_e",
+   "label": "\uac08\ub9bc +11 chunk",
+   "t": 47,
+   "mp4_frame": 375,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8231_20261003T051613/server_constraints/run_0000/chunk_00421.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "snt_evidence_grounding": null,
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 49.769360572099686,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8559526538848876,
+   "apple_true_base": [
+    0.46775186993746387,
+    -0.08941115217112507,
+    0.8578037200630295
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_e",
+   "label": "\uac08\ub9bc +39 chunk",
+   "t": 75,
+   "mp4_frame": 599,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8231_20261003T051613/server_constraints/run_0000/chunk_00449.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "snt_evidence_grounding": null,
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 49.146126955747604,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8560327625274657,
+   "apple_true_base": [
+    0.46776343951639776,
+    -0.08945035238075752,
+    0.857799279005047
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_f",
+   "label": "\uac08\ub9bc -1 chunk",
+   "t": 35,
+   "mp4_frame": 279,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/server_8231_20261003T123420/server_constraints/run_0000/chunk_00259.npz",
+   "latch": "placed",
+   "subtask_label": "place",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "ok",
+   "server_verdict_reason_kinds": [
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only"
+   ],
+   "snt_evidence_grounding": null,
+   "hold": false,
+   "hold_kinds": [],
+   "gate_action": "execute",
+   "clearance_min_mm": 42.99484193325043,
+   "manipulated_id": 0,
+   "exclusion": {
+    "active": true,
+    "source": "manipulated",
+    "mechanism": [
+     "target_free_layer",
+     "contact_margin"
+    ]
+   },
+   "esdf_slice_z_m": 0.8562909078598021,
+   "apple_true_base": [
+    0.46763825816451043,
+    -0.08940542363229838,
+    0.8578049456137511
+   ],
+   "n_target_points": 38
+  },
+  {
+   "side": "on_f",
+   "label": "\uccab \uac08\ub9bc chunk",
+   "t": 36,
+   "mp4_frame": 287,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/server_8231_20261003T123420/server_constraints/run_0000/chunk_00260.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": true,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "subtask_no_target",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "subtask_no_target"
+   ],
+   "snt_evidence_grounding": "no_admissible",
+   "hold": false,
+   "hold_kinds": [],
+   "gate_action": "execute",
+   "clearance_min_mm": 43.256860226392746,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8578309059143066,
+   "apple_true_base": [
+    0.4676499506634461,
+    -0.0894015309006292,
+    0.8578044420775933
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_f",
+   "label": "\uac08\ub9bc +11 chunk",
+   "t": 47,
+   "mp4_frame": 375,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/server_8231_20261003T123420/server_constraints/run_0000/chunk_00271.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_seed",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "snt_evidence_grounding": null,
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 49.76779967546463,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8573623085021972,
+   "apple_true_base": [
+    0.46775190095175695,
+    -0.0894103724798852,
+    0.8578037200630295
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_f",
+   "label": "\uac08\ub9bc +39 chunk",
+   "t": 75,
+   "mp4_frame": 599,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/server_8231_20261003T123420/server_constraints/run_0000/chunk_00299.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_seed",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "snt_evidence_grounding": null,
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 48.67912083864212,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8568628215789794,
+   "apple_true_base": [
+    0.4677634389207723,
+    -0.08945035067218256,
+    0.857799279005047
+   ],
+   "n_target_points": 0
+  }
+ ]
+}

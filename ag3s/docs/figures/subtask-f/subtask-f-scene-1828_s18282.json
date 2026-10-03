@@ -1,0 +1,492 @@
+{
+ "pair": {
+  "episode": 1828,
+  "seed": 18282,
+  "on_e_run": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/E3bG_ep1828_s18282",
+  "on_f_run": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/E3bG_ep1828_s18282"
+ },
+ "identity": {
+  "exec_first_step": 272,
+  "exec_first_chunk": 35,
+  "exec_max_abs": 0.2817884683609009,
+  "planning_actions_first_t": 36,
+  "refined_chunk_first_t": 36,
+  "decision_first_t": 35,
+  "decision_fields_at_first": [
+   "to_status"
+  ],
+  "gate_first_t": 35,
+  "reason_first_t": 35,
+  "rows_at_gate_first": {
+   "on_f": {
+    "t": 35,
+    "region": "from_release",
+    "hold": false,
+    "hold_kinds": [],
+    "reason_kinds": [
+     "budget_only",
+     "subtask_no_target"
+    ],
+    "gate_action": "execute",
+    "latch": "placed",
+    "label": "home",
+    "placed_seen": true,
+    "blocked": null,
+    "released": false,
+    "grounding_status": "no_admissible",
+    "snt_gs": "no_admissible",
+    "mode": "no_admissible",
+    "manip_id": null,
+    "excl_active": false,
+    "to_status": "feasible",
+    "clearance_min_mm": 52.07418650388718
+   },
+   "on_e": {
+    "t": 35,
+    "region": "from_release",
+    "hold": true,
+    "hold_kinds": [
+     "uncertified"
+    ],
+    "reason_kinds": [
+     "budget_only",
+     "uncertified"
+    ],
+    "gate_action": "hold",
+    "latch": "placed",
+    "label": "home",
+    "placed_seen": true,
+    "blocked": null,
+    "released": false,
+    "grounding_status": "no_admissible",
+    "snt_gs": null,
+    "mode": "no_admissible",
+    "manip_id": null,
+    "excl_active": false,
+    "to_status": "violated",
+    "clearance_min_mm": 52.07418650388718
+   }
+  },
+  "rows_before_gate_first": {
+   "on_f": {
+    "t": 34,
+    "region": "from_release",
+    "hold": false,
+    "hold_kinds": [],
+    "reason_kinds": [
+     "budget_only",
+     "subtask_no_target"
+    ],
+    "gate_action": "execute",
+    "latch": "placed",
+    "label": "home",
+    "placed_seen": true,
+    "blocked": "first",
+    "released": false,
+    "grounding_status": "subtask_gated",
+    "snt_gs": "subtask_gated",
+    "mode": "subtask_gated",
+    "manip_id": null,
+    "excl_active": false,
+    "to_status": "feasible",
+    "clearance_min_mm": 4.569456912577152
+   },
+   "on_e": {
+    "t": 34,
+    "region": "from_release",
+    "hold": false,
+    "hold_kinds": [],
+    "reason_kinds": [
+     "budget_only",
+     "subtask_no_target"
+    ],
+    "gate_action": "execute",
+    "latch": "placed",
+    "label": "home",
+    "placed_seen": true,
+    "blocked": "first",
+    "released": false,
+    "grounding_status": "subtask_gated",
+    "snt_gs": "subtask_gated",
+    "mode": "subtask_gated",
+    "manip_id": null,
+    "excl_active": false,
+    "to_status": "feasible",
+    "clearance_min_mm": 4.569456912577152
+   }
+  },
+  "on_e_at_gate_first_is_no_admissible_hold": true,
+  "on_e_at_gate_first_home_placed_seen": true,
+  "on_f_at_gate_first_new_chunk": true,
+  "rows_at_exec_first_chunk": {
+   "on_f": {
+    "t": 35,
+    "region": "from_release",
+    "hold": false,
+    "hold_kinds": [],
+    "reason_kinds": [
+     "budget_only",
+     "subtask_no_target"
+    ],
+    "gate_action": "execute",
+    "latch": "placed",
+    "label": "home",
+    "placed_seen": true,
+    "blocked": null,
+    "released": false,
+    "grounding_status": "no_admissible",
+    "snt_gs": "no_admissible",
+    "mode": "no_admissible",
+    "manip_id": null,
+    "excl_active": false,
+    "to_status": "feasible",
+    "clearance_min_mm": 52.07418650388718
+   },
+   "on_e": {
+    "t": 35,
+    "region": "from_release",
+    "hold": true,
+    "hold_kinds": [
+     "uncertified"
+    ],
+    "reason_kinds": [
+     "budget_only",
+     "uncertified"
+    ],
+    "gate_action": "hold",
+    "latch": "placed",
+    "label": "home",
+    "placed_seen": true,
+    "blocked": null,
+    "released": false,
+    "grounding_status": "no_admissible",
+    "snt_gs": null,
+    "mode": "no_admissible",
+    "manip_id": null,
+    "excl_active": false,
+    "to_status": "violated",
+    "clearance_min_mm": 52.07418650388718
+   }
+  },
+  "t_na_e": 35,
+  "t_first_new_f": 35,
+  "t_rel_e": 32,
+  "t_rel_f": 32,
+  "t_placed_e": 30,
+  "t_placed_f": 30,
+  "earliest_any_t": 35,
+  "identical_before_t_na_e": true
+ },
+ "cells": [
+  {
+   "side": "on_e",
+   "label": "\uac08\ub9bc \uc9c1\uc804",
+   "t": 34,
+   "mp4_frame": 271,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8232_20261003T052013/server_constraints/run_0000/chunk_00558.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": "first",
+   "released": false,
+   "grounding_status": "subtask_gated",
+   "server_verdict_reason_kinds": [
+    "subtask_no_target",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "subtask_no_target"
+   ],
+   "snt_evidence_grounding": "subtask_gated",
+   "hold": false,
+   "hold_kinds": [],
+   "gate_action": "execute",
+   "clearance_min_mm": 4.569456912577152,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8589819955825805,
+   "apple_true_base": [
+    0.5709592452708213,
+    -0.024385747609482405,
+    0.8594966316557412
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_e",
+   "label": "\uccab \uac08\ub9bc chunk",
+   "t": 35,
+   "mp4_frame": 279,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8232_20261003T052013/server_constraints/run_0000/chunk_00559.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "snt_evidence_grounding": null,
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 52.07418650388718,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8573111772537231,
+   "apple_true_base": [
+    0.5708906990529719,
+    -0.02446061180978447,
+    0.859496608349414
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_e",
+   "label": "\uac08\ub9bc +10",
+   "t": 45,
+   "mp4_frame": 359,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8232_20261003T052013/server_constraints/run_0000/chunk_00569.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "snt_evidence_grounding": null,
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 51.59314721822739,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8584818124771117,
+   "apple_true_base": [
+    0.5708594371065943,
+    -0.02457979680315596,
+    0.859493745676405
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_e",
+   "label": "\ub9c8\uc9c0\ub9c9 chunk",
+   "t": 75,
+   "mp4_frame": 599,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-e/runs/E3bG/server_8232_20261003T052013/server_constraints/run_0000/chunk_00599.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "uncertified",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "uncertified"
+   ],
+   "snt_evidence_grounding": null,
+   "hold": true,
+   "hold_kinds": [
+    "uncertified"
+   ],
+   "gate_action": "hold",
+   "clearance_min_mm": 51.310766488313675,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8589836835861205,
+   "apple_true_base": [
+    0.5708193537367682,
+    -0.02449350168516054,
+    0.8594954627161555
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_f",
+   "label": "\uac08\ub9bc \uc9c1\uc804",
+   "t": 34,
+   "mp4_frame": 271,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/server_8232_20261003T123820/server_constraints/run_0000/chunk_00483.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": "first",
+   "released": false,
+   "grounding_status": "subtask_gated",
+   "server_verdict_reason_kinds": [
+    "subtask_no_target",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "subtask_no_target"
+   ],
+   "snt_evidence_grounding": "subtask_gated",
+   "hold": false,
+   "hold_kinds": [],
+   "gate_action": "execute",
+   "clearance_min_mm": 4.569456912577152,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8589819955825805,
+   "apple_true_base": [
+    0.5709592452708213,
+    -0.024385747609482405,
+    0.8594966316557412
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_f",
+   "label": "\uccab \uac08\ub9bc chunk",
+   "t": 35,
+   "mp4_frame": 279,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/server_8232_20261003T123820/server_constraints/run_0000/chunk_00484.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "subtask_no_target",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "subtask_no_target"
+   ],
+   "snt_evidence_grounding": "no_admissible",
+   "hold": false,
+   "hold_kinds": [],
+   "gate_action": "execute",
+   "clearance_min_mm": 52.07418650388718,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8573111772537231,
+   "apple_true_base": [
+    0.5708906990529719,
+    -0.02446061180978447,
+    0.859496608349414
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_f",
+   "label": "\uac08\ub9bc +10",
+   "t": 45,
+   "mp4_frame": 359,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/server_8232_20261003T123820/server_constraints/run_0000/chunk_00494.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "subtask_no_target",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "subtask_no_target"
+   ],
+   "snt_evidence_grounding": "no_admissible",
+   "hold": false,
+   "hold_kinds": [],
+   "gate_action": "execute",
+   "clearance_min_mm": 46.72033712267876,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.858583025932312,
+   "apple_true_base": [
+    0.570861186803234,
+    -0.02457986098870682,
+    0.859493745676405
+   ],
+   "n_target_points": 0
+  },
+  {
+   "side": "on_f",
+   "label": "\ub9c8\uc9c0\ub9c9 chunk",
+   "t": 75,
+   "mp4_frame": 599,
+   "server_chunk": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/server_8232_20261003T123820/server_constraints/run_0000/chunk_00524.npz",
+   "latch": "placed",
+   "subtask_label": "home",
+   "blocked": null,
+   "released": false,
+   "grounding_status": "no_admissible",
+   "server_verdict_reason_kinds": [
+    "subtask_no_target",
+    "budget_only"
+   ],
+   "client_reason_kinds": [
+    "budget_only",
+    "subtask_no_target"
+   ],
+   "snt_evidence_grounding": "no_admissible",
+   "hold": false,
+   "hold_kinds": [],
+   "gate_action": "execute",
+   "clearance_min_mm": 35.13697907328606,
+   "manipulated_id": null,
+   "exclusion": {
+    "active": false,
+    "source": "none",
+    "mechanism": []
+   },
+   "esdf_slice_z_m": 0.8582973861694335,
+   "apple_true_base": [
+    0.570818384171558,
+    -0.024496473149238553,
+    0.8594954627161555
+   ],
+   "n_target_points": 0
+  }
+ ]
+}

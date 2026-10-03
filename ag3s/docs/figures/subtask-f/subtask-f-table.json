@@ -1,0 +1,284 @@
+{
+ "paired_2x2": {
+  "off_vs_on_f:success": {
+   "both": 28,
+   "off_only": 1,
+   "on_f_only": 0,
+   "neither": 19,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "off_vs_on_f:grasp": {
+   "both": 34,
+   "off_only": 1,
+   "on_f_only": 0,
+   "neither": 13,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "off_vs_on_f:place": {
+   "both": 28,
+   "off_only": 1,
+   "on_f_only": 0,
+   "neither": 19,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "on_e_vs_on_f:success": {
+   "both": 28,
+   "on_e_only": 0,
+   "on_f_only": 0,
+   "neither": 20,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "on_e_vs_on_f:grasp": {
+   "both": 34,
+   "on_e_only": 0,
+   "on_f_only": 0,
+   "neither": 14,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "on_e_vs_on_f:place": {
+   "both": 28,
+   "on_e_only": 0,
+   "on_f_only": 0,
+   "neither": 20,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "off_vs_on_e:success": {
+   "both": 28,
+   "off_only": 1,
+   "on_e_only": 0,
+   "neither": 19,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "off_vs_on_e:grasp": {
+   "both": 34,
+   "off_only": 1,
+   "on_e_only": 0,
+   "neither": 13,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  },
+  "off_vs_on_e:place": {
+   "both": 28,
+   "off_only": 1,
+   "on_e_only": 0,
+   "neither": 19,
+   "n_pairs": 48,
+   "mcnemar_exact_p": 1.0
+  }
+ },
+ "identity_summary": {
+  "n_pairs": 48,
+  "n_fully_identical": 38,
+  "n_pairs_with_t_na_e": 10,
+  "n_identical_before_t_na_e": 48,
+  "earliest_minus_t_na_e": {
+   "0": 10
+  },
+  "gate_first_minus_t_na_e": {
+   "0": 10
+  },
+  "exec_first_chunk_minus_gate_first_t": {
+   "0": 10
+  },
+  "n_on_e_at_gate_first_no_admissible_hold": 10,
+  "n_on_e_at_gate_first_home_placed_seen": 10,
+  "n_on_f_at_gate_first_new_chunk": 10,
+  "n_pairs_with_gate_diff": 10,
+  "decision_fields_at_first": {
+   "to_status": 10
+  },
+  "pairs_without_t_na_e_but_differing": [],
+  "pairs_with_t_na_e_but_identical": []
+ },
+ "top": [
+  [
+   "baseline legacy",
+   "14/15 \u00b7 15/15 \u00b7 -29.031048280806342",
+   "True"
+  ],
+  [
+   "baseline curobo",
+   "10/15 \u00b7 15/15 \u00b7 -9.171877401271193",
+   "True"
+  ],
+  [
+   "V0 gate off E3b_ep1807_s18071 vs T39",
+   "executed True \u00b7 planning True \u00b7 npz other [] \u00b7 frames other []",
+   "True"
+  ],
+  [
+   "V0 gate off E3b_ep1800_s18001 vs T39",
+   "executed True \u00b7 planning True \u00b7 npz other [] \u00b7 frames other []",
+   "True"
+  ],
+  [
+   "on_f vs on_e identity",
+   "fully identical 38/48 \u00b7 pairs with an on_e no_admissible home HOLD (t_na_e) 10 \u00b7 identical before t_na_e 48/48",
+   "first diff - t_na_e: {\"0\": 10}"
+  ],
+  [
+   "on_f vs on_e first gate difference",
+   "pairs 10 \u00b7 on_e there = uncertified HOLD, grounding no_admissible: 10 \u00b7 label home \u2227 placed_seen: 10 \u00b7 on_f there = new chunk: 10",
+   "exec chunk - gate t: {\"0\": 10}"
+  ]
+ ],
+ "rows": [
+  [
+   "runs",
+   "48",
+   "48",
+   "48"
+  ],
+  [
+   "success / grasp / place",
+   "29 / 35 / 29",
+   "28 / 34 / 28",
+   "28 / 34 / 28"
+  ],
+  [
+   "runs latch PLACED / runs released",
+   "25 / 0",
+   "24 / 24",
+   "24 / 24"
+  ],
+  [
+   "HOLD chunks / runs with HOLD",
+   "294 / 18",
+   "446 / 24",
+   "242 / 16"
+  ],
+  [
+   "HOLD kinds (all chunks)",
+   "{\"collision\": 198, \"uncertified\": 89, \"unverified\": 62}",
+   "{\"collision\": 207, \"uncertified\": 232, \"unverified\": 62}",
+   "{\"collision\": 207, \"uncertified\": 28, \"unverified\": 62}"
+  ],
+  [
+   "from release: HOLD / chunks (runs with HOLD)",
+   "0 / 0 (0)",
+   "232 / 984 (10)",
+   "28 / 984 (1)"
+  ],
+  [
+   "from release: HOLD kinds",
+   "{}",
+   "{\"uncertified\": 232}",
+   "{\"uncertified\": 28}"
+  ],
+  [
+   "from release: HOLD grounding",
+   "{}",
+   "{\"no_admissible\": 232}",
+   "{\"no_seed\": 28}"
+  ],
+  [
+   "from release: grounding_status",
+   "{}",
+   "{\"no_admissible\": 232, \"subtask_gated\": 752}",
+   "{\"no_admissible\": 204, \"no_seed\": 28, \"subtask_gated\": 752}"
+  ],
+  [
+   "from release: clearance min mm / chunks < 0",
+   "- / 0",
+   "0.2 / 0",
+   "0.2 / 0"
+  ],
+  [
+   "after PLACED: HOLD / chunks (runs with HOLD)",
+   "86 / 1051 (4)",
+   "232 / 1041 (10)",
+   "28 / 1041 (1)"
+  ],
+  [
+   "after PLACED: HOLD grounding",
+   "{\"no_admissible\": 86}",
+   "{\"no_admissible\": 232}",
+   "{\"no_seed\": 28}"
+  ],
+  [
+   "runs HOLD at t=75 / held to end (all no_admissible)",
+   "5 / 2",
+   "12 / 7",
+   "6 / 0"
+  ],
+  [
+   "subtask_no_target evidence grounding (chunks)",
+   "{}",
+   "{\"subtask_gated\": 752}",
+   "{\"no_admissible\": 204, \"subtask_gated\": 752}"
+  ],
+  [
+   "new chunks (snt + no_admissible) / runs / HOLD",
+   "0 / 0 / 0",
+   "0 / 0 / 0",
+   "204 / 10 / 0"
+  ],
+  [
+   "new chunks: latch / label",
+   "{} {}",
+   "{} {}",
+   "{\"placed\": 204} {\"home\": 204}"
+  ],
+  [
+   "new chunks: clearance min mm / chunks < 0",
+   "- / 0",
+   "- / 0",
+   "19.0 / 0"
+  ],
+  [
+   "new chunks: MuJoCo contact steps (robot vs object)",
+   "{\"apple\": 0, \"crate\": 0, \"table\": 0, \"other_fruit\": 0, \"other\": 0}",
+   "{\"apple\": 0, \"crate\": 0, \"table\": 0, \"other_fruit\": 0, \"other\": 0}",
+   "{\"apple\": 0, \"crate\": 0, \"table\": 0, \"other_fruit\": 0, \"other\": 0}"
+  ],
+  [
+   "pose: ||q_L - q_ready|| last step, median rad (runs w/ ref)",
+   "0.12",
+   "0.11",
+   "0.11"
+  ],
+  [
+   "pose: ||q_L - q_ready|| last step, max rad (runs w/ ref)",
+   "0.92",
+   "0.92",
+   "0.92"
+  ],
+  [
+   "pose: EE distance to step 0, last step, median / max mm",
+   "25 / 271",
+   "25 / 271",
+   "22 / 271"
+  ],
+  [
+   "pose: ref kind (runs)",
+   "{\"placed\": 25}",
+   "{\"release\": 24}",
+   "{\"release\": 24}"
+  ],
+  [
+   "MuJoCo contact steps from ref (robot vs object)",
+   "{}",
+   "{}",
+   "{}"
+  ],
+  [
+   "clearance min over runs mm / chunks < 0",
+   "-47.1 / 329",
+   "-47.1 / 337",
+   "-47.1 / 337"
+  ],
+  [
+   "SQP time-budget hits (chunks)",
+   "0",
+   "0",
+   "0"
+  ]
+ ]
+}
