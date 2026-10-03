@@ -1,0 +1,32 @@
+{
+ "png": "/mnt/dev/work/benchmark/ag3s/docs/figures/t40/t40a-scene-1995_19952.png",
+ "slot": "bollard_0",
+ "xy": [
+  0.6300000000000002,
+  0.3425000000000006
+ ],
+ "yaw_rad": 0.0,
+ "status": "kept",
+ "divider_nearest_feasible": {
+  "xy": [
+   0.7125000000000004,
+   0.32250000000000056
+  ],
+  "yaw_rad": -0.1545716971520712,
+  "status": "blocks E0 only"
+ },
+ "windows": {
+  "E0": {
+   "lift_t": 152,
+   "grasp_t": 160,
+   "place_t": 232
+  },
+  "E3b": {
+   "lift_t": 154,
+   "grasp_t": 168,
+   "place_t": 240
+  }
+ },
+ "scene_qpos_source": "E3b planning row 0 qpos (== E0 planning row 0)",
+ "render": "MuJoCo osmesa; paths = apple centre (qpos 38:41) per control row in [lift_t, place_t]"
+}
