@@ -969,7 +969,8 @@ class CollisionConstraintSet:
 
     @property
     def subtask_no_target(self) -> bool:
-        """The subtask gate emptied the target on purpose and nothing is carved (SUBTASK-e).
+        """The subtask gate emptied the target on purpose (or, after PLACED under `home`, nothing
+        admissible is left) and nothing is carved (SUBTASK-e, -f).
 
         `subtask_no_target(self)` — see the function for the exact rule.
         """
@@ -1051,17 +1052,32 @@ def _enum_value(value: Any) -> Any:
     return getattr(value, "value", value)
 
 
+def _placed_home(metrics: Any) -> bool:
+    """`metrics["subtask"]` says: gate on, confirmed label `home`, latch reached PLACED this episode
+    (SUBTASK-f). Exact values only — a missing / malformed record is False (fail closed)."""
+    sub = metrics.get("subtask") if isinstance(metrics, dict) else None
+    return (isinstance(sub, dict) and sub.get("gate") is True and sub.get("label") == "home"
+            and sub.get("placed_seen") is True)
+
+
 def subtask_no_target(constraint_set: Any) -> bool:
-    """True when the frame has no target **because the subtask gate decided so**, and the field
-    carves nothing — the one `no_target` a TO may treat as certified geometry (SUBTASK-e).
+    """True when the frame has no target **because the subtask gate decided so** (or, after the
+    object was placed and the label is home, because nothing graspable is left), and the field
+    carves nothing — the `no_target` a TO may treat as certified geometry (SUBTASK-e, -f).
 
     `PipelineStatus.NO_TARGET` normally means "grounding could not name the object", and the caller
     holds: it does not know what it is about to touch. `GroundingStatus.SUBTASK_GATED` is different —
     the confirmed subtask label is place / home, so there is nothing to carve, and the field that
     results is the most conservative one AG3S builds (every object at full clearance). All of:
 
-    - `status == no_target` and `grounding_status == subtask_gated` (only reachable with
-      `clustering.subtask_gate` on — gate off, this is always False);
+    - `status == no_target` and either
+      * `grounding_status == subtask_gated` (only reachable with `clustering.subtask_gate` on), or
+      * SUBTASK-f: `grounding_status == no_admissible` **and** `metrics["subtask"]` says
+        `gate is True` ∧ `label == "home"` ∧ `placed_seen is True` — the object has been put down
+        and the policy is going home, so the crate being the only cluster in view is the expected
+        scene, not a grounding failure. The grounding status is not rewritten (the record keeps
+        `no_admissible`). Before PLACED, under another label, or with the gate off this branch is
+        closed — gate off, the whole predicate is always False;
     - `validity == valid` (a degraded / incomplete frame stays uncertified, gated or not);
     - nothing is carved: no target, no manipulated object (`manipulated` and the identity record
       `metrics["manipulated"]`), nothing attached, no target-free mask, no contact margin, and the
@@ -1075,13 +1091,15 @@ def subtask_no_target(constraint_set: Any) -> bool:
         return False
     if _enum_value(getattr(cs, "status", None)) != PipelineStatus.NO_TARGET.value:
         return False
-    if _enum_value(getattr(cs, "grounding_status", None)) != GroundingStatus.SUBTASK_GATED.value:
+    metrics = getattr(cs, "metrics", None)
+    grounding = _enum_value(getattr(cs, "grounding_status", None))
+    if not (grounding == GroundingStatus.SUBTASK_GATED.value
+            or (grounding == GroundingStatus.NO_ADMISSIBLE.value and _placed_home(metrics))):
         return False
     if _enum_value(getattr(cs, "validity", None)) != ConstraintValidity.VALID.value:
         return False
     if any(getattr(cs, name, None) is not None for name in _CARVE_FIELDS):
         return False
-    metrics = getattr(cs, "metrics", None)
     if not isinstance(metrics, dict) or metrics.get("manipulated") is not None:
         return False
     exclusion = metrics.get("exclusion")

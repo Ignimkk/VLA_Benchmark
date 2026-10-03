@@ -1376,7 +1376,10 @@ class SafePolicy:
             + (f", manipulated {man.get('state')}" if man.get("state") else "") + ")", **evidence)
 
     def _subtask_no_target_reason(self, cs) -> dict[str, Any]:
-        """`subtask_no_target` — target 이 없는데 실행하는 이유를 기록에 남긴다 (SUBTASK-e).
+        """`subtask_no_target` — target 이 없는데 실행하는 이유를 기록에 남긴다 (SUBTASK-e, -f).
+
+        `grounding_status` 가 둘을 가른다: `subtask_gated` (gate 가 비웠다, SUBTASK-e) ·
+        `no_admissible` (놓은 뒤 home 에서 잡을 것이 없다, SUBTASK-f).
 
         증거는 `_certification_reason` 과 같은 키에 subtask label (`metrics["subtask"]`) 을 더한다 —
         "gate 가 무엇을 보고 비웠나" (label · released · placed_seen) 가 같은 줄에 있게.
@@ -1387,12 +1390,19 @@ class SafePolicy:
         metrics = getattr(cs, "metrics", None) or {}
         sub = metrics.get("subtask") if isinstance(metrics.get("subtask"), dict) else {}
         exclusion = metrics.get("exclusion") if isinstance(metrics.get("exclusion"), dict) else {}
+        if grounding == "no_admissible":
+            # SUBTASK-f: 놓은 뒤 home — 보이는 것이 놓을 곳 (crate) 뿐이라 잡을 것이 없는 것이 정상.
+            why = (f"no target this frame: nothing admissible is in view after the object was "
+                   f"placed (placed_seen={sub.get('placed_seen')}, label={sub.get('label')}, "
+                   f"gate={sub.get('gate')}, released={sub.get('released')})")
+        else:
+            why = (f"no target this frame because the subtask gate withheld it (label="
+                   f"{sub.get('label')}, blocked={sub.get('blocked')}, "
+                   f"released={sub.get('released')})")
         return wire.make_reason(
             "subtask_no_target",
-            f"no target this frame because the subtask gate withheld it (label="
-            f"{sub.get('label')}, blocked={sub.get('blocked')}, released={sub.get('released')}); "
-            "nothing is carved, so the field holds every object at full clearance and the "
-            "geometry is certified",
+            why + "; nothing is carved, so the field holds every object at full clearance and "
+            "the geometry is certified",
             ag3s_status=status, grounding_status=grounding, validity=validity,
             subtask_label=sub.get("label"), subtask_blocked=sub.get("blocked"),
             subtask_released=sub.get("released"), subtask_released_id=sub.get("released_id"),
@@ -1488,9 +1498,10 @@ def geometry_certified(constraint_set: Any) -> bool:
     `_verdict` (→ 사유) 가 같이 쓰는 술어 하나.
 
     `status == ok` 이거나, SUBTASK-e: target 이 없는 이유가 subtask gate 이고 carve 중인 것이 없다
-    (`ag3s.types.subtask_no_target`). 그 밖의 `no_target` (`no_seed` · `low_score` · `lost` …) ·
-    degraded · incomplete 는 지금처럼 미인증이다. gate off 에서는 `subtask_gated` 가 생기지 않으므로
-    이 값은 `status == ok` 와 같다.
+    (`ag3s.types.subtask_no_target`). SUBTASK-f: gate on ∧ 확정 label home ∧ PLACED 도달 뒤의
+    `no_admissible` 도 같은 조건으로 인증된다. 그 밖의 `no_target` (`no_seed` · `low_score` · `lost` ·
+    놓기 전 `no_admissible` …) · degraded · incomplete 는 지금처럼 미인증이다. gate off 에서는 두 갈래
+    모두 닫히므로 이 값은 `status == ok` 와 같다.
     """
     if constraint_set is None:
         return False
