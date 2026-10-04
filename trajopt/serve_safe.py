@@ -621,6 +621,20 @@ def resolve_plan_horizon(value: str):
             f"{value!r}") from None
 
 
+def subtask_config_section(subtask_gate: bool | None,
+                           subtask_probe_path: str | None) -> dict:
+    """`build_ag3s` 가 config 에 얹는 subtask 조각 (SUBTASK-c · SUBTASK-g).
+
+    `subtask_gate` 가 bool 이면 **켜든 끄든** `clustering.subtask_gate` 로 싣고 (기본이 바뀐 뒤에도
+    서버 동작이 config 기본값에 기대지 않게), None 이면 싣지 않는다 (= config 기본). probe 경로는
+    줄 때만 싣는다. 둘 다 없으면 `{}` — config 는 글자 그대로다.
+    """
+    clustering = {
+        **({"subtask_gate": bool(subtask_gate)} if subtask_gate is not None else {}),
+        **({"subtask_probe_path": str(subtask_probe_path)} if subtask_probe_path else {})}
+    return {"clustering": clustering} if clustering else {}
+
+
 def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
                backend: str = "legacy", fine_voxel: float | None = None,
                tsdf_voxel: float | None = None,
@@ -633,7 +647,7 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
                plan_horizon_steps: int | None = None,
                rows_per_step: int | None = None,
                self_filter: dict | None = None,
-               subtask_gate: bool = False,
+               subtask_gate: bool | None = None,
                subtask_probe_path: str | None = None):
     """서버가 쓸 AG3S. 자기 필터는 전신, 제약은 `links` (T27 부터 기본 `gripper` — 손바닥 + 손가락).
 
@@ -661,8 +675,11 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     `pointcloud` 는 예전과 글자 그대로 `{"range_max": ...}` 이다. 실제 유효 inflation 표는
     `announce_self_filter` 가 찍는다.
 
-    `subtask_gate` · `subtask_probe_path` (SUBTASK-c) 도 **기본이 아닐 때만** `clustering` 에
-    얹는다 — 끄고 경로를 안 주면 config 는 예전과 글자 그대로다.
+    `subtask_gate` (SUBTASK-g): bool 을 주면 **켜든 끄든 늘** `clustering.subtask_gate` 로 싣는다 —
+    기본이 off → on 으로 바뀌었으므로, 서버가 띄운 gate 가 config 기본값에 기대면 기본이 다시
+    바뀌는 날 서버 동작이 말없이 바뀐다. `main` 은 늘 bool (`resolve_subtask_gate`) 을 넘긴다.
+    None (함수 기본) 이면 키를 넣지 않는다 = config 기본 (on). `subtask_probe_path` 는 SUBTASK-c
+    그대로 **줄 때만** 얹는다 (안 주면 동봉 asset).
     """
     import mujoco
 
@@ -738,11 +755,9 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
         # `ConstraintConfig` 와 두 곳이 되고, 갈라지는 날 갈라진 쪽이 안전 판정이다
         # (`sphere_options` 와 같은 규약). 두 flag 가 같은 section 을 쓰므로 한 dict 로 모은다.
         **({"constraint": constraint_section} if constraint_section else {}),
-        # SUBTASK-c — 같은 규약: 기본(끔 · 동봉 asset)이면 키를 넣지 않는다.
-        **({"clustering": {
-            **({"subtask_gate": True} if subtask_gate else {}),
-            **({"subtask_probe_path": str(subtask_probe_path)} if subtask_probe_path else {})}}
-           if (subtask_gate or subtask_probe_path) else {}),
+        # SUBTASK-g — gate 는 bool 이면 켜든 끄든 명시 (위 docstring). probe 경로는 SUBTASK-c
+        # 규약 그대로: 줄 때만.
+        **subtask_config_section(subtask_gate, subtask_probe_path),
     })
     logging.info("AG3S: self-filter %d spheres, constraints %d spheres (%s)",
                  filter_robot.n_spheres, constraint_robot.n_spheres, links_label)
@@ -1064,11 +1079,22 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--no-attention", action="store_true",
                     help="attention 추출을 끈다 (체크포인트를 한 번 더 로드하지 않는다). AG3S 는 "
                          "target 없이 돌아 제약이 더 보수적이 된다")
-    ap.add_argument("--subtask-gate", action="store_true",
-                    help="SUBTASK-c: subtask label (kv_L4 probe, attention 서버가 싣는다) 이 확정 "
-                         "place/home 이면 AG3S 가 새 조작 대상을 채택하지도 바꾸지도 않는다 "
-                         "(attention target 을 carve 하지 않는다). PLACED 뒤 home 이면 놓인 대상을 "
-                         "푼다. 기본 끔 = 지금과 같다 (label 은 기록만)")
+    # SUBTASK-g — gate 는 **기본 on** 이다. 세 값: None(안 줌 = 기본 on) · True(`--subtask-gate`
+    # 명시) · False(`--no-subtask-gate`). 명시와 기본을 구별해야 `--no-attention` 등과의 조합에서
+    # "명시 → 오류, 기본 → gate 끄고 한 줄" 을 가를 수 있다 (`reject_bad_flag_combinations`,
+    # `resolve_subtask_gate`). 둘을 같이 주면 argparse 가 거절한다.
+    gate = ap.add_mutually_exclusive_group()
+    gate.add_argument("--subtask-gate", dest="subtask_gate", action="store_const", const=True,
+                      default=None,
+                      help="SUBTASK-c: subtask label (kv_L4 probe, attention 서버가 싣는다) 이 확정 "
+                           "place/home 이면 AG3S 가 새 조작 대상을 채택하지도 바꾸지도 않는다 "
+                           "(attention target 을 carve 하지 않는다). PLACED 뒤 home 이면 놓인 대상을 "
+                           "푼다. SUBTASK-g 부터 **기본 on** — 이 flag 는 호환용이고, 명시하면 "
+                           "label 이 없는 조합 (--no-safe · --no-attention · --no-perception) 을 "
+                           "오류로 거절한다")
+    gate.add_argument("--no-subtask-gate", dest="subtask_gate", action="store_const", const=False,
+                      help="subtask gate 를 끈다 (SUBTASK-g 전 기본) — label 은 기록만 하고 결정은 "
+                           "label 과 무관하다")
     ap.add_argument("--subtask-probe", default=None, metavar="NPZ",
                     help="subtask probe asset (`clustering.subtask_probe_path`). 안 주면 동봉 "
                          "benchmark/ag3s/asset/subtask_probe/kv_L4_v1.npz")
@@ -1116,6 +1142,32 @@ def build_parser() -> argparse.ArgumentParser:
     return ap
 
 
+def _label_unavailable(args) -> bool:
+    """이 조합에서는 subtask label 이 AG3S 에 오지 않는다 (안전 계층 · attention 서버 · 지각 중 하나가 꺼짐)."""
+    return bool(args.no_safe or args.no_attention or getattr(args, "no_perception", False))
+
+
+def resolve_subtask_gate(args) -> str | None:
+    """SUBTASK-g — `args.subtask_gate` 를 bool 로 확정한다 (`reject_bad_flag_combinations` **뒤에**).
+
+    None(안 줌) = 기본 on. 단 label 이 오지 않는 조합 (`_label_unavailable`) 이면 끈다 — label 이
+    없으면 gate 는 어차피 아무것도 하지 않고, 켜 둔 채 뜨면 기록 (`subtask.gate`) 이 켠 실행처럼
+    읽힌다. 그때 기동 로그에 남길 한 줄을 돌려준다 (나머지는 None). 명시한 True 와 그 조합은
+    `reject_bad_flag_combinations` 가 이미 거절했다. 두 번 불러도 같다 (bool 은 그대로 둔다).
+    """
+    if args.subtask_gate is not None:
+        args.subtask_gate = bool(args.subtask_gate)
+        return None
+    if _label_unavailable(args):
+        args.subtask_gate = False
+        off = [f for f, on in (("--no-safe", args.no_safe), ("--no-attention", args.no_attention),
+                               ("--no-perception", getattr(args, "no_perception", False))) if on]
+        return (f"subtask gate: off ({' · '.join(off)} — subtask label 이 오지 않으므로 기본 on 인 "
+                f"gate 를 끈다. 명시한 --subtask-gate 였다면 오류)")
+    args.subtask_gate = True
+    return None
+
+
 def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
     """안전 계층을 끈 채 그 계층의 flag 를 준 조합을 시작할 때 막는다.
 
@@ -1145,8 +1197,9 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         ap.error("--w-* 는 최적화기의 목적함수를 고치는 flag 입니다 (--no-safe 는 최적화기를 "
                  "아예 안 돌립니다). 그대로 띄우면 목적함수를 바꿨다고 믿게 되는데, 실은 "
                  "정책 청크가 그대로 나가는 서버가 뜹니다")
-    if getattr(args, "subtask_gate", False) and (args.no_safe or args.no_attention
-                                                 or getattr(args, "no_perception", False)):
+    # SUBTASK-g — **명시한** `--subtask-gate` (True) 만 거절한다. 안 준 것(None = 기본 on)은
+    # 거절하지 않고 `resolve_subtask_gate` 가 gate 를 끄며 한 줄 남긴다.
+    if getattr(args, "subtask_gate", None) is True and _label_unavailable(args):
         ap.error("--subtask-gate 는 attention 서버가 싣는 subtask label 을 AG3S 가 읽어야 뜻이 "
                  "있습니다 (--no-safe · --no-attention · --no-perception 은 그 중 하나를 끕니다). "
                  "그대로 띄우면 label 이 늘 없어 gate 가 아무것도 막지 않는데 켰다고 믿게 됩니다")
@@ -1460,6 +1513,10 @@ def main() -> None:
     reject_bad_flag_combinations(ap, args)
 
     logging.basicConfig(level=logging.INFO, force=True)
+    # SUBTASK-g — 기본 on 인 gate 를 bool 로 확정한다. 이 아래는 전부 bool 만 본다.
+    gate_note = resolve_subtask_gate(args)
+    if gate_note:
+        logging.info(gate_note)
     # openpi 는 서브모듈이라 sys.path 에 올려야 한다 (`serve_policy.py` 와 같은 규칙).
     repo = pathlib.Path(__file__).resolve().parents[2]
     for path in (repo, repo / "src" / "openpi" / "src"):

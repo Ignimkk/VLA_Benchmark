@@ -270,9 +270,12 @@ class ClusteringConfig:
     #: frame is a gap, as while frozen). The current manipulated object is kept; its carve, attach
     #: and detach follow the existing rules (the grasp latch decides carve → attach, not the label).
     #: `pick` or no confirmed label = the ungated behaviour. The label can only *block* a new carve,
-    #: never add one. **False (default) = bit-identical to before** (the label is still recorded,
-    #: with what the gate would have blocked).
-    subtask_gate: bool = False
+    #: never add one. **True is the default since SUBTASK-g** (user decision 2026-10-04, evidence
+    #: `SUBTASK-f.verify.json`). Without a label (no attention server, an offline replay, an
+    #: in-process run whose policy carries no `subtask`) the confirmed label stays None and the gate
+    #: decides nothing — bit-identical to False except `metrics["subtask"]["gate"]`. False = the
+    #: ungated behaviour (the label is still recorded, with what the gate would have blocked).
+    subtask_gate: bool = True
     #: Consecutive requests the probe's argmax must agree before the confirmed label changes.
     #: `None` = `target_confirm_frames` (3).
     subtask_confirm_frames: int | None = None
