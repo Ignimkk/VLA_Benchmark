@@ -1,0 +1,192 @@
+{
+ "sources": {
+  "baseline": "/mnt/dev/work/outputs/verify/SUBTASK-g/baseline/judge.json",
+  "flags": "/mnt/dev/work/outputs/verify/SUBTASK-g/flags/flag_matrix.json",
+  "analysis": "/mnt/dev/work/outputs/verify/SUBTASK-g/analysis/summary.json"
+ },
+ "baseline": [
+  [
+   "baseline legacy",
+   "14/15 · 15/15 · -29.031048280806342",
+   "14/15 · 15/15 · -29.031048280806342",
+   "True",
+   "True",
+   "ag3s_ms 15, to_ms 15"
+  ],
+  [
+   "baseline curobo",
+   "10/15 · 15/15 · -9.171877401271193",
+   "10/15 · 15/15 · -9.171877401271193",
+   "True",
+   "True",
+   "ag3s_ms 15, to_ms 15"
+  ]
+ ],
+ "flags": [
+  [
+   "no_flag",
+   "started",
+   "True",
+   "{\"subtask_gate\": true}",
+   "-"
+  ],
+  [
+   "--no-subtask-gate",
+   "started",
+   "False",
+   "{\"subtask_gate\": false}",
+   "-"
+  ],
+  [
+   "--subtask-gate",
+   "started",
+   "True",
+   "{\"subtask_gate\": true}",
+   "-"
+  ],
+  [
+   "--no-attention",
+   "started",
+   "False",
+   "{\"subtask_gate\": false}",
+   "subtask gate: off (--no-attention — subtask label 이 오지 않으므로 기본..."
+  ],
+  [
+   "--no-safe",
+   "started",
+   "False",
+   "{\"subtask_gate\": false}",
+   "subtask gate: off (--no-safe — subtask label 이 오지 않으므로 기본 on 인..."
+  ],
+  [
+   "--no-perception",
+   "started",
+   "False",
+   "{\"subtask_gate\": false}",
+   "subtask gate: off (--no-perception — subtask label 이 오지 않으므로 기..."
+  ],
+  [
+   "--subtask-gate --no-attention",
+   "rejected (argparse error)",
+   "-",
+   "-",
+   "-"
+  ],
+  [
+   "--no-subtask-gate --no-attention",
+   "started",
+   "False",
+   "{\"subtask_gate\": false}",
+   "-"
+  ],
+  [
+   "--subtask-gate --no-subtask-gate",
+   "rejected (argparse error)",
+   "-",
+   "-",
+   "-"
+  ]
+ ],
+ "startup": [
+  [
+   "E3bD (no gate flag)",
+   "subtask label: probe kv_L4_v1 (shipped asset) · gate ON (place/home → ",
+   "true (150 chunks)"
+  ],
+  [
+   "E3bN (E3b + --no-subtask-gate)",
+   "subtask label: probe kv_L4_v1 (shipped asset) · gate off (기록만)",
+   "false (150 chunks)"
+  ]
+ ],
+ "closed_loop": [
+  [
+   "E3bD ep1807_s18071",
+   "SUBTASK-f gate on (E3bG)",
+   "True",
+   "True",
+   "0 / 0",
+   "Y/Y/Y | Y/Y/Y",
+   "0 | 0",
+   "13 | 13",
+   "true | true",
+   "scene.model_xml"
+  ],
+  [
+   "E3bD ep1800_s18001",
+   "SUBTASK-f gate on (E3bG)",
+   "True",
+   "True",
+   "0 / 0",
+   "Y/Y/Y | Y/Y/Y",
+   "1 | 1",
+   "44 | 44",
+   "true | true",
+   "chunk_index, scene.model_xml"
+  ],
+  [
+   "E3bN ep1807_s18071",
+   "T39 E3b (gate off)",
+   "True",
+   "True",
+   "0 / 4",
+   "Y/Y/Y | Y/Y/Y",
+   "0 | 0",
+   "0 | 0",
+   "null | false",
+   "scene.model_xml"
+  ],
+  [
+   "E3bN ep1800_s18001",
+   "T39 E3b (gate off)",
+   "True",
+   "True",
+   "0 / 4",
+   "Y/Y/Y | Y/Y/Y",
+   "1 | 1",
+   "0 | 0",
+   "null | false",
+   "chunk_index, scene.model_xml"
+  ],
+  [
+   "E3bN ep1807_s18071",
+   "SUBTASK-f V0 E3b (gate off)",
+   "True",
+   "True",
+   "0 / 0",
+   "Y/Y/Y | Y/Y/Y",
+   "0 | 0",
+   "0 | 0",
+   "false | false",
+   "scene.model_xml"
+  ],
+  [
+   "E3bN ep1800_s18001",
+   "SUBTASK-f V0 E3b (gate off)",
+   "True",
+   "True",
+   "0 / 0",
+   "Y/Y/Y | Y/Y/Y",
+   "1 | 1",
+   "0 | 0",
+   "false | false",
+   "scene.model_xml"
+  ]
+ ],
+ "decision_fields": [
+  "status",
+  "validity",
+  "grounding_status",
+  "has_target",
+  "verdict_reasons",
+  "grasp.state",
+  "manipulated.id",
+  "exclusion",
+  "admissibility.decision.mode",
+  "subtask.gate",
+  "subtask.label",
+  "subtask.blocked",
+  "subtask.released",
+  "subtask.placed_seen"
+ ]
+}

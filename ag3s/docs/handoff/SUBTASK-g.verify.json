@@ -1,0 +1,1040 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only; no interpretation.",
+ "step": "SUBTASK-g",
+ "date": "2026-10-04T06:39:29+00:00",
+ "runs": [
+  {
+   "id": "baseline",
+   "command": "outputs/verify/SUBTASK-g/baseline/run_baseline.sh (cwd /mnt/dev/work-sg, PYTHONPATH=/mnt/dev/work-sg, .venv-openpi-live, XLA_PYTHON_CLIENT_PREALLOCATE=false, esdf_rollout --records /mnt/dev/work/run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms [--esdf-backend curobo --fine-voxel 0.005 --tsdf-voxel 0.005]); legacy then cuRobo, serial, alone on the GPU",
+   "venv": ".venv-openpi-live (.venv-ag3s not used)",
+   "raw_output": [
+    "outputs/verify/SUBTASK-g/baseline/legacy.json",
+    "outputs/verify/SUBTASK-g/baseline/curobo.json"
+   ],
+   "stdout_log": [
+    "outputs/verify/SUBTASK-g/baseline/legacy.log",
+    "outputs/verify/SUBTASK-g/baseline/curobo.log"
+   ],
+   "judge": "outputs/verify/SUBTASK-g/baseline/judge.json",
+   "leafdiff_vs_SUBTASK_f": "outputs/verify/SUBTASK-g/baseline/leafdiff_vs_sf.json",
+   "concurrent_processes_at_start": "outputs/verify/SUBTASK-g/baseline/concurrent_at_start.txt",
+   "cgroup_gpu_at_start": "outputs/verify/SUBTASK-g/baseline/cgroup_gpu_at_start.txt"
+  },
+  {
+   "id": "G1_default_on",
+   "command": "outputs/verify/SUBTASK-g/p/run_chain.sh E3bD 8230 (start_server.sh E3bD = E3b flags with no gate flag; run_client.sh; ep1807 s18071 then ep1800 s18001 on one server)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/SUBTASK-g/runs/E3bD/",
+   "server_log": "outputs/verify/SUBTASK-g/runs/E3bD/server_8230_20261004T061244/serve_safe.log",
+   "chain_log": "outputs/verify/SUBTASK-g/runs/E3bD/chain_8230.log"
+  },
+  {
+   "id": "G2_no_subtask_gate",
+   "command": "outputs/verify/SUBTASK-g/p/run_chain.sh E3bN 8231 (start_server.sh E3bN = E3b + --no-subtask-gate; same two runs)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/SUBTASK-g/runs/E3bN/",
+   "server_log": "outputs/verify/SUBTASK-g/runs/E3bN/server_8231_20261004T062151/serve_safe.log",
+   "chain_log": "outputs/verify/SUBTASK-g/runs/E3bN/chain_8231.log"
+  },
+  {
+   "id": "compare",
+   "command": "outputs/verify/SUBTASK-g/p/compare_all.sh (p/compare_v0.py, CPU) then p/summarize.py outputs/verify/SUBTASK-g/analysis/summary.json",
+   "raw_output": [
+    "outputs/verify/SUBTASK-g/compare/",
+    "outputs/verify/SUBTASK-g/analysis/summary.json"
+   ],
+   "stdout_log": [
+    "outputs/verify/SUBTASK-g/compare/compare_all.out",
+    "outputs/verify/SUBTASK-g/analysis/summary.log"
+   ]
+  },
+  {
+   "id": "flag_matrix",
+   "command": "cwd /mnt/dev/work-sg, PYTHONPATH=/mnt/dev/work-sg, JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES=: .venv-openpi-live/bin/python outputs/verify/SUBTASK-g/flags/flag_matrix.py outputs/verify/SUBTASK-g/flags/flag_matrix.json",
+   "raw_output": "outputs/verify/SUBTASK-g/flags/flag_matrix.json",
+   "stdout_log": "outputs/verify/SUBTASK-g/flags/flag_matrix.log"
+  },
+  {
+   "id": "pytest_gate_files",
+   "command": "cwd /mnt/dev/work: JAX_PLATFORMS=cpu XLA_PYTHON_CLIENT_PREALLOCATE=false CUDA_VISIBLE_DEVICES= MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work src/openpi/.venv/bin/python -m pytest tests/trajopt/test_subtask_gate_default.py tests/ag3s/test_subtask_gate.py tests/trajopt/test_subtask_wiring.py tests/trajopt/test_subtask_no_target.py tests/trajopt/test_subtask_no_admissible_home.py -q -p no:cacheprovider",
+   "venv": "src/openpi/.venv (CPU)",
+   "stdout_log": "outputs/verify/SUBTASK-g/pytest/pytest.log"
+  },
+  {
+   "id": "figure",
+   "command": ".venv-openpi-live/bin/python outputs/verify/SUBTASK-g/p/fig_g.py benchmark/ag3s/docs/figures/subtask-g"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "bf65756",
+  "root_repo_head": "54399b8",
+  "snapshot": {
+   "root": "/mnt/dev/work-sg",
+   "benchmark": "git -C /mnt/dev/work/benchmark archive bf65756ed88d7290111eff3754fc85c2a1420d94 (symlink benchmark/ag3s/asset/data -> /mnt/dev/work/benchmark/ag3s/asset/data)",
+   "pi05_TO_hybrid": "git -C /mnt/dev/work/pi05_TO_hybrid archive 22d8dae4f2cf5632b3f68b505cf18880033e6ada rby1_bringup rby1_manipulation rby1_description; other 16 top-level entries symlinked to /mnt/dev/work/pi05_TO_hybrid/* (same layout as /mnt/dev/work-sf)",
+   "extra_symlink": {
+    "/mnt/dev/work-sg/src": "/mnt/dev/work-sg/pi05_TO_hybrid"
+   },
+   "code_md5_file": "outputs/verify/SUBTASK-g/p/code_md5_sg.txt",
+   "code_md5_n_files": 395,
+   "code_md5_file_md5": "6d1d253daa04f4acc3a5954a9d94de90",
+   "files_differing_vs_work_sf_same_file_set": [
+    "benchmark/ag3s/config.py",
+    "benchmark/trajopt/serve_safe.py"
+   ],
+   "code_md5_diff_vs_work_sf": "outputs/verify/SUBTASK-g/s0/code_md5_sf_vs_sg.diff",
+   "diff_benchmark_af168a8_bf65756": "outputs/verify/SUBTASK-g/s0/diff_benchmark_sf_vs_sg.txt"
+  },
+  "import_check": {
+   "server": "outputs/verify/SUBTASK-g/s0/import_server.json",
+   "client": "outputs/verify/SUBTASK-g/s0/import_client.json",
+   "all_benchmark_under_work_sg": true,
+   "client_rby1_manipulation_under_work_sg": true,
+   "before_every_server": "p/run_chain.sh preflight: code md5 == p/code_md5_sg.txt and import check server+client (runs/*/preflight_*)"
+  },
+  "main_checkout_git_state_changed": false,
+  "scripts": "outputs/verify/SUBTASK-g/p/ (copied from SUBTASK-f/p, paths work-sf -> work-sg; conds E3bD/E3bN; cgroup rule memory.current + 16 GiB <= 64 GiB; compare_v0.py skips unreadable chunk files)"
+ },
+ "setup": {
+  "server_flags_E3b": "--esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links gripper --target-field-policy exclude-authorized --esdf-margin 0 --no-self-collision --capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32 --record-constraints",
+  "server_flags_E3bD": "E3b (no --subtask-gate / --no-subtask-gate)",
+  "server_flags_E3bN": "E3b + --no-subtask-gate",
+  "xla_flags": "--xla_gpu_enable_command_buffer= --xla_gpu_autotune_level=0",
+  "xla_python_client_preallocate": "false",
+  "client_flags": "--max-steps 600 --headless --warmup-steps 1000 --policy-seed SEED --record-frames --record third_person_front.mp4 --view front --trajectory-out traj.npz --safe-remote --safe-timeout 120 --safe-phase approach --safe-manipulators left --safe-gate reasons --safe-hold-mode fixed",
+  "runs": [
+   "ep1807 s18071",
+   "ep1800 s18001"
+  ],
+  "ports": [
+   8230,
+   8231
+  ],
+  "servers_concurrent_max": 1,
+  "references": {
+   "E3bD": "outputs/verify/SUBTASK-f/runs/E3bG/E3bG_ep{1807_s18071,1800_s18001}",
+   "E3bN": [
+    "outputs/verify/T39/s21/E3b_a/E3b_ep1807_s18071",
+    "outputs/verify/T39/runs/E3b/E3b_ep1800_s18001",
+    "outputs/verify/SUBTASK-f/v0/E3b/E3b_ep{1807_s18071,1800_s18001}"
+   ]
+  },
+  "control_for_leaf_classification": "outputs/verify/SUBTASK-e/v0/control_T39_s21.json (read only)",
+  "resources": {
+   "E3bD_server": {
+    "rss_peak_gib": 12.75,
+    "cgroup_memory_current_peak_gib": 49.59,
+    "gpu_used_peak_mib": 18364
+   },
+   "E3bN_server": {
+    "rss_peak_gib": 12.49,
+    "cgroup_memory_current_peak_gib": 49.64,
+    "gpu_used_peak_mib": 17930
+   },
+   "cgroup_memory_current_at_chain_start_gib": [
+    38,
+    38
+   ],
+   "gpu_used_at_chain_start_mib": [
+    0,
+    0
+   ]
+  },
+  "timeline_utc": {
+   "baseline": [
+    "2026-10-04T06:11:12",
+    "2026-10-04T06:12:43"
+   ],
+   "E3bD": [
+    "2026-10-04T06:12:44",
+    "2026-10-04T06:21:51"
+   ],
+   "E3bN": [
+    "2026-10-04T06:21:51",
+    "2026-10-04T06:30:52"
+   ]
+  }
+ },
+ "numbers": {
+  "baseline": {
+   "legacy": {
+    "violated_start": "14/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -29.031048280806342,
+    "matched": true,
+    "sha1_clearance_before_repr_json_list": "40798fb0a4d2e4ff49f67ea707c24437bc7def2c",
+    "sha1_equal_SUBTASK_f": true,
+    "frame_leaf_diff_vs_SUBTASK_f": {
+     "ag3s_ms": 15,
+     "to_ms": 15
+    },
+    "subtask_key_in_output_json": 0
+   },
+   "curobo": {
+    "violated_start": "10/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "matched": true,
+    "sha1_clearance_before_repr_json_list": "fe73bd7a6ba68623b67ee063ad489ea9806bfad9",
+    "sha1_equal_SUBTASK_f": true,
+    "frame_leaf_diff_vs_SUBTASK_f": {
+     "ag3s_ms": 15,
+     "to_ms": 15
+    },
+    "subtask_key_in_output_json": 0
+   }
+  },
+  "closed_loop_pairs": {
+   "D_vs_SFon_ep1807_s18071": {
+    "ref_run": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/E3bG_ep1807_s18071",
+    "new_run": "/mnt/dev/work/outputs/verify/SUBTASK-g/runs/E3bD/E3bD_ep1807_s18071",
+    "executed_actions_equal": true,
+    "planning_actions_equal": true,
+    "traj_npz_keys_differing": [
+     "inference_ms"
+    ],
+    "frames_rows": [
+     750,
+     750
+    ],
+    "frames_other_leaf_diff": [],
+    "frames_subtask_leaf_diff": [],
+    "manifest_other_leaf_diff": [
+     "scene.model_xml"
+    ],
+    "manifest_other_values": {
+     "scene.model_xml": [
+      "/mnt/dev/work-sf/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+      "/mnt/dev/work-sg/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml"
+     ]
+    },
+    "server_n_chunks": [
+     75,
+     75
+    ],
+    "server_segments_found_ref_new": [
+     2,
+     1
+    ],
+    "server_array_diff": {},
+    "chunk_index_first_ref_new": null,
+    "server_summary_other_leaf_diff": [],
+    "server_summary_subtask_leaf_diff": [],
+    "named_per_chunk": {
+     "grasp_state_equal": true,
+     "manipulated_id_equal": true,
+     "exclusion_equal": true,
+     "refined_chunk_equal": true,
+     "subtask_key_in_t39": 75,
+     "subtask_key_in_new": 75
+    },
+    "decision_field_n_chunks_differ": {
+     "status": 0,
+     "validity": 0,
+     "grounding_status": 0,
+     "has_target": 0,
+     "verdict_reasons": 0,
+     "grasp.state": 0,
+     "manipulated.id": 0,
+     "exclusion": 0,
+     "admissibility.decision.mode": 0,
+     "subtask.gate": 0,
+     "subtask.label": 0,
+     "subtask.blocked": 0,
+     "subtask.released": 0,
+     "subtask.placed_seen": 0
+    },
+    "success_grasp_place_ref": [
+     true,
+     true,
+     true
+    ],
+    "success_grasp_place_new": [
+     true,
+     true,
+     true
+    ],
+    "hold_chunks_ref_new": [
+     0,
+     0
+    ],
+    "verdict_action_counts_ref_new": [
+     {
+      "execute": 116
+     },
+     {
+      "execute": 116
+     }
+    ],
+    "grounding_status_counts_ref_new": [
+     {
+      "ok": 34,
+      "subtask_gated": 13,
+      "no_admissible": 28
+     },
+     {
+      "ok": 34,
+      "subtask_gated": 13,
+      "no_admissible": 28
+     }
+    ],
+    "chunks_released_ref_new": [
+     1,
+     1
+    ],
+    "chunks_subtask_blocked_ref_new": [
+     14,
+     14
+    ],
+    "subtask_gate_values_ref_new": [
+     [
+      "true"
+     ],
+     [
+      "true"
+     ]
+    ],
+    "compare_json": "outputs/verify/SUBTASK-g/compare/D_vs_SFon_ep1807_s18071.json"
+   },
+   "D_vs_SFon_ep1800_s18001": {
+    "ref_run": "/mnt/dev/work/outputs/verify/SUBTASK-f/runs/E3bG/E3bG_ep1800_s18001",
+    "new_run": "/mnt/dev/work/outputs/verify/SUBTASK-g/runs/E3bD/E3bD_ep1800_s18001",
+    "executed_actions_equal": true,
+    "planning_actions_equal": true,
+    "traj_npz_keys_differing": [
+     "inference_ms"
+    ],
+    "frames_rows": [
+     750,
+     750
+    ],
+    "frames_other_leaf_diff": [],
+    "frames_subtask_leaf_diff": [],
+    "manifest_other_leaf_diff": [
+     "scene.model_xml"
+    ],
+    "manifest_other_values": {
+     "scene.model_xml": [
+      "/mnt/dev/work-sf/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+      "/mnt/dev/work-sg/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml"
+     ]
+    },
+    "server_n_chunks": [
+     75,
+     75
+    ],
+    "server_segments_found_ref_new": [
+     1,
+     1
+    ],
+    "server_array_diff": {
+     "chunk_index": {
+      "n_chunks": 75,
+      "first_chunk": 0
+     }
+    },
+    "chunk_index_first_ref_new": [
+     0,
+     75
+    ],
+    "server_summary_other_leaf_diff": [
+     "chunk_index"
+    ],
+    "server_summary_subtask_leaf_diff": [],
+    "named_per_chunk": {
+     "grasp_state_equal": true,
+     "manipulated_id_equal": true,
+     "exclusion_equal": true,
+     "refined_chunk_equal": true,
+     "subtask_key_in_t39": 75,
+     "subtask_key_in_new": 75
+    },
+    "decision_field_n_chunks_differ": {
+     "status": 0,
+     "validity": 0,
+     "grounding_status": 0,
+     "has_target": 0,
+     "verdict_reasons": 0,
+     "grasp.state": 0,
+     "manipulated.id": 0,
+     "exclusion": 0,
+     "admissibility.decision.mode": 0,
+     "subtask.gate": 0,
+     "subtask.label": 0,
+     "subtask.blocked": 0,
+     "subtask.released": 0,
+     "subtask.placed_seen": 0
+    },
+    "success_grasp_place_ref": [
+     true,
+     true,
+     true
+    ],
+    "success_grasp_place_new": [
+     true,
+     true,
+     true
+    ],
+    "hold_chunks_ref_new": [
+     1,
+     1
+    ],
+    "verdict_action_counts_ref_new": [
+     {
+      "execute": 120,
+      "hold": 1
+     },
+     {
+      "execute": 120,
+      "hold": 1
+     }
+    ],
+    "grounding_status_counts_ref_new": [
+     {
+      "ok": 31,
+      "subtask_gated": 44
+     },
+     {
+      "ok": 31,
+      "subtask_gated": 44
+     }
+    ],
+    "chunks_released_ref_new": [
+     1,
+     1
+    ],
+    "chunks_subtask_blocked_ref_new": [
+     46,
+     46
+    ],
+    "subtask_gate_values_ref_new": [
+     [
+      "true"
+     ],
+     [
+      "true"
+     ]
+    ],
+    "compare_json": "outputs/verify/SUBTASK-g/compare/D_vs_SFon_ep1800_s18001.json"
+   },
+   "N_vs_T39_ep1807_s18071": {
+    "ref_run": "/mnt/dev/work/outputs/verify/T39/s21/E3b_a/E3b_ep1807_s18071",
+    "new_run": "/mnt/dev/work/outputs/verify/SUBTASK-g/runs/E3bN/E3bN_ep1807_s18071",
+    "executed_actions_equal": true,
+    "planning_actions_equal": true,
+    "traj_npz_keys_differing": [
+     "inference_ms"
+    ],
+    "frames_rows": [
+     750,
+     750
+    ],
+    "frames_other_leaf_diff": [],
+    "frames_subtask_leaf_diff": [],
+    "manifest_other_leaf_diff": [
+     "scene.model_xml"
+    ],
+    "manifest_other_values": {
+     "scene.model_xml": [
+      "/mnt/dev/work-o1/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+      "/mnt/dev/work-sg/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml"
+     ]
+    },
+    "server_n_chunks": [
+     75,
+     75
+    ],
+    "server_segments_found_ref_new": [
+     1,
+     1
+    ],
+    "server_array_diff": {},
+    "chunk_index_first_ref_new": null,
+    "server_summary_other_leaf_diff": [],
+    "server_summary_subtask_leaf_diff": [
+     "subtask.argmax",
+     "subtask.frames",
+     "subtask.gate",
+     "subtask.label",
+     "subtask.p.home",
+     "subtask.p.pick",
+     "subtask.p.place",
+     "subtask.placed_seen",
+     "subtask.released",
+     "subtask.streak",
+     "subtask.would_block"
+    ],
+    "named_per_chunk": {
+     "grasp_state_equal": true,
+     "manipulated_id_equal": true,
+     "exclusion_equal": true,
+     "refined_chunk_equal": true,
+     "subtask_key_in_t39": 0,
+     "subtask_key_in_new": 75
+    },
+    "decision_field_n_chunks_differ": {
+     "status": 0,
+     "validity": 0,
+     "grounding_status": 0,
+     "has_target": 0,
+     "verdict_reasons": 0,
+     "grasp.state": 0,
+     "manipulated.id": 0,
+     "exclusion": 0,
+     "admissibility.decision.mode": 0,
+     "subtask.gate": 75,
+     "subtask.label": 73,
+     "subtask.blocked": 0,
+     "subtask.released": 75,
+     "subtask.placed_seen": 75
+    },
+    "success_grasp_place_ref": [
+     true,
+     true,
+     true
+    ],
+    "success_grasp_place_new": [
+     true,
+     true,
+     true
+    ],
+    "hold_chunks_ref_new": [
+     0,
+     0
+    ],
+    "verdict_action_counts_ref_new": [
+     {
+      "execute": 75
+     },
+     {
+      "execute": 75
+     }
+    ],
+    "grounding_status_counts_ref_new": [
+     {
+      "ok": 75
+     },
+     {
+      "ok": 75
+     }
+    ],
+    "chunks_released_ref_new": [
+     0,
+     0
+    ],
+    "chunks_subtask_blocked_ref_new": [
+     0,
+     0
+    ],
+    "subtask_gate_values_ref_new": [
+     [
+      "null"
+     ],
+     [
+      "false"
+     ]
+    ],
+    "compare_json": "outputs/verify/SUBTASK-g/compare/N_vs_T39_ep1807_s18071.json"
+   },
+   "N_vs_T39_ep1800_s18001": {
+    "ref_run": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1800_s18001",
+    "new_run": "/mnt/dev/work/outputs/verify/SUBTASK-g/runs/E3bN/E3bN_ep1800_s18001",
+    "executed_actions_equal": true,
+    "planning_actions_equal": true,
+    "traj_npz_keys_differing": [
+     "inference_ms"
+    ],
+    "frames_rows": [
+     750,
+     750
+    ],
+    "frames_other_leaf_diff": [],
+    "frames_subtask_leaf_diff": [],
+    "manifest_other_leaf_diff": [
+     "scene.model_xml"
+    ],
+    "manifest_other_values": {
+     "scene.model_xml": [
+      "/mnt/dev/work-o1/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+      "/mnt/dev/work-sg/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml"
+     ]
+    },
+    "server_n_chunks": [
+     75,
+     75
+    ],
+    "server_segments_found_ref_new": [
+     1,
+     1
+    ],
+    "server_array_diff": {
+     "chunk_index": {
+      "n_chunks": 75,
+      "first_chunk": 0
+     }
+    },
+    "chunk_index_first_ref_new": [
+     0,
+     75
+    ],
+    "server_summary_other_leaf_diff": [
+     "chunk_index"
+    ],
+    "server_summary_subtask_leaf_diff": [
+     "subtask.argmax",
+     "subtask.frames",
+     "subtask.gate",
+     "subtask.label",
+     "subtask.p.home",
+     "subtask.p.pick",
+     "subtask.p.place",
+     "subtask.placed_seen",
+     "subtask.released",
+     "subtask.streak",
+     "subtask.would_block"
+    ],
+    "named_per_chunk": {
+     "grasp_state_equal": true,
+     "manipulated_id_equal": true,
+     "exclusion_equal": true,
+     "refined_chunk_equal": true,
+     "subtask_key_in_t39": 0,
+     "subtask_key_in_new": 75
+    },
+    "decision_field_n_chunks_differ": {
+     "status": 0,
+     "validity": 0,
+     "grounding_status": 0,
+     "has_target": 0,
+     "verdict_reasons": 0,
+     "grasp.state": 0,
+     "manipulated.id": 0,
+     "exclusion": 0,
+     "admissibility.decision.mode": 0,
+     "subtask.gate": 75,
+     "subtask.label": 73,
+     "subtask.blocked": 0,
+     "subtask.released": 75,
+     "subtask.placed_seen": 75
+    },
+    "success_grasp_place_ref": [
+     true,
+     true,
+     true
+    ],
+    "success_grasp_place_new": [
+     true,
+     true,
+     true
+    ],
+    "hold_chunks_ref_new": [
+     1,
+     1
+    ],
+    "verdict_action_counts_ref_new": [
+     {
+      "execute": 76,
+      "hold": 1
+     },
+     {
+      "execute": 76,
+      "hold": 1
+     }
+    ],
+    "grounding_status_counts_ref_new": [
+     {
+      "ok": 75
+     },
+     {
+      "ok": 75
+     }
+    ],
+    "chunks_released_ref_new": [
+     0,
+     0
+    ],
+    "chunks_subtask_blocked_ref_new": [
+     0,
+     0
+    ],
+    "subtask_gate_values_ref_new": [
+     [
+      "null"
+     ],
+     [
+      "false"
+     ]
+    ],
+    "compare_json": "outputs/verify/SUBTASK-g/compare/N_vs_T39_ep1800_s18001.json"
+   },
+   "N_vs_SFoff_ep1807_s18071": {
+    "ref_run": "/mnt/dev/work/outputs/verify/SUBTASK-f/v0/E3b/E3b_ep1807_s18071",
+    "new_run": "/mnt/dev/work/outputs/verify/SUBTASK-g/runs/E3bN/E3bN_ep1807_s18071",
+    "executed_actions_equal": true,
+    "planning_actions_equal": true,
+    "traj_npz_keys_differing": [
+     "inference_ms"
+    ],
+    "frames_rows": [
+     750,
+     750
+    ],
+    "frames_other_leaf_diff": [],
+    "frames_subtask_leaf_diff": [],
+    "manifest_other_leaf_diff": [
+     "scene.model_xml"
+    ],
+    "manifest_other_values": {
+     "scene.model_xml": [
+      "/mnt/dev/work-sf/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+      "/mnt/dev/work-sg/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml"
+     ]
+    },
+    "server_n_chunks": [
+     75,
+     75
+    ],
+    "server_segments_found_ref_new": [
+     1,
+     1
+    ],
+    "server_array_diff": {},
+    "chunk_index_first_ref_new": null,
+    "server_summary_other_leaf_diff": [],
+    "server_summary_subtask_leaf_diff": [],
+    "named_per_chunk": {
+     "grasp_state_equal": true,
+     "manipulated_id_equal": true,
+     "exclusion_equal": true,
+     "refined_chunk_equal": true,
+     "subtask_key_in_t39": 75,
+     "subtask_key_in_new": 75
+    },
+    "decision_field_n_chunks_differ": {
+     "status": 0,
+     "validity": 0,
+     "grounding_status": 0,
+     "has_target": 0,
+     "verdict_reasons": 0,
+     "grasp.state": 0,
+     "manipulated.id": 0,
+     "exclusion": 0,
+     "admissibility.decision.mode": 0,
+     "subtask.gate": 0,
+     "subtask.label": 0,
+     "subtask.blocked": 0,
+     "subtask.released": 0,
+     "subtask.placed_seen": 0
+    },
+    "success_grasp_place_ref": [
+     true,
+     true,
+     true
+    ],
+    "success_grasp_place_new": [
+     true,
+     true,
+     true
+    ],
+    "hold_chunks_ref_new": [
+     0,
+     0
+    ],
+    "verdict_action_counts_ref_new": [
+     {
+      "execute": 75
+     },
+     {
+      "execute": 75
+     }
+    ],
+    "grounding_status_counts_ref_new": [
+     {
+      "ok": 75
+     },
+     {
+      "ok": 75
+     }
+    ],
+    "chunks_released_ref_new": [
+     0,
+     0
+    ],
+    "chunks_subtask_blocked_ref_new": [
+     0,
+     0
+    ],
+    "subtask_gate_values_ref_new": [
+     [
+      "false"
+     ],
+     [
+      "false"
+     ]
+    ],
+    "compare_json": "outputs/verify/SUBTASK-g/compare/N_vs_SFoff_ep1807_s18071.json"
+   },
+   "N_vs_SFoff_ep1800_s18001": {
+    "ref_run": "/mnt/dev/work/outputs/verify/SUBTASK-f/v0/E3b/E3b_ep1800_s18001",
+    "new_run": "/mnt/dev/work/outputs/verify/SUBTASK-g/runs/E3bN/E3bN_ep1800_s18001",
+    "executed_actions_equal": true,
+    "planning_actions_equal": true,
+    "traj_npz_keys_differing": [
+     "inference_ms"
+    ],
+    "frames_rows": [
+     750,
+     750
+    ],
+    "frames_other_leaf_diff": [],
+    "frames_subtask_leaf_diff": [],
+    "manifest_other_leaf_diff": [
+     "scene.model_xml"
+    ],
+    "manifest_other_values": {
+     "scene.model_xml": [
+      "/mnt/dev/work-sf/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml",
+      "/mnt/dev/work-sg/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml"
+     ]
+    },
+    "server_n_chunks": [
+     75,
+     75
+    ],
+    "server_segments_found_ref_new": [
+     1,
+     1
+    ],
+    "server_array_diff": {},
+    "chunk_index_first_ref_new": null,
+    "server_summary_other_leaf_diff": [],
+    "server_summary_subtask_leaf_diff": [],
+    "named_per_chunk": {
+     "grasp_state_equal": true,
+     "manipulated_id_equal": true,
+     "exclusion_equal": true,
+     "refined_chunk_equal": true,
+     "subtask_key_in_t39": 75,
+     "subtask_key_in_new": 75
+    },
+    "decision_field_n_chunks_differ": {
+     "status": 0,
+     "validity": 0,
+     "grounding_status": 0,
+     "has_target": 0,
+     "verdict_reasons": 0,
+     "grasp.state": 0,
+     "manipulated.id": 0,
+     "exclusion": 0,
+     "admissibility.decision.mode": 0,
+     "subtask.gate": 0,
+     "subtask.label": 0,
+     "subtask.blocked": 0,
+     "subtask.released": 0,
+     "subtask.placed_seen": 0
+    },
+    "success_grasp_place_ref": [
+     true,
+     true,
+     true
+    ],
+    "success_grasp_place_new": [
+     true,
+     true,
+     true
+    ],
+    "hold_chunks_ref_new": [
+     1,
+     1
+    ],
+    "verdict_action_counts_ref_new": [
+     {
+      "execute": 76,
+      "hold": 1
+     },
+     {
+      "execute": 76,
+      "hold": 1
+     }
+    ],
+    "grounding_status_counts_ref_new": [
+     {
+      "ok": 75
+     },
+     {
+      "ok": 75
+     }
+    ],
+    "chunks_released_ref_new": [
+     0,
+     0
+    ],
+    "chunks_subtask_blocked_ref_new": [
+     0,
+     0
+    ],
+    "subtask_gate_values_ref_new": [
+     [
+      "false"
+     ],
+     [
+      "false"
+     ]
+    ],
+    "compare_json": "outputs/verify/SUBTASK-g/compare/N_vs_SFoff_ep1800_s18001.json"
+   }
+  },
+  "startup": {
+   "E3bD": {
+    "gate_lines": {
+     "/mnt/dev/work/outputs/verify/SUBTASK-g/runs/E3bD/server_8230_20261004T061244": [
+      "INFO:root:subtask label: probe kv_L4_v1 (shipped asset) · gate ON (place/home → 새 조작 대상 없음 · PLACED 뒤 home → 해제)"
+     ]
+    },
+    "subtask_gate_off_note_line_present": false,
+    "chunk_summary_subtask_gate": "true in 150/150 chunks"
+   },
+   "E3bN": {
+    "gate_lines": {
+     "/mnt/dev/work/outputs/verify/SUBTASK-g/runs/E3bN/server_8231_20261004T062151": [
+      "INFO:root:subtask label: probe kv_L4_v1 (shipped asset) · gate off (기록만)"
+     ]
+    },
+    "subtask_gate_off_note_line_present": false,
+    "chunk_summary_subtask_gate": "false in 150/150 chunks"
+   },
+   "server_constraints_meta_json_written": false,
+   "server_constraints_meta_json_note": "meta.json (where manifest subtask.gate lives) is written only by ConstraintRecordWriter.close(); SIGTERM path ran the atexit flush ('flushed at exit (0 pending): 150 written, 0 failed') and no meta.json; same as SUBTASK-f runs",
+   "client_manifest_has_subtask_key": false
+  },
+  "flag_matrix": {
+   "no_flag": {
+    "rejected": false,
+    "resolved_subtask_gate": true,
+    "startup_note": null,
+    "config_section": {
+     "clustering": {
+      "subtask_gate": true
+     }
+    },
+    "manifest_subtask_gate": true
+   },
+   "--no-subtask-gate": {
+    "rejected": false,
+    "resolved_subtask_gate": false,
+    "startup_note": null,
+    "config_section": {
+     "clustering": {
+      "subtask_gate": false
+     }
+    },
+    "manifest_subtask_gate": false
+   },
+   "--subtask-gate": {
+    "rejected": false,
+    "resolved_subtask_gate": true,
+    "startup_note": null,
+    "config_section": {
+     "clustering": {
+      "subtask_gate": true
+     }
+    },
+    "manifest_subtask_gate": true
+   },
+   "--no-attention": {
+    "rejected": false,
+    "resolved_subtask_gate": false,
+    "startup_note": "subtask gate: off (--no-attention — subtask label 이 오지 않으므로 기본 on 인 gate 를 끈다. 명시한 --subtask-gate 였다면 오류)",
+    "config_section": {
+     "clustering": {
+      "subtask_gate": false
+     }
+    },
+    "manifest_subtask_gate": false
+   },
+   "--no-safe": {
+    "rejected": false,
+    "resolved_subtask_gate": false,
+    "startup_note": "subtask gate: off (--no-safe — subtask label 이 오지 않으므로 기본 on 인 gate 를 끈다. 명시한 --subtask-gate 였다면 오류)",
+    "config_section": {
+     "clustering": {
+      "subtask_gate": false
+     }
+    },
+    "manifest_subtask_gate": false
+   },
+   "--no-perception": {
+    "rejected": false,
+    "resolved_subtask_gate": false,
+    "startup_note": "subtask gate: off (--no-perception — subtask label 이 오지 않으므로 기본 on 인 gate 를 끈다. 명시한 --subtask-gate 였다면 오류)",
+    "config_section": {
+     "clustering": {
+      "subtask_gate": false
+     }
+    },
+    "manifest_subtask_gate": false
+   },
+   "--subtask-gate --no-attention": {
+    "rejected": true,
+    "resolved_subtask_gate": null,
+    "startup_note": null,
+    "config_section": null,
+    "manifest_subtask_gate": null
+   },
+   "--no-subtask-gate --no-attention": {
+    "rejected": false,
+    "resolved_subtask_gate": false,
+    "startup_note": null,
+    "config_section": {
+     "clustering": {
+      "subtask_gate": false
+     }
+    },
+    "manifest_subtask_gate": false
+   },
+   "--subtask-gate --no-subtask-gate": {
+    "rejected": true,
+    "resolved_subtask_gate": null,
+    "startup_note": null,
+    "config_section": null,
+    "manifest_subtask_gate": null
+   }
+  },
+  "config_default_clustering_subtask_gate": true,
+  "main_manifest_expression": [
+   "\"subtask\": {\"gate\": bool(args.subtask_gate),"
+  ],
+  "main_build_ag3s_gate_arg": [
+   "subtask_gate=args.subtask_gate,"
+  ],
+  "pytest_gate_files": {
+   "passed": 316,
+   "skipped": 1,
+   "failed": 0,
+   "seconds": 132.32
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/subtask-g/subtask-g-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/subtask-g/subtask-g-table.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "legacy 14/15 · 15/15 · -29.031048280806342; cuRobo 10/15 · 15/15 · -9.171877401271193; sha1 of the 15 clearance_before values equal SUBTASK-f judge.json for both; frame leaves differing vs SUBTASK-f: ag3s_ms, to_ms only"
+ },
+ "verdict": "baseline matched. E3bD (no flag) vs SUBTASK-f gate on: executed and planning actions equal for both runs, 0/14 decision fields differ, subtask.* server leaves equal. E3bN (--no-subtask-gate) vs T39 E3b: executed and planning actions equal for both runs, non-subtask decision fields 0 differ (subtask.* absent in T39). E3bN vs SUBTASK-f V0 E3b: executed and planning actions equal, 0/14 decision fields differ. Startup log gate ON (E3bD) / gate off (E3bN); chunk subtask.gate true / false.",
+ "not_measured": [
+  "server meta.json subtask.gate on disk: not written on SIGTERM shutdown (see numbers.startup); value checked via flag_matrix (bool(args.subtask_gate) after resolve_subtask_gate) and per-chunk summary subtask.gate",
+  "--no-attention / --no-safe / --no-perception servers were not started with a model; their gate resolution was checked by flag_matrix only",
+  "full pytest tests/trajopt tests/ag3s not run by verifier; only the five gate-related files",
+  "reference E3bG_ep1807_s18071 has 2 server segments for seed 18071 (first attempt OOM-killed in SUBTASK-f); compare used the last one",
+  "one truncated chunk file in SUBTASK-f server_8231_20261003T120639 (chunk_00196.npz) skipped by compare_v0.py; it is not in the ep1800 s18001 segment (chunks 0-74)",
+  "timing fields not compared (control_vary class)",
+  "scene/graph figures not made (lead asked for one table)",
+  "SendUserFile not available to this agent: figure reported by path"
+ ]
+}
