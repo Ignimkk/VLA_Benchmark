@@ -315,6 +315,20 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **`uncertified` (HOLD kind)** (보강) | 위 `geometry_certified` 가 False 라서 막은 HOLD. SUBTASK-d 에서 gate 가 비운 target 이 이쪽으로 떨어져 해제 뒤 984 / 984 chunk 가 HOLD 였다 |
 | **HOLD (`--safe-hold-mode fixed`)** (보강) | 판정이 chunk 를 막을 때 client 가 하는 동작. **HOLD 에 들어갈 때 직전 step 에 명령한 팔 목표 (`d.ctrl`) 를 `q_hold` 로 한 번 잡아 계속 유지** 하고 gripper 는 마지막 명령을 유지한다 (열지도 닫지도 않는다; `pi05_infer.py` T23). 막힌 chunk 에서는 정책 action 이 한 step 도 실행되지 않으므로, HOLD 가 길면 로봇이 **그 자세에 멈춘다** — SUBTASK-d 의 해제 뒤 HOLD 가 로봇을 준비 자세로 못 돌아가게 한 이유이다 |
 
+### 장애물 시연 · 허들 (T40, 2026-10-04 추가)
+
+| 용어 | 뜻 |
+|---|---|
+| **hurdle (`hurdle_0`)** | T40 E 가 새로 만든 장애물 slot. 가로 막대 (capsule, 반지름 12 mm, 길이 0.264 m) 하나를 양 끝 기둥 둘이 받치는 모양이다. **capsule 과 cylinder 로만** 만들었다 (box 의 `mj_geomDistance` 가 틀리기 때문). 사과를 crate 로 나르는 경로를 **가로질러** 둔다. bollard (가는 기둥) · divider (낮은 판) 와 달리 막대 높이를 config 로 바꾼다 |
+| **`bar_height`** | hurdle config 의 필드. 막대 **중심** 의 높이 (m, `position[2]` = 테이블 위). 0.20–0.32, 기본 0.26. hurdle slot 에만 허용한다. 막대와 기둥 일부가 mocap body 둘로 나뉘어 telescope 하므로 compile 된 model 은 바뀌지 않는다 |
+| **mocap obstacle** | MuJoCo 의 mocap body (`mocap="true"`) 로 만든 장애물. 시뮬레이션이 위치를 **직접 정해 주는** body 라 월드에 용접된 것처럼 움직이지 않고, 물리 충돌은 일으킨다 (로봇 · 사과를 민다). 장면 XML 에는 모든 slot 이 parking 위치 (테이블 밖) 에 있고, config 의 `position` · `yaw` 가 그 slot 을 데려온다. 장애물을 "추가 · 제거" 하는 것은 이 slot 을 데려오거나 parking 으로 돌려보내는 것이다 |
+| **obstacle stop** | client 가 로봇 (또는 쥔 사과) 과 장애물의 거리를 매 control step 재서, `--obstacle-stop-distance` 이하이거나 접촉이면 **episode 를 끝내는** 것 (`pick_place_obstacles.py`). `min_robot_clearance_m` 을 기록한다. T40 G 는 정지 거리 0.0 으로 돌았다 |
+| **false-zero distance** | client 의 거리 함수 (`PickPlaceObstacleManager.pair_distance`, 대부분 `mj_geomDistance`) 가 **정확히 0.0** 을 돌려주는데 실제로는 접촉이 없는 것 (독립 GJK 로 재면 0.2 m 대). 정지 거리가 0.0 이면 거짓 정지를 일으킨다. T40 에서 5 run 이 이렇게 끝났고 원인은 미확정이다 |
+| **reset clearance check** | client 가 시작할 때 장애물 profile 을 올린 장면에서 로봇 · 움직이는 물체 (사과 · 과일 · crate) 와 장애물이 겹치는지 재는 검사. `robot_clearance ≤ 0` 이나 `object_clearance ≤ 0` 이면 `SystemExit(2)` 로 시작을 거부한다. 기준이 0 이므로 1.9 mm 로도 통과한다 (ep1995) |
+| **pod memory cgroup** | 이 GPU server 는 pod 이고, pod 안 **모든 세션의 process** 가 하나의 memory cgroup 한도를 나눠 쓴다 (`/sys/fs/cgroup/memory.max` = 80 GiB, CPU 는 `cpu.max` 로 16 개). `free` · `nproc` 은 호스트 값을 보여 주므로 이 한도를 알려 주지 않는다. 한도를 넘으면 커널이 process 를 골라 죽인다 (**OOM kill**, exit 137) — 그 process 가 누구 것이든 상관없다 |
+| **GJK 기준 거리** | MuJoCo 와 독립으로 짠 convex 거리 계산 (`gjk.py`, verifier). box–box 에서 정확한 값과 최대 0.0015 mm 차이. T40 에서 `mj_geomDistance` · client 거리의 정답 대조에 쓴다. 겹치면 separation 0 을 돌려준다 |
+| **placement tier (T1–T4)** | F 의 허들 배치 후보를 고르는 등급. T1 = (c_low 이고 margin ≥ 10 mm) · T2 = (c_low 이고 margin ≥ 5 mm) · T3 = c_low · T4 = feasible. **margin** = reset robot · reset object · 들기 전 최소 · t0 최소 중 가장 작은 값. **c_low** = 막대를 20 mm 낮춰도 운반을 막는다 |
+
 ---
 
 > **갈림길에서 안 고른 선택지** — 맨 아래 **"선택한 것과 안 고른 것 — 되돌아올 지점"** 절.
@@ -358,6 +372,9 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | ↳ O14 | TO 가 execute chunk 에서도 정책 action 을 바꾼다 | **열림** (T39, plan §7) — a (E3b 실행 chunk − 정책 원출력) gate `execute` chunk 3,306 개에서 중앙 9.03e-3 · 최대 0.300. 바뀐 양을 목적 항별로 분해한 측정은 없다 |
 | ↳ O15 | 짝지은 비교의 한계: 같은 seed · 같은 상태에서도 두 조건의 정책 출력이 다르다 | **열림** (T39, plan §7) — b 중앙 chunk 1 5.87e-8 · chunk 2 1.36e-3 (c 2.23e-8) · chunk 5 0.101. 갈린 15 쌍의 원인은 이 기록으로 가릴 수 없다 (재측정 대기 13) |
 | ↳ O16 | 새 episode 에서 HOLD 가 난다 | **열림** (T39, plan §7) — E3b 18 / 48 run · 294 chunk (`collision` 198 · `uncertified` 89 · `unverified` 62). HOLD 가 있는 run success 13 / 18, 없는 run 16 / 30. 사유별 대표 chunk 확인은 안 했다 |
+| **T40** 통합 main 의 closed-loop 시연: (1) 장애물 없음 (2) 사과 → crate 운반 경로 위 허들 (subtask gate off, 사용자 판정 2026-10-03) | 장애물이 없으면 T39 와 같은 결과인가. 운반 경로 위에 허들을 두면 E0 · E3b 는 어떻게 되나 | **G · D 측정 완료**(2026-10-04, 판정 대기) — **장애물 없음 B 12 / 12 success · 12 / 12 T39 와 비트 동일.** 허들 (C · D, 9 run 씩) **E3b 2 / 9 · E0 0 / 9** — E3b 성공 둘은 모두 놓은 뒤 obstacle stop. 5 run 은 client 거리가 접촉 없이 정확히 0.0 을 돌려줘 멈춘 것이라 판정할 수 없다 (열림, 재측정 대기 17). ep1828 은 배치 없음 (재측정 대기 19). 절 "T40" |
+| ↳ T40 A · E | A: bollard · divider 로 운반 회피를 시험할 수 있는가. E: 허들 `hurdle_0` 추가 · 제거 | A: bollard 는 사과에서 36.8–38.5 mm 라 접근부터 간섭 (6 episode 중 4 개에서 기록 궤적의 접근 구간 겹침), divider (80 mm) 는 사과 바닥 높이 (최소 180.4 mm) 보다 낮아 best 배치가 6 개 중 1 개만 둘 다 막음. 막힘 둘 (16D + 장애물 → block XML · `mj_geomDistance` box 오류 최대 284.18 mm). E: `hurdle_0` (capsule · cylinder), `bar_height` 0.20–0.32 m, `clear` 비트 동일 (구현자 · 26 tests) (2026-10-03) |
+| ↳ T40 F · OOM | F: 허들 배치. 첫 탐색 중 pod memory 한도 | 배치 5 episode (tier 1 이 4 개, 1995 만 tier 3 · margin 1.5 mm), **1828 은 (a)–(d) 를 만족하는 배치 0 으로 제외.** 2026-10-03 12:19 UTC OOM — worker 60 개로 80 GiB cgroup 이 차서 kill 17 건 (다른 세션의 서버 4 · client 3 포함), 새 자원 규칙 (≤ 4 worker · RSS ≤ 16 GB · 띄우기 전 ≤ 64 GiB) |
 
 ### 이 국면에서 쓰는 자산
 
@@ -402,6 +419,10 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | T39 — 짝지은 비교의 "같은 noise" 는 `(episode, seed)` 로 정한다 | `seed = 10·ep + rep` (rep = 1, 2), 첫 요청에만 싣고 이후 요청은 이어 split. seed 가 없으면 요청 바이트가 T39 전과 같다. 같은 서버 프로세스를 다시 띄우면 같은 난수 순서가 흐르던 문제 (6 run 이 독립 표본이 아니던 이유) 를 없앤다 (S1) | 16D |
 | T39 — 평가 서버의 `XLA_FLAGS` 에 `--xla_gpu_autotune_level=0` 을 더한다 (두 조건 모두) | CLAUDE.md 의 `--xla_gpu_enable_command_buffer=` 는 그대로 두고 하나 더한다. 없으면 같은 seed 도 **서버 프로세스가 다르면** chunk 0 부터 3–5e-3 다르다 (구현자). 기본 kernel 과는 수치가 4–14e-3 다르므로 (구현자) T34 · T37 의 옛 run 과 비트 비교하지 않는다 (lead 판단, 2026-10-02) | 16D |
 | T39 — 평가 코드는 immutable snapshot 에서 돌린다 | 브랜치 `o1-eval` `9fab500` (tag `t39-eval-9fab500`) 를 `/mnt/dev/work-o1` 에 풀어 96 run 내내 코드를 고정. main 체크아웃은 다른 세션이 같은 파일을 고치는 중이었다 | 16D |
+| T40 — 시연은 **subtask gate 를 끄고** 한다 | 사용자 판정 (2026-10-03). snapshot 의 serve_safe 기본이 off 라서 flag 를 주지 않았다. main 으로 다시 돌릴 때는 `--no-subtask-gate` 를 명시한다 (SUBTASK-g 로 기본이 on) | 16D 경로 |
+| T40 — 시험용 장애물은 capsule · cylinder 로 만든 **허들 `hurdle_0`** 이다. box 를 쓰지 않는다 | `mj_geomDistance` 가 box 쌍에서 틀린다 (box–box 5,850 쌍 중 82 쌍이 0.1 mm 넘게 다름, 최대 284.18 mm, T40 A). 추가 · 제거는 `--obstacle-config` · `--obstacle-profile` (`clear` = 제거) | 16D 경로 |
+| T40 — 평가 코드는 immutable snapshot `/mnt/dev/work-t40` | benchmark `150c28f` + pi05_TO_hybrid `98e07d6`. G · D 내내 코드를 고정 (399 개 파일 md5 기록) | 16D 경로 |
+| T40 — 공용 pod 에서 process 를 띄우기 전 자원을 센다 | OOM 사고 (2026-10-03) 뒤 lead 규칙: 탐색은 해석적으로 · worker ≤ 4 개 nice 19 · 전체 RSS ≤ 16 GB · server · client · worker 를 띄우기 전 `memory.current` + RSS 추정 ≤ 64 GiB | — |
 
 원 측정: [`AG3S_REVIEW_LOG.md`](AG3S_REVIEW_LOG.md) 의 **"누적 발견"** 표와 각 발견의 절.
 
@@ -429,6 +450,9 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | 14 | (T39 가 추가) S2-2 중 서버별 GPU 메모리 | 총량만 있다 (nvidia-smi 의 pid 를 서버에 귀속할 수 없었다). S2-1 의 서버 하나당 peak 증가는 E0 8,732–8,738 MiB · E3b 17,930–19,476 MiB | **측정 안 됨** (S2-2 구간) |
 | 15 | (T39 가 추가) regression baseline 의 cuRobo 변형 | legacy 만 돌렸다 (14/15 · 15/15 · −29.031048280806342 mm, 일치). cuRobo 변형은 안 돌렸다 | **측정 안 됨** |
 | 16 | (T39 가 추가) 재측정 대기 8 (닫힌 루프 서버 시간) 과 T39 의 닫힌 루프 수치 | T39 의 E3b server AG3S 중앙 353.5 ms · TO 79.0 ms · server total 1,071.0 ms · round trip 1,292.2 ms. T38 replay 의 AG3S + TO 314.5 ms 와 구간 정의를 맞춰 비교하지 않았고, 조건도 다르다 (`autotune_level=0` · 서버 4 개 동시 · `--record-constraints`) | **분리해 재지 않았다** — 8 번 행은 닫히지 않았다 |
+| 17 | (T40 이 추가) **client 거리의 false-zero 정지** — `pair_distance` 가 접촉 없이 정확히 0.0 을 돌려줘 obstacle stop (정지 거리 0.0) 이 걸린다 | 정확한 0.0 · 접촉 없음 정지 **5 run** (C E3b ep1995 t = 103 · D E3b ep1967 t = 137 · D E3b ep1982 t = 23 · D E3b ep1995 t = 71 · D E0 ep1967 t = 90). kinematic probe (마지막 행 + 섭동 400 개) 가 3 run 에서 0.0 을 재현: 그 pair 는 허들 발 ↔ 팔 링크 · 손목 · gripper, GJK separation 0.208–0.238 m. ep1967 의 2 run 은 0 / 400 으로 재현 못 함 | **측정 안 됨 · 결함 열림.** 물리 sub-step 에서의 재현 · 원인 · 고친 뒤 재실행이 없다. **이 5 run 은 판정할 수 없다** (E3b 가 못 피한 것인지 거리 검사의 거짓 0 인지 가를 수 없음). E 의 survey (cylinder–mesh 102,319 쌍 < 0.25 m 에서 오류 0, 구현자) 와 맞지 않는 것도 풀지 않았다 |
+| 18 | (T40 이 추가) **접근 단계 finger contact 의 원인** — 허들 run 에서 grasp 전에 gripper · finger 가 막대와 닿아 끝난 run | 접촉 정지 7 run (C E0 ep1807 · ep1995, C E3b ep1807 · ep1967 · ep1982, D E0 ep1982 · ep1995). E0 의 접촉은 HOLD 0 chunk 에서도 난다. E3b 3 run 은 접촉 전에 HOLD 가 있었다 (ep1807 HOLD 5 · 연속 3 뒤 chunk 에서 접촉, ep1967 HOLD t = 192 뒤 t = 203, ep1982 HOLD t = 176 뒤 t = 178) | **원인 미확정.** 후보만 적는다 (어느 것도 확인하지 않았다): (i) 가는 막대 (반지름 12 mm) 대 거친 20 mm 계층, (ii) margin 0 (어느 parameter 의 margin 인지는 `verify.json` 에 없다), (iii) HOLD 직후의 chunk. 이 중 무엇인지 가르는 측정이 없다 |
+| 19 | (T40 이 추가) **ep1828 의 허들 run** | 조건 (a)–(d) 를 만족하는 배치가 base 18,480 · `u` 확장 24,640 후보에서 모두 0. B (장애물 없음) 만 있다 | **측정 안 됨** |
 
 ~~재측정이 끝나면 이 표의 `상태` 를 값과 함께 갱신하고, 값이 달라진 것은 **왜 달라졌는지**를
 같은 자리에 적는다. 값이 같으면 그것도 적는다 — "모델을 바꿔도 안 바뀌었다" 는 결과다.~~
@@ -4994,3 +5018,418 @@ verifier 가 돌린 gate 관련 pytest 다섯 파일: **316 passed / 1 skipped /
 - figure: `figures/subtask/` (`subtask-inference-paths` · `subtask-template-discovery` · `subtask-scene-ep1807` · `subtask-timeline` · `subtask-accuracy-table`), `figures/subtask-b/` (`-scene` · `-graph` · `-table`), `figures/merge-o4/` (`merge-o4-baseline-table`), `figures/subtask-d/` · `figures/subtask-e/` · `figures/subtask-f/` (각각 `-table` · `-timeline` · 씬 둘), `figures/subtask-g/` (`subtask-g-table`). 각각 `.json` sidecar 가 있다.
 
 **다음 판정은 사용자에게 있다:** (1) 로컬 PC 의 client 를 SUBTASK-e 의 새 `wire.py` 로 갱신 (모르는 reason kind 는 HOLD; SUBTASK-g 는 client 갱신을 요구하지 않는다). (2) 크기로 안 갈리는 목적지 씬으로 gate 를 재는 것을 따로 STEP 으로 할 것인가. (3) 기본 on 으로 다시 돌린 큰 N (48 쌍) 이 필요한가.
+
+
+---
+
+## T40 — 통합 main 의 closed-loop 시연: 장애물 없음 대 사과 → crate 운반 경로 위 허들 (2026-10-03 ~ 2026-10-04)
+
+**이 절이 답하는 물음.** (1) 장애물이 없을 때 통합 main (E0 = VLA 단독, E3b = AG3S + cuRobo ESDF + TO 에 gate · HOLD) 은 T39 와 같은 결과를 내는가. (2) 사과를 crate 로 나르는 경로 **위에** 장애물을 두면 E0 · E3b 는 어떻게 되는가. 사용자 지시는 "headless 로 장애물 없는 상황 테스트 · 녹화" 와 "사과를 바구니로 가져가는 경로에 임의의 장애물을 설치해 회피하며 성공하는지" 였고, 2026-10-03 에 **subtask gate 는 끄고 진행** 하기로 판정했다. O5 는 뒤로 미룬다 (사용자).
+
+**읽는 법과 출처 규약.**
+
+- 수치는 `handoff/T40A.verify.json` (A) 과 `handoff/T40FG.verify.json` (F · G · D) 의 `numbers` 에서 왔다. OOM 사고 기록은 `T40FG.verify.json` 과 `T40FG.verify.partial.json` 의 `incident_oom_20261003` (두 파일이 같다) 이고, run 의 시각 (UTC) 은 `T40FG.verify.partial.json` 의 `runs` 에서 왔다.
+- 설계와 사용자 판정은 `handoff/T40.task.md` (lead), E 의 구현은 `handoff/T40E.impl.md` 에서 왔다. **`T40E.impl.md` 에만 있는 수치는 "(구현자)"** 라고 밝혔다.
+- 표의 일부는 verifier 가 만든 figure 의 sidecar (`figures/t40/*.json`) 에서 옮겼다. 그 경우 표 아래에 sidecar 이름을 적었다.
+- **이 절은 무엇이 어떻게 측정됐는지만 적는다.** run 이 실패한 이유를 단정하지 않는다. 원인이 확정되지 않은 것은 아래 **재측정 대기 17–19** 에 둔다.
+
+**STEP 기호** (규칙 G — 이 절의 알파벳은 모두 T40 의 STEP 이다. T39 의 a · b · c 분기 지표와 다르다).
+
+| 기호 | 무엇 | 누가 |
+|---|---|---|
+| **A** | 배치 설계 — T39 에서 둘 다 성공한 쌍 22 개 중 crate 위치가 다른 6 episode 의 기록된 사과 운반 경로를 뽑고, bollard · divider 후보를 기록 궤적 재생으로 검사 | verifier |
+| **E** | 구현 — 허들 장애물을 추가 · 제거할 수 있게 한다 (A 가 드러낸 막힘 둘의 수정 포함) | implementer |
+| **F** | 허들 배치 — 6 episode 마다 허들을 사과 ↔ crate 통로에 놓을 위치 · 방향 · 높이를 찾는다 | verifier |
+| **G** | 실행 — 불변 snapshot, gate off, 같은 seed 로 **B · C** 를 E0 · E3b 에서 돌린다 | verifier |
+| **B** (G 의) | 시연 1 — 장애물 없음 (`--obstacle-profile clear`). 6 episode × 2 조건 = 12 run | verifier |
+| **C** (G 의) | 시연 2 — F 의 허들 (round 1). 5 episode × 2 조건 = 10 run | verifier |
+| **D** | C 에서 E3b 가 실패한 4 episode 를 허들 배치를 바꿔 (round 2) 다시 돌린다. 4 episode × 2 조건 = 8 run | verifier |
+
+(주의: 위 표의 B · C 는 G 안의 시연 번호이다. SUBTASK 절의 SUBTASK-b 나 "선택지 B" 와 글자만 같고 다른 것이다.)
+
+### 타임라인
+
+| 시각 | 무엇 | 출처 |
+|---|---|---|
+| 2026-10-03 07:27 UTC | **A** 완료 — benchmark `9c40c4b`. 사용자 판정 "장애물을 추가하고 제거할 수 있도록. 지금 기둥은 무의미. subtask gate 는 끄고 진행." (시각 기록 없음) | `T40A.verify.json` · `T40.task.md` |
+| 2026-10-03 12:04 | **E** 구현 끝 (`T40.progress.md` 의 표기는 KST 이나 commit 시각과 같은 시각대이므로 구분하지 않고 적는다). 26 tests passed (구현자) | `T40E.impl.md` |
+| 2026-10-03 12:06 UTC | commit: pi05_TO_hybrid `98e07d6` (허들 · 16D 장애물 XML 수정), 루트 `033ff1a` (`tests/sim` 26 tests), benchmark `150c28f` (E docs) | git |
+| 2026-10-03 12:19 UTC | **OOM 사고** (아래 §4) — F 의 첫 탐색 (60 worker) 이 pod memory cgroup 을 채움 | `incident_oom_20261003` |
+| 2026-10-03 13:24 UTC | **F** 완료 — benchmark `cc91f3e` (허들 배치 5 episode · OOM 사고 기록) | git |
+| 2026-10-03 13:54–14:26 UTC | **G B · C** 실행 (B 12 run, C 10 run) | `partial.json` `runs` |
+| 2026-10-04 05:43–05:51 UTC | **D** 실행 (8 run) | `partial.json` `runs` |
+| 2026-10-04 05:58 UTC | **G · D** 완료 — benchmark `4c220d1` | git |
+
+**코드 상태.** G · D 는 불변 snapshot `/mnt/dev/work-t40` (benchmark `150c28f` + pi05_TO_hybrid `98e07d6`, 399 개 파일의 md5 를 `outputs/verify/T40/p/code_md5_g0.txt` 에 남김, 모든 import 가 snapshot 아래) 에서 돌았다. 이 snapshot 의 serve_safe 는 **subtask gate 기본 off** 이다. 그 뒤 SUBTASK-g (사용자 판정 2026-10-04) 로 main 의 기본이 on 이 되었으므로, main 코드로 T40 을 다시 돌릴 때는 `--no-subtask-gate` 를 명시해야 한다 (`T40.task.md`). 서버 flag 는 T39 의 `start_server.sh` 와 같고 `--subtask-gate` 를 주지 않았다.
+
+### 1. A — bollard · divider 는 왜 쓸 수 없었나 (2026-10-03)
+
+**설계.** T39 에서 E0 · E3b 가 모두 성공한 22 쌍 (`n_pairs_both_success_T39`) 중 crate 위치가 다른 6 episode 를 골랐다. 각 run 의 기록 qpos 에서 쥔 사과의 운반 구간 `[lift_t, place_t]` 를 뽑고, bollard (mocap 원기둥) · divider (mocap 상자) 후보를 경로 위에 놓아 **기록된 T39 궤적을 재생** 하며 GJK 로 장애물과의 부호 있는 거리 (A = gripper 구성 geom · B = 사과 · C = 나머지 로봇) 를 쟀다. 구간의 min(A, B) ≤ 0 이면 "막는다 (blocks)" 이다. 사과 · gripper 가 부딪히는 위치만 남기려는 것이다.
+
+**결과 1 — 운반 높이.** 사과가 divider 를 넘는 구간의 높이를 다음처럼 쟀다.
+
+| 항목 | 값 | 출처 |
+|---|---|---|
+| 사과 바닥 높이 (테이블 위, traverse 구간 있는 35 run) | 최소 180.4 · 중앙 211.9 · 최대 239.7 mm | `carry_height_44runs` (44 run) |
+| divider 윗면 (테이블 위) | 80 mm | `divider_top_above_table_mm` |
+| bollard 윗면 | 287 mm | `bollard_top_above_table_mm` |
+| crate 윗면 | 157.0 mm | `crate_top_above_table_mm` |
+
+**결과 2 — 후보별 거리.** (6 episode 의 best 후보, `figures/t40/t40a-table.json` 에서 옮김. 부호: 음수 = 겹침)
+
+| episode · seed | bollard ↔ 사과 (t0, mm) | bollard: gripper 접근 구간 최소 E0 / E3b (mm) | bollard 가 운반 구간을 막는가 | divider ↔ 사과 (t0, mm) | divider 가 막는가 | divider 상태 |
+|---|---|---|---|---|---|---|
+| 1807 · 18071 | 36.8 | −3.6 / −5.3 | E0 · E3b | 28.4 | 둘 다 아님 | not kept |
+| 1968 · 19681 | 38.5 | 14.9 / 5.1 | E0 · E3b | 27.8 | E3b 만 | blocks E3b only |
+| 1982 · 19822 | 37.6 | −2.2 / 3.2 | E0 · E3b | 29.1 | E0 만 | blocks E0 only |
+| 1828 · 18281 | 38.4 | 1.9 / −8.9 | E0 · E3b | 28.7 | 둘 다 아님 | not kept |
+| 1995 · 19952 | 37.0 | −0.8 / 1.5 | E0 · E3b | 35.6 | E0 만 | blocks E0 only |
+| 1967 · 19672 | 37.5 | 3.8 / 2.0 | E0 · E3b | 28.5 | E0 · E3b | kept |
+
+`verify.json` 의 verdict: bollard best 배치는 6/6 에서 기록된 두 경로를 모두 막고, divider best 는 1/6 (1967) 만 막는다. bollard 는 사과에서 36.8–38.5 mm 떨어져 있고, 6 episode 중 4 개 (1807 · 1982 · 1828 · 1995) 에서 기록된 T39 궤적의 **접근 구간** (사과를 집기 전) 에 gripper 가 bollard 와 겹친다 (음수). 즉 bollard 는 운반 회피가 아니라 접근 · 파지 단계부터 간섭한다.
+
+**결과 3 — 막힘 둘.**
+
+| 막힘 | 증상 | 수치 |
+|---|---|---|
+| **1. 16D + 장애물 → block 장면 XML** | `pi05_infer.py` 가 16D 모델 + 장애물 profile 이면 block 장면 XML (`model_pick_place_obstacles.xml`) 을 읽어 `ValueError: joint 'apple_free' missing from the loaded MuJoCo model` | 원래 경로 (stock) 로 정책 호출까지 간 config 0 / 7. counterfactual (transport XML) 은 bollard 6 / 6 이 정책 호출까지 갔고 divider 1 개는 reset 검사에서 `SystemExit(2)` (`obstacle profile overlaps a movable object at reset (clearance=0.000 m)`) |
+| **2. MuJoCo 3.11 `mj_geomDistance` 가 box 쌍에서 틀린다** | reset 검사 · obstacle stop 이 이 함수를 쓴다 | box–box 5,850 쌍 중 82 쌍, box–mesh 10,590 쌍 중 38 쌍이 GJK 와 0.1 mm 넘게 다르다. 최대 차이 284.18 mm. cylinder 가 낀 쌍은 0 쌍. GJK 와 정확한 box–box 거리의 최대 오차 0.0015 mm. 위 divider 의 reset 검사는 `mj_geomDistance` 가 0.0 을 돌려준 pair 둘 (divider foot ↔ `apple_geom` 은 GJK 188.5 mm, divider ↔ `crate_wall_py` 는 GJK 117.1 mm) 때문에 실패했다 |
+
+![T40 A 배치도](figures/t40/t40a-layout.png)
+
+[`figures/t40/t40a-layout.png`](figures/t40/t40a-layout.png) — 배치도. t = 0 의 위에서 본 그림 (x 축 반전, 로봇은 오른쪽 끝). crate · 과일 · 사과 운반 경로 (파랑 = E0, 주황 = E3b) 위에 bollard (r 27 mm · 받침 r 45 mm) 와 divider (208 × 36 mm) 를 겹쳤다. 실선 = kept, 점선 = not kept.
+
+![T40 A 거리](figures/t40/t40a-distance.png)
+
+[`figures/t40/t40a-distance.png`](figures/t40/t40a-distance.png) — 그래프. 기록된 T39 qpos 를 재생 (mj_kinematics 만) 했을 때 bollard 와 gripper (A, 파랑) · 쥔 사과 (B, 주황) · 나머지 로봇 (C, 초록) 의 부호 있는 거리 (mm, [−40, 160] 으로 clip) 를 6 episode × {E0, E3b} 에서 control step (15 Hz) 에 따라 그렸다. 음영 = `[lift_t, place_t]`, 점선 = `grasp_t`.
+
+![T40 A 표](figures/t40/t40a-table.png)
+
+[`figures/t40/t40a-table.png`](figures/t40/t40a-table.png) — 표. 위 결과 2 의 전체 (window 최소 A/B · t0 최소 clearance · free height · 받침 gap) 이다.
+
+6 episode 의 실제 씬 (bollard 와 divider 후보 · 기록 경로):
+[1807](figures/t40/t40a-scene-1807_18071.png) ·
+[1968](figures/t40/t40a-scene-1968_19681.png) ·
+[1982](figures/t40/t40a-scene-1982_19822.png) ·
+[1828](figures/t40/t40a-scene-1828_18281.png) ·
+[1995](figures/t40/t40a-scene-1995_19952.png) ·
+[1967](figures/t40/t40a-scene-1967_19672.png). 각각 `.json` sidecar 가 있다.
+
+**사용자 판정 (2026-10-03).** "장애물을 추가하고 제거할 수 있도록. 지금 기둥은 무의미. subtask gate 는 끄고 진행." → E.
+
+### 2. E — 허들 `hurdle_0` 을 추가 · 제거할 수 있게 (2026-10-03 12:04, implementer)
+
+**무엇이 바뀌었나.** (이 절의 수치는 모두 `T40E.impl.md` 이므로 (구현자) 이다.)
+
+- 막힘 1 의 수정: 16D 모델 (`rby1_randomized_pick_place_16d`) 과 장애물 profile 이면 `model_transport_pick_place_obstacles.xml` 을 읽는다 (`pi05_infer.py:1032`, 분기 조건을 `args.model == "rby1_transport_14d"` 에서 `mcfg.get("model_xml") == MODEL_XML_TRANSPORT` 로).
+- 새 slot **`hurdle_0`** (용어 참고): 길이 0.264 m 의 capsule 막대 (반지름 12 mm) 와 양 끝 기둥 두 개. **capsule · cylinder 만으로** 만들었다 (box 를 쓰지 않는다 — 막힘 2). 시각 geom (group 2) 과 충돌 geom (`prop_collision`, group 3) 은 같은 크기이다.
+- 막대 높이는 config 의 `bar_height` (0.20–0.32 m, 기본 0.26 m, 허들 slot 에만 허용) 로 정한다. mocap body 둘이 telescope 하는 방식이라 compile 된 model 은 바뀌지 않는다 (geom 의 `rbound` · `aabb` · BVH 를 런타임에 바꾸지 않으려는 선택).
+- 거리: 허들의 모든 쌍 유형에서 `mj_geomDistance` 가 맞고 **capsule–box 만** 틀려서, capsule–box 는 정확한 계산 (`capsule_box_distance`, golden-section) 으로 바꿨다. bounding-sphere prefilter 를 더했다.
+
+| 쌍 (구현자 survey, `outputs/verify/T40/E/survey/*.log`) | n (< 0.25 m) | overlap | `mj_geomDistance` 오류 |
+|---|---|---|---|
+| cylinder–mesh (로봇 · 과일) | 102,319 | 2,371 | 0 |
+| capsule–mesh | 19,018 | 229 | 0 |
+| cylinder–box (crate) | 189,529 | 8,195 | 0 |
+| **capsule–box** | 34,011 | 1,488 | **overlap 74 쌍을 양수로 보고 (최대 33.5 mm)** |
+| capsule–box 수정 뒤 | 6,000 | 3,655 | 부호 오류 0 |
+
+**추가 · 제거 방법 (config 형식).**
+
+```json
+{"version": 1, "table_surface_z": 0.82,
+ "profiles": {"clear": {"scene": "any", "obstacles": []},
+              "ep1807_hurdle": {"scene": "fruit", "obstacles": [
+                 {"slot": "hurdle_0", "position": [0.68, 0.23, 0.82], "yaw": 0.0, "bar_height": 0.26}]}}}
+```
+
+| 필드 | 뜻 |
+|---|---|
+| `position` | 발 (footprint) 의 중심 `[x, y, table_z]` |
+| `yaw` | 세계 z 축 회전. 막대가 local x 축이므로 `yaw = 0` 이면 막대가 세계 x 축과 나란하다 |
+| `bar_height` | `position[2]` 위 막대 중심의 높이 (m) |
+
+- **추가:** `--obstacle-config <json> --obstacle-profile <name>`.
+- **제거:** `--obstacle-profile clear` (기본) 이거나 두 flag 를 모두 생략.
+- 사용법은 `pick_place_obstacles.py` 의 module docstring 과 `pi05_infer.py:826-839` 의 help 에 있다.
+
+**`clear` 는 이전 장면과 비트 동일하다.** (구현자) `tests/sim/test_t40_hurdle.py` 의 clear 3 tests 가 `main()` 을 `clear` 로, 오늘의 client 와 `22d8dae` 의 client (git 에서 꺼냄) 로 정책 호출 직전까지 돌려 같은 `model_xml` (`model_transport.xml`) · manager 없음 · model fingerprint 동일 · state (qpos · qvel · ctrl · act · mocap · time) **byte-identical** 을 확인했다. qpos 주소는 apple 38 · crate 31 · left finger 27, nq / nv / nu 는 66 / 61 / 29 로 두 XML 에서 같다. 모든 slot 을 parking 한 obstacle XML 은 clear XML 과 같게 움직인다 (200 step, ≤ 1e-9). 이 구현자 확인에 더해, **닫힌 루프 수준에서는 아래 §5 의 G B 12 / 12 가 T39 와 비트 동일**이다.
+
+**tests.** 루트 `tests/sim/test_t40_hurdle.py` **26 passed** (`.venv-openpi-live`, CPU, 88 s) (구현자). 구성은 clear (3) · config (2) · placement (9 + 1) · collision (3) · 16D + 장애물 (2) · distances (6). 기존 `test_pick_place_obstacles.py` 4 passed (구현자). 거리 test 는 독립 GJK (`tests/sim/_gjk.py`, verifier 의 `gjk.py` 사본) 와 대조한다.
+
+**배치에 쓸 사실 (구현자, ep1807).** reset 에서 왼 gripper 는 x 0.43–0.48 · y 0.21–0.26 · 테이블 위 0.21–0.30 m 에 걸려 있다. 이는 사과 → crate 통로 안이고 막대 높이이다. 그래서 통로를 가로지르는 막대를 reset 에서 두면 gripper 와 겹친다 (예: (0.55, 0.215) → robot clearance −19 mm, 모든 막대 높이에서).
+
+**고치지 않은 것 (구현자).** `pi05_ex_infer.py:1215-1219` 에 같은 16D → block XML 분기가 남아 있다 (이 STEP 의 범위 밖).
+
+### 3. F — 허들 배치 (2026-10-03, verifier)
+
+**탐색.** (해석적 탐색 v2, lead 규칙 2026-10-03; CPU · 호출마다 1 process.) 후보는 기록된 사과 중심 경로 (E0 · E3b 각각의 `lift_t ≤ t < place_t`) 를 3-D 호장 0.01 m 마다 resample 한 점을 막대 중심 xy 로 하고, 막대 방향은 경로의 수평 법선을 `dyaw ∈ {0, ±20, ±40}°` 로 돌린 것, 막대 중심을 막대 방향으로 `u ∈ {−0.06, 0, +0.06} m` 옮긴 것 (lead 규칙에 없는 확장), `bar_height ∈ {0.20, 0.22, …, 0.32} m` 이다. 검사 순서는 a → b → d → c 이고 각각 early-exit 한다.
+
+**배치 기준 (a)–(e).** (`T40FG.verify.json` 의 `F.definitions`)
+
+| 기준 | 내용 | 통과 조건 |
+|---|---|---|
+| **(a)** reset 검사 | client 의 reset clearance check (용어) 를 captured reset scene 에서 | `robot_clearance > 0` ∧ `object_clearance > 0` |
+| **(b)** t0 | 기록된 planning row 0 에서 허들 ↔ 로봇 · 사과 + 과일 · crate | 모두 > 0, E0 · E3b 둘 다 |
+| **(c)** 운반을 막는다 | 정확한 거리로 `lift_t ≤ t < place_t` 의 min(gripper, 사과) 거리 | ≤ 0, E0 **와** E3b 둘 다. 추가로 `c_low` = 막대를 20 mm 낮춰도 막는다 (기하만) |
+| **(d)** 들기 전 | `t < lift_t` 의 모든 로봇 geom · 사과 · 다른 과일과의 최소 거리 | > 0, 둘 다 |
+| **(e)** 위로 비킬 여유 | 그 xy 에서 기구학적으로 낼 수 있는 왼 TCP 최대 높이 (SLSQP, 충돌 검사 없음) 에서 사과 바닥 offset 을 빼고 막대 윗면을 뺀 값 `free_height_over_bar` | 선택 시 클수록 우선 |
+
+선택은 (a)–(d) 를 통과한 후보 (feasible) 중에서 tier 로 한다. 어떤 episode 의 후보도 lead 의 20 mm 여유에 닿지 않아 문턱을 10 · 5 mm 로 낮췄다 (`F.definitions.selection`): T1 = `c_low` ∧ margin ≥ 10 mm, T2 = `c_low` ∧ margin ≥ 5 mm, T3 = `c_low`, T4 = feasible. margin = min(reset robot, reset object, pre-lift 최소, t0 최소). 가장 좋은 비어 있지 않은 tier 안에서 `free_height_over_bar` 가 큰 것을 택한다.
+
+**후보 수.** (episode 별 base 탐색, `F.episodes.*.sources`)
+
+| episode · seed | candidates | (a) 통과 | (b) 통과 | (d) 통과 | (c) 통과 = feasible | tier 1 · 2 · 3 · 4 |
+|---|---|---|---|---|---|---|
+| 1807 · 18071 | 16,800 | 1,404 | 1,404 | 142 | 124 | 11 · 62 · 35 · 16 |
+| 1968 · 19681 | 18,480 | 1,267 | 1,267 | 300 | 285 | 81 · 47 · 118 · 39 |
+| 1982 · 19822 | 17,850 | 1,446 | 1,445 | 200 | 200 | 35 · 38 · 100 · 27 |
+| 1995 · 19952 | 16,380 | 1,030 | 1,030 | 2 | 2 (+ `u` ±0.08, ±0.10 확장 0) | 0 · 0 · 1 · 1 |
+| 1967 · 19672 | 15,855 | 777 | 776 | 132 | 132 | 39 · 25 · 48 · 20 |
+| **1828 · 18281** | 18,480 (+ 24,640 확장) | 1,279 (+ 884) | 1,279 (+ 884) | **0 (+ 0)** | **0 (+ 0)** | — |
+
+**1828 은 버렸다.** (a)–(d) 를 모두 만족하는 배치가 base 와 `u` 확장 (±0.08, ±0.10 m) 에서 모두 0 이다 (`dropped: true`, reason `no candidate satisfies (a)-(d)`). 따라서 **ep1828 의 허들 run 은 없다** (B 의 장애물 없음 run 만 있다). `diag_d` 가 센 (run | body) 별 개수는 E3b | EE_BODY_L 45 · E0 | EE_BODY_L 40 · E0 | FT_SENSOR_L 2 이다 (원자료 `outputs/verify/T40/F/raw/diag_d_1828_18281.json`).
+
+**선택된 5 배치 (round 1).**
+
+| episode · seed | 허들 위치 (x, y) m | yaw (°) | bar_height (m) | tier | margin (mm) | reset robot / object (mm) | (c) 운반 구간 최소 A · B, E0 (mm) | (c) 운반 구간 최소 A · B, E3b (mm) | free height over bar (m) |
+|---|---|---|---|---|---|---|---|---|---|
+| 1807 · 18071 | (0.5011, 0.1905) | 17.17 | 0.28 | 1 | 10.4 | 19.0 / 10.4 | −23.7 · −15.4 | −22.2 · −9.1 | 0.510 |
+| 1968 · 19681 | (0.4939, 0.1778) | 17.86 | 0.24 | 1 | 16.2 | 22.5 / 16.2 | −22.9 · −38.8 | −22.2 · −33.9 | 0.556 |
+| 1982 · 19822 | (0.4965, 0.1794) | 15.85 | 0.22 | 1 | 12.4 | 13.6 / 12.4 | −12.5 · −28.7 | −11.2 · −23.8 | 0.573 |
+| 1995 · 19952 | (0.4866, 0.1977) | 9.11 | 0.32 | **3** | **1.5** | 1.9 / 5.4 | −31.0 · +13.1 | −31.3 · +26.6 | 0.507 |
+| 1967 · 19672 | (0.4677, 0.1861) | 11.64 | 0.22 | 1 | 11.8 | 31.1 / 11.8 | −8.6 · −32.7 | −10.1 · −33.1 | 0.560 |
+
+(위 표의 A = gripper 구성 geom, B = 사과. 1995 만 tier 3 이고 margin 이 1.5 mm 이다 — 아래 §6 의 1995 절.)
+
+**교차 검증.** 각 배치의 보고된 최소값을 argmin 행 · pair 에서 **GJK 와 대조**했다. separated 인 항목 72 개 (round 1) 와 63 개 (round 2, D) 에서 client 거리와 GJK 의 차이는 각각 최대 1.6e-11 m · 1.3e-11 m 이고, overlap 항목 (client 음수) 은 GJK separation 0 으로 일치한다. client 의 reset 검사 (`dryrun.py` — snapshot 의 `pi05_infer.main()` 을 정책 호출 직전까지) 는 5 / 5 배치가 `load_remote_policy` 까지 갔다 (초기 robot / object clearance: 1807 0.019 / 0.010 · 1968 0.022 / 0.016 · 1982 0.014 / 0.012 · 1995 0.002 / 0.005 · 1967 0.031 / 0.012 m).
+
+![T40 F 배치](figures/t40/t40fg-placement.png)
+
+[`figures/t40/t40fg-placement.png`](figures/t40/t40fg-placement.png) — 실제 씬. client 의 reset 장면에 round 1 (위) · round 2 (아래, D) 의 허들과 기록된 T39 사과 경로 (파랑 = E0, 주황 = E3b) 를 겹쳤다. ep1828 은 배치 없음, ep1968 은 round 2 없음.
+
+**D 의 round 2 배치.** C 에서 E3b 가 실패한 4 episode (1807 · 1967 · 1982 · 1995) 에서, round 1 의 E3b 실패가 모두 **들기 전** (접근 중 gripper · finger ↔ 막대 정지, 또는 1995 의 clearance 0.0 · 접촉 없음 정지) 이었으므로, 같은 후보 pool 에서 (a)–(d) 와 (c) 를 유지하면서 **round 1 의 닫힌 루프 접근 궤적에 대해서도 여유가 최대인** 배치를 골랐다 (`dselect.py`). score = min(m_T39, m_C), m_C = round 1 의 C run (E0 · E3b) 에서 각 run 의 들기 전 control row 의 허들 ↔ 로봇 거리 최소. round 1 배치는 제외했다. **`c_low` 는 4 episode 모두 false** 이다 (막대를 20 mm 낮추면 막지 못한다).
+
+| episode · seed | round 2 위치 (x, y) m | yaw (°) | bar_height (m) | round 1 score (mm) | round 2 score (mm) | m_T39 (mm) | m_C E0 · E3b (mm) | 초기 robot / object (mm) |
+|---|---|---|---|---|---|---|---|---|
+| 1807 · 18071 | (0.4988, 0.1524) | 13.2 | 0.22 | 1.7 | 9.9 | 9.9 | 40.3 · 40.8 | 41 / 10 |
+| 1967 · 19672 | (0.4709, 0.1863) | 13.4 | 0.20 | 3.2 | 14.2 | 14.2 | 23.0 · 15.8 | 35 / 14 |
+| 1982 · 19822 | (0.5428, 0.1732) | 176.6 | 0.20 | 0.04 | 13.9 | 13.9 | 16.9 · 16.9 | 17 / 14 |
+| 1995 · 19952 | (0.5343, 0.2142) | 171.2 | 0.20 | 1.5 | **−1.0** | 1.0 | 0.7 · **−1.0** | 1 / 3 |
+
+1995 의 round 2 score 가 음수인 것은 round 1 의 E3b C run 의 들기 전 기록에서 이 배치와의 거리 최소가 −1.0 mm 라는 뜻이다 (`m_C.C_E3b = −0.00098 m`). 이 배치로도 1995 는 실행되었다 (§6).
+
+### 4. OOM 사고 — 2026-10-03 12:19 UTC (사실만)
+
+pod 의 memory cgroup 은 **전 세션이 공용으로 쓰는 80 GiB** 이다 (`/sys/fs/cgroup/memory.max` = 85,899,345,920 B). CPU 는 `cpu.max` 1,600,000 / 100,000, 즉 pod 전체 16 CPU 이다. `free` · `nproc` 은 이 한도를 보여 주지 않는다.
+
+| 시각 (UTC) | 무슨 일 |
+|---|---|
+| 2026-10-03 12:19 | F 의 첫 탐색 (`run_search.sh`, `search.py`, exhaustive grid) 이 **CPU worker 60 개** (각 약 1.4–1.5 GB RSS) 를 띄웠다. `memory.current` 가 약 85.1e9 B 에 닿았다 |
+| 12:18:51 ~ 12:19:56 (dmesg, ±20 s) | OOM kill 16 건 |
+| 약 12:28:50 | OOM kill 1 건 (G regression baseline 의 legacy 재실행) |
+| 12:31 | verifier 가 **남은 search worker 52 개** (자기 process) 를 모두 죽였다. 그 뒤 `memory.current` 7,758,315,520 B |
+
+(주의: 60 개 − 죽은 9 개 = 51 이나 `verify.json` 은 52 로 적는다. 차이는 기록에 설명이 없다. 이 로그의 SUBTASK 절 §8 (SUBTASK-f) 의 "실행 중 사고" 단락은 같은 사고를 "51 개 × 약 1.5 GB" 라고 적었다.)
+
+**누가 죽었나.** `memory.events` 의 `oom_kill` 누적 38 건 중 2026-10-03 에 17 건, 그 전이 21 건이다. 17 건을 dmesg 의 vm · anon_rss 크기로 분류한 것이다 (원자료 `outputs/verify/T40/F/raw/oom_kills_20261003.txt`).
+
+| 분류 (크기로 추정) | 개수 | 영향 |
+|---|---|---|
+| `serve_safe` 서버 (vm ≈ 419 GB · rss ≈ 6 GB) | 3 | **다른 세션** SUBTASK-f E3bG 체인 8231 · 8232 · 8233. 서버가 죽어 "server died, chain stops" (12:21:17–12:21:22) |
+| 기동 중인 서버 (vm 112 GB · rss 4.7 GB) | 1 | SUBTASK-f 체인 8234 "server died during start" (12:20:58) |
+| `pi05_infer` client (vm ≈ 32.7 GB · rss ≈ 2.4 GB, 12:19) | 3 | SUBTASK-f run 3 개 exit=137: E3bG ep1863 s18631 (포트 8231) · ep1828 s18281 (8232) · ep1807 s18071 (8233) |
+| T40 F search worker (vm ≈ 10.5 GB · rss ≈ 1.4 GB) | 9 | **이 STEP** 의 verifier. 이 탐색의 결과는 쓰지 않았다 (`search.py` + `run_search.sh` 는 superseded) |
+| T40 G regression baseline 의 legacy `esdf_rollout` (vm 33 GB · rss 2.3 GB, ~12:29) | 1 | 이 STEP. legacy rc=137 (`G/baseline/run.out`) |
+
+**이 STEP 에 준 영향.** 첫 legacy baseline 시도가 죽었다. nice 19 · `OMP_NUM_THREADS=2` 로 다시 돌렸고 (F worker 2 개 · 다른 세션이 함께 도는 동안) 결과가 SUBTASK-e 의 기준선과 일치했다 (§5 의 표). F 는 해석적 탐색 (v2) 으로 다시 했다.
+
+**새 자원 규칙 (lead).** 이 사고 뒤 정해졌다 (`incident_oom_20261003.after`):
+
+| 규칙 | 값 |
+|---|---|
+| F 같은 탐색 | 해석적으로 (exhaustive grid 금지) |
+| CPU worker | ≤ 4 개, nice 19, **전체 RSS ≤ 16 GB** |
+| server · client · worker 를 띄우기 전 | `memory.current` + RSS 추정 ≤ **64 GiB** |
+
+G 가 도는 동안 pod memory 최고는 49.94 GiB 였다 (`resources.pod_memory_peak_GiB_during_G`).
+
+### 5. G B — 장애물 없음: 12 / 12 가 성공, T39 와 비트 동일 (2026-10-03 13:54–14:25 UTC)
+
+**설정.** `--obstacle-profile clear` · 6 episode × {E0, E3b} = 12 run. 같은 seed (T39 의 `10·ep + rep`) · `--warmup-steps 1000` · `--policy-seed` · XLA autotune 0 · 불변 snapshot · gate off. 녹화는 `--record third_person_front.mp4 --view front --record-frames --trajectory-out traj.npz`. 서버 포트는 G 의 E3b 8240 · E0 8241.
+
+**기준선 (G 시작 전).** regression baseline 이 일치했다 (`baseline_check.matched`).
+
+| 변형 | `violated_start` | `has_target` | frame 0 `clearance_before` | `clearance_before` 의 sha1 이 SUBTASK-e 와 같은가 |
+|---|---|---|---|---|
+| cuRobo | 10 / 15 | 15 / 15 | −9.171877401271193 mm | 같다 (`fe73bd7a…`) |
+| legacy | 14 / 15 | 15 / 15 | −29.031048280806342 mm | 같다 (`40798fb0…`) |
+
+**결과.** 비트 동일의 비교는 `outputs/verify/T40/p/analyze_t40.py` 의 `bit_identity` 이다: `traj.npz` 의 `executed_actions` · `measured_qpos` · `predicted_chunks` · `inference_states` · `chunk_start_steps`, frame 기록의 planning actions · qpos · object poses · control qpos · applied ctrl, 그리고 E3b 는 서버 기록의 `refined_chunk` · `reference_chunk` · `clearance` 를 T39 의 같은 (episode, seed, 조건) run 과 비교한다.
+
+| episode · seed | E0 success | E0 bit-identical | E3b success | E3b HOLD chunk (kind) | E3b bit-identical |
+|---|---|---|---|---|---|
+| 1807 · 18071 | ✓ | ✓ | ✓ | 0 | ✓ |
+| 1828 · 18281 | ✓ | ✓ | ✓ | 0 | ✓ |
+| 1967 · 19672 | ✓ | ✓ | ✓ | 1 (collision) | ✓ |
+| 1968 · 19681 | ✓ | ✓ | ✓ | 0 | ✓ |
+| 1982 · 19822 | ✓ | ✓ | ✓ | 9 (uncertified) | ✓ |
+| 1995 · 19952 | ✓ | ✓ | ✓ | 1 (collision) | ✓ |
+| **합** | **6 / 6** | **6 / 6** | **6 / 6** | 11 chunk | **6 / 6** |
+
+모든 run 이 `n_control` 600 이다. 즉 B 는 **12 / 12 success · 12 / 12 비트 동일** (`verdict`: "12/12 B runs bit-identical to T39").
+
+**chunk 시간.** (첫 chunk 제외, `chunk_times`)
+
+| 조건 | stage | round trip 중앙 · p95 · 최대 (ms) | server total 중앙 · p95 (ms) | server trajopt 중앙 · p95 (ms) | n |
+|---|---|---|---|---|---|
+| E0 | B | 202.8 · 340.4 · 390.0 | — | — | 444 |
+| E3b | B | 981.3 · 1,139.7 · 1,298.9 | 768.5 · 923.6 | 69.1 · 84.5 | 444 |
+| E0 | C | 207.0 · 347.9 · 380.2 | — | — | 129 |
+| E3b | C | 1,006.1 · 1,154.9 · 1,225.5 | 786.8 · 930.3 | 67.4 · 91.1 | 121 |
+| E0 | D | 185.0 · 261.7 · 443.7 | — | — | 72 |
+| E3b | D | 973.7 · 1,087.0 · 1,171.2 | 761.5 · 876.3 | 63.2 · 74.7 | 61 |
+
+E0 의 server 시간은 기록이 없다 (`--no-safe` 서버 · 재측정 대기 12). 이 값들은 서버 둘 (G 의 E3b · E0) 이 도는 동안의 값이다. T39 의 server 시간과 같은 부하 조건이었다는 기록이 없어 이 절에서 견주지 않는다.
+
+**자원.** (`resources`) E3b server RSS 최고 6.9 GiB · E0 server 4.02 GiB · E3b client 3.0 GiB · E0 client 2.76 GiB. GPU: E3b server 약 17,930 MiB, 두 서버 동시 최고 27,278 MiB. pod memory 최고 49.94 GiB.
+
+### 6. G C · D — 운반 경로 위 허들: E3b 2 / 9 · E0 0 / 9 (C 2026-10-03 14:00–14:26 UTC, D 2026-10-04 05:43–05:51 UTC)
+
+**설정.** 위 F · D 의 config 로 5 + 4 episode 를 E0 · E3b 에서 돌렸다 (C = round 1 허들 5 episode × 2, D = round 2 허들 4 episode × 2, 총 18 run). 설정은 §5 와 같고, 서버는 D 에서 E3b 8242 · E0 8243. **`--obstacle-stop-distance` 는 0.0** 이다 (`G_settings`). `T40.task.md` 는 기본값 0.02 (로봇이 장애물 2 cm 안이면 멈춘다) 를 적었고, 0.0 으로 정한 근거는 이 기록의 출처에 없다. 로봇이 장애물과 정지 거리 이하이거나 접촉하면 run 이 끝난다 (**obstacle stop**, 용어). C 의 E3b ep1807 은 `check_run` v1 이 장애물 정지 run 을 "불완전" (`planned_missing = 75 − captured`) 으로 판정해 두 번 돌렸다 (v2 가 이 경우를 받아들인다). 두 attempt 는 비트 동일이다 (`retry_reproducibility_C_E3b_ep1807`).
+
+**성공 · 정지 표.** (success = grasp 와 place 모두, T39 규칙. **client contact** = client 가 기록한 로봇 ↔ 허들 접촉 pair. 정지 시각 t 는 control step.)
+
+| round | episode | 조건 | success | grasp | place | HOLD (kind) | obstacle stop t | client 접촉 pair | `min_robot_clearance` (mm) |
+|---|---|---|---|---|---|---|---|---|---|
+| C | 1807 | E0 | ✗ | ✗ | ✗ | 0 | 254 | EE_BODY_L (geom 1052) ↔ bar | −0.19 |
+| C | 1807 | E3b | ✗ | ✗ | ✗ | 5 (collision) | 218 | ee_finger_l2 (1086) ↔ bar | −0.94 |
+| C | 1967 | E0 | ✗ | ✓ | ✗ | 0 | 190 | ee_finger_l2 (1086) ↔ bar | −0.52 |
+| C | 1967 | E3b | ✗ | ✗ | ✗ | 1 (collision) | 203 | ee_finger_l2 (1086) ↔ bar | −0.21 |
+| C | 1968 | E0 | ✗ | ✓ | ✗ | 0 | 259 | ee_finger_l2 (1086) ↔ bar | −0.36 |
+| C | 1968 | **E3b** | **✓** | ✓ | ✓ | 0 | 280 (놓은 뒤) | 사과 ↔ bar, ee_finger_l1 (1079) ↔ bar | −1.65 |
+| C | 1982 | E0 | ✗ | ✓ | ✗ | 0 | 165 | ee_finger_l2 (1086) ↔ bar | −0.32 |
+| C | 1982 | E3b | ✗ | ✗ | ✗ | 1 (collision) | 178 | EE_BODY_L (1052) ↔ bar | −0.19 |
+| C | 1995 | E0 | ✗ | ✗ | ✗ | 0 | 186 | EE_BODY_L (1051) ↔ bar | −0.46 |
+| C | 1995 | E3b | ✗ | ✗ | ✗ | 0 | 103 | **없음** (false-zero) | 0.0 |
+| D | 1807 | E0 | ✗ | ✓ | ✗ | 0 | 196 | ee_finger_l2 (1086) ↔ bar | −0.25 |
+| D | 1807 | **E3b** | **✓** | ✓ | ✓ | 0 | 275 (놓은 뒤) | ee_finger_l2 (1086) ↔ bar | −2.0 |
+| D | 1967 | E0 | ✗ | ✗ | ✗ | 0 | 90 | **없음** (false-zero) | 0.0 |
+| D | 1967 | E3b | ✗ | ✗ | ✗ | 1 (collision) | 137 | **없음** (false-zero) | 0.0 |
+| D | 1982 | E0 | ✗ | ✗ | ✗ | 0 | 225 | ee_finger_l2 (1086) ↔ bar | −1.02 |
+| D | 1982 | E3b | ✗ | ✗ | ✗ | 0 | 23 | **없음** (false-zero) | 0.0 |
+| D | 1995 | E0 | ✗ | ✗ | ✗ | 0 | 76 | EE_BODY_L (1051) · (1055) ↔ bar | +0.03 |
+| D | 1995 | E3b | ✗ | ✗ | ✗ | 0 | 71 | **없음** (false-zero) | 0.0 |
+
+| 집계 | E0 | E3b |
+|---|---|---|
+| C (5 run) | 0 / 5 | 1 / 5 (ep1968) |
+| D (4 run) | 0 / 4 | 1 / 4 (ep1807) |
+| **합 (9 run)** | **0 / 9** | **2 / 9** |
+
+![T40 G·D 표](figures/t40/t40fg-table.png)
+
+[`figures/t40/t40fg-table.png`](figures/t40/t40fg-table.png) — 표. episode × stage (B · C · D) × 조건의 success · HOLD · 최소 gripper / 사과 / 로봇 거리 · 접촉 · 사과가 손을 떠난 t · AG3S target 이 허들 위에 있었던 chunk · bit-identical 을 한 장에 모은 것.
+
+![T40 G 거리](figures/t40/t40fg-distance.png)
+
+[`figures/t40/t40fg-distance.png`](figures/t40/t40fg-distance.png) — 그래프. episode 별 min(gripper, 사과) ↔ 허들 거리 (mm, client 거리 코드, 300 으로 cap) 를 control step 에 따라 그렸다. 파랑 = E0, 주황 = E3b, 실선 = C (물리 허들), 점선 = B (같은 허들을 **가상으로** 놓은 것, 물리 없음), × = obstacle stop 으로 끝난 run 의 마지막 행. round 2 (D) 는 [`t40fg-distance-d.png`](figures/t40/t40fg-distance-d.png).
+
+round 1 (C) 의 실제 씬 — 각 run 의 최소 허들 거리 control row 의 third-person front 프레임, E0 | E3b:
+[1807](figures/t40/t40fg-scene-1807.png) ·
+[1968](figures/t40/t40fg-scene-1968.png) ·
+[1982](figures/t40/t40fg-scene-1982.png) ·
+[1995](figures/t40/t40fg-scene-1995.png) ·
+[1967](figures/t40/t40fg-scene-1967.png).
+round 2 (D):
+[1807](figures/t40/t40fg-scene-1807-d.png) ·
+[1982](figures/t40/t40fg-scene-1982-d.png) ·
+[1995](figures/t40/t40fg-scene-1995-d.png) ·
+[1967](figures/t40/t40fg-scene-1967-d.png). 각각 `.json` sidecar 가 있다.
+
+#### 6-1. 실패의 분류와 증거
+
+`T40.task.md` 의 D 단계는 실패를 HOLD 연속 · TO 가 8 step 안에서 못 비킴 · 정책이 다시 끌어당김 · 장애물을 target 으로 착각 · 팔뚝 충돌 로 나눠 보라고 했다 (TO = trajectory optimization, 계획 지평 8 step). verifier 가 run 마다 대조한 결과는 다음과 같다.
+
+| run | 정지 시점 | 접촉 | 기록된 사실 | 목록의 분류와 맞는 것 |
+|---|---|---|---|---|
+| C E3b 1807 | 들기 전 (grasp 없음, 사과 dz 최대 3 mm), t = 218 | ee_finger_l2 ↔ bar | HOLD 5 chunk (t = 136 · 176 · 192 · 200 · 208, 모두 collision, 최대 연속 3 = 192 · 200 · 208). 위반 링크: attached:ee_left[0] fine tier, 이어 ee_finger_l2 · ee_left · ee_finger_l1 target_free tier, −11.1 … −1.1 mm. 접촉은 **연속 HOLD 3 개 뒤 t = 216 에서 시작한 chunk (gate `execute`)** 에서 났다 | HOLD 연속 (3) |
+| C E3b 1967 | 들기 전 (grasp 없음, dz 6 mm), t = 203 | ee_finger_l2 ↔ bar | HOLD 1 chunk (t = 192, collision: ee_finger_l1 −0.1 mm, target_free) | 없음 |
+| C E3b 1982 | 들기 전 (grasp 없음, dz 14 mm), t = 178 | EE_BODY_L ↔ bar | HOLD 1 chunk (t = 176, collision: ee_finger_l2 −10.2 mm, target_free) | 없음 |
+| C E3b 1995 | 들기 전 (grasp 없음), t = 103 | **접촉 없음** (`robot_collision` False · contact steps 0) | client `min_robot_clearance` 가 정확히 0.0. replay 의 t = 103 clearance 는 22.2 mm | 없음 — §6-2 |
+
+그 밖에 기록된 사실.
+
+- 1807 의 실패 분류 중 목록에서 **맞지 않는 것**: "TO 가 운반 중 막대를 못 비킴" (운반 자체가 없었다) · "허들을 target 으로 착각" (아래) · "점검 밖 팔뚝 링크" (접촉 링크가 finger 이다) · "사과를 쳐서 떨어뜨림" (grasp 가 없었다). "정책이 다시 끌어당김" 은 `verify.json` 이 따로 판정하지 않았다.
+- **E0 의 접촉.** C 의 E0 5 run 은 전부 허들과의 접촉으로 끝났다: 접근 중 EE_BODY_L 접촉 2 (1807 t = 254 · 1995 t = 186), 운반 중 ee_finger_l2 접촉 3 (1968 grasp t = 232 · 접촉 t = 259 · 1982 grasp t = 144 · 접촉 t = 165 · 1967 grasp t = 168 · 접촉 t = 190). E0 에는 HOLD 가 없다 (0 chunk).
+- **D E0.** 1807: grasp t = 168, 운반 중 ee_finger_l2 ↔ bar t = 196. 1982: grasp 없이 ee_finger_l2 ↔ bar t = 225. 1995: grasp 없이 EE_BODY_L ↔ bar t = 76. 1967: false-zero (아래).
+- **E3b 성공 둘.** C ep1968: grasp t = 144, place t = 232 (손에서 놓임). 운반 중 사과 ↔ bar 접촉 (client `payload_collision` True, replay 의 사과 최소 거리 −0.4 mm @ t = 171), 사과는 t = 232 의 release 까지 손에 있었다. obstacle stop 은 **놓은 뒤** t = 280 (ee_finger_l1 ↔ bar). D ep1807: grasp t = 136, place t = 216 (사과는 t = 215 에 놓임). 운반 중 gripper 최소 거리 11.3 mm · 사과 5.4 mm, payload 접촉 없음. obstacle stop 은 놓은 뒤 t = 275 (ee_finger_l2 ↔ bar).
+- **사과를 쳐서 떨어뜨린 run 은 없다.** `apple_left_hand_t` 는 성공 run 에서 crate 의 release 에만 값이 있다 (`apple_knocked_off`).
+- **허들이 AG3S 의 target 으로 선택된 적은 없다.** E3b 의 C · D 모든 run 에서 target 점이 허들 표면 15 mm 안에 하나라도 있는 chunk 는 **0** 이다 (`ag3s_hurdle_as_target`). target 점 중심에서 허들 표면까지의 최소 거리는 C 57–78 mm · D 54–160 mm.
+
+#### 6-2. client 거리의 false-zero 정지 — **열린 결함**
+
+**false-zero distance** (용어): client 의 `pair_distance` 가 정확히 **0.0** 을 돌려주는데 실제로는 접촉이 없고 GJK separation 이 0.2 m 대인 경우. 거리 0.0 은 `--obstacle-stop-distance 0.0` 에서 정지 조건 (≤ 0) 이므로 run 이 끝난다.
+
+정확한 0.0 · 접촉 없음으로 끝난 run 은 **5 개** 이다 (`stops_with_exact_zero_and_no_contact`). kinematic probe (`zero_probe.py`, 기록된 마지막 control row 에 400 개 섭동) 의 결과:
+
+| run | 정지 t | replay 의 마지막 행 clearance (mm) | 섭동 400 개 중 ≤ 0 | 0.0 을 돌려준 pair | 그 pair 의 GJK separation (m) |
+|---|---|---|---|---|---|
+| C E3b 1995 | 103 | 22.2 | 4 | foot_left ↔ link_left_arm_5 (geom 856) | 0.215–0.217 |
+| D E3b 1982 | 23 | 35.2 | 4 | foot_right ↔ ee_finger_l2 (1085) 1 · ↔ EE_BODY_L (1055) 3 | 0.222–0.231 |
+| D E3b 1995 | 71 | 17.0 | 10 | foot_right ↔ link_left_arm_6 (904) 5 · FT_SENSOR_L (942 · 935 · 941) 5 | 0.208–0.238 |
+| D E3b 1967 | 137 | 22.8 | **0** | 재현 안 됨 | — |
+| D E0 1967 | 90 | 42.1 | **0** | 재현 안 됨 | — |
+
+- 재현된 3 run 의 0.0 pair 는 모두 **허들의 발 (foot)** 과 로봇 팔 링크 · 손목 · gripper 사이였고, GJK separation 이 0.21–0.24 m 이다 (`verify.json` 의 `witness_gap_m` 은 0.43–0.48 m).
+- 1967 의 두 run 은 probe 로 0.0 을 재현하지 못했다. 이 두 run 의 정지 원인은 이 기록으로 가릴 수 없다.
+- probe 는 **kinematic** 이다 (기록된 control row 와 섭동). 각 정지의 physics sub-step 에서 0.0 이 나온 것을 재현한 것이 아니다 (`not_measured`).
+- E 의 구현자 survey (cylinder–mesh 102,319 쌍, < 0.25 m) 는 `mj_geomDistance` 오류 0 이었다 (구현자). 위 pair 의 GJK separation 은 그 범위 안이다. 두 기록은 이 절에서 조정하지 않았다.
+- **이 5 run 은 판정할 수 없다.** E3b 가 허들을 피하지 못해서 끝난 것인지, 거리 검사의 거짓 0 이 run 을 끝낸 것인지를 이 run 들에서 가를 수 없다. 이 5 run 은 위 집계의 실패에 들어 있다 (E3b 4 run: C 1995 · D 1967 · D 1982 · D 1995, E0 1 run: D 1967). → 재측정 대기 17.
+
+#### 6-3. 1995 와 reset margin
+
+ep1995 는 F 에서 후보가 둘뿐이었고 (위 후보 수 표) 선택된 배치는 tier 3 · margin 1.5 mm 이다. 이 episode 의 기록:
+
+| 항목 | 값 |
+|---|---|
+| reset margin (round 1) | reset robot 1.9 mm · reset object 5.4 mm · t0 최소 1.9 mm · T39 들기 전 최소 1.5 mm |
+| reset 에서 허들 ↔ 로봇 pair | bar ↔ EE_BODY_L (geom 1050 / 1053), t = 0 에서 1.8 mm · t = 4 에서 1.5 mm (C 의 두 run, replay) |
+| C E3b 의 gripper ↔ bar 거리 (mm) | t0 1.8 · t4 1.5 · t16 8.4 · t48 24.7 · t80 43.7 · t103 22.2 |
+| C E0 | t = 186 에 접근 중 EE_BODY_L (1051) ↔ bar 접촉. replay 의 gripper 거리 t4 1.5 · t64 31.5 · t110 20.0 · t170 18.4 mm |
+| B (가상 허들) 의 r1 pose gripper 거리 t = 130 (mm) | E3b 15.6 · E0 8.0 |
+| D (round 2) | m_T39 1.0 mm. E3b 는 t = 71 에 clearance 0.0 · 접촉 없음 (false-zero), E0 는 t = 76 에 EE_BODY_L ↔ bar 접촉 |
+
+reset 검사의 기준은 clearance > 0 이므로 1995 는 1.9 mm (robot) 로 통과했다.
+
+### 7. 아직 모르는 것 (`not_measured` 와 이 절에서 드러난 것)
+
+| 항목 | 상태 |
+|---|---|
+| **false-zero 정지 5 run 의 판정** | **판정 불가.** 재측정 대기 17 |
+| **접근 단계 finger contact 의 원인** | **미확정.** 재측정 대기 18 |
+| **ep1828 의 허들 run** | 없음 (배치 없음). 재측정 대기 19 |
+| false-zero 를 physics sub-step 에서 재현하는 것 | **안 했다** (probe 가 kinematic) |
+| E0 의 server 시간 | 기록 없음 (재측정 대기 12 와 같음) |
+| 장애물 없음 B 의 gate on 기본값 | 안 쟀다. G 는 gate off. 기본 on 의 main 으로 같은 시연을 다시 하지 않았다 |
+| `--obstacle-stop-distance` 0.0 으로 정한 근거 | 출처에 없다 (위 §6 설정) |
+| VLA 는 장애물 있는 데이터로 학습되지 않았다 | `T40.task.md` 의 주의 1. 허들을 비키는 것은 TO (계획 지평 8 step) 뿐이고 정책은 매 chunk 직선 경로로 다시 당긴다는 가정은 이 run 들로 **검증하지 않았다** |
+| E3b 의 충돌 검사 범위 | `--links gripper` + 쥔 사과 구 (`T40.task.md` 의 주의 2). 팔뚝은 검사 밖이다. 이 run 들의 정지 접촉 링크는 finger · EE_BODY_L 이다 |
+
+### 되돌아올 지점 — 고르지 않은 선택지
+
+| 안 고른 것 | 왜 안 골랐나 | 되돌아올 신호 (**scribe 가 위 기록에서 도출한 것이며 사용자 판정이 아니다**) |
+|---|---|---|
+| bollard · divider 를 그대로 쓴다 | A: 운반 높이 (사과 바닥 180–240 mm) 가 divider 윗면 (80 mm) 보다 높고, bollard 는 사과에서 37–38 mm 라 접근부터 간섭 | 사용자 판정 — "지금 기둥은 무의미" |
+| F 의 exhaustive grid 탐색 (60 worker) | OOM 사고로 중단, 결과 미사용 | 해석적 탐색이 후보를 못 줄 때 (ep1828 처럼) — 단 새 자원 규칙 안에서 |
+| 기본 obstacle stop 0.02 | G 는 0.0 | 근거가 이 기록에 없다. 사용자 판정 필요 |
+| E3b 의 `--links` 범위를 넓힌다 | `T40.task.md` D 가 "사용자 판정으로" 로 남긴 것 | 정지 접촉 링크가 gripper 밖 (팔뚝) 으로 나올 때. 지금까지는 finger · EE_BODY_L |
+
+### 이 STEP 의 산출물
+
+- 코드: pi05_TO_hybrid `98e07d6` (허들 · 16D 장애물 XML 수정), 루트 repo `033ff1a` (`tests/sim/` 26 tests).
+- 문서·측정 커밋: benchmark `9c40c4b` (A), `150c28f` (E docs), `cc91f3e` (F · OOM 기록), `4c220d1` (G · D).
+- 측정: `handoff/T40A.verify.json` · `T40FG.verify.json` · `T40FG.verify.partial.json`. 구현: `handoff/T40E.impl.md`. 설계: `handoff/T40.task.md`.
+- figure: `figures/t40/` — A: `t40a-layout` · `t40a-distance` · `t40a-table` · `t40a-scene-{1807_18071, 1968_19681, 1982_19822, 1828_18281, 1995_19952, 1967_19672}`. F · G · D: `t40fg-placement` · `t40fg-table` · `t40fg-distance` · `t40fg-distance-d` · `t40fg-scene-{1807, 1968, 1982, 1995, 1967}` · `t40fg-scene-{1807, 1982, 1995, 1967}-d`. 각각 `.json` sidecar 가 있다.
+
+**다음 판정은 사용자에게 있다:** (1) false-zero distance 를 고칠 것인가, 그 뒤 5 run 을 다시 돌릴 것인가 (재측정 대기 17). (2) 접근 단계 finger contact 를 어느 후보부터 가를 것인가 (재측정 대기 18). (3) `--obstacle-stop-distance` 를 0.0 에서 바꿀 것인가, `--links` 범위를 넓힐 것인가. (4) ep1828 에 허들을 두는 다른 방법을 쓸 것인가 (재측정 대기 19). (5) main (gate 기본 on) 으로 같은 시연을 다시 할 것인가 (`--no-subtask-gate` 를 명시하지 않으면 SUBTASK 이후의 동작이다).

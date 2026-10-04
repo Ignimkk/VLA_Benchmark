@@ -2292,3 +2292,26 @@ pick 을 위한 것인지 place 를 위한 것인지 알 수 있나.
 - SUBTASK (c) 의 B (subtask co-training — text 를 학습시켜 attention 이 subtask 에 조건부가 되게) 는 하지 않았다.
 
 상세와 수치 · figure 는 [`AG3S_T0T6_LOG.md`](AG3S_T0T6_LOG.md) 의 **SUBTASK** 절, 판단의 흐름은 [`handoff/SUBTASK.audit.md`](handoff/SUBTASK.audit.md).
+
+## T40 — 통합 main 의 closed-loop 시연: 장애물 없음 대 운반 경로 위 허들 (2026-10-03 ~ 2026-10-04)
+
+**왜.** 사용자 지시 — "headless 로 장애물 없는 상황 테스트" 와 "사과를 바구니로 가져가는 경로에 임의의 장애물을 설치해 회피하며 성공하는지". 같은 6 episode · seed (T39 의 쌍) 로 E0 (VLA 단독) · E3b (AG3S + ESDF + TO) 를 돌린다. **subtask gate 는 끈다** (사용자 판정 2026-10-03).
+
+**한 일 (STEP 기호는 로그 T40 절에 풀어 놓았다).**
+
+| 단계 | 무엇 | 결과 |
+|---|---|---|
+| A (배치 설계) | bollard · divider 후보를 기록된 T39 사과 운반 경로 위에서 검사 | 둘 다 쓸 수 없다 — bollard 는 사과에서 36.8–38.5 mm 라 접근부터 간섭, divider (80 mm) 는 사과 바닥 높이 (최소 180.4 mm) 보다 낮다. 막힘 둘 발견 (16D + 장애물 → block XML · `mj_geomDistance` box 오류) |
+| E (구현) | 허들 `hurdle_0` (capsule · cylinder) 을 config 로 추가 · 제거, 두 막힘 수정 | `clear` 는 이전 장면과 비트 동일 (구현자 확인 · 26 tests) |
+| F (허들 배치) | 6 episode 의 사과 ↔ crate 통로에 허들 배치 | 5 episode 배치, **1828 은 배치 0 으로 제외**. 탐색 중 OOM 사고 (2026-10-03 12:19 UTC, 80 GiB pod cgroup · 다른 세션의 서버 포함 kill 17 건) → 새 자원 규칙 |
+| G B (장애물 없음) | 12 run | **12 / 12 success · T39 와 비트 동일** |
+| G C · D (허들) | round 1 (5 episode) · round 2 (4 episode) | **E3b 2 / 9 · E0 0 / 9.** 성공 둘은 놓은 뒤 obstacle stop. 5 run 은 client 거리가 접촉 없이 0.0 을 돌려줘 멈췄다 |
+
+**상태.** 측정 완료, **판정 대기.** 허들이 AG3S 의 target 으로 선택된 적은 없다 (E3b 모든 run 에서 0 chunk). 코드는 benchmark `9c40c4b` · `150c28f` · `cc91f3e` · `4c220d1`, pi05_TO_hybrid `98e07d6`, 루트 `033ff1a`. 상세 · figure 는 [`AG3S_T0T6_LOG.md`](AG3S_T0T6_LOG.md) 의 **T40** 절.
+
+**남은 판정 · 열린 것.**
+- **client 거리 false-zero (열린 결함, 재측정 대기 17).** 정확한 0.0 · 접촉 없음으로 끝난 5 run 은 판정할 수 없다. 고칠 것인가, 고친 뒤 다시 돌릴 것인가.
+- **접근 단계 finger contact 의 원인 (미확정, 재측정 대기 18).** 후보: 가는 막대 대 거친 20 mm 계층 · margin 0 · HOLD 직후 chunk. 어느 것도 확인하지 않았다.
+- `--obstacle-stop-distance` 0.0 (T40 G 의 값, 근거가 기록에 없다) 을 바꿀 것인가, E3b 의 `--links` 범위를 넓힐 것인가.
+- ep1828 의 허들 run 은 없다 (재측정 대기 19).
+- main (subtask gate 기본 on) 으로 같은 시연을 다시 할 것인가 — 이때는 `--no-subtask-gate` 를 명시해야 T40 과 같은 조건이다.
