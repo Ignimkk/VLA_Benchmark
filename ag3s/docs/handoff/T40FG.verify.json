@@ -1,0 +1,3891 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only; no interpretation.",
+ "step": "T40FG",
+ "date": "2026-10-04",
+ "runs": [
+  {
+   "id": "F search",
+   "command": "outputs/verify/T40/F/p/capture.py; fsearch.py (FS_US / FS_SUFFIX second pass); select_write.py; dryrun.py; render_f.py",
+   "venv": ".venv-openpi-live (CPU, nice 19)",
+   "raw_output": "outputs/verify/T40/F/raw/{fsearch,select,dryrun,diag_d}_*.json, F/configs/*_r1.json",
+   "stdout_log": "F/raw/fsearch_w*.log, select_*.log"
+  },
+  {
+   "id": "G B+C",
+   "command": "outputs/verify/T40/p/launch_g.sh (run_chain.sh, run_client.sh, start_server.sh, check_run.py)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T40/G/runs/{E0,E3b}/{B,C}/",
+   "stdout_log": "G/runs/*/chain_824[01].log, launch.out"
+  },
+  {
+   "id": "D select + runs",
+   "command": "F/p/dselect.py; p/launch_d.sh",
+   "venv": ".venv-openpi-live",
+   "raw_output": "F/configs/*_r2.json, F/raw/dselect_*.json, G/runs/*/D/",
+   "stdout_log": "G/runs/*/chain_824[23].log, launch_d.out"
+  },
+  {
+   "id": "analysis",
+   "command": "p/analyze_t40.py G/analysis_all.json; p/zero_probe.py; p/summarize.py",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "G/analysis_all.json, G/zero_probe.json, G/retry_compare_C_E3b_1807.json",
+   "stdout_log": "G/analysis_all.log"
+  },
+  {
+   "id": "baseline",
+   "command": "G/baseline/run_baseline.sh (legacy rerun nice 19)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "G/baseline/{curobo,legacy}.json, judge_*.json",
+   "stdout_log": "G/baseline/*.log"
+  }
+ ],
+ "code_state": {
+  "benchmark_head": "150c28f",
+  "pi05_TO_hybrid_head": "98e07d6",
+  "snapshot": "/mnt/dev/work-t40",
+  "code_md5": "outputs/verify/T40/p/code_md5_g0.txt",
+  "dirty_files": []
+ },
+ "numbers": {
+  "_comment": "distances in m unless _mm; times UTC; client distance = snapshot PickPlaceObstacleManager.pair_distance",
+  "snapshot": {
+   "root": "/mnt/dev/work-t40",
+   "benchmark": "git archive 150c28f + ag3s/asset/data symlink",
+   "pi05_TO_hybrid": "git archive 98e07d6 rby1_bringup rby1_description/models rby1_manipulation; other top-level entries symlinked",
+   "src": "-> /mnt/dev/work-t40/pi05_TO_hybrid",
+   "code_md5": "outputs/verify/T40/p/code_md5_g0.txt (399 files)",
+   "import_check": [
+    "outputs/verify/T40/G/import_server_g0.json",
+    "outputs/verify/T40/G/import_client_g0.json"
+   ],
+   "all_under_snapshot": true
+  },
+  "baseline": {
+   "curobo": {
+    "violated_start": "10/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "sha1_repr_json_list": "fe73bd7a6ba68623b67ee063ad489ea9806bfad9",
+    "ref": {
+     "violated_start": "10/15",
+     "has_target": "15/15",
+     "frame0": -9.171877401271193,
+     "sha1_SUBTASK-e": "fe73bd7a6ba68623b67ee063ad489ea9806bfad9"
+    },
+    "matched": true,
+    "sha1_equal_SUBTASK-e": true
+   },
+   "legacy": {
+    "violated_start": "14/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -29.031048280806342,
+    "sha1_repr_json_list": "40798fb0a4d2e4ff49f67ea707c24437bc7def2c",
+    "ref": {
+     "violated_start": "14/15",
+     "has_target": "15/15",
+     "frame0": -29.031048280806342,
+     "sha1_SUBTASK-e": "40798fb0a4d2e4ff49f67ea707c24437bc7def2c"
+    },
+    "note": "first legacy attempt OOM-killed (rc=137, 12:30 UTC); rerun at nice 19 with OMP_NUM_THREADS=2 while 2 F workers + other sessions ran",
+    "matched": true,
+    "sha1_equal_SUBTASK-e": true
+   },
+   "snapshot": "/mnt/dev/work-t40",
+   "command": "G/baseline/run_baseline.sh (+ legacy rerun, nice 19)"
+  },
+  "F": {
+   "definitions": {
+    "search": "T40 F (v2, analytic, lead rule 2026-10-03): hurdle placement on the recorded transport path. CPU, 1 process per call.\nusage: fsearch.py TAG [TAG ...]  -> raw/fsearch_<TAG>.json\n\nPath      : recorded apple-centre path (free-joint qpos 38:41) over control rows lift_t <= t < place_t of E0 and of E3b (T40 A\n            windows), resampled every 0.01 m of 3-D arc length s from lift-off.\nCandidate : bar centre xy = path point at s (run R in {E0, E3b}); bar direction = horizontal path normal (tangent from the xy\n            path +-3 cm of arc; where the xy tangent is < 5 mm over that span, i.e. the vertical lift, the apple t0 -> crate\n            direction is used) rotated by dyaw in {0, +-20, +-40} deg; extension (not in the lead's rule, flagged): the bar centre\n            may be shifted along the bar by u in {-0.06, 0, +0.06} m (the path still crosses the bar between the posts);\n            bar_height h in {0.20, 0.22, ..., 0.32} m.\nOrder     : a -> b -> d -> c, each with an early-exit scan (flib.first_le0; same distance code); survivors get full minima.\nChecks    : (a) client reset check on the captured reset scene (flib: robot_clearance > 0, object_clearance > 0);\n            (c) exact, min over lift_t <= t < place_t of min(gripper, apple) distance <= 0 in E0 AND E3b; also c at h - 0.02\n                (geometric only, flag c_low);\n            (d) min over rows t < lift_t of distance to all robot geoms, apple, other fruits > 0 (both runs);\n            (b) t0 (recorded planning row 0) robot, apple+fruits, crate > 0 (both runs).\nDetour (e): for each distinct feasible bar-centre xy: kinematic max left-TCP z at that xy (workspace.max_tcp_z: SLSQP over the\n            7 left-arm joints, xy tol 5 mm, approach axis within 15 deg of the recorded carry axis, no collision check) per run,\n            max over runs; apple_bottom_max_est = that - median(TCP z - apple bottom z) over the carry rows of both runs;\n            free_height_over_bar = apple_bottom_max_est - bar top (h + 0.012).\nSelection : tier 1 = feasible and c_low and reset robot >= 0.02 and reset object >= 0.01 and pre-lift >= 0.02 and t0 >= 0.02;\n            tier 2 = feasible and c_low; tier 3 = feasible. Within the best non-empty tier: largest free_height_over_bar,\n            ties -> larger pre-lift minimum.",
+    "selection": "T40 F step 2: choose one placement per episode from raw/fsearch_<TAG>[ _u10].json, write the config, cross-check.\nusage: select_write.py TAG [TAG ...]  -> configs/t40f_ep<EP>_s<SEED>_r1.json, raw/select_<TAG>.json\n\nMargins m = min(reset robot clearance, reset object clearance, pre-lift minimum (robot+apple+fruits, both runs), t0 minimum).\nTiers (no candidate of any episode reached the lead's 20 mm, so the thresholds are 10 and 5 mm):\n  T1: c_low (still blocks with the bar 20 mm lower) and m >= 0.010;  T2: c_low and m >= 0.005;  T3: c_low;  T4: feasible.\nWithin the best non-empty tier: largest free_height_over_bar (detour room, fsearch definition), ties -> larger m.\nPool = fsearch_<TAG>.json (u in {0, +-0.06}) plus fsearch_<TAG>_u10.json (u in {+-0.08, +-0.10}) when present.\nCross-check of the chosen placement: (1) GJK (gjk.signed_dist) at the argmin row/pair of each reported minimum vs the client\ndistance; (2) the client's own reset check: dryrun.py (snapshot pi05_infer.main() up to the policy call)."
+   },
+   "scripts": [
+    "outputs/verify/T40/F/p/flib.py",
+    "F/p/capture.py",
+    "F/p/fsearch.py",
+    "F/p/select_write.py",
+    "F/p/dryrun.py",
+    "F/p/diag_d.py",
+    "F/p/render_f.py",
+    "F/p/selftest.py",
+    "F/p/selftest2.py"
+   ],
+   "superseded": "F/p/search.py + run_search.sh (exhaustive grid, 60 workers) - killed after the OOM incident; no results used",
+   "self_tests": {
+    "cached_vs_direct_and_gjk": {
+     "(0.68, 0.23, 0.0, 0.26)": {
+      "reset_check": [
+       0.04011368658665666,
+       0.022206325755693177
+      ],
+      "max_abs_cached_vs_direct_m": 0.0,
+      "max_abs_vs_gjk_sep_m(AB, separated rows)": 4.03256820297182e-11,
+      "t_set_ms": 0.5598068237304688,
+      "t_reset_ms": 4.9228668212890625,
+      "t_series_ms_per_row": 4.841383113417515
+     },
+     "(0.62, 0.12, 0.3, 0.22)": {
+      "reset_check": [
+       0.10858090640885772,
+       -0.007990745815824702
+      ],
+      "max_abs_cached_vs_direct_m": 0.0,
+      "max_abs_vs_gjk_sep_m(AB, separated rows)": 2.4623775241039425e-12,
+      "t_set_ms": 0.6635189056396484,
+      "t_reset_ms": 5.397319793701172,
+      "t_series_ms_per_row": 6.433087725972021
+     },
+     "(0.56, 0.25, 0.0, 0.3)": {
+      "reset_check": [
+       -0.029779875309032984,
+       0.02141227381245945
+      ],
+      "max_abs_cached_vs_direct_m": 0.0,
+      "max_abs_vs_gjk_sep_m(AB, separated rows)": 6.983892630874067e-12,
+      "t_set_ms": 1.5499591827392578,
+      "t_reset_ms": 5.666255950927734,
+      "t_series_ms_per_row": 5.572205366090286
+     }
+    },
+    "fast_vs_exact_reset": {
+     "fast_vs_exact_reset_max_abs_m_200": 0.0,
+     "smoke_placement_reset": [
+      0.04011368658665666,
+      0.022206325755693177
+     ],
+     "peak_rss_mb": 492.0
+    }
+   },
+   "episodes": {
+    "1807_18071": {
+     "sources": {
+      "base": {
+       "counts": {
+        "candidates": 16800,
+        "validator_xy": 15393,
+        "a": 1404,
+        "b": 1404,
+        "d": 142,
+        "c": 124
+       },
+       "n_feasible": 124,
+       "u_values_m": null
+      }
+     },
+     "n_feasible_pool": 124,
+     "n_by_tier": {
+      "1": 11,
+      "2": 62,
+      "3": 35,
+      "4": 16
+     },
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1807_s18071_r1.json",
+     "profile": "t40f_ep1807_s18071_r1",
+     "placement": {
+      "x": 0.5011,
+      "y": 0.1905,
+      "yaw_rad": 0.299647,
+      "yaw_deg": 17.17,
+      "bar_height_m": 0.28
+     },
+     "construction": {
+      "path_run": "E0",
+      "s_m": 0.35000000000000003,
+      "path_point": [
+       0.5584353061099528,
+       0.20820201062276428,
+       1.074032697877138
+      ],
+      "dyaw_deg": 20.0,
+      "u_m": -0.06
+     },
+     "tier": 1,
+     "margin_m": 0.010396473728972221,
+     "a_reset_robot_m": 0.01898580943038851,
+     "a_reset_object_m": 0.010405400154954204,
+     "b_t0_min_m": {
+      "E0": {
+       "robot": 0.01895310248557869,
+       "apple": 0.04177436144518271,
+       "fruits": 0.05,
+       "crate": 0.010396473728972221
+      },
+      "E3b": {
+       "robot": 0.01895310248557869,
+       "apple": 0.04177436144518271,
+       "fruits": 0.05,
+       "crate": 0.010396473728972221
+      }
+     },
+     "d_prelift_min_m": {
+      "E0": {
+       "robot": 0.016833074942918143,
+       "apple": 0.03549521655744094,
+       "fruits": 0.05
+      },
+      "E3b": {
+       "robot": 0.015776342779251325,
+       "apple": 0.039249420509641975,
+       "fruits": 0.05
+      }
+     },
+     "c_transport": {
+      "E0": {
+       "min_A": -0.023719141992114317,
+       "min_B": -0.015352236808234235,
+       "n_rows_le0": 8,
+       "first_contact_t": 197,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ]
+      },
+      "E3b": {
+       "min_A": -0.022229218698680785,
+       "min_B": -0.009090384537622662,
+       "n_rows_le0": 8,
+       "first_contact_t": 182,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ]
+      }
+     },
+     "c_low_bar_minus_20mm_blocks_both": true,
+     "e_detour": {
+      "tcp_z_max_above_table_m": 0.8509262359740196,
+      "tcp_minus_apple_bottom_median_m": 0.04906982315455344,
+      "bar_top_above_table_m": 0.29200000000000004,
+      "free_height_over_bar_m": 0.5098564128194661
+     },
+     "gjk_check": {
+      "E0:carry:A": {
+       "client_m": -0.023719141992114317,
+       "t": 198,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:carry:B": {
+       "client_m": -0.015352236808234235,
+       "t": 200,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:prelift:robot": {
+       "client_m": 0.016833074942918143,
+       "t": 150,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "geom#1086"
+       ],
+       "gjk_m": 0.016833074936521357,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:apple": {
+       "client_m": 0.03549521655744094,
+       "t": 152,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.03549521655744094,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:fruits": {
+       "client_m": 0.12360155330489485,
+       "t": 3,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "orange_geom"
+       ],
+       "gjk_m": 0.1236015533024916,
+       "gjk_note": "signed"
+      },
+      "E0:t0:robot": {
+       "client_m": 0.01895310248557869,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1051"
+       ],
+       "gjk_m": 0.018953102485578754,
+       "gjk_note": "signed"
+      },
+      "E0:t0:apple": {
+       "client_m": 0.04177436144518271,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.04177436144135243,
+       "gjk_note": "signed"
+      },
+      "E0:t0:fruits": {
+       "client_m": 0.12365984868133119,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "orange_geom"
+       ],
+       "gjk_m": 0.12365984867892915,
+       "gjk_note": "signed"
+      },
+      "E0:t0:crate": {
+       "client_m": 0.010396473728972221,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_left",
+        "crate_floor"
+       ],
+       "gjk_m": 0.01039647372181277,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:A": {
+       "client_m": -0.022229218698680785,
+       "t": 187,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:carry:B": {
+       "client_m": -0.009090384537622662,
+       "t": 185,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:prelift:robot": {
+       "client_m": 0.015776342779251325,
+       "t": 139,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "geom#1086"
+       ],
+       "gjk_m": 0.0157763427700782,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:apple": {
+       "client_m": 0.039249420509641975,
+       "t": 141,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.03924942050936749,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:fruits": {
+       "client_m": 0.12360155330489485,
+       "t": 3,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "orange_geom"
+       ],
+       "gjk_m": 0.1236015533024916,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:robot": {
+       "client_m": 0.01895310248557869,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1051"
+       ],
+       "gjk_m": 0.018953102485578754,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:apple": {
+       "client_m": 0.04177436144518271,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.04177436144135243,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:fruits": {
+       "client_m": 0.12365984868133119,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "orange_geom"
+       ],
+       "gjk_m": 0.12365984867892915,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:crate": {
+       "client_m": 0.010396473728972221,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_left",
+        "crate_floor"
+       ],
+       "gjk_m": 0.01039647372181277,
+       "gjk_note": "signed"
+      },
+      "reset_exact_activate": [
+       0.01898580943038851,
+       0.010405400154954204
+      ]
+     },
+     "client_dryrun": {
+      "ep": 1807,
+      "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1807_s18071_r1.json",
+      "profile": "t40f_ep1807_s18071_r1",
+      "outcome": "reached load_remote_policy",
+      "model_xml": "/mnt/dev/work-t40/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport_pick_place_obstacles.xml",
+      "active_slots": [
+       "hurdle_0"
+      ],
+      "robot_clearance_m": 0.018976414022337372,
+      "object_clearance_m": 0.010417324486235512,
+      "obstacles_line": "obstacles  : t40f_ep1807_s18071_r1 ('hurdle_0',) (initial robot/object clearance 0.019/0.010 m)",
+      "error_lines": []
+     },
+     "render": [
+      "outputs/verify/T40/F/render/1807_18071_r1_front.png",
+      "outputs/verify/T40/F/render/1807_18071_r1_oblique.png"
+     ]
+    },
+    "1968_19681": {
+     "sources": {
+      "base": {
+       "counts": {
+        "candidates": 18480,
+        "validator_xy": 17220,
+        "a": 1267,
+        "b": 1267,
+        "d": 300,
+        "c": 285
+       },
+       "n_feasible": 285,
+       "u_values_m": null
+      }
+     },
+     "n_feasible_pool": 285,
+     "n_by_tier": {
+      "1": 81,
+      "2": 47,
+      "3": 118,
+      "4": 39
+     },
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1968_s19681_r1.json",
+     "profile": "t40f_ep1968_s19681_r1",
+     "placement": {
+      "x": 0.4939,
+      "y": 0.1778,
+      "yaw_rad": 0.311739,
+      "yaw_deg": 17.86,
+      "bar_height_m": 0.24
+     },
+     "construction": {
+      "path_run": "E3b",
+      "s_m": 0.36,
+      "path_point": [
+       0.5509622382220037,
+       0.19617567013218531,
+       1.0524238624634734
+      ],
+      "dyaw_deg": 20.0,
+      "u_m": -0.06
+     },
+     "tier": 1,
+     "margin_m": 0.016169498336153228,
+     "a_reset_robot_m": 0.02251159139440029,
+     "a_reset_object_m": 0.016173578182048974,
+     "b_t0_min_m": {
+      "E0": {
+       "robot": 0.022483875125136343,
+       "apple": 0.04902184648997035,
+       "fruits": 0.05,
+       "crate": 0.016169498336153228
+      },
+      "E3b": {
+       "robot": 0.022483875125136343,
+       "apple": 0.04902184648997035,
+       "fruits": 0.05,
+       "crate": 0.016169498336153228
+      }
+     },
+     "d_prelift_min_m": {
+      "E0": {
+       "robot": 0.022043276127792503,
+       "apple": 0.0456086551070514,
+       "fruits": 0.05
+      },
+      "E3b": {
+       "robot": 0.022043273952663773,
+       "apple": 0.046845276217305165,
+       "fruits": 0.05
+      }
+     },
+     "c_transport": {
+      "E0": {
+       "min_A": -0.022860465202969447,
+       "min_B": -0.03879562003923709,
+       "n_rows_le0": 7,
+       "first_contact_t": 260,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      },
+      "E3b": {
+       "min_A": -0.022170056065862136,
+       "min_B": -0.033919022802448566,
+       "n_rows_le0": 7,
+       "first_contact_t": 173,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      }
+     },
+     "c_low_bar_minus_20mm_blocks_both": true,
+     "e_detour": {
+      "tcp_z_max_above_table_m": 0.8558659088854633,
+      "tcp_minus_apple_bottom_median_m": 0.047894983130475466,
+      "bar_top_above_table_m": 0.252,
+      "free_height_over_bar_m": 0.5559709257549879
+     },
+     "gjk_check": {
+      "E0:carry:A": {
+       "client_m": -0.022860465202969447,
+       "t": 265,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:carry:B": {
+       "client_m": -0.03879562003923709,
+       "t": 264,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:prelift:robot": {
+       "client_m": 0.022043276127792503,
+       "t": 4,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1051"
+       ],
+       "gjk_m": 0.02204327612779735,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:apple": {
+       "client_m": 0.0456086551070514,
+       "t": 187,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.04560865510664529,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:fruits": {
+       "client_m": 0.10108792353268962,
+       "t": 224,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "banana_geom_4"
+       ],
+       "gjk_m": 0.1010879235315895,
+       "gjk_note": "signed"
+      },
+      "E0:t0:robot": {
+       "client_m": 0.022483875125136343,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1051"
+       ],
+       "gjk_m": 0.02248387512513807,
+       "gjk_note": "signed"
+      },
+      "E0:t0:apple": {
+       "client_m": 0.04902184648997035,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0490218464875879,
+       "gjk_note": "signed"
+      },
+      "E0:t0:fruits": {
+       "client_m": 0.10109371346442769,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "banana_geom_4"
+       ],
+       "gjk_m": 0.10109371346335409,
+       "gjk_note": "signed"
+      },
+      "E0:t0:crate": {
+       "client_m": 0.016169498336153228,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_sleeve_right",
+        "handle_post_lp"
+       ],
+       "gjk_m": 0.01616949832673383,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:A": {
+       "client_m": -0.022170056065862136,
+       "t": 177,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:carry:B": {
+       "client_m": -0.033919022802448566,
+       "t": 176,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:prelift:robot": {
+       "client_m": 0.022043273952663773,
+       "t": 4,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1051"
+       ],
+       "gjk_m": 0.022043273952668613,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:apple": {
+       "client_m": 0.046845276217305165,
+       "t": 121,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.046845276217310945,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:fruits": {
+       "client_m": 0.10109171521030227,
+       "t": 6,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "banana_geom_4"
+       ],
+       "gjk_m": 0.10109171520922673,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:robot": {
+       "client_m": 0.022483875125136343,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1051"
+       ],
+       "gjk_m": 0.02248387512513807,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:apple": {
+       "client_m": 0.04902184648997035,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0490218464875879,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:fruits": {
+       "client_m": 0.10109371346442769,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "banana_geom_4"
+       ],
+       "gjk_m": 0.10109371346335409,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:crate": {
+       "client_m": 0.016169498336153228,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_sleeve_right",
+        "handle_post_lp"
+       ],
+       "gjk_m": 0.01616949832673383,
+       "gjk_note": "signed"
+      },
+      "reset_exact_activate": [
+       0.02251159139440029,
+       0.016173578182048974
+      ]
+     },
+     "client_dryrun": {
+      "ep": 1968,
+      "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1968_s19681_r1.json",
+      "profile": "t40f_ep1968_s19681_r1",
+      "outcome": "reached load_remote_policy",
+      "model_xml": "/mnt/dev/work-t40/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport_pick_place_obstacles.xml",
+      "active_slots": [
+       "hurdle_0"
+      ],
+      "robot_clearance_m": 0.022499855229162365,
+      "object_clearance_m": 0.01621347520288658,
+      "obstacles_line": "obstacles  : t40f_ep1968_s19681_r1 ('hurdle_0',) (initial robot/object clearance 0.022/0.016 m)",
+      "error_lines": []
+     },
+     "render": [
+      "outputs/verify/T40/F/render/1968_19681_r1_front.png",
+      "outputs/verify/T40/F/render/1968_19681_r1_oblique.png"
+     ]
+    },
+    "1982_19822": {
+     "sources": {
+      "base": {
+       "counts": {
+        "candidates": 17850,
+        "validator_xy": 16303,
+        "a": 1446,
+        "b": 1445,
+        "d": 200,
+        "c": 200
+       },
+       "n_feasible": 200,
+       "u_values_m": null
+      }
+     },
+     "n_feasible_pool": 200,
+     "n_by_tier": {
+      "1": 35,
+      "2": 38,
+      "3": 100,
+      "4": 27
+     },
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1982_s19822_r1.json",
+     "profile": "t40f_ep1982_s19822_r1",
+     "placement": {
+      "x": 0.4965,
+      "y": 0.1794,
+      "yaw_rad": 0.27665,
+      "yaw_deg": 15.85,
+      "bar_height_m": 0.22
+     },
+     "construction": {
+      "path_run": "E0",
+      "s_m": 0.38,
+      "path_point": [
+       0.5541885749819314,
+       0.19576547161836613,
+       1.0524676729334592
+      ],
+      "dyaw_deg": 20.0,
+      "u_m": -0.06
+     },
+     "tier": 1,
+     "margin_m": 0.012425436146513745,
+     "a_reset_robot_m": 0.013641548835062915,
+     "a_reset_object_m": 0.012429566549036396,
+     "b_t0_min_m": {
+      "E0": {
+       "robot": 0.013608330149421685,
+       "apple": 0.05,
+       "fruits": 0.05,
+       "crate": 0.012425436146513745
+      },
+      "E3b": {
+       "robot": 0.013608330149421685,
+       "apple": 0.05,
+       "fruits": 0.05,
+       "crate": 0.012425436146513745
+      }
+     },
+     "d_prelift_min_m": {
+      "E0": {
+       "robot": 0.013101077211791493,
+       "apple": 0.05,
+       "fruits": 0.05
+      },
+      "E3b": {
+       "robot": 0.013101077658914669,
+       "apple": 0.05,
+       "fruits": 0.05
+      }
+     },
+     "c_transport": {
+      "E0": {
+       "min_A": -0.012546409498838675,
+       "min_B": -0.028744451617053367,
+       "n_rows_le0": 7,
+       "first_contact_t": 193,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      },
+      "E3b": {
+       "min_A": -0.011177267024685442,
+       "min_B": -0.023762898783920062,
+       "n_rows_le0": 6,
+       "first_contact_t": 183,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      }
+     },
+     "c_low_bar_minus_20mm_blocks_both": true,
+     "e_detour": {
+      "tcp_z_max_above_table_m": 0.8544617256027086,
+      "tcp_minus_apple_bottom_median_m": 0.0498573690865135,
+      "bar_top_above_table_m": 0.232,
+      "free_height_over_bar_m": 0.5726043565161951
+     },
+     "gjk_check": {
+      "E0:carry:A": {
+       "client_m": -0.012546409498838675,
+       "t": 197,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:carry:B": {
+       "client_m": -0.028744451617053367,
+       "t": 197,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:prelift:robot": {
+       "client_m": 0.013101077211791493,
+       "t": 3,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.013101077211791892,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:apple": {
+       "client_m": 0.0516222826453385,
+       "t": 156,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.051622282642745355,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:fruits": {
+       "client_m": 0.12732864451996906,
+       "t": 156,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.12732864451990447,
+       "gjk_note": "signed"
+      },
+      "E0:t0:robot": {
+       "client_m": 0.013608330149421685,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.013608330149425432,
+       "gjk_note": "signed"
+      },
+      "E0:t0:apple": {
+       "client_m": 0.06528085175750539,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.06528085175750702,
+       "gjk_note": "signed"
+      },
+      "E0:t0:fruits": {
+       "client_m": 0.12744556427102202,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.12744556427096007,
+       "gjk_note": "signed"
+      },
+      "E0:t0:crate": {
+       "client_m": 0.012425436146513745,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_sleeve_right",
+        "handle_post_lp"
+       ],
+       "gjk_m": 0.012425436130359018,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:A": {
+       "client_m": -0.011177267024685442,
+       "t": 187,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:carry:B": {
+       "client_m": -0.023762898783920062,
+       "t": 186,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:prelift:robot": {
+       "client_m": 0.013101077658914669,
+       "t": 3,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.01310107765891507,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:apple": {
+       "client_m": 0.060429054365340726,
+       "t": 142,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.06042905436038626,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:fruits": {
+       "client_m": 0.12736694853123118,
+       "t": 144,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.12736694853126096,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:robot": {
+       "client_m": 0.013608330149421685,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.013608330149425432,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:apple": {
+       "client_m": 0.06528085175750539,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.06528085175750702,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:fruits": {
+       "client_m": 0.12744556427102202,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.12744556427096007,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:crate": {
+       "client_m": 0.012425436146513745,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_sleeve_right",
+        "handle_post_lp"
+       ],
+       "gjk_m": 0.012425436130359018,
+       "gjk_note": "signed"
+      },
+      "reset_exact_activate": [
+       0.013641548835062915,
+       0.012429566549036396
+      ]
+     },
+     "client_dryrun": {
+      "ep": 1982,
+      "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1982_s19822_r1.json",
+      "profile": "t40f_ep1982_s19822_r1",
+      "outcome": "reached load_remote_policy",
+      "model_xml": "/mnt/dev/work-t40/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport_pick_place_obstacles.xml",
+      "active_slots": [
+       "hurdle_0"
+      ],
+      "robot_clearance_m": 0.013628171372287428,
+      "object_clearance_m": 0.012466754536876058,
+      "obstacles_line": "obstacles  : t40f_ep1982_s19822_r1 ('hurdle_0',) (initial robot/object clearance 0.014/0.012 m)",
+      "error_lines": []
+     },
+     "render": [
+      "outputs/verify/T40/F/render/1982_19822_r1_front.png",
+      "outputs/verify/T40/F/render/1982_19822_r1_oblique.png"
+     ]
+    },
+    "1828_18281": {
+     "sources": {
+      "base": {
+       "counts": {
+        "candidates": 18480,
+        "validator_xy": 17101,
+        "a": 1279,
+        "b": 1279,
+        "d": 0,
+        "c": 0
+       },
+       "n_feasible": 0,
+       "u_values_m": null
+      },
+      "_u10": {
+       "counts": {
+        "candidates": 24640,
+        "validator_xy": 21455,
+        "a": 884,
+        "b": 884,
+        "d": 0,
+        "c": 0
+       },
+       "n_feasible": 0,
+       "u_values_m": [
+        -0.1,
+        -0.08,
+        0.08,
+        0.1
+       ]
+      }
+     },
+     "n_feasible_pool": 0,
+     "n_by_tier": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0
+     },
+     "dropped": true,
+     "reason": "no candidate satisfies (a)-(d)",
+     "diag_d": "outputs/verify/T40/F/raw/diag_d_1828_18281.json",
+     "diag_d_counts_run_body": {
+      "E3b|EE_BODY_L": 45,
+      "E0|EE_BODY_L": 40,
+      "E0|FT_SENSOR_L": 2
+     }
+    },
+    "1995_19952": {
+     "sources": {
+      "base": {
+       "counts": {
+        "candidates": 16380,
+        "validator_xy": 15463,
+        "a": 1030,
+        "b": 1030,
+        "d": 2,
+        "c": 2
+       },
+       "n_feasible": 2,
+       "u_values_m": null
+      },
+      "_u10": {
+       "counts": {
+        "candidates": 21840,
+        "validator_xy": 18753,
+        "a": 284,
+        "b": 271,
+        "d": 0,
+        "c": 0
+       },
+       "n_feasible": 0,
+       "u_values_m": [
+        -0.1,
+        -0.08,
+        0.08,
+        0.1
+       ]
+      }
+     },
+     "n_feasible_pool": 2,
+     "n_by_tier": {
+      "1": 0,
+      "2": 0,
+      "3": 1,
+      "4": 1
+     },
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1995_s19952_r1.json",
+     "profile": "t40f_ep1995_s19952_r1",
+     "placement": {
+      "x": 0.4866,
+      "y": 0.1977,
+      "yaw_rad": 0.158984,
+      "yaw_deg": 9.11,
+      "bar_height_m": 0.32
+     },
+     "construction": {
+      "path_run": "E0",
+      "s_m": 0.34,
+      "path_point": [
+       0.5458165286694923,
+       0.20715583153792078,
+       1.0509017317589509
+      ],
+      "dyaw_deg": 20.0,
+      "u_m": -0.06
+     },
+     "tier": 3,
+     "margin_m": 0.0014840179195696555,
+     "a_reset_robot_m": 0.0019079717058887724,
+     "a_reset_object_m": 0.005374746242891206,
+     "b_t0_min_m": {
+      "E0": {
+       "robot": 0.001873021836368732,
+       "apple": 0.041110185653787185,
+       "fruits": 0.05,
+       "crate": 0.005388070391993058
+      },
+      "E3b": {
+       "robot": 0.001873021836368732,
+       "apple": 0.041110185653787185,
+       "fruits": 0.05,
+       "crate": 0.005388070391993058
+      }
+     },
+     "d_prelift_min_m": {
+      "E0": {
+       "robot": 0.0014840179195696555,
+       "apple": 0.027415961262295913,
+       "fruits": 0.05
+      },
+      "E3b": {
+       "robot": 0.001484020162303576,
+       "apple": 0.03666201148668297,
+       "fruits": 0.05
+      }
+     },
+     "c_transport": {
+      "E0": {
+       "min_A": -0.031000211854508436,
+       "min_B": 0.013055624904770875,
+       "n_rows_le0": 10,
+       "first_contact_t": 182,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1053"
+       ]
+      },
+      "E3b": {
+       "min_A": -0.03132434750717411,
+       "min_B": 0.026632913422934293,
+       "n_rows_le0": 9,
+       "first_contact_t": 190,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1053"
+       ]
+      }
+     },
+     "c_low_bar_minus_20mm_blocks_both": true,
+     "e_detour": {
+      "tcp_z_max_above_table_m": 0.8882196443951319,
+      "tcp_minus_apple_bottom_median_m": 0.049000734819294345,
+      "bar_top_above_table_m": 0.332,
+      "free_height_over_bar_m": 0.5072189095758375
+     },
+     "gjk_check": {
+      "E0:carry:A": {
+       "client_m": -0.031000211854508436,
+       "t": 187,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1053"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:carry:B": {
+       "client_m": 0.013055624904770875,
+       "t": 185,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_post_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.013055624892220476,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:robot": {
+       "client_m": 0.0014840179195696555,
+       "t": 4,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1053"
+       ],
+       "gjk_m": 0.0014840179195696461,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:apple": {
+       "client_m": 0.027415961262295913,
+       "t": 151,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.027415961260963143,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:fruits": {
+       "client_m": 0.09305392947861812,
+       "t": 112,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_left",
+        "banana_geom_0"
+       ],
+       "gjk_m": 0.09305392947832186,
+       "gjk_note": "signed"
+      },
+      "E0:t0:robot": {
+       "client_m": 0.001873021836368732,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1053"
+       ],
+       "gjk_m": 0.001873021836368734,
+       "gjk_note": "signed"
+      },
+      "E0:t0:apple": {
+       "client_m": 0.041110185653787185,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.04111018565163323,
+       "gjk_note": "signed"
+      },
+      "E0:t0:fruits": {
+       "client_m": 0.09306970471555644,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_left",
+        "banana_geom_0"
+       ],
+       "gjk_m": 0.09306970471525518,
+       "gjk_note": "signed"
+      },
+      "E0:t0:crate": {
+       "client_m": 0.005388070391993058,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_left",
+        "crate_wall_nx"
+       ],
+       "gjk_m": 0.005388070388147196,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:A": {
+       "client_m": -0.03132434750717411,
+       "t": 193,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1053"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:carry:B": {
+       "client_m": 0.026632913422934293,
+       "t": 192,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_post_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0266329134214996,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:robot": {
+       "client_m": 0.001484020162303576,
+       "t": 4,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1053"
+       ],
+       "gjk_m": 0.0014840201623035616,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:apple": {
+       "client_m": 0.03666201148668297,
+       "t": 150,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.03666201148654081,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:fruits": {
+       "client_m": 0.09305392947861812,
+       "t": 112,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_left",
+        "banana_geom_0"
+       ],
+       "gjk_m": 0.09305392947832186,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:robot": {
+       "client_m": 0.001873021836368732,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1053"
+       ],
+       "gjk_m": 0.001873021836368734,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:apple": {
+       "client_m": 0.041110185653787185,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.04111018565163323,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:fruits": {
+       "client_m": 0.09306970471555644,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_left",
+        "banana_geom_0"
+       ],
+       "gjk_m": 0.09306970471525518,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:crate": {
+       "client_m": 0.005388070391993058,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_left",
+        "crate_wall_nx"
+       ],
+       "gjk_m": 0.005388070388147196,
+       "gjk_note": "signed"
+      },
+      "reset_exact_activate": [
+       0.0019079717058887724,
+       0.005374746242891206
+      ]
+     },
+     "client_dryrun": {
+      "ep": 1995,
+      "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1995_s19952_r1.json",
+      "profile": "t40f_ep1995_s19952_r1",
+      "outcome": "reached load_remote_policy",
+      "model_xml": "/mnt/dev/work-t40/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport_pick_place_obstacles.xml",
+      "active_slots": [
+       "hurdle_0"
+      ],
+      "robot_clearance_m": 0.0018701824843991074,
+      "object_clearance_m": 0.005350300094824201,
+      "obstacles_line": "obstacles  : t40f_ep1995_s19952_r1 ('hurdle_0',) (initial robot/object clearance 0.002/0.005 m)",
+      "error_lines": []
+     },
+     "render": [
+      "outputs/verify/T40/F/render/1995_19952_r1_front.png",
+      "outputs/verify/T40/F/render/1995_19952_r1_oblique.png"
+     ]
+    },
+    "1967_19672": {
+     "sources": {
+      "base": {
+       "counts": {
+        "candidates": 15855,
+        "validator_xy": 15610,
+        "a": 777,
+        "b": 776,
+        "d": 132,
+        "c": 132
+       },
+       "n_feasible": 132,
+       "u_values_m": null
+      }
+     },
+     "n_feasible_pool": 132,
+     "n_by_tier": {
+      "1": 39,
+      "2": 25,
+      "3": 48,
+      "4": 20
+     },
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1967_s19672_r1.json",
+     "profile": "t40f_ep1967_s19672_r1",
+     "placement": {
+      "x": 0.4677,
+      "y": 0.1861,
+      "yaw_rad": 0.203097,
+      "yaw_deg": 11.64,
+      "bar_height_m": 0.22
+     },
+     "construction": {
+      "path_run": "E3b",
+      "s_m": 0.34,
+      "path_point": [
+       0.5264315967459335,
+       0.19822350162008634,
+       1.0490492946478536
+      ],
+      "dyaw_deg": 20.0,
+      "u_m": -0.06
+     },
+     "tier": 1,
+     "margin_m": 0.01179894785195369,
+     "a_reset_robot_m": 0.03113268662797639,
+     "a_reset_object_m": 0.011803210646542436,
+     "b_t0_min_m": {
+      "E0": {
+       "robot": 0.031109552052085303,
+       "apple": 0.025368518107548248,
+       "fruits": 0.05,
+       "crate": 0.01179894785195369
+      },
+      "E3b": {
+       "robot": 0.031109552052085303,
+       "apple": 0.025368518107548248,
+       "fruits": 0.05,
+       "crate": 0.01179894785195369
+      }
+     },
+     "d_prelift_min_m": {
+      "E0": {
+       "robot": 0.026372000248347367,
+       "apple": 0.025311187496039708,
+       "fruits": 0.05
+      },
+      "E3b": {
+       "robot": 0.020222344199023107,
+       "apple": 0.025328957669991256,
+       "fruits": 0.05
+      }
+     },
+     "c_transport": {
+      "E0": {
+       "min_A": -0.008634203189645195,
+       "min_B": -0.032721548113644076,
+       "n_rows_le0": 8,
+       "first_contact_t": 173,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      },
+      "E3b": {
+       "min_A": -0.0101357278316291,
+       "min_B": -0.033118347734655405,
+       "n_rows_le0": 7,
+       "first_contact_t": 173,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      }
+     },
+     "c_low_bar_minus_20mm_blocks_both": true,
+     "e_detour": {
+      "tcp_z_max_above_table_m": 0.8450053811988395,
+      "tcp_minus_apple_bottom_median_m": 0.05277084670480714,
+      "bar_top_above_table_m": 0.232,
+      "free_height_over_bar_m": 0.5602345344940324
+     },
+     "gjk_check": {
+      "E0:carry:A": {
+       "client_m": -0.008634203189645195,
+       "t": 177,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:carry:B": {
+       "client_m": -0.032721548113644076,
+       "t": 177,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:prelift:robot": {
+       "client_m": 0.026372000248347367,
+       "t": 139,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "geom#1086"
+       ],
+       "gjk_m": 0.026372000243166348,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:apple": {
+       "client_m": 0.025311187496039708,
+       "t": 139,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.025311187490309226,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:fruits": {
+       "client_m": 0.10806128001969202,
+       "t": 137,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.10806128001922932,
+       "gjk_note": "signed"
+      },
+      "E0:t0:robot": {
+       "client_m": 0.031109552052085303,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1051"
+       ],
+       "gjk_m": 0.03110955205209284,
+       "gjk_note": "signed"
+      },
+      "E0:t0:apple": {
+       "client_m": 0.025368518107548248,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.02536851809965566,
+       "gjk_note": "signed"
+      },
+      "E0:t0:fruits": {
+       "client_m": 0.10814173133008788,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.10814173132963363,
+       "gjk_note": "signed"
+      },
+      "E0:t0:crate": {
+       "client_m": 0.01179894785195369,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_sleeve_right",
+        "handle_arm_l"
+       ],
+       "gjk_m": 0.011798947851953737,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:A": {
+       "client_m": -0.0101357278316291,
+       "t": 177,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:carry:B": {
+       "client_m": -0.033118347734655405,
+       "t": 177,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:prelift:robot": {
+       "client_m": 0.020222344199023107,
+       "t": 136,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "geom#1086"
+       ],
+       "gjk_m": 0.020222344191488693,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:apple": {
+       "client_m": 0.025328957669991256,
+       "t": 10,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.025328957665309435,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:fruits": {
+       "client_m": 0.10806128001969202,
+       "t": 137,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.10806128001922932,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:robot": {
+       "client_m": 0.031109552052085303,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1051"
+       ],
+       "gjk_m": 0.03110955205209284,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:apple": {
+       "client_m": 0.025368518107548248,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.02536851809965566,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:fruits": {
+       "client_m": 0.10814173133008788,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.10814173132963363,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:crate": {
+       "client_m": 0.01179894785195369,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_sleeve_right",
+        "handle_arm_l"
+       ],
+       "gjk_m": 0.011798947851953737,
+       "gjk_note": "signed"
+      },
+      "reset_exact_activate": [
+       0.03113268662797639,
+       0.011803210646542436
+      ]
+     },
+     "client_dryrun": {
+      "ep": 1967,
+      "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1967_s19672_r1.json",
+      "profile": "t40f_ep1967_s19672_r1",
+      "outcome": "reached load_remote_policy",
+      "model_xml": "/mnt/dev/work-t40/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport_pick_place_obstacles.xml",
+      "active_slots": [
+       "hurdle_0"
+      ],
+      "robot_clearance_m": 0.03116024549047115,
+      "object_clearance_m": 0.011838415280860786,
+      "obstacles_line": "obstacles  : t40f_ep1967_s19672_r1 ('hurdle_0',) (initial robot/object clearance 0.031/0.012 m)",
+      "error_lines": []
+     },
+     "render": [
+      "outputs/verify/T40/F/render/1967_19672_r1_front.png",
+      "outputs/verify/T40/F/render/1967_19672_r1_oblique.png"
+     ]
+    }
+   }
+  },
+  "G_settings": {
+   "seeds": "T39 (10*ep + rep)",
+   "warmup_steps": 1000,
+   "policy_seed": true,
+   "xla_autotune": 0,
+   "obstacle_stop_distance": 0.0,
+   "ports": {
+    "G": {
+     "E3b": 8240,
+     "E0": 8241
+    },
+    "D": {
+     "E3b": 8242,
+     "E0": 8243
+    }
+   },
+   "server_flags": "T39 start_server.sh, no --subtask-gate (default off at 150c28f)",
+   "recording": "--record third_person_front.mp4 --view front --record-frames --trajectory-out traj.npz"
+  },
+  "outcome_table": {
+   "B": {
+    "E0_ep1807": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    },
+    "E0_ep1828": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    },
+    "E0_ep1967": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    },
+    "E0_ep1968": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    },
+    "E0_ep1982": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    },
+    "E0_ep1995": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    },
+    "E3b_ep1807": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    },
+    "E3b_ep1828": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    },
+    "E3b_ep1967": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    },
+    "E3b_ep1968": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    },
+    "E3b_ep1982": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 9,
+     "hold_kinds": {
+      "uncertified": 9
+     },
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    },
+    "E3b_ep1995": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    }
+   },
+   "C": {
+    "E0_ep1807": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 255,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 254,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.00019169754933853062,
+     "client_contact_pairs": [
+      [
+       "geom#1052",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E0_ep1967": {
+     "success": false,
+     "grasp": true,
+     "place": false,
+     "n_control": 191,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 190,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.0005246868913883294,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E0_ep1968": {
+     "success": false,
+     "grasp": true,
+     "place": false,
+     "n_control": 260,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 259,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.00035703498617690316,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E0_ep1982": {
+     "success": false,
+     "grasp": true,
+     "place": false,
+     "n_control": 166,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 165,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.000315701743453016,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E0_ep1995": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 187,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 186,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.00045879821080757437,
+     "client_contact_pairs": [
+      [
+       "geom#1051",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E3b_ep1807": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 219,
+     "n_hold_chunks": 5,
+     "hold_kinds": {
+      "collision": 5
+     },
+     "obstacle_stop_t": 218,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.0009381777707047068,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E3b_ep1967": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 204,
+     "n_hold_chunks": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "obstacle_stop_t": 203,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.00020544193343107267,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E3b_ep1968": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 281,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 280,
+     "client_robot_collision": true,
+     "client_payload_collision": true,
+     "client_min_robot_clearance_m": -0.0016484139729421414,
+     "client_contact_pairs": [
+      [
+       "apple_geom",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ],
+      [
+       "geom#1079",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E3b_ep1982": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 179,
+     "n_hold_chunks": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "obstacle_stop_t": 178,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.00019490642370171944,
+     "client_contact_pairs": [
+      [
+       "geom#1052",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E3b_ep1995": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 104,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 103,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": 0.0,
+     "client_contact_pairs": [],
+     "bit_identical_to_T39": null
+    }
+   },
+   "D": {
+    "E0_ep1807": {
+     "success": false,
+     "grasp": true,
+     "place": false,
+     "n_control": 197,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 196,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.0002490367667341391,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E0_ep1967": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 91,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 90,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": 0.0,
+     "client_contact_pairs": [],
+     "bit_identical_to_T39": null
+    },
+    "E0_ep1982": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 226,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 225,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.001024960611045761,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E0_ep1995": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 77,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 76,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": 2.6300355567956957e-05,
+     "client_contact_pairs": [
+      [
+       "geom#1051",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ],
+      [
+       "geom#1055",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E3b_ep1807": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 276,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 275,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.001995142528328173,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    },
+    "E3b_ep1967": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 138,
+     "n_hold_chunks": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "obstacle_stop_t": 137,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": 0.0,
+     "client_contact_pairs": [],
+     "bit_identical_to_T39": null
+    },
+    "E3b_ep1982": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 24,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 23,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": 0.0,
+     "client_contact_pairs": [],
+     "bit_identical_to_T39": null
+    },
+    "E3b_ep1995": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 72,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 71,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": 0.0,
+     "client_contact_pairs": [],
+     "bit_identical_to_T39": null
+    }
+   }
+  },
+  "B_bit_identical_to_T39": {
+   "E0_ep1807": true,
+   "E0_ep1828": true,
+   "E0_ep1967": true,
+   "E0_ep1968": true,
+   "E0_ep1982": true,
+   "E0_ep1995": true,
+   "E3b_ep1807": true,
+   "E3b_ep1828": true,
+   "E3b_ep1967": true,
+   "E3b_ep1968": true,
+   "E3b_ep1982": true,
+   "E3b_ep1995": true
+  },
+  "C_E3b_failure_classes": {
+   "C_E3b_ep1807": {
+    "phase": "before lift-off (no grasp, apple dz max 3 mm)",
+    "obstacle_stop_t": 218,
+    "contact": "ee_finger_l2 (geom 1086) <-> hurdle bar",
+    "hold_chunks_t": [
+     136,
+     176,
+     192,
+     200,
+     208
+    ],
+    "hold_kinds": "collision x5 (max 3 consecutive: 192, 200, 208); worst links attached:ee_left[0] fine tier, then ee_finger_l2 / ee_left / ee_finger_l1 target_free tier, -11.1 .. -1.1 mm",
+    "contact_on_chunk": "chunk starting t=216 (gate execute) after the 3 consecutive HOLDs",
+    "listed_classes_matching": [
+     "consecutive HOLDs (3) before the contact"
+    ],
+    "listed_classes_not_matching": [
+     "TO could not clear the bar in transport (no transport)",
+     "hurdle as target (0/28 chunks with target points within 15 mm; min target centroid -> hurdle 62 mm)",
+     "unchecked arm link (contact link is a finger)",
+     "apple knocked off (never grasped)"
+    ]
+   },
+   "C_E3b_ep1967": {
+    "phase": "before lift-off (no grasp, dz 6 mm)",
+    "obstacle_stop_t": 203,
+    "contact": "ee_finger_l2 (1086) <-> bar",
+    "hold_chunks_t": [
+     192
+    ],
+    "hold_kinds": "collision x1 (ee_finger_l1 -0.1 mm, target_free)",
+    "listed_classes_matching": [],
+    "ag3s_target_points_on_hurdle_chunks": "0/26 (min centroid 57 mm)"
+   },
+   "C_E3b_ep1982": {
+    "phase": "before lift-off (no grasp, dz 14 mm)",
+    "obstacle_stop_t": 178,
+    "contact": "EE_BODY_L (geom 1052) <-> bar",
+    "hold_chunks_t": [
+     176
+    ],
+    "hold_kinds": "collision x1 (ee_finger_l2 -10.2 mm, target_free)",
+    "listed_classes_matching": [],
+    "ag3s_target_points_on_hurdle_chunks": "0/23 (min centroid 75 mm)"
+   },
+   "C_E3b_ep1995": {
+    "phase": "before lift-off (no grasp)",
+    "obstacle_stop_t": 103,
+    "contact": "none (client robot_collision False, contact_steps 0); client min_robot_clearance exactly 0.0",
+    "replay_clearance_at_t103_m": 0.02224,
+    "zero_probe": {
+     "t_last": 103,
+     "clearance_last_row": 0.022240292772140884,
+     "n_perturbed_le0": 4,
+     "min_perturbed": 0.0,
+     "median_perturbed": 0.022358359249688358,
+     "pairs_le0": {
+      "('pick_obstacle_hurdle_0_collision_foot_left', 'link_left_arm_5', 856)": {
+       "n": 4,
+       "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ],
+       "witness_gap_m": [
+        0.43335278267343913,
+        0.4343063074187892,
+        0.43241269099385893,
+        0.430682334403332
+       ],
+       "gjk_sep_m": [
+        0.21667639038033798,
+        0.21715315303172966,
+        0.21620627004194887,
+        0.21534116058217037
+       ]
+      }
+     }
+    },
+    "listed_classes_matching": [],
+    "class_fact": "client distance returned exactly 0.0 (see zero_clearance_probe); no contact"
+   }
+  },
+  "C_E0_facts": {
+   "ep1807": "no grasp; contact EE_BODY_L (1052) <-> bar t=254 (approach)",
+   "ep1968": "grasp t=232; contact ee_finger_l2 <-> bar t=259 in transport",
+   "ep1982": "grasp t=144; contact ee_finger_l2 <-> bar t=165 in transport",
+   "ep1967": "grasp t=168; contact ee_finger_l2 <-> bar t=190 in transport",
+   "ep1995": "no grasp; contact EE_BODY_L (1051) <-> bar t=186 (approach)"
+  },
+  "C_E3b_ep1968_success": "grasp t=144, place t=232; apple <-> bar contact in transport (client payload_collision True, replay apple min -0.4 mm at t=171, gripper min 0.0 at t=166/9.1 mm on rows); apple stayed in hand until the release at t=232; obstacle stop t=280 after the place (ee_finger_l1 <-> bar)",
+  "apple_knocked_off": "none: apple_left_hand_t is set only in successful runs, at the release in the crate",
+  "ag3s_hurdle_as_target": "chunks with >= 1 target point within 15 mm of the hurdle: 0 in every E3b C and D run; min target centroid -> hurdle surface 54-160 mm (C: 57-78, D: 54-160)",
+  "ep1995_reset_proximity": {
+   "reset_margins_m": {
+    "reset_robot": 0.0019,
+    "reset_object": 0.0054,
+    "t0_min": 0.0019,
+    "prelift_min_T39": 0.0015
+   },
+   "reset_pair": "bar <-> EE_BODY_L geoms 1050/1053, 1.8 mm at t=0, 1.5 mm at t=4 (both C runs; replay)",
+   "gripper_bar_distance_mm_C_E3b": {
+    "t0": 1.8,
+    "t4": 1.5,
+    "t16": 8.4,
+    "t48": 24.7,
+    "t80": 43.7,
+    "t103": 22.2
+   },
+   "C_E3b_stop": "t=103, client min clearance exactly 0.0, no contact; replay robot clearance 22.2 mm at t=103 and >= 21.9 mm over a 2-step linear extrapolation; zero_probe: foot_left <-> link_left_arm_5 returns 0.0 in 4/400 perturbations with GJK separation 0.215-0.217 m (witness gap 0.43 m)",
+   "C_E0_stop": "t=186 contact EE_BODY_L (1051) <-> bar during the approach (no grasp); replay gripper distance 1.5 mm at t=4, 31.5 at t=64, 20.0 at t=110, 18.4 at t=170",
+   "B_runs_virtual_r1_pose_gripper_distance_mm": {
+    "E3b t=130": 15.6,
+    "E0 t=130": 8.0
+   },
+   "D_round2": "placement (0.534, 0.214, yaw 171.2 deg, h 0.20), m_T39 1.0 mm; E3b stop t=71 clearance 0.0 no contact (zero_probe: foot_right <-> link_left_arm_6 / FT_SENSOR_L 0.0, GJK 0.22-0.24 m); E0 contact t=76 EE_BODY_L <-> bar"
+  },
+  "D_round2": {
+   "selection": "T40 D: one adjustment round (round 2) for the episodes whose E3b run failed with the round-1 hurdle. CPU.\nusage: dselect.py TAG [TAG ...]  -> configs/t40f_ep<EP>_s<SEED>_r2.json, raw/dselect_<TAG>.json\n\nEvery round-1 E3b failure was an obstacle stop BEFORE lift-off (gripper/finger <-> bar during the approach, or the 1995 stop with\nclearance 0.0 and no contact); so round 2 keeps (a)-(d) and (c) from the same F pool (fsearch_<TAG>[ _u10].json: bar centre on the\nrecorded T39 path, blocks both recorded transports) and maximises the pre-lift room, now also against the round-1 closed-loop\napproaches:\n  m_T39 = min(reset robot, reset object, T39 pre-lift minimum, t0 minimum)            (F numbers)\n  m_C   = min over the round-1 C runs (E0 and E3b) of the hurdle <-> ROBOT_ALL distance over every recorded control row before\n          that run's lift-off (or before its end when it never lifted), client distance code (cap 0.05)\n  score = min(m_T39, m_C); choose the max score; ties -> lower bar_height. The round-1 placement is excluded.\nThe chosen placement is re-checked: GJK at the argmins (select_write.gjk_check) and the client dry run (dryrun.py).",
+   "episodes": {
+    "1807_18071": {
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1807_s18071_r2.json",
+     "profile": "t40f_ep1807_s18071_r2",
+     "placement": {
+      "x": 0.49883580304363095,
+      "y": 0.15237114029441334,
+      "yaw_rad": 0.23027749404748138,
+      "bar_height_m": 0.22
+     },
+     "m_T39_m": 0.0099069072735131,
+     "m_C_m": {
+      "C_E0": 0.04025197879416148,
+      "C_E3b": 0.04077951375990682
+     },
+     "score_m": 0.0099069072735131,
+     "round1_score_m": 0.001683178289622238,
+     "round1_m_C_m": {
+      "C_E0": 0.001683178289622238,
+      "C_E3b": 0.0029512100834671214
+     },
+     "c_transport_T39": {
+      "E0": {
+       "min_A": 0.0028288026411035453,
+       "min_B": -0.011728795968608626,
+       "n_rows_le0": 4,
+       "first_contact_t": 201,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      },
+      "E3b": {
+       "min_A": -0.0022360060820607857,
+       "min_B": -0.018531870949881745,
+       "n_rows_le0": 5,
+       "first_contact_t": 186,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      }
+     },
+     "c_low": false,
+     "client_dryrun": "obstacles  : t40f_ep1807_s18071_r2 ('hurdle_0',) (initial robot/object clearance 0.041/0.010 m)",
+     "gjk_check": {
+      "E0:carry:A": {
+       "client_m": 0.0028288026411035453,
+       "t": 200,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.002828802641104415,
+       "gjk_note": "signed"
+      },
+      "E0:carry:B": {
+       "client_m": -0.011728795968608626,
+       "t": 203,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:prelift:robot": {
+       "client_m": 0.04068088923282165,
+       "t": 3,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1085"
+       ],
+       "gjk_m": 0.04068088923282655,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:apple": {
+       "client_m": 0.07602354036254415,
+       "t": 152,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.07602354036203031,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:fruits": {
+       "client_m": 0.15288407692091363,
+       "t": 3,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "orange_geom"
+       ],
+       "gjk_m": 0.15288407692063688,
+       "gjk_note": "signed"
+      },
+      "E0:t0:robot": {
+       "client_m": 0.041478428033867226,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1085"
+       ],
+       "gjk_m": 0.04147842803387154,
+       "gjk_note": "signed"
+      },
+      "E0:t0:apple": {
+       "client_m": 0.08361007459841946,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.08361007459794138,
+       "gjk_note": "signed"
+      },
+      "E0:t0:fruits": {
+       "client_m": 0.15293252246981368,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "orange_geom"
+       ],
+       "gjk_m": 0.15293252246953817,
+       "gjk_note": "signed"
+      },
+      "E0:t0:crate": {
+       "client_m": 0.0099069072735131,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_left",
+        "crate_floor"
+       ],
+       "gjk_m": 0.009906907273513047,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:A": {
+       "client_m": -0.0022360060820607857,
+       "t": 186,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:carry:B": {
+       "client_m": -0.018531870949881745,
+       "t": 188,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:prelift:robot": {
+       "client_m": 0.04068088934112481,
+       "t": 3,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1085"
+       ],
+       "gjk_m": 0.040680889341129685,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:apple": {
+       "client_m": 0.08005481055618711,
+       "t": 141,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.08005481055552537,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:fruits": {
+       "client_m": 0.15288407692091363,
+       "t": 3,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "orange_geom"
+       ],
+       "gjk_m": 0.15288407692063688,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:robot": {
+       "client_m": 0.041478428033867226,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1085"
+       ],
+       "gjk_m": 0.04147842803387154,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:apple": {
+       "client_m": 0.08361007459841946,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.08361007459794138,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:fruits": {
+       "client_m": 0.15293252246981368,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "orange_geom"
+       ],
+       "gjk_m": 0.15293252246953817,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:crate": {
+       "client_m": 0.0099069072735131,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_left",
+        "crate_floor"
+       ],
+       "gjk_m": 0.009906907273513047,
+       "gjk_note": "signed"
+      },
+      "reset_exact_activate": [
+       0.04150904118892308,
+       0.009912684486716995
+      ]
+     },
+     "E3b": {
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "n_control": 276,
+      "n_hold_chunks": 0,
+      "hold_kinds": {},
+      "obstacle_stop_t": 275,
+      "client_robot_collision": true,
+      "client_payload_collision": false,
+      "client_min_robot_clearance_m": -0.001995142528328173,
+      "client_contact_pairs": [
+       [
+        "geom#1086",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "bit_identical_to_T39": null
+     },
+     "E0": {
+      "success": false,
+      "grasp": true,
+      "place": false,
+      "n_control": 197,
+      "n_hold_chunks": 0,
+      "hold_kinds": {},
+      "obstacle_stop_t": 196,
+      "client_robot_collision": true,
+      "client_payload_collision": false,
+      "client_min_robot_clearance_m": -0.0002490367667341391,
+      "client_contact_pairs": [
+       [
+        "geom#1086",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "bit_identical_to_T39": null
+     }
+    },
+    "1967_19672": {
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1967_s19672_r2.json",
+     "profile": "t40f_ep1967_s19672_r2",
+     "placement": {
+      "x": 0.470869772906596,
+      "y": 0.18634953222949688,
+      "yaw_rad": 0.23381309124915423,
+      "bar_height_m": 0.2
+     },
+     "m_T39_m": 0.01420500113434021,
+     "m_C_m": {
+      "C_E0": 0.02297566790859393,
+      "C_E3b": 0.015781120903631183
+     },
+     "score_m": 0.01420500113434021,
+     "round1_score_m": 0.0032015739790361274,
+     "round1_m_C_m": {
+      "C_E0": 0.02370614195408382,
+      "C_E3b": 0.0032015739790361274
+     },
+     "c_transport_T39": {
+      "E0": {
+       "min_A": 0.011351827829052055,
+       "min_B": -0.013066886554208755,
+       "n_rows_le0": 5,
+       "first_contact_t": 175,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      },
+      "E3b": {
+       "min_A": 0.008427636962956068,
+       "min_B": -0.014530695947153529,
+       "n_rows_le0": 5,
+       "first_contact_t": 175,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      }
+     },
+     "c_low": false,
+     "client_dryrun": "obstacles  : t40f_ep1967_s19672_r2 ('hurdle_0',) (initial robot/object clearance 0.035/0.014 m)",
+     "gjk_check": {
+      "E0:carry:A": {
+       "client_m": 0.011351827829052055,
+       "t": 174,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.011351827829056037,
+       "gjk_note": "signed"
+      },
+      "E0:carry:B": {
+       "client_m": -0.013066886554208755,
+       "t": 177,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:prelift:robot": {
+       "client_m": 0.026212027525986784,
+       "t": 139,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "geom#1086"
+       ],
+       "gjk_m": 0.026212027516550992,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:apple": {
+       "client_m": 0.02341006058204594,
+       "t": 139,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.023410060576395605,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:fruits": {
+       "client_m": 0.10739919303122503,
+       "t": 137,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.10739919303055928,
+       "gjk_note": "signed"
+      },
+      "E0:t0:robot": {
+       "client_m": 0.03466183850417011,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.0346618385041701,
+       "gjk_note": "signed"
+      },
+      "E0:t0:apple": {
+       "client_m": 0.023650209649910273,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.02365020964537552,
+       "gjk_note": "signed"
+      },
+      "E0:t0:fruits": {
+       "client_m": 0.10747644982316934,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.10747644982208307,
+       "gjk_note": "signed"
+      },
+      "E0:t0:crate": {
+       "client_m": 0.01420500113434021,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_sleeve_right",
+        "handle_post_lp"
+       ],
+       "gjk_m": 0.014205001134190511,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:A": {
+       "client_m": 0.008427636962956068,
+       "t": 177,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.00842763696295686,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:B": {
+       "client_m": -0.014530695947153529,
+       "t": 177,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:prelift:robot": {
+       "client_m": 0.019629567226904426,
+       "t": 136,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "geom#1086"
+       ],
+       "gjk_m": 0.01962956721404678,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:apple": {
+       "client_m": 0.02361199872313747,
+       "t": 10,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.02361199871891516,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:fruits": {
+       "client_m": 0.10739919303122503,
+       "t": 137,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.10739919303055928,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:robot": {
+       "client_m": 0.03466183850417011,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.0346618385041701,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:apple": {
+       "client_m": 0.023650209649910273,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.02365020964537552,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:fruits": {
+       "client_m": 0.10747644982316934,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.10747644982208307,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:crate": {
+       "client_m": 0.01420500113434021,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_sleeve_right",
+        "handle_post_lp"
+       ],
+       "gjk_m": 0.014205001134190511,
+       "gjk_note": "signed"
+      },
+      "reset_exact_activate": [
+       0.03468606652692144,
+       0.014209321147067147
+      ]
+     },
+     "E3b": {
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "n_control": 138,
+      "n_hold_chunks": 1,
+      "hold_kinds": {
+       "collision": 1
+      },
+      "obstacle_stop_t": 137,
+      "client_robot_collision": false,
+      "client_payload_collision": false,
+      "client_min_robot_clearance_m": 0.0,
+      "client_contact_pairs": [],
+      "bit_identical_to_T39": null
+     },
+     "E0": {
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "n_control": 91,
+      "n_hold_chunks": 0,
+      "hold_kinds": {},
+      "obstacle_stop_t": 90,
+      "client_robot_collision": false,
+      "client_payload_collision": false,
+      "client_min_robot_clearance_m": 0.0,
+      "client_contact_pairs": [],
+      "bit_identical_to_T39": null
+     }
+    },
+    "1982_19822": {
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1982_s19822_r2.json",
+     "profile": "t40f_ep1982_s19822_r2",
+     "placement": {
+      "x": 0.5428495117765336,
+      "y": 0.17315331659671399,
+      "yaw_rad": 3.081945598618206,
+      "bar_height_m": 0.2
+     },
+     "m_T39_m": 0.013931970499508504,
+     "m_C_m": {
+      "C_E0": 0.01688199780876415,
+      "C_E3b": 0.016881999840411964
+     },
+     "score_m": 0.013931970499508504,
+     "round1_score_m": 3.8722487009324943e-05,
+     "round1_m_C_m": {
+      "C_E0": 0.013217385686278827,
+      "C_E3b": 3.8722487009324943e-05
+     },
+     "c_transport_T39": {
+      "E0": {
+       "min_A": 0.005415826522575766,
+       "min_B": -0.012035387371416758,
+       "n_rows_le0": 4,
+       "first_contact_t": 197,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      },
+      "E3b": {
+       "min_A": 0.008170997995421671,
+       "min_B": -0.004843538822579405,
+       "n_rows_le0": 3,
+       "first_contact_t": 186,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      }
+     },
+     "c_low": false,
+     "client_dryrun": "obstacles  : t40f_ep1982_s19822_r2 ('hurdle_0',) (initial robot/object clearance 0.017/0.014 m)",
+     "gjk_check": {
+      "E0:carry:A": {
+       "client_m": 0.005415826522575766,
+       "t": 199,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.005415826522580588,
+       "gjk_note": "signed"
+      },
+      "E0:carry:B": {
+       "client_m": -0.012035387371416758,
+       "t": 198,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:prelift:robot": {
+       "client_m": 0.016696823007814856,
+       "t": 4,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.0166968230078207,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:apple": {
+       "client_m": 0.11235799232680031,
+       "t": 142,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.11235799232477703,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:fruits": {
+       "client_m": 0.08837739579929685,
+       "t": 145,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.08837739579864384,
+       "gjk_note": "signed"
+      },
+      "E0:t0:robot": {
+       "client_m": 0.017375457864041585,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.01737545786405145,
+       "gjk_note": "signed"
+      },
+      "E0:t0:apple": {
+       "client_m": 0.12755762950779312,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.12755762950752106,
+       "gjk_note": "signed"
+      },
+      "E0:t0:fruits": {
+       "client_m": 0.08852147728527723,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.08852147728126844,
+       "gjk_note": "signed"
+      },
+      "E0:t0:crate": {
+       "client_m": 0.013931970499508504,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "crate_wall_nx"
+       ],
+       "gjk_m": 0.013931970489445063,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:A": {
+       "client_m": 0.008170997995421671,
+       "t": 189,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.008170997995423378,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:B": {
+       "client_m": -0.004843538822579405,
+       "t": 187,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:prelift:robot": {
+       "client_m": 0.01669682208385447,
+       "t": 4,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.016696822083860297,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:apple": {
+       "client_m": 0.11276540592207202,
+       "t": 141,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.1127654059206353,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:fruits": {
+       "client_m": 0.08837454194835245,
+       "t": 144,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.0883745419477013,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:robot": {
+       "client_m": 0.017375457864041585,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.01737545786405145,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:apple": {
+       "client_m": 0.12755762950779312,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.12755762950752106,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:fruits": {
+       "client_m": 0.08852147728527723,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "pear_geom"
+       ],
+       "gjk_m": 0.08852147728126844,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:crate": {
+       "client_m": 0.013931970499508504,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "crate_wall_nx"
+       ],
+       "gjk_m": 0.013931970489445063,
+       "gjk_note": "signed"
+      },
+      "reset_exact_activate": [
+       0.017407989809922857,
+       0.01393266584431747
+      ]
+     },
+     "E3b": {
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "n_control": 24,
+      "n_hold_chunks": 0,
+      "hold_kinds": {},
+      "obstacle_stop_t": 23,
+      "client_robot_collision": false,
+      "client_payload_collision": false,
+      "client_min_robot_clearance_m": 0.0,
+      "client_contact_pairs": [],
+      "bit_identical_to_T39": null
+     },
+     "E0": {
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "n_control": 226,
+      "n_hold_chunks": 0,
+      "hold_kinds": {},
+      "obstacle_stop_t": 225,
+      "client_robot_collision": true,
+      "client_payload_collision": false,
+      "client_min_robot_clearance_m": -0.001024960611045761,
+      "client_contact_pairs": [
+       [
+        "geom#1086",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "bit_identical_to_T39": null
+     }
+    },
+    "1995_19952": {
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1995_s19952_r2.json",
+     "profile": "t40f_ep1995_s19952_r2",
+     "placement": {
+      "x": 0.5343417380012185,
+      "y": 0.2141664675510805,
+      "yaw_rad": 2.9887399962875514,
+      "bar_height_m": 0.2
+     },
+     "m_T39_m": 0.000970591998658444,
+     "m_C_m": {
+      "C_E0": 0.0006899718287787585,
+      "C_E3b": -0.0009847582301567882
+     },
+     "score_m": -0.0009847582301567882,
+     "round1_score_m": 0.0014840179195696555,
+     "round1_m_C_m": {
+      "C_E0": 0.001569562287639924,
+      "C_E3b": 0.001569565567561276
+     },
+     "c_transport_T39": {
+      "E0": {
+       "min_A": 0.00665134511522603,
+       "min_B": -0.010907413805629259,
+       "n_rows_le0": 4,
+       "first_contact_t": 185,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      },
+      "E3b": {
+       "min_A": 0.005635121216504661,
+       "min_B": -0.012288929017753185,
+       "n_rows_le0": 5,
+       "first_contact_t": 191,
+       "min_pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ]
+      }
+     },
+     "c_low": false,
+     "client_dryrun": "obstacles  : t40f_ep1995_s19952_r2 ('hurdle_0',) (initial robot/object clearance 0.001/0.003 m)",
+     "gjk_check": {
+      "E0:carry:A": {
+       "client_m": 0.00665134511522603,
+       "t": 189,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.006651345115229391,
+       "gjk_note": "signed"
+      },
+      "E0:carry:B": {
+       "client_m": -0.010907413805629259,
+       "t": 187,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E0:prelift:robot": {
+       "client_m": 0.000970591998658444,
+       "t": 8,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.0009705919986590103,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:apple": {
+       "client_m": 0.07325731781779357,
+       "t": 151,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_left",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0732573178177886,
+       "gjk_note": "signed"
+      },
+      "E0:prelift:fruits": {
+       "client_m": 0.02430647750743082,
+       "t": 112,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "banana_geom_0"
+       ],
+       "gjk_m": 0.024306477503979376,
+       "gjk_note": "signed"
+      },
+      "E0:t0:robot": {
+       "client_m": 0.0012877273381795597,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.0012877273381796475,
+       "gjk_note": "signed"
+      },
+      "E0:t0:apple": {
+       "client_m": 0.07647083356976309,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.07647083356727596,
+       "gjk_note": "signed"
+      },
+      "E0:t0:fruits": {
+       "client_m": 0.02432126949533645,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "banana_geom_0"
+       ],
+       "gjk_m": 0.024321269491880404,
+       "gjk_note": "signed"
+      },
+      "E0:t0:crate": {
+       "client_m": 0.0026773353211555612,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_sleeve_right",
+        "handle_post_ln"
+       ],
+       "gjk_m": 0.002677335318547005,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:A": {
+       "client_m": 0.005635121216504661,
+       "t": 195,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1079"
+       ],
+       "gjk_m": 0.005635121216505505,
+       "gjk_note": "signed"
+      },
+      "E3b:carry:B": {
+       "client_m": -0.012288929017753185,
+       "t": 193,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "apple_geom"
+       ],
+       "gjk_m": 0.0,
+       "gjk_note": "separation (0 if overlapping)"
+      },
+      "E3b:prelift:robot": {
+       "client_m": 0.0009705949359748896,
+       "t": 8,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.0009705949359755992,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:apple": {
+       "client_m": 0.07580279002037756,
+       "t": 94,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.07580279001716711,
+       "gjk_note": "signed"
+      },
+      "E3b:prelift:fruits": {
+       "client_m": 0.02430647750743082,
+       "t": 112,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "banana_geom_0"
+       ],
+       "gjk_m": 0.024306477503979376,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:robot": {
+       "client_m": 0.0012877273381795597,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_bar",
+        "geom#1086"
+       ],
+       "gjk_m": 0.0012877273381796475,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:apple": {
+       "client_m": 0.07647083356976309,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "apple_geom"
+       ],
+       "gjk_m": 0.07647083356727596,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:fruits": {
+       "client_m": 0.02432126949533645,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_foot_right",
+        "banana_geom_0"
+       ],
+       "gjk_m": 0.024321269491880404,
+       "gjk_note": "signed"
+      },
+      "E3b:t0:crate": {
+       "client_m": 0.0026773353211555612,
+       "t": -1,
+       "pair": [
+        "pick_obstacle_hurdle_0_collision_sleeve_right",
+        "handle_post_ln"
+       ],
+       "gjk_m": 0.002677335318547005,
+       "gjk_note": "signed"
+      },
+      "reset_exact_activate": [
+       0.001263127971943211,
+       0.0026633400992282074
+      ]
+     },
+     "E3b": {
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "n_control": 72,
+      "n_hold_chunks": 0,
+      "hold_kinds": {},
+      "obstacle_stop_t": 71,
+      "client_robot_collision": false,
+      "client_payload_collision": false,
+      "client_min_robot_clearance_m": 0.0,
+      "client_contact_pairs": [],
+      "bit_identical_to_T39": null
+     },
+     "E0": {
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "n_control": 77,
+      "n_hold_chunks": 0,
+      "hold_kinds": {},
+      "obstacle_stop_t": 76,
+      "client_robot_collision": true,
+      "client_payload_collision": false,
+      "client_min_robot_clearance_m": 2.6300355567956957e-05,
+      "client_contact_pairs": [
+       [
+        "geom#1051",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ],
+       [
+        "geom#1055",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "bit_identical_to_T39": null
+     }
+    }
+   },
+   "outcome_facts": {
+    "E3b_ep1807": "success: grasp t=136, place t=216 (apple released 215); carry minimum gripper 11.3 mm, apple 5.4 mm, no payload contact; obstacle stop t=275 after the place, ee_finger_l2 <-> bar",
+    "E3b_ep1967": "no grasp; stop t=137, clearance exactly 0.0, no contact; replay 22.8 mm; zero_probe 0/400 perturbations reproduce 0.0",
+    "E3b_ep1982": "no grasp; stop t=23, clearance exactly 0.0, no contact; replay 35.2 mm; zero_probe: foot_right <-> EE_BODY_L / ee_finger_l2 return 0.0 (4/400) with GJK 0.22-0.23 m",
+    "E3b_ep1995": "no grasp; stop t=71, clearance exactly 0.0, no contact; replay 17.0 mm; zero_probe 10/400 (foot_right <-> link_left_arm_6, FT_SENSOR_L), GJK 0.22-0.24 m",
+    "E0_ep1807": "grasp t=168, contact ee_finger_l2 <-> bar t=196 in transport, stop",
+    "E0_ep1967": "no grasp; stop t=90 clearance exactly 0.0 no contact; zero_probe 0/400",
+    "E0_ep1982": "no grasp; contact ee_finger_l2 <-> bar t=225, stop",
+    "E0_ep1995": "no grasp; contact EE_BODY_L <-> bar t=76, stop"
+   }
+  },
+  "zero_clearance_probe": {
+   "file": "outputs/verify/T40/G/zero_probe.json",
+   "script": "outputs/verify/T40/p/zero_probe.py",
+   "runs": {
+    "runs/E3b/C/E3b_ep1995_s19952": {
+     "t_last": 103,
+     "clearance_last_row": 0.022240292772140884,
+     "n_perturbed_le0": 4,
+     "min_perturbed": 0.0,
+     "median_perturbed": 0.022358359249688358,
+     "pairs_le0": {
+      "('pick_obstacle_hurdle_0_collision_foot_left', 'link_left_arm_5', 856)": {
+       "n": 4,
+       "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ],
+       "witness_gap_m": [
+        0.43335278267343913,
+        0.4343063074187892,
+        0.43241269099385893,
+        0.430682334403332
+       ],
+       "gjk_sep_m": [
+        0.21667639038033798,
+        0.21715315303172966,
+        0.21620627004194887,
+        0.21534116058217037
+       ]
+      }
+     }
+    },
+    "runs/E3b/D/E3b_ep1967_s19672": {
+     "t_last": 137,
+     "clearance_last_row": 0.022843042970717074,
+     "n_perturbed_le0": 0,
+     "min_perturbed": 0.02008982736686191,
+     "median_perturbed": 0.022937537456795748,
+     "pairs_le0": {}
+    },
+    "runs/E3b/D/E3b_ep1982_s19822": {
+     "t_last": 23,
+     "clearance_last_row": 0.035157915940255344,
+     "n_perturbed_le0": 4,
+     "min_perturbed": 0.0,
+     "median_perturbed": 0.03524909106476186,
+     "pairs_le0": {
+      "('pick_obstacle_hurdle_0_collision_foot_right', 'ee_finger_l2', 1085)": {
+       "n": 1,
+       "values": [
+        0.0
+       ],
+       "witness_gap_m": [
+        0.44392928042071206
+       ],
+       "gjk_sep_m": [
+        0.2219646385086253
+       ]
+      },
+      "('pick_obstacle_hurdle_0_collision_foot_right', 'EE_BODY_L', 1055)": {
+       "n": 3,
+       "values": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "witness_gap_m": [
+        0.46158797150710656,
+        0.45450834387644146,
+        0.45914507390020104
+       ],
+       "gjk_sep_m": [
+        0.23079398087565395,
+        0.22725415867288978,
+        0.22957253631183216
+       ]
+      }
+     }
+    },
+    "runs/E3b/D/E3b_ep1995_s19952": {
+     "t_last": 71,
+     "clearance_last_row": 0.016956867467955588,
+     "n_perturbed_le0": 10,
+     "min_perturbed": 0.0,
+     "median_perturbed": 0.01689326373746533,
+     "pairs_le0": {
+      "('pick_obstacle_hurdle_0_collision_foot_right', 'link_left_arm_6', 904)": {
+       "n": 5,
+       "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ],
+       "witness_gap_m": [
+        0.4764972076041974,
+        0.47146034347098226,
+        0.4736478022566462,
+        0.4758084756292071,
+        0.47521086851838223
+       ],
+       "gjk_sep_m": [
+        0.23824859314359875,
+        0.23573010443144504,
+        0.23682389767758538,
+        0.23790419172891447,
+        0.23760537296887765
+       ]
+      },
+      "('pick_obstacle_hurdle_0_collision_foot_right', 'FT_SENSOR_L', 942)": {
+       "n": 3,
+       "values": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "witness_gap_m": [
+        0.4452714863868196,
+        0.4427287351671549,
+        0.442266116253709
+       ],
+       "gjk_sep_m": [
+        0.22263574186559376,
+        0.22136436654874128,
+        0.22113305661213073
+       ]
+      },
+      "('pick_obstacle_hurdle_0_collision_foot_right', 'FT_SENSOR_L', 935)": {
+       "n": 1,
+       "values": [
+        0.0
+       ],
+       "witness_gap_m": [
+        0.45885065246131373
+       ],
+       "gjk_sep_m": [
+        0.22942510650538323
+       ]
+      },
+      "('pick_obstacle_hurdle_0_collision_foot_right', 'FT_SENSOR_L', 941)": {
+       "n": 1,
+       "values": [
+        0.0
+       ],
+       "witness_gap_m": [
+        0.3548963448579197
+       ],
+       "gjk_sep_m": [
+        0.20842789274313425
+       ]
+      }
+     }
+    },
+    "runs/E0/D/E0_ep1967_s19672": {
+     "t_last": 90,
+     "clearance_last_row": 0.042077434729545005,
+     "n_perturbed_le0": 0,
+     "min_perturbed": 0.03952589959873791,
+     "median_perturbed": 0.04207794742588135,
+     "pairs_le0": {}
+    }
+   },
+   "stops_with_exact_zero_and_no_contact": [
+    "C/E3b_ep1995 t=103",
+    "D/E3b_ep1967 t=137",
+    "D/E3b_ep1982 t=23",
+    "D/E3b_ep1995 t=71",
+    "D/E0_ep1967 t=90"
+   ]
+  },
+  "chunk_times": {
+   "B": {
+    "E0": {
+     "round_trip_ms": {
+      "n": 444,
+      "median": 202.8,
+      "p95": 340.4,
+      "max": 390.0
+     }
+    },
+    "E3b": {
+     "round_trip_ms": {
+      "n": 444,
+      "median": 981.3,
+      "p95": 1139.7,
+      "max": 1298.9
+     },
+     "server_total_ms": {
+      "median": 768.5,
+      "p95": 923.6,
+      "max": 1089.8
+     },
+     "server_trajopt_ms": {
+      "median": 69.1,
+      "p95": 84.5,
+      "max": 234.6
+     }
+    }
+   },
+   "C": {
+    "E0": {
+     "round_trip_ms": {
+      "n": 129,
+      "median": 207.0,
+      "p95": 347.9,
+      "max": 380.2
+     }
+    },
+    "E3b": {
+     "round_trip_ms": {
+      "n": 121,
+      "median": 1006.1,
+      "p95": 1154.9,
+      "max": 1225.5
+     },
+     "server_total_ms": {
+      "median": 786.8,
+      "p95": 930.3,
+      "max": 984.5
+     },
+     "server_trajopt_ms": {
+      "median": 67.4,
+      "p95": 91.1,
+      "max": 155.1
+     }
+    }
+   },
+   "D": {
+    "E0": {
+     "round_trip_ms": {
+      "n": 72,
+      "median": 185.0,
+      "p95": 261.7,
+      "max": 443.7
+     }
+    },
+    "E3b": {
+     "round_trip_ms": {
+      "n": 61,
+      "median": 973.7,
+      "p95": 1087.0,
+      "max": 1171.2
+     },
+     "server_total_ms": {
+      "median": 761.5,
+      "p95": 876.3,
+      "max": 912.4
+     },
+     "server_trajopt_ms": {
+      "median": 63.2,
+      "p95": 74.7,
+      "max": 167.4
+     }
+    }
+   },
+   "definition": "per chunk, first chunk of each run excluded (analyze_t39 rule)"
+  },
+  "resources": {
+   "E3b_server_rss_peak_GiB": 6.9,
+   "E0_server_rss_peak_GiB": 4.02,
+   "E3b_client_rss_peak_GiB": 3.0,
+   "E0_client_rss_peak_GiB": 2.76,
+   "pod_memory_peak_GiB_during_G": 49.94,
+   "gpu_E3b_server_MiB_approx": 17930,
+   "gpu_both_servers_peak_MiB": 27278,
+   "files": "G/runs/*/server_*/rss_samples.txt, gpu_samples.txt"
+  },
+  "retry_reproducibility_C_E3b_ep1807": {
+   "file": "outputs/verify/T40/G/retry_compare_C_E3b_1807.json",
+   "attempt1_vs_attempt2_bit_identical": true,
+   "why_retry": "check_run v1 required completeness pass; obstacle-stopped runs fail it (planned_missing = 75 - captured); check_run v2 accepts that case"
+  },
+  "incident_oom_20261003": {
+   "what": "T40 F search launched 60 CPU worker processes (outputs/verify/T40/F/p/run_search.sh, search.py, each ~1.4-1.5 GB RSS) at 12:19 UTC; pod memory cgroup limit 85899345920 B (80 GiB, /sys/fs/cgroup/memory.max); memory.current reached ~85.1e9 B",
+   "start_utc": "2026-10-03T12:19 (workers launched); kills between ~12:19:10 and ~12:19:56 UTC, one more ~12:29 UTC",
+   "workers_killed_by_verifier_utc": "2026-10-03T12:31 (all remaining 52 search workers, own processes); memory.current afterwards 7758315520 B",
+   "memory_events_oom_kill_cumulative": 38,
+   "oom_kills_on_20261003": 17,
+   "oom_kills_before_20261003_in_same_counter": 21,
+   "kill_list_file": "outputs/verify/T40/F/raw/oom_kills_20261003.txt (dmesg -T wall clock, may be offset by ~20 s)",
+   "kill_list": [
+    "Sat Oct  3 12:18:51 2026 pid=2161102 python vm_kB=419585916 anon_rss_kB=6312356",
+    "Sat Oct  3 12:19:00 2026 pid=2149356 python vm_kB=419456880 anon_rss_kB=6138272",
+    "Sat Oct  3 12:19:09 2026 pid=2175205 python vm_kB=419384388 anon_rss_kB=6110956",
+    "Sat Oct  3 12:19:14 2026 pid=2189754 python vm_kB=112068156 anon_rss_kB=4725072",
+    "Sat Oct  3 12:19:18 2026 pid=2179263 python vm_kB=32780268 anon_rss_kB=2494936",
+    "Sat Oct  3 12:19:28 2026 pid=2181793 python vm_kB=32743200 anon_rss_kB=2437892",
+    "Sat Oct  3 12:19:33 2026 pid=2182688 python vm_kB=32739136 anon_rss_kB=2446312",
+    "Sat Oct  3 12:19:36 2026 pid=2192261 python vm_kB=10553452 anon_rss_kB=1370896",
+    "Sat Oct  3 12:19:41 2026 pid=2192300 python vm_kB=10516244 anon_rss_kB=1388128",
+    "Sat Oct  3 12:19:44 2026 pid=2192276 python vm_kB=10515200 anon_rss_kB=1373980",
+    "Sat Oct  3 12:19:46 2026 pid=2192260 python vm_kB=10562080 anon_rss_kB=1407340",
+    "Sat Oct  3 12:19:48 2026 pid=2192303 python vm_kB=10522184 anon_rss_kB=1377952",
+    "Sat Oct  3 12:19:50 2026 pid=2192289 python vm_kB=10557524 anon_rss_kB=1398480",
+    "Sat Oct  3 12:19:51 2026 pid=2192263 python vm_kB=10559560 anon_rss_kB=1401544",
+    "Sat Oct  3 12:19:52 2026 pid=2192310 python vm_kB=10563960 anon_rss_kB=1417464",
+    "Sat Oct  3 12:19:56 2026 pid=2192330 python vm_kB=10599624 anon_rss_kB=1434404",
+    "Sat Oct  3 12:28:50 2026 pid=2222149 python vm_kB=33151720 anon_rss_kB=2325340"
+   ],
+   "kill_list_classification_by_size": {
+    "vm_~419GB_rss_~6GB (3)": "serve_safe servers (SUBTASK-f E3bG chains 8231/8232/8233)",
+    "vm_112GB_rss_4.7GB (1)": "server in start-up (SUBTASK-f chain 8234: 'server died during start')",
+    "vm_~32.7GB_rss_~2.4GB (3, 12:19)": "pi05_infer clients (SUBTASK-f runs ending exit=137)",
+    "vm_~10.5GB_rss_~1.4GB (9)": "T40 F search workers (verifier)",
+    "vm_33GB_rss_2.3GB (1, ~12:29)": "T40 G regression baseline legacy esdf_rollout (verifier; legacy rc=137 in outputs/verify/T40/G/baseline/run.out)"
+   },
+   "affected_SUBTASK_f": {
+    "chain_logs": "outputs/verify/SUBTASK-f/runs/E3bG/chain_823{1,2,3,4}.log",
+    "runs_exit_137": [
+     "E3bG_ep1863_s18631 (port 8231)",
+     "E3bG_ep1828_s18281 (port 8232)",
+     "E3bG_ep1807_s18071 (port 8233)"
+    ],
+    "chains_stopped": [
+     "8231 'server died, chain stops' 12:21:22",
+     "8232 12:21:17",
+     "8233 12:21:17",
+     "8234 'server died during start' 12:20:58"
+    ]
+   },
+   "cpu_quota": "/sys/fs/cgroup/cpu.max 1600000 100000 (16 CPUs for the pod)",
+   "after": "lead rules: F analytic search, <= 4 workers nice 19, total RSS <= 16 GB; before any server/client/worker memory.current + RSS estimate <= 64 GiB"
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-placement.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-scene-1807.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-scene-1968.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-scene-1982.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-scene-1995.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-scene-1967.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-scene-1807-d.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-scene-1982-d.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-scene-1995-d.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-scene-1967-d.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-distance.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-distance-d.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t40/t40fg-table.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "cuRobo 10/15 · 15/15 · -9.171877401271193; legacy 14/15 · 15/15 · -29.031048280806342; clearance_before sha1 equal to SUBTASK-e for both"
+ },
+ "verdict": "baseline matched; 12/12 B runs bit-identical to T39",
+ "not_measured": [
+  "ep1828 hurdle runs (no placement satisfying (a)-(d))",
+  "physics-level reproduction of the exact-zero client clearance at the sim sub-step of each stop (probe is kinematic, at the recorded control row + perturbations)",
+  "E0 server-side times (no server timing in E0)"
+ ]
+}
