@@ -1,0 +1,2096 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only; no interpretation. Recomputation from existing raw records (CPU only, no GPU/MuJoCo/server run).",
+ "step": "SUBTASK-extra",
+ "date": "2026-10-04T07:18:43+00:00",
+ "runs": [
+  {
+   "id": "M1_placed_switch",
+   "command": "cd /mnt/dev/work && JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= python3 outputs/verify/SUBTASK-extra/m1_placed.py",
+   "venv": "system python3",
+   "raw_output": "outputs/verify/SUBTASK-extra/m1_placed.json",
+   "stdout_log": "outputs/verify/SUBTASK-extra/m1_placed.log",
+   "inputs": [
+    "outputs/verify/T37/E3a_rec/server_8204/server_constraints",
+    "outputs/verify/T37/E3b_rec/server_8206/server_constraints",
+    "outputs/verify/T34/E3a_rec/server_8204/server_constraints",
+    "outputs/verify/T34/E3b_rec/server_8206/server_constraints"
+   ]
+  },
+  {
+   "id": "M1_implementer_scan",
+   "command": "cd /mnt/dev/work && JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= python3 benchmark/ag3s/experiments/tools/scan_placed_switch.py <same 4 roots>",
+   "venv": "system python3",
+   "raw_output": "outputs/verify/SUBTASK-extra/scan_placed_switch.out",
+   "stdout_log": "outputs/verify/SUBTASK-extra/scan_placed_switch.out"
+  },
+  {
+   "id": "M2_probe_per_run",
+   "command": "cd /mnt/dev/work && JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= python3 outputs/verify/SUBTASK-extra/m2_probe_per_run.py",
+   "venv": "system python3",
+   "raw_output": "outputs/verify/SUBTASK-extra/m2_probe_per_run.json",
+   "stdout_log": "outputs/verify/SUBTASK-extra/m2_probe_per_run.log",
+   "inputs": [
+    "outputs/verify/SUBTASK-b/predictions.csv"
+   ]
+  },
+  {
+   "id": "M3_ep1828",
+   "command": "cd /mnt/dev/work && JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= python3 outputs/verify/SUBTASK-extra/m3_ep1828.py",
+   "venv": "system python3",
+   "raw_output": "outputs/verify/SUBTASK-extra/m3_ep1828.json",
+   "stdout_log": "outputs/verify/SUBTASK-extra/m3_ep1828.log",
+   "inputs": [
+    "outputs/verify/T39/runs/E3b/server_8226_20261002T093647/server_constraints/run_0000 (chunk 225-299)",
+    "outputs/verify/T39/runs/E3b/E3b_ep1828_s18281/frames.jsonl",
+    "outputs/verify/SUBTASK-d/runs/E3bG/server_8232_20261002T190400/server_constraints/run_0000 (chunk 75-149)",
+    "outputs/verify/SUBTASK-d/runs/E3bG/E3bG_ep1828_s18281/frames.jsonl"
+   ]
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "dbc5f9e",
+  "dirty_files": [],
+  "note": "benchmark dirty entries are docs only (AG3S_REVIEW_PLAN.md, AG3S_T0T6_LOG.md, handoff/SESSION_STATE.md); main repo /mnt/dev/work HEAD 54399b8. Records were produced by earlier runs; no code executed against the live stack here."
+ },
+ "numbers": {
+  "M1_placed_before_switch": {
+   "scope": "T34+T37 x E3a+E3b, gate off; per episode from first chunk with grasp.state==placed up to (not incl.) first chunk with admissibility.decision.mode==switch, or episode end if no switch",
+   "episodes": 24,
+   "placed_episodes": 14,
+   "chunks": 129,
+   "exclusion_active": 129,
+   "chunks_in_switched_episodes": 41,
+   "chunks_in_episodes_without_switch": 88,
+   "exclusion_source_all": "manipulated",
+   "per_root_before_switch_chunks": {
+    "T37/E3a": 6,
+    "T37/E3b": 44,
+    "T34/E3a": 24,
+    "T34/E3b": 55
+   }
+  },
+  "M1_scan": {
+   "episodes": 24,
+   "placed_episodes": 14,
+   "switched_after_placed": 12,
+   "new_target_in_destination_xy_lt_0.15m": 8,
+   "new_target_other_object": 4,
+   "after_switch_chunks": 433,
+   "after_switch_exclusion_active": 406,
+   "after_switch_exclusion_inactive_source_none": 27,
+   "per_root_episodes": {
+    "T37/E3a": 6,
+    "T37/E3b": 6,
+    "T34/E3a": 6,
+    "T34/E3b": 6
+   },
+   "per_root_placed": {
+    "T37/E3a": 3,
+    "T37/E3b": 3,
+    "T34/E3a": 5,
+    "T34/E3b": 3
+   },
+   "per_root_switched": {
+    "T37/E3a": 3,
+    "T37/E3b": 2,
+    "T34/E3a": 5,
+    "T34/E3b": 2
+   },
+   "implementer_scan_output_identical": true,
+   "per_episode": [
+    {
+     "root": "T37/E3a",
+     "ep": 0,
+     "first_chunk_index": 0,
+     "t_placed": 30,
+     "before_switch_chunks": 2,
+     "before_switch_exclusion_active": 2,
+     "first_switch_t": 32,
+     "first_switch_id": 1,
+     "first_switch_xy_to_destination_m": 0.2429,
+     "first_switch_kind": "other_object",
+     "after_switch_chunks": 44,
+     "after_switch_exclusion_active": 44
+    },
+    {
+     "root": "T37/E3a",
+     "ep": 1,
+     "first_chunk_index": 75,
+     "t_placed": 31,
+     "before_switch_chunks": 2,
+     "before_switch_exclusion_active": 2,
+     "first_switch_t": 33,
+     "first_switch_id": 1,
+     "first_switch_xy_to_destination_m": 0.0187,
+     "first_switch_kind": "in_destination",
+     "after_switch_chunks": 43,
+     "after_switch_exclusion_active": 43
+    },
+    {
+     "root": "T37/E3a",
+     "ep": 3,
+     "first_chunk_index": 225,
+     "t_placed": 34,
+     "before_switch_chunks": 2,
+     "before_switch_exclusion_active": 2,
+     "first_switch_t": 36,
+     "first_switch_id": 1,
+     "first_switch_xy_to_destination_m": 0.0275,
+     "first_switch_kind": "in_destination",
+     "after_switch_chunks": 40,
+     "after_switch_exclusion_active": 40
+    },
+    {
+     "root": "T37/E3b",
+     "ep": 0,
+     "first_chunk_index": 0,
+     "t_placed": 30,
+     "before_switch_chunks": 2,
+     "before_switch_exclusion_active": 2,
+     "first_switch_t": 32,
+     "first_switch_id": 1,
+     "first_switch_xy_to_destination_m": 0.0353,
+     "first_switch_kind": "in_destination",
+     "after_switch_chunks": 44,
+     "after_switch_exclusion_active": 44
+    },
+    {
+     "root": "T37/E3b",
+     "ep": 1,
+     "first_chunk_index": 75,
+     "t_placed": 31,
+     "before_switch_chunks": 2,
+     "before_switch_exclusion_active": 2,
+     "first_switch_t": 33,
+     "first_switch_id": 1,
+     "first_switch_xy_to_destination_m": 0.0147,
+     "first_switch_kind": "in_destination",
+     "after_switch_chunks": 43,
+     "after_switch_exclusion_active": 43
+    },
+    {
+     "root": "T37/E3b",
+     "ep": 3,
+     "first_chunk_index": 225,
+     "t_placed": 36,
+     "before_switch_chunks": 40,
+     "before_switch_exclusion_active": 40,
+     "first_switch_t": null,
+     "first_switch_id": null,
+     "first_switch_xy_to_destination_m": null,
+     "first_switch_kind": null,
+     "after_switch_chunks": 0,
+     "after_switch_exclusion_active": 0
+    },
+    {
+     "root": "T34/E3a",
+     "ep": 0,
+     "first_chunk_index": 0,
+     "t_placed": 27,
+     "before_switch_chunks": 16,
+     "before_switch_exclusion_active": 16,
+     "first_switch_t": 43,
+     "first_switch_id": 1,
+     "first_switch_xy_to_destination_m": 0.2952,
+     "first_switch_kind": "other_object",
+     "after_switch_chunks": 33,
+     "after_switch_exclusion_active": 33
+    },
+    {
+     "root": "T34/E3a",
+     "ep": 1,
+     "first_chunk_index": 75,
+     "t_placed": 31,
+     "before_switch_chunks": 2,
+     "before_switch_exclusion_active": 2,
+     "first_switch_t": 33,
+     "first_switch_id": 1,
+     "first_switch_xy_to_destination_m": 0.0276,
+     "first_switch_kind": "in_destination",
+     "after_switch_chunks": 43,
+     "after_switch_exclusion_active": 42
+    },
+    {
+     "root": "T34/E3a",
+     "ep": 3,
+     "first_chunk_index": 225,
+     "t_placed": 33,
+     "before_switch_chunks": 2,
+     "before_switch_exclusion_active": 2,
+     "first_switch_t": 35,
+     "first_switch_id": 1,
+     "first_switch_xy_to_destination_m": 0.0364,
+     "first_switch_kind": "in_destination",
+     "after_switch_chunks": 41,
+     "after_switch_exclusion_active": 15
+    },
+    {
+     "root": "T34/E3a",
+     "ep": 4,
+     "first_chunk_index": 300,
+     "t_placed": 62,
+     "before_switch_chunks": 2,
+     "before_switch_exclusion_active": 2,
+     "first_switch_t": 64,
+     "first_switch_id": 3,
+     "first_switch_xy_to_destination_m": 0.2557,
+     "first_switch_kind": "other_object",
+     "after_switch_chunks": 12,
+     "after_switch_exclusion_active": 12
+    },
+    {
+     "root": "T34/E3a",
+     "ep": 5,
+     "first_chunk_index": 375,
+     "t_placed": 66,
+     "before_switch_chunks": 2,
+     "before_switch_exclusion_active": 2,
+     "first_switch_t": 68,
+     "first_switch_id": 3,
+     "first_switch_xy_to_destination_m": 0.2423,
+     "first_switch_kind": "other_object",
+     "after_switch_chunks": 8,
+     "after_switch_exclusion_active": 8
+    },
+    {
+     "root": "T34/E3b",
+     "ep": 0,
+     "first_chunk_index": 0,
+     "t_placed": 28,
+     "before_switch_chunks": 48,
+     "before_switch_exclusion_active": 48,
+     "first_switch_t": null,
+     "first_switch_id": null,
+     "first_switch_xy_to_destination_m": null,
+     "first_switch_kind": null,
+     "after_switch_chunks": 0,
+     "after_switch_exclusion_active": 0
+    },
+    {
+     "root": "T34/E3b",
+     "ep": 1,
+     "first_chunk_index": 75,
+     "t_placed": 29,
+     "before_switch_chunks": 5,
+     "before_switch_exclusion_active": 5,
+     "first_switch_t": 34,
+     "first_switch_id": 1,
+     "first_switch_xy_to_destination_m": 0.0408,
+     "first_switch_kind": "in_destination",
+     "after_switch_chunks": 42,
+     "after_switch_exclusion_active": 42
+    },
+    {
+     "root": "T34/E3b",
+     "ep": 3,
+     "first_chunk_index": 225,
+     "t_placed": 34,
+     "before_switch_chunks": 2,
+     "before_switch_exclusion_active": 2,
+     "first_switch_t": 36,
+     "first_switch_id": 1,
+     "first_switch_xy_to_destination_m": 0.0249,
+     "first_switch_kind": "in_destination",
+     "after_switch_chunks": 40,
+     "after_switch_exclusion_active": 40
+    }
+   ]
+  },
+  "M2_probe_kv_L4_normal_closed414": {
+   "ep0_orange": {
+    "n": 113,
+    "correct": 110,
+    "accuracy": 0.9735,
+    "confusion_true_rows_pred_cols_pick_place_home": [
+     [
+      16,
+      0,
+      0
+     ],
+     [
+      2,
+      11,
+      0
+     ],
+     [
+      0,
+      1,
+      83
+     ]
+    ]
+   },
+   "ep1200_pear": {
+    "n": 113,
+    "correct": 106,
+    "accuracy": 0.9381,
+    "confusion_true_rows_pred_cols_pick_place_home": [
+     [
+      36,
+      0,
+      0
+     ],
+     [
+      3,
+      12,
+      0
+     ],
+     [
+      0,
+      4,
+      58
+     ]
+    ]
+   },
+   "ep1807_apple": {
+    "n": 75,
+    "correct": 72,
+    "accuracy": 0.96,
+    "confusion_true_rows_pred_cols_pick_place_home": [
+     [
+      19,
+      0,
+      0
+     ],
+     [
+      1,
+      12,
+      0
+     ],
+     [
+      0,
+      2,
+      41
+     ]
+    ]
+   },
+   "ep500_banana": {
+    "n": 113,
+    "correct": 109,
+    "accuracy": 0.9646,
+    "confusion_true_rows_pred_cols_pick_place_home": [
+     [
+      14,
+      0,
+      0
+     ],
+     [
+      2,
+      14,
+      0
+     ],
+     [
+      0,
+      2,
+      81
+     ]
+    ]
+   },
+   "_all": {
+    "n": 414,
+    "correct": 397,
+    "accuracy": 0.9589,
+    "confusion_true_rows_pred_cols_pick_place_home": [
+     [
+      85,
+      0,
+      0
+     ],
+     [
+      8,
+      49,
+      0
+     ],
+     [
+      0,
+      9,
+      263
+     ]
+    ]
+   },
+   "_labels": [
+    "pick",
+    "place",
+    "home"
+   ]
+  },
+  "M3_ep1828_s18281": {
+   "index_convention": "k = chunk_index - episode_base = server t_step - 1 = manipulated.frame; client planning seq = k+1, client t_step = 8k",
+   "off_server_chunk_base": 225,
+   "on_server_chunk_base": 75,
+   "frames_note": "object_poses are MuJoCo world frame; robot base joints qpos[0:3] max |.| over episode: off 0.000147, on 0.000834 (base at world origin)",
+   "off_rows_k14_35": [
+    {
+     "k": 14,
+     "chunk_index": 239,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5626,
+      0.3203,
+      0.8652
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0155,
+      "dist_xy_m": 0.0034
+     },
+     "apple_pos": [
+      0.5636,
+      0.3236,
+      0.85
+     ]
+    },
+    {
+     "k": 15,
+     "chunk_index": 240,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5636,
+      0.3166,
+      0.8659
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0162,
+      "dist_xy_m": 0.0033
+     },
+     "apple_pos": [
+      0.5634,
+      0.3199,
+      0.85
+     ]
+    },
+    {
+     "k": 16,
+     "chunk_index": 241,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5643,
+      0.3187,
+      0.8664
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0165,
+      "dist_xy_m": 0.0018
+     },
+     "apple_pos": [
+      0.5636,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 17,
+     "chunk_index": 242,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5655,
+      0.3173,
+      0.8655
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0159,
+      "dist_xy_m": 0.0036
+     },
+     "apple_pos": [
+      0.5636,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 18,
+     "chunk_index": 243,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5583,
+      0.3149,
+      0.8666
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0183,
+      "dist_xy_m": 0.0076
+     },
+     "apple_pos": [
+      0.5636,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 19,
+     "chunk_index": 244,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5637,
+      0.3191,
+      0.8667
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0168,
+      "dist_xy_m": 0.0013
+     },
+     "apple_pos": [
+      0.5636,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 20,
+     "chunk_index": 245,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5851,
+      0.3123,
+      0.8641
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.027,
+      "dist_xy_m": 0.023
+     },
+     "apple_pos": [
+      0.5635,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 21,
+     "chunk_index": 246,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5692,
+      0.3214,
+      0.8707
+     ],
+     "decision_mode": "hold",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0215,
+      "dist_xy_m": 0.0059
+     },
+     "apple_pos": [
+      0.5635,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 22,
+     "chunk_index": 247,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5692,
+      0.3214,
+      0.8707
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0215,
+      "dist_xy_m": 0.0059
+     },
+     "apple_pos": [
+      0.5634,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 23,
+     "chunk_index": 248,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5692,
+      0.3214,
+      0.8707
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0215,
+      "dist_xy_m": 0.0059
+     },
+     "apple_pos": [
+      0.5635,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 24,
+     "chunk_index": 249,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.565,
+      0.3134,
+      0.8656
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.017,
+      "dist_xy_m": 0.0069
+     },
+     "apple_pos": [
+      0.5634,
+      0.3202,
+      0.85
+     ]
+    },
+    {
+     "k": 25,
+     "chunk_index": 250,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5629,
+      0.316,
+      0.8677
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0182,
+      "dist_xy_m": 0.0044
+     },
+     "apple_pos": [
+      0.5634,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 26,
+     "chunk_index": 251,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5629,
+      0.316,
+      0.8677
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0182,
+      "dist_xy_m": 0.0043
+     },
+     "apple_pos": [
+      0.5634,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 27,
+     "chunk_index": 252,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5629,
+      0.316,
+      0.8677
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0182,
+      "dist_xy_m": 0.0043
+     },
+     "apple_pos": [
+      0.5633,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 28,
+     "chunk_index": 253,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5629,
+      0.316,
+      0.8677
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0182,
+      "dist_xy_m": 0.0044
+     },
+     "apple_pos": [
+      0.5633,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 29,
+     "chunk_index": 254,
+     "grasp_state": "latched",
+     "manipulated_id": 1,
+     "manipulated_state": "visible",
+     "switched_from": 0,
+     "centroid": [
+      0.4644,
+      -0.2989,
+      0.8526
+     ],
+     "decision_mode": "switch",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 1,
+     "nearest_object": {
+      "name": "banana",
+      "dist_m": 0.0119,
+      "dist_xy_m": 0.0075
+     },
+     "apple_pos": [
+      0.5633,
+      0.3204,
+      0.85
+     ]
+    },
+    {
+     "k": 30,
+     "chunk_index": 255,
+     "grasp_state": "latched",
+     "manipulated_id": 1,
+     "manipulated_state": "visible",
+     "switched_from": 0,
+     "centroid": [
+      0.4636,
+      -0.2986,
+      0.8526
+     ],
+     "decision_mode": "hold",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 1,
+     "nearest_object": {
+      "name": "banana",
+      "dist_m": 0.0118,
+      "dist_xy_m": 0.0073
+     },
+     "apple_pos": [
+      0.5633,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 31,
+     "chunk_index": 256,
+     "grasp_state": "latched",
+     "manipulated_id": 1,
+     "manipulated_state": "visible",
+     "switched_from": 0,
+     "centroid": [
+      0.4641,
+      -0.2988,
+      0.8525
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 1,
+     "nearest_object": {
+      "name": "banana",
+      "dist_m": 0.0118,
+      "dist_xy_m": 0.0074
+     },
+     "apple_pos": [
+      0.5632,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 32,
+     "chunk_index": 257,
+     "grasp_state": "latched",
+     "manipulated_id": 1,
+     "manipulated_state": "visible",
+     "switched_from": 0,
+     "centroid": [
+      0.4642,
+      -0.2988,
+      0.8524
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 1,
+     "nearest_object": {
+      "name": "banana",
+      "dist_m": 0.0118,
+      "dist_xy_m": 0.0075
+     },
+     "apple_pos": [
+      0.5632,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 33,
+     "chunk_index": 258,
+     "grasp_state": "latched",
+     "manipulated_id": 1,
+     "manipulated_state": "visible",
+     "switched_from": 0,
+     "centroid": [
+      0.4639,
+      -0.299,
+      0.8529
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 1,
+     "nearest_object": {
+      "name": "banana",
+      "dist_m": 0.0119,
+      "dist_xy_m": 0.0071
+     },
+     "apple_pos": [
+      0.5632,
+      0.3203,
+      0.85
+     ]
+    },
+    {
+     "k": 34,
+     "chunk_index": 259,
+     "grasp_state": "latched",
+     "manipulated_id": 1,
+     "manipulated_state": "visible",
+     "switched_from": 0,
+     "centroid": [
+      0.4638,
+      -0.2989,
+      0.8528
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 1,
+     "nearest_object": {
+      "name": "banana",
+      "dist_m": 0.0119,
+      "dist_xy_m": 0.0071
+     },
+     "apple_pos": [
+      0.5632,
+      0.3204,
+      0.85
+     ]
+    },
+    {
+     "k": 35,
+     "chunk_index": 260,
+     "grasp_state": "latched",
+     "manipulated_id": 1,
+     "manipulated_state": "visible",
+     "switched_from": 0,
+     "centroid": [
+      0.4644,
+      -0.2989,
+      0.8526
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 1,
+     "nearest_object": {
+      "name": "banana",
+      "dist_m": 0.0119,
+      "dist_xy_m": 0.0075
+     },
+     "apple_pos": [
+      0.5631,
+      0.3203,
+      0.85
+     ]
+    }
+   ],
+   "on_rows_k14_35": [
+    {
+     "k": 14,
+     "chunk_index": 89,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5626,
+      0.3203,
+      0.8652
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0155,
+      "dist_xy_m": 0.0034
+     },
+     "apple_pos": [
+      0.5636,
+      0.3236,
+      0.85
+     ],
+     "subtask_label": "pick",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0658,
+      "place": 0.9334,
+      "home": 0.0008
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 15,
+     "chunk_index": 90,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5636,
+      0.3166,
+      0.8659
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0162,
+      "dist_xy_m": 0.0033
+     },
+     "apple_pos": [
+      0.5634,
+      0.3199,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.3702,
+      "place": 0.6282,
+      "home": 0.0016
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 16,
+     "chunk_index": 91,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5643,
+      0.3187,
+      0.8664
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0165,
+      "dist_xy_m": 0.0018
+     },
+     "apple_pos": [
+      0.5636,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0127,
+      "place": 0.9864,
+      "home": 0.0009
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 17,
+     "chunk_index": 92,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5655,
+      0.3173,
+      0.8655
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0159,
+      "dist_xy_m": 0.0036
+     },
+     "apple_pos": [
+      0.5636,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0398,
+      "place": 0.9583,
+      "home": 0.0019
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 18,
+     "chunk_index": 93,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5583,
+      0.3149,
+      0.8666
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0183,
+      "dist_xy_m": 0.0076
+     },
+     "apple_pos": [
+      0.5636,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.3888,
+      "place": 0.594,
+      "home": 0.0172
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 19,
+     "chunk_index": 94,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5637,
+      0.3191,
+      0.8667
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0168,
+      "dist_xy_m": 0.0013
+     },
+     "apple_pos": [
+      0.5636,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.1224,
+      "place": 0.865,
+      "home": 0.0125
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 20,
+     "chunk_index": 95,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5851,
+      0.3123,
+      0.8641
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.027,
+      "dist_xy_m": 0.023
+     },
+     "apple_pos": [
+      0.5635,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0257,
+      "place": 0.955,
+      "home": 0.0193
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 21,
+     "chunk_index": 96,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5692,
+      0.3214,
+      0.8707
+     ],
+     "decision_mode": "hold",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0215,
+      "dist_xy_m": 0.0059
+     },
+     "apple_pos": [
+      0.5635,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0006,
+      "place": 0.9971,
+      "home": 0.0024
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 22,
+     "chunk_index": 97,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5692,
+      0.3214,
+      0.8707
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0215,
+      "dist_xy_m": 0.0059
+     },
+     "apple_pos": [
+      0.5634,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0,
+      "place": 0.9947,
+      "home": 0.0052
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 23,
+     "chunk_index": 98,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5692,
+      0.3214,
+      0.8707
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0215,
+      "dist_xy_m": 0.0059
+     },
+     "apple_pos": [
+      0.5635,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0,
+      "place": 0.9985,
+      "home": 0.0015
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 24,
+     "chunk_index": 99,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.565,
+      0.3134,
+      0.8656
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.017,
+      "dist_xy_m": 0.0069
+     },
+     "apple_pos": [
+      0.5634,
+      0.3202,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0,
+      "place": 0.9991,
+      "home": 0.0009
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 25,
+     "chunk_index": 100,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5629,
+      0.316,
+      0.8677
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0182,
+      "dist_xy_m": 0.0044
+     },
+     "apple_pos": [
+      0.5634,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0,
+      "place": 0.9997,
+      "home": 0.0003
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 26,
+     "chunk_index": 101,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5629,
+      0.316,
+      0.8677
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0182,
+      "dist_xy_m": 0.0043
+     },
+     "apple_pos": [
+      0.5634,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0,
+      "place": 0.9999,
+      "home": 0.0001
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 27,
+     "chunk_index": 102,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5629,
+      0.316,
+      0.8677
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0182,
+      "dist_xy_m": 0.0043
+     },
+     "apple_pos": [
+      0.5633,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0001,
+      "place": 0.9959,
+      "home": 0.004
+     },
+     "subtask_blocked": "switch",
+     "subtask_would_block": "switch"
+    },
+    {
+     "k": 28,
+     "chunk_index": 103,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5629,
+      0.316,
+      0.8677
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0182,
+      "dist_xy_m": 0.0044
+     },
+     "apple_pos": [
+      0.5633,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "place",
+     "subtask_p": {
+      "pick": 0.0004,
+      "place": 0.9356,
+      "home": 0.064
+     },
+     "subtask_blocked": "switch",
+     "subtask_would_block": "switch"
+    },
+    {
+     "k": 29,
+     "chunk_index": 104,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5606,
+      0.3169,
+      0.8681
+     ],
+     "decision_mode": "hold",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0186,
+      "dist_xy_m": 0.0044
+     },
+     "apple_pos": [
+      0.5633,
+      0.3204,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "home",
+     "subtask_p": {
+      "pick": 0.0008,
+      "place": 0.0917,
+      "home": 0.9074
+     },
+     "subtask_blocked": "switch",
+     "subtask_would_block": "switch"
+    },
+    {
+     "k": 30,
+     "chunk_index": 105,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "manipulated_state": "visible",
+     "switched_from": null,
+     "centroid": [
+      0.5661,
+      0.3139,
+      0.8656
+     ],
+     "decision_mode": "keep",
+     "decision_reason": null,
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0171,
+      "dist_xy_m": 0.007
+     },
+     "apple_pos": [
+      0.5633,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "place",
+     "subtask_argmax": "home",
+     "subtask_p": {
+      "pick": 0.0001,
+      "place": 0.0015,
+      "home": 0.9984
+     },
+     "subtask_blocked": null,
+     "subtask_would_block": null
+    },
+    {
+     "k": 31,
+     "chunk_index": 106,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5661,
+      0.3139,
+      0.8656
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "association_rejected",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0171,
+      "dist_xy_m": 0.007
+     },
+     "apple_pos": [
+      0.5632,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "home",
+     "subtask_argmax": "home",
+     "subtask_p": {
+      "pick": 0.0005,
+      "place": 0.0066,
+      "home": 0.9929
+     },
+     "subtask_blocked": "switch",
+     "subtask_would_block": "switch"
+    },
+    {
+     "k": 32,
+     "chunk_index": 107,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5661,
+      0.3139,
+      0.8656
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0171,
+      "dist_xy_m": 0.007
+     },
+     "apple_pos": [
+      0.5632,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "home",
+     "subtask_argmax": "home",
+     "subtask_p": {
+      "pick": 0.0019,
+      "place": 0.0056,
+      "home": 0.9925
+     },
+     "subtask_blocked": "switch",
+     "subtask_would_block": "switch"
+    },
+    {
+     "k": 33,
+     "chunk_index": 108,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5661,
+      0.3139,
+      0.8656
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0171,
+      "dist_xy_m": 0.007
+     },
+     "apple_pos": [
+      0.5632,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "home",
+     "subtask_argmax": "home",
+     "subtask_p": {
+      "pick": 0.003,
+      "place": 0.0063,
+      "home": 0.9908
+     },
+     "subtask_blocked": "switch",
+     "subtask_would_block": "switch"
+    },
+    {
+     "k": 34,
+     "chunk_index": 109,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5661,
+      0.3139,
+      0.8656
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0171,
+      "dist_xy_m": 0.007
+     },
+     "apple_pos": [
+      0.5632,
+      0.3204,
+      0.85
+     ],
+     "subtask_label": "home",
+     "subtask_argmax": "home",
+     "subtask_p": {
+      "pick": 0.0039,
+      "place": 0.0091,
+      "home": 0.987
+     },
+     "subtask_blocked": "switch",
+     "subtask_would_block": "switch"
+    },
+    {
+     "k": 35,
+     "chunk_index": 110,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "manipulated_state": "occluded",
+     "switched_from": null,
+     "centroid": [
+      0.5661,
+      0.3139,
+      0.8656
+     ],
+     "decision_mode": "occluded",
+     "decision_reason": "unobserved",
+     "exclusion_active": true,
+     "exclusion_manipulated_id": 0,
+     "nearest_object": {
+      "name": "apple",
+      "dist_m": 0.0171,
+      "dist_xy_m": 0.007
+     },
+     "apple_pos": [
+      0.5631,
+      0.3203,
+      0.85
+     ],
+     "subtask_label": "home",
+     "subtask_argmax": "home",
+     "subtask_p": {
+      "pick": 0.0078,
+      "place": 0.038,
+      "home": 0.9542
+     },
+     "subtask_blocked": "switch",
+     "subtask_would_block": "switch"
+    }
+   ],
+   "off_switch_chunk_k29": {
+    "new_id": 1,
+    "switched_from": 0,
+    "decision_mode": "switch",
+    "chunk_index": 254,
+    "server_t_step": 30,
+    "centroid_id1": [
+     0.4644,
+     -0.2989,
+     0.8526
+    ],
+    "prev_id0_chunk": 28,
+    "centroid_id0": [
+     0.5629,
+     0.316,
+     0.8677
+    ],
+    "dist_id1_id0_m": 0.6229,
+    "client_planning_seq": 30,
+    "client_t_step": 232,
+    "apple_pos": [
+     0.5633,
+     0.3204,
+     0.85
+    ],
+    "all_objects_dist_to_id1_m": {
+     "apple": 0.6271,
+     "banana": 0.0119,
+     "orange": 0.0907,
+     "pear": 0.6291,
+     "crate": 0.3169
+    },
+    "nearest_to_id1": {
+     "name": "banana",
+     "dist_m": 0.0119,
+     "dist_xy_m": 0.0075
+    }
+   },
+   "off_chunk_k30": {
+    "new_id": 1,
+    "switched_from": 0,
+    "decision_mode": "hold",
+    "centroid_id1": [
+     0.4636,
+     -0.2986,
+     0.8526
+    ],
+    "prev_id0_chunk": 28,
+    "centroid_id0": [
+     0.5629,
+     0.316,
+     0.8677
+    ],
+    "dist_id1_id0_m": 0.6228,
+    "dist_id1_id0_xy_m": 0.6226,
+    "client_planning_seq": 31,
+    "client_t_step": 240,
+    "base_qpos_xyth": [
+     -5e-06,
+     -8e-06,
+     -3e-06
+    ],
+    "apple_pos": [
+     0.5633,
+     0.3203,
+     0.85
+    ],
+    "crate_pos": [
+     0.5267,
+     0.0106,
+     0.88
+    ],
+    "apple_to_crate_xy_m": 0.3119,
+    "dist_id0_centroid_to_apple_m": 0.0182,
+    "dist_id1_centroid_to_apple_m": 0.6269,
+    "all_objects_dist_to_id1_m": {
+     "apple": 0.6269,
+     "banana": 0.0118,
+     "orange": 0.0916,
+     "pear": 0.6288,
+     "crate": 0.3167
+    },
+    "all_objects_dist_to_id0_m": {
+     "apple": 0.0182,
+     "banana": 0.6299,
+     "orange": 0.6262,
+     "pear": 0.1046,
+     "crate": 0.3078
+    },
+    "nearest_to_id1": {
+     "name": "banana",
+     "dist_m": 0.0118,
+     "dist_xy_m": 0.0073
+    }
+   },
+   "off_transitions_k0_74": [
+    {
+     "k": 0,
+     "grasp_state": "searching",
+     "manipulated_id": 0,
+     "decision_mode": "first",
+     "subtask_label": null
+    },
+    {
+     "k": 2,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "decision_mode": "keep",
+     "subtask_label": null
+    },
+    {
+     "k": 13,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "decision_mode": "keep",
+     "subtask_label": null
+    },
+    {
+     "k": 27,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "decision_mode": "occluded",
+     "subtask_label": null
+    },
+    {
+     "k": 29,
+     "grasp_state": "latched",
+     "manipulated_id": 1,
+     "decision_mode": "switch",
+     "subtask_label": null
+    },
+    {
+     "k": 40,
+     "grasp_state": "latched",
+     "manipulated_id": 2,
+     "decision_mode": "switch",
+     "subtask_label": null
+    },
+    {
+     "k": 52,
+     "grasp_state": "closing",
+     "manipulated_id": 2,
+     "decision_mode": "keep",
+     "subtask_label": null
+    },
+    {
+     "k": 53,
+     "grasp_state": "held",
+     "manipulated_id": 2,
+     "decision_mode": "occluded",
+     "subtask_label": null
+    },
+    {
+     "k": 65,
+     "grasp_state": "placed",
+     "manipulated_id": 2,
+     "decision_mode": "occluded",
+     "subtask_label": null
+    }
+   ],
+   "on_transitions_k0_74": [
+    {
+     "k": 0,
+     "grasp_state": "searching",
+     "manipulated_id": 0,
+     "decision_mode": "first",
+     "subtask_label": null
+    },
+    {
+     "k": 2,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "decision_mode": "keep",
+     "subtask_label": "pick"
+    },
+    {
+     "k": 13,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "decision_mode": "keep",
+     "subtask_label": "pick"
+    },
+    {
+     "k": 27,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "decision_mode": "occluded",
+     "subtask_label": "place"
+    },
+    {
+     "k": 56,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "decision_mode": "keep",
+     "subtask_label": "pick"
+    },
+    {
+     "k": 57,
+     "grasp_state": "held",
+     "manipulated_id": 0,
+     "decision_mode": "occluded",
+     "subtask_label": "pick"
+    },
+    {
+     "k": 59,
+     "grasp_state": "latched",
+     "manipulated_id": 0,
+     "decision_mode": "keep",
+     "subtask_label": "pick"
+    },
+    {
+     "k": 60,
+     "grasp_state": "closing",
+     "manipulated_id": 0,
+     "decision_mode": "keep",
+     "subtask_label": "place"
+    }
+   ],
+   "apple_disp_from_start_m_k14_35_max": 0.0134,
+   "apple_episode_off": {
+    "first": [
+     0.5582,
+     0.3323,
+     0.85
+    ],
+    "last": [
+     0.478,
+     -0.0021,
+     0.8596
+    ],
+    "max_disp_from_start_m": 0.4418,
+    "last_xy_to_crate_m": 0.0506,
+    "max_abs_base_qpos_xyth": 0.000147
+   },
+   "apple_episode_on": {
+    "first": [
+     0.5582,
+     0.3323,
+     0.85
+    ],
+    "last": [
+     0.6025,
+     0.3204,
+     0.85
+    ],
+    "max_disp_from_start_m": 0.0466,
+    "last_xy_to_crate_m": 0.3189,
+    "max_abs_base_qpos_xyth": 0.000834
+   },
+   "rows_k14_28_identical_off_vs_on_fields": "grasp_state, manipulated_id, centroid, decision_mode, exclusion_active",
+   "k_identical_off_vs_on": [
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28
+   ]
+  }
+ },
+ "figures": [],
+ "baseline_check": {
+  "matched": null,
+  "note": "not run: lead scoped this as a CPU-only recomputation of existing records (no GPU/MuJoCo/server)."
+ },
+ "lead_comparison": {
+  "M1_before_switch_129_of_129": "same (129 / 129)",
+  "M2_ep1807_0.960_ep0_0.973_ep500_0.965_ep1200_0.938": "same (0.9600, 0.9735, 0.9646, 0.9381)",
+  "M3_chunk30_label": "decision.mode==switch is at k=29 (chunk_index 254, server t_step 30); k=30 (chunk_index 255, t_step 31) has id 1 with mode hold. Both recorded."
+ },
+ "verdict": "Recomputation. M1 and M2 match the lead values. Baseline not run (out of scope).",
+ "not_measured": [
+  "regression baseline (CPU-only scope)",
+  "figures (lead: not needed)"
+ ]
+}

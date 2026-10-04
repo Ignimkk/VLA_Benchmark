@@ -2264,3 +2264,31 @@ reference 보다 나빠진 chunk 0/75, T5 의 핵심 합격 조건 통과). **�
 `T7`(목적함수의 `w_slack` 대 `w_track` 비율, cuRobo 의 attached-object 설계와의 대조,
 그리퍼만 남기는 진단, 활성 제약 전체 분포 기록). 상세는 [`AG3S_T0T6_LOG.md`](AG3S_T0T6_LOG.md)
 의 **T6** 절 하위 항목과 `benchmark/ag3s/docs/handoff/T7.task.md`.
+
+## SUBTASK — subtask label 로 "attention 이 무엇을 위한 것인가" 를 정한다 (2026-09-30 ~ 2026-10-04)
+
+**왜.** AG3S 는 attention target 을 ESDF 에서 지운다(carve). place 때 바구니를 지우지 않는 것은 그동안 **크기 rule**
+(T26 admissibility — 잡을 수 없는 크기는 target 이 못 된다) 에 기대고 있었다. 사용자 질문: pi0.5 의 subtask 로 attention 이
+pick 을 위한 것인지 place 를 위한 것인지 알 수 있나.
+
+**한 일과 판정 (순서대로).**
+
+| 단계 | 무엇 | 결과 · 사용자 판정 |
+|---|---|---|
+| SUBTASK (a) | openpi 에 subtask 생성 코드가 있나, tied LM head 로 zero-shot decode | 코드 없음. decode 는 되지만 16D 는 subtask text 를 학습한 적 없어 불안정 (FAST action token 으로 무너짐) |
+| SUBTASK-b | hidden-state probe (KV cache layer 4 위 linear classifier) 로 pick / place / home | 읽힌다 — State 의 gripper 를 가려도 같다 (image 에서 읽음) |
+| spec | 사용자: **pick 이면 target 을 지우고, place / home 이면 안 지운다.** 쥔 사과의 carve → attach 는 latch HELD. home + latch PLACED → 놓인 target 해제 (안 (b)) | 확정 |
+| SUBTASK-c · MERGE-o4 | gate 구현 (`--subtask-gate`, 기본 off) · `o4-gpu-parallel` (T38) 을 main 에 merge | merge 뒤 기준선 비트 동일 |
+| SUBTASK-d | closed-loop gate on vs off (T39 E3b 48 run 과 짝) | PLACED 뒤 carve 가 사라짐. 해제 뒤 uncertified HOLD 가 남음. lead 의 "PLACED 전 차단이 문제" 해석은 **틀려 철회** (사용자 지적, audit §11) |
+| SUBTASK-e | gate 가 비운 target 은 인증 (`subtask_no_target`) | 해제 뒤 HOLD 감소 · 준비 자세 복귀 |
+| SUBTASK-f | 놓은 뒤 home 이면 "바구니만 보임" (`no_admissible`) 도 인증 | 끝까지 멈추는 run 0. 남은 `no_seed` HOLD 1 run 은 **그대로 둔다** (사용자 판정) |
+
+**열린 것.**
+- **gate 기본값은 on** (사용자 판정 2026-10-04, SUBTASK-g `bf65756`). 끄려면 `--no-subtask-gate` (그때는 SUBTASK 이전 동작 —
+  place 중 바구니는 크기 rule 로 지켜지지만 놓은 뒤 놓인 사과 · 집던 자리 · 옆 과일을 carve). label 이 없는 모드 (`--no-attention` ·
+  `--no-perception` · `--no-safe`, offline 재생) 는 기동하되 gate off. 검증: 기준선 그대로, 기본 on = SUBTASK-f gate on, off = T39 E3b (비트 동일).
+  크기로 갈리지 않는 목적지 (작은 그릇 등) 에서 gate off 가 place 중에 지우는지는 **미측정**.
+- 남은 HOLD: SUBTASK-f 에서 `no_seed` (attention 점을 못 찾음) 1 run 은 **그대로 둔다** (사용자 판정 2026-10-04).
+- SUBTASK (c) 의 B (subtask co-training — text 를 학습시켜 attention 이 subtask 에 조건부가 되게) 는 하지 않았다.
+
+상세와 수치 · figure 는 [`AG3S_T0T6_LOG.md`](AG3S_T0T6_LOG.md) 의 **SUBTASK** 절, 판단의 흐름은 [`handoff/SUBTASK.audit.md`](handoff/SUBTASK.audit.md).

@@ -293,6 +293,28 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **first-divergence chunk (처음 갈라진 chunk)** | 한 쌍에서 E0 와 E3b 의 **실행된 action** 의 차이가 처음 문턱 (T39 는 1e-3, 1e-2, 1e-1) 을 넘은 step 이 속한 chunk |
 | **HOLD · HOLD kind** | `--safe-gate reasons` 에서 서버 verdict 가 chunk 를 막는 것 (`gate_action = hold`, IPC 응답 `unsafe`). 막은 사유의 분류가 HOLD kind (`collision` · `uncertified` · `unverified`). 한 chunk 가 둘 이상의 kind 를 가질 수 있다 |
 
+### subtask · gate · 놓은 뒤 인증 (SUBTASK, 2026-10-04 추가)
+
+| 용어 | 뜻 |
+|---|---|
+| **subtask (label `pick` / `place` / `home`)** | "지금 이 순간 로봇이 하는 일" 의 이름. pi0.5 논문은 subtask 를 문장 ("pick up the pillow") 으로 먼저 생성하고 action 을 그 문장에 조건부로 만든다. 이 기록의 label 은 문장이 아니라 세 class 이다 — `pick` (집으러 가기 · 닫기, dataset `phase_index` 0–5), `place` (들고 가서 놓기, 6–9), `home` (놓은 뒤 준비 자세로 돌아가기, 10–13). 서버가 probe 로 요청마다 확률 `p(pick/place/home)` 을 내고, 연속 N 요청 (`subtask_confirm_frames`, 기본은 `target_confirm_frames`) 같은 argmax 면 **확정 label** (debounce) 로 본다 |
+| **FAST action token** | pi0.5 가 action 을 discrete token 으로 말할 때 쓰는 vocab 영역 (id 254,976–257,023, 2,048 개). openpi 원형 prompt `Task: …, State: …;\nAction: ` 뒤에 text 를 생성시키면 대부분이 이 token 이라 "깨진 영어" 처럼 보인다 (GitHub issue 의 "garbled words"). 고장이 아니라 action 을 말하는 중이다 |
+| **tied LM head** | Gemma 가 output logits 를 만들 때 embedding table 의 전치 (`x @ E.T`) 를 그대로 쓰는 것. 별도 language head weight 가 없어도 checkpoint 안의 embedding 만으로 prefix hidden 에서 다음 token 을 계산할 수 있다 — openpi 에 subtask 생성 코드가 없어도 우리가 decode 를 구현할 수 있는 근거 |
+| **prefix-LM decoding** | image · prompt token (prefix) 은 서로 bidirectional 로 보고, 새로 생성하는 token 만 causal 로 이어 붙이며 greedy 로 한 token 씩 뽑는 decode. 이 기록의 구현은 KV cache 없이 token 마다 전체를 다시 forward 한다 |
+| **hidden-state probe** | 얼린 모델의 중간 표현 (hidden state · KV cache · attention) 위에 **작은 분류기 하나** (StandardScaler + logistic regression) 를 학습해 그 표현에서 어떤 정보가 선형으로 읽히는지 보는 것. VLA 는 재학습하지 않는다. 여기서는 pick / place / home 을 읽는다 |
+| **`kv_L4`** | probe 의 입력 중 가장 좋았던 feature. Gemma prefix KV cache 의 layer 4 **V** 를 `[text token 평균 \| image token 평균]` (512 차원) 으로 줄인 것. action expert 가 attend 하는 바로 그 cache 이고, `AttentionSampler` 가 AG3S attention 을 위해 이미 계산하므로 추가 forward 가 없다 |
+| **AUROC** | 두 집단 (예: held 프레임 대 reach 프레임) 의 점수 분포가 얼마나 갈리는지의 순위 기반 지표. 0.5 = 무작위, 1.0 = 완전 분리. 임계값을 고르지 않는다. **macro AUROC** 는 class 별 one-vs-rest AUROC 의 평균 |
+| **gripper 가림 (mask (a) / (b))** | probe 가 State 문자열의 gripper 값을 읽어서 맞히는 것이 아닌지 보는 control. 정책 입력의 `state[7] = state[15] = 1.0` 으로 덮는다. **(a)** = 가리지 않은 입력으로 학습한 probe 를 가린 입력에 적용, **(b)** = 가린 입력으로 다시 학습 (`probe.py`) |
+| **subtask gate (`clustering.subtask_gate`)** | 확정 label 이 `place` 나 `home` 이면 `TargetConfirm` 이 **새 target 을 채택 (`first`) 하지도, 다른 후보를 세지도 (`switch`) 않게** 하는 규칙의 on/off 스위치 (규칙 자체는 사용자 spec 을 code 로 옮긴 것이고, 스위치는 같은 seed 로 끈 실행과 비교해 검증하려고 달았다). **기본 on** (SUBTASK-g, 2026-10-04 사용자 판정; 끄려면 `serve_safe --no-subtask-gate`. 구현 시점 SUBTASK-c 의 기본값은 off 였다). 이 때 grounding status 는 `subtask_gated` 이고 target 이 없다 (`no_target`). 지금 manipulated 인 물체 · admissibility · latch · attach / detach 는 건드리지 않는다. 사용자 spec 은 "pick 이면 target 을 지운다, place 면 지우지 않는다" 이다 |
+| **latch 상태 (SEARCHING / LATCHED / CLOSING / HELD / PLACED)** (보강) | 위 "잠금 (latch)" 의 상태들. **SEARCHING** = 대상을 아직 못 정함, **LATCHED** = 대상을 정했으나 쥐지 않음, **CLOSING** = 손을 닫는 중 (파지 확인 전), **HELD** = 파지 확인 · `attach` 됨 (쥔 물체가 robot tree 에 편입), **PLACED** = 목적지에 놓고 `detach` 됨. SUBTASK 에서 쓰는 규칙: 쥔 물체의 carve → attach 전환은 label 이 아니라 **latch 가 HELD 가 되는 물리 증거** 가 일으킨다 |
+| **B3 해제 (`subtask_released`)** | gate on ∧ 이번 episode 에 latch 가 PLACED 에 도달 (`placed_seen`, `reset()` 만 지우는 sticky 플래그) ∧ 확정 label `home` ∧ frozen 아님 ∧ 지금 manipulated 가 있으면 → **기존 manipulated 를 해제** 한다 (carve 없음). "놓은 뒤 home" 이라는 뜻이다 — PLACED 를 요구하는 이유는 `attach_revoked` (거짓 attach 회수) 도 detach 이지만 사과는 놓이지 않았기 때문이다 (사용자 안 (b), 2026-10-02) |
+| **`placed_seen`** | latch 가 이번 episode 에 PLACED 에 한 번이라도 도달했는가. B3 해제와 SUBTASK-f 인증이 읽는다 |
+| **`no_admissible`** | grounding status 의 하나. 보이는 cluster 가 있는데 **전부 admissibility (잡을 수 있는 크기인가 · destination 과 안 겹치나) 를 통과하지 못해** 채택할 target 이 없다. 이 과제에서는 놓은 뒤 **바구니 (crate) 만 보이는** 프레임이 이것이다 |
+| **`no_seed`** | grounding status 의 하나. attention 에서 seed (위 "씨앗") 를 하나도 못 골라 cluster 를 만들 수 없다. 원인은 이 기록으로 가리지 못했다 (SUBTASK-f) |
+| **`subtask_no_target` (reason kind)** | verdict reason 의 한 kind. gate 가 **일부러** target 을 비운 프레임 (carve · manipulated · attach 전부 없음, validity `valid`) 을 **인증된 기하** 로 보고 chunk 를 실행하되, "target 이 없는데 왜 실행했나" 를 응답 · 서버 로그 · `summary_json.verdict.reasons` 에 남기는 사유. 처리는 `execute` 이고 `uncertified` 가 아니다. SUBTASK-e 는 grounding `subtask_gated`, SUBTASK-f 는 거기에 (gate on ∧ label home ∧ `placed_seen`) 인 `no_admissible` 을 더했다 |
+| **`uncertified` (HOLD kind)** (보강) | 위 `geometry_certified` 가 False 라서 막은 HOLD. SUBTASK-d 에서 gate 가 비운 target 이 이쪽으로 떨어져 해제 뒤 984 / 984 chunk 가 HOLD 였다 |
+| **HOLD (`--safe-hold-mode fixed`)** (보강) | 판정이 chunk 를 막을 때 client 가 하는 동작. **HOLD 에 들어갈 때 직전 step 에 명령한 팔 목표 (`d.ctrl`) 를 `q_hold` 로 한 번 잡아 계속 유지** 하고 gripper 는 마지막 명령을 유지한다 (열지도 닫지도 않는다; `pi05_infer.py` T23). 막힌 chunk 에서는 정책 action 이 한 step 도 실행되지 않으므로, HOLD 가 길면 로봇이 **그 자세에 멈춘다** — SUBTASK-d 의 해제 뒤 HOLD 가 로봇을 준비 자세로 못 돌아가게 한 이유이다 |
+
 ---
 
 > **갈림길에서 안 고른 선택지** — 맨 아래 **"선택한 것과 안 고른 것 — 되돌아올 지점"** 절.
@@ -4463,3 +4485,512 @@ first chunk (reset 직후, 첫 요청의 JIT 등이 얹힌다) 는 run 마다 �
 - 결과 커밋: benchmark main `318c343` (S2 · figure) · `80dc4cd` (S2-3b).
 - 측정: `handoff/T39.verify.json` (`numbers.s2_3b` 포함) · 설계 `handoff/T39.task.md` · 구현 보고 `handoff/T39-S1.impl.md` · 진행 `handoff/T39.progress.md`. raw 는 `outputs/verify/T39/` (`s21/` · `runs/` · `s23/` · `p/`).
 - figure: `figures/t39/` — `t39-summary-table` · `t39-paired-2x2` · `t39-success-matrix` · `t39-hold-verdict` · `t39-contact-height` · `t39-chunk-time` · `t39-s23b-divergence` · 갈린 쌍 15 개의 `t39-scene-<episode>_<seed>` (각각 `.json` sidecar 가 있다).
+
+---
+
+## SUBTASK — pi0.5 의 subtask 로 attention 의 목적을 읽고, pick 일 때만 target 을 지운다 (2026-09-30 ~ 2026-10-04)
+
+**이 절이 답하는 물음.** (1) AG3S 는 attention 이 가리키는 target 을 ESDF 에서 지운다 (carving). place 때 목적지(바구니)를 안 지우는 것은 지금 **크기 rule (admissibility)** 에 기대고 있다 — 그래서 사용자가 물었다: *pi0.5 의 subtask 로 attention 이 무엇을 위한 것인지 알 수 있는가.* (2) 알 수 있다면 그 label 로 carving 을 어떻게 제어하고, closed loop 에서 무엇이 바뀌고 무엇이 막히는가.
+
+**gate 란.** 이 절에서 **gate = subtask label 을 보고 attention target 을 지울지 말지 정하는 규칙**이다 — label 이 `pick` 이면 지운다 (carving), `place` · `home` 이면 **새로 지울 대상을 정하지 않는다**, `home` 이고 latch 가 PLACED 이면 **이미 놓인 target 의 carving 을 해제**한다 (B3 해제). 새 장치가 아니라 **사용자 규칙 하나 (§4) 를 code 로 옮긴 것**이다. on / off 스위치 (`clustering.subtask_gate`, serve flag `--subtask-gate`) 는 같은 seed 로 끈 실행과 켠 실행을 비교해 **검증하려고** 달았다.
+
+**읽는 법과 출처 규약.**
+
+- 수치는 아래 `handoff/*.verify.json` 의 `numbers` 에서 왔다: [`SUBTASK.verify.json`](handoff/SUBTASK.verify.json) (zero-shot decode · AUROC 재계산) · [`SUBTASK-b.verify.json`](handoff/SUBTASK-b.verify.json) (hidden-state probe) · [`SUBTASK-extra.verify.json`](handoff/SUBTASK-extra.verify.json) (기존 기록의 재계산: PLACED 뒤 switch · run 별 probe accuracy · ep1828 chunk 별 기록) · [`MERGE-o4.verify.json`](handoff/MERGE-o4.verify.json) (merge 뒤 기준선) · [`SUBTASK-d.verify.json`](handoff/SUBTASK-d.verify.json) (gate on 대 off) · [`SUBTASK-e.verify.json`](handoff/SUBTASK-e.verify.json) · [`SUBTASK-f.verify.json`](handoff/SUBTASK-f.verify.json) · [`SUBTASK-g.verify.json`](handoff/SUBTASK-g.verify.json) (gate 기본 on). 이 파일들에 없는 수치는 쓰지 않았다.
+- 구현 내용은 `SUBTASK-c.impl.md` · `SUBTASK-e.impl.md` · `SUBTASK-f.impl.md` · `SUBTASK-g.impl.md` · `MERGE-o4.impl.md` 에서 왔다. **구현 보고서에만 있는 수치 (단위 테스트 개수 · 회귀 passed 수 · parity 등) 는 이 절에 쓰지 않았고, 해당 impl.md 로 링크했다.** 판단 흐름과 사용자 판정은 `SUBTASK.audit.md` (§1–§11) 와 `SESSION_STATE.md` 의 2026-09-30 ~ 2026-10-04 행에서 왔다.
+- 시각은 UTC 이고 git commit 시각과 `verify.json` 의 `date` 이다. 실행 구간 (V1 시작 · 끝) 은 `verify.json` 의 `V1.start` · `V1.end`.
+- **이 절은 무엇이 어떻게 측정됐는지만 적는다.** 원인을 측정하지 않은 것은 "미측정" 으로 적었다.
+- 새 용어 (subtask · FAST action token · tied LM head · prefix-LM decoding · hidden-state probe · AUROC · subtask gate · latch 상태 · B3 해제 · `subtask_no_target` · `no_admissible` · `no_seed` · HOLD …) 는 위 **"용어 → subtask · gate · 놓은 뒤 인증 (SUBTASK)"** 에 있다.
+
+### 결과 한 장
+
+| 단계 | 물음 | 답 (측정된 것) |
+|---|---|---|
+| **SUBTASK (a)** · 2026-09-30 | subtask 문장을 zero-shot 으로 읽을 수 있나 | **못 쓴다.** 16D (serve 중인 checkpoint) 는 held 구간 36 frame 중 30 에서 영어 대신 FAST action token 을 낸다. 점수 분리도 AUROC 는 episode 마다 0.502–0.854 로 흔들린다 |
+| **SUBTASK-b** · 2026-10-01 | hidden state 에서 pick / place / home 이 읽히나 | **읽힌다.** `kv_L4` probe 가 val 0.981 · closed-loop 0.959 (3-class accuracy). State 의 gripper 값을 가려도 같다 (0.980) |
+| **SUBTASK-c** · 2026-10-02 | label 로 carving 을 제어하는 gate 를 만들 수 있나 | 만들었다 (이 시점의 기본값은 off). 추가 forward 없음. 기준선은 그대로다 (아래 MERGE-o4) |
+| **MERGE-o4** · 2026-10-02 | T38 GPU 가속과 합쳐도 기준선이 같은가 | **legacy 4/4 · cuRobo 4/4 비트 동일** |
+| **SUBTASK-d** · 2026-10-02 | gate on 의 closed loop (48 쌍) | PLACED 뒤 carving 이 965 / 1051 → 57 / 1041 chunk 로 줄고, 해제 24 / 24 run. **그러나 해제 뒤 984 / 984 chunk 가 `uncertified` HOLD** |
+| **SUBTASK-e** · 2026-10-03 | gate 가 비운 target 을 인증하면 | 해제 뒤 HOLD **984 → 232** / 984 chunk. 왼팔이 준비 자세로 돌아온다 (거리 중앙값 1.154 → 0.113 rad). 남은 232 는 `no_admissible` (바구니만 보임) |
+| **SUBTASK-f** · 2026-10-03 | 놓은 뒤 home 이면 `no_admissible` 도 인증하면 | 해제 뒤 HOLD **232 → 28** / 984 chunk (1 run, `no_seed`). 끝까지 `no_admissible` HOLD 인 run 7 → 0 |
+| **SUBTASK-g** · 2026-10-04 | gate 를 기본 on 으로 (사용자 판정) | 기준선 sha1 이 SUBTASK-f 와 같고, **플래그 없음 = SUBTASK-f 의 gate on**, **`--no-subtask-gate` = T39 E3b** — 2 run 씩 실행된 action · planning action 이 같다 |
+
+**gate 를 끄고 켠 네 구성의 비교** (같은 24 episode × 2 seed = 48 쌍, 같은 policy seed · 같은 warmup, 서버 flag 는 E3b 와 같고 gate 만 다르다). "gate off" 는 T39 의 E3b 48 run 이다.
+
+| 항목 | gate off (T39 E3b) | gate on · SUBTASK-d | gate on · SUBTASK-e | gate on · SUBTASK-f |
+|---|---|---|---|---|
+| success / grasp / place | 29 / 35 / 29 | 28 / 34 / 28 | 28 / 34 / 28 | 28 / 34 / 28 |
+| latch PLACED 에 도달한 run | 25 | 24 | 24 | 24 |
+| B3 해제가 일어난 run | 0 | 24 | 24 | 24 |
+| HOLD chunk 총수 (3,600 중) · HOLD 가 있는 run | 294 · 18 | 1,198 · 34 | 446 · 24 | **242 · 16** |
+| 　`uncertified` HOLD chunk | 89 | 984 | 232 | **28** |
+| 　`collision` / `unverified` HOLD chunk | 198 / 62 | 209 / 62 | 207 / 62 | 207 / 62 |
+| 해제 뒤 (984 chunk) HOLD | 해제 없음 | 984 | 232 | **28** |
+| 해제 뒤 clearance 최솟값 (mm) | — | −1.409 | +0.150 | +0.150 |
+| 왼팔 마지막 자세의 준비 자세 거리, 중앙값 · p95 (rad) | 0.115 · 0.424 | 1.154 · 1.886 | 0.113 · 0.561 | 0.109 · **0.164** |
+| 끝까지 HOLD 인 run (t = 75 에서 HOLD) · 그중 `no_admissible` 로만 | 5 · 2 | — | 12 · 7 | 6 · **0** |
+| 해제 뒤 MuJoCo 접촉 (dist < 0) | 0 | 0 | 0 | 0 |
+
+(출처: `SUBTASK-d.verify.json` `V2_summary_*` · `SUBTASK-e.verify.json` `summary_on_*` · `SUBTASK-f.verify.json` `summary_*`. 왼팔 자세 거리는 해제가 있는 24 run 의 control step 599 값이고 gate off 열은 PLACED 가 있는 25 run 이다. 정의는 `verify.json` `definitions` — 준비 자세 = control step 0 (warm-up 1,000 step 뒤) 의 16-D 관절값. d 열의 "끝까지 HOLD" 는 이 지표를 d 에서 계산하지 않아 비웠다.)
+
+![SUBTASK-d 표](figures/subtask-d/subtask-d-table.png)
+
+[`figures/subtask-d/subtask-d-table.png`](figures/subtask-d/subtask-d-table.png) — 표. gate off 대 on 의 짝 2×2 와 PLACED 전후 항목.
+[`figures/subtask-e/subtask-e-table.png`](figures/subtask-e/subtask-e-table.png) — 표. off · d · e 세 쪽. [`figures/subtask-f/subtask-f-table.png`](figures/subtask-f/subtask-f-table.png) — 표. e 와 f 의 차이.
+
+### 타임라인
+
+| 시각 (UTC) | STEP | 무엇 |
+|---|---|---|
+| 2026-09-30 10:16 | **SUBTASK (a)** audit | 사용자 질문. subtask 생성 코드 · zero-shot decode 측정 (lead). 사용자 판정: 우리 16D checkpoint (`…/29999`) 를 쓴다 |
+| 2026-10-01 | **SUBTASK-b** (`verify.json` 날짜) | hidden-state probe. 사용자 승인: "b 를 gpu 에 올려 테스트" |
+| 2026-10-02 | **사용자 spec** · 확정 두 건 · 안 (b) | "phase 가 pick 이면 target 을 지운다, place 면 지우지 않는다" |
+| 2026-10-02 09:42:05 | **SUBTASK-c** 커밋 | benchmark `4a8a051` (code) · `5110dbc` (문서) · 루트 `0057f70` (tests) |
+| 2026-10-02 09:54:30 | **MERGE-o4** 커밋 | main `2016f30` — `o4-gpu-parallel` (T38 GPU 가속) merge |
+| 2026-10-02 19:00 → 20:11:40 | **SUBTASK-d** V1 (gate on 48 run) | `verify.json` 날짜 20:18. 같은 날 18:45 착수 |
+| 2026-10-03 | **정정** (audit §11) | lead 가 "문제 2" 를 철회. 2026-10-04 `SUBTASK-extra.verify.json` 이 근거 숫자를 기존 기록에서 다시 계산했다 |
+| 2026-10-03 05:02:10 | **SUBTASK-e** 구현 커밋 | benchmark `a7994c0` · 루트 `ff8de30` (tests) |
+| 2026-10-03 05:17 → 06:28 | SUBTASK-e V1 | `verify.json` 날짜 06:38 |
+| 2026-10-03 11:44:00 | **SUBTASK-f** 구현 커밋 | benchmark `ce92fd1` · 루트 `7fca003` (tests) |
+| 2026-10-03 12:07 → 13:45 | SUBTASK-f V1 (**12:21 에 pod 메모리 OOM** 으로 3 run 을 다시 돌렸다) | `verify.json` 날짜 13:52, 결과 커밋 13:53:05 `0f77081` |
+| 2026-10-04 | **사용자 판정: subtask gate 를 기본 on 으로 한다** (남은 `no_seed` HOLD 는 그대로 둔다) | `SESSION_STATE.md` 의 2026-10-04 행에 기록됨 |
+| 2026-10-04 06:11 → 06:30 | **SUBTASK-g** 검증 (baseline 06:11:12–06:12:43, 플래그 없음 06:12:44–06:21:51, `--no-subtask-gate` 06:21:51–06:30:52) | benchmark `bf65756` · 루트 `54399b8` (tests). `verify.json` 날짜 06:39:29 |
+
+---
+
+### 1. 문제 — place 때 안 지우는 것이 크기 rule 에 기대고 있다
+
+AG3S 는 attention 1 등 cluster 를 target 으로 삼고, 쥐기 전에는 그것을 ESDF 에서 **지운다** (carving; target-free layer 와 contact margin). place 때 바구니를 지우지 않는 것은 지금은 *규칙* 이다 (lead 가 코드를 읽어 정리한 것, audit §9):
+
+| 역할 | 누가 정하나 | 근거 |
+|---|---|---|
+| manipulated 후보 (지울 수 있는 것) | **크기** — 잡을 수 있는 크기인가 | `admissibility` (가장 좁은 PCA 주축 extent ≤ gripper 최대 개도) · `_exclusion_gate` |
+| destination (지우지 않는 것) | **크기** — 못 잡는 크기, 또는 등록된 destination 과 겹침 | `DestinationRegistry` |
+| attach / detach | 물리 증거 | `grasp_latch.py` |
+
+crate 는 "너무 커서" carving 에서 빠진다. 이 rule 은 목적지가 **크기로 갈리지 않는** 경우 (bowl · plate · 쌓기 · 건네기) 에는 깨질 수 있다 — 이 논리는 코드를 읽은 것이고 그런 목적지로 측정한 적은 없다 (**미측정**). 그래서 질문이 나왔다: 모델이 지금 무엇을 하는 중인지 (**subtask**) 를 직접 말해 주면 크기 대신 그것으로 갈라 볼 수 있지 않은가.
+
+### 2. SUBTASK (a) — subtask 문장을 zero-shot 으로 읽어 본다 (2026-09-30 10:16)
+
+**먼저 알게 된 것 (lead 의 조사, audit §1).** openpi 에는 subtask 를 생성하는 코드가 없다. 그러나 Gemma 는 **tied LM head** 라 weight 는 checkpoint 안에 이미 있고, prefix-LM decoding (~100 줄) 으로 영어 subtask 를 만들 수 있다. 공개된 `pi05_base` 는 `caption en\n` 에 `Subtask: pick up apple` 로 답해 학습 format 이 `Subtask: …` 임을 스스로 드러낸다.
+
+**issue 의 "garbled words" 는 FAST action token 이다.** openpi 원형 prompt 뒤 생성 token 192 개 중 187 개 (97.4 %) 가 FAST 영역 (id 254,976–257,023) 이다 — `verify.json` 이 재계산한 값. 이 192 개는 `Action:` 으로 끝나는 openpi 원형 prompt 와 `Subtask:` 로 끝나는 prompt 를 합친 것이고, openpi 원형만 보면 93 / 96 (96.9 %) 이다 (audit 의 문장은 원형 prompt 하나의 값처럼 읽히지만 합계다).
+
+**우리 16D checkpoint 에 그 head 가 남아 있나.** LLM 은 그대로이고 눈 (SigLIP) 이 바뀌었다 — pi05_base 대비 weight 상대 차이 `‖w_16d − w_base‖ / ‖w_base‖` (LoRA leaf 제외):
+
+| 부분 | leaf 수 | 풀링 상대 차이 | 최대 leaf |
+|---|---|---|---|
+| Gemma 2B LLM | 9 | 1.661e-3 | 1.6615e-3 |
+| action expert LLM | 11 | 1.662e-3 | 1.727e-3 |
+| SigLIP (눈) | 23 | 5.85e-2 (중앙값 8.4e-3) | 0.1732 (`PaliGemma/img/head/kernel`) |
+
+LoRA 가 `.*llm.*` 을 얼리므로 LLM 의 차이는 bf16 저장 반올림 수준이고, SigLIP 은 얼림 대상이 아니라 바뀐다. 16D 학습 loss 는 action flow-matching MSE 뿐이고 prompt 는 full instruction 12 종이라 **subtask text 는 학습된 적이 없다.**
+
+**측정 (246 frame).** 입력은 기록된 closed-loop rollout 네 개 (`20260925_ep1807` 75 frame + `20260925_train/ep0 · ep500 · ep1200` 각 57 frame; 전부 16D checkpoint 의 headless MuJoCo 기록이고 dataset 재생이 아니다). 참값 phase 는 MuJoCo qpos 로 정했다 — reach (gripper 열림 · 과일 crate 밖) → pick, held (gripper 닫힘) → place, released (gripper 열림 · 과일 crate 안) → home. frame 수는 ep1807 reach 19 · held 13 · released 43, ep0 8 · 7 · 42, ep500 7 · 8 · 42, ep1200 18 · 8 · 31 (released 합 158). variant 셋: `base` (`pi05_base`), `ft16d` (served 16D, LoRA on), `ft_nolora` (16D 에서 `lora_b` = 0).
+
+![subtask 추론 경로](figures/subtask/subtask-inference-paths.png)
+
+[`figures/subtask/subtask-inference-paths.png`](figures/subtask/subtask-inference-paths.png) — 도식. ① pi0.5 논문 (prefix forward → AR text decode → action expert), ② 우리 checkpoint 의 실제 경로 (prefix forward 1 회 → KV cache 만 남고 hidden 은 버려진다, text 를 한 token 도 생성하지 않는다), ③ subtask 를 꺼내는 세 길 ((a) text decode · (b) hidden-state probe · (c) subtask co-training).
+
+![ep1807 의 scene 과 각 variant 가 말한 subtask](figures/subtask/subtask-scene-ep1807.png)
+
+[`figures/subtask/subtask-scene-ep1807.png`](figures/subtask/subtask-scene-ep1807.png) — 실제 씬. ep1807 의 reach → held → released 다섯 시점의 두 카메라와, 세 variant 가 template `Task: {p};\n` 에서 말한 문장. `pi05_base` 는 "pick up red energy drink" 처럼 object 를 지어내고, served `ft16d` 는 held 시점 셋에서 `<action tokens>` 를 낸다.
+
+![template 탐색](figures/subtask/subtask-template-discovery.png)
+
+[`figures/subtask/subtask-template-discovery.png`](figures/subtask/subtask-template-discovery.png) — 표. 14 template × 3 frame × 3 variant 를 class (영어 · 빈 문자열 · action token) 로 센 것: `base` 영어 27 · 빈 6 · action 9, `ft16d` 10 · 2 · 30, `ft_nolora` 15 · 1 · 26.
+
+**(1) 점수 분리도 — AUROC.** 후보 `pick up the X` / `place the X in the basket` / `return to home position` 의 log-likelihood 로 만든 점수. held 열은 Δ = log p(place) − log p(pick) 로 held 대 reach, released 열은 home − max(pick, place) 로 released 대 나머지.
+
+| variant | held vs reach: ep1807 · ep0 · ep500 · ep1200 | released vs rest: ep1807 · ep0 · ep500 · ep1200 |
+|---|---|---|
+| pi05_base | 0.632 · 0.964 · 1.000 · 0.868 | 0.935 · 0.494 · 0.332 · 0.355 |
+| **16D ft (served)** | **0.502 · 0.571 · 0.750 · 0.854** | 0.952 · 0.848 · 0.881 · 0.868 |
+| 16D ft, LoRA off | 0.530 · 0.679 · 0.589 · 0.826 | 0.884 · 0.694 · 0.795 · 0.919 |
+
+**(2) 자유 생성 (246 frame).** 세 template: T = `Task: {p};\n`, P = `{p}\n`, S = `Task: {p}. Subtask: `.
+
+| variant | 정확도 T · P · S | action-token 비율 (T) | object 이름 맞음 (T) | held 36 frame 중 action token (T) |
+|---|---|---|---|---|
+| pi05_base | 0.244 · 0.207 · 0.203 | 0.134 | 111 / 207 | 0 |
+| **16D ft (served)** | 0.171 · **0.354** · 0.110 | **0.480** | **0 / 71** | **30** (13/13 · 7/7 · 3/8 · 7/8) |
+| 16D ft, LoRA off | 0.240 · 0.476 · 0.386 | 0.289 | 1 / 98 | 23 (12/13 · 7/7 · 2/8 · 2/8) |
+
+그 밖에: pick / place / home 중 최고 점수를 고르는 3-way argmax 는 **세 variant 모두 246 / 246 frame 에서 `home`** (짧은 후보가 유리한 length bias) 이다. token 당 forward 중앙값은 21.0 ms (KV cache 없는 naive decoding, H200, bf16; p90 22.2 ms). KV cache 판의 지연은 **미측정**.
+
+![정확도 표](figures/subtask/subtask-accuracy-table.png)
+
+[`figures/subtask/subtask-accuracy-table.png`](figures/subtask/subtask-accuracy-table.png) — 표. 위 두 표의 수치 전부 (AUROC · 생성 정확도 · action-token 비율 · object 이름 정확도).
+
+![4 episode 의 Δ 추이](figures/subtask/subtask-timeline.png)
+
+[`figures/subtask/subtask-timeline.png`](figures/subtask/subtask-timeline.png) — 그래프. 네 episode 의 Δ 추이와 생성 문장 class 띠 대 참값 phase.
+
+**판정 (lead 해석, audit §4–§6).** zero-shot 으로는 쓸 수 없다 — served model 은 **place 를 말해야 할 바로 그 held 구간에서 action token 으로 무너지고**, AUROC 는 episode 마다 흔들린다. 이유는 구조적이다. pi0.5 원 설계에서 attention 이 "그 subtask 를 위한 것" 인 까닭은 action expert 가 생성된 subtask token 에 **조건부** 이기 때문인데, 우리 16D 는 full task prompt 로만 학습되어 그 조건이 없다. 그래서 text 로 읽은 subtask 는 VLM 의 장면 해석일 뿐 AG3S 가 읽는 attention (layer 8 · head 2) 이 무엇을 위한 것인지에 대한 인과 보장이 없다.
+
+사용자 질문 하나에 답했다 (2026-09-30): "headless MuJoCo 로 돌려 테스트하면 zero-shot 이 아니지 않나" — 장면 (image) 은 in-distribution 이지만 **subtask text 출력은 여전히 zero-shot** 이다 (학습 loss 에 text 가 없다). 측정한 frame 이 이미 같은 checkpoint 의 headless closed-loop 기록이라 새 실행은 같은 조건의 표본을 늘릴 뿐이다.
+
+선택지 (audit §5): A zero-shot 그대로 (비추천) · B subtask co-training (`phase_index` 로 text loss 를 더해 16D 를 재학습, 원 설계와 같은 인과 보장, 재학습 필요) · **C hidden-state probe (재학습 없음)** · D 지금 rule 유지. 사용자는 C 를 승인했다 (SUBTASK-b 착수).
+
+### 3. SUBTASK-b — hidden state 에서 phase 를 읽는다 (2026-10-01)
+
+**설정.** 16D checkpoint (`…_xla_retry_20260923/29999`, LoRA on, `return_attn_probs=True`) 를 얼리고 hidden state 위에 logistic regression (StandardScaler + L2, C 는 GroupKFold(5) 로 선택) 을 학습한다. label 은 dataset `phase_index` 를 pick (0–5) / place (6–9) / home (10–13) 로 묶은 것. frame 은 `frame_index % 6 == 0` 로 뽑았다.
+
+| 집합 | episode | frame | pick / place / home |
+|---|---|---|---|
+| train | 200 (0..1592, 8 간격) | 10,401 | 4,000 / 3,200 / 3,201 |
+| val | 50 (1600..1796, 4 간격) | 2,601 | 1,000 / 800 / 801 |
+| closed246 | closed-loop 기록 4 run (ep1807 전부 + 나머지 둘째 step 마다) | 246 | 52 / 36 / 158 |
+| closed414 | 같은 4 run 의 모든 step | 414 | 85 / 57 / 272 |
+
+closed-loop 참값은 gripper 로 정의했다 (`min(s7, s15) < 0.9` → held, 그 외 과일이 crate 안 → released, 나머지 reach). 정의상 rule (gripper + 이력) 은 거기서 1.000 이다.
+
+**결과 — 3-class accuracy / macro AUROC.** `normal` = State 그대로, `mask (a)` = 가리지 않고 학습한 probe 에 gripper 를 가린 입력, `mask (b)` = 가린 입력으로 다시 학습.
+
+| feature | val normal | val mask (a) | val mask (b) | closed246 normal | closed246 mask (a) | closed246 mask (b) |
+|---|---|---|---|---|---|---|
+| prefix_img (Gemma image hidden 평균) | 0.980 / 0.999 | 0.981 / 0.999 | 0.978 / 0.999 | 0.955 / 0.997 | 0.955 / 0.996 | 0.955 / 0.994 |
+| **kv_L4** (best) | **0.981 / 0.999** | 0.981 / 0.999 | 0.980 / 0.999 | **0.959 / 0.997** | 0.955 / 0.998 | 0.955 / 0.998 |
+| ae_final (action expert 마지막 hidden) | 0.980 / 0.999 | 0.981 / 0.999 | 0.980 / 0.999 | 0.963 / 0.998 | 0.959 / 0.998 | 0.968 / 0.993 |
+| attn_L8 (AG3S 가 읽는 층의 attention 질량) | 0.974 / 0.999 | 0.956 / 0.990 | 0.975 / 0.999 | 0.955 / 0.994 | 0.939 / 0.979 | 0.951 / 0.996 |
+| rule (gripper + 이력) | 0.942 / 0.959 | — | — | 1.000 / 1.000 | — | — |
+| control: frame_index 만 | **1.000** | — | — | — | — | — |
+| control: 팔 관절 14 개 (gripper 제외) | 0.697 / 0.863 | — | — | 0.569 / 0.751 | — | — |
+
+kv_L4 (normal) 의 closed414 run 별 accuracy (`SUBTASK-extra.verify.json` 이 `predictions.csv` 에서 다시 계산): ep1807 apple **0.9600** (72/75) · ep0 orange **0.9735** (110/113) · ep500 banana **0.9646** (109/113) · ep1200 pear **0.9381** (106/113), 전체 0.9589 (397/414). ep1807 은 test split 이다.
+
+kv_L4 의 오분류 (3-class, val): pick → place 17 · place → pick 32 · home → place 1. closed414 는 pick → place **0** · place → pick 8 · home → place 9. val 의 오분류 50 개는 전부 phase 전환 지점에서 1 sample 안이고, closed414 의 17 개는 모두 3 sample 안이다 (14 개가 1 sample 안). 14-way (phase 별) 로는 val 0.967.
+
+![SUBTASK-b 실제 frame](figures/subtask-b/subtask-b-scene.png)
+
+[`figures/subtask-b/subtask-b-scene.png`](figures/subtask-b/subtask-b-scene.png) — 실제 씬. closed-loop ep1807 (t = 72 · 200 · 424) 과 val ep1600 (frame 60 · 168 · 264) 의 pick · place · home 시점 이미지와 `kv_L4` 의 p(pick / place / home) 막대 (normal · mask (a) · mask (b)). 여섯 시점 모두 참값 class 에 확률이 거의 1 이다.
+
+![SUBTASK-b 그래프](figures/subtask-b/subtask-b-graph.png)
+
+[`figures/subtask-b/subtask-b-graph.png`](figures/subtask-b/subtask-b-graph.png) — 그래프. closed-loop run 별 시계열과 feature 별 val accuracy. [`figures/subtask-b/subtask-b-table.png`](figures/subtask-b/subtask-b-table.png) — 표. 위 표의 전체 (feature × 집합 × 조건).
+
+**무엇이 확인됐고 무엇이 아닌가.**
+
+- 확인: 우리 checkpoint 의 hidden state 에서 phase 가 **선형으로** 읽힌다 — Gemma 쪽 · action expert 쪽 · attention 자체 모두 (val 0.974–0.981).
+- 확인: State 의 gripper 값을 가려도 그대로다 (kv_L4 val 0.981 → 0.980). 팔 관절만으로는 0.697 이므로 probe 는 **image 에서** 읽는다.
+- **한계 1.** dataset `phase_index` 는 scripted 라 frame 시각만으로 1.000 이 나온다 (250 episode 중 248 이 같은 phase 열 — `controls`). val 은 쉬운 시험이다. policy 자신의 속도로 도는 closed-loop 의 0.93–0.97 이 더 정직한 수치다.
+- **한계 2.** closed-loop 참값이 gripper 로 정의되었으므로 rule 은 정의상 1.000 이다. **이 데이터로는 probe 가 rule 을 이긴다고 말할 수 없다.** probe 가 rule 을 이길 수 있는 곳은 gripper 는 닫혔는데 사과가 손에 없는 경우 (T35-diag 가 본 "들 때 미끄러짐") 인데, 그 run 들은 policy image 를 저장하지 않아 **아직 못 쟀다.**
+- 한계 3. held-out closed-loop 은 ep1807 하나이고, ae_final · attn_L8 은 noise seed 하나이다.
+- 통합 비용: kv_L4 는 `AttentionSampler._prefix` 가 AG3S attention 용으로 이미 계산하는 KV cache 에서 나온다 → **추가 forward 가 없다.** probe 추론은 0.092 ms (CPU, 1 frame). 참고로 prefix forward 는 24.5 ms · suffix 는 5.18 ms (중앙값, closed 집합).
+- val 의 pick → place 오분류 17 개는 lead 가 GRIPPER_CLOSE 경계로 읽었다 (audit §9; 이 attribution 은 `verify.json` 에 없다) — label 이 닫히는 도중 먼저 place 로 바뀔 수 있다는 뜻이므로 아래 §4 의 두 번째 확인이 이것을 막는다. closed-loop 에서는 pick → place 가 0 개 (위 confusion).
+
+### 4. 사용자 spec (2026-10-02)
+
+lead 는 label 을 역할 · 허용 · attach 세 권한으로 나누는 안을 냈으나 (audit §9, shadow 단계 포함), 사용자가 이렇게 줄였다:
+
+> "phase 가 pick 이면 target 을 지운다, place 면 지우지 않는다. 이게 전부다."
+
+구현 전에 두 가지를 확인했고 둘 다 확정되었다 (2026-10-02):
+
+1. place 중 **쥔 사과** 는 지금처럼 attach 로 robot tree 에 넣어 field 에서 뺀다 — "지우지 않는다" 는 **attention target (바구니)** 에 적용된다.
+2. 사과의 처리가 carving (pick) → attach (place) 로 바뀌는 순간은 label 이 아니라 **latch HELD (물리 증거)** 가 일으킨다. label 은 attention target 을 carving 할지만 정한다. (label 이 일찍 바뀌면 실제 사과가 field 로 돌아오고 gripper 엔 가짜 사과가 남는다 — T34 의 거짓 attach 와 같은 모양이고, 늦게 바뀌면 쥔 사과가 충돌 계산에서 빠진다.)
+
+home 은 place 와 같이 처리한다 (지우지 않는다). 구현에서 남은 빈칸이 하나 있었다 — **PLACED 뒤에는 기존 manipulated (놓인 사과) 를 계속 carving 한다** (아래 §5). 사용자는 **안 (b)** 로 정했다: *"사과가 놓이기 전에 home 이 나올 수도 있는 상황에 대비"* 해서, **gate on ∧ 확정 label home ∧ 이번 episode 에 latch 가 PLACED 에 도달** 하면 기존 manipulated 를 해제한다 (B3 해제). "detach" 가 아니라 PLACED 로 좁힌 이유는 T34 의 `attach_revoked` (거짓 attach 회수) 도 detach 이지만 사과가 놓이지 않았기 때문이다.
+
+### 5. SUBTASK-c 구현 · MERGE-o4 (2026-10-02)
+
+**구현 (`SUBTASK-c.impl.md`).** gate 는 **새 target 을 채택 (`first`) 하지도, 다른 후보를 세지도 (`switch`) 않게** 막는 것이다. 지금 manipulated 인 물체 · admissibility · destination registry · latch freeze · attach / detach · `_exclusion_gate` 는 건드리지 않는다. 구현 시점의 기본값은 off 였고 (2026-10-04 사용자 판정으로 기본 on 이 되었다 — §9 SUBTASK-g), off 이면 결정이 구현 전과 같다 (label 은 `metrics["subtask"]` 에 기록만, "켰다면 막았을 것" 은 `would_block` 으로 남긴다).
+
+| 구성요소 | 위치 | 무엇 |
+|---|---|---|
+| probe asset | `asset/subtask_probe/kv_L4_v1.npz` · `.json` · `experiments/tools/export_subtask_probe.py` | SUBTASK-b 와 같은 데이터 · 설정으로 재학습한 numpy asset. SUBTASK-b 와 맞는지의 parity 검사는 `SUBTASK-c.impl.md` |
+| label 경로 | `sources/pi05_attention.py` · `trajopt/attention_policy.py` · `stages/subtask_probe.py` | `AttentionSampler` 가 이미 하는 prefix pass 의 KV cache 에서 feature 를 꺼내 `result["subtask"] = {p, argmax, probe}` 로 싣는다. 새 경로의 kv_L4 가 SUBTASK-b 의 feature 와 맞는지, attention 이 bit 동일한지의 검사는 `SUBTASK-c.impl.md` |
+| gate | `stages/target_grounding.py` · `runtime/pipeline.py` · `config.py` | `clustering.subtask_gate` (이 시점의 기본 `False`) · 확정 label (연속 N 요청 같은 argmax; `subtask_confirm_frames`, 기본은 `target_confirm_frames`) · grounding status `subtask_gated` |
+| 배선 (Part B) | `trajopt/safe_policy.py` · `trajopt/serve_safe.py` | 요청마다 `ag3s.set_subtask(...)` · `ag3s.set_placed(...)`, `--subtask-gate` · `--subtask-probe`. `--no-safe` · `--no-attention` · `--no-perception` 과 같이 주면 거절 |
+| **B3 해제** | `stages/target_grounding.py` | §4 의 조건으로 기존 manipulated 를 해제 (carving 없음). id 는 계속 센다 — 다음 `first` 는 새 id |
+
+단위 테스트 · 회귀 결과는 [`SUBTASK-c.impl.md`](handoff/SUBTASK-c.impl.md) (Part A · Part B 각각).
+
+**PLACED 뒤 carving 이 어디로 가는지 — 구현 전 기록을 다시 계산한 결과 (`SUBTASK-extra.verify.json`, T34 · T37 의 E3a · E3b 서버 기록, gate off, 읽기 전용).** 지금 코드는 PLACED 뒤에도 manipulated 를 carving 하고, `TargetConfirm` 의 `switch` 가 열려 다른 물체를 새 target 으로 채택할 수 있다. 구현자의 스캔 도구 (`scan_placed_switch.py`) 출력과 verifier 의 재계산이 일치한다. 기록에서:
+
+| 항목 | 값 |
+|---|---|
+| PLACED 에 도달한 episode · 그 뒤 switch 가 난 episode (24 episode 중) | 14 · **12** |
+| switch 뒤 chunk 의 exclusion active | 433 중 **406** (나머지 27 은 `source = none`) |
+| 새 target 이 destination 의 xy 0.15 m 안(놓인 사과) · 그 밖의 다른 물체 | 8 · 4 |
+| switch 전 (PLACED 부터 첫 switch 직전, switch 가 없으면 episode 끝까지) 의 chunk · exclusion active | 129 · **129** (source 는 전부 `manipulated`) |
+
+이 표는 **기록을 읽은 것** 이지 gate 를 켠 재현이 아니었고, 그래서 SUBTASK-d 가 closed loop 로 재었다.
+
+**MERGE-o4 (구현자 · verifier).** SUBTASK 작업이 끝나면 T38 GPU 가속 브랜치와 합친다는 사용자 계획에 따라 `o4-gpu-parallel` (T38 B1–B5, tip `5c72d37`) 를 main (`5110dbc`) 에 merge 했다 (`2016f30`, 2026-10-02 09:54:30). 충돌이 난 파일은 `trajopt/serve_safe.py` 하나뿐이었고 둘 다 살렸다 (T39 `9fab500` 과 같은 순서). 충돌 해법 · CPU 회귀 · `tests/o4` 결과는 [`MERGE-o4.impl.md`](handoff/MERGE-o4.impl.md).
+
+**verifier 의 기준선 (merge 된 tree, `regression-baseline`)** — gate 는 (그 시점의 기본값인) off 로만 쟀다:
+
+| baseline | 위반으로 시작 | `has_target` | frame0 `clearance_before` (mm) | 15 frame sha1[:12] | 기대값과 |
+|---|---|---|---|---|---|
+| legacy | 14 / 15 | 15 / 15 | −29.031048280806342 | `40798fb0a4d2` | **비트 동일** |
+| cuRobo | 10 / 15 | 15 / 15 | −9.171877401271193 | `fe73bd7a6ba6` | **비트 동일** |
+
+legacy 4/4 · cuRobo 4/4 항목이 T38 V3 기대값과 같고, 15 frame 의 `clearance_before` 가 전부 T38 V3 와 같다. 실행에 쓰인 `benchmark` module 은 전부 `/mnt/dev/work/benchmark` 아래 (밖 0 개) 였다. wall 은 56.3 s (legacy) · 57.0 s (cuRobo).
+
+![MERGE-o4 기준선](figures/merge-o4/merge-o4-baseline-table.png)
+
+[`figures/merge-o4/merge-o4-baseline-table.png`](figures/merge-o4/merge-o4-baseline-table.png) — 표. 기대값 (T38 V3) 과 측정값을 항목마다 나란히 놓은 것.
+
+**미측정 (MERGE-o4 `verify.json`):** gate on, CPU device path, closed-loop E3 경로.
+
+### 6. SUBTASK-d — gate on 의 closed loop (2026-10-02, verifier)
+
+**설계.** 같은 24 episode × 2 seed = 48 쌍 (T39 와 같은 policy seed `10·ep + rep`, `--warmup-steps 1000`). **gate off 는 T39 의 E3b 48 run 을 다시 쓴다** — 먼저 새 코드 (snapshot `/mnt/dev/work-sd`, main `73dcb37`, 불변 사본) 에서 gate off 두 run (ep1807 s18071 · ep1800 s18001) 을 다시 돌려 T39 E3b 와 **실행된 action · planning action · `traj.npz` 배열 (`inference_ms` 제외) · chunk 별 latch 상태 · manipulated id · exclusion · refined chunk 가 같음** 을 확인했다. 달라진 것은 서버 기록에 `subtask` 키가 새로 생긴 것과 시간 항목뿐이다. gate on 은 E3b 서버 flag 에 `--subtask-gate` 만 더한 48 run, 서버 4 개 병렬 (V1: 19:00 → 20:11:40, 실패한 시도 0, run 당 wall 평균 293.1 s). baseline 은 일치 (legacy 14/15 · 15/15 · −29.031 mm, cuRobo 10/15 · 15/15 · −9.172 mm).
+
+**결과.**
+
+| 항목 | gate off | gate on |
+|---|---|---|
+| success / grasp / place | 29 / 35 / 29 | 28 / 34 / 28 |
+| latch PLACED 에 도달한 run | 25 | 24 |
+| 　그중 PLACED 뒤 `switch` 가 있었던 run · `switch` decision | **21** · 29 | **0** · 0 |
+| PLACED **전** `switch` decision | 42 | 5 |
+| PLACED 뒤 exclusion active / chunk | **965 / 1,051** | **57 / 1,041** |
+| carving 중심에서 가장 가까운 물체 (chunk 수) | banana 224 · orange 119 · pear 200 · apple 422 | banana 23 · orange 20 · pear 14 |
+| carving 중심 → 사과(현재 위치) 거리 중앙값 (mm) | 218.7 | 362.7 |
+| carving 중심 → 사과(초기 위치) 거리 중앙값 (mm) | 355.7 | **28.4** |
+| 해제된 run · 해제 chunk | 0 · 0 | **24 · 24** |
+| PLACED → 해제 (chunk) · 해제 chunk − 사과가 crate 안에 든 chunk | — | 2–3 · 3–12 (24 run 전부 양수) |
+| gate 가 막은 chunk (`first` · `switch`) | 0 | 983 · 239 |
+| HOLD chunk 총수 · run | 294 · 18 | **1,198 · 34** |
+| 해제 뒤 HOLD (984 chunk 중) · kind | — | **984** · `uncertified` 984 (+ `collision` 2) |
+| 해제 뒤 grounding status | — | `subtask_gated` 983 · `no_admissible` 1 |
+| run 별 최소 clearance 중 최솟값 (mm) | −47.1 | −47.1 |
+
+**읽는 법.** gate off 에서 PLACED 뒤 carving 은 965 / 1,051 chunk 에서 켜져 있고, carving 중심은 **놓인 사과 (422 chunk) 가 아니라 다른 과일 (543 chunk: banana · pear · orange)** 에 더 가까울 때가 많다 — `switch` 로 manipulated 가 옮겨간 것이다 (21 / 25 run). gate on 에서는 그 `switch` 가 0 이 되고, 남은 57 chunk 의 carving 은 해제 전 PLACED 직후 2–3 chunk 동안 **사과의 초기 위치** (중앙값 28.4 mm) 에 남아 있는 것이다 — 해제는 사과가 crate 안에 든 chunk 보다 3–12 chunk 뒤였다.
+
+![ep1800 s18001: PLACED 전후](figures/subtask-d/subtask-d-scene-1800_s18001.png)
+
+[`figures/subtask-d/subtask-d-scene-1800_s18001.png`](figures/subtask-d/subtask-d-scene-1800_s18001.png) — 실제 씬 (3rd person) + ESDF 의 xy 단면 (robot base frame, z ≈ 0.86 m 에서 위에서 본 5 mm main tier; coarse tier 는 안 그렸다). 위 세 줄이 gate off, 아래가 gate on; 열은 PLACED 직전 (chunk 28) · 해제 시점 (chunk 32) · 해제 + 10 chunk. ✕ 는 manipulated centroid, ★ 는 실제 사과 중심, 초록 사각형은 destination AABB. **gate off 는 PLACED 뒤에도 ✕ 가 crate 밖 탁자 쪽에 남고 target-free ball (붉은 점선) 이 그 자리를 비운다.** gate on 은 해제 시점부터 ✕ 가 없고 exclusion 이 꺼진다. (gate off 의 label 은 T39 기록에 `subtask` 키가 없어 "n/a" 로 표기된다.)
+
+![ep1925 s19251](figures/subtask-d/subtask-d-scene-1925_s19251.png)
+
+[`figures/subtask-d/subtask-d-scene-1925_s19251.png`](figures/subtask-d/subtask-d-scene-1925_s19251.png) — 실제 씬 + ESDF 단면, 같은 형식. 이 쌍은 gate off 에서 manipulated 가 새 id (1) 로 `switch` 된 예다.
+
+![ep1800 s18001 의 chunk 별 timeline](figures/subtask-d/subtask-d-timeline.png)
+
+[`figures/subtask-d/subtask-d-timeline.png`](figures/subtask-d/subtask-d-timeline.png) — 그래프. 위: ep1800 s18001 의 chunk 별 latch · 확정 label · exclusion · gate blocked · HOLD (gate off 5 줄, gate on 5 줄; 점선 = latch PLACED). gate on 은 PLACED 에서 label 이 home 으로 바뀌고 (확정 chunk 32) exclusion 이 꺼지지만 **그 뒤 전 구간이 HOLD (검은 띠)** 다 — 이 pair 는 gate on HOLD 45 chunk (gate off 1 chunk). 아래 왼쪽: run 쌍마다 PLACED 뒤 exclusion active chunk 비율 (gate off 25 run, gate on 24 run). 아래 오른쪽: PLACED 뒤 첫 `switch` (gate off) 와 해제 (gate on) 까지의 chunk 수 히스토그램.
+
+**두 시스템이 갈라지는 곳.** 쌍 48 개 중 6 쌍은 실행된 action 이 한 번도 다르지 않았다. 나머지 첫 차이 chunk 는 중앙값 34 (최소 24, 최대 75), **24 쌍은 PLACED 상태에서 PLACED + 2–3 chunk 에서** 갈린다 (해제 시점), 18 쌍은 LATCHED 상태에서 갈린다. 첫 차이 시점의 gate on 상태는 42 쌍 중 `switch` 를 막는 중 21 (label place 13 · home 8), 해제된 상태 19, 막지 않는 상태 2 (label pick · place 각 1) 이다. 첫 target 채택 chunk 는 48 쌍 모두 같고 (t = 1), 채택한 id 도 같다. 첫 HELD 이전의 결정은 43 / 48 쌍이 같다.
+
+**성공률.** gate off 29 → on 28, 짝지은 2×2 는 둘 다 28 · off 만 1 · on 만 0 · 둘 다 아님 19, exact McNemar p = **1.0** (grasp · place 도 같다: off 만 1 · on 만 0). 갈린 한 쌍은 ep1828 s18281 이다.
+
+**lead 의 첫 해석과 그 철회 (audit §11, 2026-10-03, 사용자 지적).** 결과를 처음 정리한 lead 는 문제를 둘로 보았다 — (1) 해제 뒤 uncertified HOLD, **(2) "PLACED 전 LATCHED 상태에서 label 이 place / home 으로 바뀌었다는 이유로 `switch` 를 막아 ep1828 을 잃었다"** (`V2_gate_blocked_before_placed`: 21 run · 191 chunk, 전부 `switch` · 전부 latch `LATCHED`, label place 66 · home 125). **(2) 는 틀렸다.** 기록을 다시 읽은 것이 audit §11 이고, 2026-10-04 `SUBTASK-extra.verify.json` 이 같은 기록에서 숫자를 다시 계산했다 (ep1828 s18281, gate off = T39 server_8226 · gate on = SUBTASK-d server_8232; 아래 `k` = server `t_step` − 1):
+
+| 항목 | gate off (T39 E3b) | gate on (SUBTASK-d) |
+|---|---|---|
+| k = 14–26 | latch `closing` (파지 확인 전), manipulated id 0 = 사과 | 같다 (k 14–28 의 latch 상태 · manipulated id · centroid · decision mode · exclusion 은 두 쪽이 같다) |
+| k = 27 부터 | latch `latched` | latch `latched`. 확정 label **place** 가 k = 26 부터 있고 `subtask_blocked = switch` 가 k = 27 부터 |
+| **k = 29 (server t_step 30)** | **`switch`: manipulated 가 id 0 → id 1**. id 1 의 centroid (0.4644, −0.2989, 0.8526) m, **가장 가까운 물체는 바나나 (0.0119 m)**, **사과에서 0.627 m**, id 0 ↔ id 1 거리 **0.6229 m**. 사과 위치 (0.5633, 0.3204, 0.85) m | manipulated 는 id 0 (사과) 그대로, 사과와 0.0186 m, exclusion active — gate 가 그 교체를 막고 있다 |
+| 이후 | k = 40 에 id 1 → id 2 로 다시 `switch`, k = 52 `closing` · k = 53 `held` · k = 65 `placed` | k = 31 에 확정 label 이 **home** 이 되지만 latch 는 아직 `latched` (PLACED 아님) 라 해제는 없다. k = 56 `closing`, k = 57 `held`, k = 59 `latched`, k = 60 `closing` (재파지 시도) |
+| 사과의 에피소드 끝 위치 | crate 에서 xy 0.0506 m (최대 이동 0.4418 m) | 거의 안 움직임 — 최대 이동 0.0466 m, 끝에서 crate 에서 xy 0.3189 m |
+
+즉 chunk 30 (server t_step 30) 에서 **gate off 는 manipulated 를 사과에서 탁자 반대편의 다른 물체 (바나나) 로 바꿨고, gate on 은 그 교체를 막아 사과를 계속 carving 했다.** 이것은 사용자 원칙 — *"쥐기 전 + place 면 사과는 이미 지워져 있고, 바구니는 안 지운다"* — 그대로의 동작이다. 불일치 한 쌍은 그 뒤 **재파지 결과가 갈린 것** (gate on 의 사과는 끝까지 crate 에 닿지 않았다; 원인은 이 기록으로 가르지 않았다) 이다. 그래서 (2) 와 그에 딸린 제안 ("HELD 이후에만 막기") 은 철회되었고, 남은 수정은 문제 (1) 하나다.
+(SUBTASK-d 의 `verify.json` 이 가진 같은 pair 의 숫자: 첫 판정 차이 chunk 30, gate 가 처음 막은 chunk 28, 첫 HELD chunk 58, 막은 `switch` 11 chunk, gate off 쪽 PLACED chunk 66 · gate on 은 PLACED 없음. 이 chunk 번호들은 server `t_step` 이고 SUBTASK-extra 의 `k` 는 그보다 1 작다.)
+
+**문제 (1) — 해제 뒤 uncertified HOLD.** 해제 뒤 984 chunk 전부가 HOLD 이고 kind 는 `uncertified` 다 (grounding `subtask_gated` 983). gate 가 일부러 target 을 비웠는데 파이프라인이 그것을 "target 을 못 찾음 (`no_target`)" 으로 읽어 **기하가 인증되지 않았다**고 보고 막은 것이다 (`SUBTASK-e.impl.md` 의 코드 추적: 판정을 내리는 곳이 `_scene_fn` → SQP 의 `status = VIOLATED`, `_verdict` → `uncertified` 둘이었다). 결과로 로봇은 해제 뒤 그 자리에 멈춘다 — HOLD (`--safe-hold-mode fixed`) 는 `q_hold` 를 유지하기 때문이다 (다음 절의 자세 측정).
+
+### 7. SUBTASK-e — gate 가 비운 target 은 인증한다 (2026-10-03, 구현 05:02 · 검증 05:17–06:28)
+
+**구현 (`SUBTASK-e.impl.md`).** 판정 술어 하나 `subtask_no_target(cs)` 를 `ag3s/types.py` 에 두고 (grounding `subtask_gated` ∧ validity `valid` ∧ **carve 가 하나도 없음** — `target` · `manipulated` · `attached` · `target_field_exclude` · `manipulated_link_margin` 이 None, `metrics["manipulated"]` 가 None, exclusion 기록이 있고 `source = none` · `active = False`) `safe_policy.geometry_certified(cs)` = `status == "ok"` ∨ `subtask_no_target(cs)` 로 HOLD 를 만드는 세 곳 (`_scene_fn` → SQP, `_verdict` / `_reasons`, `bringup.LivePipeline.scene_fn`) 이 같은 술어를 읽게 했다. 실행되는 chunk 에는 사유 kind `subtask_no_target` (처리 = `execute`) 를 붙여 "target 이 없는데 왜 실행했나" 가 응답 · 서버 로그 · `summary_json.verdict.reasons` 에 남는다. 상태는 `no_target` 그대로 두었다 (다른 소비자가 "target 이 있다" 로 읽는 것을 건드리지 않으려고). 못 읽는 필드는 인증하지 않는다 (fail closed). 새 kind 를 모르는 client 는 HOLD 하므로 **client 쪽 `wire.py` 도 갱신해야 한다** (local PC 의 client 갱신 필요). 단위 테스트 결과는 [`SUBTASK-e.impl.md`](handoff/SUBTASK-e.impl.md).
+
+**검증 (verifier).** snapshot `/mnt/dev/work-se` (main `7098e69`, 코드 변경 `a7994c0`), gate on 48 run, 서버 4 개 병렬. pytest **1,958 passed / 2 skipped / 0 failed**, baseline 일치, gate off 두 run 이 T39 와도 SUBTASK-d V0 와도 실행 · planning action 이 같다.
+
+**gate on 의 수정 전 (d) 대 후 (e) 대 gate off — 해제 뒤 984 chunk.**
+
+| 항목 | d (수정 전) | **e (수정 후)** | gate off |
+|---|---|---|---|
+| HOLD chunk | 984 | **232** | — (해제 없음) |
+| `subtask_no_target` 로 실행한 chunk · run | — | **752 · 24** (전부 실행, HOLD 0) | — |
+| HOLD 의 grounding status | `subtask_gated` 983 · `no_admissible` 1 | **`no_admissible` 232** | — |
+| clearance 최솟값 (mm) | −1.409 (음수 2 chunk) | **+0.150** (음수 0) | — |
+| 왼팔 마지막 자세 → 준비 자세, 중앙값 (rad) | **1.154** | **0.113** | 0.115 |
+| 왼팔 마지막 자세 → 준비 자세, p95 (rad) | 1.886 | 0.561 | 0.424 |
+| 왼팔 EE 이동 (마지막 자세, 중앙값, mm) | 311.8 | 25.1 | 25.0 |
+| 해제 뒤 MuJoCo 접촉 (dist < 0) | 0 | 0 | 0 |
+
+(자세 지표: `traj.npz` 의 `measured_qpos[0]` — warm-up 1,000 step 뒤의 16-D 관절값 — 을 "준비 자세" 로 놓고 왼팔 관절 7 개의 L2 거리를 쟀다. 코드에 별도의 준비 자세 정의는 없다. 해제 chunk 의 거리는 d 중앙값 1.157 rad, e 1.150 rad 로 같다 — 즉 돌아오는 것은 해제 뒤다. 충돌은 기록된 qpos 를 MuJoCo 로 kinematic 재생해 dist < 0 인 접촉을 세었고 접촉력은 재지 않았다.)
+
+![SUBTASK-e 시계열](figures/subtask-e/subtask-e-timeline.png)
+
+[`figures/subtask-e/subtask-e-timeline.png`](figures/subtask-e/subtask-e-timeline.png) — 그래프. (a) ep1800 s18001 의 chunk 별 latch · label · gate blocked · released · HOLD · reason `subtask_no_target` (수정 전 위, 수정 후 아래; 점선 = 수정 전 / 후 첫 차이 chunk 32). 수정 후는 해제 뒤 HOLD 가 없고 `subtask_no_target` 가 이어진다. (b) 왼팔 관절의 준비 자세 거리 대 control step (gate off · d · e). **d 는 해제 뒤 0.950 rad 에 멈추고, e 와 gate off 는 0.167 · 0.164 rad (마지막 자세) 로 내려간다.** (c) run 별 해제 뒤 HOLD (d 984 chunk 대 e 232). (d) 해제 24 쌍의 마지막 자세 (회색 선 = 같은 episode · seed).
+
+![ep1800 s18001: B3 해제 전후](figures/subtask-e/subtask-e-scene-1800_s18001.png)
+
+[`figures/subtask-e/subtask-e-scene-1800_s18001.png`](figures/subtask-e/subtask-e-scene-1800_s18001.png) — 실제 씬 + ESDF xy 단면 (같은 형식; 위 = 수정 전 d, 아래 = 수정 후 e; 열 = 해제 직전 chunk 31 · 해제 chunk 32 · +10 · 마지막 chunk 75). 수정 전은 chunk 32 부터 `HOLD True ['uncertified']` 이고 3rd person 에서 왼팔이 올라간 채로 있으며, 수정 후는 `HOLD False` · reasons 에 `subtask_no_target` 가 붙고 chunk 42 · 75 에서 팔이 내려와 있다. 단면에서 ✕ (manipulated) 는 해제와 함께 사라진다.
+
+![ep1828 s18282](figures/subtask-e/subtask-e-scene-1828_s18282.png)
+
+[`figures/subtask-e/subtask-e-scene-1828_s18282.png`](figures/subtask-e/subtask-e-scene-1828_s18282.png) — 실제 씬 + ESDF 단면. 남은 HOLD 가 있는 쌍 (grounding `no_admissible`) 의 수정 전 / 후.
+
+**일치 · 성공.**
+
+- **e 와 d 는 해제 전까지 같다.** 48 / 48 쌍이 d 의 첫 `uncertified` HOLD (grounding `subtask_gated`) 이전에는 같고, 해제가 있는 24 쌍의 첫 차이는 그 chunk 에서 (차 0 chunk) 정확히 시작한다. 해제가 없는 24 쌍은 끝까지 완전히 같다. 달라진 결정 항목은 처음 갈리는 곳에서 `to_status` (trajectory optimizer 의 status) 뿐이다.
+- 성공은 28 / 48 로 d 와 쌍으로 같다 (둘 다 28 · 둘 다 아님 20 · 어느 한쪽만 0, p = 1.0). gate off 대비는 off 만 1 (ep1828 s18281) · p = 1.0.
+
+**남은 232 chunk — `no_admissible`.** HOLD 가 남은 run 은 10 개 (해제 뒤 모든 HOLD 가 grounding `no_admissible` · kind `uncertified`): 놓은 뒤 팔이 올라가 장면에 **바구니 (crate) 만 보이는** 프레임이다. 보이는 cluster 가 있는데 전부 admissibility 를 통과하지 못해 target 이 없는 것이다 (바구니는 너무 커서 manipulated 가 못 된다).
+
+| run | 해제 chunk | 해제 뒤 `no_admissible` chunk | 처음 chunk |
+|---|---|---|---|
+| ep1807 s18071 | 35 | 36 | 40 |
+| ep1824 s18241 | 31 | 11 | 37 |
+| ep1828 s18282 | 32 | 41 | 35 |
+| ep1863 s18631 | 34 | 39 | 36 |
+| ep1925 s19252 | 30 | 1 | 32 |
+| ep1939 s19391 | 32 | 35 | 41 |
+| ep1939 s19392 | 29 | 1 | 65 |
+| ep1968 s19681 | 34 | 16 | 38 |
+| ep1976 s19761 | 36 | 39 | 36 |
+| ep1982 s19822 | 36 | 13 | 39 |
+| **합계** | | **232** | |
+
+(`no_admissible_after_release_on_e` 의 run · chunk 와 SUBTASK-f 의 `changed_runs_table` 의 e 열에서.) gate off 에도 PLACED 뒤 `uncertified` HOLD 가 86 chunk 있고 grounding 은 전부 `no_admissible` 이다 (4 run) — 같은 종류다. 이 HOLD 는 run 끝까지 이어지기도 한다: "t = 75 에서 HOLD · 그 구간 grounding 이 전부 `no_admissible`" 로 정의하면 e 는 7 run (gate off 는 2 run). 이 정의는 SUBTASK-f 의 verifier 가 쓴 것이고, SUBTASK-e 직후 lead 의 보고 (4 run: ep1807 s18071 · ep1828 s18282 · ep1863 s18631 · ep1939 s19391) 는 이 정의로 재현되지 않는다.
+
+### 8. SUBTASK-f — 놓은 뒤 home 이면 `no_admissible` 도 인증한다 (2026-10-03, 구현 11:44 · 검증 12:07–13:45)
+
+**구현 (`SUBTASK-f.impl.md`).** SUBTASK-e 의 인증 술어에 **갈래 하나** 를 더했다: grounding 이 `no_admissible` 이어도 `metrics["subtask"]` 가 **`gate is True` ∧ 확정 label `home` ∧ `placed_seen is True`** 라고 말하면 `subtask_gated` 와 같이 인증된 기하로 본다. 나머지 조건 (`status == no_target` · validity `valid` · carve 다섯 필드 None · manipulated identity None · exclusion `source = none`) 은 한 글자도 바꾸지 않았다. 정확한 값만 통과한다 (`1` · `"true"` · `None` · `"HOME"` 은 거절). grounding 상태는 다시 쓰지 않고 evidence 의 `grounding_status` 가 둘을 가른다. **`released` 는 조건에 넣지 않았다** — 해제된 적 없이 (처음부터 adopt 하지 않은 채) PLACED 에 간 episode 도 이 칸에 든다 (carve 는 없다). pipeline 에서 exclusion gate 가 manipulated 를 거절해 생기는 `no_admissible` 은 manipulated identity 가 살아 있어 인증되지 않는다 (테스트 (vii)). **client 갱신은 필요 없다** (`REASON_KINDS` · `GATE_DEFAULT` 는 e 에서 이미 등록). 단위 테스트 결과 (새 `test_subtask_no_admissible_home.py`, SUBTASK-e 테스트에서 의도적으로 바꾼 기대값 두 줄 포함) 는 [`SUBTASK-f.impl.md`](handoff/SUBTASK-f.impl.md).
+
+**검증 (verifier).** snapshot `/mnt/dev/work-sf` (main `af168a8`, 코드 변경 `ce92fd1`), gate on 48 run, 서버 4 개 병렬. pytest **2,018 passed / 2 skipped / 0 failed**, baseline 일치, gate off 두 run 이 T39 와도 SUBTASK-e V0 와도 같다.
+
+**실행 중 사고.** 2026-10-03 12:21, pod 의 memory cgroup (80 GiB, 전 세션 공용) 이 **다른 세션의 CPU 프로세스 (T40 `search.py`, 51 개 × 약 1.5 GB)** 로 차서 OOM 이 났고 서버 8231–8233 이 죽었다 (8234 는 기동 중에 죽음). 진행 중이던 run 3 개 (ep1863 s18631 · ep1828 s18281 · ep1807 s18071) 는 `failed/` 로 옮기고 다시 돌렸다. 잘린 chunk 파일 2 개는 분석에서 건너뛰었고 (`BadZipFile`), 이 세 seed 는 서버 기록에 같은 seed 의 segment 가 둘이라 분석이 `policy_seed.applied` 로 맞는 쪽을 골랐다. 분석은 run 마다 `policy_seed.applied` 가 그 run 의 seed 와 같은 segment 를 쓴다 (분석 정의). 이 사고가 결과에 준 영향은 따로 재지 않았다.
+
+**e 대 f.**
+
+| 항목 | e | **f** |
+|---|---|---|
+| 해제 뒤 HOLD (984 chunk 중) | 232 (10 run) | **28 (1 run)** |
+| 해제 뒤 grounding status | `subtask_gated` 752 · `no_admissible` 232 | `subtask_gated` 752 · **`no_admissible` 204 (모두 execute)** · `no_seed` 28 (모두 HOLD) |
+| `subtask_no_target` 로 실행한 chunk | 752 | **956** |
+| HOLD chunk 총수 · run | 446 · 24 | **242 · 16** |
+| 끝까지 `no_admissible` 로 HOLD 인 run | 7 | **0** |
+| 새로 실행된 `no_admissible` chunk 204 의 clearance 최솟값 (mm) | — | **+19.02** (음수 0) |
+| 그 204 chunk (10 run, control step 1,632 개) 의 MuJoCo 접촉 | — | **0** (apple · crate · table · 다른 과일 · 기타 모두) |
+| 왼팔 마지막 자세 → 준비 자세 p95 (rad, 해제 24 run) | 0.561 | **0.164** |
+| 왼팔 마지막 자세 → 준비 자세 중앙값 (rad) | 0.113 | 0.109 |
+| success / grasp / place | 28 / 34 / 28 | 28 / 34 / 28 (e 와 쌍으로 같다, p = 1.0) |
+
+![SUBTASK-f 시계열](figures/subtask-f/subtask-f-timeline.png)
+
+[`figures/subtask-f/subtask-f-timeline.png`](figures/subtask-f/subtask-f-timeline.png) — 그래프. (a) ep1828 s18282 의 chunk 별 latch · label · grounding · released · HOLD · `subtask_no_target` evidence (e 위 6 줄, f 아래 6 줄; 점선 = 첫 차이 chunk 35). e 는 chunk 35 부터 HOLD (검은 띠) 로 끝까지 가고 f 는 HOLD 가 없다 — grounding 은 `no_admissible` 인 채 `subtask_no_target (no_admissible)` evidence 로 실행된다. (b) 왼팔 준비 자세 거리 대 control step (gate off · e · f). 이 쌍에서 e 는 0.588 rad 에 멈추고 (마지막 자세) f 는 0.112 rad 로 gate off 와 같은 곡선이다. (c) run 별 해제 뒤 HOLD (e 232 대 f 28). (d) 해제 24 쌍의 마지막 자세 — e 에서 위로 튀던 점이 f 에서는 한 점 (0.92 rad 근처, 세 조건에서 같은 run) 을 빼고 내려온다.
+
+![ep1828 s18282: e 대 f](figures/subtask-f/subtask-f-scene-1828_s18282.png)
+
+[`figures/subtask-f/subtask-f-scene-1828_s18282.png`](figures/subtask-f/subtask-f-scene-1828_s18282.png) — 실제 씬 + ESDF xy 단면 (위 = e, 아래 = f; 열 = 첫 차이 직전 chunk 34 · 첫 차이 chunk 35 · +10 · 마지막 chunk 75). e 는 chunk 35 부터 `HOLD True ['uncertified']` 로 팔이 crate 위에 서 있고, f 는 `HOLD False` · reasons `['budget_only', 'subtask_no_target']` 로 팔이 내려와 있다. 두 줄 모두 단면에는 ✕ (manipulated) 가 없고 exclusion off.
+
+![ep1976 s19761: 남은 HOLD](figures/subtask-f/subtask-f-scene-1976_s19761.png)
+
+[`figures/subtask-f/subtask-f-scene-1976_s19761.png`](figures/subtask-f/subtask-f-scene-1976_s19761.png) — 실제 씬 + ESDF xy 단면 (같은 형식; 첫 차이 chunk 36). f 의 마지막 두 열은 **`HOLD True ['uncertified']`, grounding `no_seed`** 다 — 남은 28 chunk 가 이 run (ep1976 s19761) 이다.
+
+**f 가 바꾼 것은 정확히 e 의 `no_admissible` HOLD 자리다.**
+
+- 완전히 같은 쌍 38 개. 다른 10 쌍은 모두 **e 의 첫 `no_admissible` HOLD chunk (`t_na_e`) 이전까지 같고, 그 chunk 에서 처음 갈린다** (차 0 chunk 10 / 10). 그 chunk 에서 e 는 `no_admissible` · `uncertified` · gate hold, label `home`, `placed_seen` True 이고 f 는 새로 인증된 chunk 다 (10 / 10). 첫 갈림에서 서버 결정의 달라진 항목은 `to_status` 뿐이다.
+- 10 run 의 해제 뒤 HOLD 변화 (e → f): ep1807 s18071 36 → 0 · ep1824 s18241 11 → 0 · ep1828 s18282 41 → 0 · ep1863 s18631 39 → 0 · ep1925 s19252 1 → 0 · ep1939 s19391 35 → 0 · ep1939 s19392 1 → 0 · ep1968 s19681 16 → 0 · **ep1976 s19761 39 → 28** · ep1982 s19822 13 → 0. 10 run 모두 gate off · e · f 에서 success 다.
+- 새로 실행된 `no_admissible` chunk (run 별): 28 · 31 · 38 · 40 · 1 · 35 · 2 · 1 · 12 · 16 (합 204).
+
+**남은 HOLD 28 chunk — ep1976 s19761, `no_seed`.** 이 run 은 f 에서 chunk 36 부터 12 chunk (마지막 chunk 71) 가 새로 인증되어 실행되었다. 해제 뒤 HOLD 28 chunk 는 grounding 이 `no_admissible` 이 아니라 **`no_seed`** (attention 이 seed 를 못 고름) 이고, 그것은 인증되지 않아 HOLD 다 (kind `uncertified`; `verify.json` 이 위치를 주는 것은 마지막 연속 구간 4 chunk, t = 72–75 뿐이다). **왜 `no_seed` 가 되었는지는 이 기록으로 가리지 못했다 (미측정).**
+
+**사용자 판정 (2026-10-04, `SESSION_STATE.md` 의 2026-10-04 행에 기록됨): 남은 `no_seed` HOLD 는 그대로 둔다.**
+
+### 9. SUBTASK-g — gate 를 기본 on 으로 (사용자 판정 2026-10-04, 검증 06:11–06:30)
+
+**사용자 판정 (2026-10-04, `SESSION_STATE.md` 의 2026-10-04 행): subtask gate 를 기본 on 으로 한다.** 앞 절들의 gate on 수치는 모두 `--subtask-gate` 를 명시한 실행이었다. 이 절은 그 flag 없이 서버를 띄운 실행이 명시한 실행과 같은지, 끌 수 있는지를 확인한 것이다.
+
+**구현 (`SUBTASK-g.impl.md`).**
+
+| 항목 | 내용 |
+|---|---|
+| config 기본 | `clustering.subtask_gate` 가 `True` |
+| `serve_safe` flag | 플래그 없음 = gate on. **`--no-subtask-gate` 로 끈다.** `--subtask-gate` 는 호환용으로 남아 있고 (받으면 on) 두 flag 를 같이 주면 argparse 가 거절한다 |
+| label 이 오지 않는 모드 (`--no-safe` · `--no-attention` · `--no-perception`) | 기본 on 이면 **오류 대신 gate 를 끄고 기동 로그에 한 줄** (`subtask gate: off (…)`). 사용자가 `--subtask-gate` 를 **명시** 했으면 SUBTASK-c 처럼 오류 |
+| 서버 → AG3S | `build_ag3s` 에 넘기는 gate 는 항상 bool 이고 config 에 켜든 끄든 명시적으로 실린다 (서버가 config 기본값에 기대지 않는다) |
+| in-process (`bringup.build_live_pipeline`) · offline replay | config 기본을 따르므로 이제 gate on. 이 경로의 정책은 `subtask` 를 싣지 않아 label 이 늘 None 이고, label None 이면 gate on 의 결정이 gate off 와 같다고 구현자의 테스트가 보인다 (달라지는 것은 기록 필드 `metrics["subtask"]["gate"]` 뿐; 테스트 결과는 `SUBTASK-g.impl.md`) |
+| **호환** | 옛 launch 명령 중 `--subtask-gate` 없이 띄운 것은 이제 gate on 이다. **T39 E3b (gate off) 와 같은 조건은 `--no-subtask-gate` 가 필요하다.** local client (`pi05_infer.py`) 갱신은 필요 없다 (wire 형식 · `REASON_KINDS` · `GATE_DEFAULT` 불변) |
+
+**검증 (verifier).** snapshot `/mnt/dev/work-sg` (main `bf65756`, 불변 사본). 서버 하나씩 (동시 1 개), 두 run (ep1807 s18071 · ep1800 s18001), 조건 둘: **E3bD** = E3b 서버 flag 에 gate flag 를 주지 않음, **E3bN** = E3b + `--no-subtask-gate`.
+
+**(1) 기준선 (offline, label 없음).**
+
+| baseline | 위반으로 시작 · `has_target` · frame0 `clearance_before` | 기대값과 | sha1 이 SUBTASK-f 와 |
+|---|---|---|---|
+| legacy | 14 / 15 · 15 / 15 · −29.031048280806342 mm | 일치 | 같음 |
+| cuRobo | 10 / 15 · 15 / 15 · −9.171877401271193 mm | 일치 | 같음 |
+
+SUBTASK-f 와 달라진 frame leaf 는 시간 항목 (`ag3s_ms` · `to_ms`, 각 15 frame) 뿐이다.
+
+**(2) flag 해석 (모델 없이 snapshot 의 parser · 해석 함수로).**
+
+| flag | 결과 | 해석된 gate | 기동 로그 |
+|---|---|---|---|
+| 없음 | 기동 | **on** | — |
+| `--no-subtask-gate` | 기동 | off | — |
+| `--subtask-gate` | 기동 | on | — |
+| `--no-attention` · `--no-safe` · `--no-perception` | 기동 | off | `subtask gate: off (<flag> — subtask label 이 오지 않으므로 기본 on 인 gate 를 끈다 …)` |
+| `--subtask-gate --no-attention` | **거절** | — | — |
+| `--no-subtask-gate --no-attention` | 기동 | off | — |
+| `--subtask-gate --no-subtask-gate` | **거절** | — | — |
+
+`--no-attention` · `--no-safe` · `--no-perception` 서버는 모델과 함께 띄우지 않았고 해석 함수로만 확인했다.
+
+**(3) 띄운 서버의 기동 로그와 기록.** 플래그 없음: `subtask label: probe kv_L4_v1 (shipped asset) · gate ON (place/home → 새 조작 대상 없음 · PLACED 뒤 home → 해제)`, chunk summary 의 `subtask.gate` 가 150 / 150 chunk 에서 true. `--no-subtask-gate`: `… · gate off (기록만)`, 150 / 150 chunk 에서 false.
+
+**(4) closed loop — 2 run × 2 조건, 기준 run 과 같은 episode · seed.**
+
+| 새 run | 기준 | 실행된 action · planning action | 결정 항목의 차이 | S / G / P | HOLD chunk (기준 · 새) |
+|---|---|---|---|---|---|
+| E3bD ep1807 s18071 | SUBTASK-f gate on | 같음 | 14 항목 모두 0 chunk | 모두 성공 | 0 · 0 |
+| E3bD ep1800 s18001 | SUBTASK-f gate on | 같음 | 14 항목 모두 0 chunk | 모두 성공 | 1 · 1 |
+| E3bN ep1807 s18071 | T39 E3b (gate off) | 같음 | `subtask.*` 를 뺀 항목 0 chunk | 모두 성공 | 0 · 0 |
+| E3bN ep1800 s18001 | T39 E3b (gate off) | 같음 | `subtask.*` 를 뺀 항목 0 chunk | 모두 성공 | 1 · 1 |
+| E3bN ep1807 s18071 | SUBTASK-f V0 (gate off) | 같음 | 14 항목 모두 0 chunk | 모두 성공 | 0 · 0 |
+| E3bN ep1800 s18001 | SUBTASK-f V0 (gate off) | 같음 | 14 항목 모두 0 chunk | 모두 성공 | 1 · 1 |
+
+(14 항목 = status · validity · grounding_status · has_target · verdict_reasons · grasp.state · manipulated.id · exclusion · admissibility.decision.mode 와 `subtask.gate` · `.label` · `.blocked` · `.released` · `.placed_seen`. T39 E3b 의 서버 기록에는 `subtask` 키가 없어 `subtask.*` 가 다를 수밖에 없다 — `subtask.gate` 가 75 chunk 모두 null 대 false. 이 두 run 에서 gate on 은 `released` 1 chunk 씩, `blocked` 가 ep1807 14 chunk · ep1800 46 chunk 있다 — gate 가 실제로 일한 run 이다.)
+
+verifier 가 돌린 gate 관련 pytest 다섯 파일: **316 passed / 1 skipped / 0 failed** (132.3 s). 전체 `tests/trajopt tests/ag3s` 회귀는 구현자의 결과 (`SUBTASK-g.impl.md`).
+
+![SUBTASK-g 표](figures/subtask-g/subtask-g-table.png)
+
+[`figures/subtask-g/subtask-g-table.png`](figures/subtask-g/subtask-g-table.png) — 표. 위 (1) 기준선 · (2) flag 해석 · (3) 기동 로그 · (4) closed loop 를 한 장에 모은 것.
+
+**읽는 법과 한계.** 확인된 것은 *설정 경로가 의도대로다* (flag 없음 = 명시한 `--subtask-gate`, `--no-subtask-gate` = T39 E3b) 는 것이고, 확인한 run 은 2 개다. 앞 절의 48 쌍을 기본 on 으로 다시 돌린 것이 아니다 (같은 config 가 실려 같은 동작이 나온다는 구현자의 기대를 두 run 이 지지한다). 미측정: 서버 `meta.json` 의 `subtask.gate` 는 SIGTERM 종료 때 디스크에 쓰이지 않는다 (`close()` 에서만 기록; SUBTASK-f 도 같다) — 값은 flag 해석과 chunk 별 `subtask.gate` 로 확인했다. 시간 항목은 비교하지 않았다. 장면 · 그래프 figure 는 만들지 않았다.
+
+### 10. 아직 모르는 것 (`not_measured` 와 이 절에서 드러난 것)
+
+| 항목 | 상태 |
+|---|---|
+| **gate 기본값** | **결정 · 구현 · 검증 끝.** 사용자 판정 (2026-10-04) 으로 기본 on, `--no-subtask-gate` 로 끈다 (§9 SUBTASK-g). 단 §6–§8 의 48 쌍 closed loop 는 `--subtask-gate` 를 명시한 실행이고, 기본 on 으로 다시 돌린 48 쌍은 없다 (확인한 것은 2 run 의 비트 동일) |
+| **gate off 는 놓은 뒤 엉뚱한 곳을 carving 한다** | **측정됨** (§6 표: PLACED 뒤 965 / 1,051 chunk 의 carving 중 543 chunk 는 가장 가까운 물체가 다른 과일, 21 / 25 run 에서 `switch`). 단 그 carving 이 **충돌 · 성공에 미친 영향은 미측정** — 성공률은 29 대 28, p = 1.0 이고 짝 하나의 차이는 재파지 결과 (원인 미측정) |
+| **크기로 안 갈리는 목적지에서 place 중에도 target 을 지울 수 있다** | **미측정.** 이 task 의 crate 는 크기로 갈려 place 중에도 지워지지 않으므로 여기서는 재현되지 않는다. bowl · plate · 쌓기 · 건네기 씬으로 측정한 적이 없다 (§1 의 논리는 코드를 읽은 것) |
+| probe 가 rule (gripper) 을 이기는가 | **미측정.** closed-loop 참값이 gripper 정의라 rule 이 정의상 1.000 이다. "gripper 는 닫혔는데 사과가 손에 없는" 미끄러짐 run 은 policy image 가 저장되지 않아 쟀다 못 했다 (SUBTASK-b 한계 2). 그런 run 에서 label 이 어떻게 나오는지도 미측정 |
+| held-out closed-loop 표본 | probe 의 held-out closed-loop 은 ep1807 하나 (SUBTASK-b 한계 3). gate on 의 closed loop 는 24 episode × 2 seed 지만 **gate 가 성공률을 올리지는 않았다** (28 / 48, off 29 / 48, p = 1.0). 이 task 에서 gate 의 쓰임은 성공률이 아니라 carving 의 정합성이라는 것은 lead 의 판단이고 (audit §9: 이 과제에서는 거의 바뀌는 것이 없다 — 일반성과 거짓 attach 교차검증이 가치) 측정으로 가른 것이 아니다 |
+| label 의 늦은 전환 | 확정 label 이 place 가 되기까지 (첫 HELD 부터) 0–6 chunk (0 → 1 run · 1 → 17 · 2 → 13 · 3 → 9 · 4 → 1 · 5 → 2 · 6 → 2), home 은 PLACED 뒤 2–3 chunk (2 → 15 run · 3 → 9). **PLACED 전에 home 이 확정된 run 이 1 개 있다** (그래서 B3 가 PLACED 를 요구한다) |
+| 해제 뒤 팔이 준비 자세로 돌아가는 속도 | 마지막 자세만 비교했다. "돌아가는 데 걸린 시간" 은 재지 않았다 (경로 길이 `L_path_rad_from_ref` 만 있다) |
+| chunk 시간의 gate on 대 off 비교 | **안 했다.** V1 은 서버 4 개를 동시에 돌렸고 T39 S2-2 는 서버 4 개 (E3b 2 · E0 2) 였다. 부하가 달라 짝지을 수 없다 (SUBTASK-f 는 다른 세션의 CPU 작업도 겹쳤다) |
+| gate off 의 label × latch · 전환 지연 · `would_block` | T39 의 gate off 서버 기록에는 `subtask` 키가 없다 (`o1-eval` 코드). 이 항목들은 gate on 48 run 과 V0 의 gate off 2 run 에만 있다 |
+| 두 번째 물체를 쥐는 과제 | `placed_seen` 은 episode 동안 sticky 이고 latch 는 PLACED 에서 다시 잠그지 않는다 (`grasp_latch.py:516`). 한 episode 에서 두 번째 물체를 쥐는 과제가 생기면 B3 · f 의 조건을 다시 봐야 한다 (`SUBTASK-c.impl.md` 의 "남은 위험") |
+| legacy latch (`evidence = False`) | PLACED 가 AG3S 에 한 요청 늦게 닿는다 (`SUBTASK-c.impl.md` 의 "남은 위험"). 기본 (evidence) 은 같은 요청이다 |
+| 준비 자세의 정의 | 코드에 별도 정의가 없어 control step 0 (warm-up 뒤) 의 16-D 관절값을 썼다 |
+| 충돌 판정 | 기록된 qpos 의 kinematic 재생에서 dist < 0 접촉을 센 것 + 서버의 `clearance_min_mm` 이다. 접촉력은 재지 않았다 |
+| KV cache decoding 의 지연 | **미측정** (SUBTASK (a) 는 naive decoding 만) |
+| 로컬 PC (MuJoCo) 실행 | 모든 closed loop 는 서버에서 headless 로 돌렸다 (client 도 같은 서버). local PC 의 실기 client 는 이 측정에 없다 |
+
+### 되돌아올 지점 — 고르지 않은 선택지와 전환 신호
+
+| 안 고른 것 | 왜 안 골랐나 | 되돌아올 신호 (**scribe 가 위 한계에서 도출한 것이며 사용자 판정이 아니다**) |
+|---|---|---|
+| **A** zero-shot subtask text 를 그대로 쓴다 | held 구간 36 frame 중 30 에서 action token, AUROC 0.502–0.854 (§2) | 거의 없다 — 16D 를 subtask 문장으로 다시 학습한 checkpoint 가 생기면 B 와 함께 재측정 |
+| **B** subtask co-training (`phase_index` → 문장, text loss 추가, 16D 재학습) | 재학습 비용. probe 가 재학습 없이 val 0.981 · closed-loop 0.959 로 읽는다 | probe label 이 **틀리는 구간** 이 측정될 때 — 특히 미끄러짐 run 에서 probe 가 rule 보다 나쁘거나, closed-loop 에서 pick → place 오분류 (지금 0 개) 가 나올 때 |
+| **D** gate 없이 rule 유지 (gripper · attach · 크기) | 구현 시점의 기본값이었다. 2026-10-04 사용자가 기본 on 으로 정했다 (SUBTASK-g) | on/off 스위치는 남는다 — **`--no-subtask-gate`** 로 끄면 T39 E3b 와 같은 동작이다 (SUBTASK-g 에서 2 run 비트 동일; SUBTASK-d · e · f V0 에서도 각각 확인) |
+| B3 해제를 `detach` 로 | `attach_revoked` 가 detach 이지만 사과가 놓이지 않았다 | PLACED 가 안 오는 성공 경로가 생기면 |
+| e · f 의 인증을 서버 상태 (`status`) 를 `ok` 로 바꿔서 | 다른 소비자 (`has_target` 집계 · 기록 비교) 가 같이 바뀐다 | 소비자가 `subtask_no_target` 술어를 모르는 경로가 생기면 |
+| SUBTASK-f 의 `no_seed` HOLD 를 인증 | 사용자 판정 — 그대로 둔다 | `no_seed` 가 다른 run 에서도 놓은 뒤 길게 이어질 때 |
+
+### 이 STEP 의 산출물
+
+- 코드: benchmark `4a8a051` (SUBTASK-c) · `2016f30` (merge) · `a7994c0` (SUBTASK-e) · `ce92fd1` (SUBTASK-f) · `bf65756` (SUBTASK-g), 루트 repo 테스트 `0057f70` · `ff8de30` · `7fca003` · `54399b8` (`tests/ag3s/test_subtask_gate.py` · `tests/trajopt/test_subtask_wiring.py` · `test_subtask_no_target.py` · `test_subtask_no_admissible_home.py` · `test_subtask_gate_default.py`).
+- 문서·측정 커밋: `5110dbc` (SUBTASK 측정 · gate 구현 문서) · `6c24854` (MERGE-o4) · `7098e69` (SUBTASK-d verify) · `af168a8` (SUBTASK-e verify) · `0f77081` (SUBTASK-f verify).
+- 측정: `handoff/SUBTASK.verify.json` · `SUBTASK-b.verify.json` · `MERGE-o4.verify.json` · `SUBTASK-d.verify.json` · `SUBTASK-e.verify.json` · `SUBTASK-f.verify.json` · `SUBTASK-extra.verify.json` · `SUBTASK-g.verify.json`. 판단 흐름: `handoff/SUBTASK.audit.md` (§1–§11). 구현 보고: `SUBTASK-c.impl.md` · `SUBTASK-e.impl.md` · `SUBTASK-f.impl.md` · `SUBTASK-g.impl.md` · `MERGE-o4.impl.md`. raw: `outputs/verify/subtask_probe/` · `outputs/verify/SUBTASK-b/` · `outputs/verify/MERGE-o4/` · `outputs/verify/SUBTASK-d/` (`s4/` = SUBTASK (a) 재계산) · `outputs/verify/SUBTASK-e/` · `outputs/verify/SUBTASK-f/` · `outputs/verify/SUBTASK-extra/` · `outputs/verify/SUBTASK-g/`.
+- figure: `figures/subtask/` (`subtask-inference-paths` · `subtask-template-discovery` · `subtask-scene-ep1807` · `subtask-timeline` · `subtask-accuracy-table`), `figures/subtask-b/` (`-scene` · `-graph` · `-table`), `figures/merge-o4/` (`merge-o4-baseline-table`), `figures/subtask-d/` · `figures/subtask-e/` · `figures/subtask-f/` (각각 `-table` · `-timeline` · 씬 둘), `figures/subtask-g/` (`subtask-g-table`). 각각 `.json` sidecar 가 있다.
+
+**다음 판정은 사용자에게 있다:** (1) 로컬 PC 의 client 를 SUBTASK-e 의 새 `wire.py` 로 갱신 (모르는 reason kind 는 HOLD; SUBTASK-g 는 client 갱신을 요구하지 않는다). (2) 크기로 안 갈리는 목적지 씬으로 gate 를 재는 것을 따로 STEP 으로 할 것인가. (3) 기본 on 으로 다시 돌린 큰 N (48 쌍) 이 필요한가.
