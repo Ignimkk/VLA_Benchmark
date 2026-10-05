@@ -1,0 +1,5157 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only; no interpretation.",
+ "step": "T43S2",
+ "date": "2026-10-05",
+ "runs": [
+  {
+   "id": "baseline legacy (CPU, shared with T43 P2)",
+   "command": "outputs/verify/T43/P2/baseline/run_baseline.sh; judge.py",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/T43/P2/baseline/judge.json",
+   "stdout_log": "outputs/verify/T43/P2/baseline/legacy.log"
+  },
+  {
+   "id": "demo replay",
+   "command": "outputs/verify/T43/S2/p/run_replays.sh N EP... -> replay_demo.py EP OUTDIR",
+   "venv": ".venv-openpi-live (CPU, nice 19, <= 3 replay workers)",
+   "raw_output": "outputs/verify/T43/S2/raw/replay/DEMO_ep<EP>/ (frames.jsonl, manifest.json, traj.npz, third_person_front.mp4), DEMO_ep<EP>.replay.json",
+   "stdout_log": "outputs/verify/T43/S2/raw/replay/DEMO_ep<EP>.client.log"
+  },
+  {
+   "id": "analysis",
+   "command": "p/analyze_s2.py EP...",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/T43/S2/raw/s2_analysis.json",
+   "stdout_log": null
+  },
+  {
+   "id": "figures",
+   "command": "p/render_s2.py EP...; p/fig_s2.py",
+   "venv": ".venv-openpi-live (CPU, osmesa)",
+   "raw_output": "outputs/verify/T43/S2/render/",
+   "stdout_log": null
+  }
+ ],
+ "code_state": {
+  "client": "/mnt/dev/work-t42 snapshot (pi05_TO_hybrid 98e07d6 = T42-1 rollout client), pi05_infer.py md5 08460b17b12378a3e20e06ca8317db15",
+  "benchmark_head": "089516e",
+  "analysis_code": "outputs/verify/T42/p/grasp_robust.py + analyze_t42.py (T42-1 rule), outputs/verify/T43/S/p/measure_pick.geom_at (T43 S geometry)",
+  "dirty_files": []
+ },
+ "numbers": {
+  "_comment": "mm / deg unless noted. outcome rule = T42-1 analyze_t42 (T39 rule generalized to the target fruit). settled row = first close command + 16 control rows.",
+  "definitions": {
+   "replay": "T43 S2: open-loop replay of the RECORDED DATASET ACTIONS in the policy client's MuJoCo scene (verifier, CPU, no server).\n\nClient  : the T42-1 client snapshot /mnt/dev/work-t42 (pi05_TO_hybrid 98e07d6 = the client that recorded the T42-1 E0/E3b\n          rollouts), pi05_infer.main() run in-process with exactly the E0 arguments of outputs/verify/T42/p/run_client.sh\n          (--model rby1_randomized_pick_place_16d --episode-index EP --max-steps 600 --headless --warmup-steps 1000\n          --record-frames RUN --record RUN/third_person_front.mp4 --view front --trajectory-out RUN/traj.npz\n          --obstacle-stop-distance 0), except: no --policy-seed (there is no model), and load_remote_policy is replaced by\n          DatasetPolicy.  So the reset (reset_randomized_scene from the dataset record, actuator hold, 1000 warmup steps),\n          apply_action('rby1_16d': 16-D absolute joint targets + 2 gripper openings in [0, 1] x RBY1_GRIPPER_OPEN), the\n          steps per action (1 / (15 Hz * timestep)) and the recording are the client's own code.\nPolicy  : DatasetPolicy.infer(obs) returns the next 8 rows (OPEN_LOOP_HORIZON) of the episode's parquet 'action' column:\n          control step t gets action[t] (t = 0 .. len-1); after the last frame the last action is repeated (hold) up to\n          step 600.  The observation is ignored (open loop).\nusage: replay_demo.py EP OUTDIR   -> OUTDIR/DEMO_ep<EP>/ (frames.jsonl, manifest.json, traj.npz, third_person_front.mp4),\n       OUTDIR/DEMO_ep<EP>.replay.json (n frames, held steps, action source)",
+   "analysis": "T43 S2 analysis (verifier, CPU): demo replay vs dataset vs policy rollouts, per episode.\n\nRuns     : DEMO = raw/replay/DEMO_ep<EP> (replay_demo.py); policy E0 / E3b = every finished run of the episode in\n           outputs/verify/T42/1/runs/{E0,E3b}/noobs (.done) and outputs/verify/T39/runs/{E0,E3b} (.done).\nOutcome  : T42-1 grasp_robust.robust(run_dir) = analyze_t42 (T39/T28 rule generalized: grasp = target z >= z0 + 0.050 m at a\n           planning row; place = target centre inside the crate interior at the LAST planning row; success = both) + close\n           command rows (applied arm gripper crossing 0.9 downward), lift_t, robust grasp (T42-1 definition B).\nGeometry : T43 S measure_pick.geom_at at the first close command row (onset) and onset + 16 control rows (settled):\n           tip_dz_mm / tip_dxy_mm = fingertip midpoint vs the fruit body centre, tilt_deg = approach axis vs -z,\n           approach_yaw_deg_mirrored, closing_yaw_deg_mirrored_mod180, closing_elev_deg, grasp_dz/dxy (finger bodies), contacts.\n           Dataset row: T43 S raw/demo_grasp.json (dataset observation.state at grasp_close_start_frame + 16; fruits at the\n           recorded initial / settled poses).\nTracking : DEMO control row t qpos (commanded-at pose) vs dataset observation.state[t]: used-arm joints max |diff| (deg) over\n           t <= min(len, onset + 16) and over all frames; gripper opening (|finger qpos| / 0.045) vs state col 7 / 15;\n           final target xy vs the dataset's final_fruit_poses (mm).\nusage: analyze_s2.py EP [EP ...]  -> raw/s2_analysis.json",
+   "action_mapping": "dataset 'action' (16) = [left_arm_0..6 absolute joint targets, left_gripper opening 0..1, right_arm_0..6, right_gripper]; pi05_infer.apply_action('rby1_16d'): d.ctrl[arm actuators] = targets, d.ctrl[gripper] = clip(opening, 0, 1) * RBY1_GRIPPER_OPEN; one action per control step (15 Hz), sim steps per action = round(1 / (15 * timestep))"
+  },
+  "counts": {
+   "right": {
+    "episodes": 6,
+    "demo_success": 6,
+    "demo_robust_grasp": 5,
+    "policy_runs": {
+     "E0": [
+      12,
+      9
+     ],
+     "E3b": [
+      14,
+      12
+     ]
+    }
+   },
+   "left": {
+    "episodes": 6,
+    "demo_success": 6,
+    "demo_robust_grasp": 6,
+    "policy_runs": {
+     "E0": [
+      11,
+      8
+     ],
+     "E3b": [
+      15,
+      13
+     ]
+    }
+   }
+  },
+  "episodes": {
+   "1834": {
+    "arm": "right",
+    "fruit": "apple",
+    "split": "test",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 282
+    },
+    "n_dataset_frames": 312,
+    "held_steps_after_last_frame": 288,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep1834",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 200,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 122,
+     "regrasp": false,
+     "robust_grasp": true,
+     "robust_grasp_strict": true,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -8.003461784533261,
+       "tip_dxy_mm": 17.911594996415676,
+       "tip_spread_mm": 97.32006979509629,
+       "tilt_deg": 37.94198619539963,
+       "approach_yaw_deg_mirrored": 34.19824803302756,
+       "closing_yaw_deg_mirrored_mod180": 115.76197052825464,
+       "closing_elev_deg": 6.525460580201365,
+       "grasp_dz_mm": 35.612808866269944,
+       "grasp_dxy_mm": 25.33900025969044,
+       "opening_meas": 0.9999999991474943,
+       "n_contacts": 0,
+       "contact_bodies": [],
+       "tip_rel_fruit_mm": [
+        16.141595186066116,
+        -7.763642197112786,
+        -8.003461784533261
+       ],
+       "fruit_pos": [
+        0.44393624358860556,
+        -0.3263240215630625,
+        0.8500018760268739
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -7.9310363430610265,
+       "tip_dxy_mm": 19.113334662419774,
+       "tip_spread_mm": 73.1762051814671,
+       "tilt_deg": 37.948131220124026,
+       "approach_yaw_deg_mirrored": 34.17376966948938,
+       "closing_yaw_deg_mirrored_mod180": 115.76453698120595,
+       "closing_elev_deg": 6.526881734132977,
+       "grasp_dz_mm": 35.678362409030996,
+       "grasp_dxy_mm": 24.549477510461102,
+       "opening_meas": 0.731272274958575,
+       "n_contacts": 2,
+       "contact_bodies": [
+        "ee_finger_r1",
+        "ee_finger_r2"
+       ],
+       "tip_rel_fruit_mm": [
+        18.032786383865187,
+        -6.335469765656187,
+        -7.9310363430610265
+       ],
+       "fruit_pos": [
+        0.4420820125019036,
+        -0.3277669997944451,
+        0.849998946516665
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 312,
+     "arm_joint_maxabs_deg_to_settled": 0.7886953604557295,
+     "arm_joint_maxabs_deg_all": 1.6311192333995068,
+     "arm_joint_median_deg_all": 0.0901853659471926,
+     "gripper_opening_maxabs_all": 0.03179363014701919,
+     "final_target_xy_vs_dataset_final_mm": 13.92550739965201,
+     "final_target_z_vs_dataset_final_mm": -0.00016227398758061895
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -9.540007876384315,
+      "tip_dxy_mm": 23.770309780136735,
+      "tip_spread_mm": 91.32675177649904,
+      "tilt_deg": 37.80365557765537,
+      "approach_yaw_deg_mirrored": 34.16898225582843,
+      "closing_yaw_deg_mirrored_mod180": 115.74869988768157,
+      "closing_elev_deg": 6.481028649469272,
+      "grasp_dz_mm": 33.863325903149665,
+      "grasp_dxy_mm": 19.883515890464473,
+      "opening_meas": 0.9954050183296204,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -9.479999445027975,
+      "tip_dxy_mm": 23.80783486301162,
+      "tip_spread_mm": 67.39811069564261,
+      "tilt_deg": 37.81092871865733,
+      "approach_yaw_deg_mirrored": 34.15584331526476,
+      "closing_yaw_deg_mirrored_mod180": 115.7461828393928,
+      "closing_elev_deg": 6.4746631934302865,
+      "grasp_dz_mm": 33.91764922735862,
+      "grasp_dxy_mm": 19.837736162314123,
+      "opening_meas": 0.7295312285423279,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1834_s18341",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       110
+      ],
+      "lift_t": 134,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 110,
+        "tip_dz_mm": -2.9877364481167845,
+        "tip_dxy_mm": 28.912034785096292,
+        "tip_spread_mm": 97.23977678422914,
+        "tilt_deg": 37.49683568749533,
+        "approach_yaw_deg_mirrored": -43.04791762959915,
+        "closing_yaw_deg_mirrored_mod180": 39.1126662873481,
+        "closing_elev_deg": 5.9747464284422644,
+        "grasp_dz_mm": 40.926037977265686,
+        "grasp_dxy_mm": 23.26475081107887,
+        "opening_meas": 0.9990994756338792,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         5.472369427703184,
+         28.389415778796113,
+         -2.9877364481167845
+        ],
+        "fruit_pos": [
+         0.44304971589597525,
+         -0.32648174830146565,
+         0.8499977292190517
+        ]
+       },
+       "settled": {
+        "t": 126,
+        "tip_dz_mm": -3.4423485462429237,
+        "tip_dxy_mm": 24.61110693923866,
+        "tip_spread_mm": 73.09162804218167,
+        "tilt_deg": 37.70737796022876,
+        "approach_yaw_deg_mirrored": -42.59777178842988,
+        "closing_yaw_deg_mirrored_mod180": 39.14129236230781,
+        "closing_elev_deg": 6.365207707191511,
+        "grasp_dz_mm": 40.33751328841628,
+        "grasp_dxy_mm": 19.233625639978587,
+        "opening_meas": 0.7301943137847436,
+        "n_contacts": 3,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         13.124249028855617,
+         20.819718350718,
+         -3.4423485462429237
+        ],
+        "fruit_pos": [
+         0.43743566568584685,
+         -0.3180012091922118,
+         0.8509055710199167
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1834_s18342",
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "close_cmd_t": [
+       106
+      ],
+      "lift_t": null,
+      "robust_grasp": false,
+      "geom": {
+       "onset": {
+        "t": 106,
+        "tip_dz_mm": -8.322147756531063,
+        "tip_dxy_mm": 23.63280363919046,
+        "tip_spread_mm": 97.15129660389304,
+        "tilt_deg": 35.19588356477398,
+        "approach_yaw_deg_mirrored": -40.84931496072279,
+        "closing_yaw_deg_mirrored_mod180": 39.91344375427252,
+        "closing_elev_deg": 6.460214416462622,
+        "grasp_dz_mm": 37.33012571328265,
+        "grasp_dxy_mm": 24.382559782773352,
+        "opening_meas": 0.9981110588386402,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         4.680472840075001,
+         23.164683935721076,
+         -8.322147756531063
+        ],
+        "fruit_pos": [
+         0.4439369606031095,
+         -0.3263178480413785,
+         0.8500019194428289
+        ]
+       },
+       "settled": {
+        "t": 122,
+        "tip_dz_mm": -8.339001758119636,
+        "tip_dxy_mm": 20.453003901749454,
+        "tip_spread_mm": 75.09467033114181,
+        "tilt_deg": 35.468636503745536,
+        "approach_yaw_deg_mirrored": -40.429955929028715,
+        "closing_yaw_deg_mirrored_mod180": 39.848169321971405,
+        "closing_elev_deg": 6.897716347578222,
+        "grasp_dz_mm": 37.14374926926334,
+        "grasp_dxy_mm": 21.339194097120945,
+        "opening_meas": 0.7521870874308781,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         11.457252566313525,
+         16.94274866238299,
+         -8.339001758119636
+        ],
+        "fruit_pos": [
+         0.43927714040808385,
+         -0.31997194000897183,
+         0.8509316701965272
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1834_s18343",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       114
+      ],
+      "lift_t": 173,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 114,
+        "tip_dz_mm": -5.01541592725907,
+        "tip_dxy_mm": 22.495283227275582,
+        "tip_spread_mm": 98.25829775443749,
+        "tilt_deg": 37.73707990155696,
+        "approach_yaw_deg_mirrored": -41.00628656813439,
+        "closing_yaw_deg_mirrored_mod180": 40.88168049229872,
+        "closing_elev_deg": 6.231485626075597,
+        "grasp_dz_mm": 38.129579160467664,
+        "grasp_dxy_mm": 27.448809709650416,
+        "opening_meas": 1.010449688527904,
+        "n_contacts": 1,
+        "contact_bodies": [
+         "ee_finger_r1"
+        ],
+        "tip_rel_fruit_mm": [
+         7.123589193513357,
+         21.337578224283227,
+         -5.01541592725907
+        ],
+        "fruit_pos": [
+         0.4429645611452698,
+         -0.3250862415667545,
+         0.8500055810688805
+        ]
+       },
+       "settled": {
+        "t": 130,
+        "tip_dz_mm": -7.063415385707206,
+        "tip_dxy_mm": 20.018299906885613,
+        "tip_spread_mm": 74.03012026245595,
+        "tilt_deg": 37.86942699189732,
+        "approach_yaw_deg_mirrored": -40.67702850706946,
+        "closing_yaw_deg_mirrored_mod180": 40.784003570644586,
+        "closing_elev_deg": 6.685958256965406,
+        "grasp_dz_mm": 36.608601670894416,
+        "grasp_dxy_mm": 23.636978157285284,
+        "opening_meas": 0.7389858258524513,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         11.30853164854917,
+         16.518154954951182,
+         -7.063415385707206
+        ],
+        "fruit_pos": [
+         0.43532742069180075,
+         -0.3157796488497146,
+         0.8504060894477417
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1834_s18341",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       110,
+       208,
+       216
+      ],
+      "lift_t": 114,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 110,
+        "tip_dz_mm": -5.435677887668966,
+        "tip_dxy_mm": 31.442965199456488,
+        "tip_spread_mm": 97.30507219611745,
+        "tilt_deg": 37.68713401573086,
+        "approach_yaw_deg_mirrored": -41.77213625220089,
+        "closing_yaw_deg_mirrored_mod180": 40.677067308651765,
+        "closing_elev_deg": 5.796770779698771,
+        "grasp_dz_mm": 38.32146316802021,
+        "grasp_dxy_mm": 20.0475049467587,
+        "opening_meas": 0.999830560099346,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         9.304213017139851,
+         30.03484111271304,
+         -5.435677887668966
+        ],
+        "fruit_pos": [
+         0.44353196515763366,
+         -0.32618157192128794,
+         0.8499971464007081
+        ]
+       },
+       "settled": {
+        "t": 126,
+        "tip_dz_mm": -3.720844442345661,
+        "tip_dxy_mm": 28.42864538513916,
+        "tip_spread_mm": 74.51434468695376,
+        "tilt_deg": 39.232542624911446,
+        "approach_yaw_deg_mirrored": -40.44892233085598,
+        "closing_yaw_deg_mirrored_mod180": 41.56363370552842,
+        "closing_elev_deg": 6.499917123711774,
+        "grasp_dz_mm": 38.89722900823733,
+        "grasp_dxy_mm": 16.604174670518972,
+        "opening_meas": 0.7460163875380371,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         16.625920313118936,
+         23.060066178912265,
+         -3.720844442345661
+        ],
+        "fruit_pos": [
+         0.45316326077671887,
+         -0.32653150492800503,
+         0.8864551748496011
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1834_s18342",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       106,
+       208
+      ],
+      "lift_t": 119,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 106,
+        "tip_dz_mm": -6.755424729601889,
+        "tip_dxy_mm": 27.387526418151097,
+        "tip_spread_mm": 97.17661780058128,
+        "tilt_deg": 37.97376934184027,
+        "approach_yaw_deg_mirrored": -42.94123890473655,
+        "closing_yaw_deg_mirrored_mod180": 37.08748216913409,
+        "closing_elev_deg": 7.698013289636886,
+        "grasp_dz_mm": 36.92552368279078,
+        "grasp_dxy_mm": 19.337706530925495,
+        "opening_meas": 0.9983913854831339,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         10.447196886145594,
+         25.31664828777763,
+         -6.755424729601889
+        ],
+        "fruit_pos": [
+         0.4439369606031095,
+         -0.3263178480413785,
+         0.8500019194428289
+        ]
+       },
+       "settled": {
+        "t": 122,
+        "tip_dz_mm": -5.5823802174931325,
+        "tip_dxy_mm": 27.07463980024908,
+        "tip_spread_mm": 73.52462036013745,
+        "tilt_deg": 38.89924790323228,
+        "approach_yaw_deg_mirrored": -42.86841204767215,
+        "closing_yaw_deg_mirrored_mod180": 37.08668655186223,
+        "closing_elev_deg": 8.035360086901827,
+        "grasp_dz_mm": 37.410427118357404,
+        "grasp_dxy_mm": 17.751347848136348,
+        "opening_meas": 0.7350661176035391,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         14.178208029145544,
+         23.065440325203078,
+         -5.5823802174931325
+        ],
+        "fruit_pos": [
+         0.4485389421328446,
+         -0.3257258879328252,
+         0.8694544230568788
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1834_s18343",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       91,
+       192
+      ],
+      "lift_t": 99,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 91,
+        "tip_dz_mm": -5.422165396665735,
+        "tip_dxy_mm": 28.65912967006944,
+        "tip_spread_mm": 97.9819777726014,
+        "tilt_deg": 36.71429724143291,
+        "approach_yaw_deg_mirrored": -39.10371322102869,
+        "closing_yaw_deg_mirrored_mod180": 44.71955936245617,
+        "closing_elev_deg": 4.587884969775163,
+        "grasp_dz_mm": 38.98228611684906,
+        "grasp_dxy_mm": 23.087746091172257,
+        "opening_meas": 1.0073526740744767,
+        "n_contacts": 1,
+        "contact_bodies": [
+         "ee_finger_r1"
+        ],
+        "tip_rel_fruit_mm": [
+         7.3615256410482495,
+         27.69753876578285,
+         -5.422165396665735
+        ],
+        "fruit_pos": [
+         0.4436523845077515,
+         -0.3260268938598253,
+         0.8499151782608328
+        ]
+       },
+       "settled": {
+        "t": 107,
+        "tip_dz_mm": -3.312649603261719,
+        "tip_dxy_mm": 25.782944360422718,
+        "tip_spread_mm": 73.07075305222702,
+        "tilt_deg": 41.45178736453419,
+        "approach_yaw_deg_mirrored": -36.63314895696173,
+        "closing_yaw_deg_mirrored_mod180": 45.35106107217784,
+        "closing_elev_deg": 7.0433968177816135,
+        "grasp_dz_mm": 37.58758608573864,
+        "grasp_dxy_mm": 20.67198486540173,
+        "opening_meas": 0.7300948712861322,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         16.38942048248193,
+         19.90344483100992,
+         -3.312649603261719
+        ],
+        "fruit_pos": [
+         0.4697402235226644,
+         -0.3155397649535559,
+         0.9064062789134608
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "1925": {
+    "arm": "left",
+    "fruit": "apple",
+    "split": "test",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 281
+    },
+    "n_dataset_frames": 311,
+    "held_steps_after_last_frame": 289,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep1925",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 200,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 123,
+     "regrasp": false,
+     "robust_grasp": true,
+     "robust_grasp_strict": true,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -20.545409169634542,
+       "tip_dxy_mm": 7.282821802695435,
+       "tip_spread_mm": 97.32016366536763,
+       "tilt_deg": 35.55867277699705,
+       "approach_yaw_deg_mirrored": 0.4514472126334593,
+       "closing_yaw_deg_mirrored_mod180": 78.48446052433783,
+       "closing_elev_deg": 8.431229136108628,
+       "grasp_dz_mm": 33.71930546954927,
+       "grasp_dxy_mm": 21.73489607642339,
+       "opening_meas": 0.9999999998241673,
+       "n_contacts": 0,
+       "contact_bodies": [],
+       "tip_rel_fruit_mm": [
+        7.024742172593856,
+        -1.9215854959895307,
+        -20.545409169634542
+       ],
+       "fruit_pos": [
+        0.5493011,
+        0.3063348,
+        0.8504785171361058
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -20.464501319412577,
+       "tip_dxy_mm": 7.68807265998887,
+       "tip_spread_mm": 72.90325848159394,
+       "tilt_deg": 35.55776797681441,
+       "approach_yaw_deg_mirrored": 0.41213265659607823,
+       "closing_yaw_deg_mirrored_mod180": 78.4767226527892,
+       "closing_elev_deg": 8.429603019262007,
+       "grasp_dz_mm": 33.79853316024906,
+       "grasp_dxy_mm": 21.20912038517501,
+       "opening_meas": 0.7282293209969929,
+       "n_contacts": 4,
+       "contact_bodies": [
+        "ee_finger_l1",
+        "ee_finger_l2"
+       ],
+       "tip_rel_fruit_mm": [
+        7.532509720560743,
+        -1.5387522656120645,
+        -20.464501319412577
+       ],
+       "fruit_pos": [
+        0.5488042450955696,
+        0.3057597236113339,
+        0.8504344635878872
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 311,
+     "arm_joint_maxabs_deg_to_settled": 0.6947834190800519,
+     "arm_joint_maxabs_deg_all": 1.1663110932517737,
+     "arm_joint_median_deg_all": 0.09987076339811002,
+     "gripper_opening_maxabs_all": 0.03375230154653186,
+     "final_target_xy_vs_dataset_final_mm": 55.56947005254677,
+     "final_target_z_vs_dataset_final_mm": 1.918679719136951
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -18.956522002858577,
+      "tip_dxy_mm": 7.225809386572424,
+      "tip_spread_mm": 91.32675177649897,
+      "tilt_deg": 35.66339669469796,
+      "approach_yaw_deg_mirrored": 0.4941810186319354,
+      "closing_yaw_deg_mirrored_mod180": 78.49809554131639,
+      "closing_elev_deg": 8.483154270146985,
+      "grasp_dz_mm": 34.84451412717726,
+      "grasp_dxy_mm": 22.221896023511064,
+      "opening_meas": 0.9954050183296204,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -19.01574099832992,
+      "tip_dxy_mm": 7.176076194336203,
+      "tip_spread_mm": 67.231776185793,
+      "tilt_deg": 35.656984459970786,
+      "approach_yaw_deg_mirrored": 0.48464922063580124,
+      "closing_yaw_deg_mirrored_mod180": 78.49503416541425,
+      "closing_elev_deg": 8.476737229974699,
+      "grasp_dz_mm": 34.78876080062376,
+      "grasp_dxy_mm": 22.264597935114942,
+      "opening_meas": 0.7276830673217773,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1925_s19253",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       182
+      ],
+      "lift_t": 193,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 182,
+        "tip_dz_mm": -22.196150202404617,
+        "tip_dxy_mm": 19.45210376463496,
+        "tip_spread_mm": 97.72949926795881,
+        "tilt_deg": 36.69198150998135,
+        "approach_yaw_deg_mirrored": -3.1892015534705966,
+        "closing_yaw_deg_mirrored_mod180": 74.7073316440822,
+        "closing_elev_deg": 8.881314158463406,
+        "grasp_dz_mm": 31.492806278652363,
+        "grasp_dxy_mm": 17.006328557209745,
+        "opening_meas": 1.0045292401055486,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         15.510750002366237,
+         -11.738866011426374,
+         -22.196150202404617
+        ],
+        "fruit_pos": [
+         0.5493011,
+         0.3063348,
+         0.8504785083615525
+        ]
+       },
+       "settled": {
+        "t": 198,
+        "tip_dz_mm": -20.87557465048906,
+        "tip_dxy_mm": 19.973298624250944,
+        "tip_spread_mm": 72.26800278282226,
+        "tilt_deg": 36.93612953738625,
+        "approach_yaw_deg_mirrored": -3.961830023601167,
+        "closing_yaw_deg_mirrored_mod180": 74.57572949922223,
+        "closing_elev_deg": 8.521175263697467,
+        "grasp_dz_mm": 32.67819007148021,
+        "grasp_dxy_mm": 10.659768921921254,
+        "opening_meas": 0.7211017662362207,
+        "n_contacts": 3,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         19.399909005131775,
+         -4.751440679005848,
+         -20.87557465048906
+        ],
+        "fruit_pos": [
+         0.5547418660940057,
+         0.29862483704084647,
+         0.8686014737133375
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T39/runs/E0/E0_ep1925_s19251",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       128
+      ],
+      "lift_t": 160,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 128,
+        "tip_dz_mm": -22.073114918119362,
+        "tip_dxy_mm": 15.677490105991906,
+        "tip_spread_mm": 97.22641915515612,
+        "tilt_deg": 35.803581301363245,
+        "approach_yaw_deg_mirrored": -4.138439991678969,
+        "closing_yaw_deg_mirrored_mod180": 72.96491752029827,
+        "closing_elev_deg": 9.146618973610739,
+        "grasp_dz_mm": 32.07618219180419,
+        "grasp_dxy_mm": 18.976557024378284,
+        "opening_meas": 0.9989428194460965,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         11.567069971310517,
+         -10.582371582130378,
+         -22.073114918119362
+        ],
+        "fruit_pos": [
+         0.5493011,
+         0.3063348,
+         0.8504785130251863
+        ]
+       },
+       "settled": {
+        "t": 144,
+        "tip_dz_mm": -23.28373091807734,
+        "tip_dxy_mm": 15.315443496900235,
+        "tip_spread_mm": 72.22199499350491,
+        "tilt_deg": 35.482636506076325,
+        "approach_yaw_deg_mirrored": -4.288271539290331,
+        "closing_yaw_deg_mirrored_mod180": 72.5455611632181,
+        "closing_elev_deg": 9.242861441838825,
+        "grasp_dz_mm": 31.026212184797174,
+        "grasp_dxy_mm": 13.71541161605865,
+        "opening_meas": 0.7206595253477428,
+        "n_contacts": 3,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         14.840114063352395,
+         -3.786003710171737,
+         -23.28373091807734
+        ],
+        "fruit_pos": [
+         0.5461402846847515,
+         0.2996130766454013,
+         0.8501465361537648
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T39/runs/E0/E0_ep1925_s19252",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       92
+      ],
+      "lift_t": 108,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 92,
+        "tip_dz_mm": -22.141770599353073,
+        "tip_dxy_mm": 18.24970918104201,
+        "tip_spread_mm": 97.12659956028017,
+        "tilt_deg": 35.77921496808046,
+        "approach_yaw_deg_mirrored": -7.260845370986871,
+        "closing_yaw_deg_mirrored_mod180": 70.83937006266902,
+        "closing_elev_deg": 8.452963397360712,
+        "grasp_dz_mm": 32.01168309262437,
+        "grasp_dxy_mm": 20.826849570083127,
+        "opening_meas": 0.9978422634718181,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         10.58530209493458,
+         -14.866178552391418,
+         -22.141770599353073
+        ],
+        "fruit_pos": [
+         0.5493011,
+         0.3063348,
+         0.8504785004673178
+        ]
+       },
+       "settled": {
+        "t": 108,
+        "tip_dz_mm": -20.764796281635633,
+        "tip_dxy_mm": 15.925094019734438,
+        "tip_spread_mm": 72.18562241165472,
+        "tilt_deg": 35.60850386792968,
+        "approach_yaw_deg_mirrored": -7.5011814103752155,
+        "closing_yaw_deg_mirrored_mod180": 70.64488980838995,
+        "closing_elev_deg": 8.391419964262562,
+        "grasp_dz_mm": 33.47192592247883,
+        "grasp_dxy_mm": 13.301993723992647,
+        "opening_meas": 0.7202053234653604,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         15.126121050959785,
+         -4.980871559184474,
+         -20.764796281635633
+        ],
+        "fruit_pos": [
+         0.5459849118523464,
+         0.2967654053044241,
+         0.8543848664644077
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1925_s19253",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       113
+      ],
+      "lift_t": 129,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 113,
+        "tip_dz_mm": -19.86874834266694,
+        "tip_dxy_mm": 19.256172641461568,
+        "tip_spread_mm": 97.26701712959814,
+        "tilt_deg": 35.69912377587132,
+        "approach_yaw_deg_mirrored": -4.509444797399009,
+        "closing_yaw_deg_mirrored_mod180": 73.7685729342658,
+        "closing_elev_deg": 8.30566702612445,
+        "grasp_dz_mm": 34.32332260528459,
+        "grasp_dxy_mm": 18.087248809400037,
+        "opening_meas": 0.9994108733633554,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         13.847505961324448,
+         -13.380835678269754,
+         -19.86874834266694
+        ],
+        "fruit_pos": [
+         0.5493011,
+         0.3063348,
+         0.850478510747452
+        ]
+       },
+       "settled": {
+        "t": 129,
+        "tip_dz_mm": -16.470962130600064,
+        "tip_dxy_mm": 19.35443879671205,
+        "tip_spread_mm": 72.11426347782117,
+        "tilt_deg": 36.813036824520836,
+        "approach_yaw_deg_mirrored": -4.316947060435838,
+        "closing_yaw_deg_mirrored_mod180": 73.69320904296492,
+        "closing_elev_deg": 8.860542090214922,
+        "grasp_dz_mm": 37.1520135551332,
+        "grasp_dxy_mm": 11.710190014698293,
+        "opening_meas": 0.719414945672508,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         18.4295027596858,
+         -5.911660440722722,
+         -16.470962130600064
+        ],
+        "fruit_pos": [
+         0.5529215182558348,
+         0.2992889194958401,
+         0.8565596506754625
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1925_s19251",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       122
+      ],
+      "lift_t": 137,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 122,
+        "tip_dz_mm": -19.813615860820867,
+        "tip_dxy_mm": 21.169148571295672,
+        "tip_spread_mm": 97.29580846639104,
+        "tilt_deg": 36.2439914654803,
+        "approach_yaw_deg_mirrored": -4.4091546867777796,
+        "closing_yaw_deg_mirrored_mod180": 74.64882583157204,
+        "closing_elev_deg": 7.921902392198562,
+        "grasp_dz_mm": 34.094258049625296,
+        "grasp_dxy_mm": 12.83607976338183,
+        "opening_meas": 0.9997299332615044,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         18.51725442091279,
+         -10.258856658749815,
+         -19.813615860820867
+        ],
+        "fruit_pos": [
+         0.5493011,
+         0.3063348,
+         0.8504785063156592
+        ]
+       },
+       "settled": {
+        "t": 138,
+        "tip_dz_mm": -17.611865088701826,
+        "tip_dxy_mm": 23.31120153262519,
+        "tip_spread_mm": 72.01892127043082,
+        "tilt_deg": 37.663518530945915,
+        "approach_yaw_deg_mirrored": -2.8623703055997933,
+        "closing_yaw_deg_mirrored_mod180": 75.02897922409684,
+        "closing_elev_deg": 9.218368784603465,
+        "grasp_dz_mm": 35.5638790322339,
+        "grasp_dxy_mm": 9.095319717136807,
+        "opening_meas": 0.7183965983735777,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         22.465102800587555,
+         -6.223445432692431,
+         -17.611865088701826
+        ],
+        "fruit_pos": [
+         0.5552989298580739,
+         0.31375189919670404,
+         0.8606853440708113
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1925_s19252",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       89
+      ],
+      "lift_t": 97,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 89,
+        "tip_dz_mm": -18.14974037476913,
+        "tip_dxy_mm": 19.459570862860385,
+        "tip_spread_mm": 97.25844664648487,
+        "tilt_deg": 35.82642369355976,
+        "approach_yaw_deg_mirrored": -6.100027707653744,
+        "closing_yaw_deg_mirrored_mod180": 72.08213367042934,
+        "closing_elev_deg": 8.410639807931593,
+        "grasp_dz_mm": 35.97917966192854,
+        "grasp_dxy_mm": 18.464570236244096,
+        "opening_meas": 0.9993107904458784,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         13.385057523422116,
+         -14.124982593311962,
+         -18.14974037476913
+        ],
+        "fruit_pos": [
+         0.5493011,
+         0.3063348,
+         0.8504785121336137
+        ]
+       },
+       "settled": {
+        "t": 105,
+        "tip_dz_mm": -17.28382728170008,
+        "tip_dxy_mm": 18.814360240401047,
+        "tip_spread_mm": 72.35701893412178,
+        "tilt_deg": 36.46702609280223,
+        "approach_yaw_deg_mirrored": -6.316301034798834,
+        "closing_yaw_deg_mirrored_mod180": 72.07907600067657,
+        "closing_elev_deg": 8.477425927460958,
+        "grasp_dz_mm": 36.5148156465972,
+        "grasp_dxy_mm": 11.658409198206968,
+        "opening_meas": 0.7221474060907882,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         17.82470551400317,
+         -6.021629729122235,
+         -17.28382728170008
+        ],
+        "fruit_pos": [
+         0.5540243375062414,
+         0.3001999077605414,
+         0.8685904645939296
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "1623": {
+    "arm": "right",
+    "fruit": "orange",
+    "split": "validation",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 281
+    },
+    "n_dataset_frames": 311,
+    "held_steps_after_last_frame": 289,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep1623",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 200,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 122,
+     "regrasp": false,
+     "robust_grasp": true,
+     "robust_grasp_strict": true,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -9.127087879921337,
+       "tip_dxy_mm": 23.214280168472342,
+       "tip_spread_mm": 97.32017689841398,
+       "tilt_deg": 39.82743109094532,
+       "approach_yaw_deg_mirrored": 14.415508846150145,
+       "closing_yaw_deg_mirrored_mod180": 93.88764561572167,
+       "closing_elev_deg": 8.664277401797072,
+       "grasp_dz_mm": 33.194286815867116,
+       "grasp_dxy_mm": 21.44128379397171,
+       "opening_meas": 0.9999999995834007,
+       "n_contacts": 0,
+       "contact_bodies": [],
+       "tip_rel_fruit_mm": [
+        23.166881813487805,
+        -1.4826971303055214,
+        -9.127087879921337
+       ],
+       "fruit_pos": [
+        0.4380713466901859,
+        -0.3141095977080075,
+        0.8487613849974162
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -9.233626763093028,
+       "tip_dxy_mm": 23.81602306661941,
+       "tip_spread_mm": 67.36109620939048,
+       "tilt_deg": 39.834503531576935,
+       "approach_yaw_deg_mirrored": 14.406730671695296,
+       "closing_yaw_deg_mirrored_mod180": 93.89978206412567,
+       "closing_elev_deg": 8.67009432209172,
+       "grasp_dz_mm": 33.07971162280188,
+       "grasp_dxy_mm": 21.165577440545935,
+       "opening_meas": 0.6666718077475607,
+       "n_contacts": 4,
+       "contact_bodies": [
+        "ee_finger_r1",
+        "ee_finger_r2"
+       ],
+       "tip_rel_fruit_mm": [
+        23.81488212378413,
+        -0.2331182961821665,
+        -9.233626763093028
+       ],
+       "fruit_pos": [
+        0.43736515210202537,
+        -0.31553041270722365,
+        0.8489439956505351
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 311,
+     "arm_joint_maxabs_deg_to_settled": 0.8669023332228833,
+     "arm_joint_maxabs_deg_all": 1.266650038739024,
+     "arm_joint_median_deg_all": 0.07902561734192759,
+     "gripper_opening_maxabs_all": 0.042070600985002704,
+     "final_target_xy_vs_dataset_final_mm": 51.98772848718884,
+     "final_target_z_vs_dataset_final_mm": 0.5908738171114258
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -9.982263673096181,
+      "tip_dxy_mm": 26.551636029986923,
+      "tip_spread_mm": 91.32675177649891,
+      "tilt_deg": 39.67293850341628,
+      "approach_yaw_deg_mirrored": 14.446907819618083,
+      "closing_yaw_deg_mirrored_mod180": 93.86417222714333,
+      "closing_elev_deg": 8.661113257826058,
+      "grasp_dz_mm": 32.04021441090465,
+      "grasp_dxy_mm": 21.208630857116304,
+      "opening_meas": 0.9954050183296204,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -9.971808731098818,
+      "tip_dxy_mm": 26.55942693416523,
+      "tip_spread_mm": 61.73756069735928,
+      "tilt_deg": 39.674930054081905,
+      "approach_yaw_deg_mirrored": 14.446944709058663,
+      "closing_yaw_deg_mirrored_mod180": 93.86450955365942,
+      "closing_elev_deg": 8.66147723929057,
+      "grasp_dz_mm": 32.04911773800001,
+      "grasp_dxy_mm": 21.194742920194447,
+      "opening_meas": 0.6666362285614014,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1623_s16231",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       115
+      ],
+      "lift_t": 136,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 115,
+        "tip_dz_mm": -12.43347213506163,
+        "tip_dxy_mm": 17.934534593718134,
+        "tip_spread_mm": 97.02440939628123,
+        "tilt_deg": 37.36153508267027,
+        "approach_yaw_deg_mirrored": 24.995816838276806,
+        "closing_yaw_deg_mirrored_mod180": 104.93325885608758,
+        "closing_elev_deg": 7.599447681314584,
+        "grasp_dz_mm": 31.704163271122354,
+        "grasp_dxy_mm": 24.783008356125116,
+        "opening_meas": 0.996695065166466,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         16.62808898602963,
+         -6.719686582419781,
+         -12.43347213506163
+        ],
+        "fruit_pos": [
+         0.4381643095832698,
+         -0.3140409808317886,
+         0.8487531860107047
+        ]
+       },
+       "settled": {
+        "t": 131,
+        "tip_dz_mm": -12.826589476452988,
+        "tip_dxy_mm": 18.604218186568495,
+        "tip_spread_mm": 69.4213173875241,
+        "tilt_deg": 37.28313054012955,
+        "approach_yaw_deg_mirrored": 25.20686238264275,
+        "closing_yaw_deg_mirrored_mod180": 104.86032530767172,
+        "closing_elev_deg": 7.807986114141252,
+        "grasp_dz_mm": 31.38373690963747,
+        "grasp_dxy_mm": 24.282819332921793,
+        "opening_meas": 0.6895201000323985,
+        "n_contacts": 4,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         18.21967801749691,
+         -3.763013057668796,
+         -12.826589476452988
+        ],
+        "fruit_pos": [
+         0.43562445989097887,
+         -0.31773220557132853,
+         0.8487657730688405
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1623_s16232",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       109
+      ],
+      "lift_t": 114,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 109,
+        "tip_dz_mm": -10.476433344909776,
+        "tip_dxy_mm": 18.557804571556897,
+        "tip_spread_mm": 97.10379700817452,
+        "tilt_deg": 37.891538874172554,
+        "approach_yaw_deg_mirrored": 24.656310180323906,
+        "closing_yaw_deg_mirrored_mod180": 104.2056830217367,
+        "closing_elev_deg": 8.035533206844809,
+        "grasp_dz_mm": 33.29382887539689,
+        "grasp_dxy_mm": 24.504320909192252,
+        "opening_meas": 0.997588604297975,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         17.711417997357703,
+         -5.5405580079060375,
+         -10.476433344909776
+        ],
+        "fruit_pos": [
+         0.4381314863179154,
+         -0.3140420188063478,
+         0.8487618422683735
+        ]
+       },
+       "settled": {
+        "t": 125,
+        "tip_dz_mm": -8.884111472552746,
+        "tip_dxy_mm": 18.73921767706039,
+        "tip_spread_mm": 69.46905370036488,
+        "tilt_deg": 38.48087986622879,
+        "approach_yaw_deg_mirrored": 26.516457790355982,
+        "closing_yaw_deg_mirrored_mod180": 107.35784932272651,
+        "closing_elev_deg": 7.232723947166408,
+        "grasp_dz_mm": 34.37008870926839,
+        "grasp_dxy_mm": 25.210939896581575,
+        "opening_meas": 0.6900586044140533,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         18.319500966619717,
+         -3.943876707285854,
+         -8.884111472552746
+        ],
+        "fruit_pos": [
+         0.4661101197672316,
+         -0.3290186295293845,
+         0.956743987525138
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1623_s16233",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       81
+      ],
+      "lift_t": 95,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 81,
+        "tip_dz_mm": -11.684116269436885,
+        "tip_dxy_mm": 21.535419669521808,
+        "tip_spread_mm": 97.16254340010971,
+        "tilt_deg": 38.032798540462295,
+        "approach_yaw_deg_mirrored": 26.665727915986317,
+        "closing_yaw_deg_mirrored_mod180": 106.95669389910188,
+        "closing_elev_deg": 7.516123240251347,
+        "grasp_dz_mm": 31.93758946469916,
+        "grasp_dxy_mm": 21.689944678755428,
+        "opening_meas": 0.9982236059526134,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         20.355317884978795,
+         -7.031026535569973,
+         -11.684116269436885
+        ],
+        "fruit_pos": [
+         0.4380727698708233,
+         -0.3140985058442967,
+         0.848759236581176
+        ]
+       },
+       "settled": {
+        "t": 97,
+        "tip_dz_mm": -11.82976460148566,
+        "tip_dxy_mm": 22.30761417531021,
+        "tip_spread_mm": 69.26964603658237,
+        "tilt_deg": 38.005574779343846,
+        "approach_yaw_deg_mirrored": 27.495098009407386,
+        "closing_yaw_deg_mirrored_mod180": 107.79667117814444,
+        "closing_elev_deg": 7.5226114807750415,
+        "grasp_dz_mm": 31.81041051506439,
+        "grasp_dxy_mm": 21.225284581736855,
+        "opening_meas": 0.6878121924803887,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         21.582670719445083,
+         -5.640742398878795,
+         -11.82976460148566
+        ],
+        "fruit_pos": [
+         0.44032870894332155,
+         -0.3188104651660848,
+         0.8600022353171882
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1623_s16231",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       138
+      ],
+      "lift_t": 149,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 138,
+        "tip_dz_mm": -5.542832436773559,
+        "tip_dxy_mm": 32.57712557885571,
+        "tip_spread_mm": 97.14549185727843,
+        "tilt_deg": 40.24549309095241,
+        "approach_yaw_deg_mirrored": 25.25399727687586,
+        "closing_yaw_deg_mirrored_mod180": 107.60618122842622,
+        "closing_elev_deg": 6.427263335935567,
+        "grasp_dz_mm": 36.27821702633327,
+        "grasp_dxy_mm": 12.821518101226923,
+        "opening_meas": 0.9980586932269055,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         31.467896564064624,
+         -8.428558406623543,
+         -5.542832436773559
+        ],
+        "fruit_pos": [
+         0.4381551230834517,
+         -0.31403206669688716,
+         0.8487568790096768
+        ]
+       },
+       "settled": {
+        "t": 154,
+        "tip_dz_mm": -4.970476234970267,
+        "tip_dxy_mm": 33.10839589676254,
+        "tip_spread_mm": 69.30237179899305,
+        "tilt_deg": 40.543764627249914,
+        "approach_yaw_deg_mirrored": 25.943342967467142,
+        "closing_yaw_deg_mirrored_mod180": 109.08102186544109,
+        "closing_elev_deg": 5.860041061973747,
+        "grasp_dz_mm": 36.5716545335153,
+        "grasp_dxy_mm": 12.731690562621177,
+        "opening_meas": 0.6881707411073598,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         31.971614418938422,
+         -8.601264459571711,
+         -4.970476234970267
+        ],
+        "fruit_pos": [
+         0.45151703744761645,
+         -0.31789038527895036,
+         0.8853306481942107
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1623_s16232",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       109
+      ],
+      "lift_t": 114,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 109,
+        "tip_dz_mm": -6.314665738276548,
+        "tip_dxy_mm": 21.354400162455885,
+        "tip_spread_mm": 97.06335906838063,
+        "tilt_deg": 38.366327720948874,
+        "approach_yaw_deg_mirrored": 22.300950123633015,
+        "closing_yaw_deg_mirrored_mod180": 102.3583803687279,
+        "closing_elev_deg": 7.783661143804006,
+        "grasp_dz_mm": 37.072650315284505,
+        "grasp_dxy_mm": 22.472813016349782,
+        "opening_meas": 0.9971409971716442,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         21.111787437166406,
+         -3.2098033438512363,
+         -6.314665738276548
+        ],
+        "fruit_pos": [
+         0.4381314863179154,
+         -0.3140420188063478,
+         0.8487618422683735
+        ]
+       },
+       "settled": {
+        "t": 125,
+        "tip_dz_mm": -4.334136999109006,
+        "tip_dxy_mm": 21.249727903003627,
+        "tip_spread_mm": 69.33910529001965,
+        "tilt_deg": 38.78666351772078,
+        "approach_yaw_deg_mirrored": 23.880104484895693,
+        "closing_yaw_deg_mirrored_mod180": 105.19812287807281,
+        "closing_elev_deg": 6.937887757920005,
+        "grasp_dz_mm": 38.66237526939265,
+        "grasp_dxy_mm": 23.113165375226558,
+        "opening_meas": 0.6886330146642377,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         20.984662010764765,
+         -3.3458775000972385,
+         -4.334136999109006
+        ],
+        "fruit_pos": [
+         0.4646297013050729,
+         -0.32635624039571515,
+         0.9504684473102123
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1623_s16233",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       90
+      ],
+      "lift_t": 103,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 90,
+        "tip_dz_mm": -6.977930572765412,
+        "tip_dxy_mm": 25.54399810565703,
+        "tip_spread_mm": 97.24441055735787,
+        "tilt_deg": 38.77276625573285,
+        "approach_yaw_deg_mirrored": 25.27557377597229,
+        "closing_yaw_deg_mirrored_mod180": 106.80384470198061,
+        "closing_elev_deg": 6.749271285419505,
+        "grasp_dz_mm": 36.017698213850146,
+        "grasp_dxy_mm": 18.42050658814904,
+        "opening_meas": 0.9991495534243855,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         24.561901390848075,
+         -7.014901231526038,
+         -6.977930572765412
+        ],
+        "fruit_pos": [
+         0.4381140849312953,
+         -0.3140524729145541,
+         0.8487593263039811
+        ]
+       },
+       "settled": {
+        "t": 106,
+        "tip_dz_mm": -5.957374507504665,
+        "tip_dxy_mm": 26.50801674584849,
+        "tip_spread_mm": 69.24389094659247,
+        "tilt_deg": 39.76431411511329,
+        "approach_yaw_deg_mirrored": 24.608643433719664,
+        "closing_yaw_deg_mirrored_mod180": 107.00074781053138,
+        "closing_elev_deg": 6.309794640285472,
+        "grasp_dz_mm": 36.23191342553855,
+        "grasp_dxy_mm": 18.577102992957972,
+        "opening_meas": 0.6875404183266494,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         25.891199470636504,
+         -5.685133399481124,
+         -5.957374507504665
+        ],
+        "fruit_pos": [
+         0.4464843432128964,
+         -0.31530927297521344,
+         0.861726411114324
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "1977": {
+    "arm": "right",
+    "fruit": "apple",
+    "split": "test",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 280
+    },
+    "n_dataset_frames": 310,
+    "held_steps_after_last_frame": 290,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep1977",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 200,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 122,
+     "regrasp": false,
+     "robust_grasp": true,
+     "robust_grasp_strict": true,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -8.025405824350852,
+       "tip_dxy_mm": 24.61443222508054,
+       "tip_spread_mm": 97.32015184570977,
+       "tilt_deg": 38.660767343018904,
+       "approach_yaw_deg_mirrored": -39.93515189955114,
+       "closing_yaw_deg_mirrored_mod180": 39.73451615903434,
+       "closing_elev_deg": 8.16434351434675,
+       "grasp_dz_mm": 35.16529851205541,
+       "grasp_dxy_mm": 19.503714852383716,
+       "opening_meas": 1.0000000006001013,
+       "n_contacts": 0,
+       "contact_bodies": [],
+       "tip_rel_fruit_mm": [
+        14.684791995088098,
+        19.754168112681437,
+        -8.025405824350852
+       ],
+       "fruit_pos": [
+        0.44204841268681194,
+        -0.29438021694458166,
+        0.8500022134165744
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -8.280679421647562,
+       "tip_dxy_mm": 25.164781036037525,
+       "tip_spread_mm": 72.44813281381363,
+       "tilt_deg": 38.653829458059086,
+       "approach_yaw_deg_mirrored": -39.961629590813025,
+       "closing_yaw_deg_mirrored_mod180": 39.73745622265607,
+       "closing_elev_deg": 8.159726399172557,
+       "grasp_dz_mm": 34.91223887488315,
+       "grasp_dxy_mm": 19.034113653834456,
+       "opening_meas": 0.7231960569272528,
+       "n_contacts": 2,
+       "contact_bodies": [
+        "ee_finger_r1",
+        "ee_finger_r2"
+       ],
+       "tip_rel_fruit_mm": [
+        14.862433976134293,
+        20.307000292922705,
+        -8.280679421647562
+       ],
+       "fruit_pos": [
+        0.4418149719187152,
+        -0.29497819216902704,
+        0.8502017308572073
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 310,
+     "arm_joint_maxabs_deg_to_settled": 0.9584824230436765,
+     "arm_joint_maxabs_deg_all": 0.9584824230436765,
+     "arm_joint_median_deg_all": 0.08411573538220425,
+     "gripper_opening_maxabs_all": 0.03510220353784288,
+     "final_target_xy_vs_dataset_final_mm": 20.069796805713903,
+     "final_target_z_vs_dataset_final_mm": 0.9924102550383784
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -7.628797738347459,
+      "tip_dxy_mm": 28.4030358780274,
+      "tip_spread_mm": 91.32675177649892,
+      "tilt_deg": 38.416924892761855,
+      "approach_yaw_deg_mirrored": -39.76492208106591,
+      "closing_yaw_deg_mirrored_mod180": 39.691363520727144,
+      "closing_elev_deg": 8.25715885646431,
+      "grasp_dz_mm": 35.35650830664139,
+      "grasp_dxy_mm": 18.18931495290101,
+      "opening_meas": 0.9954050183296204,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -7.612633602787633,
+      "tip_dxy_mm": 28.431977378059802,
+      "tip_spread_mm": 67.33828134135653,
+      "tilt_deg": 38.42159655089788,
+      "approach_yaw_deg_mirrored": -39.76899662914274,
+      "closing_yaw_deg_mirrored_mod180": 39.68986453653075,
+      "closing_elev_deg": 8.256555698197612,
+      "grasp_dz_mm": 35.36906187593958,
+      "grasp_dxy_mm": 18.171693432263567,
+      "opening_meas": 0.728866457939148,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1977_s19771",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       94
+      ],
+      "lift_t": 105,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 94,
+        "tip_dz_mm": -5.615649608068596,
+        "tip_dxy_mm": 25.512685808177114,
+        "tip_spread_mm": 97.12152790602426,
+        "tilt_deg": 36.332572514777816,
+        "approach_yaw_deg_mirrored": 11.434001427958751,
+        "closing_yaw_deg_mirrored_mod180": 89.01947012528422,
+        "closing_elev_deg": 8.984917703459892,
+        "grasp_dz_mm": 39.40474263022975,
+        "grasp_dxy_mm": 16.25938751055363,
+        "opening_meas": 0.9977903650700269,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         25.344462048945804,
+         -2.924958221292684,
+         -5.615649608068596
+        ],
+        "fruit_pos": [
+         0.44204411476566624,
+         -0.29437329800836126,
+         0.8500026249581767
+        ]
+       },
+       "settled": {
+        "t": 110,
+        "tip_dz_mm": -5.1357168969191624,
+        "tip_dxy_mm": 24.20287200798513,
+        "tip_spread_mm": 72.1966422593993,
+        "tilt_deg": 36.90804288681878,
+        "approach_yaw_deg_mirrored": 11.450562976160288,
+        "closing_yaw_deg_mirrored_mod180": 90.09409232569561,
+        "closing_elev_deg": 8.434088404334911,
+        "grasp_dz_mm": 39.40660241044647,
+        "grasp_dxy_mm": 18.986285386046873,
+        "opening_meas": 0.72035946436424,
+        "n_contacts": 3,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         24.098415623353908,
+         2.2461918615742094,
+         -5.1357168969191624
+        ],
+        "fruit_pos": [
+         0.45896545482700696,
+         -0.304451388299092,
+         0.8885303074183917
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1977_s19772",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       150
+      ],
+      "lift_t": 167,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 150,
+        "tip_dz_mm": -13.003612046041946,
+        "tip_dxy_mm": 12.29018001787949,
+        "tip_spread_mm": 97.03137086595635,
+        "tilt_deg": 34.87370836198848,
+        "approach_yaw_deg_mirrored": -41.07983497813401,
+        "closing_yaw_deg_mirrored_mod180": 35.413767574891345,
+        "closing_elev_deg": 9.245607410184297,
+        "grasp_dz_mm": 33.10763145180684,
+        "grasp_dxy_mm": 34.907794899611694,
+        "opening_meas": 0.9967808691930464,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         -2.694207944559157,
+         11.991237151493529,
+         -13.003612046041946
+        ],
+        "fruit_pos": [
+         0.4310378152328799,
+         -0.286138382687426,
+         0.8500284626356318
+        ]
+       },
+       "settled": {
+        "t": 166,
+        "tip_dz_mm": -14.555235203499329,
+        "tip_dxy_mm": 7.576093278418003,
+        "tip_spread_mm": 72.20131928739568,
+        "tilt_deg": 35.1071986552187,
+        "approach_yaw_deg_mirrored": -40.236809425001944,
+        "closing_yaw_deg_mirrored_mod180": 35.584514822068236,
+        "closing_elev_deg": 9.790675852771866,
+        "grasp_dz_mm": 31.431369573441504,
+        "grasp_dxy_mm": 33.22718054322092,
+        "opening_meas": 0.7204289707836824,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         4.1665547203882936,
+         6.327480630179794,
+         -14.555235203499329
+        ],
+        "fruit_pos": [
+         0.4266199659443477,
+         -0.28111273927413627,
+         0.8507777628945407
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1977_s19773",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       90,
+       96
+      ],
+      "lift_t": 107,
+      "robust_grasp": false,
+      "geom": {
+       "onset": {
+        "t": 90,
+        "tip_dz_mm": 0.34563106052165615,
+        "tip_dxy_mm": 20.5784298977858,
+        "tip_spread_mm": 97.2309055364044,
+        "tilt_deg": 35.11479379357638,
+        "approach_yaw_deg_mirrored": 13.434685898213452,
+        "closing_yaw_deg_mirrored_mod180": 90.05992856771813,
+        "closing_elev_deg": 9.239207093070751,
+        "grasp_dz_mm": 46.28175230719434,
+        "grasp_dxy_mm": 20.177596823869226,
+        "opening_meas": 0.9990079688340381,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         20.507024961999633,
+         -1.712805962743147,
+         0.34563106052165615
+        ],
+        "fruit_pos": [
+         0.44203895987948394,
+         -0.2943710222279165,
+         0.8500017300730043
+        ]
+       },
+       "settled": {
+        "t": 106,
+        "tip_dz_mm": 0.887678080674803,
+        "tip_dxy_mm": 18.22268375076641,
+        "tip_spread_mm": 72.18565462373806,
+        "tilt_deg": 35.38516841424179,
+        "approach_yaw_deg_mirrored": 13.247312847868507,
+        "closing_yaw_deg_mirrored_mod180": 89.86364272454892,
+        "closing_elev_deg": 9.358900684122531,
+        "grasp_dz_mm": 46.63362287798378,
+        "grasp_dxy_mm": 23.89604184759961,
+        "opening_meas": 0.720204430018127,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         17.994795071501258,
+         2.872899826850961,
+         0.887678080674803
+        ],
+        "fruit_pos": [
+         0.4463414972152846,
+         -0.29935558427838765,
+         0.8506680194565884
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1977_s19771",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       94
+      ],
+      "lift_t": 106,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 94,
+        "tip_dz_mm": -6.203895883743815,
+        "tip_dxy_mm": 22.816516847224715,
+        "tip_spread_mm": 97.13321794558823,
+        "tilt_deg": 36.86780075789183,
+        "approach_yaw_deg_mirrored": 17.45113091354666,
+        "closing_yaw_deg_mirrored_mod180": 95.60111594077878,
+        "closing_elev_deg": 8.75519891827031,
+        "grasp_dz_mm": 38.39820463814381,
+        "grasp_dxy_mm": 19.47956641037255,
+        "opening_meas": 0.9979191777447988,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         22.056166248649756,
+         -5.841144703875479,
+         -6.203895883743815
+        ],
+        "fruit_pos": [
+         0.44204411476566624,
+         -0.29437329800836126,
+         0.8500026249581767
+        ]
+       },
+       "settled": {
+        "t": 110,
+        "tip_dz_mm": -6.125223936168878,
+        "tip_dxy_mm": 25.23738457808927,
+        "tip_spread_mm": 72.21019199031069,
+        "tilt_deg": 37.83428273372878,
+        "approach_yaw_deg_mirrored": 15.126703870814442,
+        "closing_yaw_deg_mirrored_mod180": 95.06469026358947,
+        "closing_elev_deg": 7.749053075671026,
+        "grasp_dz_mm": 37.663171651159175,
+        "grasp_dxy_mm": 18.51035214796809,
+        "opening_meas": 0.7205129236281641,
+        "n_contacts": 3,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         25.23676664635022,
+         -0.1766057191695536,
+         -6.125223936168878
+        ],
+        "fruit_pos": [
+         0.44683523420998217,
+         -0.2883349669288226,
+         0.856644326790031
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1977_s19772",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       312
+      ],
+      "lift_t": 321,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 312,
+        "tip_dz_mm": -11.423578368316756,
+        "tip_dxy_mm": 22.214039542827113,
+        "tip_spread_mm": 97.1777501989733,
+        "tilt_deg": 29.267835421532332,
+        "approach_yaw_deg_mirrored": 21.335821169661358,
+        "closing_yaw_deg_mirrored_mod180": 97.88521728478464,
+        "closing_elev_deg": 7.427439909801939,
+        "grasp_dz_mm": 38.358069855673804,
+        "grasp_dxy_mm": 14.979230956004914,
+        "opening_meas": 0.998418052052604,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         19.970387872151495,
+         -9.728677250588124,
+         -11.423578368316756
+        ],
+        "fruit_pos": [
+         0.4422271709774976,
+         -0.29425456532225824,
+         0.8500030632876259
+        ]
+       },
+       "settled": {
+        "t": 328,
+        "tip_dz_mm": -10.216435421489534,
+        "tip_dxy_mm": 24.9468443066631,
+        "tip_spread_mm": 72.19075742399274,
+        "tilt_deg": 31.36936172661756,
+        "approach_yaw_deg_mirrored": 17.661519243628533,
+        "closing_yaw_deg_mirrored_mod180": 97.40308038792291,
+        "closing_elev_deg": 6.216921786598639,
+        "grasp_dz_mm": 38.08595278142724,
+        "grasp_dxy_mm": 13.543794048426596,
+        "opening_meas": 0.7202953071752015,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         24.89387505868973,
+         -1.6248155043679935,
+         -10.216435421489534
+        ],
+        "fruit_pos": [
+         0.4616517114292137,
+         -0.28946472659674227,
+         0.881902793816161
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1977_s19773",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       89
+      ],
+      "lift_t": 98,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 89,
+        "tip_dz_mm": -3.927139970728688,
+        "tip_dxy_mm": 27.62921099267293,
+        "tip_spread_mm": 97.22424236026592,
+        "tilt_deg": 36.20259315254123,
+        "approach_yaw_deg_mirrored": 8.885042580891653,
+        "closing_yaw_deg_mirrored_mod180": 86.71978569994448,
+        "closing_elev_deg": 8.76867301003142,
+        "grasp_dz_mm": 41.17141062858343,
+        "grasp_dxy_mm": 14.257898305016697,
+        "opening_meas": 0.9989374181928586,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         27.440820043811097,
+         -3.220977398370517,
+         -3.927139970728688
+        ],
+        "fruit_pos": [
+         0.4420286621318843,
+         -0.29437811535464714,
+         0.8500013163363659
+        ]
+       },
+       "settled": {
+        "t": 105,
+        "tip_dz_mm": -2.197291262868828,
+        "tip_dxy_mm": 28.85093284400447,
+        "tip_spread_mm": 72.28489247034841,
+        "tilt_deg": 37.39731291938113,
+        "approach_yaw_deg_mirrored": 7.197703477240824,
+        "closing_yaw_deg_mirrored_mod180": 86.47966102899986,
+        "closing_elev_deg": 8.113522001336623,
+        "grasp_dz_mm": 41.95112726396455,
+        "grasp_dxy_mm": 14.92573000201493,
+        "opening_meas": 0.7213421925328255,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         28.564159383365208,
+         4.057724077726976,
+         -2.197291262868828
+        ],
+        "fruit_pos": [
+         0.45166215101706514,
+         -0.2936605336860224,
+         0.8615285700897872
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "1828": {
+    "arm": "left",
+    "fruit": "apple",
+    "split": "test",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 282
+    },
+    "n_dataset_frames": 312,
+    "held_steps_after_last_frame": 288,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep1828",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 200,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 123,
+     "regrasp": false,
+     "robust_grasp": true,
+     "robust_grasp_strict": true,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -19.270234363824468,
+       "tip_dxy_mm": 10.113498989967649,
+       "tip_spread_mm": 97.32014997430915,
+       "tilt_deg": 40.64594130850924,
+       "approach_yaw_deg_mirrored": 6.25553148023719,
+       "closing_yaw_deg_mirrored_mod180": 86.66480372514398,
+       "closing_elev_deg": 8.140199445966994,
+       "grasp_dz_mm": 32.214192695772304,
+       "grasp_dxy_mm": 23.482490236269417,
+       "opening_meas": 0.9999999947618549,
+       "n_contacts": 0,
+       "contact_bodies": [],
+       "tip_rel_fruit_mm": [
+        10.092211230166793,
+        -0.6558462516260688,
+        -19.270234363824468
+       ],
+       "fruit_pos": [
+        0.5583226938393276,
+        0.3323519112292523,
+        0.8500036503005699
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -19.39513249656033,
+       "tip_dxy_mm": 10.4286102825752,
+       "tip_spread_mm": 73.21450852952934,
+       "tilt_deg": 40.63885706516661,
+       "approach_yaw_deg_mirrored": 6.224999727587597,
+       "closing_yaw_deg_mirrored_mod180": 86.66198521394105,
+       "closing_elev_deg": 8.136033115640858,
+       "grasp_dz_mm": 32.091339968251866,
+       "grasp_dxy_mm": 23.21727883614677,
+       "opening_meas": 0.7317075187742145,
+       "n_contacts": 4,
+       "contact_bodies": [
+        "ee_finger_l1",
+        "ee_finger_l2"
+       ],
+       "tip_rel_fruit_mm": [
+        10.390727941192,
+        -0.8880795448409917,
+        -19.39513249656033
+       ],
+       "fruit_pos": [
+        0.5580378383748827,
+        0.3325323127805787,
+        0.8500756842439686
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 312,
+     "arm_joint_maxabs_deg_to_settled": 0.7260502395266417,
+     "arm_joint_maxabs_deg_all": 1.4924680340637884,
+     "arm_joint_median_deg_all": 0.08669022186844429,
+     "gripper_opening_maxabs_all": 0.030585769038609434,
+     "final_target_xy_vs_dataset_final_mm": 47.15834053493891,
+     "final_target_z_vs_dataset_final_mm": -0.9156026136353246
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -17.535192999108553,
+      "tip_dxy_mm": 10.240583846273006,
+      "tip_spread_mm": 91.32675177649892,
+      "tilt_deg": 40.742372179290435,
+      "approach_yaw_deg_mirrored": 6.335318690861997,
+      "closing_yaw_deg_mirrored_mod180": 86.67515142271726,
+      "closing_elev_deg": 8.22515094553382,
+      "grasp_dz_mm": 33.49506529557345,
+      "grasp_dxy_mm": 23.783534346906276,
+      "opening_meas": 0.9954050183296204,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -17.594230451931757,
+      "tip_dxy_mm": 10.191267891842514,
+      "tip_spread_mm": 67.5717193563406,
+      "tilt_deg": 40.73557896125507,
+      "approach_yaw_deg_mirrored": 6.333801607693752,
+      "closing_yaw_deg_mirrored_mod180": 86.67454006430606,
+      "closing_elev_deg": 8.22245272820627,
+      "grasp_dz_mm": 33.44010322787061,
+      "grasp_dxy_mm": 23.82676436235722,
+      "opening_meas": 0.7314602136611938,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1828_s18281",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       118,
+       216
+      ],
+      "lift_t": 130,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 118,
+        "tip_dz_mm": -18.44803186773958,
+        "tip_dxy_mm": 26.509638460947457,
+        "tip_spread_mm": 98.78208936485466,
+        "tilt_deg": 42.23847260082948,
+        "approach_yaw_deg_mirrored": -1.8614538641906657,
+        "closing_yaw_deg_mirrored_mod180": 79.75453120431014,
+        "closing_elev_deg": 7.542410927336165,
+        "grasp_dz_mm": 32.07013321569929,
+        "grasp_dxy_mm": 20.8533356655667,
+        "opening_meas": 1.0162276510328627,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "EE_BODY_L",
+         "ee_finger_l1"
+        ],
+        "tip_rel_fruit_mm": [
+         20.169565463280193,
+         -17.203184599154874,
+         -18.44803186773958
+        ],
+        "fruit_pos": [
+         0.5554727827647823,
+         0.3324335085218414,
+         0.8499663448248098
+        ]
+       },
+       "settled": {
+        "t": 134,
+        "tip_dz_mm": -14.80379118780184,
+        "tip_dxy_mm": 24.11938743116146,
+        "tip_spread_mm": 73.26734733695244,
+        "tilt_deg": 43.39383815506257,
+        "approach_yaw_deg_mirrored": -3.112968593449608,
+        "closing_yaw_deg_mirrored_mod180": 79.852826638002,
+        "closing_elev_deg": 6.629367538512774,
+        "grasp_dz_mm": 34.97376989228085,
+        "grasp_dxy_mm": 12.682579301364916,
+        "opening_meas": 0.7322337418332088,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         23.366675583239903,
+         -5.978571923301534,
+         -14.80379118780184
+        ],
+        "fruit_pos": [
+         0.5704850896734764,
+         0.3225278568847168,
+         0.8843932708544028
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T39/runs/E0/E0_ep1828_s18282",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       127
+      ],
+      "lift_t": 138,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 127,
+        "tip_dz_mm": -18.146232848227804,
+        "tip_dxy_mm": 27.021765533352173,
+        "tip_spread_mm": 98.70383780920771,
+        "tilt_deg": 41.64445193192567,
+        "approach_yaw_deg_mirrored": -2.5172493557047586,
+        "closing_yaw_deg_mirrored_mod180": 78.02699052358186,
+        "closing_elev_deg": 8.311696664176047,
+        "grasp_dz_mm": 32.74788251623906,
+        "grasp_dxy_mm": 20.479178257742326,
+        "opening_meas": 1.0153732454275624,
+        "n_contacts": 1,
+        "contact_bodies": [
+         "EE_BODY_L"
+        ],
+        "tip_rel_fruit_mm": [
+         20.44215742492206,
+         -17.671842358796763,
+         -18.146232848227804
+        ],
+        "fruit_pos": [
+         0.5570591871550781,
+         0.33296361592937784,
+         0.8500091182264211
+        ]
+       },
+       "settled": {
+        "t": 143,
+        "tip_dz_mm": -13.385058508581071,
+        "tip_dxy_mm": 25.407750877851395,
+        "tip_spread_mm": 72.06348419194624,
+        "tilt_deg": 43.22697903321461,
+        "approach_yaw_deg_mirrored": -4.259492284395466,
+        "closing_yaw_deg_mirrored_mod180": 78.15104668260048,
+        "closing_elev_deg": 7.101883092302164,
+        "grasp_dz_mm": 36.5088186595619,
+        "grasp_dxy_mm": 11.650756591794803,
+        "opening_meas": 0.7188505343594637,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         24.36232050707654,
+         -7.213261688129469,
+         -13.385058508581071
+        ],
+        "fruit_pos": [
+         0.5763423972727052,
+         0.3233717615796851,
+         0.9003007633925496
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1828_s18281",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       100,
+       410
+      ],
+      "lift_t": 417,
+      "robust_grasp": false,
+      "geom": {
+       "onset": {
+        "t": 100,
+        "tip_dz_mm": -8.6815945117249,
+        "tip_dxy_mm": 28.35116637116446,
+        "tip_spread_mm": 97.1680485885677,
+        "tilt_deg": 42.065501842731486,
+        "approach_yaw_deg_mirrored": 0.39641848308594846,
+        "closing_yaw_deg_mirrored_mod180": 82.39613439697811,
+        "closing_elev_deg": 7.159234697032958,
+        "grasp_dz_mm": 41.93372439186482,
+        "grasp_dxy_mm": 18.499127465408666,
+        "opening_meas": 0.9983124464978593,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         23.545688719862735,
+         -15.792060578429135,
+         -8.6815945117249
+        ],
+        "fruit_pos": [
+         0.5583283833896587,
+         0.3323462911254658,
+         0.8500005632786477
+        ]
+       },
+       "settled": {
+        "t": 116,
+        "tip_dz_mm": 91.63016883469288,
+        "tip_dxy_mm": 42.62669387934228,
+        "tip_spread_mm": 52.3384121474001,
+        "tilt_deg": 42.70502450242259,
+        "approach_yaw_deg_mirrored": -2.432157455248495,
+        "closing_yaw_deg_mirrored_mod180": 81.89702963184007,
+        "closing_elev_deg": 5.2101985041211885,
+        "grasp_dz_mm": 141.29390759651506,
+        "grasp_dxy_mm": 8.974348743124727,
+        "opening_meas": 0.5002208948065405,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         42.43837712412313,
+         -4.002396551300135,
+         91.63016883469288
+        ],
+        "fruit_pos": [
+         0.5637020669936587,
+         0.3216099622511493,
+         0.8500330743888659
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1828_s18283",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       201
+      ],
+      "lift_t": 217,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 201,
+        "tip_dz_mm": -17.731575526996004,
+        "tip_dxy_mm": 23.60111293137875,
+        "tip_spread_mm": 97.1267116999001,
+        "tilt_deg": 45.59815284946661,
+        "approach_yaw_deg_mirrored": 0.5548085470007688,
+        "closing_yaw_deg_mirrored_mod180": 82.4239507286156,
+        "closing_elev_deg": 8.218655670729984,
+        "grasp_dz_mm": 30.66053055870166,
+        "grasp_dxy_mm": 19.08000187494738,
+        "opening_meas": 0.9978374550012602,
+        "n_contacts": 1,
+        "contact_bodies": [
+         "EE_BODY_L"
+        ],
+        "tip_rel_fruit_mm": [
+         21.22765125564685,
+         -10.31500624179782,
+         -17.731575526996004
+        ],
+        "fruit_pos": [
+         0.5706564622313526,
+         0.33341402219632876,
+         0.8499594939683085
+        ]
+       },
+       "settled": {
+        "t": 217,
+        "tip_dz_mm": -16.859536930905918,
+        "tip_dxy_mm": 22.446719935079074,
+        "tip_spread_mm": 72.9113169324082,
+        "tilt_deg": 45.48601781554128,
+        "approach_yaw_deg_mirrored": -0.08632410757999688,
+        "closing_yaw_deg_mirrored_mod180": 82.2086021493062,
+        "closing_elev_deg": 7.7912240688476615,
+        "grasp_dz_mm": 31.59529978754727,
+        "grasp_dxy_mm": 15.742554903120455,
+        "opening_meas": 0.7282782355208457,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         22.130307284950913,
+         -3.755627153688823,
+         -16.859536930905918
+        ],
+        "fruit_pos": [
+         0.573480470571745,
+         0.32701484603845543,
+         0.8549090841553413
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1828_s18282",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       119
+      ],
+      "lift_t": 129,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 119,
+        "tip_dz_mm": -15.719426894783783,
+        "tip_dxy_mm": 23.432472863976884,
+        "tip_spread_mm": 97.17620200068951,
+        "tilt_deg": 41.829522907497626,
+        "approach_yaw_deg_mirrored": -0.2660748466953409,
+        "closing_yaw_deg_mirrored_mod180": 80.8950900940414,
+        "closing_elev_deg": 7.830869949936843,
+        "grasp_dz_mm": 35.05367640642554,
+        "grasp_dxy_mm": 17.63698546687891,
+        "opening_meas": 0.9983986929350719,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         20.27652491310161,
+         -11.744927499537095,
+         -15.719426894783783
+        ],
+        "fruit_pos": [
+         0.5583248365899393,
+         0.33232270173011363,
+         0.8500020168770713
+        ]
+       },
+       "settled": {
+        "t": 135,
+        "tip_dz_mm": -14.55954265057835,
+        "tip_dxy_mm": 23.81195410040409,
+        "tip_spread_mm": 73.19130036354733,
+        "tilt_deg": 42.51960455363229,
+        "approach_yaw_deg_mirrored": -1.5064088884479758,
+        "closing_yaw_deg_mirrored_mod180": 80.97431274240174,
+        "closing_elev_deg": 6.866851117819927,
+        "grasp_dz_mm": 35.76863077328707,
+        "grasp_dxy_mm": 12.179812502664284,
+        "opening_meas": 0.7313922014291808,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         23.25043355227885,
+         -5.1406709397526225,
+         -14.55954265057835
+        ],
+        "fruit_pos": [
+         0.5707292839426988,
+         0.3276566403712012,
+         0.8888795536794772
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "1215": {
+    "arm": "right",
+    "fruit": "pear",
+    "split": "train",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 280
+    },
+    "n_dataset_frames": 310,
+    "held_steps_after_last_frame": 290,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep1215",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 200,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 123,
+     "regrasp": false,
+     "robust_grasp": true,
+     "robust_grasp_strict": true,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -12.740414984749759,
+       "tip_dxy_mm": 24.332874837896824,
+       "tip_spread_mm": 97.32010208499985,
+       "tilt_deg": 34.44083926975407,
+       "approach_yaw_deg_mirrored": -36.832603512303486,
+       "closing_yaw_deg_mirrored_mod180": 42.53766994296155,
+       "closing_elev_deg": 7.209596947370285,
+       "grasp_dz_mm": 33.51309602148645,
+       "grasp_dxy_mm": 19.805902205354403,
+       "opening_meas": 0.999999974896378,
+       "n_contacts": 1,
+       "contact_bodies": [
+        "EE_BODY_R"
+       ],
+       "tip_rel_fruit_mm": [
+        10.473709896269945,
+        21.963383138431325,
+        -12.740414984749759
+       ],
+       "fruit_pos": [
+        0.4394333749472997,
+        -0.3322356266835201,
+        0.8554770955775755
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -12.545673521992097,
+       "tip_dxy_mm": 22.32569030857554,
+       "tip_spread_mm": 67.99005083277802,
+       "tilt_deg": 34.46928903394296,
+       "approach_yaw_deg_mirrored": -36.850148130613796,
+       "closing_yaw_deg_mirrored_mod180": 42.51739065010248,
+       "closing_elev_deg": 7.235735793274874,
+       "grasp_dz_mm": 33.687342929951235,
+       "grasp_dxy_mm": 18.669996257291743,
+       "opening_meas": 0.6737169741984628,
+       "n_contacts": 3,
+       "contact_bodies": [
+        "EE_BODY_R",
+        "ee_finger_r1",
+        "ee_finger_r2"
+       ],
+       "tip_rel_fruit_mm": [
+        13.71576308572331,
+        17.61573985760273,
+        -12.545673521992097
+       ],
+       "fruit_pos": [
+        0.4367246761764998,
+        -0.32758500450783795,
+        0.8555153704723132
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 310,
+     "arm_joint_maxabs_deg_to_settled": 0.8884471726235238,
+     "arm_joint_maxabs_deg_all": 0.8884471726235238,
+     "arm_joint_median_deg_all": 0.09211906089715348,
+     "gripper_opening_maxabs_all": 0.044007048031863394,
+     "final_target_xy_vs_dataset_final_mm": 2.585176276546828,
+     "final_target_z_vs_dataset_final_mm": -0.0003583682111063524
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -13.109181468124564,
+      "tip_dxy_mm": 25.085174034959905,
+      "tip_spread_mm": 91.32617778376977,
+      "tilt_deg": 34.1962663859384,
+      "approach_yaw_deg_mirrored": -36.85497273148523,
+      "closing_yaw_deg_mirrored_mod180": 42.4653042584914,
+      "closing_elev_deg": 7.177188684114577,
+      "grasp_dz_mm": 32.967690807180425,
+      "grasp_dxy_mm": 16.646514351418563,
+      "opening_meas": 0.9953986406326294,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -12.754609505312931,
+      "tip_dxy_mm": 25.382666454176967,
+      "tip_spread_mm": 62.419013448518804,
+      "tilt_deg": 34.24487269597727,
+      "approach_yaw_deg_mirrored": -36.81248971365153,
+      "closing_yaw_deg_mirrored_mod180": 42.468777207295695,
+      "closing_elev_deg": 7.215840998466274,
+      "grasp_dz_mm": 33.288845837067925,
+      "grasp_dxy_mm": 16.297629858380006,
+      "opening_meas": 0.6742079257965088,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1215_s12151",
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "close_cmd_t": [
+       218
+      ],
+      "lift_t": null,
+      "robust_grasp": false,
+      "geom": {
+       "onset": {
+        "t": 218,
+        "tip_dz_mm": -6.429487186032645,
+        "tip_dxy_mm": 39.98605864727313,
+        "tip_spread_mm": 102.43265069505915,
+        "tilt_deg": 32.856059990113934,
+        "approach_yaw_deg_mirrored": -61.345863662469874,
+        "closing_yaw_deg_mirrored_mod180": 19.5317793998969,
+        "closing_elev_deg": 5.852030324931724,
+        "grasp_dz_mm": 40.834228940985874,
+        "grasp_dxy_mm": 24.740782072934433,
+        "opening_meas": 1.0566746270976275,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "EE_BODY_R",
+         "ee_finger_r1"
+        ],
+        "tip_rel_fruit_mm": [
+         -9.595888418776621,
+         38.817570913151634,
+         -6.429487186032645
+        ],
+        "fruit_pos": [
+         0.4358416825322136,
+         -0.3351937551511055,
+         0.8554939555326158
+        ]
+       },
+       "settled": {
+        "t": 234,
+        "tip_dz_mm": 8.156612553731236,
+        "tip_dxy_mm": 39.79761090428887,
+        "tip_spread_mm": 57.05154449916823,
+        "tilt_deg": 33.40287278736118,
+        "approach_yaw_deg_mirrored": -59.45619120753036,
+        "closing_yaw_deg_mirrored_mod180": 19.694410646306363,
+        "closing_elev_deg": 7.082279992916121,
+        "grasp_dz_mm": 55.13379305043642,
+        "grasp_dxy_mm": 3.9175824341809533,
+        "opening_meas": 0.5524205180308189,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         12.58557446940084,
+         37.755173803921735,
+         8.156612553731236
+        ],
+        "fruit_pos": [
+         0.4235015973846094,
+         -0.33312086695294235,
+         0.8555100503650689
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1215_s12152",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       133,
+       171
+      ],
+      "lift_t": 192,
+      "robust_grasp": false,
+      "geom": {
+       "onset": {
+        "t": 133,
+        "tip_dz_mm": -5.467385897741095,
+        "tip_dxy_mm": 43.4976342082497,
+        "tip_spread_mm": 104.82401952472921,
+        "tilt_deg": 33.673074205623365,
+        "approach_yaw_deg_mirrored": -55.960303228947524,
+        "closing_yaw_deg_mirrored_mod180": 24.30174393927256,
+        "closing_elev_deg": 6.4306768761709225,
+        "grasp_dz_mm": 41.270239491736916,
+        "grasp_dxy_mm": 26.813791631493732,
+        "opening_meas": 1.0833525969213884,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "EE_BODY_R",
+         "ee_finger_r1"
+        ],
+        "tip_rel_fruit_mm": [
+         -7.084608276507143,
+         42.9168091461043,
+         -5.467385897741095
+        ],
+        "fruit_pos": [
+         0.4348949310483103,
+         -0.33511709487561003,
+         0.8555060925015535
+        ]
+       },
+       "settled": {
+        "t": 149,
+        "tip_dz_mm": 65.0199761391198,
+        "tip_dxy_mm": 35.02784314198058,
+        "tip_spread_mm": 69.2222189741006,
+        "tilt_deg": 36.01934970812094,
+        "approach_yaw_deg_mirrored": -54.63934734025419,
+        "closing_yaw_deg_mirrored_mod180": 24.197945402141006,
+        "closing_elev_deg": 8.006770636534945,
+        "grasp_dz_mm": 109.41473113678069,
+        "grasp_dxy_mm": 15.494303252752632,
+        "opening_meas": 0.687927683852261,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         29.341567038429993,
+         19.13170768406508,
+         65.0199761391198
+        ],
+        "fruit_pos": [
+         0.4277724461991436,
+         -0.3232431784531486,
+         0.8555851463700382
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1215_s12153",
+      "success": false,
+      "grasp": true,
+      "place": false,
+      "close_cmd_t": [
+       95
+      ],
+      "lift_t": 510,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 95,
+        "tip_dz_mm": -8.702845051023257,
+        "tip_dxy_mm": 27.394509993157914,
+        "tip_spread_mm": 98.36759632710907,
+        "tilt_deg": 33.16269471726461,
+        "approach_yaw_deg_mirrored": -50.27741109095384,
+        "closing_yaw_deg_mirrored_mod180": 30.56121653436972,
+        "closing_elev_deg": 5.940440302312794,
+        "grasp_dz_mm": 38.35518149798034,
+        "grasp_dxy_mm": 26.914184327911855,
+        "opening_meas": 1.01162454751313,
+        "n_contacts": 1,
+        "contact_bodies": [
+         "ee_finger_r1"
+        ],
+        "tip_rel_fruit_mm": [
+         -4.45545813079995,
+         27.029762681346604,
+         -8.702845051023257
+        ],
+        "fruit_pos": [
+         0.4361745341554623,
+         -0.33074128997362706,
+         0.8555589975768855
+        ]
+       },
+       "settled": {
+        "t": 111,
+        "tip_dz_mm": -8.926314592930474,
+        "tip_dxy_mm": 16.246159919158156,
+        "tip_spread_mm": 66.58923216620617,
+        "tilt_deg": 33.313013680130844,
+        "approach_yaw_deg_mirrored": -49.65873059531236,
+        "closing_yaw_deg_mirrored_mod180": 30.43492160633246,
+        "closing_elev_deg": 6.483701780119322,
+        "grasp_dz_mm": 38.06398605132466,
+        "grasp_dxy_mm": 23.71155745018353,
+        "opening_meas": 0.6577639122117688,
+        "n_contacts": 4,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         6.5485669658451044,
+         14.867884274929743,
+         -8.926314592930474
+        ],
+        "fruit_pos": [
+         0.4264491541225408,
+         -0.31758006310626125,
+         0.8558927871125017
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1215_s12151",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       128,
+       256
+      ],
+      "lift_t": 154,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 128,
+        "tip_dz_mm": -7.694705732009588,
+        "tip_dxy_mm": 24.122430869297542,
+        "tip_spread_mm": 101.7162800577251,
+        "tilt_deg": 33.038527496526825,
+        "approach_yaw_deg_mirrored": -48.56963283062181,
+        "closing_yaw_deg_mirrored_mod180": 33.44097314609364,
+        "closing_elev_deg": 5.164601194229686,
+        "grasp_dz_mm": 38.891113605921454,
+        "grasp_dxy_mm": 30.573405373053703,
+        "opening_meas": 1.0488636344121103,
+        "n_contacts": 1,
+        "contact_bodies": [
+         "ee_finger_r1"
+        ],
+        "tip_rel_fruit_mm": [
+         -2.6131819600565542,
+         23.980470201555136,
+         -7.694705732009588
+        ],
+        "fruit_pos": [
+         0.4377466727617586,
+         -0.3315258770095122,
+         0.8555624579105677
+        ]
+       },
+       "settled": {
+        "t": 144,
+        "tip_dz_mm": -9.41739207227943,
+        "tip_dxy_mm": 19.532008539346386,
+        "tip_spread_mm": 66.97174661387184,
+        "tilt_deg": 33.13853573767303,
+        "approach_yaw_deg_mirrored": -48.786802247935,
+        "closing_yaw_deg_mirrored_mod180": 33.53346052746187,
+        "closing_elev_deg": 5.077666594468349,
+        "grasp_dz_mm": 37.58639340535197,
+        "grasp_dxy_mm": 20.686500652375923,
+        "opening_meas": 0.6606208905262124,
+        "n_contacts": 3,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         8.05243794567273,
+         17.794875686899026,
+         -9.41739207227943
+        ],
+        "fruit_pos": [
+         0.42230385912333174,
+         -0.3211748693975139,
+         0.8556666638683124
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1215_s12152",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       97
+      ],
+      "lift_t": 106,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 97,
+        "tip_dz_mm": -9.38938246305554,
+        "tip_dxy_mm": 28.07704061625489,
+        "tip_spread_mm": 98.40639403843032,
+        "tilt_deg": 33.306854560317454,
+        "approach_yaw_deg_mirrored": -51.01677174329139,
+        "closing_yaw_deg_mirrored_mod180": 32.6267651864842,
+        "closing_elev_deg": 4.163157766382967,
+        "grasp_dz_mm": 37.44292842746666,
+        "grasp_dxy_mm": 25.21634074197455,
+        "opening_meas": 1.0120135762212876,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         -2.764237905472089,
+         27.940637046581063,
+         -9.38938246305554
+        ],
+        "fruit_pos": [
+         0.43698408040656866,
+         -0.33270393219637345,
+         0.8555497871023772
+        ]
+       },
+       "settled": {
+        "t": 113,
+        "tip_dz_mm": -8.508032800316423,
+        "tip_dxy_mm": 17.99381121173118,
+        "tip_spread_mm": 66.77386940654769,
+        "tilt_deg": 33.939600303817045,
+        "approach_yaw_deg_mirrored": -47.842066631189375,
+        "closing_yaw_deg_mirrored_mod180": 32.921390942279075,
+        "closing_elev_deg": 6.186126654946893,
+        "grasp_dz_mm": 38.02087598839332,
+        "grasp_dxy_mm": 22.382952465219955,
+        "opening_meas": 0.6601064666776991,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         8.464738692742724,
+         15.878458388238037,
+         -8.508032800316423
+        ],
+        "fruit_pos": [
+         0.43889941457276105,
+         -0.3278486552191003,
+         0.8644051571825195
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1215_s12153",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       83
+      ],
+      "lift_t": 169,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 83,
+        "tip_dz_mm": -10.685172168919621,
+        "tip_dxy_mm": 25.1547506117189,
+        "tip_spread_mm": 97.23128544560808,
+        "tilt_deg": 32.28983963135078,
+        "approach_yaw_deg_mirrored": -47.73128846987624,
+        "closing_yaw_deg_mirrored_mod180": 34.808322246569105,
+        "closing_elev_deg": 4.690979015616461,
+        "grasp_dz_mm": 36.88495545919723,
+        "grasp_dxy_mm": 24.1696562904361,
+        "opening_meas": 0.9990079133212401,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         -0.34013412845351754,
+         25.15245091660917,
+         -10.685172168919621
+        ],
+        "fruit_pos": [
+         0.437651964576342,
+         -0.3332031694683267,
+         0.8555726622767231
+        ]
+       },
+       "settled": {
+        "t": 99,
+        "tip_dz_mm": -9.718826085909683,
+        "tip_dxy_mm": 15.93066155536984,
+        "tip_spread_mm": 67.1135750520308,
+        "tilt_deg": 32.635828458836436,
+        "approach_yaw_deg_mirrored": -46.296622663257104,
+        "closing_yaw_deg_mirrored_mod180": 35.0029507013404,
+        "closing_elev_deg": 5.552611899516786,
+        "grasp_dz_mm": 37.673427801996006,
+        "grasp_dxy_mm": 23.276593896646123,
+        "opening_meas": 0.663910217339119,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         8.223901274109547,
+         13.643805386527541,
+         -9.718826085909683
+        ],
+        "fruit_pos": [
+         0.43473461580234785,
+         -0.32520600413537526,
+         0.8586882004017798
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "1959": {
+    "arm": "right",
+    "fruit": "orange",
+    "split": "test",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 280
+    },
+    "n_dataset_frames": 310,
+    "held_steps_after_last_frame": 290,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep1959",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 200,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 122,
+     "regrasp": false,
+     "robust_grasp": true,
+     "robust_grasp_strict": true,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -9.374116610857964,
+       "tip_dxy_mm": 24.562740909624303,
+       "tip_spread_mm": 97.32010557631625,
+       "tilt_deg": 39.3705317363497,
+       "approach_yaw_deg_mirrored": -9.132486394428415,
+       "closing_yaw_deg_mirrored_mod180": 71.89265845022919,
+       "closing_elev_deg": 7.294738269573023,
+       "grasp_dz_mm": 33.198341146794206,
+       "grasp_dxy_mm": 20.747965158503227,
+       "opening_meas": 0.9999999982096948,
+       "n_contacts": 0,
+       "contact_bodies": [],
+       "tip_rel_fruit_mm": [
+        22.04806759397804,
+        10.82640089617537,
+        -9.374116610857964
+       ],
+       "fruit_pos": [
+        0.44347353474682355,
+        -0.2894260101865656,
+        0.8487608611253324
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -9.71153882196052,
+       "tip_dxy_mm": 23.411712418374776,
+       "tip_spread_mm": 68.05931034186109,
+       "tilt_deg": 39.37851728737181,
+       "approach_yaw_deg_mirrored": -9.118106776245632,
+       "closing_yaw_deg_mirrored_mod180": 71.91628452094456,
+       "closing_elev_deg": 7.308525490396933,
+       "grasp_dz_mm": 32.853402912591534,
+       "grasp_dxy_mm": 21.238361847742333,
+       "opening_meas": 0.6744583781065624,
+       "n_contacts": 2,
+       "contact_bodies": [
+        "ee_finger_r1",
+        "ee_finger_r2"
+       ],
+       "tip_rel_fruit_mm": [
+        21.70642818863233,
+        8.771502360053917,
+        -9.71153882196052
+       ],
+       "fruit_pos": [
+        0.44381445246033974,
+        -0.28783362205339563,
+        0.8491473479673999
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 310,
+     "arm_joint_maxabs_deg_to_settled": 0.8116781485669858,
+     "arm_joint_maxabs_deg_all": 1.1426942857053175,
+     "arm_joint_median_deg_all": 0.07423733310348016,
+     "gripper_opening_maxabs_all": 0.04210641416040706,
+     "final_target_xy_vs_dataset_final_mm": 31.614809502801407,
+     "final_target_z_vs_dataset_final_mm": -0.0014279565507813174
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -10.268180302463348,
+      "tip_dxy_mm": 21.4119681969611,
+      "tip_spread_mm": 91.32675177649894,
+      "tilt_deg": 39.18969096702145,
+      "approach_yaw_deg_mirrored": -9.094428446276872,
+      "closing_yaw_deg_mirrored_mod180": 71.86822521532916,
+      "closing_elev_deg": 7.297737461592605,
+      "grasp_dz_mm": 32.091061823589115,
+      "grasp_dxy_mm": 24.721151834768854,
+      "opening_meas": 0.9954050183296204,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -10.130311791690328,
+      "tip_dxy_mm": 21.409279489306673,
+      "tip_spread_mm": 62.313007183832234,
+      "tilt_deg": 39.206707445910425,
+      "approach_yaw_deg_mirrored": -9.056615809723818,
+      "closing_yaw_deg_mirrored_mod180": 71.88040971445014,
+      "closing_elev_deg": 7.322428307202615,
+      "grasp_dz_mm": 32.216370488067135,
+      "grasp_dxy_mm": 24.602214756878876,
+      "opening_meas": 0.6730300784111023,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1959_s19591",
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "close_cmd_t": [
+       99,
+       253,
+       370
+      ],
+      "lift_t": null,
+      "robust_grasp": false,
+      "geom": {
+       "onset": {
+        "t": 99,
+        "tip_dz_mm": -3.140274691906364,
+        "tip_dxy_mm": 41.892152858372356,
+        "tip_spread_mm": 98.0191262434716,
+        "tilt_deg": 39.26477988515421,
+        "approach_yaw_deg_mirrored": -8.55418148574144,
+        "closing_yaw_deg_mirrored_mod180": 74.8675462949169,
+        "closing_elev_deg": 5.351286429074615,
+        "grasp_dz_mm": 39.37433064934115,
+        "grasp_dxy_mm": 3.115951312033287,
+        "opening_meas": 1.0077446962275844,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         41.127383339139065,
+         7.968112121747612,
+         -3.140274691906364
+        ],
+        "fruit_pos": [
+         0.41184807546335517,
+         -0.2368819276546717,
+         0.8505388691478099
+        ]
+       },
+       "settled": {
+        "t": 115,
+        "tip_dz_mm": 18.18147536059067,
+        "tip_dxy_mm": 51.36085617680323,
+        "tip_spread_mm": 47.69658803580823,
+        "tilt_deg": 42.18601418674946,
+        "approach_yaw_deg_mirrored": -8.926634681598733,
+        "closing_yaw_deg_mirrored_mod180": 73.92854008845555,
+        "closing_elev_deg": 6.431673816506909,
+        "grasp_dz_mm": 58.44488181089136,
+        "grasp_dxy_mm": 10.18680808642197,
+        "opening_meas": 0.44862663504757494,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         46.78826652420548,
+         21.18479791912539,
+         18.18147536059067
+        ],
+        "fruit_pos": [
+         0.419759659633769,
+         -0.24530616554588355,
+         0.8503528693806617
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "1984": {
+    "arm": "right",
+    "fruit": "banana",
+    "split": "test",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 280
+    },
+    "n_dataset_frames": 310,
+    "held_steps_after_last_frame": 290,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep1984",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 176,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 110,
+     "regrasp": false,
+     "robust_grasp": false,
+     "robust_grasp_strict": false,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -4.56370939354811,
+       "tip_dxy_mm": 26.70975138872276,
+       "tip_spread_mm": 97.32018198330819,
+       "tilt_deg": 42.094619451453084,
+       "approach_yaw_deg_mirrored": -14.541704676489429,
+       "closing_yaw_deg_mirrored_mod180": 65.6262597801276,
+       "closing_elev_deg": 8.769822194043897,
+       "grasp_dz_mm": 35.95002886951071,
+       "grasp_dxy_mm": 21.15618892239104,
+       "opening_meas": 1.0000000007648193,
+       "n_contacts": 0,
+       "contact_bodies": [],
+       "tip_rel_fruit_mm": [
+        22.184812974084032,
+        14.874303094676078,
+        -4.56370939354811
+       ],
+       "fruit_pos": [
+        0.44203257859371214,
+        -0.3232139703894381,
+        0.8433331095097528
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -6.589052906794568,
+       "tip_dxy_mm": 30.460851590864305,
+       "tip_spread_mm": 51.945850309443514,
+       "tilt_deg": 42.177608896972345,
+       "approach_yaw_deg_mirrored": -14.445685675646764,
+       "closing_yaw_deg_mirrored_mod180": 65.64903110120783,
+       "closing_elev_deg": 8.87398504861622,
+       "grasp_dz_mm": 33.86316531144207,
+       "grasp_dxy_mm": 16.506562617500002,
+       "opening_meas": 0.49551906022073466,
+       "n_contacts": 4,
+       "contact_bodies": [
+        "ee_finger_r1",
+        "ee_finger_r2"
+       ],
+       "tip_rel_fruit_mm": [
+        26.972142324364402,
+        14.15510572461015,
+        -6.589052906794568
+       ],
+       "fruit_pos": [
+        0.4377615565932276,
+        -0.3225388124759252,
+        0.8463913311541948
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 310,
+     "arm_joint_maxabs_deg_to_settled": 0.7486227092777019,
+     "arm_joint_maxabs_deg_all": 1.0096069824413907,
+     "arm_joint_median_deg_all": 0.10290646447449582,
+     "gripper_opening_maxabs_all": 0.1633593573381953,
+     "final_target_xy_vs_dataset_final_mm": 26.165045534370112,
+     "final_target_z_vs_dataset_final_mm": -1.3338644832906477
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -4.504815263369433,
+      "tip_dxy_mm": 27.25357612283623,
+      "tip_spread_mm": 91.32675177649904,
+      "tilt_deg": 41.90967439554512,
+      "approach_yaw_deg_mirrored": -14.417053548462388,
+      "closing_yaw_deg_mirrored_mod180": 65.59225344776365,
+      "closing_elev_deg": 8.850731119765074,
+      "grasp_dz_mm": 35.736670303327834,
+      "grasp_dxy_mm": 20.420911978380012,
+      "opening_meas": 0.9954050183296204,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -3.8989589929534496,
+      "tip_dxy_mm": 27.910150999093595,
+      "tip_spread_mm": 47.7037227828923,
+      "tilt_deg": 41.999864261738985,
+      "approach_yaw_deg_mirrored": -14.437075847679028,
+      "closing_yaw_deg_mirrored_mod180": 65.59021082063632,
+      "closing_elev_deg": 8.862786595462916,
+      "grasp_dz_mm": 36.26956029062045,
+      "grasp_dxy_mm": 19.895326385786536,
+      "opening_meas": 0.5107046961784363,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1984_s19841",
+      "success": false,
+      "grasp": true,
+      "place": false,
+      "close_cmd_t": [
+       128,
+       232,
+       410,
+       560
+      ],
+      "lift_t": 142,
+      "robust_grasp": false,
+      "geom": {
+       "onset": {
+        "t": 128,
+        "tip_dz_mm": 0.2572480076495909,
+        "tip_dxy_mm": 28.053869317898403,
+        "tip_spread_mm": 97.28927177571346,
+        "tilt_deg": 40.42134871514014,
+        "approach_yaw_deg_mirrored": -6.322527591212942,
+        "closing_yaw_deg_mirrored_mod180": 74.55954742490663,
+        "closing_elev_deg": 7.686779818241538,
+        "grasp_dz_mm": 42.03251791965978,
+        "grasp_dxy_mm": 21.671987458012154,
+        "opening_meas": 0.999658344412138,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         23.317899539877118,
+         15.597921167704365,
+         0.2572480076495909
+        ],
+        "fruit_pos": [
+         0.44203381617242693,
+         -0.32321322659343865,
+         0.8433392406991552
+        ]
+       },
+       "settled": {
+        "t": 144,
+        "tip_dz_mm": 1.3854913699403726,
+        "tip_dxy_mm": 28.7165809982526,
+        "tip_spread_mm": 52.16798904441381,
+        "tilt_deg": 40.42274106520383,
+        "approach_yaw_deg_mirrored": -6.485385765363858,
+        "closing_yaw_deg_mirrored_mod180": 74.45983674222242,
+        "closing_elev_deg": 7.653262638795252,
+        "grasp_dz_mm": 43.154807169356936,
+        "grasp_dxy_mm": 17.3066838836942,
+        "opening_meas": 0.4979133086285195,
+        "n_contacts": 3,
+        "contact_bodies": [
+         "ee_finger_r1",
+         "ee_finger_r2"
+        ],
+        "tip_rel_fruit_mm": [
+         26.747404905404835,
+         10.45075858756328,
+         1.3854913699403726
+        ],
+        "fruit_pos": [
+         0.4407299867087451,
+         -0.3190350331729393,
+         0.8488712038363796
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "1830": {
+    "arm": "left",
+    "fruit": "orange",
+    "split": "test",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 281
+    },
+    "n_dataset_frames": 311,
+    "held_steps_after_last_frame": 289,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep1830",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 200,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 122,
+     "regrasp": false,
+     "robust_grasp": true,
+     "robust_grasp_strict": true,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -18.776359428180566,
+       "tip_dxy_mm": 14.784885974978566,
+       "tip_spread_mm": 97.32009058857388,
+       "tilt_deg": 39.72702622678418,
+       "approach_yaw_deg_mirrored": -26.568961198956455,
+       "closing_yaw_deg_mirrored_mod180": 54.994679929369745,
+       "closing_elev_deg": 6.951292219564552,
+       "grasp_dz_mm": 33.216485791329184,
+       "grasp_dxy_mm": 19.925724463735836,
+       "opening_meas": 0.9999999999336724,
+       "n_contacts": 0,
+       "contact_bodies": [],
+       "tip_rel_fruit_mm": [
+        9.111274079580124,
+        -11.643776790195236,
+        -18.776359428180566
+       ],
+       "fruit_pos": [
+        0.4450482,
+        0.2964926,
+        0.849478517165624
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -19.00558990339196,
+       "tip_dxy_mm": 15.153333846488863,
+       "tip_spread_mm": 67.34751333163948,
+       "tilt_deg": 39.69752458564283,
+       "approach_yaw_deg_mirrored": -26.641040265335253,
+       "closing_yaw_deg_mirrored_mod180": 54.993178791446766,
+       "closing_elev_deg": 6.908188142856403,
+       "grasp_dz_mm": 33.00140428805831,
+       "grasp_dxy_mm": 17.750677402725845,
+       "opening_meas": 0.6665056445166652,
+       "n_contacts": 4,
+       "contact_bodies": [
+        "ee_finger_l1",
+        "ee_finger_l2"
+       ],
+       "tip_rel_fruit_mm": [
+        12.121534369584463,
+        -9.093510388740288,
+        -19.00558990339196
+       ],
+       "fruit_pos": [
+        0.4418634677619639,
+        0.29403113817779125,
+        0.8492888484876234
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 311,
+     "arm_joint_maxabs_deg_to_settled": 0.7412737024458572,
+     "arm_joint_maxabs_deg_all": 0.917109146497977,
+     "arm_joint_median_deg_all": 0.08812637377085551,
+     "gripper_opening_maxabs_all": 0.04207612867035182,
+     "final_target_xy_vs_dataset_final_mm": 18.03100833801741,
+     "final_target_z_vs_dataset_final_mm": -0.2672552362360525
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -18.33027579860036,
+      "tip_dxy_mm": 15.155019304163995,
+      "tip_spread_mm": 91.32675177649902,
+      "tilt_deg": 39.528478366705876,
+      "approach_yaw_deg_mirrored": -26.41149140537257,
+      "closing_yaw_deg_mirrored_mod180": 54.96411823106663,
+      "closing_elev_deg": 7.0539016402515085,
+      "grasp_dz_mm": 33.43567579318374,
+      "grasp_dxy_mm": 19.177507473987472,
+      "opening_meas": 0.9954050183296204,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -18.488519999972695,
+      "tip_dxy_mm": 15.028244885975994,
+      "tip_spread_mm": 61.73202998237047,
+      "tilt_deg": 39.50870243449729,
+      "approach_yaw_deg_mirrored": -26.421549183604757,
+      "closing_yaw_deg_mirrored_mod180": 54.96275084770197,
+      "closing_elev_deg": 7.0420149012394,
+      "grasp_dz_mm": 33.28900523816336,
+      "grasp_dxy_mm": 19.313519463312264,
+      "opening_meas": 0.6665747761726379,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1830_s18301",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       98
+      ],
+      "lift_t": 106,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 98,
+        "tip_dz_mm": -14.626954274491343,
+        "tip_dxy_mm": 18.778432078379677,
+        "tip_spread_mm": 97.28241037329929,
+        "tilt_deg": 38.139151680129395,
+        "approach_yaw_deg_mirrored": -26.777661283975384,
+        "closing_yaw_deg_mirrored_mod180": 55.19875460795597,
+        "closing_elev_deg": 6.254725338925686,
+        "grasp_dz_mm": 38.23927063241705,
+        "grasp_dxy_mm": 18.660636977744247,
+        "opening_meas": 0.9995827898374186,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         8.614593444979167,
+         -16.68587100213953,
+         -14.626954274491343
+        ],
+        "fruit_pos": [
+         0.4450482,
+         0.2964926,
+         0.849478508739602
+        ]
+       },
+       "settled": {
+        "t": 114,
+        "tip_dz_mm": -12.544090339686953,
+        "tip_dxy_mm": 19.10593617514151,
+        "tip_spread_mm": 68.14233501898313,
+        "tilt_deg": 40.090762350698874,
+        "approach_yaw_deg_mirrored": -28.93558374187615,
+        "closing_yaw_deg_mirrored_mod180": 55.36290554126612,
+        "closing_elev_deg": 4.802621205982588,
+        "grasp_dz_mm": 39.18060761261699,
+        "grasp_dxy_mm": 14.426665237221405,
+        "opening_meas": 0.6753259110631544,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         14.598528781589405,
+         -12.325573193230689,
+         -12.544090339686953
+        ],
+        "fruit_pos": [
+         0.462392142316573,
+         0.2949812754144186,
+         0.940800022775147
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1830_s18302",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       97
+      ],
+      "lift_t": 112,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 97,
+        "tip_dz_mm": -16.8725766878971,
+        "tip_dxy_mm": 20.328702493685725,
+        "tip_spread_mm": 97.04255138869311,
+        "tilt_deg": 39.42508172361886,
+        "approach_yaw_deg_mirrored": -37.04608654242974,
+        "closing_yaw_deg_mirrored_mod180": 43.68276105408863,
+        "closing_elev_deg": 7.54489321583112,
+        "grasp_dz_mm": 34.572447402852255,
+        "grasp_dxy_mm": 13.380356811798707,
+        "opening_meas": 0.9969240825124376,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         18.48984973342033,
+         -8.448763336271202,
+         -16.8725766878971
+        ],
+        "fruit_pos": [
+         0.4450482,
+         0.2964926,
+         0.8494785140018947
+        ]
+       },
+       "settled": {
+        "t": 113,
+        "tip_dz_mm": -17.125858020969776,
+        "tip_dxy_mm": 19.998518307915095,
+        "tip_spread_mm": 68.60004830368207,
+        "tilt_deg": 39.690499346431864,
+        "approach_yaw_deg_mirrored": -37.34093147701351,
+        "closing_yaw_deg_mirrored_mod180": 43.89705455100816,
+        "closing_elev_deg": 7.228347427533917,
+        "grasp_dz_mm": 34.8919691045736,
+        "grasp_dxy_mm": 13.105050200737256,
+        "opening_meas": 0.680387790980989,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         13.53263396553006,
+         -14.724420276092276,
+         -17.125858020969776
+        ],
+        "fruit_pos": [
+         0.449736125929478,
+         0.2988784493871623,
+         0.8595181839388922
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1830_s18303",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       128
+      ],
+      "lift_t": 138,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 128,
+        "tip_dz_mm": -13.963641161238494,
+        "tip_dxy_mm": 20.585409458517077,
+        "tip_spread_mm": 97.13081450756295,
+        "tilt_deg": 38.49152340780505,
+        "approach_yaw_deg_mirrored": -23.60524354459904,
+        "closing_yaw_deg_mirrored_mod180": 58.50782200145802,
+        "closing_elev_deg": 6.227409586124804,
+        "grasp_dz_mm": 38.707902214358384,
+        "grasp_dxy_mm": 19.605476043753367,
+        "opening_meas": 0.9978966545340722,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         9.236325368097154,
+         -18.39699367476788,
+         -13.963641161238494
+        ],
+        "fruit_pos": [
+         0.4450482,
+         0.2964926,
+         0.8494785130475628
+        ]
+       },
+       "settled": {
+        "t": 144,
+        "tip_dz_mm": -11.448478047221045,
+        "tip_dxy_mm": 19.757744701659497,
+        "tip_spread_mm": 68.42734358489342,
+        "tilt_deg": 40.049639111279895,
+        "approach_yaw_deg_mirrored": -25.47282222106636,
+        "closing_yaw_deg_mirrored_mod180": 58.52497100899668,
+        "closing_elev_deg": 5.046108236689116,
+        "grasp_dz_mm": 40.307318980522645,
+        "grasp_dxy_mm": 13.830829781824935,
+        "opening_meas": 0.6784746306047484,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         15.745455233629247,
+         -11.935204865511583,
+         -11.448478047221045
+        ],
+        "fruit_pos": [
+         0.4593752711392659,
+         0.2924938202961947,
+         0.9184855902844955
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1830_s18301",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       103,
+       192
+      ],
+      "lift_t": 114,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 103,
+        "tip_dz_mm": -13.172550896479173,
+        "tip_dxy_mm": 18.782552824365265,
+        "tip_spread_mm": 97.31130184108227,
+        "tilt_deg": 38.27369640445291,
+        "approach_yaw_deg_mirrored": -24.81787098915993,
+        "closing_yaw_deg_mirrored_mod180": 57.131214298057834,
+        "closing_elev_deg": 6.305965346741431,
+        "grasp_dz_mm": 39.621070745600065,
+        "grasp_dxy_mm": 19.912965772936577,
+        "opening_meas": 0.9999017390791953,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         8.096332384122551,
+         -16.947970159458038,
+         -13.172550896479173
+        ],
+        "fruit_pos": [
+         0.4450482,
+         0.2964926,
+         0.8494785021758858
+        ]
+       },
+       "settled": {
+        "t": 119,
+        "tip_dz_mm": -10.76917885510853,
+        "tip_dxy_mm": 19.359887012056532,
+        "tip_spread_mm": 68.37609082636091,
+        "tilt_deg": 39.74695843902131,
+        "approach_yaw_deg_mirrored": -25.69251868722191,
+        "closing_yaw_deg_mirrored_mod180": 57.18558950698062,
+        "closing_elev_deg": 5.909769176953085,
+        "grasp_dz_mm": 41.18511538972047,
+        "grasp_dxy_mm": 14.047860225062243,
+        "opening_meas": 0.6778954578409774,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         15.20514332241374,
+         -11.983690652902057,
+         -10.76917885510853
+        ],
+        "fruit_pos": [
+         0.45457292700942287,
+         0.29202880363360495,
+         0.8871597682598622
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1830_s18302",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       100,
+       192
+      ],
+      "lift_t": 111,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 100,
+        "tip_dz_mm": -16.090514680424327,
+        "tip_dxy_mm": 22.390613302062118,
+        "tip_spread_mm": 97.12976846770887,
+        "tilt_deg": 39.65888830414713,
+        "approach_yaw_deg_mirrored": -36.571036247461564,
+        "closing_yaw_deg_mirrored_mod180": 45.73071983485089,
+        "closing_elev_deg": 6.337907433227881,
+        "grasp_dz_mm": 35.92676992634536,
+        "grasp_dxy_mm": 10.38694088008173,
+        "opening_meas": 0.997863431757011,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         16.391089480049416,
+         -15.253581536789795,
+         -16.090514680424327
+        ],
+        "fruit_pos": [
+         0.4450482,
+         0.2964926,
+         0.8494784990226043
+        ]
+       },
+       "settled": {
+        "t": 116,
+        "tip_dz_mm": -13.232204579244344,
+        "tip_dxy_mm": 23.746471577818465,
+        "tip_spread_mm": 67.93490279551318,
+        "tilt_deg": 41.66422450052099,
+        "approach_yaw_deg_mirrored": -37.70810769591055,
+        "closing_yaw_deg_mirrored_mod180": 45.74162112692183,
+        "closing_elev_deg": 5.817579008644189,
+        "grasp_dz_mm": 37.59107729287248,
+        "grasp_dxy_mm": 11.137508798295837,
+        "opening_meas": 0.6730473646804546,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         16.341852704287174,
+         -17.229009332736524,
+         -13.232204579244344
+        ],
+        "fruit_pos": [
+         0.46118032326756747,
+         0.2995173210969411,
+         0.8995456654180751
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1830_s18303",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       285
+      ],
+      "lift_t": 313,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 285,
+        "tip_dz_mm": -14.56625674614287,
+        "tip_dxy_mm": 28.040744099743677,
+        "tip_spread_mm": 97.16639073131391,
+        "tilt_deg": 46.33607836447089,
+        "approach_yaw_deg_mirrored": -30.967113445471718,
+        "closing_yaw_deg_mirrored_mod180": 51.41466105762443,
+        "closing_elev_deg": 7.908073179750217,
+        "grasp_dz_mm": 33.326597696033744,
+        "grasp_dxy_mm": 18.141320874192324,
+        "opening_meas": 0.9982941914193774,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         14.415800858948613,
+         -24.0513620251005,
+         -14.56625674614287
+        ],
+        "fruit_pos": [
+         0.4626500353673384,
+         0.281800597075581,
+         0.8487609955869733
+        ]
+       },
+       "settled": {
+        "t": 301,
+        "tip_dz_mm": -12.832381510714086,
+        "tip_dxy_mm": 29.389287883184142,
+        "tip_spread_mm": 67.31647540887889,
+        "tilt_deg": 46.574300342736194,
+        "approach_yaw_deg_mirrored": -30.288182247412244,
+        "closing_yaw_deg_mirrored_mod180": 51.71252017673472,
+        "closing_elev_deg": 8.38946074139255,
+        "grasp_dz_mm": 34.90771358398115,
+        "grasp_dxy_mm": 10.362182614571369,
+        "opening_meas": 0.6661308953058127,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         22.488137128809925,
+         -18.921256056523173,
+         -12.832381510714086
+        ],
+        "fruit_pos": [
+         0.4574493492400057,
+         0.2792918994713955,
+         0.8488886521682727
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "983": {
+    "arm": "left",
+    "fruit": "pear",
+    "split": "train",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 281
+    },
+    "n_dataset_frames": 312,
+    "held_steps_after_last_frame": 288,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep983",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 200,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 123,
+     "regrasp": false,
+     "robust_grasp": true,
+     "robust_grasp_strict": true,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -22.02944199052692,
+       "tip_dxy_mm": 7.487149610360366,
+       "tip_spread_mm": 97.32014267412085,
+       "tilt_deg": 34.49154249035633,
+       "approach_yaw_deg_mirrored": 1.4974808781490596,
+       "closing_yaw_deg_mirrored_mod180": 79.46742961446395,
+       "closing_elev_deg": 8.14960311498181,
+       "grasp_dz_mm": 32.75974849897179,
+       "grasp_dxy_mm": 20.85255287862538,
+       "opening_meas": 0.9999999360790162,
+       "n_contacts": 1,
+       "contact_bodies": [
+        "EE_BODY_L"
+       ],
+       "tip_rel_fruit_mm": [
+        7.013498466474033,
+        -2.620734352941134,
+        -22.02944199052692
+       ],
+       "fruit_pos": [
+        0.4394417007423409,
+        0.31418028028334555,
+        0.8555520434668152
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -21.949931966207647,
+       "tip_dxy_mm": 7.464605261784116,
+       "tip_spread_mm": 68.70025205349202,
+       "tilt_deg": 34.50033363989129,
+       "approach_yaw_deg_mirrored": 1.4606612820607094,
+       "closing_yaw_deg_mirrored_mod180": 79.4608022094481,
+       "closing_elev_deg": 8.150150857343867,
+       "grasp_dz_mm": 32.833189261922804,
+       "grasp_dxy_mm": 20.693685474883004,
+       "opening_meas": 0.6815817497690595,
+       "n_contacts": 3,
+       "contact_bodies": [
+        "EE_BODY_L",
+        "ee_finger_l1",
+        "ee_finger_l2"
+       ],
+       "tip_rel_fruit_mm": [
+        7.13556293610762,
+        -2.191819631973013,
+        -21.949931966207647
+       ],
+       "fruit_pos": [
+        0.4395586987861059,
+        0.3137065803287199,
+        0.855516977011573
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 312,
+     "arm_joint_maxabs_deg_to_settled": 0.7628245307490954,
+     "arm_joint_maxabs_deg_all": 1.336702957305942,
+     "arm_joint_median_deg_all": 0.10134064542009036,
+     "gripper_opening_maxabs_all": 0.04328741120905655,
+     "final_target_xy_vs_dataset_final_mm": 56.55762634764207,
+     "final_target_z_vs_dataset_final_mm": -2.9030748001720452
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -22.925706739948648,
+      "tip_dxy_mm": 9.812477992812491,
+      "tip_spread_mm": 91.32701999740047,
+      "tilt_deg": 34.29966544166415,
+      "approach_yaw_deg_mirrored": 1.552694263126496,
+      "closing_yaw_deg_mirrored_mod180": 79.42717969926575,
+      "closing_elev_deg": 8.154254183451677,
+      "grasp_dz_mm": 31.56085615265647,
+      "grasp_dxy_mm": 18.483080883326707,
+      "opening_meas": 0.9954079985618591,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -22.871811919827344,
+      "tip_dxy_mm": 9.881890451721121,
+      "tip_spread_mm": 63.13065714435023,
+      "tilt_deg": 34.309752615583854,
+      "approach_yaw_deg_mirrored": 1.556127531335261,
+      "closing_yaw_deg_mirrored_mod180": 79.42903149827599,
+      "closing_elev_deg": 8.158330735509555,
+      "grasp_dz_mm": 31.609736511796992,
+      "grasp_dxy_mm": 18.418309937302652,
+      "opening_meas": 0.6821150779724121,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep983_s9831",
+      "success": false,
+      "grasp": true,
+      "place": false,
+      "close_cmd_t": [
+       145
+      ],
+      "lift_t": 519,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 145,
+        "tip_dz_mm": -17.329673680750666,
+        "tip_dxy_mm": 11.035375755433273,
+        "tip_spread_mm": 96.78434243631773,
+        "tilt_deg": 38.48748050581588,
+        "approach_yaw_deg_mirrored": -37.5526378782971,
+        "closing_yaw_deg_mirrored_mod180": 40.19855536330724,
+        "closing_elev_deg": 9.578352872705487,
+        "grasp_dz_mm": 35.4035310601708,
+        "grasp_dxy_mm": 27.764521406472227,
+        "opening_meas": 0.9939674156859098,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         -1.7978844235684854,
+         -10.887935050462705,
+         -17.329673680750666
+        ],
+        "fruit_pos": [
+         0.4381850571517924,
+         0.3143905766038515,
+         0.8555727177684659
+        ]
+       },
+       "settled": {
+        "t": 161,
+        "tip_dz_mm": -17.081763239775615,
+        "tip_dxy_mm": 9.285507084532542,
+        "tip_spread_mm": 66.91760013357012,
+        "tilt_deg": 38.55549218591264,
+        "approach_yaw_deg_mirrored": -37.277924001529165,
+        "closing_yaw_deg_mirrored_mod180": 40.23286735999479,
+        "closing_elev_deg": 9.861748999620929,
+        "grasp_dz_mm": 35.60745164093271,
+        "grasp_dxy_mm": 22.7796322215091,
+        "opening_meas": 0.6603483429996431,
+        "n_contacts": 3,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         5.340953369825153,
+         -7.595713193522869,
+         -17.081763239775615
+        ],
+        "fruit_pos": [
+         0.4316962122189341,
+         0.311929246568159,
+         0.8555563740196724
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep983_s9832",
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "close_cmd_t": [
+       129
+      ],
+      "lift_t": null,
+      "robust_grasp": false,
+      "geom": {
+       "onset": {
+        "t": 129,
+        "tip_dz_mm": -21.020525495437425,
+        "tip_dxy_mm": 16.348744159778906,
+        "tip_spread_mm": 97.40830446934554,
+        "tilt_deg": 33.25833110972736,
+        "approach_yaw_deg_mirrored": -13.262639203092096,
+        "closing_yaw_deg_mirrored_mod180": 68.68213544217701,
+        "closing_elev_deg": 5.252375203100781,
+        "grasp_dz_mm": 34.30000674913669,
+        "grasp_dxy_mm": 33.38564987965639,
+        "opening_meas": 1.000946046963793,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         -7.046709223705538,
+         -14.75212949775212,
+         -21.020525495437425
+        ],
+        "fruit_pos": [
+         0.4382291461638499,
+         0.3141378421346274,
+         0.8555422366595784
+        ]
+       },
+       "settled": {
+        "t": 145,
+        "tip_dz_mm": -22.499220615532668,
+        "tip_dxy_mm": 3.3193098451194527,
+        "tip_spread_mm": 66.4453045690389,
+        "tilt_deg": 33.1024066909105,
+        "approach_yaw_deg_mirrored": -12.879415919878992,
+        "closing_yaw_deg_mirrored_mod180": 68.74633367832716,
+        "closing_elev_deg": 5.5036736234022,
+        "grasp_dz_mm": 32.89496766363842,
+        "grasp_dxy_mm": 29.791018159924874,
+        "opening_meas": 0.6550508296908096,
+        "n_contacts": 4,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         -3.233871851139436,
+         0.7482584435306583,
+         -22.499220615532668
+        ],
+        "fruit_pos": [
+         0.4332684079910353,
+         0.3009230448746446,
+         0.8560198145204866
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E0",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep983_s9833",
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "close_cmd_t": [
+       100
+      ],
+      "lift_t": null,
+      "robust_grasp": false,
+      "geom": {
+       "onset": {
+        "t": 100,
+        "tip_dz_mm": -19.941159804825137,
+        "tip_dxy_mm": 20.37687930067745,
+        "tip_spread_mm": 97.27178668618184,
+        "tilt_deg": 34.155121834243,
+        "approach_yaw_deg_mirrored": -7.625926938697963,
+        "closing_yaw_deg_mirrored_mod180": 73.14155029159855,
+        "closing_elev_deg": 6.21235614576926,
+        "grasp_dz_mm": 34.97645972199837,
+        "grasp_dxy_mm": 19.666521001312336,
+        "opening_meas": 0.9994663054184647,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "EE_BODY_L"
+        ],
+        "tip_rel_fruit_mm": [
+         11.430614477520917,
+         -16.8688548129583,
+         -19.941159804825137
+        ],
+        "fruit_pos": [
+         0.438816997804142,
+         0.3145183375882876,
+         0.8555421200400946
+        ]
+       },
+       "settled": {
+        "t": 116,
+        "tip_dz_mm": -17.765170962490973,
+        "tip_dxy_mm": 16.83660813535142,
+        "tip_spread_mm": 66.86277387834997,
+        "tilt_deg": 34.59730377153531,
+        "approach_yaw_deg_mirrored": -6.911699469018411,
+        "closing_yaw_deg_mirrored_mod180": 73.40745495383135,
+        "closing_elev_deg": 6.6482665548094895,
+        "grasp_dz_mm": 36.94429776291486,
+        "grasp_dxy_mm": 12.149754584092953,
+        "opening_meas": 0.6608415963779601,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         15.524810268482792,
+         -6.515492278484636,
+         -17.765170962490973
+        ],
+        "fruit_pos": [
+         0.4376139956224219,
+         0.3084444022720847,
+         0.8557068952729006
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep983_s9831",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       152
+      ],
+      "lift_t": 298,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 152,
+        "tip_dz_mm": -17.74432461524411,
+        "tip_dxy_mm": 14.516169289279247,
+        "tip_spread_mm": 97.24429917461352,
+        "tilt_deg": 38.111327830931295,
+        "approach_yaw_deg_mirrored": -32.593306186118795,
+        "closing_yaw_deg_mirrored_mod180": 46.7056560626262,
+        "closing_elev_deg": 8.28727550738794,
+        "grasp_dz_mm": 35.178150838405585,
+        "grasp_dxy_mm": 33.3454544936736,
+        "opening_meas": 0.9991580401698669,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         -7.252487584585077,
+         -12.574601173415134,
+         -17.74432461524411
+        ],
+        "fruit_pos": [
+         0.43820089139063445,
+         0.31440983898787944,
+         0.855571499883463
+        ]
+       },
+       "settled": {
+        "t": 168,
+        "tip_dz_mm": -18.514107640534185,
+        "tip_dxy_mm": 2.100074394409532,
+        "tip_spread_mm": 66.67784953618637,
+        "tilt_deg": 38.74126686781563,
+        "approach_yaw_deg_mirrored": -29.95094218932588,
+        "closing_yaw_deg_mirrored_mod180": 47.43795537310679,
+        "closing_elev_deg": 9.958547232667012,
+        "grasp_dz_mm": 34.08041090253111,
+        "grasp_dxy_mm": 29.575628469033205,
+        "opening_meas": 0.6590291135372989,
+        "n_contacts": 4,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         1.7628309673940468,
+         -1.1413761178731274,
+         -18.514107640534185
+        ],
+        "fruit_pos": [
+         0.43842300327497247,
+         0.31504170161777667,
+         0.8636390001518413
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep983_s9832",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       111
+      ],
+      "lift_t": 145,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 111,
+        "tip_dz_mm": -19.463695799921467,
+        "tip_dxy_mm": 18.16470152211632,
+        "tip_spread_mm": 97.29834021139347,
+        "tilt_deg": 34.79543624639307,
+        "approach_yaw_deg_mirrored": -6.384849102918355,
+        "closing_yaw_deg_mirrored_mod180": 74.11179763699104,
+        "closing_elev_deg": 6.545237257478307,
+        "grasp_dz_mm": 35.1489855580529,
+        "grasp_dxy_mm": 19.181567270868634,
+        "opening_meas": 0.9997572227131573,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         11.30538524395397,
+         -14.217758116994494,
+         -19.463695799921467
+        ],
+        "fruit_pos": [
+         0.43856128486813994,
+         0.3145238793096775,
+         0.8555725186789718
+        ]
+       },
+       "settled": {
+        "t": 127,
+        "tip_dz_mm": -17.89805606303785,
+        "tip_dxy_mm": 16.903610838306836,
+        "tip_spread_mm": 67.10343591114945,
+        "tilt_deg": 35.10237320529832,
+        "approach_yaw_deg_mirrored": -5.929908192602773,
+        "closing_yaw_deg_mirrored_mod180": 74.27440202822771,
+        "closing_elev_deg": 6.837461072254216,
+        "grasp_dz_mm": 36.567118602319425,
+        "grasp_dxy_mm": 12.316661216449969,
+        "opening_meas": 0.6638386051301521,
+        "n_contacts": 3,
+        "contact_bodies": [
+         "EE_BODY_L",
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         15.864721623280397,
+         -5.834609428980119,
+         -17.89805606303785
+        ],
+        "fruit_pos": [
+         0.4359325725679053,
+         0.30872835061749987,
+         0.8555755857315589
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep983_s9833",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       144
+      ],
+      "lift_t": 159,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 144,
+        "tip_dz_mm": -20.27284524139217,
+        "tip_dxy_mm": 13.158657397113286,
+        "tip_spread_mm": 97.10787956802432,
+        "tilt_deg": 35.23944747307092,
+        "approach_yaw_deg_mirrored": -0.46506309929945205,
+        "closing_yaw_deg_mirrored_mod180": 80.3304999087706,
+        "closing_elev_deg": 6.448204205788824,
+        "grasp_dz_mm": 34.117313988297646,
+        "grasp_dxy_mm": 17.39276875751476,
+        "opening_meas": 0.9976232809190712,
+        "n_contacts": 1,
+        "contact_bodies": [
+         "EE_BODY_L"
+        ],
+        "tip_rel_fruit_mm": [
+         11.673773698933744,
+         -6.072336627747754,
+         -20.27284524139217
+        ],
+        "fruit_pos": [
+         0.4393324247499102,
+         0.3146435104216127,
+         0.8556147774569324
+        ]
+       },
+       "settled": {
+        "t": 160,
+        "tip_dz_mm": -19.943815758853734,
+        "tip_dxy_mm": 13.00049414363913,
+        "tip_spread_mm": 68.08457129761749,
+        "tilt_deg": 35.39829211726814,
+        "approach_yaw_deg_mirrored": -0.6002949492525037,
+        "closing_yaw_deg_mirrored_mod180": 80.46986202274448,
+        "closing_elev_deg": 6.315786955712838,
+        "grasp_dz_mm": 34.36218977767547,
+        "grasp_dxy_mm": 16.43191032330335,
+        "opening_meas": 0.6746728935002286,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         12.35644194255725,
+         -4.041186768637073,
+         -19.943815758853734
+        ],
+        "fruit_pos": [
+         0.4442798941531845,
+         0.31446321576369185,
+         0.8667684644185963
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "1957": {
+    "arm": "left",
+    "fruit": "banana",
+    "split": "test",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 281
+    },
+    "n_dataset_frames": 311,
+    "held_steps_after_last_frame": 289,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep1957",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 200,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 122,
+     "regrasp": false,
+     "robust_grasp": true,
+     "robust_grasp_strict": false,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -15.992871852072543,
+       "tip_dxy_mm": 11.8422311946074,
+       "tip_spread_mm": 97.31999590418182,
+       "tilt_deg": 37.2863290435522,
+       "approach_yaw_deg_mirrored": -8.931982045666132,
+       "closing_yaw_deg_mirrored_mod180": 74.38529469924704,
+       "closing_elev_deg": 5.0637239220503485,
+       "grasp_dz_mm": 37.30332308181416,
+       "grasp_dxy_mm": 20.06354495447393,
+       "opening_meas": 1.0000000001103841,
+       "n_contacts": 0,
+       "contact_bodies": [],
+       "tip_rel_fruit_mm": [
+        9.752943376374946,
+        -6.717033211452561,
+        -15.992871852072543
+       ],
+       "fruit_pos": [
+        0.44258419816407224,
+        0.3306207013820738,
+        0.843356391422147
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -17.533452774328605,
+       "tip_dxy_mm": 12.584605254905817,
+       "tip_spread_mm": 51.88993690741028,
+       "tilt_deg": 37.30887937693831,
+       "approach_yaw_deg_mirrored": -8.935740340439036,
+       "closing_yaw_deg_mirrored_mod180": 74.38750067999223,
+       "closing_elev_deg": 5.085053025621881,
+       "grasp_dz_mm": 35.74994174754609,
+       "grasp_dxy_mm": 18.185611134763178,
+       "opening_meas": 0.49473112219395915,
+       "n_contacts": 5,
+       "contact_bodies": [
+        "ee_finger_l1",
+        "ee_finger_l2"
+       ],
+       "tip_rel_fruit_mm": [
+        11.741834398096064,
+        -4.527870845054127,
+        -17.533452774328605
+       ],
+       "fruit_pos": [
+        0.44073844655228317,
+        0.3283955442272289,
+        0.8451536057564973
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 311,
+     "arm_joint_maxabs_deg_to_settled": 0.7685324772901162,
+     "arm_joint_maxabs_deg_all": 1.0786835116955047,
+     "arm_joint_median_deg_all": 0.10899680096032567,
+     "gripper_opening_maxabs_all": 0.06548982372982348,
+     "final_target_xy_vs_dataset_final_mm": 3.710736869939801,
+     "final_target_z_vs_dataset_final_mm": -0.002765437109975011
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -15.635115090085083,
+      "tip_dxy_mm": 12.072087299292729,
+      "tip_spread_mm": 91.32675177649891,
+      "tilt_deg": 37.12266234643917,
+      "approach_yaw_deg_mirrored": -8.701012763713084,
+      "closing_yaw_deg_mirrored_mod180": 74.36491308300026,
+      "closing_elev_deg": 5.221208380721463,
+      "grasp_dz_mm": 37.49893889904832,
+      "grasp_dxy_mm": 19.48491900945555,
+      "opening_meas": 0.9954050183296204,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -15.382876747737416,
+      "tip_dxy_mm": 12.250563444833075,
+      "tip_spread_mm": 46.26658982829486,
+      "tilt_deg": 37.15826802265486,
+      "approach_yaw_deg_mirrored": -8.678268578714757,
+      "closing_yaw_deg_mirrored_mod180": 74.37251467013921,
+      "closing_elev_deg": 5.239214363884713,
+      "grasp_dz_mm": 37.73186187096256,
+      "grasp_dxy_mm": 19.269560797060862,
+      "opening_meas": 0.49473655223846436,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1957_s19571",
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "close_cmd_t": [
+       105,
+       576
+      ],
+      "lift_t": null,
+      "robust_grasp": false,
+      "geom": {
+       "onset": {
+        "t": 105,
+        "tip_dz_mm": -9.578734262814415,
+        "tip_dxy_mm": 17.985378507044206,
+        "tip_spread_mm": 96.92566225314857,
+        "tilt_deg": 36.87888280326651,
+        "approach_yaw_deg_mirrored": -9.761764980120626,
+        "closing_yaw_deg_mirrored_mod180": 75.42385583433705,
+        "closing_elev_deg": 3.6044268006832776,
+        "grasp_dz_mm": 43.887978875460476,
+        "grasp_dxy_mm": 20.242513679287853,
+        "opening_meas": 0.9955880426653176,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         10.553985862273906,
+         -14.563214702138062,
+         -9.578734262814415
+        ],
+        "fruit_pos": [
+         0.44258567391153625,
+         0.3306215900405243,
+         0.8433570823759042
+        ]
+       },
+       "settled": {
+        "t": 121,
+        "tip_dz_mm": 58.447062915547356,
+        "tip_dxy_mm": 22.053205278024326,
+        "tip_spread_mm": 45.470249917759894,
+        "tilt_deg": 38.31723186948286,
+        "approach_yaw_deg_mirrored": -12.307955656518534,
+        "closing_yaw_deg_mirrored_mod180": 75.34962071973824,
+        "closing_elev_deg": 1.8507042624812566,
+        "grasp_dz_mm": 111.06986874713398,
+        "grasp_dxy_mm": 9.64857447432383,
+        "opening_meas": 0.423877126756091,
+        "n_contacts": 0,
+        "contact_bodies": [],
+        "tip_rel_fruit_mm": [
+         20.823584049171394,
+         -7.261006154919203,
+         58.447062915547356
+        ],
+        "fruit_pos": [
+         0.4535802929756479,
+         0.3205780500182288,
+         0.8408385248227825
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "1992": {
+    "arm": "left",
+    "fruit": "pear",
+    "split": "test",
+    "dataset_success": true,
+    "dataset_events": {
+     "grasp_close_start_frame": 104,
+     "grasp_verified_frame": 121,
+     "lift_from_table_start_frame": 121,
+     "success_frame": 282
+    },
+    "n_dataset_frames": 312,
+    "held_steps_after_last_frame": 288,
+    "demo_replay": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T43/S2/raw/replay/DEMO_ep1992",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 200,
+     "close_cmd_t": [
+      104
+     ],
+     "n_close_cycles": 1,
+     "lift_t": 123,
+     "regrasp": false,
+     "robust_grasp": true,
+     "robust_grasp_strict": true,
+     "release_t": 202,
+     "geom": {
+      "onset": {
+       "t": 104,
+       "tip_dz_mm": -22.622797305145824,
+       "tip_dxy_mm": 5.096366057982882,
+       "tip_spread_mm": 97.3199919098287,
+       "tilt_deg": 36.98154786482324,
+       "approach_yaw_deg_mirrored": 5.070424548613479,
+       "closing_yaw_deg_mirrored_mod180": 88.4132424778006,
+       "closing_elev_deg": 4.98938796020175,
+       "grasp_dz_mm": 30.833425855070207,
+       "grasp_dxy_mm": 25.105369286945674,
+       "opening_meas": 0.999999999109848,
+       "n_contacts": 0,
+       "contact_bodies": [],
+       "tip_rel_fruit_mm": [
+        5.096327836980496,
+        -0.01973765380380854,
+        -22.622797305145824
+       ],
+       "fruit_pos": [
+        0.45150475924332695,
+        0.31207457884223666,
+        0.8555759744888933
+       ]
+      },
+      "settled": {
+       "t": 120,
+       "tip_dz_mm": -22.56232557976867,
+       "tip_dxy_mm": 5.319065130939753,
+       "tip_spread_mm": 68.01770165199119,
+       "tilt_deg": 36.98665087911649,
+       "approach_yaw_deg_mirrored": 5.056500301894651,
+       "closing_yaw_deg_mirrored_mod180": 88.4179101714761,
+       "closing_elev_deg": 4.996311948877653,
+       "grasp_dz_mm": 30.89017802034433,
+       "grasp_dxy_mm": 25.084505082830628,
+       "opening_meas": 0.6739693267393291,
+       "n_contacts": 2,
+       "contact_bodies": [
+        "ee_finger_l1",
+        "ee_finger_l2"
+       ],
+       "tip_rel_fruit_mm": [
+        5.196105108712157,
+        -1.1370776430809637,
+        -22.56232557976867
+       ],
+       "fruit_pos": [
+        0.4513641089671089,
+        0.31319648142279116,
+        0.8555944443269858
+       ]
+      }
+     }
+    },
+    "demo_tracking": {
+     "n_frames_compared": 312,
+     "arm_joint_maxabs_deg_to_settled": 0.7814079203477888,
+     "arm_joint_maxabs_deg_all": 1.778865979913663,
+     "arm_joint_median_deg_all": 0.09278422811350318,
+     "gripper_opening_maxabs_all": 0.04337403368333226,
+     "final_target_xy_vs_dataset_final_mm": 4.849444043937393,
+     "final_target_z_vs_dataset_final_mm": -0.0008252905575600877
+    },
+    "dataset_geom": {
+     "onset": {
+      "tip_dz_mm": -23.431503583426828,
+      "tip_dxy_mm": 10.527414360476486,
+      "tip_spread_mm": 91.32675177649892,
+      "tilt_deg": 36.857274591189835,
+      "approach_yaw_deg_mirrored": 5.179108278163151,
+      "closing_yaw_deg_mirrored_mod180": 88.40007043151147,
+      "closing_elev_deg": 5.056924693958975,
+      "grasp_dz_mm": 29.846449897519612,
+      "grasp_dxy_mm": 19.91622658873013,
+      "opening_meas": 0.9954050183296204,
+      "frame": 104
+     },
+     "settled": {
+      "tip_dz_mm": -23.412634837326806,
+      "tip_dxy_mm": 10.554044740567583,
+      "tip_spread_mm": 62.45067960814867,
+      "tilt_deg": 36.86108117939399,
+      "approach_yaw_deg_mirrored": 5.171646156799281,
+      "closing_yaw_deg_mirrored_mod180": 88.39770739812447,
+      "closing_elev_deg": 5.053854225049704,
+      "grasp_dz_mm": 29.86337179388343,
+      "grasp_dxy_mm": 19.897970842737095,
+      "opening_meas": 0.6745597720146179,
+      "frame": 120
+     }
+    },
+    "policy_runs": [
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1992_s19921",
+      "success": true,
+      "grasp": true,
+      "place": true,
+      "close_cmd_t": [
+       117
+      ],
+      "lift_t": 129,
+      "robust_grasp": true,
+      "geom": {
+       "onset": {
+        "t": 117,
+        "tip_dz_mm": -21.876275633346264,
+        "tip_dxy_mm": 20.02658435158908,
+        "tip_spread_mm": 91.60423613378816,
+        "tilt_deg": 40.44872931665385,
+        "approach_yaw_deg_mirrored": -39.02433362865033,
+        "closing_yaw_deg_mirrored_mod180": 44.77791438880596,
+        "closing_elev_deg": 5.258701893957092,
+        "grasp_dz_mm": 29.3993009252852,
+        "grasp_dxy_mm": 19.060166075587667,
+        "opening_meas": 0.9984877428087001,
+        "n_contacts": 1,
+        "contact_bodies": [
+         "EE_BODY_L"
+        ],
+        "tip_rel_fruit_mm": [
+         7.854480425667775,
+         -18.42203077931731,
+         -21.876275633346264
+        ],
+        "fruit_pos": [
+         0.45236442027185014,
+         0.31019025770702885,
+         0.8556860978108435
+        ]
+       },
+       "settled": {
+        "t": 133,
+        "tip_dz_mm": -20.177842468851793,
+        "tip_dxy_mm": 19.993023877743493,
+        "tip_spread_mm": 66.90810499827808,
+        "tilt_deg": 42.038106360775,
+        "approach_yaw_deg_mirrored": -38.138606365083646,
+        "closing_yaw_deg_mirrored_mod180": 44.89445119840062,
+        "closing_elev_deg": 6.2656393924112,
+        "grasp_dz_mm": 30.43042390449957,
+        "grasp_dxy_mm": 15.476794334113162,
+        "opening_meas": 0.6615757050768399,
+        "n_contacts": 2,
+        "contact_bodies": [
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         12.676161345923475,
+         -15.460787085660844,
+         -20.177842468851793
+        ],
+        "fruit_pos": [
+         0.4593174329071245,
+         0.304114231054145,
+         0.8670621747759389
+        ]
+       }
+      }
+     },
+     {
+      "cond": "E3b",
+      "run_dir": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1992_s19922",
+      "success": false,
+      "grasp": false,
+      "place": false,
+      "close_cmd_t": [
+       96
+      ],
+      "lift_t": null,
+      "robust_grasp": false,
+      "geom": {
+       "onset": {
+        "t": 96,
+        "tip_dz_mm": -17.872291281943564,
+        "tip_dxy_mm": 20.10264659080513,
+        "tip_spread_mm": 97.03660589922485,
+        "tilt_deg": 39.86578677773245,
+        "approach_yaw_deg_mirrored": -27.31577303517062,
+        "closing_yaw_deg_mirrored_mod180": 57.781623973168465,
+        "closing_elev_deg": 4.081889856840842,
+        "grasp_dz_mm": 33.56336709085517,
+        "grasp_dxy_mm": 17.288099517324024,
+        "opening_meas": 0.9968635303367556,
+        "n_contacts": 1,
+        "contact_bodies": [
+         "EE_BODY_L"
+        ],
+        "tip_rel_fruit_mm": [
+         14.133184495804308,
+         -14.29578595119435,
+         -17.872291281943564
+        ],
+        "fruit_pos": [
+         0.4472415721216867,
+         0.3139849654117758,
+         0.8558402135932158
+        ]
+       },
+       "settled": {
+        "t": 112,
+        "tip_dz_mm": -14.734475614514242,
+        "tip_dxy_mm": 24.672669515075928,
+        "tip_spread_mm": 63.73845315215402,
+        "tilt_deg": 40.462067843281886,
+        "approach_yaw_deg_mirrored": -26.643181919335575,
+        "closing_yaw_deg_mirrored_mod180": 57.90632470787506,
+        "closing_elev_deg": 4.665373043263513,
+        "grasp_dz_mm": 36.769076953859006,
+        "grasp_dxy_mm": 9.323507402972457,
+        "opening_meas": 0.6261489837227816,
+        "n_contacts": 3,
+        "contact_bodies": [
+         "EE_BODY_L",
+         "ee_finger_l1",
+         "ee_finger_l2"
+        ],
+        "tip_rel_fruit_mm": [
+         19.92685192566762,
+         -14.548580457648564,
+         -14.734475614514242
+        ],
+        "fruit_pos": [
+         0.44513394912935605,
+         0.3097966333315074,
+         0.855797701459831
+        ]
+       }
+      }
+     }
+    ]
+   }
+  },
+  "selection": {
+   "right": [
+    "1834",
+    "1977",
+    "1623",
+    "1215",
+    "1959",
+    "1984"
+   ],
+   "left": [
+    "1925",
+    "1828",
+    "1830",
+    "983",
+    "1957",
+    "1992"
+   ],
+   "rule": "T42-1 1834/1623 (right) and 1925/1830 (left) as asked, plus T42-1 episodes covering pear/banana and E3b failures (1959 miss, 1984 grasp-only, 1957 no grasp, 1992 s2 HOLD)"
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43s2-stills-right.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t43/t43s2-stills-right.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43s2-stills-left.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t43/t43s2-stills-left.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43s2-graph.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t43/t43s2-graph.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43s2-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t43/t43s2-table.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "legacy CPU (run once for P2 and S2): violated_start 14/15, has_target 15/15, frame0 -29.031048280806342 mm; cuRobo not run"
+ },
+ "verdict": "기준선 일치 (legacy, CPU). cuRobo 기준선은 돌리지 않음.",
+ "not_measured": [
+  "policy rollouts were not re-run (T42-1 / T39 records); E0 runs do not exist for 1959, 1984, 1957, 1992",
+  "replay of the dataset with the collector's own controller (sim-rate waypoint interpolation); the replay uses the dataset's 15 Hz logged actions through the client",
+  "videos of the dataset itself were not compared frame by frame (only observation.state and final_fruit_poses)"
+ ]
+}

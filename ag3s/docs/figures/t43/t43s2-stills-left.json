@@ -1,0 +1,133 @@
+{
+ "definitions": "T43 S2 figures.\nstills-<arm>: per episode (rows) the settled grasp pose (first close command + 16 control rows) of the DEMO replay, the first E0 and the\n  first E3b policy run (columns; render_s2.py, close camera from +x).  Panel text: run outcome (S success, g grasp only, - no grasp; T42-1\n  rule), tip dz / tip dxy (fingertip midpoint vs fruit centre, mm), tilt (approach vs -z, deg).\ngraph: tip dxy vs tip dz at the settled row; marker = source (dataset demo state, DEMO replay, E0, E3b), colour = arm; one point per run.\ntable: per episode: dataset events, DEMO replay outcome (success / robust grasp), replay tracking (used-arm joints vs dataset state, max deg;\n  final target xy vs dataset final, mm), and settled geometry medians (tip dz, tip dxy, tilt, approach yaw (mirrored), closing yaw\n  (mirrored, mod 180)) for dataset / DEMO / E0 / E3b with policy outcomes.\n-> benchmark/ag3s/docs/figures/t43/t43s2-stills-right.png, t43s2-stills-left.png, t43s2-graph.png, t43s2-table.png (+ .json)",
+ "panels": {
+  "1925/DEMO": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1925_DEMO_settled.png",
+   "outcome": "S",
+   "t": 120,
+   "tip_dz_mm": -20.464501319412577,
+   "tip_dxy_mm": 7.68807265998887,
+   "tilt_deg": 35.55776797681441
+  },
+  "1925/E0_s19253": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1925_E0_s19253_settled.png",
+   "outcome": "S",
+   "t": 198,
+   "tip_dz_mm": -20.87557465048906,
+   "tip_dxy_mm": 19.973298624250944,
+   "tilt_deg": 36.93612953738625
+  },
+  "1925/E3b_s19253": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1925_E3b_s19253_settled.png",
+   "outcome": "S",
+   "t": 129,
+   "tip_dz_mm": -16.470962130600064,
+   "tip_dxy_mm": 19.35443879671205,
+   "tilt_deg": 36.813036824520836
+  },
+  "1828/DEMO": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1828_DEMO_settled.png",
+   "outcome": "S",
+   "t": 120,
+   "tip_dz_mm": -19.39513249656033,
+   "tip_dxy_mm": 10.4286102825752,
+   "tilt_deg": 40.63885706516661
+  },
+  "1828/E0_s18281": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1828_E0_s18281_settled.png",
+   "outcome": "S",
+   "t": 134,
+   "tip_dz_mm": -14.80379118780184,
+   "tip_dxy_mm": 24.11938743116146,
+   "tilt_deg": 43.39383815506257
+  },
+  "1828/E3b_s18281": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1828_E3b_s18281_settled.png",
+   "outcome": "S",
+   "t": 116,
+   "tip_dz_mm": 91.63016883469288,
+   "tip_dxy_mm": 42.62669387934228,
+   "tilt_deg": 42.70502450242259
+  },
+  "1830/DEMO": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1830_DEMO_settled.png",
+   "outcome": "S",
+   "t": 120,
+   "tip_dz_mm": -19.00558990339196,
+   "tip_dxy_mm": 15.153333846488863,
+   "tilt_deg": 39.69752458564283
+  },
+  "1830/E0_s18301": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1830_E0_s18301_settled.png",
+   "outcome": "S",
+   "t": 114,
+   "tip_dz_mm": -12.544090339686953,
+   "tip_dxy_mm": 19.10593617514151,
+   "tilt_deg": 40.090762350698874
+  },
+  "1830/E3b_s18301": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1830_E3b_s18301_settled.png",
+   "outcome": "S",
+   "t": 119,
+   "tip_dz_mm": -10.76917885510853,
+   "tip_dxy_mm": 19.359887012056532,
+   "tilt_deg": 39.74695843902131
+  },
+  "983/DEMO": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/983_DEMO_settled.png",
+   "outcome": "S",
+   "t": 120,
+   "tip_dz_mm": -21.949931966207647,
+   "tip_dxy_mm": 7.464605261784116,
+   "tilt_deg": 34.50033363989129
+  },
+  "983/E0_s9831": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/983_E0_s9831_settled.png",
+   "outcome": "g",
+   "t": 161,
+   "tip_dz_mm": -17.081763239775615,
+   "tip_dxy_mm": 9.285507084532542,
+   "tilt_deg": 38.55549218591264
+  },
+  "983/E3b_s9831": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/983_E3b_s9831_settled.png",
+   "outcome": "S",
+   "t": 168,
+   "tip_dz_mm": -18.514107640534185,
+   "tip_dxy_mm": 2.100074394409532,
+   "tilt_deg": 38.74126686781563
+  },
+  "1957/DEMO": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1957_DEMO_settled.png",
+   "outcome": "S",
+   "t": 120,
+   "tip_dz_mm": -17.533452774328605,
+   "tip_dxy_mm": 12.584605254905817,
+   "tilt_deg": 37.30887937693831
+  },
+  "1957/E3b_s19571": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1957_E3b_s19571_settled.png",
+   "outcome": "-",
+   "t": 121,
+   "tip_dz_mm": 58.447062915547356,
+   "tip_dxy_mm": 22.053205278024326,
+   "tilt_deg": 38.31723186948286
+  },
+  "1992/DEMO": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1992_DEMO_settled.png",
+   "outcome": "S",
+   "t": 120,
+   "tip_dz_mm": -22.56232557976867,
+   "tip_dxy_mm": 5.319065130939753,
+   "tilt_deg": 36.98665087911649
+  },
+  "1992/E3b_s19921": {
+   "image": "/mnt/dev/work/outputs/verify/T43/S2/render/1992_E3b_s19921_settled.png",
+   "outcome": "S",
+   "t": 133,
+   "tip_dz_mm": -20.177842468851793,
+   "tip_dxy_mm": 19.993023877743493,
+   "tilt_deg": 42.038106360775
+  }
+ }
+}

@@ -1,0 +1,613 @@
+{
+ "definitions": "T43 S2 figures.\nstills-<arm>: per episode (rows) the settled grasp pose (first close command + 16 control rows) of the DEMO replay, the first E0 and the\n  first E3b policy run (columns; render_s2.py, close camera from +x).  Panel text: run outcome (S success, g grasp only, - no grasp; T42-1\n  rule), tip dz / tip dxy (fingertip midpoint vs fruit centre, mm), tilt (approach vs -z, deg).\ngraph: tip dxy vs tip dz at the settled row; marker = source (dataset demo state, DEMO replay, E0, E3b), colour = arm; one point per run.\ntable: per episode: dataset events, DEMO replay outcome (success / robust grasp), replay tracking (used-arm joints vs dataset state, max deg;\n  final target xy vs dataset final, mm), and settled geometry medians (tip dz, tip dxy, tilt, approach yaw (mirrored), closing yaw\n  (mirrored, mod 180)) for dataset / DEMO / E0 / E3b with policy outcomes.\n-> benchmark/ag3s/docs/figures/t43/t43s2-stills-right.png, t43s2-stills-left.png, t43s2-graph.png, t43s2-table.png (+ .json)",
+ "points": [
+  {
+   "arm": "right",
+   "episode": "1834",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 23.80783486301162,
+   "tip_dz_mm": -9.479999445027975
+  },
+  {
+   "arm": "right",
+   "episode": "1977",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 28.431977378059802,
+   "tip_dz_mm": -7.612633602787633
+  },
+  {
+   "arm": "right",
+   "episode": "1623",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 26.55942693416523,
+   "tip_dz_mm": -9.971808731098818
+  },
+  {
+   "arm": "right",
+   "episode": "1215",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 25.382666454176967,
+   "tip_dz_mm": -12.754609505312931
+  },
+  {
+   "arm": "right",
+   "episode": "1959",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 21.409279489306673,
+   "tip_dz_mm": -10.130311791690328
+  },
+  {
+   "arm": "right",
+   "episode": "1984",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 27.910150999093595,
+   "tip_dz_mm": -3.8989589929534496
+  },
+  {
+   "arm": "right",
+   "episode": "1834",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 19.113334662419774,
+   "tip_dz_mm": -7.9310363430610265
+  },
+  {
+   "arm": "right",
+   "episode": "1977",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 25.164781036037525,
+   "tip_dz_mm": -8.280679421647562
+  },
+  {
+   "arm": "right",
+   "episode": "1623",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 23.81602306661941,
+   "tip_dz_mm": -9.233626763093028
+  },
+  {
+   "arm": "right",
+   "episode": "1215",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 22.32569030857554,
+   "tip_dz_mm": -12.545673521992097
+  },
+  {
+   "arm": "right",
+   "episode": "1959",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 23.411712418374776,
+   "tip_dz_mm": -9.71153882196052
+  },
+  {
+   "arm": "right",
+   "episode": "1984",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 30.460851590864305,
+   "tip_dz_mm": -6.589052906794568
+  },
+  {
+   "arm": "right",
+   "episode": "1834",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 24.61110693923866,
+   "tip_dz_mm": -3.4423485462429237
+  },
+  {
+   "arm": "right",
+   "episode": "1834",
+   "source": "E0",
+   "outcome": "-",
+   "tip_dxy_mm": 20.453003901749454,
+   "tip_dz_mm": -8.339001758119636
+  },
+  {
+   "arm": "right",
+   "episode": "1834",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 20.018299906885613,
+   "tip_dz_mm": -7.063415385707206
+  },
+  {
+   "arm": "right",
+   "episode": "1977",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 24.20287200798513,
+   "tip_dz_mm": -5.1357168969191624
+  },
+  {
+   "arm": "right",
+   "episode": "1977",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 7.576093278418003,
+   "tip_dz_mm": -14.555235203499329
+  },
+  {
+   "arm": "right",
+   "episode": "1977",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 18.22268375076641,
+   "tip_dz_mm": 0.887678080674803
+  },
+  {
+   "arm": "right",
+   "episode": "1623",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 18.604218186568495,
+   "tip_dz_mm": -12.826589476452988
+  },
+  {
+   "arm": "right",
+   "episode": "1623",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 18.73921767706039,
+   "tip_dz_mm": -8.884111472552746
+  },
+  {
+   "arm": "right",
+   "episode": "1623",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 22.30761417531021,
+   "tip_dz_mm": -11.82976460148566
+  },
+  {
+   "arm": "right",
+   "episode": "1215",
+   "source": "E0",
+   "outcome": "-",
+   "tip_dxy_mm": 39.79761090428887,
+   "tip_dz_mm": 8.156612553731236
+  },
+  {
+   "arm": "right",
+   "episode": "1215",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 35.02784314198058,
+   "tip_dz_mm": 65.0199761391198
+  },
+  {
+   "arm": "right",
+   "episode": "1215",
+   "source": "E0",
+   "outcome": "g",
+   "tip_dxy_mm": 16.246159919158156,
+   "tip_dz_mm": -8.926314592930474
+  },
+  {
+   "arm": "right",
+   "episode": "1834",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 28.42864538513916,
+   "tip_dz_mm": -3.720844442345661
+  },
+  {
+   "arm": "right",
+   "episode": "1834",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 27.07463980024908,
+   "tip_dz_mm": -5.5823802174931325
+  },
+  {
+   "arm": "right",
+   "episode": "1834",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 25.782944360422718,
+   "tip_dz_mm": -3.312649603261719
+  },
+  {
+   "arm": "right",
+   "episode": "1977",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 25.23738457808927,
+   "tip_dz_mm": -6.125223936168878
+  },
+  {
+   "arm": "right",
+   "episode": "1977",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 24.9468443066631,
+   "tip_dz_mm": -10.216435421489534
+  },
+  {
+   "arm": "right",
+   "episode": "1977",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 28.85093284400447,
+   "tip_dz_mm": -2.197291262868828
+  },
+  {
+   "arm": "right",
+   "episode": "1623",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 33.10839589676254,
+   "tip_dz_mm": -4.970476234970267
+  },
+  {
+   "arm": "right",
+   "episode": "1623",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 21.249727903003627,
+   "tip_dz_mm": -4.334136999109006
+  },
+  {
+   "arm": "right",
+   "episode": "1623",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 26.50801674584849,
+   "tip_dz_mm": -5.957374507504665
+  },
+  {
+   "arm": "right",
+   "episode": "1215",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 19.532008539346386,
+   "tip_dz_mm": -9.41739207227943
+  },
+  {
+   "arm": "right",
+   "episode": "1215",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 17.99381121173118,
+   "tip_dz_mm": -8.508032800316423
+  },
+  {
+   "arm": "right",
+   "episode": "1215",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 15.93066155536984,
+   "tip_dz_mm": -9.718826085909683
+  },
+  {
+   "arm": "right",
+   "episode": "1959",
+   "source": "E3b",
+   "outcome": "-",
+   "tip_dxy_mm": 51.36085617680323,
+   "tip_dz_mm": 18.18147536059067
+  },
+  {
+   "arm": "right",
+   "episode": "1984",
+   "source": "E3b",
+   "outcome": "g",
+   "tip_dxy_mm": 28.7165809982526,
+   "tip_dz_mm": 1.3854913699403726
+  },
+  {
+   "arm": "left",
+   "episode": "1925",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 7.176076194336203,
+   "tip_dz_mm": -19.01574099832992
+  },
+  {
+   "arm": "left",
+   "episode": "1828",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 10.191267891842514,
+   "tip_dz_mm": -17.594230451931757
+  },
+  {
+   "arm": "left",
+   "episode": "1830",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 15.028244885975994,
+   "tip_dz_mm": -18.488519999972695
+  },
+  {
+   "arm": "left",
+   "episode": "983",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 9.881890451721121,
+   "tip_dz_mm": -22.871811919827344
+  },
+  {
+   "arm": "left",
+   "episode": "1957",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 12.250563444833075,
+   "tip_dz_mm": -15.382876747737416
+  },
+  {
+   "arm": "left",
+   "episode": "1992",
+   "source": "dataset",
+   "outcome": null,
+   "tip_dxy_mm": 10.554044740567583,
+   "tip_dz_mm": -23.412634837326806
+  },
+  {
+   "arm": "left",
+   "episode": "1925",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 7.68807265998887,
+   "tip_dz_mm": -20.464501319412577
+  },
+  {
+   "arm": "left",
+   "episode": "1828",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 10.4286102825752,
+   "tip_dz_mm": -19.39513249656033
+  },
+  {
+   "arm": "left",
+   "episode": "1830",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 15.153333846488863,
+   "tip_dz_mm": -19.00558990339196
+  },
+  {
+   "arm": "left",
+   "episode": "983",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 7.464605261784116,
+   "tip_dz_mm": -21.949931966207647
+  },
+  {
+   "arm": "left",
+   "episode": "1957",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 12.584605254905817,
+   "tip_dz_mm": -17.533452774328605
+  },
+  {
+   "arm": "left",
+   "episode": "1992",
+   "source": "DEMO",
+   "outcome": "S",
+   "tip_dxy_mm": 5.319065130939753,
+   "tip_dz_mm": -22.56232557976867
+  },
+  {
+   "arm": "left",
+   "episode": "1925",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 19.973298624250944,
+   "tip_dz_mm": -20.87557465048906
+  },
+  {
+   "arm": "left",
+   "episode": "1925",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 15.315443496900235,
+   "tip_dz_mm": -23.28373091807734
+  },
+  {
+   "arm": "left",
+   "episode": "1925",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 15.925094019734438,
+   "tip_dz_mm": -20.764796281635633
+  },
+  {
+   "arm": "left",
+   "episode": "1828",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 24.11938743116146,
+   "tip_dz_mm": -14.80379118780184
+  },
+  {
+   "arm": "left",
+   "episode": "1828",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 25.407750877851395,
+   "tip_dz_mm": -13.385058508581071
+  },
+  {
+   "arm": "left",
+   "episode": "1830",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 19.10593617514151,
+   "tip_dz_mm": -12.544090339686953
+  },
+  {
+   "arm": "left",
+   "episode": "1830",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 19.998518307915095,
+   "tip_dz_mm": -17.125858020969776
+  },
+  {
+   "arm": "left",
+   "episode": "1830",
+   "source": "E0",
+   "outcome": "S",
+   "tip_dxy_mm": 19.757744701659497,
+   "tip_dz_mm": -11.448478047221045
+  },
+  {
+   "arm": "left",
+   "episode": "983",
+   "source": "E0",
+   "outcome": "g",
+   "tip_dxy_mm": 9.285507084532542,
+   "tip_dz_mm": -17.081763239775615
+  },
+  {
+   "arm": "left",
+   "episode": "983",
+   "source": "E0",
+   "outcome": "-",
+   "tip_dxy_mm": 3.3193098451194527,
+   "tip_dz_mm": -22.499220615532668
+  },
+  {
+   "arm": "left",
+   "episode": "983",
+   "source": "E0",
+   "outcome": "-",
+   "tip_dxy_mm": 16.83660813535142,
+   "tip_dz_mm": -17.765170962490973
+  },
+  {
+   "arm": "left",
+   "episode": "1925",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 19.35443879671205,
+   "tip_dz_mm": -16.470962130600064
+  },
+  {
+   "arm": "left",
+   "episode": "1925",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 23.31120153262519,
+   "tip_dz_mm": -17.611865088701826
+  },
+  {
+   "arm": "left",
+   "episode": "1925",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 18.814360240401047,
+   "tip_dz_mm": -17.28382728170008
+  },
+  {
+   "arm": "left",
+   "episode": "1828",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 42.62669387934228,
+   "tip_dz_mm": 91.63016883469288
+  },
+  {
+   "arm": "left",
+   "episode": "1828",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 22.446719935079074,
+   "tip_dz_mm": -16.859536930905918
+  },
+  {
+   "arm": "left",
+   "episode": "1828",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 23.81195410040409,
+   "tip_dz_mm": -14.55954265057835
+  },
+  {
+   "arm": "left",
+   "episode": "1830",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 19.359887012056532,
+   "tip_dz_mm": -10.76917885510853
+  },
+  {
+   "arm": "left",
+   "episode": "1830",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 23.746471577818465,
+   "tip_dz_mm": -13.232204579244344
+  },
+  {
+   "arm": "left",
+   "episode": "1830",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 29.389287883184142,
+   "tip_dz_mm": -12.832381510714086
+  },
+  {
+   "arm": "left",
+   "episode": "983",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 2.100074394409532,
+   "tip_dz_mm": -18.514107640534185
+  },
+  {
+   "arm": "left",
+   "episode": "983",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 16.903610838306836,
+   "tip_dz_mm": -17.89805606303785
+  },
+  {
+   "arm": "left",
+   "episode": "983",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 13.00049414363913,
+   "tip_dz_mm": -19.943815758853734
+  },
+  {
+   "arm": "left",
+   "episode": "1957",
+   "source": "E3b",
+   "outcome": "-",
+   "tip_dxy_mm": 22.053205278024326,
+   "tip_dz_mm": 58.447062915547356
+  },
+  {
+   "arm": "left",
+   "episode": "1992",
+   "source": "E3b",
+   "outcome": "S",
+   "tip_dxy_mm": 19.993023877743493,
+   "tip_dz_mm": -20.177842468851793
+  },
+  {
+   "arm": "left",
+   "episode": "1992",
+   "source": "E3b",
+   "outcome": "-",
+   "tip_dxy_mm": 24.672669515075928,
+   "tip_dz_mm": -14.734475614514242
+  }
+ ]
+}
