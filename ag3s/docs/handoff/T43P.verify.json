@@ -1,0 +1,2816 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only; no interpretation.",
+ "step": "T43P",
+ "date": "2026-10-05",
+ "runs": [
+  {
+   "id": "baseline legacy (CPU)",
+   "command": "outputs/verify/T43/P/baseline/run_baseline.sh; judge.py",
+   "venv": ".venv-openpi-live (JAX_PLATFORMS=cpu, nice 19)",
+   "raw_output": "outputs/verify/T43/P/baseline/{legacy.json,judge.json}",
+   "stdout_log": "outputs/verify/T43/P/baseline/legacy.log"
+  },
+  {
+   "id": "capture",
+   "command": "outputs/verify/T43/P/p/capture.py (flib.capture_reset on snapshot /mnt/dev/work-t40h)",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/T43/P/raw/capture/",
+   "stdout_log": "outputs/verify/T43/P/raw/capture.log"
+  },
+  {
+   "id": "search",
+   "command": "p/run_psearch.sh (psearch.py coarse), p/run_refine.sh (refine.py), p/run_ext.sh (ep1995 extended), p/fix_e.py",
+   "venv": ".venv-openpi-live (CPU, <= 4 processes, nice 19)",
+   "raw_output": "outputs/verify/T43/P/raw/psearch_<TAG>{,_refine,_ext}.json",
+   "stdout_log": "raw/psearch_w*.log, refine_r*.log, psearch_ext.log, fix_e.log"
+  },
+  {
+   "id": "select + cross-check",
+   "command": "p/select_p.py (gjk.py at argmin pairs; dryrun.py = client reset check)",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "raw/select_p_<TAG>.json, raw/dryrun_t43p_*.json, configs/t43p_*.json",
+   "stdout_log": "raw/select_p.log"
+  },
+  {
+   "id": "old F under P metrics",
+   "command": "p/old_f.py",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "raw/old_f_<TAG>.json",
+   "stdout_log": "raw/old_f.log"
+  },
+  {
+   "id": "self-test",
+   "command": "p/selftest_bound.py",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "raw/selftest_bound.json",
+   "stdout_log": "raw/selftest_bound.log"
+  },
+  {
+   "id": "figures",
+   "command": "p/render_p.py (RP_KIND main/relaxed/tradeoff), p/fig_scene.py, p/fig_layout.py, p/fig_table.py",
+   "venv": ".venv-openpi-live (CPU, osmesa)",
+   "raw_output": "outputs/verify/T43/P/render/",
+   "stdout_log": "-"
+  }
+ ],
+ "code_state": {
+  "benchmark_head_at_baseline": "d309550 (baseline/pre.txt)",
+  "benchmark_head_at_write": "f7386bb",
+  "benchmark_used_by_search": "figstyle only (search/distance code = pi05_TO_hybrid bd6a002 snapshot)",
+  "pi05_TO_hybrid": "bd6a002 via snapshot /mnt/dev/work-t40h (pick_place_obstacles.py, convex_distance.py, pi05_infer.py md5 = git show bd6a002)",
+  "dirty_files": [],
+  "scripts": "outputs/verify/T43/P/p/ (copied from outputs/verify/T40/F/p/, SNAP -> /mnt/dev/work-t40h)"
+ },
+ "numbers": {
+  "_comment": "distances in m unless _mm; distance = bd6a002 PickPlaceObstacleManager.pair_distance (certified mj_geomDistance / GJK); values are capped at 0.06 m (0.06 = '>= 60 mm')",
+  "baseline_legacy_cpu": {
+   "violated_start": "14/15",
+   "has_target": "15/15",
+   "frame0_clearance_before_mm": -29.031048280806342,
+   "matched": true,
+   "sha1": {
+    "repr_json_list": "40798fb0a4d2e4ff49f67ea707c24437bc7def2c",
+    "repr_join": "c253217ef47b8c907e799140b98f7857e3b570ae"
+   },
+   "ref": "14/15, 15/15, -29.031048280806342 (T36/T40 legacy sha1 40798fb...)",
+   "curobo": "not run (lane P is CPU only)"
+  },
+  "definitions": {
+   "search": "T43 P: hurdle re-placement near the crate / inside the crate handle, with no effect on the robot's reset pose.\nCPU, 1 process per call.  usage: psearch.py TAG [TAG ...]  -> raw/psearch_<TAG>.json\n\nCode     : pi05_TO_hybrid bd6a002 (snapshot /mnt/dev/work-t40h): PickPlaceObstacleManager.pair_distance (mj_geomDistance checked\n           by convex_distance.certify, exact GJK fallback; capsule-box exact).  Red/white hurdle_0.  Reset scene = the client's\n           pi05_infer.main() state at the obstacle reset check (flib.capture_reset, bd6a002).\nFrame    : crate frame = body 'crate' at the reset scene (origin = crate body centre, axes = crate body x/y).  u = bar-centre x_rel,\n           v = bar-centre y_rel (+y = the apple / left-handle side), dyaw = hurdle yaw - crate yaw (0 = bar parallel to the crate's\n           +y wall).  Crate (all episodes): walls |x_rel| <= 0.094, |y_rel| <= 0.150; left handle bar y_rel 0.192..0.208,\n           x_rel -0.050..0.050; handle posts x_rel +-0.058; handle arms y_rel 0.150..0.200, z 73..87 mm above table.\nGrid     : u in [-0.10, 0.10], v in [0.10, 0.30], step PS_STEP (coarse pass 0.02 m; refine.py for the local pass); dyaw in {0, +-10, +-20, +-30, +-45} deg;\n           bar_height h in {0.20, 0.22, ..., 0.32} m (validator range); validator xy box enforced.\nRows     : WU  = reset scene (row 0) + warmup replay (1000 mj_step from the captured reset state, hurdle parked) every 50 steps;\n           T0  = recorded planning row 0 of E0 and of E3b (state after the 1000-step warmup);\n           PRE = control rows 0 <= t < lift_t (approach + grasp; T40 A windows), E0 and E3b;\n           CAR = control rows lift_t <= t < place_t (transport), E0 and E3b.\nGeom sets: ROBOT = every collision geom under body 'base' (both arms, both grippers, torso, head, base); ARMS = the client's\n           manager.robot_geom_ids (arms + grippers); GRIP = EE_BODY_L + ee_finger_l1/l2; APPLE; FRUITS = banana/orange/pear;\n           CRATE = crate collision geoms (floor, walls, handles).\nMetric   : min over the given rows and geom pairs (hurdle collision geom x set geom) of pair_distance, branch-and-bound on the\n           lower bound dist(geom centre, hurdle geom axis segment) - hurdle radius - geom rbound (exact for every value below cap = 0.06 m; values >= cap are reported as cap).\nCriteria : a' = min(ROBOT over WU and T0) >= 0.030;\n           b  = CRATE, APPLE, FRUITS over WU row 0 and T0 > 0 (+ client reset check: ARMS > 0.02 stop distance, object > 0);\n                flag post_in_crate = a foot centre lies inside the crate outer footprint (|x_rel| <= 0.094 and |y_rel| <= 0.150);\n           c  = min(GRIP, APPLE) over CAR <= 0 in E0 AND E3b (T40 F definition);\n           c_apple = min(APPLE) over CAR <= 0 in E0 AND E3b;  c_relaxed (\"blocks the apple\") = min(APPLE) over CAR <= 0 in E0 OR E3b;\n           d  = min(ROBOT, APPLE) over PRE >= 0.030 (both runs);\n           e  = free_height_over_bar (fsearch.WS: kinematic max left-TCP z above the bar xy, approach axis within 15 deg of the\n                recorded carry axis, minus the median TCP-apple-bottom offset, minus the bar top h + 0.012) >= 0.05 m; computed only\n                for candidates passing a', b, d and c_relaxed.",
+   "selection": "T43 P step 2: choose one placement per episode from raw/psearch_<TAG>[_refine].json, write configs, cross-check.\nusage: select_p.py TAG [TAG ...]  -> configs/t43p_ep<EP>_s<SEED>[_crelax].json, raw/select_p_<TAG>.json\n\nPool      : psearch_<TAG>.json (coarse, 0.02 m) + psearch_<TAG>_refine.json (refine.py) + psearch_<TAG>_ext.json (run_ext.sh) when present.\nmargin    : min(a_min, d_min) (reset/warmup/t0 robot clearance, approach+grasp clearance of robot and apple).\nMain      : pass a', b, c, d, e (psearch definitions).  Relaxed: c replaced by c_relaxed (apple hits the bar in E0 or E3b).\nRanking   : (1) margin, capped at the 0.06 m distance cap and rounded to 1 mm; (2) main only: the apple itself hits the bar in both\n            runs (c_apple) first; (3) crate clearance b_crate_min capped at 0.010 m, rounded to 1 mm; (4) deepest blocking (main:\n            smaller max over runs of min(GRIP, APPLE) over CAR; relaxed: smaller min over runs of APPLE over CAR); (5) larger\n            free_height_over_bar.\nTrade-off : always reported (best value of each criterion with the other criteria held):\n            a_best_given_bcd, d_best_given_abc, margin_best_given_bc (a and d both free), c_miss_best_given_abd (smallest\n            max-over-runs min(GRIP, APPLE) over CAR among a', b, d passers; > 0 = the recorded path misses the bar by that much),\n            c_apple_miss_best_given_abd (same with APPLE only, min over runs = relaxed c), n_post_in_crate_given_acd;\n            maximin_given_c / maximin_given_crelaxed: the candidate maximising the worst slack min(a_min - 0.030, d_min - 0.030,\n            b_crate_min, b_obj_min, client_reset_arms - 0.020) among c (resp. c_relaxed) passers, with the limiting criterion.\nCross-check of each written config: (1) independent numpy GJK (gjk.py, T40 A) at the argmin row/pair of a_min, d_min, b_crate,\n            and the CAR minima vs the client distance; (2) dryrun.py = the client's own reset check (bd6a002 pi05_infer.main() up to the\n            policy call, default --obstacle-stop-distance 0.02)."
+  },
+  "geometry": {
+   "hurdle": "post centres +-0.120 m from bar centre; foot cylinder r 0.035 (z 0.820-0.832); sleeve r 0.014 to 0.18 m above table; bar capsule r 0.012 half-length 0.12",
+   "crate_frame": "walls |x_rel| <= 0.094, |y_rel| <= 0.150 (outer); left handle bar y_rel 0.192-0.208, x_rel +-0.050, top 157 mm above table; handle posts x_rel +-0.058; handle arms y_rel 0.150-0.200, 73-87 mm above table",
+   "straddle_check_m": {
+    "crate_outer_width_x": 0.188,
+    "post_spacing": 0.24,
+    "needed_for_both_feet_clear_of_crate_x_walls": 0.258
+   }
+  },
+  "self_test": {
+   "segment_bound_vs_sphere_bound_on_old_F_max_abs_m": 0.0,
+   "bb_vs_bruteforce_6_random_max_abs_m": 0.0,
+   "eval_s_per_candidate_single": [
+    0.077,
+    0.072,
+    0.061,
+    0.065,
+    0.059
+   ]
+  },
+  "episodes": {
+   "1807_18071": {
+    "n_candidates": {
+     "coarse": 7623,
+     "_refine": 3017
+    },
+    "counts": {
+     "coarse": {
+      "pass_a": 2760,
+      "pass_b": 111,
+      "pass_c": 6789,
+      "pass_c_apple": 5412,
+      "pass_c_relaxed": 5576,
+      "pass_d": 2501,
+      "pass_e": 14,
+      "post_in_crate": 1932,
+      "all_abcde": 14,
+      "all_ab_crelaxed_de": 6
+     },
+     "_refine": {
+      "pass_a": 1448,
+      "pass_b": 1467,
+      "pass_c": 2586,
+      "pass_c_apple": 1870,
+      "pass_c_relaxed": 1908,
+      "pass_d": 1086,
+      "pass_e": 649,
+      "post_in_crate": 0,
+      "all_abcde": 649,
+      "all_ab_crelaxed_de": 332
+     }
+    },
+    "crate_xy_m": [
+     0.5169140626752788,
+     -0.015538496504310932
+    ],
+    "crate_yaw_rad": -1.6767839521369476e-05,
+    "warmup_replay_final_vs_planning_row0_maxabs_qpos": {
+     "E0": 0.0013694092987154155,
+     "E3b": 0.0013694092987154155
+    },
+    "n_pass_main": 663,
+    "n_pass_relaxed": 338,
+    "old_F_r1": {
+     "u": -0.01581751749350015,
+     "v": 0.2060382313076809,
+     "x": 0.5011,
+     "y": 0.1905,
+     "yaw": 0.299647,
+     "h": 0.28,
+     "a_min": 0.018943706762342697,
+     "d_min": 0.015764486043414863,
+     "b_crate_min": 0.010408397629377482,
+     "b_obj_min": 0.04173693547553177,
+     "client_reset_arms": 0.018976414022337372,
+     "client_reset_object": 0.010417324486235512,
+     "c_min_per_run": {
+      "E0": -0.02370863056198404,
+      "E3b": -0.022240200634017736
+     },
+     "c_apple_per_run": {
+      "E0": -0.015351201450374823,
+      "E3b": -0.009093658830076328
+     },
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1807_s18071_r1.json",
+     "pass": {
+      "pass_a": false,
+      "pass_b": false,
+      "pass_c": true,
+      "pass_c_relaxed": true,
+      "pass_d": false
+     }
+    },
+    "chosen_main": {
+     "u": -0.01,
+     "v": 0.155,
+     "dyaw_deg": 15,
+     "x": 0.5069166616918103,
+     "y": 0.13946167115229435,
+     "yaw": 0.26178261995962804,
+     "h": 0.28,
+     "a_min": 0.06,
+     "d_min": 0.06,
+     "b_crate_min": 0.0009049389569035966,
+     "b_obj_min": 0.06,
+     "client_reset_arms": 0.06298491837865908,
+     "client_reset_object": 0.0009107964027688378,
+     "c_min_per_run": {
+      "E0": -0.020680811015741304,
+      "E3b": -0.0230403162662989
+     },
+     "c_apple_per_run": {
+      "E0": -0.011502922617511492,
+      "E3b": -0.004710881428936565
+     },
+     "free_height_over_bar_m": 0.5030684288467299,
+     "post_in_crate": false,
+     "inside_handle": true,
+     "pass_a": true,
+     "pass_b": true,
+     "pass_c": true,
+     "pass_c_apple": true,
+     "pass_c_relaxed": true,
+     "pass_d": true,
+     "pass_e": true,
+     "margin": 0.06
+    },
+    "chosen_relaxed": {
+     "u": -0.01,
+     "v": 0.155,
+     "dyaw_deg": 15,
+     "x": 0.5069166616918103,
+     "y": 0.13946167115229435,
+     "yaw": 0.26178261995962804,
+     "h": 0.28,
+     "a_min": 0.06,
+     "d_min": 0.06,
+     "b_crate_min": 0.0009049389569035966,
+     "b_obj_min": 0.06,
+     "client_reset_arms": 0.06298491837865908,
+     "client_reset_object": 0.0009107964027688378,
+     "c_min_per_run": {
+      "E0": -0.020680811015741304,
+      "E3b": -0.0230403162662989
+     },
+     "c_apple_per_run": {
+      "E0": -0.011502922617511492,
+      "E3b": -0.004710881428936565
+     },
+     "free_height_over_bar_m": 0.5030684288467299,
+     "post_in_crate": false,
+     "inside_handle": true,
+     "pass_a": true,
+     "pass_b": true,
+     "pass_c": true,
+     "pass_c_apple": true,
+     "pass_c_relaxed": true,
+     "pass_d": true,
+     "pass_e": true,
+     "margin": 0.06
+    },
+    "tradeoff": {
+     "a_best_given_bcd": {
+      "u": -0.02,
+      "v": 0.16,
+      "dyaw_deg": 20,
+      "x": 0.4969167455324138,
+      "y": 0.14446183882998664,
+      "yaw": 0.3490490825593445,
+      "h": 0.3,
+      "a_min": 0.06,
+      "d_min": 0.04176124066367896,
+      "b_crate_min": 0.007756930173554856,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.0661777923102401,
+      "client_reset_object": 0.0077628117441638,
+      "c_min_per_run": {
+       "E0": -0.02630753918446062,
+       "E3b": -0.023552045952722322
+      },
+      "c_apple_per_run": {
+       "E0": 0.007869299621770721,
+       "E3b": 0.008474286357622466
+      },
+      "free_height_over_bar_m": 0.48855075246903285,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.04176124066367896
+     },
+     "d_best_given_abc": {
+      "u": -0.01,
+      "v": 0.155,
+      "dyaw_deg": 15,
+      "x": 0.5069166616918103,
+      "y": 0.13946167115229435,
+      "yaw": 0.26178261995962804,
+      "h": 0.28,
+      "a_min": 0.06,
+      "d_min": 0.06,
+      "b_crate_min": 0.0009049389569035966,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.06298491837865908,
+      "client_reset_object": 0.0009107964027688378,
+      "c_min_per_run": {
+       "E0": -0.020680811015741304,
+       "E3b": -0.0230403162662989
+      },
+      "c_apple_per_run": {
+       "E0": -0.011502922617511492,
+       "E3b": -0.004710881428936565
+      },
+      "free_height_over_bar_m": 0.5030684288467299,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.06
+     },
+     "margin_best_given_bc": {
+      "u": -0.01,
+      "v": 0.155,
+      "dyaw_deg": 15,
+      "x": 0.5069166616918103,
+      "y": 0.13946167115229435,
+      "yaw": 0.26178261995962804,
+      "h": 0.28,
+      "a_min": 0.06,
+      "d_min": 0.06,
+      "b_crate_min": 0.0009049389569035966,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.06298491837865908,
+      "client_reset_object": 0.0009107964027688378,
+      "c_min_per_run": {
+       "E0": -0.020680811015741304,
+       "E3b": -0.0230403162662989
+      },
+      "c_apple_per_run": {
+       "E0": -0.011502922617511492,
+       "E3b": -0.004710881428936565
+      },
+      "free_height_over_bar_m": 0.5030684288467299,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.06
+     },
+     "c_miss_best_given_abd": {
+      "u": -0.015,
+      "v": 0.155,
+      "dyaw_deg": 20,
+      "x": 0.5019166616925133,
+      "y": 0.13946175499149194,
+      "yaw": 0.3490490825593445,
+      "h": 0.32,
+      "a_min": 0.06,
+      "d_min": 0.04854989865320167,
+      "b_crate_min": 0.0027569059797845174,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.08213143849167936,
+      "client_reset_object": 0.002762811751935749,
+      "c_min_per_run": {
+       "E0": -0.033065322664029805,
+       "E3b": -0.036978670209609515
+      },
+      "c_apple_per_run": {
+       "E0": 0.015572992160517678,
+       "E3b": 0.01273892947916278
+      },
+      "free_height_over_bar_m": 0.46557990178145386,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.04854989865320167
+     },
+     "c_apple_miss_best_given_abd": {
+      "u": -0.03,
+      "v": 0.155,
+      "dyaw_deg": 20,
+      "x": 0.48691666169462194,
+      "y": 0.13946200650908475,
+      "yaw": 0.3490490825593445,
+      "h": 0.24,
+      "a_min": 0.0501715949393962,
+      "d_min": 0.04169888231332105,
+      "b_crate_min": 0.0027627460882759533,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.05020297255465617,
+      "client_reset_object": 0.0027627460882759533,
+      "c_min_per_run": {
+       "E0": -0.03119981492144145,
+       "E3b": -0.03838941470358181
+      },
+      "c_apple_per_run": {
+       "E0": -0.03119981492144145,
+       "E3b": -0.03838941470358181
+      },
+      "free_height_over_bar_m": 0.552357526238494,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.04169888231332105
+     },
+     "margin_best_given_b_crelaxed": {
+      "u": -0.01,
+      "v": 0.155,
+      "dyaw_deg": 15,
+      "x": 0.5069166616918103,
+      "y": 0.13946167115229435,
+      "yaw": 0.26178261995962804,
+      "h": 0.28,
+      "a_min": 0.06,
+      "d_min": 0.06,
+      "b_crate_min": 0.0009049389569035966,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.06298491837865908,
+      "client_reset_object": 0.0009107964027688378,
+      "c_min_per_run": {
+       "E0": -0.020680811015741304,
+       "E3b": -0.0230403162662989
+      },
+      "c_apple_per_run": {
+       "E0": -0.011502922617511492,
+       "E3b": -0.004710881428936565
+      },
+      "free_height_over_bar_m": 0.5030684288467299,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.06
+     },
+     "maximin_given_c": {
+      "limiting": "b_crate",
+      "worst_slack_m": 0.014032923208996465,
+      "slacks_m": {
+       "a": 0.018052242046832576,
+       "d": 0.014761255759321412,
+       "b_crate": 0.014032923208996465,
+       "b_obj": 0.06,
+       "client_arms": 0.028088358481151602
+      },
+      "candidate": {
+       "u": -0.02,
+       "v": 0.18,
+       "dyaw_deg": 10,
+       "x": 0.49691708088920417,
+       "y": 0.16446183882717505,
+       "yaw": 0.17451615735991158,
+       "h": 0.3,
+       "a_min": 0.048052242046832574,
+       "d_min": 0.04476125575932141,
+       "b_crate_min": 0.014032923208996465,
+       "b_obj_min": 0.06,
+       "client_reset_arms": 0.0480883584811516,
+       "client_reset_object": 0.014040125533755197,
+       "c_min_per_run": {
+        "E0": -0.02566318745095611,
+        "E3b": -0.023348121288714628
+       },
+       "c_apple_per_run": {
+        "E0": 0.007396009917579077,
+        "E3b": 0.013300146612976911
+       },
+       "free_height_over_bar_m": 0.49044785173375177,
+       "post_in_crate": false,
+       "inside_handle": true,
+       "pass_a": true,
+       "pass_b": true,
+       "pass_c": true,
+       "pass_c_apple": false,
+       "pass_c_relaxed": false,
+       "pass_d": true,
+       "pass_e": true,
+       "margin": 0.04476125575932141
+      }
+     },
+     "maximin_given_crelaxed": {
+      "limiting": "b_crate",
+      "worst_slack_m": 0.010910730748749209,
+      "slacks_m": {
+       "a": 0.012887582478383078,
+       "d": 0.012102455481754149,
+       "b_crate": 0.010910730748749209,
+       "b_obj": 0.06,
+       "client_arms": 0.02291797290899857
+      },
+      "candidate": {
+       "u": -0.025,
+       "v": 0.165,
+       "dyaw_deg": 15,
+       "x": 0.49191682937231423,
+       "y": 0.14946192266848138,
+       "yaw": 0.26178261995962804,
+       "h": 0.22,
+       "a_min": 0.04288758247838308,
+       "d_min": 0.04210245548175415,
+       "b_crate_min": 0.010910730748749209,
+       "b_obj_min": 0.06,
+       "client_reset_arms": 0.04291797290899857,
+       "client_reset_object": 0.010910730748749209,
+       "c_min_per_run": {
+        "E0": -0.01150298250396523,
+        "E3b": -0.018602762645231623
+       },
+       "c_apple_per_run": {
+        "E0": -0.01150298250396523,
+        "E3b": -0.018602762645231623
+       },
+       "free_height_over_bar_m": 0.5713625342981071,
+       "post_in_crate": false,
+       "inside_handle": true,
+       "pass_a": true,
+       "pass_b": true,
+       "pass_c": true,
+       "pass_c_apple": true,
+       "pass_c_relaxed": true,
+       "pass_d": true,
+       "pass_e": true,
+       "margin": 0.04210245548175415
+      }
+     },
+     "n_post_in_crate_given_acd": 1286,
+     "n_post_in_crate_given_a_crelaxed_d": 1056
+    },
+    "main_config": "/mnt/dev/work/outputs/verify/T43/P/configs/t43p_ep1807_s18071.json",
+    "main_profile": "t43p_ep1807_s18071",
+    "main_gjk_max_abs_diff_m": 2.8182542020568913e-12,
+    "main_gjk_check": {
+     "wu_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "reset_crate": {
+      "client_m": 0.0009107964027688378,
+      "row": 0,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_foot_left",
+       "crate_floor"
+      ],
+      "gjk_m": 0.0009107963999505836,
+      "abs_diff_m": 2.8182542020568913e-12
+     },
+     "E0_pre_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E0_pre_apple": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E0_car_grip": {
+      "client_m": -0.020680811015741304,
+      "row": 207,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1079"
+      ],
+      "gjk_m": -0.020680815375980877,
+      "abs_diff_m": null
+     },
+     "E0_car_apple": {
+      "client_m": -0.011502922617511492,
+      "row": 205,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": -0.011502923089112604,
+      "abs_diff_m": null
+     },
+     "E3b_pre_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E3b_pre_apple": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E3b_car_grip": {
+      "client_m": -0.0230403162662989,
+      "row": 189,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1052"
+      ],
+      "gjk_m": -0.023040395587018425,
+      "abs_diff_m": null
+     },
+     "E3b_car_apple": {
+      "client_m": -0.004710881428936565,
+      "row": 190,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": -0.004710885285493571,
+      "abs_diff_m": null
+     },
+     "reset_exact_activate": [
+      0.06298491837865908,
+      0.0009107964027688378
+     ]
+    },
+    "main_client_dryrun": {
+     "outcome": "reached load_remote_policy",
+     "obstacles_line": "obstacles  : t43p_ep1807_s18071 ('hurdle_0',) (initial robot/object clearance 0.063/0.001 m)",
+     "robot_clearance_m": 0.06294574783134885,
+     "object_clearance_m": 0.0009274469338375576,
+     "model_xml": "/mnt/dev/work-t40h/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport_pick_place_obstacles.xml"
+    },
+    "relaxed_config": "same placement as main"
+   },
+   "1968_19681": {
+    "n_candidates": {
+     "coarse": 7623,
+     "_refine": 3857
+    },
+    "counts": {
+     "coarse": {
+      "pass_a": 3379,
+      "pass_b": 231,
+      "pass_c": 7378,
+      "pass_c_apple": 5585,
+      "pass_c_relaxed": 6485,
+      "pass_d": 3153,
+      "pass_e": 58,
+      "post_in_crate": 1932,
+      "all_abcde": 58,
+      "all_ab_crelaxed_de": 30
+     },
+     "_refine": {
+      "pass_a": 2745,
+      "pass_b": 2639,
+      "pass_c": 3817,
+      "pass_c_apple": 2164,
+      "pass_c_relaxed": 2755,
+      "pass_d": 2690,
+      "pass_e": 1964,
+      "post_in_crate": 0,
+      "all_abcde": 1964,
+      "all_ab_crelaxed_de": 1282
+     }
+    },
+    "crate_xy_m": [
+     0.5328872549265484,
+     -0.024163829918612312
+    ],
+    "crate_yaw_rad": -7.398849400636292e-06,
+    "warmup_replay_final_vs_planning_row0_maxabs_qpos": {
+     "E0": 0.00045956113013096214,
+     "E3b": 0.00045956113013096214
+    },
+    "n_pass_main": 2022,
+    "n_pass_relaxed": 1312,
+    "old_F_r1": {
+     "u": -0.03898874922544321,
+     "v": 0.20196354145225653,
+     "x": 0.4939,
+     "y": 0.1778,
+     "yaw": 0.311739,
+     "h": 0.24,
+     "a_min": 0.022472139253131938,
+     "d_min": 0.02203154469023792,
+     "b_crate_min": 0.01620940130574087,
+     "b_obj_min": 0.04902110549317251,
+     "client_reset_arms": 0.022499855229162365,
+     "client_reset_object": 0.01621347520288658,
+     "c_min_per_run": {
+      "E0": -0.03879372484695246,
+      "E3b": -0.033924822663992445
+     },
+     "c_apple_per_run": {
+      "E0": -0.03879372484695246,
+      "E3b": -0.033924822663992445
+     },
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1968_s19681_r1.json",
+     "pass": {
+      "pass_a": false,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_relaxed": true,
+      "pass_d": false
+     }
+    },
+    "chosen_main": {
+     "u": -0.025,
+     "v": 0.165,
+     "dyaw_deg": 15,
+     "x": 0.5078884757373838,
+     "y": 0.14083635504810643,
+     "yaw": 0.26179198894974876,
+     "h": 0.24,
+     "a_min": 0.06,
+     "d_min": 0.06,
+     "b_crate_min": 0.010911123122843468,
+     "b_obj_min": 0.06,
+     "client_reset_arms": 0.06098540338533297,
+     "client_reset_object": 0.010911123122843468,
+     "c_min_per_run": {
+      "E0": -0.03816434779674919,
+      "E3b": -0.03060127755646753
+     },
+     "c_apple_per_run": {
+      "E0": -0.03816434779674919,
+      "E3b": -0.03060127755646753
+     },
+     "free_height_over_bar_m": 0.5481982763997577,
+     "post_in_crate": false,
+     "inside_handle": true,
+     "pass_a": true,
+     "pass_b": true,
+     "pass_c": true,
+     "pass_c_apple": true,
+     "pass_c_relaxed": true,
+     "pass_d": true,
+     "pass_e": true,
+     "margin": 0.06
+    },
+    "chosen_relaxed": {
+     "u": -0.02,
+     "v": 0.165,
+     "dyaw_deg": 15,
+     "x": 0.5128884757372469,
+     "y": 0.14083631805385943,
+     "yaw": 0.26179198894974876,
+     "h": 0.24,
+     "a_min": 0.06,
+     "d_min": 0.06,
+     "b_crate_min": 0.010907067739894609,
+     "b_obj_min": 0.06,
+     "client_reset_arms": 0.06227858385529628,
+     "client_reset_object": 0.01091118763735927,
+     "c_min_per_run": {
+      "E0": -0.039077834157041816,
+      "E3b": -0.030516160237243302
+     },
+     "c_apple_per_run": {
+      "E0": -0.039077834157041816,
+      "E3b": -0.030516160237243302
+     },
+     "free_height_over_bar_m": 0.5454044710890895,
+     "post_in_crate": false,
+     "inside_handle": true,
+     "pass_a": true,
+     "pass_b": true,
+     "pass_c": true,
+     "pass_c_apple": true,
+     "pass_c_relaxed": true,
+     "pass_d": true,
+     "pass_e": true,
+     "margin": 0.06
+    },
+    "tradeoff": {
+     "a_best_given_bcd": {
+      "u": -0.02,
+      "v": 0.16,
+      "dyaw_deg": 20,
+      "x": 0.5128884387429999,
+      "y": 0.13583631805399626,
+      "yaw": 0.34905845154946524,
+      "h": 0.2,
+      "a_min": 0.06,
+      "d_min": 0.06,
+      "b_crate_min": 0.007758982527497203,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.06422718961447825,
+      "client_reset_object": 0.0077632029769854494,
+      "c_min_per_run": {
+       "E0": -0.0029989298389409783,
+       "E3b": -0.013349524725038711
+      },
+      "c_apple_per_run": {
+       "E0": -0.0029989298389409783,
+       "E3b": -0.013349524725038711
+      },
+      "free_height_over_bar_m": 0.5851526151901607,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.06
+     },
+     "d_best_given_abc": {
+      "u": -0.02,
+      "v": 0.16,
+      "dyaw_deg": 20,
+      "x": 0.5128884387429999,
+      "y": 0.13583631805399626,
+      "yaw": 0.34905845154946524,
+      "h": 0.2,
+      "a_min": 0.06,
+      "d_min": 0.06,
+      "b_crate_min": 0.007758982527497203,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.06422718961447825,
+      "client_reset_object": 0.0077632029769854494,
+      "c_min_per_run": {
+       "E0": -0.0029989298389409783,
+       "E3b": -0.013349524725038711
+      },
+      "c_apple_per_run": {
+       "E0": -0.0029989298389409783,
+       "E3b": -0.013349524725038711
+      },
+      "free_height_over_bar_m": 0.5851526151901607,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.06
+     },
+     "margin_best_given_bc": {
+      "u": -0.02,
+      "v": 0.16,
+      "dyaw_deg": 20,
+      "x": 0.5128884387429999,
+      "y": 0.13583631805399626,
+      "yaw": 0.34905845154946524,
+      "h": 0.2,
+      "a_min": 0.06,
+      "d_min": 0.06,
+      "b_crate_min": 0.007758982527497203,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.06422718961447825,
+      "client_reset_object": 0.0077632029769854494,
+      "c_min_per_run": {
+       "E0": -0.0029989298389409783,
+       "E3b": -0.013349524725038711
+      },
+      "c_apple_per_run": {
+       "E0": -0.0029989298389409783,
+       "E3b": -0.013349524725038711
+      },
+      "free_height_over_bar_m": 0.5851526151901607,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.06
+     },
+     "c_miss_best_given_abd": {
+      "u": -0.02,
+      "v": 0.2,
+      "dyaw_deg": 25,
+      "x": 0.5128887346969759,
+      "y": 0.17583631805290142,
+      "yaw": 0.43632491414918173,
+      "h": 0.24,
+      "a_min": 0.03329287474923347,
+      "d_min": 0.03284021011225337,
+      "b_crate_min": 0.003753005997463178,
+      "b_obj_min": 0.04607472268614364,
+      "client_reset_arms": 0.03332077385579654,
+      "client_reset_object": 0.0037570229270812057,
+      "c_min_per_run": {
+       "E0": -0.03924688945565851,
+       "E3b": -0.03320883406503178
+      },
+      "c_apple_per_run": {
+       "E0": -0.03924688945565851,
+       "E3b": -0.03320883406503178
+      },
+      "free_height_over_bar_m": 0.5458021473401706,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.03284021011225337
+     },
+     "c_apple_miss_best_given_abd": {
+      "u": -0.02,
+      "v": 0.175,
+      "dyaw_deg": 15,
+      "x": 0.5128885497257409,
+      "y": 0.1508363180535857,
+      "yaw": 0.26179198894974876,
+      "h": 0.24,
+      "a_min": 0.05259848531092369,
+      "d_min": 0.05214498140311562,
+      "b_crate_min": 0.010907134845621943,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.052627036891595216,
+      "client_reset_object": 0.010911187637359262,
+      "c_min_per_run": {
+       "E0": -0.0415225134160289,
+       "E3b": -0.029665202185494715
+      },
+      "c_apple_per_run": {
+       "E0": -0.0415225134160289,
+       "E3b": -0.029665202185494715
+      },
+      "free_height_over_bar_m": 0.5457626972660676,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.05214498140311562
+     },
+     "margin_best_given_b_crelaxed": {
+      "u": -0.02,
+      "v": 0.16,
+      "dyaw_deg": 20,
+      "x": 0.5128884387429999,
+      "y": 0.13583631805399626,
+      "yaw": 0.34905845154946524,
+      "h": 0.2,
+      "a_min": 0.06,
+      "d_min": 0.06,
+      "b_crate_min": 0.007758982527497203,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.06422718961447825,
+      "client_reset_object": 0.0077632029769854494,
+      "c_min_per_run": {
+       "E0": -0.0029989298389409783,
+       "E3b": -0.013349524725038711
+      },
+      "c_apple_per_run": {
+       "E0": -0.0029989298389409783,
+       "E3b": -0.013349524725038711
+      },
+      "free_height_over_bar_m": 0.5851526151901607,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.06
+     },
+     "maximin_given_c": {
+      "limiting": "d",
+      "worst_slack_m": 0.01970664139065602,
+      "slacks_m": {
+       "a": 0.020300551832452385,
+       "d": 0.01970664139065602,
+       "b_crate": 0.021359422416987822,
+       "b_obj": 0.06,
+       "client_arms": 0.03033402455677241
+      },
+      "candidate": {
+       "u": -0.015,
+       "v": 0.195,
+       "dyaw_deg": 5,
+       "x": 0.517888697702592,
+       "y": 0.17083628105879128,
+       "yaw": 0.08725906375031584,
+       "h": 0.32,
+       "a_min": 0.050300551832452384,
+       "d_min": 0.04970664139065602,
+       "b_crate_min": 0.021359422416987822,
+       "b_obj_min": 0.06,
+       "client_reset_arms": 0.05033402455677241,
+       "client_reset_object": 0.02136690050625835,
+       "c_min_per_run": {
+        "E0": -0.02764488218534805,
+        "E3b": -0.03056491339082273
+       },
+       "c_apple_per_run": {
+        "E0": 0.03693652205160891,
+        "E3b": 0.04405978521033717
+       },
+       "free_height_over_bar_m": 0.46289210338687475,
+       "post_in_crate": false,
+       "inside_handle": true,
+       "pass_a": true,
+       "pass_b": true,
+       "pass_c": true,
+       "pass_c_apple": false,
+       "pass_c_relaxed": false,
+       "pass_d": true,
+       "pass_e": true,
+       "margin": 0.04970664139065602
+      }
+     },
+     "maximin_given_crelaxed": {
+      "limiting": "b_crate",
+      "worst_slack_m": 0.015209668513547664,
+      "slacks_m": {
+       "a": 0.01582269144001154,
+       "d": 0.015291222952077438,
+       "b_crate": 0.015209668513547664,
+       "b_obj": 0.06,
+       "client_arms": 0.025854232220570112
+      },
+      "candidate": {
+       "u": -0.02,
+       "v": 0.185,
+       "dyaw_deg": 10,
+       "x": 0.5128886237142349,
+       "y": 0.16083631805331197,
+       "yaw": 0.17452552635003232,
+       "h": 0.28,
+       "a_min": 0.04582269144001154,
+       "d_min": 0.04529122295207744,
+       "b_crate_min": 0.015209668513547664,
+       "b_obj_min": 0.06,
+       "client_reset_arms": 0.04585423222057011,
+       "client_reset_object": 0.015215496770916038,
+       "c_min_per_run": {
+        "E0": -0.028538994824998005,
+        "E3b": -0.02536349396815172
+       },
+       "c_apple_per_run": {
+        "E0": -0.0016853797594422373,
+        "E3b": 0.008367995775574271
+       },
+       "free_height_over_bar_m": 0.5059260086026629,
+       "post_in_crate": false,
+       "inside_handle": true,
+       "pass_a": true,
+       "pass_b": true,
+       "pass_c": true,
+       "pass_c_apple": false,
+       "pass_c_relaxed": true,
+       "pass_d": true,
+       "pass_e": true,
+       "margin": 0.04529122295207744
+      }
+     },
+     "n_post_in_crate_given_acd": 1598,
+     "n_post_in_crate_given_a_crelaxed_d": 1397
+    },
+    "main_config": "/mnt/dev/work/outputs/verify/T43/P/configs/t43p_ep1968_s19681.json",
+    "main_profile": "t43p_ep1968_s19681",
+    "main_gjk_max_abs_diff_m": 5.360295540768334e-16,
+    "main_gjk_check": {
+     "wu_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "reset_crate": {
+      "client_m": 0.010911123122843468,
+      "row": 0,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_sleeve_right",
+       "handle_arm_l"
+      ],
+      "gjk_m": 0.010911123122844004,
+      "abs_diff_m": 5.360295540768334e-16
+     },
+     "E0_pre_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E0_pre_apple": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E0_car_grip": {
+      "client_m": -0.02301266688674689,
+      "row": 269,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1079"
+      ],
+      "gjk_m": -0.023012878221952915,
+      "abs_diff_m": null
+     },
+     "E0_car_apple": {
+      "client_m": -0.03816434779674919,
+      "row": 268,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": -0.03816454614786274,
+      "abs_diff_m": null
+     },
+     "E3b_pre_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E3b_pre_apple": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E3b_car_grip": {
+      "client_m": -0.02305189584341617,
+      "row": 181,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1079"
+      ],
+      "gjk_m": -0.023052341903310514,
+      "abs_diff_m": null
+     },
+     "E3b_car_apple": {
+      "client_m": -0.03060127755646753,
+      "row": 180,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": -0.030601577476975894,
+      "abs_diff_m": null
+     },
+     "reset_exact_activate": [
+      0.06098540338533297,
+      0.010911123122843468
+     ]
+    },
+    "main_client_dryrun": {
+     "outcome": "reached load_remote_policy",
+     "obstacles_line": "obstacles  : t43p_ep1968_s19681 ('hurdle_0',) (initial robot/object clearance 0.061/0.011 m)",
+     "robot_clearance_m": 0.06102347518254264,
+     "object_clearance_m": 0.010922647311242985,
+     "model_xml": "/mnt/dev/work-t40h/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport_pick_place_obstacles.xml"
+    },
+    "relaxed_config": "/mnt/dev/work/outputs/verify/T43/P/configs/t43p_ep1968_s19681_crelax.json",
+    "relaxed_profile": "t43p_ep1968_s19681_crelax",
+    "relaxed_gjk_max_abs_diff_m": 6.938893903907228e-18,
+    "relaxed_gjk_check": {
+     "wu_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "reset_crate": {
+      "client_m": 0.01091118763735927,
+      "row": 0,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_foot_left",
+       "crate_wall_nx"
+      ],
+      "gjk_m": 0.010911187637359277,
+      "abs_diff_m": 6.938893903907228e-18
+     },
+     "E0_pre_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E0_pre_apple": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E0_car_grip": {
+      "client_m": -0.022551460819275712,
+      "row": 269,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1079"
+      ],
+      "gjk_m": -0.02255191541511531,
+      "abs_diff_m": null
+     },
+     "E0_car_apple": {
+      "client_m": -0.039077834157041816,
+      "row": 268,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": -0.03907826990063812,
+      "abs_diff_m": null
+     },
+     "E3b_pre_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E3b_pre_apple": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E3b_car_grip": {
+      "client_m": -0.023290880021988137,
+      "row": 181,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1079"
+      ],
+      "gjk_m": -0.023290943463994906,
+      "abs_diff_m": null
+     },
+     "E3b_car_apple": {
+      "client_m": -0.030516160237243302,
+      "row": 180,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": -0.03051656349848586,
+      "abs_diff_m": null
+     },
+     "reset_exact_activate": [
+      0.06227858385529628,
+      0.01091118763735927
+     ]
+    },
+    "relaxed_client_dryrun": {
+     "outcome": "reached load_remote_policy",
+     "obstacles_line": "obstacles  : t43p_ep1968_s19681_crelax ('hurdle_0',) (initial robot/object clearance 0.062/0.011 m)",
+     "robot_clearance_m": 0.06231662094254088,
+     "object_clearance_m": 0.010899662762692872,
+     "model_xml": "/mnt/dev/work-t40h/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport_pick_place_obstacles.xml"
+    }
+   },
+   "1982_19822": {
+    "n_candidates": {
+     "coarse": 7623,
+     "_refine": 3178
+    },
+    "counts": {
+     "coarse": {
+      "pass_a": 2837,
+      "pass_b": 141,
+      "pass_c": 7483,
+      "pass_c_apple": 5594,
+      "pass_c_relaxed": 6231,
+      "pass_d": 2604,
+      "pass_e": 28,
+      "post_in_crate": 1932,
+      "all_abcde": 28,
+      "all_ab_crelaxed_de": 9
+     },
+     "_refine": {
+      "pass_a": 1508,
+      "pass_b": 1532,
+      "pass_c": 3178,
+      "pass_c_apple": 1816,
+      "pass_c_relaxed": 1930,
+      "pass_d": 1423,
+      "pass_e": 956,
+      "post_in_crate": 0,
+      "all_abcde": 956,
+      "all_ab_crelaxed_de": 385
+     }
+    },
+    "crate_xy_m": [
+     0.5272167732155576,
+     -0.016534421652234243
+    ],
+    "crate_yaw_rad": -8.988298050048693e-06,
+    "warmup_replay_final_vs_planning_row0_maxabs_qpos": {
+     "E0": 0.0005898680794929195,
+     "E3b": 0.0005898680794929195
+    },
+    "n_pass_main": 984,
+    "n_pass_relaxed": 394,
+    "old_F_r1": {
+     "u": -0.030718534331296853,
+     "v": 0.19593414555280672,
+     "x": 0.4965,
+     "y": 0.1794,
+     "yaw": 0.27665,
+     "h": 0.22,
+     "a_min": 0.01359479933113111,
+     "d_min": 0.013087699788529163,
+     "b_crate_min": 0.012462622933584244,
+     "b_obj_min": 0.06525846838112055,
+     "client_reset_arms": 0.013628171372287428,
+     "client_reset_object": 0.012466754536876058,
+     "c_min_per_run": {
+      "E0": -0.028741216531208653,
+      "E3b": -0.02375986578655372
+     },
+     "c_apple_per_run": {
+      "E0": -0.028741216531208653,
+      "E3b": -0.02375986578655372
+     },
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1982_s19822_r1.json",
+     "pass": {
+      "pass_a": false,
+      "pass_b": false,
+      "pass_c": true,
+      "pass_c_relaxed": true,
+      "pass_d": false
+     }
+    },
+    "chosen_main": {
+     "u": -0.02,
+     "v": 0.15,
+     "dyaw_deg": 20,
+     "x": 0.507218121461073,
+     "y": 0.13346575810766753,
+     "yaw": 0.3490568621008158,
+     "h": 0.24,
+     "a_min": 0.06,
+     "d_min": 0.06,
+     "b_crate_min": 0.006135427630933822,
+     "b_obj_min": 0.06,
+     "client_reset_arms": 0.06157619769694221,
+     "client_reset_object": 0.006135427630933822,
+     "c_min_per_run": {
+      "E0": -0.0297897229037299,
+      "E3b": -0.03779199881218602
+     },
+     "c_apple_per_run": {
+      "E0": -0.0297897229037299,
+      "E3b": -0.03779199881218602
+     },
+     "free_height_over_bar_m": 0.5473378193353196,
+     "post_in_crate": false,
+     "inside_handle": true,
+     "pass_a": true,
+     "pass_b": true,
+     "pass_c": true,
+     "pass_c_apple": true,
+     "pass_c_relaxed": true,
+     "pass_d": true,
+     "pass_e": true,
+     "margin": 0.06
+    },
+    "chosen_relaxed": {
+     "u": -0.02,
+     "v": 0.15,
+     "dyaw_deg": 20,
+     "x": 0.507218121461073,
+     "y": 0.13346575810766753,
+     "yaw": 0.3490568621008158,
+     "h": 0.24,
+     "a_min": 0.06,
+     "d_min": 0.06,
+     "b_crate_min": 0.006135427630933822,
+     "b_obj_min": 0.06,
+     "client_reset_arms": 0.06157619769694221,
+     "client_reset_object": 0.006135427630933822,
+     "c_min_per_run": {
+      "E0": -0.0297897229037299,
+      "E3b": -0.03779199881218602
+     },
+     "c_apple_per_run": {
+      "E0": -0.0297897229037299,
+      "E3b": -0.03779199881218602
+     },
+     "free_height_over_bar_m": 0.5473378193353196,
+     "post_in_crate": false,
+     "inside_handle": true,
+     "pass_a": true,
+     "pass_b": true,
+     "pass_c": true,
+     "pass_c_apple": true,
+     "pass_c_relaxed": true,
+     "pass_d": true,
+     "pass_e": true,
+     "margin": 0.06
+    },
+    "tradeoff": {
+     "a_best_given_bcd": {
+      "u": -0.02,
+      "v": 0.16,
+      "dyaw_deg": 20,
+      "x": 0.5072182113440534,
+      "y": 0.14346575810726359,
+      "yaw": 0.3490568621008158,
+      "h": 0.3,
+      "a_min": 0.06,
+      "d_min": 0.059848253205816764,
+      "b_crate_min": 0.00776338480896522,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.06672494333669166,
+      "client_reset_object": 0.00776338480896522,
+      "c_min_per_run": {
+       "E0": -0.033453174094131816,
+       "E3b": -0.027256608320399556
+      },
+      "c_apple_per_run": {
+       "E0": 0.024314796969403137,
+       "E3b": 0.02113743648994131
+      },
+      "free_height_over_bar_m": 0.4875049400963461,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.059848253205816764
+     },
+     "d_best_given_abc": {
+      "u": -0.03,
+      "v": 0.15,
+      "dyaw_deg": 20,
+      "x": 0.4972181214614769,
+      "y": 0.13346584799064803,
+      "yaw": 0.3490568621008158,
+      "h": 0.28,
+      "a_min": 0.06,
+      "d_min": 0.06,
+      "b_crate_min": 0.0027564264445676676,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.06504988170916931,
+      "client_reset_object": 0.0027631877176329664,
+      "c_min_per_run": {
+       "E0": -0.023166005288644778,
+       "E3b": -0.028952776073080774
+      },
+      "c_apple_per_run": {
+       "E0": 0.008330787998160987,
+       "E3b": 0.0022702564962506066
+      },
+      "free_height_over_bar_m": 0.5127096807805558,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.06
+     },
+     "margin_best_given_bc": {
+      "u": -0.03,
+      "v": 0.15,
+      "dyaw_deg": 20,
+      "x": 0.4972181214614769,
+      "y": 0.13346584799064803,
+      "yaw": 0.3490568621008158,
+      "h": 0.28,
+      "a_min": 0.06,
+      "d_min": 0.06,
+      "b_crate_min": 0.0027564264445676676,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.06504988170916931,
+      "client_reset_object": 0.0027631877176329664,
+      "c_min_per_run": {
+       "E0": -0.023166005288644778,
+       "E3b": -0.028952776073080774
+      },
+      "c_apple_per_run": {
+       "E0": 0.008330787998160987,
+       "E3b": 0.0022702564962506066
+      },
+      "free_height_over_bar_m": 0.5127096807805558,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.06
+     },
+     "c_miss_best_given_abd": {
+      "u": -0.025,
+      "v": 0.18,
+      "dyaw_deg": 25,
+      "x": 0.5022183911102164,
+      "y": 0.16346580304794592,
+      "yaw": 0.4363233247005323,
+      "h": 0.24,
+      "a_min": 0.032863906108008156,
+      "d_min": 0.03243633965053401,
+      "b_crate_min": 0.008757204759038482,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.03289593700422874,
+      "client_reset_object": 0.008757204759038482,
+      "c_min_per_run": {
+       "E0": -0.0334600935569869,
+       "E3b": -0.037166537751352445
+      },
+      "c_apple_per_run": {
+       "E0": -0.0334600935569869,
+       "E3b": -0.037166537751352445
+      },
+      "free_height_over_bar_m": 0.550071087465908,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.03243633965053401
+     },
+     "c_apple_miss_best_given_abd": {
+      "u": -0.02,
+      "v": 0.18,
+      "dyaw_deg": 20,
+      "x": 0.5072183911100144,
+      "y": 0.16346575810645567,
+      "yaw": 0.3490568621008158,
+      "h": 0.24,
+      "a_min": 0.033473545963591506,
+      "d_min": 0.032968711737116047,
+      "b_crate_min": 0.007763384808965177,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.03350524285453392,
+      "client_reset_object": 0.007763384808965177,
+      "c_min_per_run": {
+       "E0": -0.03210253088581776,
+       "E3b": -0.038942742171367596
+      },
+      "c_apple_per_run": {
+       "E0": -0.03210253088581776,
+       "E3b": -0.038942742171367596
+      },
+      "free_height_over_bar_m": 0.5472522773649087,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.032968711737116047
+     },
+     "margin_best_given_b_crelaxed": {
+      "u": -0.025,
+      "v": 0.15,
+      "dyaw_deg": 20,
+      "x": 0.502218121461275,
+      "y": 0.13346580304915778,
+      "yaw": 0.3490568621008158,
+      "h": 0.26,
+      "a_min": 0.06,
+      "d_min": 0.06,
+      "b_crate_min": 0.00604254008675555,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.06164206501270042,
+      "client_reset_object": 0.00604254008675555,
+      "c_min_per_run": {
+       "E0": -0.024256269541523906,
+       "E3b": -0.0241197457567712
+      },
+      "c_apple_per_run": {
+       "E0": -0.010986649316222145,
+       "E3b": -0.017761127002990363
+      },
+      "free_height_over_bar_m": 0.5300896378340814,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.06
+     },
+     "maximin_given_c": {
+      "limiting": "d",
+      "worst_slack_m": 0.015556950963046823,
+      "slacks_m": {
+       "a": 0.016042531298170737,
+       "d": 0.015556950963046823,
+       "b_crate": 0.016848220793564093,
+       "b_obj": 0.06,
+       "client_arms": 0.026080067652822492
+      },
+      "candidate": {
+       "u": -0.02,
+       "v": 0.19,
+       "dyaw_deg": 10,
+       "x": 0.5072184809929949,
+       "y": 0.17346575810605175,
+       "yaw": 0.1745239369013829,
+       "h": 0.32,
+       "a_min": 0.046042531298170736,
+       "d_min": 0.04555695096304682,
+       "b_crate_min": 0.016848220793564093,
+       "b_obj_min": 0.06,
+       "client_reset_arms": 0.04608006765282249,
+       "client_reset_object": 0.016848220793564093,
+       "c_min_per_run": {
+        "E0": -0.031698625760871124,
+        "E3b": -0.026886898183756204
+       },
+       "c_apple_per_run": {
+        "E0": 0.02874416028367489,
+        "E3b": 0.039053046871427965
+       },
+       "free_height_over_bar_m": 0.4668287846694475,
+       "post_in_crate": false,
+       "inside_handle": true,
+       "pass_a": true,
+       "pass_b": true,
+       "pass_c": true,
+       "pass_c_apple": false,
+       "pass_c_relaxed": false,
+       "pass_d": true,
+       "pass_e": true,
+       "margin": 0.04555695096304682
+      }
+     },
+     "maximin_given_crelaxed": {
+      "limiting": "b_crate",
+      "worst_slack_m": 0.010911369469294425,
+      "slacks_m": {
+       "a": 0.013272348615142343,
+       "d": 0.012784504565223023,
+       "b_crate": 0.010911369469294425,
+       "b_obj": 0.06,
+       "client_arms": 0.02330686586553445
+      },
+      "candidate": {
+       "u": -0.02,
+       "v": 0.17,
+       "dyaw_deg": 15,
+       "x": 0.5072183012270339,
+       "y": 0.15346575810685964,
+       "yaw": 0.26179039950109934,
+       "h": 0.26,
+       "a_min": 0.04327234861514234,
+       "d_min": 0.04278450456522302,
+       "b_crate_min": 0.010911369469294425,
+       "b_obj_min": 0.06,
+       "client_reset_arms": 0.04330686586553445,
+       "client_reset_object": 0.010911369469294425,
+       "c_min_per_run": {
+        "E0": -0.024966153559987905,
+        "E3b": -0.021519262454497118
+       },
+       "c_apple_per_run": {
+        "E0": -0.011670851939142381,
+        "E3b": -0.01819155347676578
+       },
+       "free_height_over_bar_m": 0.5274769797509595,
+       "post_in_crate": false,
+       "inside_handle": true,
+       "pass_a": true,
+       "pass_b": true,
+       "pass_c": true,
+       "pass_c_apple": true,
+       "pass_c_relaxed": true,
+       "pass_d": true,
+       "pass_e": true,
+       "margin": 0.04278450456522302
+      }
+     },
+     "n_post_in_crate_given_acd": 1517,
+     "n_post_in_crate_given_a_crelaxed_d": 1238
+    },
+    "main_config": "/mnt/dev/work/outputs/verify/T43/P/configs/t43p_ep1982_s19822.json",
+    "main_profile": "t43p_ep1982_s19822",
+    "main_gjk_max_abs_diff_m": 2.0167510023094692e-11,
+    "main_gjk_check": {
+     "wu_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "reset_crate": {
+      "client_m": 0.006135427630933822,
+      "row": 0,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_foot_right",
+       "crate_wall_px"
+      ],
+      "gjk_m": 0.006135427610766312,
+      "abs_diff_m": 2.0167510023094692e-11
+     },
+     "E0_pre_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E0_pre_apple": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E0_car_grip": {
+      "client_m": -0.022798323038232284,
+      "row": 201,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1079"
+      ],
+      "gjk_m": -0.022799214661349765,
+      "abs_diff_m": null
+     },
+     "E0_car_apple": {
+      "client_m": -0.0297897229037299,
+      "row": 200,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": -0.029789779942542616,
+      "abs_diff_m": null
+     },
+     "E3b_pre_robot": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E3b_pre_apple": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E3b_car_grip": {
+      "client_m": -0.020428394276035253,
+      "row": 187,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1086"
+      ],
+      "gjk_m": -0.020428456202410183,
+      "abs_diff_m": null
+     },
+     "E3b_car_apple": {
+      "client_m": -0.03779199881218602,
+      "row": 190,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": -0.037792517820204985,
+      "abs_diff_m": null
+     },
+     "reset_exact_activate": [
+      0.06157619769694221,
+      0.006135427630933822
+     ]
+    },
+    "main_client_dryrun": {
+     "outcome": "reached load_remote_policy",
+     "obstacles_line": "obstacles  : t43p_ep1982_s19822 ('hurdle_0',) (initial robot/object clearance 0.062/0.006 m)",
+     "robot_clearance_m": 0.06153796152269379,
+     "object_clearance_m": 0.006168395081095278,
+     "model_xml": "/mnt/dev/work-t40h/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport_pick_place_obstacles.xml"
+    },
+    "relaxed_config": "same placement as main"
+   },
+   "1995_19952": {
+    "n_candidates": {
+     "coarse": 7623,
+     "_refine": 3255,
+     "_ext": 4312
+    },
+    "counts": {
+     "coarse": {
+      "pass_a": 1297,
+      "pass_b": 241,
+      "pass_c": 7440,
+      "pass_c_apple": 5548,
+      "pass_c_relaxed": 6109,
+      "pass_d": 966,
+      "pass_e": 0,
+      "post_in_crate": 1932,
+      "all_abcde": 0,
+      "all_ab_crelaxed_de": 0
+     },
+     "_refine": {
+      "pass_a": 1964,
+      "pass_b": 2339,
+      "pass_c": 3254,
+      "pass_c_apple": 2066,
+      "pass_c_relaxed": 2305,
+      "pass_d": 0,
+      "pass_e": 0,
+      "post_in_crate": 0,
+      "all_abcde": 0,
+      "all_ab_crelaxed_de": 0
+     },
+     "_ext": {
+      "pass_a": 3091,
+      "pass_b": 2300,
+      "pass_c": 2332,
+      "pass_c_apple": 1757,
+      "pass_c_relaxed": 2197,
+      "pass_d": 1180,
+      "pass_e": 0,
+      "post_in_crate": 210,
+      "all_abcde": 0,
+      "all_ab_crelaxed_de": 0
+     }
+    },
+    "crate_xy_m": [
+     0.4984030620724634,
+     0.026504986611733245
+    ],
+    "crate_yaw_rad": -5.418837299613688e-06,
+    "warmup_replay_final_vs_planning_row0_maxabs_qpos": {
+     "E0": 0.0007604884151774238,
+     "E3b": 0.0007604884151774238
+    },
+    "n_pass_main": 0,
+    "n_pass_relaxed": 0,
+    "old_F_r1": {
+     "u": -0.011803989750214159,
+     "v": 0.17119494942688027,
+     "x": 0.4866,
+     "y": 0.1977,
+     "yaw": 0.158984,
+     "h": 0.32,
+     "a_min": 0.0018352323767123098,
+     "d_min": 0.00144623174542622,
+     "b_crate_min": 0.005350300094824201,
+     "b_obj_min": 0.04109520767974253,
+     "client_reset_arms": 0.0018701824843991074,
+     "client_reset_object": 0.005350300094824201,
+     "c_min_per_run": {
+      "E0": -0.030998356535423835,
+      "E3b": -0.03133799330454437
+     },
+     "c_apple_per_run": {
+      "E0": 0.01307070055778702,
+      "E3b": 0.02665274342949523
+     },
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1995_s19952_r1.json",
+     "pass": {
+      "pass_a": false,
+      "pass_b": false,
+      "pass_c": true,
+      "pass_c_relaxed": false,
+      "pass_d": false
+     }
+    },
+    "chosen_main": null,
+    "chosen_relaxed": null,
+    "tradeoff": {
+     "a_best_given_bcd": null,
+     "d_best_given_abc": {
+      "u": 0.16,
+      "v": 0.26,
+      "dyaw_deg": -60,
+      "x": 0.6584044709678121,
+      "y": 0.28650411959394806,
+      "yaw": -1.0472029700338972,
+      "h": 0.2,
+      "a_min": 0.06,
+      "d_min": 0.013806856843938333,
+      "b_crate_min": 0.06,
+      "b_obj_min": 0.03775559976222577,
+      "client_reset_arms": 0.08603357769874354,
+      "client_reset_object": 0.03775559976222577,
+      "c_min_per_run": {
+       "E0": -0.0026842400787824294,
+       "E3b": -0.0002249586017986343
+      },
+      "c_apple_per_run": {
+       "E0": 0.01741695586722756,
+       "E3b": 0.0206811810774187
+      },
+      "free_height_over_bar_m": null,
+      "post_in_crate": false,
+      "inside_handle": false,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": false,
+      "pass_e": false,
+      "margin": 0.013806856843938333
+     },
+     "margin_best_given_bc": {
+      "u": 0.16,
+      "v": 0.26,
+      "dyaw_deg": -60,
+      "x": 0.6584044709678121,
+      "y": 0.28650411959394806,
+      "yaw": -1.0472029700338972,
+      "h": 0.2,
+      "a_min": 0.06,
+      "d_min": 0.013806856843938333,
+      "b_crate_min": 0.06,
+      "b_obj_min": 0.03775559976222577,
+      "client_reset_arms": 0.08603357769874354,
+      "client_reset_object": 0.03775559976222577,
+      "c_min_per_run": {
+       "E0": -0.0026842400787824294,
+       "E3b": -0.0002249586017986343
+      },
+      "c_apple_per_run": {
+       "E0": 0.01741695586722756,
+       "E3b": 0.0206811810774187
+      },
+      "free_height_over_bar_m": null,
+      "post_in_crate": false,
+      "inside_handle": false,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": false,
+      "pass_e": false,
+      "margin": 0.013806856843938333
+     },
+     "c_miss_best_given_abd": {
+      "u": 0.16,
+      "v": 0.26,
+      "dyaw_deg": -75,
+      "x": 0.6584044709678121,
+      "y": 0.28650411959394806,
+      "yaw": -1.3090023578330467,
+      "h": 0.2,
+      "a_min": 0.06,
+      "d_min": 0.031871275001827085,
+      "b_crate_min": 0.06,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.0996713235804688,
+      "client_reset_object": 0.06482235927244137,
+      "c_min_per_run": {
+       "E0": 0.006944681015086399,
+       "E3b": 0.016399785300372408
+      },
+      "c_apple_per_run": {
+       "E0": 0.02623076256416552,
+       "E3b": 0.03628689216806254
+      },
+      "free_height_over_bar_m": null,
+      "post_in_crate": false,
+      "inside_handle": false,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": false,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": true,
+      "pass_e": false,
+      "margin": 0.031871275001827085
+     },
+     "c_apple_miss_best_given_abd": {
+      "u": 0.16,
+      "v": 0.28,
+      "dyaw_deg": 75,
+      "x": 0.6584045793445581,
+      "y": 0.3065041195936544,
+      "yaw": 1.3089915201584477,
+      "h": 0.2,
+      "a_min": 0.06,
+      "d_min": 0.03804889846828077,
+      "b_crate_min": 0.00640671816721774,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.09157212909056904,
+      "client_reset_object": 0.006411979597376676,
+      "c_min_per_run": {
+       "E0": 0.017162562705455877,
+       "E3b": 0.03733656946057194
+      },
+      "c_apple_per_run": {
+       "E0": 0.023709834596826854,
+       "E3b": 0.043455733597791146
+      },
+      "free_height_over_bar_m": null,
+      "post_in_crate": false,
+      "inside_handle": false,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": false,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": true,
+      "pass_e": false,
+      "margin": 0.03804889846828077
+     },
+     "margin_best_given_b_crelaxed": {
+      "u": 0.24,
+      "v": 0.28,
+      "dyaw_deg": 15,
+      "x": 0.7384045793433835,
+      "y": 0.30650368608667045,
+      "yaw": 0.2617939689618498,
+      "h": 0.2,
+      "a_min": 0.06,
+      "d_min": 0.005807248982449151,
+      "b_crate_min": 0.055932320731252406,
+      "b_obj_min": 0.020730608888774444,
+      "client_reset_arms": 0.07547124582332497,
+      "client_reset_object": 0.02073651380596247,
+      "c_min_per_run": {
+       "E0": -0.005912708316588482,
+       "E3b": 0.01265181473018352
+      },
+      "c_apple_per_run": {
+       "E0": -0.005912708316588482,
+       "E3b": 0.014419044236608537
+      },
+      "free_height_over_bar_m": null,
+      "post_in_crate": false,
+      "inside_handle": false,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": false,
+      "pass_c_apple": false,
+      "pass_c_relaxed": true,
+      "pass_d": false,
+      "pass_e": false,
+      "margin": 0.005807248982449151
+     },
+     "maximin_given_c": {
+      "limiting": "b_crate",
+      "worst_slack_m": -0.005000169133322818,
+      "slacks_m": {
+       "a": 0.0018459639206336725,
+       "d": 0.0015736933693678706,
+       "b_crate": -0.005000169133322818,
+       "b_obj": 0.04935425865626719,
+       "client_arms": 0.011866561055349504
+      },
+      "candidate": {
+       "u": 0.02,
+       "v": 0.12,
+       "dyaw_deg": -30,
+       "x": 0.5184037123326456,
+       "y": 0.14650487823322542,
+       "yaw": -0.5236041944355985,
+       "h": 0.2,
+       "a_min": 0.03184596392063367,
+       "d_min": 0.03157369336936787,
+       "b_crate_min": -0.005000169133322818,
+       "b_obj_min": 0.04935425865626719,
+       "client_reset_arms": 0.031866561055349504,
+       "client_reset_object": -0.005000169133322818,
+       "c_min_per_run": {
+        "E0": -0.01467951968813714,
+        "E3b": -0.015340974216843625
+       },
+       "c_apple_per_run": {
+        "E0": -0.01467951968813714,
+        "E3b": -0.015340974216843625
+       },
+       "free_height_over_bar_m": null,
+       "post_in_crate": false,
+       "inside_handle": true,
+       "pass_a": true,
+       "pass_b": false,
+       "pass_c": true,
+       "pass_c_apple": true,
+       "pass_c_relaxed": true,
+       "pass_d": true,
+       "pass_e": false,
+       "margin": 0.03157369336936787
+      }
+     },
+     "maximin_given_crelaxed": {
+      "limiting": "b_crate",
+      "worst_slack_m": -0.005000169133322818,
+      "slacks_m": {
+       "a": 0.0018459639206336725,
+       "d": 0.0015736933693678706,
+       "b_crate": -0.005000169133322818,
+       "b_obj": 0.04935425865626719,
+       "client_arms": 0.011866561055349504
+      },
+      "candidate": {
+       "u": 0.02,
+       "v": 0.12,
+       "dyaw_deg": -30,
+       "x": 0.5184037123326456,
+       "y": 0.14650487823322542,
+       "yaw": -0.5236041944355985,
+       "h": 0.2,
+       "a_min": 0.03184596392063367,
+       "d_min": 0.03157369336936787,
+       "b_crate_min": -0.005000169133322818,
+       "b_obj_min": 0.04935425865626719,
+       "client_reset_arms": 0.031866561055349504,
+       "client_reset_object": -0.005000169133322818,
+       "c_min_per_run": {
+        "E0": -0.01467951968813714,
+        "E3b": -0.015340974216843625
+       },
+       "c_apple_per_run": {
+        "E0": -0.01467951968813714,
+        "E3b": -0.015340974216843625
+       },
+       "free_height_over_bar_m": null,
+       "post_in_crate": false,
+       "inside_handle": true,
+       "pass_a": true,
+       "pass_b": false,
+       "pass_c": true,
+       "pass_c_apple": true,
+       "pass_c_relaxed": true,
+       "pass_d": true,
+       "pass_e": false,
+       "margin": 0.03157369336936787
+      }
+     },
+     "n_post_in_crate_given_acd": 882,
+     "n_post_in_crate_given_a_crelaxed_d": 739
+    }
+   },
+   "1967_19672": {
+    "n_candidates": {
+     "coarse": 7623,
+     "_refine": 3297
+    },
+    "counts": {
+     "coarse": {
+      "pass_a": 2738,
+      "pass_b": 64,
+      "pass_c": 7531,
+      "pass_c_apple": 5701,
+      "pass_c_relaxed": 5971,
+      "pass_d": 2111,
+      "pass_e": 4,
+      "post_in_crate": 1932,
+      "all_abcde": 4,
+      "all_ab_crelaxed_de": 1
+     },
+     "_refine": {
+      "pass_a": 1307,
+      "pass_b": 1528,
+      "pass_c": 3297,
+      "pass_c_apple": 1932,
+      "pass_c_relaxed": 2013,
+      "pass_d": 535,
+      "pass_e": 279,
+      "post_in_crate": 0,
+      "all_abcde": 279,
+      "all_ab_crelaxed_de": 107
+     }
+    },
+    "crate_xy_m": [
+     0.49339071734258527,
+     0.013024818124842527
+    ],
+    "crate_yaw_rad": -2.0120589105523407e-05,
+    "warmup_replay_final_vs_planning_row0_maxabs_qpos": {
+     "E0": 0.0007604884151774238,
+     "E3b": 0.0007604884151774238
+    },
+    "n_pass_main": 283,
+    "n_pass_relaxed": 108,
+    "old_F_r1": {
+     "u": -0.025694199712003613,
+     "v": 0.1730746649277563,
+     "x": 0.4677,
+     "y": 0.1861,
+     "yaw": 0.203097,
+     "h": 0.22,
+     "a_min": 0.03113710966740794,
+     "d_min": 0.02025973113915842,
+     "b_crate_min": 0.01183415280487689,
+     "b_obj_min": 0.02535273428521314,
+     "client_reset_arms": 0.03116024549047115,
+     "client_reset_object": 0.011838415280860786,
+     "c_min_per_run": {
+      "E0": -0.03272889547404304,
+      "E3b": -0.033132043506828156
+     },
+     "c_apple_per_run": {
+      "E0": -0.03272889547404304,
+      "E3b": -0.033132043506828156
+     },
+     "config": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1967_s19672_r1.json",
+     "pass": {
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_relaxed": true,
+      "pass_d": false
+     }
+    },
+    "chosen_main": {
+     "u": 0.0,
+     "v": 0.17,
+     "dyaw_deg": 0,
+     "x": 0.493394137842733,
+     "y": 0.18302481809043128,
+     "yaw": -2.0120589105523407e-05,
+     "h": 0.3,
+     "a_min": 0.04897954366007526,
+     "d_min": 0.048162310258133945,
+     "b_crate_min": 0.001047781383833642,
+     "b_obj_min": 0.06,
+     "client_reset_arms": 0.04900399892994407,
+     "client_reset_object": 0.0010549916348336534,
+     "c_min_per_run": {
+      "E0": -0.030543339350573726,
+      "E3b": -0.03352675650239705
+     },
+     "c_apple_per_run": {
+      "E0": 0.030113285692126828,
+      "E3b": 0.02994357118231415
+     },
+     "free_height_over_bar_m": 0.46616019379141965,
+     "post_in_crate": false,
+     "inside_handle": true,
+     "pass_a": true,
+     "pass_b": true,
+     "pass_c": true,
+     "pass_c_apple": false,
+     "pass_c_relaxed": false,
+     "pass_d": true,
+     "pass_e": true,
+     "margin": 0.048162310258133945
+    },
+    "chosen_relaxed": {
+     "u": -0.005,
+     "v": 0.17,
+     "dyaw_deg": 5,
+     "x": 0.4883941378437451,
+     "y": 0.1830249186933768,
+     "yaw": 0.08724634201061095,
+     "h": 0.2,
+     "a_min": 0.04113356169118686,
+     "d_min": 0.04083704441252843,
+     "b_crate_min": 0.000836383500446416,
+     "b_obj_min": 0.05201555601211219,
+     "client_reset_arms": 0.0411546688556587,
+     "client_reset_object": 0.000836383500446416,
+     "c_min_per_run": {
+      "E0": -0.014782866155247187,
+      "E3b": -0.014803746645582766
+     },
+     "c_apple_per_run": {
+      "E0": -0.014782866155247187,
+      "E3b": -0.014803746645582766
+     },
+     "free_height_over_bar_m": 0.5693250273485775,
+     "post_in_crate": false,
+     "inside_handle": true,
+     "pass_a": true,
+     "pass_b": true,
+     "pass_c": true,
+     "pass_c_apple": true,
+     "pass_c_relaxed": true,
+     "pass_d": true,
+     "pass_e": true,
+     "margin": 0.04083704441252843
+    },
+    "tradeoff": {
+     "a_best_given_bcd": {
+      "u": -0.02,
+      "v": 0.155,
+      "dyaw_deg": 15,
+      "x": 0.47339383603794477,
+      "y": 0.16802522050524965,
+      "yaw": 0.2617792672100439,
+      "h": 0.3,
+      "a_min": 0.06,
+      "d_min": 0.030348965772613107,
+      "b_crate_min": 0.001531393081562413,
+      "b_obj_min": 0.0368414970281091,
+      "client_reset_arms": 0.06905494195592057,
+      "client_reset_object": 0.0015393155033380356,
+      "c_min_per_run": {
+       "E0": -0.03080163152568838,
+       "E3b": -0.03313522414037656
+      },
+      "c_apple_per_run": {
+       "E0": 0.016973071454150453,
+       "E3b": 0.018891112489119954
+      },
+      "free_height_over_bar_m": 0.4795418361074019,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.030348965772613107
+     },
+     "d_best_given_abc": {
+      "u": 0.0,
+      "v": 0.17,
+      "dyaw_deg": 0,
+      "x": 0.493394137842733,
+      "y": 0.18302481809043128,
+      "yaw": -2.0120589105523407e-05,
+      "h": 0.3,
+      "a_min": 0.04897954366007526,
+      "d_min": 0.048162310258133945,
+      "b_crate_min": 0.001047781383833642,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.04900399892994407,
+      "client_reset_object": 0.0010549916348336534,
+      "c_min_per_run": {
+       "E0": -0.030543339350573726,
+       "E3b": -0.03352675650239705
+      },
+      "c_apple_per_run": {
+       "E0": 0.030113285692126828,
+       "E3b": 0.02994357118231415
+      },
+      "free_height_over_bar_m": 0.46616019379141965,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.048162310258133945
+     },
+     "margin_best_given_bc": {
+      "u": 0.0,
+      "v": 0.17,
+      "dyaw_deg": 0,
+      "x": 0.493394137842733,
+      "y": 0.18302481809043128,
+      "yaw": -2.0120589105523407e-05,
+      "h": 0.3,
+      "a_min": 0.04897954366007526,
+      "d_min": 0.048162310258133945,
+      "b_crate_min": 0.001047781383833642,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.04900399892994407,
+      "client_reset_object": 0.0010549916348336534,
+      "c_min_per_run": {
+       "E0": -0.030543339350573726,
+       "E3b": -0.03352675650239705
+      },
+      "c_apple_per_run": {
+       "E0": 0.030113285692126828,
+       "E3b": 0.02994357118231415
+      },
+      "free_height_over_bar_m": 0.46616019379141965,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": false,
+      "pass_c_relaxed": false,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.048162310258133945
+     },
+     "c_miss_best_given_abd": {
+      "u": -0.015,
+      "v": 0.155,
+      "dyaw_deg": 15,
+      "x": 0.4783938360369327,
+      "y": 0.16802511990230412,
+      "yaw": 0.2617792672100439,
+      "h": 0.22,
+      "a_min": 0.05092722020942182,
+      "d_min": 0.033807259239327724,
+      "b_crate_min": 0.0026644588338660155,
+      "b_obj_min": 0.03948963137508041,
+      "client_reset_arms": 0.05095056572501988,
+      "client_reset_object": 0.0026727566191530553,
+      "c_min_per_run": {
+       "E0": -0.03514113791044791,
+       "E3b": -0.035454502679462686
+      },
+      "c_apple_per_run": {
+       "E0": -0.03514113791044791,
+       "E3b": -0.035454502679462686
+      },
+      "free_height_over_bar_m": 0.5568442530189751,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.033807259239327724
+     },
+     "c_apple_miss_best_given_abd": {
+      "u": 0.015,
+      "v": 0.15,
+      "dyaw_deg": -20,
+      "x": 0.5083937354279147,
+      "y": 0.1630245162856431,
+      "yaw": -0.3490859709879714,
+      "h": 0.22,
+      "a_min": 0.03069670998448421,
+      "d_min": 0.03008160126607554,
+      "b_crate_min": 0.0027595067612361224,
+      "b_obj_min": 0.06,
+      "client_reset_arms": 0.030720219075032428,
+      "client_reset_object": 0.0027634365848714774,
+      "c_min_per_run": {
+       "E0": -0.03628380166876456,
+       "E3b": -0.033720065250599646
+      },
+      "c_apple_per_run": {
+       "E0": -0.03628380166876456,
+       "E3b": -0.033720065250599646
+      },
+      "free_height_over_bar_m": 0.5382485178463553,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.03008160126607554
+     },
+     "margin_best_given_b_crelaxed": {
+      "u": -0.005,
+      "v": 0.17,
+      "dyaw_deg": 5,
+      "x": 0.4883941378437451,
+      "y": 0.1830249186933768,
+      "yaw": 0.08724634201061095,
+      "h": 0.2,
+      "a_min": 0.04113356169118686,
+      "d_min": 0.04083704441252843,
+      "b_crate_min": 0.000836383500446416,
+      "b_obj_min": 0.05201555601211219,
+      "client_reset_arms": 0.0411546688556587,
+      "client_reset_object": 0.000836383500446416,
+      "c_min_per_run": {
+       "E0": -0.014782866155247187,
+       "E3b": -0.014803746645582766
+      },
+      "c_apple_per_run": {
+       "E0": -0.014782866155247187,
+       "E3b": -0.014803746645582766
+      },
+      "free_height_over_bar_m": 0.5693250273485775,
+      "post_in_crate": false,
+      "inside_handle": true,
+      "pass_a": true,
+      "pass_b": true,
+      "pass_c": true,
+      "pass_c_apple": true,
+      "pass_c_relaxed": true,
+      "pass_d": true,
+      "pass_e": true,
+      "margin": 0.04083704441252843
+     },
+     "maximin_given_c": {
+      "limiting": "b_crate",
+      "worst_slack_m": 0.0074180434794649695,
+      "slacks_m": {
+       "a": 0.009528152693087988,
+       "d": 0.008607366221312474,
+       "b_crate": 0.0074180434794649695,
+       "b_obj": 0.05587928719438888,
+       "client_arms": 0.019552020255242348
+      },
+      "candidate": {
+       "u": 0.0,
+       "v": 0.18,
+       "dyaw_deg": 0,
+       "x": 0.493394339048624,
+       "y": 0.19302481808840707,
+       "yaw": -2.0120589105523407e-05,
+       "h": 0.3,
+       "a_min": 0.03952815269308799,
+       "d_min": 0.03860736622131247,
+       "b_crate_min": 0.0074180434794649695,
+       "b_obj_min": 0.05587928719438888,
+       "client_reset_arms": 0.03955202025524235,
+       "client_reset_object": 0.007425884597848884,
+       "c_min_per_run": {
+        "E0": -0.030312721146102055,
+        "E3b": -0.033852012198549525
+       },
+       "c_apple_per_run": {
+        "E0": 0.02868898249706388,
+        "E3b": 0.027597363669298703
+       },
+       "free_height_over_bar_m": 0.46470167617322183,
+       "post_in_crate": false,
+       "inside_handle": true,
+       "pass_a": true,
+       "pass_b": true,
+       "pass_c": true,
+       "pass_c_apple": false,
+       "pass_c_relaxed": false,
+       "pass_d": true,
+       "pass_e": true,
+       "margin": 0.03860736622131247
+      }
+     },
+     "maximin_given_crelaxed": {
+      "limiting": "b_crate",
+      "worst_slack_m": 0.005479097832728313,
+      "slacks_m": {
+       "a": 0.006080364389889306,
+       "d": 0.005791795829139634,
+       "b_crate": 0.005479097832728313,
+       "b_obj": 0.04505211330246673,
+       "client_arms": 0.016100827384195274
+      },
+      "candidate": {
+       "u": -0.01,
+       "v": 0.175,
+       "dyaw_deg": 5,
+       "x": 0.4833942384477027,
+       "y": 0.18802501929531024,
+       "yaw": 0.08724634201061095,
+       "h": 0.2,
+       "a_min": 0.036080364389889305,
+       "d_min": 0.03579179582913963,
+       "b_crate_min": 0.005479097832728313,
+       "b_obj_min": 0.04505211330246673,
+       "client_reset_arms": 0.036100827384195275,
+       "client_reset_object": 0.005487697092257109,
+       "c_min_per_run": {
+        "E0": -0.013794179478677617,
+        "E3b": -0.015144824304146794
+       },
+       "c_apple_per_run": {
+        "E0": -0.013794179478677617,
+        "E3b": -0.015144824304146794
+       },
+       "free_height_over_bar_m": 0.5716843740298039,
+       "post_in_crate": false,
+       "inside_handle": true,
+       "pass_a": true,
+       "pass_b": true,
+       "pass_c": true,
+       "pass_c_apple": true,
+       "pass_c_relaxed": true,
+       "pass_d": true,
+       "pass_e": true,
+       "margin": 0.03579179582913963
+      }
+     },
+     "n_post_in_crate_given_acd": 1458,
+     "n_post_in_crate_given_a_crelaxed_d": 1172
+    },
+    "main_config": "/mnt/dev/work/outputs/verify/T43/P/configs/t43p_ep1967_s19672.json",
+    "main_profile": "t43p_ep1967_s19672",
+    "main_gjk_max_abs_diff_m": 2.6942733872929725e-10,
+    "main_gjk_check": {
+     "wu_robot": {
+      "client_m": 0.048979543664914665,
+      "row": 20,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#957"
+      ],
+      "gjk_m": 0.048979543664941595,
+      "abs_diff_m": 2.6929847241063953e-14
+     },
+     "reset_crate": {
+      "client_m": 0.0010549916348336534,
+      "row": 0,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_foot_left",
+       "crate_floor"
+      ],
+      "gjk_m": 0.0010549913654063147,
+      "abs_diff_m": 2.6942733872929725e-10
+     },
+     "E0_pre_robot": {
+      "client_m": 0.048162310258133945,
+      "row": 21,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#957"
+      ],
+      "gjk_m": 0.048162310258137955,
+      "abs_diff_m": 4.010680676458378e-15
+     },
+     "E0_pre_apple": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E0_car_grip": {
+      "client_m": -0.030543339350573726,
+      "row": 180,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1050"
+      ],
+      "gjk_m": -0.030543504974780866,
+      "abs_diff_m": null
+     },
+     "E0_car_apple": {
+      "client_m": 0.030113285692126828,
+      "row": 178,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": 0.030113285692128223,
+      "abs_diff_m": 1.394717674685353e-15
+     },
+     "E3b_pre_robot": {
+      "client_m": 0.04861738065154378,
+      "row": 4,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#957"
+      ],
+      "gjk_m": 0.04861738065155037,
+      "abs_diff_m": 6.591949208711867e-15
+     },
+     "E3b_pre_apple": {
+      "client_m": 0.06,
+      "note": ">= cap 0.06"
+     },
+     "E3b_car_grip": {
+      "client_m": -0.03352675650239705,
+      "row": 179,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1050"
+      ],
+      "gjk_m": -0.033526817776126094,
+      "abs_diff_m": null
+     },
+     "E3b_car_apple": {
+      "client_m": 0.02994357118231415,
+      "row": 177,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": 0.029943571182318593,
+      "abs_diff_m": 4.44436154545258e-15
+     },
+     "reset_exact_activate": [
+      0.04900399892994407,
+      0.0010549916348336534
+     ]
+    },
+    "main_client_dryrun": {
+     "outcome": "reached load_remote_policy",
+     "obstacles_line": "obstacles  : t43p_ep1967_s19672 ('hurdle_0',) (initial robot/object clearance 0.049/0.001 m)",
+     "robot_clearance_m": 0.049027580401518944,
+     "object_clearance_m": 0.0010363432989576738,
+     "model_xml": "/mnt/dev/work-t40h/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport_pick_place_obstacles.xml"
+    },
+    "relaxed_config": "/mnt/dev/work/outputs/verify/T43/P/configs/t43p_ep1967_s19672_crelax.json",
+    "relaxed_profile": "t43p_ep1967_s19672_crelax",
+    "relaxed_gjk_max_abs_diff_m": 2.336368015286999e-10,
+    "relaxed_gjk_check": {
+     "wu_robot": {
+      "client_m": 0.04113356169118686,
+      "row": 20,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1085"
+      ],
+      "gjk_m": 0.041133561691191686,
+      "abs_diff_m": 4.829470157119431e-15
+     },
+     "reset_crate": {
+      "client_m": 0.000836383500446416,
+      "row": 0,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_foot_left",
+       "crate_floor"
+      ],
+      "gjk_m": 0.0008363832668096144,
+      "abs_diff_m": 2.336368015286999e-10
+     },
+     "E0_pre_robot": {
+      "client_m": 0.0408370454729875,
+      "row": 3,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1085"
+      ],
+      "gjk_m": 0.04083704547299289,
+      "abs_diff_m": 5.3915205633359164e-15
+     },
+     "E0_pre_apple": {
+      "client_m": 0.05154340866871475,
+      "row": 140,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_foot_right",
+       "apple_geom"
+      ],
+      "gjk_m": 0.05154340866322586,
+      "abs_diff_m": 5.488887122595543e-12
+     },
+     "E0_car_grip": {
+      "client_m": 0.00886273794904591,
+      "row": 176,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1086"
+      ],
+      "gjk_m": 0.008862737949045886,
+      "abs_diff_m": 2.42861286636753e-17
+     },
+     "E0_car_apple": {
+      "client_m": -0.014782866155247187,
+      "row": 179,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": -0.014783020403805525,
+      "abs_diff_m": null
+     },
+     "E3b_pre_robot": {
+      "client_m": 0.04083704441252843,
+      "row": 3,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1085"
+      ],
+      "gjk_m": 0.040837044412533795,
+      "abs_diff_m": 5.3637649877202875e-15
+     },
+     "E3b_pre_apple": {
+      "client_m": 0.05203677755160844,
+      "row": 11,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_foot_right",
+       "apple_geom"
+      ],
+      "gjk_m": 0.05203677754637066,
+      "abs_diff_m": 5.237775491107044e-12
+     },
+     "E3b_car_grip": {
+      "client_m": 0.006700486366362782,
+      "row": 176,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "geom#1086"
+      ],
+      "gjk_m": 0.0067004863663637105,
+      "abs_diff_m": 9.280770596475918e-16
+     },
+     "E3b_car_apple": {
+      "client_m": -0.014803746645582766,
+      "row": 179,
+      "pair": [
+       "pick_obstacle_hurdle_0_collision_bar",
+       "apple_geom"
+      ],
+      "gjk_m": -0.014804391320978771,
+      "abs_diff_m": null
+     },
+     "reset_exact_activate": [
+      0.0411546688556587,
+      0.000836383500446416
+     ]
+    },
+    "relaxed_client_dryrun": {
+     "outcome": "reached load_remote_policy",
+     "obstacles_line": "obstacles  : t43p_ep1967_s19672_crelax ('hurdle_0',) (initial robot/object clearance 0.041/0.001 m)",
+     "robot_clearance_m": 0.041178468829922626,
+     "object_clearance_m": 0.0008241194410556146,
+     "model_xml": "/mnt/dev/work-t40h/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport_pick_place_obstacles.xml"
+    }
+   }
+  },
+  "resources": {
+   "processes": "<= 4 concurrent, nice 19, CPU only, 1 thread",
+   "worker_rss_gb_observed": "0.49-0.58",
+   "working_set_before_start_gib": [
+    45,
+    41,
+    32
+   ],
+   "servers": 0,
+   "gpu": "not used"
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43p-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43p-layout.png",
+   "kind": "graph (top-down layout)"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43p-table.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "legacy CPU: violated_start 14/15, has_target 15/15, frame0 -29.031048280806342 mm, sha1 40798fb (= T40 legacy); cuRobo not run"
+ },
+ "verdict": "기준선 일치 (legacy, CPU). cuRobo 기준선은 돌리지 않음.",
+ "not_measured": [
+  "closed-loop runs with the new configs (E0/E3b)",
+  "cuRobo regression baseline (GPU)",
+  "criterion e is a kinematic upper bound (no collision check), as in T40 F",
+  "crate motion during place (crate clearance of the chosen posts is a t0/reset value)"
+ ]
+}
