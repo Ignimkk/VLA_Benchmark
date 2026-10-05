@@ -1945,6 +1945,11 @@
    "path": "benchmark/ag3s/docs/figures/t42/t42-2-table-place.png",
    "kind": "table",
    "sidecar": "benchmark/ag3s/docs/figures/t42/t42-2-table-place.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t42/t42-2-invisible-diag.png",
+   "kind": "graph+table",
+   "sidecar": "benchmark/ag3s/docs/figures/t42/t42-2-invisible-diag.json"
   }
  ],
  "baseline_check": {
@@ -1958,5 +1963,1568 @@
   "seeds rep 2-3 with obstacles",
   "E3b with --obstacle-margin 0.010 --safe-hold-mode measured",
   "source of the step-0 divergence (camera image vs model XML vs physics) not separated"
- ]
+ ],
+ "invisible_diag": {
+  "_comment": "numbers and paths only. Profile t42_2_ep<EP>_place_invis = the place-phase placement with visual geom rgba [0,0,0,0] (configs/t42_2_ep<EP>_invis.json, also holds t42_2_ep<EP>_parked = obstacle model, no slot). Seed rep 1. Twin = T42-1 no-obstacle run (snapshot work-t42).",
+  "commands": [
+   "p/render_probe.py (offline, CPU)",
+   "p/launch_t42_2.sh invis (E3b 8251, E0 8250)",
+   "p/invis_diag.py",
+   "p/fig_invis.py"
+  ],
+  "raw": [
+   "outputs/verify/T42/2/raw/invis/probe_<EP>.json",
+   "outputs/verify/T42/2/runs/{E0,E3b}/{invis,clear42c}/",
+   "outputs/verify/T42/2/invis_diag.json"
+  ],
+  "definitions": "T42-2 invisible-obstacle diagnostic, run part (verifier, CPU). usage: invis_diag.py OUT_JSON\nRuns: runs/{E0,E3b}/invis/* (profile t42_2_ep<EP>_place_invis = the place-phase placement with visual rgba [0,0,0,0]) and\nruns/{E0,E3b}/clear42c/* (no obstacle flags, snapshot work-t42c). Seed rep 1.\nPer run, vs three references of the same condition and seed: T42-1 no-obstacle twin (snapshot work-t42), clear42c (ep1834 only),\nand the visible place run (runs/<COND>/place):\n  first_step_diff_gt0 / gt_1e-3 : first control step where max_j |executed_actions diff| > 0 / > 1e-3 (traj.npz)\n  first_chunk_diff_max_abs      : max |predicted_chunks[0] diff| (the policy's first chunk; E3b frames 'actions_reference' at planning\n                                  seq 1 is reported as well when present)\n  qpos_t0_equal                 : planning row 0 qpos bitwise equal\nOutcome: analyze_t42 success / grasp / place, obstacle stop / phase / contact pairs (obst_metrics.run_obst on the invisible profile).\nAG3S sees the obstacle?: E3b server chunk records paired by content; per chunk the number of raw_cloud points (robot base frame -> world\nat that planning row's qpos) within 15 mm of the obstacle surface (analytic shapes of the placed slot), for the invisible run and for\nthe visible place run, and (baseline: other surfaces within 15 mm of the obstacle's volume) for the T42-1 no-obstacle twin with the\nsame obstacle placed virtually; reported as max over chunks and at chunk 1.\nOffline part: raw/invis/probe_<EP>.json (render_probe.py).",
+  "offline_probe": {
+   "1830": {
+    "model_stat_extent": {
+     "clear": 22.62741708635787,
+     "obstacle_model": 26.145238007558593
+    },
+    "model_stat_center": {
+     "clear": [
+      0.3000000000000007,
+      -0.3000000000000007,
+      0.0
+     ],
+     "obstacle_model": [
+      2.0589104606003623,
+      -0.3000000000000007,
+      0.0
+     ]
+    },
+    "qpos_qvel_t0_equal_clear": {
+     "visible": [
+      true,
+      true
+     ],
+     "invisible": [
+      true,
+      true
+     ],
+     "parked": true
+    },
+    "contacts_with_obstacle_at_t0": {
+     "visible": 0,
+     "invisible": 0
+    },
+    "policy_images_vs_clear": {
+     "visible": {
+      "cam_high": {
+       "n_values_diff": 1764,
+       "max_abs": 212
+      },
+      "cam_left_wrist": {
+       "n_values_diff": 23176,
+       "max_abs": 223
+      },
+      "cam_right_wrist": {
+       "n_values_diff": 0,
+       "max_abs": 0
+      }
+     },
+     "invisible": {
+      "cam_high": {
+       "n_values_diff": 115,
+       "max_abs": 17
+      },
+      "cam_left_wrist": {
+       "n_values_diff": 3,
+       "max_abs": 1
+      },
+      "cam_right_wrist": {
+       "n_values_diff": 0,
+       "max_abs": 0
+      }
+     },
+     "parked": {
+      "cam_high": 115,
+      "cam_left_wrist": 3,
+      "cam_right_wrist": 0
+     }
+    },
+    "policy_images_invisible_vs_parked": {
+     "cam_high": 0,
+     "cam_left_wrist": 0,
+     "cam_right_wrist": 0
+    },
+    "depth_invisible_vs_parked_n_pixels_diff": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "depth_invisible_vs_visible_n_pixels_diff": {
+     "zed_left": 2473,
+     "wrist_cam_l": 45294,
+     "wrist_cam_r": 0
+    },
+    "depth_vs_clear_max_abs_m": {
+     "visible": {
+      "zed_left": 2.184748113155365,
+      "wrist_cam_l": 2.7710544783622026,
+      "wrist_cam_r": 1.9073486328125e-06
+     },
+     "invisible": {
+      "zed_left": 2.8848648071289062e-05,
+      "wrist_cam_l": 1.3589859008789062e-05,
+      "wrist_cam_r": 1.9073486328125e-06
+     }
+    },
+    "collision_geoms_active_invisible": {
+     "slot": "hurdle_0",
+     "collision_geoms": [
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_foot_left",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_foot_right",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_sleeve_left",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_sleeve_right",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_bar",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_post_left",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_post_right",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      }
+     ],
+     "visual_geoms_rgba": [
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     ],
+     "moved_onto_fruit": {
+      "fruit": "orange",
+      "n_contacts_obstacle_fruit": 0,
+      "object_clearance_m": -0.03546930328013746
+     }
+    }
+   },
+   "983": {
+    "model_stat_extent": {
+     "clear": 22.62741708635787,
+     "obstacle_model": 26.145238007558593
+    },
+    "model_stat_center": {
+     "clear": [
+      0.3000000000000007,
+      -0.3000000000000007,
+      0.0
+     ],
+     "obstacle_model": [
+      2.0589104606003623,
+      -0.3000000000000007,
+      0.0
+     ]
+    },
+    "qpos_qvel_t0_equal_clear": {
+     "visible": [
+      true,
+      true
+     ],
+     "invisible": [
+      true,
+      true
+     ],
+     "parked": true
+    },
+    "contacts_with_obstacle_at_t0": {
+     "visible": 0,
+     "invisible": 0
+    },
+    "policy_images_vs_clear": {
+     "visible": {
+      "cam_high": {
+       "n_values_diff": 1700,
+       "max_abs": 214
+      },
+      "cam_left_wrist": {
+       "n_values_diff": 19197,
+       "max_abs": 239
+      },
+      "cam_right_wrist": {
+       "n_values_diff": 6,
+       "max_abs": 1
+      }
+     },
+     "invisible": {
+      "cam_high": {
+       "n_values_diff": 127,
+       "max_abs": 8
+      },
+      "cam_left_wrist": {
+       "n_values_diff": 38,
+       "max_abs": 1
+      },
+      "cam_right_wrist": {
+       "n_values_diff": 6,
+       "max_abs": 1
+      }
+     },
+     "parked": {
+      "cam_high": 127,
+      "cam_left_wrist": 38,
+      "cam_right_wrist": 6
+     }
+    },
+    "policy_images_invisible_vs_parked": {
+     "cam_high": 0,
+     "cam_left_wrist": 0,
+     "cam_right_wrist": 0
+    },
+    "depth_invisible_vs_parked_n_pixels_diff": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "depth_invisible_vs_visible_n_pixels_diff": {
+     "zed_left": 2345,
+     "wrist_cam_l": 36884,
+     "wrist_cam_r": 0
+    },
+    "depth_vs_clear_max_abs_m": {
+     "visible": {
+      "zed_left": 1.758274793624878,
+      "wrist_cam_l": 1.9765783101320267,
+      "wrist_cam_r": 8.344650268554688e-06
+     },
+     "invisible": {
+      "zed_left": 6.270408630371094e-05,
+      "wrist_cam_l": 1.6689300537109375e-06,
+      "wrist_cam_r": 8.344650268554688e-06
+     }
+    },
+    "collision_geoms_active_invisible": {
+     "slot": "hurdle_0",
+     "collision_geoms": [
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_foot_left",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_foot_right",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_sleeve_left",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_sleeve_right",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_bar",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_post_left",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_post_right",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      }
+     ],
+     "visual_geoms_rgba": [
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     ],
+     "moved_onto_fruit": {
+      "fruit": "pear",
+      "n_contacts_obstacle_fruit": 1,
+      "object_clearance_m": -0.040021270629307444
+     }
+    }
+   },
+   "1215": {
+    "model_stat_extent": {
+     "clear": 22.62741708635787,
+     "obstacle_model": 26.145238007558593
+    },
+    "model_stat_center": {
+     "clear": [
+      0.3000000000000007,
+      -0.3000000000000007,
+      0.0
+     ],
+     "obstacle_model": [
+      2.0589104606003623,
+      -0.3000000000000007,
+      0.0
+     ]
+    },
+    "qpos_qvel_t0_equal_clear": {
+     "visible": [
+      true,
+      true
+     ],
+     "invisible": [
+      true,
+      true
+     ],
+     "parked": true
+    },
+    "contacts_with_obstacle_at_t0": {
+     "visible": 0,
+     "invisible": 0
+    },
+    "policy_images_vs_clear": {
+     "visible": {
+      "cam_high": {
+       "n_values_diff": 1814,
+       "max_abs": 212
+      },
+      "cam_left_wrist": {
+       "n_values_diff": 3,
+       "max_abs": 1
+      },
+      "cam_right_wrist": {
+       "n_values_diff": 22478,
+       "max_abs": 227
+      }
+     },
+     "invisible": {
+      "cam_high": {
+       "n_values_diff": 130,
+       "max_abs": 13
+      },
+      "cam_left_wrist": {
+       "n_values_diff": 3,
+       "max_abs": 1
+      },
+      "cam_right_wrist": {
+       "n_values_diff": 9,
+       "max_abs": 1
+      }
+     },
+     "parked": {
+      "cam_high": 130,
+      "cam_left_wrist": 3,
+      "cam_right_wrist": 9
+     }
+    },
+    "policy_images_invisible_vs_parked": {
+     "cam_high": 0,
+     "cam_left_wrist": 0,
+     "cam_right_wrist": 0
+    },
+    "depth_invisible_vs_parked_n_pixels_diff": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "depth_invisible_vs_visible_n_pixels_diff": {
+     "zed_left": 2607,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 43786
+    },
+    "depth_vs_clear_max_abs_m": {
+     "visible": {
+      "zed_left": 1.8366527557373047,
+      "wrist_cam_l": 6.4373016357421875e-06,
+      "wrist_cam_r": 2.5305762887001038
+     },
+     "invisible": {
+      "zed_left": 9.250640869140625e-05,
+      "wrist_cam_l": 6.4373016357421875e-06,
+      "wrist_cam_r": 1.6689300537109375e-06
+     }
+    },
+    "collision_geoms_active_invisible": {
+     "slot": "hurdle_0",
+     "collision_geoms": [
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_foot_left",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_foot_right",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_sleeve_left",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_sleeve_right",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_bar",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_post_left",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      },
+      {
+       "geom": "pick_obstacle_hurdle_0_collision_post_right",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      }
+     ],
+     "visual_geoms_rgba": [
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     ],
+     "moved_onto_fruit": {
+      "fruit": "pear",
+      "n_contacts_obstacle_fruit": 1,
+      "object_clearance_m": -0.04017991407328734
+     }
+    }
+   },
+   "1834": {
+    "model_stat_extent": {
+     "clear": 22.62741708635787,
+     "obstacle_model": 26.145238007558593
+    },
+    "model_stat_center": {
+     "clear": [
+      0.3000000000000007,
+      -0.3000000000000007,
+      0.0
+     ],
+     "obstacle_model": [
+      2.0589104606003623,
+      -0.3000000000000007,
+      0.0
+     ]
+    },
+    "qpos_qvel_t0_equal_clear": {
+     "visible": [
+      true,
+      true
+     ],
+     "invisible": [
+      true,
+      true
+     ],
+     "parked": true
+    },
+    "contacts_with_obstacle_at_t0": {
+     "visible": 0,
+     "invisible": 0
+    },
+    "policy_images_vs_clear": {
+     "visible": {
+      "cam_high": {
+       "n_values_diff": 858,
+       "max_abs": 212
+      },
+      "cam_left_wrist": {
+       "n_values_diff": 3,
+       "max_abs": 1
+      },
+      "cam_right_wrist": {
+       "n_values_diff": 0,
+       "max_abs": 0
+      }
+     },
+     "invisible": {
+      "cam_high": {
+       "n_values_diff": 134,
+       "max_abs": 17
+      },
+      "cam_left_wrist": {
+       "n_values_diff": 3,
+       "max_abs": 1
+      },
+      "cam_right_wrist": {
+       "n_values_diff": 0,
+       "max_abs": 0
+      }
+     },
+     "parked": {
+      "cam_high": 134,
+      "cam_left_wrist": 3,
+      "cam_right_wrist": 0
+     }
+    },
+    "policy_images_invisible_vs_parked": {
+     "cam_high": 0,
+     "cam_left_wrist": 0,
+     "cam_right_wrist": 0
+    },
+    "depth_invisible_vs_parked_n_pixels_diff": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "depth_invisible_vs_visible_n_pixels_diff": {
+     "zed_left": 1073,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "depth_vs_clear_max_abs_m": {
+     "visible": {
+      "zed_left": 0.3461093604564667,
+      "wrist_cam_l": 5.0067901611328125e-06,
+      "wrist_cam_r": 5.245208740234375e-06
+     },
+     "invisible": {
+      "zed_left": 7.796287536621094e-05,
+      "wrist_cam_l": 5.0067901611328125e-06,
+      "wrist_cam_r": 5.245208740234375e-06
+     }
+    },
+    "collision_geoms_active_invisible": {
+     "slot": "crate_post_0",
+     "collision_geoms": [
+      {
+       "geom": "pick_obstacle_crate_post_0_collision",
+       "contype": 1,
+       "conaffinity": 1,
+       "group": 3,
+       "rgba": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+       ]
+      }
+     ],
+     "visual_geoms_rgba": [
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     ],
+     "moved_onto_fruit": {
+      "fruit": "apple",
+      "n_contacts_obstacle_fruit": 2,
+      "object_clearance_m": -0.04695195356802201
+     }
+    }
+   }
+  },
+  "runs": {
+   "E0/invis/E0_ep1215_s12151": {
+    "cond": "E0",
+    "kind": "invis",
+    "episode": 1215,
+    "seed": 12151,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "obstacle_stop": false,
+    "stop_t": null,
+    "stop_phase": null,
+    "lift_t": null,
+    "client_contact": {
+     "robot_collision": false,
+     "payload_collision": false,
+     "contact_steps": 0,
+     "contact_pairs": []
+    },
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "vs_T42_1_no_obstacle": {
+     "other": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1215_s12151",
+     "n_compared": 600,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.005404838638622733,
+     "actions_reference_seq1_diff_max_abs": null,
+     "qpos_t0_equal": true
+    },
+    "vs_visible_place_run": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep1215_s12151",
+     "n_compared": 600,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.12470870329410477,
+     "actions_reference_seq1_diff_max_abs": null,
+     "qpos_t0_equal": true
+    },
+    "vs_clear42c": null,
+    "ag3s_raw_cloud_on_obstacle_no_obstacle_twin_virtual": null,
+    "ag3s_raw_cloud_on_obstacle_invisible": null,
+    "ag3s_raw_cloud_on_obstacle_visible_place_run": null
+   },
+   "E0/invis/E0_ep1830_s18301": {
+    "cond": "E0",
+    "kind": "invis",
+    "episode": 1830,
+    "seed": 18301,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 120,
+    "place_t": null,
+    "obstacle_stop": true,
+    "stop_t": 142,
+    "stop_phase": "carry",
+    "lift_t": 108,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 1,
+     "contact_pairs": [
+      [
+       "geom#1050",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ]
+    },
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "vs_T42_1_no_obstacle": {
+     "other": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1830_s18301",
+     "n_compared": 143,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.004070039200448017,
+     "actions_reference_seq1_diff_max_abs": null,
+     "qpos_t0_equal": true
+    },
+    "vs_visible_place_run": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep1830_s18301",
+     "n_compared": 143,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 1,
+     "first_chunk_diff_max_abs": 0.1360428379822718,
+     "actions_reference_seq1_diff_max_abs": null,
+     "qpos_t0_equal": true
+    },
+    "vs_clear42c": null,
+    "ag3s_raw_cloud_on_obstacle_no_obstacle_twin_virtual": null,
+    "ag3s_raw_cloud_on_obstacle_invisible": null,
+    "ag3s_raw_cloud_on_obstacle_visible_place_run": null
+   },
+   "E0/invis/E0_ep1834_s18341": {
+    "cond": "E0",
+    "kind": "invis",
+    "episode": 1834,
+    "seed": 18341,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 192,
+    "place_t": null,
+    "obstacle_stop": true,
+    "stop_t": 271,
+    "stop_phase": "carry",
+    "lift_t": 182,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 1,
+     "contact_pairs": [
+      [
+       "geom#626",
+       "pick_obstacle_crate_post_0_collision"
+      ]
+     ]
+    },
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "vs_T42_1_no_obstacle": {
+     "other": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1834_s18341",
+     "n_compared": 272,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 4,
+     "first_chunk_diff_max_abs": 0.0031793168462486143,
+     "actions_reference_seq1_diff_max_abs": null,
+     "qpos_t0_equal": true
+    },
+    "vs_visible_place_run": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep1834_s18341",
+     "n_compared": 180,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.03815180215498448,
+     "actions_reference_seq1_diff_max_abs": null,
+     "qpos_t0_equal": true
+    },
+    "vs_clear42c": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/clear42c/E0_ep1834_s18341",
+     "n_compared": 272,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 4,
+     "first_chunk_diff_max_abs": 0.0031793168462486143,
+     "actions_reference_seq1_diff_max_abs": null,
+     "qpos_t0_equal": true
+    },
+    "ag3s_raw_cloud_on_obstacle_no_obstacle_twin_virtual": null,
+    "ag3s_raw_cloud_on_obstacle_invisible": null,
+    "ag3s_raw_cloud_on_obstacle_visible_place_run": null
+   },
+   "E0/invis/E0_ep983_s9831": {
+    "cond": "E0",
+    "kind": "invis",
+    "episode": 983,
+    "seed": 9831,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "obstacle_stop": false,
+    "stop_t": null,
+    "stop_phase": null,
+    "lift_t": null,
+    "client_contact": {
+     "robot_collision": false,
+     "payload_collision": false,
+     "contact_steps": 0,
+     "contact_pairs": []
+    },
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "vs_T42_1_no_obstacle": {
+     "other": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep983_s9831",
+     "n_compared": 600,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 4,
+     "first_chunk_diff_max_abs": 0.0050875490005599655,
+     "actions_reference_seq1_diff_max_abs": null,
+     "qpos_t0_equal": true
+    },
+    "vs_visible_place_run": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep983_s9831",
+     "n_compared": 600,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.07860601850667381,
+     "actions_reference_seq1_diff_max_abs": null,
+     "qpos_t0_equal": true
+    },
+    "vs_clear42c": null,
+    "ag3s_raw_cloud_on_obstacle_no_obstacle_twin_virtual": null,
+    "ag3s_raw_cloud_on_obstacle_invisible": null,
+    "ag3s_raw_cloud_on_obstacle_visible_place_run": null
+   },
+   "E0/clear42c/E0_ep1834_s18341": {
+    "cond": "E0",
+    "kind": "clear42c",
+    "episode": 1834,
+    "seed": 18341,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 144,
+    "place_t": 216,
+    "obstacle_stop": null,
+    "stop_t": null,
+    "stop_phase": null,
+    "lift_t": null,
+    "client_contact": null,
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "vs_T42_1_no_obstacle": {
+     "other": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1834_s18341",
+     "n_compared": 600,
+     "first_step_diff_gt0": null,
+     "first_step_diff_gt_1e-3": null,
+     "first_chunk_diff_max_abs": 0.0,
+     "actions_reference_seq1_diff_max_abs": null,
+     "qpos_t0_equal": true
+    },
+    "vs_visible_place_run": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep1834_s18341",
+     "n_compared": 180,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.03942352889348388,
+     "actions_reference_seq1_diff_max_abs": null,
+     "qpos_t0_equal": true
+    },
+    "vs_clear42c": null,
+    "ag3s_raw_cloud_on_obstacle_no_obstacle_twin_virtual": null,
+    "ag3s_raw_cloud_on_obstacle_invisible": null,
+    "ag3s_raw_cloud_on_obstacle_visible_place_run": null
+   },
+   "E3b/invis/E3b_ep1215_s12151": {
+    "cond": "E3b",
+    "kind": "invis",
+    "episode": 1215,
+    "seed": 12151,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 168,
+    "place_t": null,
+    "obstacle_stop": true,
+    "stop_t": 199,
+    "stop_phase": "carry",
+    "lift_t": 147,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": true,
+     "contact_steps": 4,
+     "contact_pairs": [
+      [
+       "geom#765",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ],
+      [
+       "pear_geom",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ]
+    },
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "vs_T42_1_no_obstacle": {
+     "other": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1215_s12151",
+     "n_compared": 200,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.005404829978942871,
+     "actions_reference_seq1_diff_max_abs": 0.005404829978942871,
+     "qpos_t0_equal": true
+    },
+    "vs_visible_place_run": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep1215_s12151",
+     "n_compared": 200,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.12470865249633789,
+     "actions_reference_seq1_diff_max_abs": 0.12470865249633789,
+     "qpos_t0_equal": true
+    },
+    "vs_clear42c": null,
+    "ag3s_raw_cloud_on_obstacle_no_obstacle_twin_virtual": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 36857,
+      "n_within_15mm_of_obstacle": 146
+     },
+     "max_over_chunks": 218,
+     "n_chunks": 75,
+     "n_chunks_with_points_on_obstacle": 75
+    },
+    "ag3s_raw_cloud_on_obstacle_invisible": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 36857,
+      "n_within_15mm_of_obstacle": 146
+     },
+     "max_over_chunks": 223,
+     "n_chunks": 25,
+     "n_chunks_with_points_on_obstacle": 25
+    },
+    "ag3s_raw_cloud_on_obstacle_visible_place_run": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 36844,
+      "n_within_15mm_of_obstacle": 615
+     },
+     "max_over_chunks": 831,
+     "n_chunks": 75,
+     "n_chunks_with_points_on_obstacle": 75
+    }
+   },
+   "E3b/invis/E3b_ep1830_s18301": {
+    "cond": "E3b",
+    "kind": "invis",
+    "episode": 1830,
+    "seed": 18301,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 176,
+    "place_t": null,
+    "obstacle_stop": true,
+    "stop_t": 201,
+    "stop_phase": "carry",
+    "lift_t": 161,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 1,
+     "contact_pairs": [
+      [
+       "geom#1050",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ]
+    },
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "vs_T42_1_no_obstacle": {
+     "other": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1830_s18301",
+     "n_compared": 202,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.0040700435638427734,
+     "actions_reference_seq1_diff_max_abs": 0.0040700435638427734,
+     "qpos_t0_equal": true
+    },
+    "vs_visible_place_run": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep1830_s18301",
+     "n_compared": 202,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 1,
+     "first_chunk_diff_max_abs": 0.13604283332824707,
+     "actions_reference_seq1_diff_max_abs": 0.13604283332824707,
+     "qpos_t0_equal": true
+    },
+    "vs_clear42c": null,
+    "ag3s_raw_cloud_on_obstacle_no_obstacle_twin_virtual": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 36756,
+      "n_within_15mm_of_obstacle": 123
+     },
+     "max_over_chunks": 172,
+     "n_chunks": 75,
+     "n_chunks_with_points_on_obstacle": 75
+    },
+    "ag3s_raw_cloud_on_obstacle_invisible": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 36756,
+      "n_within_15mm_of_obstacle": 123
+     },
+     "max_over_chunks": 174,
+     "n_chunks": 26,
+     "n_chunks_with_points_on_obstacle": 26
+    },
+    "ag3s_raw_cloud_on_obstacle_visible_place_run": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 36817,
+      "n_within_15mm_of_obstacle": 600
+     },
+     "max_over_chunks": 731,
+     "n_chunks": 37,
+     "n_chunks_with_points_on_obstacle": 37
+    }
+   },
+   "E3b/invis/E3b_ep1834_s18341": {
+    "cond": "E3b",
+    "kind": "invis",
+    "episode": 1834,
+    "seed": 18341,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 184,
+    "place_t": null,
+    "obstacle_stop": true,
+    "stop_t": 261,
+    "stop_phase": "carry",
+    "lift_t": 169,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 2,
+     "contact_pairs": [
+      [
+       "geom#626",
+       "pick_obstacle_crate_post_0_collision"
+      ]
+     ]
+    },
+    "holds": {
+     "hold_t": [
+      128,
+      136,
+      144,
+      152,
+      160
+     ],
+     "n_hold": 5,
+     "hold_kinds": {
+      "unverified": 5
+     },
+     "max_consecutive_hold": 5
+    },
+    "vs_T42_1_no_obstacle": {
+     "other": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1834_s18341",
+     "n_compared": 262,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 4,
+     "first_chunk_diff_max_abs": 0.003179311752319336,
+     "actions_reference_seq1_diff_max_abs": 0.003179311752319336,
+     "qpos_t0_equal": true
+    },
+    "vs_visible_place_run": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep1834_s18341",
+     "n_compared": 259,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.03815180063247681,
+     "actions_reference_seq1_diff_max_abs": 0.03815180063247681,
+     "qpos_t0_equal": true
+    },
+    "vs_clear42c": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/clear42c/E3b_ep1834_s18341",
+     "n_compared": 262,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 4,
+     "first_chunk_diff_max_abs": 0.003179311752319336,
+     "actions_reference_seq1_diff_max_abs": 0.003179311752319336,
+     "qpos_t0_equal": true
+    },
+    "ag3s_raw_cloud_on_obstacle_no_obstacle_twin_virtual": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 35288,
+      "n_within_15mm_of_obstacle": 29
+     },
+     "max_over_chunks": 55,
+     "n_chunks": 75,
+     "n_chunks_with_points_on_obstacle": 75
+    },
+    "ag3s_raw_cloud_on_obstacle_invisible": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 35288,
+      "n_within_15mm_of_obstacle": 29
+     },
+     "max_over_chunks": 56,
+     "n_chunks": 33,
+     "n_chunks_with_points_on_obstacle": 33
+    },
+    "ag3s_raw_cloud_on_obstacle_visible_place_run": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 35403,
+      "n_within_15mm_of_obstacle": 165
+     },
+     "max_over_chunks": 337,
+     "n_chunks": 33,
+     "n_chunks_with_points_on_obstacle": 33
+    }
+   },
+   "E3b/invis/E3b_ep983_s9831": {
+    "cond": "E3b",
+    "kind": "invis",
+    "episode": 983,
+    "seed": 9831,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 208,
+    "place_t": null,
+    "obstacle_stop": true,
+    "stop_t": 244,
+    "stop_phase": "carry",
+    "lift_t": 154,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 3,
+     "contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ]
+    },
+    "holds": {
+     "hold_t": [
+      160,
+      168,
+      176,
+      184,
+      192
+     ],
+     "n_hold": 5,
+     "hold_kinds": {
+      "unverified": 1,
+      "collision": 5
+     },
+     "max_consecutive_hold": 5
+    },
+    "vs_T42_1_no_obstacle": {
+     "other": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep983_s9831",
+     "n_compared": 245,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 4,
+     "first_chunk_diff_max_abs": 0.005087614059448242,
+     "actions_reference_seq1_diff_max_abs": 0.005087614059448242,
+     "qpos_t0_equal": true
+    },
+    "vs_visible_place_run": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep983_s9831",
+     "n_compared": 245,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.0786060094833374,
+     "actions_reference_seq1_diff_max_abs": 0.0786060094833374,
+     "qpos_t0_equal": true
+    },
+    "vs_clear42c": null,
+    "ag3s_raw_cloud_on_obstacle_no_obstacle_twin_virtual": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 36888,
+      "n_within_15mm_of_obstacle": 201
+     },
+     "max_over_chunks": 204,
+     "n_chunks": 75,
+     "n_chunks_with_points_on_obstacle": 75
+    },
+    "ag3s_raw_cloud_on_obstacle_invisible": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 36887,
+      "n_within_15mm_of_obstacle": 201
+     },
+     "max_over_chunks": 201,
+     "n_chunks": 31,
+     "n_chunks_with_points_on_obstacle": 31
+    },
+    "ag3s_raw_cloud_on_obstacle_visible_place_run": {
+     "n_segments_matching": 1,
+     "chunk1": {
+      "seq": 1,
+      "t": 0,
+      "n_points": 36886,
+      "n_within_15mm_of_obstacle": 587
+     },
+     "max_over_chunks": 680,
+     "n_chunks": 47,
+     "n_chunks_with_points_on_obstacle": 47
+    }
+   },
+   "E3b/clear42c/E3b_ep1834_s18341": {
+    "cond": "E3b",
+    "kind": "clear42c",
+    "episode": 1834,
+    "seed": 18341,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 128,
+    "place_t": 208,
+    "obstacle_stop": null,
+    "stop_t": null,
+    "stop_phase": null,
+    "lift_t": null,
+    "client_contact": null,
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "vs_T42_1_no_obstacle": {
+     "other": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1834_s18341",
+     "n_compared": 600,
+     "first_step_diff_gt0": null,
+     "first_step_diff_gt_1e-3": null,
+     "first_chunk_diff_max_abs": 0.0,
+     "actions_reference_seq1_diff_max_abs": 0.0,
+     "qpos_t0_equal": true
+    },
+    "vs_visible_place_run": {
+     "other": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep1834_s18341",
+     "n_compared": 259,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "first_chunk_diff_max_abs": 0.03942352533340454,
+     "actions_reference_seq1_diff_max_abs": 0.03942352533340454,
+     "qpos_t0_equal": true
+    },
+    "vs_clear42c": null,
+    "ag3s_raw_cloud_on_obstacle_no_obstacle_twin_virtual": null,
+    "ag3s_raw_cloud_on_obstacle_invisible": null,
+    "ag3s_raw_cloud_on_obstacle_visible_place_run": null
+   }
+  },
+  "figure": {
+   "path": "benchmark/ag3s/docs/figures/t42/t42-2-invisible-diag.png",
+   "kind": "graph+table",
+   "sidecar": "benchmark/ag3s/docs/figures/t42/t42-2-invisible-diag.json"
+  }
+ }
 }

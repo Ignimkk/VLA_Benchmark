@@ -1,0 +1,299 @@
+{
+ "definitions": "T42-2 invisible-obstacle diagnostic figure + T42-2.verify.json key 'invisible_diag' (verifier).\nusage: fig_invis.py   (reads invis_diag.json, analysis_place1.json, raw/invis/probe_<EP>.json)\nleft  : first-chunk difference max |predicted_chunks[0] - twin| (rad, log) per episode, E3b (E0 identical first chunk), for\n        visible obstacle / invisible obstacle (rgba alpha 0) / no obstacle on snapshot work-t42c (ep1834 only); twin = T42-1 run.\nmiddle: policy-image pixel values that differ from the clear model at the first observation (offline render_probe), for the visible\n        obstacle, the invisible obstacle and the parked obstacle model (no active slot), summed over the 3 policy cameras.\nright : AG3S raw_cloud points within 15 mm of the obstacle volume (max over the run's E3b chunks): no-obstacle twin (virtual\n        placement, = other surfaces near that volume), invisible run, visible run.\ntable : per run first divergent control step (|diff| > 1e-3) vs the twin, outcome, obstacle stop phase / t.",
+ "episodes": [
+  1830,
+  983,
+  1215,
+  1834
+ ],
+ "first_chunk_diff_E3b": {
+  "visible": [
+   0.13604283332824707,
+   0.07544037699699402,
+   0.12152934074401855,
+   0.03942352533340454
+  ],
+  "invisible": [
+   0.0040700435638427734,
+   0.005087614059448242,
+   0.005404829978942871,
+   0.003179311752319336
+  ],
+  "clear_work_t42c": [
+   null,
+   null,
+   null,
+   0.0
+  ]
+ },
+ "policy_image_values_diff_vs_clear": {
+  "visible": [
+   24940,
+   20903,
+   24295,
+   861
+  ],
+  "invisible": [
+   118,
+   171,
+   142,
+   137
+  ],
+  "parked": [
+   118,
+   171,
+   142,
+   137
+  ]
+ },
+ "ag3s_cloud_points_within_15mm": {
+  "no_obstacle_virtual": [
+   172,
+   204,
+   218,
+   55
+  ],
+  "invisible": [
+   174,
+   201,
+   223,
+   56
+  ],
+  "visible": [
+   731,
+   680,
+   831,
+   337
+  ]
+ },
+ "table_columns": [
+  "ep",
+  "cond",
+  "obstacle",
+  "first div step vs twin",
+  "success",
+  "grasp",
+  "place",
+  "stop phase / t",
+  "lift t",
+  "contact"
+ ],
+ "table_rows": [
+  [
+   "1830",
+   "E0",
+   "visible",
+   "1",
+   "N",
+   "N",
+   "N",
+   "before_lift / 196",
+   "None",
+   "geom#1050-pick_obstacle_hurdle_0_collision_bar"
+  ],
+  [
+   "1830",
+   "E0",
+   "invisible",
+   "0",
+   "N",
+   "Y",
+   "N",
+   "carry / 142",
+   "108",
+   "geom#1050-pick_obstacle_hurdle_0_collision_bar"
+  ],
+  [
+   "1830",
+   "E3b",
+   "visible",
+   "1",
+   "N",
+   "N",
+   "N",
+   "before_lift / 295",
+   "None",
+   "geom#1053-pick_obstacle_hurdle_0_collision_bar"
+  ],
+  [
+   "1830",
+   "E3b",
+   "invisible",
+   "0",
+   "N",
+   "Y",
+   "N",
+   "carry / 201",
+   "161",
+   "geom#1050-pick_obstacle_hurdle_0_collision_bar"
+  ],
+  [
+   "983",
+   "E0",
+   "visible",
+   "0",
+   "N",
+   "N",
+   "N",
+   "-",
+   "None",
+   "none"
+  ],
+  [
+   "983",
+   "E0",
+   "invisible",
+   "4",
+   "N",
+   "N",
+   "N",
+   "-",
+   "None",
+   "none"
+  ],
+  [
+   "983",
+   "E3b",
+   "visible",
+   "0",
+   "N",
+   "N",
+   "N",
+   "before_lift / 369",
+   "None",
+   "geom#1079-pick_obstacle_hurdle_0_collision_bar"
+  ],
+  [
+   "983",
+   "E3b",
+   "invisible",
+   "4",
+   "N",
+   "Y",
+   "N",
+   "carry / 244",
+   "154",
+   "geom#1086-pick_obstacle_hurdle_0_collision_bar"
+  ],
+  [
+   "1215",
+   "E0",
+   "visible",
+   "0",
+   "N",
+   "N",
+   "N",
+   "-",
+   "None",
+   "none"
+  ],
+  [
+   "1215",
+   "E0",
+   "invisible",
+   "0",
+   "N",
+   "N",
+   "N",
+   "-",
+   "None",
+   "none"
+  ],
+  [
+   "1215",
+   "E3b",
+   "visible",
+   "0",
+   "N",
+   "N",
+   "N",
+   "-",
+   "None",
+   "none"
+  ],
+  [
+   "1215",
+   "E3b",
+   "invisible",
+   "0",
+   "N",
+   "Y",
+   "N",
+   "carry / 199",
+   "147",
+   "geom#765-pick_obstacle_hurdle_0_collision_bar; pear_geom-pick_obstacle_hurdle_0_collision_bar"
+  ],
+  [
+   "1834",
+   "E0",
+   "visible",
+   "0",
+   "N",
+   "Y",
+   "N",
+   "carry / 179",
+   "135",
+   "geom#765-pick_obstacle_crate_post_0_collision"
+  ],
+  [
+   "1834",
+   "E0",
+   "invisible",
+   "4",
+   "N",
+   "Y",
+   "N",
+   "carry / 271",
+   "182",
+   "geom#626-pick_obstacle_crate_post_0_collision"
+  ],
+  [
+   "1834",
+   "E3b",
+   "visible",
+   "0",
+   "Y",
+   "Y",
+   "Y",
+   "after / 258",
+   "186",
+   "geom#731-pick_obstacle_crate_post_0_collision"
+  ],
+  [
+   "1834",
+   "E3b",
+   "invisible",
+   "4",
+   "N",
+   "Y",
+   "N",
+   "carry / 261",
+   "169",
+   "geom#626-pick_obstacle_crate_post_0_collision"
+  ],
+  [
+   "1834",
+   "E0",
+   "none (work-t42c)",
+   "None",
+   "Y",
+   "Y",
+   "Y",
+   "-",
+   "-",
+   "-"
+  ],
+  [
+   "1834",
+   "E3b",
+   "none (work-t42c)",
+   "None",
+   "Y",
+   "Y",
+   "Y",
+   "-",
+   "-",
+   "-"
+  ]
+ ]
+}
