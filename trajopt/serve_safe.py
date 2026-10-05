@@ -935,6 +935,14 @@ def build_parser() -> argparse.ArgumentParser:
                          "`d_esdf(p) - 구반지름 - 이 값 >= 0` 이므로, 구 반지름 81 mm 와 합치면 "
                          "중심에서 131 mm 자유공간을 요구한다 (T6d). **기본값은 안 바꿨다** — "
                          "이 flag 로 조절한다")
+    ap.add_argument("--obstacle-margin", type=float, default=0.0, metavar="M",
+                    help="T41 a — **target 이 아닌 장애물에만** 붙는 여유거리 (m). 기본 0 = 꺼짐 "
+                         "(동작이 예전과 같다). 켜면 손 구 행 중 최근접 표면이 조작 대상(사과)도 "
+                         "지지면(테이블·바닥)도 아닌 행만 `max(--esdf-margin, M)` 을 받는다. 쥔 "
+                         "물체 행·target 행은 0 그대로. 질의 구는 키우지 않는다. 시험값 0.010")
+    ap.add_argument("--obstacle-margin-support", action="store_true",
+                    help="T41 a — 지지면(테이블·바닥)에도 --obstacle-margin 을 건다. 기본은 "
+                         "제외 (파지하려면 손가락이 테이블 가까이 가야 한다). ablation 용")
     ap.add_argument("--plan-horizon", default="execution",
                     metavar="execution|full|N",
                     help="최적화기가 **다듬는** 스텝 수. 기본 `execution` = 실행되는 창만 "
@@ -1402,6 +1410,22 @@ def announce_sqp_budget(sqp_config) -> None:
                     "(best_unaccepted)가 나간다 — T24 규칙")
 
 
+def obstacle_overrides(args) -> dict:
+    """`--obstacle-margin` · `--obstacle-margin-support` → `collision` 의 키 (T41 a). 안 줬으면 `{}`."""
+    out: dict = {}
+    margin = float(getattr(args, "obstacle_margin", 0.0) or 0.0)
+    if not margin >= 0.0:
+        raise SystemExit(f"--obstacle-margin 은 0 이상이어야 합니다: {margin}")
+    if margin > 0.0:
+        out["obstacle_margin"] = margin
+    if getattr(args, "obstacle_margin_support", False):
+        if margin <= 0.0:
+            raise SystemExit("--obstacle-margin-support 는 --obstacle-margin M (> 0) 과 함께 줘야 "
+                             "합니다 — 혼자서는 아무 일도 하지 않습니다")
+        out["obstacle_margin_support"] = True
+    return out
+
+
 def trajopt_config_from_args(args):
     """CLI → `TrajOptConfig`. `SafePolicy` 경로와 `--no-perception` 경로가 **같은 함수**를 쓴다.
 
@@ -1418,6 +1442,8 @@ def trajopt_config_from_args(args):
     return TrajOptConfig.from_dict({
         "collision": {"backend": "esdf", "esdf_margin": args.esdf_margin,
                       "use_support_planes": False,
+                      # T41 a — 준 것만 넣는다 (기본 off 면 키가 없다).
+                      **obstacle_overrides(args),
                       # **기본값을 여기 다시 적지 않는다.** 켠 경우에는 키가 아예 없다.
                       **({"enabled": False} if no_collision else {})},
         **({"cost": weights} if weights else {}),
@@ -1643,6 +1669,12 @@ def main() -> None:
             "예지력이 생기지만 **회피를 미룰 자리도 생긴다** (T6d)")
         logging.info("TO esdf_margin: %.1f mm (구 반지름과 합쳐야 중심 기준 요구 자유공간이다)",
                      to_config.collision.esdf_margin * 1000)
+        if to_config.collision.obstacle_margin > 0.0:
+            logging.warning(
+                "TO obstacle_margin: %.1f mm — target 이 아닌 장애물 행만 max(esdf_margin, 이 값). "
+                "지지면 %s · target · 쥔 물체 행은 제외 (T41 a)",
+                to_config.collision.obstacle_margin * 1000,
+                "포함" if to_config.collision.obstacle_margin_support else "제외")
         announce_collision_switch(to_config.collision.enabled)
         announce_limits_switch(to_config.limits)
         announce_cost_weights(weights)

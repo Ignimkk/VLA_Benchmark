@@ -283,6 +283,11 @@ class SafePolicy:
         # 기본 메타데이터를 T0 때와 같게 두기 위해서다.
         if self.shadow:
             meta["shadow"] = True
+        # T41 a — 같은 규약: 켰을 때만 키가 생긴다 (client 기록에서 어느 설정으로 돌았는지 본다).
+        obstacle_margin = float(getattr(self.to_config.collision, "obstacle_margin", 0.0) or 0.0)
+        if obstacle_margin > 0.0:
+            meta["obstacle_margin_m"] = obstacle_margin
+            meta["obstacle_margin_support"] = bool(self.to_config.collision.obstacle_margin_support)
         return meta
 
     def reset(self) -> None:

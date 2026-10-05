@@ -68,6 +68,12 @@ _EPS = 1e-12
 #: every plane (-1 - k, k < max_support_surfaces), so a consumer can tell the three apart.
 ESDF_SLOT = -99999
 
+#: T41 a — `CollisionLinearizer._obstacle_rows` 의 분류. `obstacle` 만 `obstacle_margin` 을 받는다.
+_OBSTACLE, _TARGET, _SUPPORT, _HELD = 0, 1, 2, 3
+OBSTACLE_CLASSES = ("obstacle", "target", "support", "held")
+#: 지지면 판정 허용오차 = 이 수 × 가장 미세한 계층의 복셀. 근거는 `_obstacle_rows` docstring.
+_SUPPORT_TOL_VOXELS = 2.0
+
 
 @dataclasses.dataclass(frozen=True)
 class SceneSnapshot:
@@ -166,6 +172,22 @@ class SceneSnapshot:
     #: told what the task is, so it cannot know which object is the destination.
     destination_label: Optional[str] = None
     destination_margin: float = 0.0
+    #: **target 이 아닌 장애물에만 붙는 여유거리** (T41 a, m). `0.0`(기본)이면 이 축이 없는 것과
+    #: 같고 `_esdf_clearance` 의 코드 경로가 한 줄도 달라지지 않는다.
+    #:
+    #: 로봇 구 행 중 최근접 표면이 (1) 조작 대상이 아니고 (E1 과 같은 `|d − d_object| ≤ voxel`)
+    #: (2) 지지면(테이블·바닥)이 아닌 (`|d − s_plane| ≤ 2 voxel`) 행만 `max(그 행의 여유, 이 값)`
+    #: 을 받는다. 쥔 물체의 질의점은 받지 않는다 — 그 점들이 곧 target 이다.
+    #: 질의 구를 키우는 것이 아니다 (사용자 지시: 손 구는 최소로) — `d − r ≥ m` 의 `m` 이다.
+    obstacle_margin: float = 0.0
+    #: 지지면도 위 여유를 받는가. 기본 `False` — 파지하려면 손가락이 테이블 가까이 가야 한다
+    #: (T40 B E3b: 테이블이 최근접인 손 행이 3.9–5.0 mm 까지 간다, `T41a.impl.md`).
+    obstacle_margin_support: bool = False
+    #: `(K, 4)` — AG3S 지지면 `[n_x, n_y, n_z, offset]` (`SupportSurface.normal`·`offset`, 단위 법선,
+    #: 자유쪽 `n·p ≥ offset`). **기하 그대로** — `plane_offset` 과 달리 `safety_margin` 을 더하지
+    #: 않았고, `use_support_planes=False` 가 끄는 `plane_active` 와도 무관하다. 위 여유가 "최근접
+    #: 표면이 지지면인가" 를 물을 때만 읽는다. `None` = 지지면 없음 (전부 장애물로 본다).
+    support_planes: Optional[np.ndarray] = None
 
     @property
     def has_esdf(self) -> bool:
@@ -653,6 +675,11 @@ class CollisionLinearizer:
         same distance as the object — and would put the phase margin on *that* surface. Those rows
         get `esdf_margin` (+ the destination rule) and nothing else. Unauthorized rows and `relax`
         (no mask) are untouched. `_target_free_exempt_rows` says which rows.
+
+        **Non-target obstacles can ask for more (T41 a).** With `scene.obstacle_margin > 0` a robot
+        row whose nearest surface is neither the manipulated object nor a support plane gets
+        `max(margin, obstacle_margin)`; target, support and held rows keep what the rules above gave
+        them. `_obstacle_rows` says which. At 0 (default) nothing here runs.
         """
         if scene.esdf is None:
             return np.zeros((centres.shape[0], centres.shape[1], 0))
@@ -723,19 +750,14 @@ class CollisionLinearizer:
             held = np.zeros(centres.shape[:2], bool)
             held[:, self.n_spheres:] = True
             margin = np.where(is_dest & held, float(scene.destination_margin), margin)
-        if scene.manipulated_link_margin is not None:
-            d_object = None
-            if scene.manipulated_spheres is not None and len(scene.manipulated_spheres):
-                # Held object: analytic distance to the union of its spheres, so no surface sampling
-                # sits between the geometry and the test.
-                delta = flat[:, None, :] - scene.manipulated_spheres[None, :, :]
-                d_object = (np.linalg.norm(delta, axis=2)
-                            - scene.manipulated_sphere_radii[None, :]).min(axis=1)
-            elif scene.manipulated_points is not None and len(scene.manipulated_points):
-                from scipy.spatial import cKDTree
-                d_object = cKDTree(scene.manipulated_points).query(flat)[0]
+        obstacle_margin = float(getattr(scene, "obstacle_margin", 0.0) or 0.0)
+        d_object = None
+        if scene.manipulated_link_margin is not None or obstacle_margin > 0.0:
+            d_object = self._manipulated_distance(flat, scene)
             if d_object is not None:
                 d_object = d_object.reshape(centres.shape[:2])
+        if scene.manipulated_link_margin is not None:
+            if d_object is not None:
                 tol = float(scene.esdf.grid.voxel_size)
                 is_object = np.abs(d - d_object) <= tol
                 if exempt is not None:
@@ -749,7 +771,73 @@ class CollisionLinearizer:
                         [per_link, np.full(n_query - per_link.shape[0], float(scene.esdf_margin))]
                     )
                 margin = np.where(is_object, per_link[None, :], margin)
+        if obstacle_margin > 0.0:
+            # T41 a — target 이 아닌 장애물에만 여유. 위의 어느 규칙과도 행이 겹치지 않는다:
+            # E1 의 `is_object` 행은 여기서 target 이고, 목적지 규칙은 쥔 물체 행에만 붙는다.
+            cls = self._obstacle_rows(d, flat, scene, d_object)
+            self._last_obstacle_class = cls
+            margin = np.where(cls == _OBSTACLE, np.maximum(margin, obstacle_margin), margin)
         return (d - radii[None, :] - margin)[..., None]
+
+    @staticmethod
+    def _manipulated_distance(flat: np.ndarray, scene: SceneSnapshot) -> Optional[np.ndarray]:
+        """`(N,)` — 질의점에서 조작 대상까지의 거리. 대상이 없으면 `None`.
+
+        쥔 물체는 구의 합집합까지의 해석적 거리, 아니면 관측 점군까지의 최근접 거리 (F11).
+        """
+        if scene.manipulated_spheres is not None and len(scene.manipulated_spheres):
+            # Held object: analytic distance to the union of its spheres, so no surface sampling
+            # sits between the geometry and the test.
+            delta = flat[:, None, :] - scene.manipulated_spheres[None, :, :]
+            return (np.linalg.norm(delta, axis=2)
+                    - scene.manipulated_sphere_radii[None, :]).min(axis=1)
+        if scene.manipulated_points is not None and len(scene.manipulated_points):
+            from scipy.spatial import cKDTree
+            return cKDTree(scene.manipulated_points).query(flat)[0]
+        return None
+
+    def _obstacle_rows(self, d: np.ndarray, flat: np.ndarray, scene: SceneSnapshot,
+                       d_object: Optional[np.ndarray]) -> np.ndarray:
+        """`(H, n_query)` int8 — 행마다 **최근접 표면이 무엇인가** (T41 a, `OBSTACLE_CLASSES`).
+
+        `obstacle` 만 `obstacle_margin` 을 받는다. 판정은 거리 일치로만 한다 — 라벨 층에 기대지
+        않는 이유는 `CuroboEsdfField.target_free_distance` 의 docstring 과 같다 (값은 삼선형,
+        라벨은 최근접 격자점이라 테이블과 사과가 만나는 파지 자리에서 어긋난다). 그리고 지지면은
+        라벨 층에 실리지 않는다 — 씨앗은 target · destination · 쥔 물체뿐이다 (`pipeline.py` 의
+        `labelled_points`). 지지면은 AG3S 가 평면으로 따로 뽑아 `support_surfaces` 로 싣는다.
+
+        | 순서 | 분류 | 조건 |
+        |---|---|---|
+        | 1 | `held` | 쥔 물체의 질의점 (`n_spheres` 뒤) — 그 점들이 곧 target |
+        | 2 | `target` | `|d − d_object| ≤ voxel` — E1 과 같은 검사. 대상이 없으면 거짓 |
+        | 3 | `support` | 어느 지지면 `k` 에서 `|d − (n_k·p − o_k)| ≤ 2 voxel` (`obstacle_margin_support` 면 건너뜀) |
+        | 4 | `obstacle` | 나머지 |
+
+        **target 검사는 target 없는 계층에 묻는 행에도 한다.** 그 행의 `d` 에는 원래 대상이 없으므로
+        참이 되는 것은 우연(다른 표면이 대상과 같은 거리)이거나, 창 밖이라 대상이 든 합성이 답했을
+        때다. 둘 다 "여유를 안 붙인다" 쪽으로 닫힌다 = T41 전 동작 — target 에 여유가 붙어 손가락이
+        사과에서 밀리는 쪽보다 낫다 (사용자: target 은 0).
+
+        **지지면 허용오차 2 voxel** 은 기록에서 정했다 (T40 G E3b, 31 청크 × 30 000 점): 관측된 테이블
+        위에서 테이블이 최근접인 점의 `|d − s|` 는 5 mm 계층 중앙 3.5 · q90 6.1 mm, 20 mm 계층
+        8.7 · 9.0 mm (TSDF 영교차가 맞춘 평면보다 위에 선다). 10 mm 면 테이블을 95.5 % / 95.8 % 맞히고,
+        장애물이 최근접인 점을 테이블로 잘못 읽는 것은 0.3 % / 4.4 % 다 (5 mm 면 20 mm 계층에서 7 % 만
+        맞힌다). 평면이 무한하므로 테이블 밖에서는 `s < d` 로 갈려 장애물 쪽으로 닫힌다.
+        """
+        tol = float(scene.esdf.grid.voxel_size)
+        cls = np.full(d.shape, _OBSTACLE, np.int8)
+        if d_object is not None:
+            cls[np.abs(d - d_object) <= tol] = _TARGET
+        planes = getattr(scene, "support_planes", None)
+        if planes is not None and not getattr(scene, "obstacle_margin_support", False):
+            planes = np.asarray(planes, np.float64).reshape(-1, 4)
+            if planes.shape[0]:
+                s = flat @ planes[:, :3].T - planes[None, :, 3]               # (N, K) signed
+                near = np.abs(s - d.reshape(-1, 1)) <= _SUPPORT_TOL_VOXELS * tol
+                on_plane = near.any(axis=1).reshape(d.shape)
+                cls[on_plane & (cls == _OBSTACLE)] = _SUPPORT
+        cls[:, self.n_spheres:] = _HELD
+        return cls
 
     def _clearances_from(self, centres: np.ndarray, scene: SceneSnapshot):
         """``(candidate[H, S, M], plane[H, S, K], distance[H, S, M])`` — no ``delta`` array.
@@ -901,6 +989,12 @@ class CollisionLinearizer:
             mask = self._target_free_rows(scene, centres.shape[1])
             out["tier"] = self._esdf_tier(point.reshape(1, 3), scene,
                                           bool(mask is not None and mask[query]))
+            # T41 a — 켜졌을 때만 키가 생긴다 (기본 off 의 기록은 키까지 예전과 같다).
+            # `worst_row` 가 바로 앞에서 부른 `_esdf_clearance` 의 분류다.
+            cls = getattr(self, "_last_obstacle_class", None)
+            if (float(getattr(scene, "obstacle_margin", 0.0) or 0.0) > 0.0 and cls is not None
+                    and esdf_block is not None and cls.shape == esdf_block.shape[:2]):
+                out["obstacle_margin_class"] = OBSTACLE_CLASSES[int(cls[step, query])]
         return out
 
     @staticmethod
@@ -1230,6 +1324,20 @@ def _check_support_surface_invariant(constraint_set, config) -> None:
     )
 
 
+def support_planes_of(constraint_set) -> np.ndarray:
+    """`(K, 4)` — `CollisionConstraintSet.support_surfaces` 의 `[n, offset]` (T41 a).
+
+    AG3S 가 평면으로 뽑은 지지면(테이블·바닥) **그대로**다: `SupportSurface.normal` 은 단위 법선
+    (자유쪽), `offset` 은 `n·p = offset` 의 상수 — `safety_margin` 은 더하지 않는다 (판정은 표면이
+    어디 있는가를 묻는다). 지지면이 없으면 `(0, 4)`.
+    """
+    rows = []
+    for surface in getattr(constraint_set, "support_surfaces", None) or ():
+        n = np.asarray(surface.normal, np.float64).reshape(3)
+        rows.append([n[0], n[1], n[2], float(surface.offset)])
+    return np.asarray(rows, np.float64).reshape(-1, 4)
+
+
 def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
                              config) -> Optional[SceneSnapshot]:
     """AG3S 의 `CollisionConstraintSet` -> 이 optimizer 가 실제로 쓸 `SceneSnapshot`.
@@ -1315,6 +1423,16 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
         per_link = np.asarray(manipulated_link_margin, np.float64).reshape(-1)
         relaxed = per_link < float(per_link.max()) - 1e-12 if per_link.size else per_link.astype(bool)
         target_free_exempt = target_free_mask & relaxed
+    # T41 a — target 이 아닌 장애물에만 붙는 여유. 꺼져 있으면(0, 기본) 지지면도 싣지 않는다 —
+    # 기본 off 의 스냅샷이 필드 하나까지 예전과 같다.
+    collision_cfg = getattr(config, "collision", None)
+    obstacle = {}
+    obstacle_margin = float(getattr(collision_cfg, "obstacle_margin", 0.0) or 0.0)
+    if obstacle_margin > 0.0:
+        obstacle = dict(
+            obstacle_margin=obstacle_margin,
+            obstacle_margin_support=bool(getattr(collision_cfg, "obstacle_margin_support", False)),
+            support_planes=support_planes_of(constraint_set))
     if spec is None:
         # No `ConstraintSpec` at all. With the field that is a complete scene — an ESDF-only frame
         # never builds the primitive parameter vector — so return a field-only snapshot rather than
@@ -1336,7 +1454,7 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
             attached_points=attached_points, attached_parent_link=attached_link,
             attached_radii=attached_radii,
             destination_label=destination_label,
-            destination_margin=float(destination_margin))
+            destination_margin=float(destination_margin), **obstacle)
         return empty
     scene = SceneSnapshot.from_spec(spec, radii)
     if backend not in ("primitive", "esdf", "both"):
@@ -1358,7 +1476,7 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
             attached_points=attached_points, attached_parent_link=attached_link,
             attached_radii=attached_radii,
             destination_label=destination_label,
-            destination_margin=float(destination_margin))
+            destination_margin=float(destination_margin), **obstacle)
 
     if not getattr(config.collision, "use_support_planes", True):
         # 평면도 끈다(지우지 않는다). AG3S 는 계속 평면을 뽑는다 — grounding 이 그 마스크 없이는

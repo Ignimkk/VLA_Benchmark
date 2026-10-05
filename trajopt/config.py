@@ -534,6 +534,14 @@ class CollisionBackendConfig:
     #: `scene_from_constraint_set` refuses the combination that constrains a support surface with
     #: nothing (carved out of the field *and* no plane row).
     use_support_planes: bool = False
+    #: **target 이 아닌 장애물에만 붙는 여유거리 (m, T41 a).** `0.0`(기본) = 꺼짐 — 코드 경로가
+    #: 예전과 같다. 켜면 로봇 구 행 중 최근접 표면이 조작 대상도 지지면도 아닌 행만
+    #: `max(esdf_margin, obstacle_margin)` 을 받는다 (`linearize.CollisionLinearizer._obstacle_rows`).
+    #: target(사과)·쥔 물체 행·지지면 행은 그대로다. 질의 구를 키우지 않는다 (`d − r ≥ m` 의 `m`).
+    obstacle_margin: float = 0.0
+    #: 지지면(테이블·바닥)도 위 여유를 받는가. 기본 `False` — 파지하려면 손가락이 테이블 가까이
+    #: 가야 한다 (T40 B E3b 기록: 테이블이 최근접인 손 행 최소 3.9–5.0 mm, 6 run 중 4).
+    obstacle_margin_support: bool = False
     #: **충돌 제약을 최적화기에 보이는가.** `True` 가 기본이고 그것이 지금까지의 TO 다.
     #:
     #: `False` 는 사용자가 요청한 ablation 이다 (*"TO 에 가장 기본적인 jerk 목적함수만 포함하고
@@ -564,6 +572,9 @@ class CollisionBackendConfig:
             raise ValueError(f"collision.backend must be one of {self.BACKENDS}, got {self.backend!r}")
         if self.esdf_margin < 0.0:
             raise ValueError(f"collision.esdf_margin must be >= 0, got {self.esdf_margin}")
+        if not self.obstacle_margin >= 0.0:
+            raise ValueError(
+                f"collision.obstacle_margin must be >= 0, got {self.obstacle_margin}")
 
     @property
     def wants_esdf(self) -> bool:
