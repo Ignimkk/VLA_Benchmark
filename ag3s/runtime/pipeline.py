@@ -34,6 +34,7 @@ import gc
 import logging
 import os
 import time
+import types
 from typing import Any, Mapping, Optional, Sequence
 
 import numpy as np
@@ -70,7 +71,11 @@ from benchmark.ag3s.stages.target_grounding import (
 )
 from benchmark.ag3s.constraints.to_adapter import build_constraint_set
 from benchmark.ag3s.runtime.degradation import ensure_reason, reason
-from benchmark.ag3s.robot_models.held_object import HELD_FILTER_SLIP_M
+from benchmark.ag3s.robot_models.held_object import (
+    HELD_BODY_SLIP_M,
+    HELD_FILTER_SLIP_M,
+    HELD_LIFT_HYSTERESIS_M,
+)
 from benchmark.ag3s.types import (
     DESTINATION_LABEL,
     TARGET_LABEL,
@@ -260,6 +265,20 @@ class AG3S:
         self.held_support_clearance_m: Optional[float] = None
         #: T34 J1: lift the held query spheres off the support at attach. Ablation switch.
         self.held_support_lift: bool = True
+        #: T43 R2: the held **query** spheres cover the whole fruit body (`held_object.
+        #: body_cover_spheres`: fit + a bottom sphere down to the support it rested on + slip), and
+        #: the J1 lift is applied **only near the support** (`held_object.near_support`, per frame).
+        #: Default off: every array the TO, the field and the self-filter see is the pre-T43 one.
+        self.held_body_cover: bool = False
+        #: T43 R2: in-hand slip along gravity the bottom sphere covers (m).
+        self.held_body_slip_m: float = HELD_BODY_SLIP_M
+        #: T43 R2: "near the support" = body bottom ≤ band + this (m).
+        self.held_lift_hysteresis_m: float = HELD_LIFT_HYSTERESIS_M
+        #: T43 R2: what `attach()` built for the per-frame choice — parent-frame body spheres
+        #: unlifted / J1-lifted, the attach plane and band. None when off or nothing is held.
+        self._held_query: Optional[dict[str, Any]] = None
+        #: T43 R2: this frame's query geometry (`_frame_held_attached`), None until a frame ran.
+        self._frame_attached: Optional[AttachedCollisionGeometry] = None
         #: T32 H3: free the held object's traces in the TSDF (cuRobo backend). Switch for ablation.
         self.free_held_traces: bool = True
         #: T32 H1: the held object's spheres join the **self-filter** sphere set while attached
@@ -373,6 +392,8 @@ class AG3S:
         self._held_first_free_frames = 0
         self._held_filter_local = None
         self._held_check_ref = None
+        self._held_query = None
+        self._frame_attached = None
         self._last_support_surfaces = []
         self._last_esdf_field = None
         self._frame_depth_masks = []
@@ -530,7 +551,14 @@ class AG3S:
     # ------------------------------------------------------- explicit grasp state, injected
     @property
     def attached(self) -> Optional[AttachedCollisionGeometry]:
-        """The object AG3S believes is in the gripper, or None."""
+        """The object AG3S believes is in the gripper, or None.
+
+        T43 R2 (`held_body_cover`): after a frame ran, the geometry that frame's constraint set
+        carries (same object) — its primitives are that frame's query spheres. Off: `_attached`.
+        """
+        if self._attached is not None and self._held_query is not None \
+                and self._frame_attached is not None:
+            return self._frame_attached
         return self._attached
 
     def attach(
@@ -641,6 +669,8 @@ class AG3S:
                         "limit", reach_m=dist, limit_m=float(reach),
                         parent_link=geometry.parent_link)
             self._attached = geometry
+            self._held_query = None
+            self._frame_attached = None
             # A prebuilt attachment keeps its own primitives (they are the held object's spheres
             # for the self-filter and the optimizer); nothing is fitted.
             self._held_record = {"mode": "prebuilt", "frame_link": geometry.parent_link,
@@ -711,6 +741,12 @@ class AG3S:
                                           if getattr(geometry, "centroid", None) is not None
                                           else g_pts.mean(axis=0)),
         }
+        self._held_query = None
+        self._frame_attached = None
+        if self.held_body_cover:
+            body_record = self._attach_body_cover(pts, frame_link, T_parent, T_now @ T_parent,
+                                                  support_record)
+            held_record["body_cover"] = body_record
         if support_record.get("applied"):
             held_record["fit_spheres"] = held_record.get("spheres")
             held_record["spheres"] = [
@@ -880,18 +916,187 @@ class AG3S:
             return palm
         return parent_link
 
-    def _held_primitives(self, points) -> tuple[list, dict]:
-        """Observed points (base) → `[primary, *covers]` sphere `Primitive`s (base) + record (H2)."""
+    def _held_fit_input(self, points):
+        """`(points, fit, max_radius)` — the trimmed observed points (base) and their sphere fit."""
         from benchmark.ag3s.constraints.attached import trim_outliers
-        from benchmark.ag3s.robot_models.held_object import covering_spheres, fit_surface_sphere
-        from benchmark.ag3s.types import Primitive, PrimitiveType
+        from benchmark.ag3s.robot_models.held_object import fit_surface_sphere
 
         pts = np.asarray(points, np.float64).reshape(-1, 3)
         keep = trim_outliers(pts, 0.020, 3)
         if int(keep.sum()) >= 4:
             pts = pts[keep]
         max_r = 0.5 * self._max_opening.value_m if self._max_opening.known else None
-        fit = fit_surface_sphere(pts, max_radius=max_r)
+        return pts, fit_surface_sphere(pts, max_radius=max_r), max_r
+
+    def _attach_body_cover(self, points, frame_link, T_parent, T_rel, support_record) -> dict:
+        """T43 R2 — the held body's query spheres (parent frame), unlifted and J1-lifted.
+
+        `points` are the observed points (base frame at the capture pose), `T_parent` the inverse
+        palm pose at that pose, `T_rel` = T_now · T_snap⁻¹ (the attach request pose, as J1). The
+        support the object rested on is the J1 plane (`support_record["plane"]`; else the last
+        frame's plane under the fit); the lift is J1's rule (`lift_off_support`, capture pose →
+        the plane, attach pose → plane + the band J1 measured) on the **body** spheres. Which of
+        the two a frame uses is decided per frame (`_frame_held_attached`). Returns the record.
+        """
+        from benchmark.ag3s.robot_models.held_object import (
+            body_cover_spheres,
+            lift_off_support,
+            support_plane_under,
+        )
+
+        pts, fit, max_r = self._held_fit_input(points)
+        slots = int(getattr(self._builder, "max_attached", 0) or 0) or 4
+        plane = None
+        if isinstance(support_record.get("plane"), dict):
+            pl = support_record["plane"]
+            plane = (np.asarray(pl["normal"], np.float64), float(pl["offset_m"]))
+        else:
+            found = support_plane_under(self._last_support_surfaces, fit.centre)
+            if found is not None:
+                plane = (found[0], float(found[1]))
+        body, rec = body_cover_spheres(pts, fit, pad=self._guard_pad(), support=plane,
+                                       slip=float(self.held_body_slip_m), max_spheres=slots,
+                                       max_radius=max_r)
+        band = None
+        lifted = body
+        if support_record.get("applied") and plane is not None:
+            band = float(support_record.get("clearance_mm", 0.0)) / 1000.0
+            lifted, lift_rec = lift_off_support(body, plane[0], plane[1], clearance=band,
+                                                relative_poses=[T_rel], snapshot_clearance=0.0)
+            rec["lift"] = lift_rec
+        else:
+            rec["lift"] = {"applied": False, "reason": support_record.get("reason")}
+
+        def local(spheres):
+            return [(T_parent[:3, :3] @ np.asarray(c, np.float64) + T_parent[:3, 3], float(r))
+                    for c, r in spheres]
+
+        self._held_query = {"parent_link": str(frame_link), "body": local(body),
+                            "lifted": local(lifted), "plane": plane, "band": band,
+                            # the lift direction (the attach plane's normal) in the parent frame
+                            "lift_dir": (None if plane is None else
+                                         T_parent[:3, :3] @ np.asarray(plane[0], np.float64))}
+        rec["band_mm"] = None if band is None else round(band * 1000.0, 3)
+        rec["hysteresis_mm"] = round(float(self.held_lift_hysteresis_m) * 1000.0, 3)
+        rec["body_parent_frame"] = [
+            {"centre_m": [round(float(v), 6) for v in c], "radius_mm": round(r * 1000.0, 3)}
+            for c, r in self._held_query["body"]]
+        rec["lifted_parent_frame"] = [
+            {"centre_m": [round(float(v), 6) for v in c], "radius_mm": round(r * 1000.0, 3)}
+            for c, r in self._held_query["lifted"]]
+        return rec
+
+    def _frame_held_attached(self, robot_state, surfaces, execution_path=None):
+        """T43 R2 — the attached geometry this frame's constraint set carries.
+
+        Off (`held_body_cover` False, or nothing / a prebuilt attachment held): `self._attached`
+        itself. On: `_attached` with its primitives replaced by the body spheres — J1-lifted if
+        the body is **near the support** at `robot_state` or anywhere on `execution_path` (the
+        policy's reference rows this chunk executes, T21; `held_object.near_support`: some body
+        sphere's bottom within band + `held_lift_hysteresis_m` of the highest horizontal plane
+        under the body; the planes are this frame's support surfaces plus the attach plane, the
+        band J1's), else unlifted. The path matters for place: the chunk that lowers the fruit to
+        the crate floor (8 mm above the table plane; the floor is no support surface of its own)
+        starts 50–100 mm above it. Lifted spheres are raised further (per sphere, along J1's
+        palm-fixed direction) by what this frame's poses need to clear plane + band — J1 measured
+        the attach pose only. The decision is recorded on `held_record["body_cover"]["frame"]`.
+        """
+        held = self._attached
+        query = self._held_query
+        if held is None or query is None:
+            return held
+        from benchmark.ag3s.constraints.attached import _link_pose_numeric
+        from benchmark.ag3s.robot_models.held_object import (
+            HELD_ROLE,
+            near_support,
+            support_plane_under,
+        )
+        from benchmark.ag3s.types import Primitive, PrimitiveType
+
+        body = query["body"]
+        near, gap, plane_rec, gap_now, near_row = False, None, None, None, None
+        poses: list = []                       # (T_parent, plane normal, offset) per state
+        if robot_state is not None and self.constraint_robot_model is not None \
+                and query["band"] is not None:
+            states = [np.asarray(robot_state, np.float64).reshape(-1)]
+            if execution_path is not None:
+                path = np.asarray(execution_path, np.float64)
+                if path.ndim == 2 and path.shape[1] == states[0].shape[0]:
+                    states.extend(path)
+            radii = np.asarray([r for _, r in body], np.float64)
+            planes = list(surfaces or ())
+            if query["plane"] is not None:
+                planes.append(types.SimpleNamespace(normal=query["plane"][0],
+                                                    offset=query["plane"][1], id=-2))
+            for i, q in enumerate(states):
+                T = _link_pose_numeric(self.constraint_robot_model, q, query["parent_link"])
+                centres = np.asarray([T[:3, :3] @ c + T[:3, 3] for c, _ in body], np.float64)
+                found = support_plane_under(planes, centres[0])
+                if found is None:
+                    continue
+                poses.append((T, np.asarray(found[0], np.float64), float(found[1])))
+                n_i, g_i = near_support(centres, radii, found[0], found[1], band=query["band"],
+                                        hysteresis=float(self.held_lift_hysteresis_m))
+                if i == 0:
+                    gap_now = g_i
+                if gap is None or g_i < gap:
+                    gap = g_i
+                    plane_rec = {"surface_id": int(getattr(found[2], "id", -1)),
+                                 "offset_m": round(float(found[1]), 6)}
+                if n_i and not near:
+                    near, near_row = True, i
+        chosen = query["lifted"] if near else body
+        extra_mm = None
+        if near and query.get("lift_dir") is not None:
+            # J1 was measured at the attach pose. While the body stays near the support the hand may
+            # press lower (T42 ep983 pear: 3.7 mm, ten chunks later) — the lifted spheres must clear
+            # plane + band at this frame's poses too (robot_state and the reference path), so each
+            # is raised further along the same palm-fixed direction by what the lowest pose needs.
+            u = np.asarray(query["lift_dir"], np.float64)
+            band = float(query["band"])
+            raised = []
+            extra_mm = []
+            for c, r in chosen:
+                need = 0.0
+                for T, n, off in poses:
+                    gap_i = float(n @ (T[:3, :3] @ c + T[:3, 3])) - off - r
+                    gain = float(n @ (T[:3, :3] @ u))
+                    if gain > 0.1:
+                        need = max(need, (band - gap_i) / gain)
+                raised.append((np.asarray(c, np.float64) + max(0.0, need) * u, r))
+                extra_mm.append(round(max(0.0, need) * 1000.0, 3))
+            chosen = raised
+        prims = [Primitive(type=PrimitiveType.SPHERE, center=np.asarray(c, np.float64).copy(),
+                           dimensions=np.full(3, float(r)), semantic_role=HELD_ROLE)
+                 for c, r in chosen]
+        self._frame_attached = dataclasses.replace(held, primitives=prims)
+        if isinstance(self._held_record, dict) and isinstance(
+                self._held_record.get("body_cover"), dict):
+            # New dicts, never mutated: a record handed out for an earlier frame keeps its values.
+            self._held_record = {
+                **self._held_record,
+                "body_cover": {**self._held_record["body_cover"], "frame": {
+                    "frame": int(self.frame_index), "near_support": bool(near),
+                    # 0 = robot_state, i ≥ 1 = execution_path[i − 1]; None = not near
+                    "near_row": near_row,
+                    # per sphere, the lift added to J1's for this frame's poses (mm); None = unlifted
+                    "extra_lift_mm": extra_mm,
+                    "min_bottom_gap_mm": None if gap is None else round(gap * 1000.0, 3),
+                    "bottom_gap_now_mm": None if gap_now is None else round(gap_now * 1000.0, 3),
+                    "plane": plane_rec}},
+                # The TO's query spheres this frame (what the pre-T43 key always meant).
+                "spheres_parent_frame": [
+                    {"centre_m": [round(float(v), 6) for v in c],
+                     "radius_mm": round(r * 1000.0, 3)} for c, r in chosen],
+            }
+        return self._frame_attached
+
+    def _held_primitives(self, points) -> tuple[list, dict]:
+        """Observed points (base) → `[primary, *covers]` sphere `Primitive`s (base) + record (H2)."""
+        from benchmark.ag3s.robot_models.held_object import covering_spheres
+        from benchmark.ag3s.types import Primitive, PrimitiveType
+
+        pts, fit, max_r = self._held_fit_input(points)
         slots = int(getattr(self._builder, "max_attached", 0) or 0) or 4
         spheres, rec = covering_spheres(pts, fit, pad=self._guard_pad(), max_spheres=slots)
         from benchmark.ag3s.robot_models.held_object import HELD_ROLE
@@ -947,6 +1152,8 @@ class AG3S:
         self._held_first_free_frames = 0
         self._held_filter_local = None
         self._held_check_ref = None
+        self._held_query = None
+        self._frame_attached = None
         return released
 
     # ------------------------------------------------------------------------------------
@@ -1430,6 +1637,7 @@ class AG3S:
             constraint_set = self._constraints(
                 esdf=esdf_field,
                 destination_points=destination_points,
+                execution_path=execution_path,
                 # Planes still live in the spec, so it is built whenever a support surface survived.
                 # In pure-field mode there is neither a candidate nor a plane to pack.
                 build_spec=primitive_path or bool(surfaces),
@@ -1674,8 +1882,10 @@ class AG3S:
     def _constraints(
         self, *, candidates, surfaces, grounding, robot_state, phase, timestamp, notes, context,
         validity=ConstraintValidity.VALID, metrics=None, esdf=None, build_spec=True,
-        destination_points=None, manipulated_geometry=None,
+        destination_points=None, manipulated_geometry=None, execution_path=None,
     ):
+        # T43 R2: the held query spheres of this frame. Off: `self._attached` itself (same object).
+        attached = self._frame_held_attached(robot_state, surfaces, execution_path)
         # 목적지 마진은 `ClearancePolicy` 에서 나온다 — 마진이 나오는 곳은 하나여야 하고,
         # 소비 쪽(trajopt)은 그 값을 다시 계산하지 않고 읽기만 한다.
         has_destination = destination_points is not None and len(destination_points) > 0
@@ -1718,7 +1928,7 @@ class AG3S:
                 validity=ConstraintValidity.worst(validity, ConstraintValidity.DEGRADED),
                 contact_context=context,
                 metrics=dict(metrics or {}),
-                attached=self._attached,
+                attached=attached,
                 esdf=esdf,
                 destination_label=destination_label,
                 destination_margin=destination_margin,
@@ -1738,7 +1948,7 @@ class AG3S:
             contact_context=context,
             validity=validity,
             metrics=metrics,
-            attached=self._attached,
+            attached=attached,
             esdf=esdf,
             build_spec=build_spec,
             destination_label=destination_label,

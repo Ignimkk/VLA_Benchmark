@@ -224,6 +224,206 @@ def covering_spheres(points: np.ndarray, fit: SphereFit, *, pad: float, max_sphe
     return spheres, rec
 
 
+# ---------------------------------------------------------------------------------------------
+# T43 R2 — 쥔 질의 구가 과일 **몸통 전체**를 덮는다 (바닥 반구 포함)
+# ---------------------------------------------------------------------------------------------
+#: 운반 중 쥔 과일이 손바닥 frame 에서 **중력 쪽으로** 미끄러지는 양의 허용치 (m, T43 R2).
+#: 근거: T40/T41 사과-막대 접촉 5 run (고유) 에서 attach → 접촉까지 사과 중심이 손바닥 frame 에서
+#: 아래로 2.1–4.5 mm 움직였다 (`T43R2.impl.md` §2). 덮개 pad 5 mm 위에 이만큼을 바닥 구로 더 덮는다.
+HELD_BODY_SLIP_M = 0.005
+
+
+#: 길쭉한 물체로 보는 수평 길이 비 (T43 R2). 관측 점 (+ 받침면 발자국) 의 수평 주축 길이가 그에 수직인
+#: 폭의 이 배를 넘으면 구 맞춤 몸통이 아니라 주축 구간 구로 덮는다 (바나나). 사과 · 오렌지 · 배는 위에서
+#: 보면 둥글다 (MuJoCo mesh 수평 66.6 × 66.6 · 61.5 × 61.5 · 60.3 × 58.7 mm).
+HELD_ELONGATION_RATIO = 1.6
+
+
+def body_cover_spheres(points: np.ndarray, fit: SphereFit, *, pad: float,
+                       support: Optional[tuple[np.ndarray, float]] = None,
+                       slip: float = HELD_BODY_SLIP_M, max_spheres: int = 4,
+                       cover_eps: float = COVER_EPS, min_shift: float = 0.001,
+                       max_radius: Optional[float] = None, radius_from_support: bool = True,
+                       elongation_ratio: float = HELD_ELONGATION_RATIO,
+                       ) -> tuple[list[tuple[np.ndarray, float]], dict]:
+    """쥔 과일의 **몸통**을 덮는 구 몇 개 (T43 R2) — `([(centre, radius), ...], record)`, base 좌표.
+
+    H2 `covering_spheres` 는 관측된 면(위 · 옆)과 맞춘 구를 덮는다. 카메라는 바닥을 못 보고, 맞춘 구가
+    작게 나오면 (손에 가린 cap: T41 ep1807 반지름 29 mm, 사과 33 mm) 아래 반구가 밖으로 나간다.
+    여기서는 **물체가 받침 위에 놓여 있었다**는 사실을 쓴다 — 촬영 순간 물체의 바닥은 받침면이다.
+
+    **구형 몸통** (`mode="sphere"`, 맞춤이 받아들여졌고 길쭉하지 않다):
+
+    * **주 구**: 맞춘 중심 `c`, 반지름 `R + pad`. 받침 위 중심 높이 `h` 가 `R` 보다 크되 그 차가 한 pad
+      이하이면 (맞춘 구가 받침에 조금 못 미친다 — 가린 cap 으로 작게 나왔다) `R = min(h, max_radius)` 로
+      올린다 (`radius_from_support`): 받침 위에 놓인 구형 몸통의 반지름은 중심 높이 이상이다. 더 크게
+      못 미치면 몸통이 구가 아니다 (배) — 옆으로 키우지 않고 바닥 구가 받침까지 덮는다.
+    * **바닥 구**: 같은 반지름, 중심을 받침 법선의 **아래로** `Δ = max(0, h − R) + slip`.
+      `slip` 은 운반 중 중력 쪽 미끄럼 허용치. 같은 반지름 두 구의 허리는 `√(R² − Δ²/4)`.
+      `h − R > R` 이면 그 면 위에 놓여 있지 않았던 것으로 보고 쓰지 않는다 (기록). 받침면을 모르면
+      아래 = base −z, `Δ = slip`. `Δ < min_shift` 면 바닥 구를 만들지 않는다.
+    * **덮개 구**: 두 구 밖의 관측 점 (꼭지 · 잎) 덩어리마다 하나 (`covering_spheres` 와 같은 규칙).
+      슬롯을 넘으면 큰 구 하나로 합치지 않고 아래의 구간 덮개로 간다.
+
+    **구간 덮개** (`mode="segments"`, 맞춤이 물러났거나 · 수평 주축이 폭의 `elongation_ratio` 배를
+    넘거나 · 덮개가 슬롯을 넘을 때): 관측 점 + 그 점들의 받침면 발자국 (물체가 받침 위에 놓여 있었으므로
+    바닥은 거기다; 가장 낮은 관측 점이 받침 위 `max_radius` 안일 때만) + `slip` 만큼 내린 사본을 수평
+    주축을 따라 `k` (= 길이/폭 올림, 2 ≤ k ≤ `max_spheres`) 구간으로 나누고, 구간마다 그 점들을 담는
+    구 (상자 중심 + 최대거리) + pad. 구는 볼록이라 구간 점들의 볼록 껍질을 담는다 — 위 면부터 받침까지.
+    큰 구 하나 (H2 의 merge, 바나나에서 반지름 ~90 mm) 가 손가락 파지 여유를 삼키는 것을 피한다.
+
+    구는 받침면 아래로 내려갈 수 있다 — 받침 가까이에서는 J1 lift 가 올린다
+    (`AG3S._frame_held_attached`). 이 함수는 몸통만 말한다.
+    """
+    pts = np.asarray(points, np.float64).reshape(-1, 3)
+    pad = float(pad)
+    slip = max(0.0, float(slip))
+    c = np.asarray(fit.centre, np.float64).reshape(3)
+    if fit.accepted or not len(pts):
+        R = float(fit.radius)
+    else:
+        R = max(float(np.linalg.norm(pts - c, axis=1).max()), float(fit.radius))
+    rec: dict[str, Any] = {"method": "body_cover", "fit": fit.record(), "pad_mm": round(pad * 1000.0, 3),
+                           "slip_mm": round(slip * 1000.0, 3), "n_points": int(len(pts)),
+                           "body_radius_mm": round(R * 1000.0, 3)}
+    if support is not None:
+        n = np.asarray(support[0], np.float64).reshape(3)
+        n = n / float(np.linalg.norm(n))
+        off = float(support[1])
+    else:
+        n, off = np.array([0.0, 0.0, 1.0]), None
+    down = -n
+    # --- 수평 주축 (관측 점 + 받침 발자국) -----------------------------------------------------
+    resting = False
+    cloud = pts
+    if off is not None and len(pts):
+        heights = pts @ n - off
+        hi = float("inf") if max_radius is None else float(max_radius)
+        resting = bool(heights.min() <= hi)
+        if resting:
+            cloud = np.vstack([pts, pts - np.clip(heights, 0.0, None)[:, None] * n[None, :]])
+    rec["resting_on_support"] = resting
+    a1 = np.cross(n, [1.0, 0.0, 0.0])
+    if np.linalg.norm(a1) < 1e-6:
+        a1 = np.cross(n, [0.0, 1.0, 0.0])
+    a1 /= np.linalg.norm(a1)
+    a2 = np.cross(n, a1)
+    if len(cloud) >= 2:
+        hxy = np.column_stack([cloud @ a1, cloud @ a2])
+        hxy = hxy - hxy.mean(axis=0)
+        w, v = np.linalg.eigh(hxy.T @ hxy)
+        major = v[0, 1] * a1 + v[1, 1] * a2          # 가장 큰 고윳값의 축 (eigh 는 오름차순)
+        minor = np.cross(n, major)
+        length = float(np.ptp(cloud @ major))
+        width = float(np.ptp(cloud @ minor))
+    else:
+        major, minor, length, width = a1, a2, 0.0, 0.0
+    rec["horizontal_extent_mm"] = [round(length * 1000.0, 3), round(width * 1000.0, 3)]
+    # 한쪽에서 본 둥근 과일의 cap 은 초승달처럼 좁게 보인다 — 맞춘 구가 뒷면까지 말하므로 폭은 그 지름
+    # 이상이다. 길쭉함은 그 폭에 대해 잰다.
+    width_eff = max(width, 2.0 * R) if fit.accepted else width
+    elongated = bool(width_eff > 0.0 and length > float(elongation_ratio) * width_eff)
+
+    def segments(reason: str):
+        body_pts = np.vstack([cloud, cloud + slip * down[None, :]]) if slip > 0.0 else cloud
+        t = body_pts @ major
+        k = int(np.clip(np.ceil(length / max(width, 1e-6)), 2, max(2, int(max_spheres))))
+        k = min(k, max(1, int(max_spheres)))
+        edges = np.linspace(t.min(), t.max(), k + 1)
+        out = []
+        for i in range(k):
+            sel = (t >= edges[i]) & ((t <= edges[i + 1]) if i == k - 1 else (t < edges[i + 1]))
+            p = body_pts[sel]
+            if not len(p):
+                continue
+            lo, up = p.min(axis=0), p.max(axis=0)
+            cc = 0.5 * (lo + up)
+            out.append((cc, float(np.linalg.norm(p - cc, axis=1).max()) + pad))
+        rec.update({"mode": "segments", "segments_reason": reason, "n_segments": len(out)})
+        return out
+
+    spheres = None
+    if not fit.accepted or not len(pts):
+        spheres = segments("fit_rejected" if len(pts) else "no_points")
+    elif elongated:
+        spheres = segments("elongated")
+    else:
+        rec["mode"] = "sphere"
+        if off is not None:
+            h = float(n @ c - off)                       # 맞춘 중심의 받침면 위 높이
+            delta = h - R
+            rec["support_gap_mm"] = round(delta * 1000.0, 3)
+            if delta > R:
+                rec["support_ignored"] = "fit sphere bottom more than one radius above the plane"
+                delta = 0.0
+            elif 0.0 < delta <= pad and radius_from_support:
+                # 한 pad 안쪽으로 못 미친 맞춤 = 가린 cap 의 반지름 과소 (T41 ep1807: 3.1 mm) — 올린다.
+                # 그보다 멀면 구가 아닌 몸통 (배: 위쪽 cap 에 맞춘 중심이 받침 위 43 mm, 반지름 27 mm)
+                # 이라 옆으로 키우면 이웃 과일을 읽는다 — 바닥 구가 받침까지 덮는다.
+                cap = float("inf") if max_radius is None else float(max_radius)
+                R_new = min(h, max(R, cap))
+                rec["radius_raised_mm"] = round((R_new - R) * 1000.0, 3)
+                R = R_new
+                rec["body_radius_mm"] = round(R * 1000.0, 3)
+                delta = h - R
+        else:
+            delta = 0.0
+            rec["support_gap_mm"] = None
+        shift = max(0.0, delta) + slip
+        rec["bottom_shift_mm"] = round(shift * 1000.0, 3)
+        body = [(c.copy(), R + pad)]
+        if shift >= float(min_shift):
+            body.append((c + shift * down, R + pad))
+        spheres = list(body)
+        rec["n_body"] = len(body)
+        rec["n_cover"] = 0
+        gap = np.min(np.stack([np.linalg.norm(pts - bc, axis=1) - br for bc, br in body]), axis=0)
+        outside = pts[gap > 0.0]
+        rec["n_outside_body"] = int(len(outside))
+        if len(outside):
+            groups = _clusters(outside, float(cover_eps))
+            if len(groups) <= max(0, int(max_spheres) - len(body)):
+                for g in groups:
+                    p = outside[g]
+                    cc = p.mean(axis=0)
+                    r = (float(np.linalg.norm(p - cc, axis=1).max()) if len(p) > 1 else 0.0) + pad
+                    spheres.append((cc, r))
+                rec["n_cover"] = len(groups)
+            else:
+                spheres = segments("covers_over_slots")
+    rec["spheres"] = [{"centre_m": [round(float(v), 6) for v in cc],
+                       "radius_mm": round(float(r) * 1000.0, 3)} for cc, r in spheres]
+    return spheres, rec
+
+
+#: J1 lift 를 켜는 높이 여유 (m, T43 R2). 몸통 구의 바닥이 받침면 + 띠 + 이 값 안이면 "받침 가까이"
+#: — 그때만 J1 lift 를 붙인다. 두 fine voxel: 띠에서 멈춘 내려놓기가 다음 프레임에 lift 로 넘어가고,
+#: 면 · 맞춤의 voxel 단위 잡음으로 프레임마다 뒤집히지 않을 만큼.
+HELD_LIFT_HYSTERESIS_M = 0.010
+
+
+def support_gap(centres: np.ndarray, radii: np.ndarray, normal, offset) -> np.ndarray:
+    """구마다 바닥 − 받침면 (m, 법선 방향; 음수 = 면 아래로 내려갔다)."""
+    n = np.asarray(normal, np.float64).reshape(3)
+    n = n / float(np.linalg.norm(n))
+    c = np.asarray(centres, np.float64).reshape(-1, 3)
+    return c @ n - float(offset) - np.asarray(radii, np.float64).reshape(-1)
+
+
+def near_support(centres: np.ndarray, radii: np.ndarray, normal, offset, *, band: float,
+                 hysteresis: float = HELD_LIFT_HYSTERESIS_M) -> tuple[bool, float]:
+    """`(near, min_gap)` — 쥔 몸통이 받침면 가까이 있는가 (T43 R2 의 J1 조건).
+
+    `near` ⇔ 몸통 구 바닥의 최솟값 ≤ `band + hysteresis`. `band` 는 거리장이 받침면을 d = 0 으로
+    보는 두께 (J1 이 attach 때 잰 값) 다: 그 안에서는 lift 없는 구가 테이블 행에서 음수를 읽는다 —
+    물체가 받침 위에 **놓여 있어서**이지 충돌이 아니다. 그 위에서는 몸통이 받침에서 떨어져 있으므로
+    lift 를 하지 않는다 (막대처럼 받침 위 장애물이 바닥 반구로 들어오는 것을 놓치지 않게).
+    """
+    g = support_gap(centres, radii, normal, offset)
+    m = float(g.min()) if g.size else float("inf")
+    return bool(m <= float(band) + float(hysteresis)), m
+
+
 def _clusters(points: np.ndarray, eps: float) -> list[np.ndarray]:
     """`eps` 연결 성분 (index 배열 목록)."""
     from scipy.sparse.csgraph import connected_components
@@ -542,6 +742,9 @@ def held_observation_check(*, observed_centroid, held_centre, held_centre_at_att
 
 
 __all__ = [
+    "HELD_BODY_SLIP_M",
+    "HELD_ELONGATION_RATIO",
+    "HELD_LIFT_HYSTERESIS_M",
     "HELD_LINK_PREFIX",
     "HELD_FILTER_SLIP_M",
     "HELD_ROLE",
@@ -549,6 +752,7 @@ __all__ = [
     "HELD_SUPPORT_BAND_MAX_M",
     "HeldSphereFilterModel",
     "SphereFit",
+    "body_cover_spheres",
     "covering_spheres",
     "enclosing_ball",
     "extend_inflation",
@@ -557,7 +761,9 @@ __all__ = [
     "held_observation_check",
     "held_spheres_of",
     "lift_off_support",
+    "near_support",
     "palm_link_for",
     "sphere_volume_points",
+    "support_gap",
     "support_plane_under",
 ]
