@@ -264,6 +264,15 @@ class LimitsConfig:
     #: `rest_start` 의 첫 스텝 문턱 `e0` (rad, 관절 공통). `None` 이면 관절마다 `a_max·dt²`
     #: (정지에서 한 주기에 닿는 거리). `0` 이면 `Q0 = q_now`. `v_max·dt` 보다 크게 줘도 그 값에서 잘린다.
     rest_start_tolerance: float | None = None
+    #: **T43 Q (1) — 실행 가능한 계획: 위치 servo 모델.** 기본 `False` = 예전 그대로. `True` 면 TO 가
+    #: 명령 `Q` 와 함께 **로봇이 실제로 지날 자세** `X(Q)` 를 안다 — 제어 대상 MJCF (`model_xml`) 의
+    #: actuator `kp` · `kv` · joint damping · armature + 관성 대각에서 유도한 관절별 선형 PD servo
+    #: (`servo.py`), 시작 상태는 촬영 순간 측정 자세 + `exec_feedback.applied_arm` 으로 추정한 속도와
+    #: 상수 토크 (`servo.ServoObserver`). 각 제어 행 끝의 예측 자세 (`sweep_check` 면 행 안의 sub-step
+    #: 도) 에 충돌 행을 더한다 (`sweep.PathChecker`, 행 = 그 자세가 의존하는 `Q[:, 0..k]` 전부).
+    #: 명령 waypoint 의 행 · 한계 · anchor 는 그대로다 — 막는 것은 "검사하지 않은 자세를 지난다" 뿐이고
+    #: 범위를 자르지 않는다 (`rest_start` 와 다르다: 21.6° 명령 탈출은 servo 가 실제로 그만큼 빨리 움직이므로 남는다).
+    servo_model: bool = False
 
     @property
     def enforces_nothing(self) -> bool:
@@ -370,8 +379,29 @@ class ConstraintReductionConfig:
     # `trust_radius * reach`, and the second-order term is that squared over twice the clearance.
     linearization_backoff: float = 5e-3
     enabled: bool = True
+    #: **T43 Q (2) — waypoint 사이 연속 충돌 검사.** 기본 `False` = 예전 그대로. `True` 면 제어 행마다
+    #: 중간 자세를 더 검사한다 (`sweep.PathChecker`): `limits.servo_model` 이 꺼져 있으면 `Q[:, k-1] →
+    #: Q[:, k]` (첫 행은 `q_now → Q[:, 0]`) 관절 공간 보간, 켜져 있으면 servo 예측 경로의 sub-step.
+    #: 행 하나를 `ceil(chord / sweep_max_m)` 조각으로 (chord = 행 양 끝 사이 질의 구의 최대 이동) 자른다.
+    sweep_check: bool = False
+    #: 검사 자세 사이 질의 구 이동의 목표 상한 (m). 기본 12 mm = 24 mm 허들 막대 두께의 절반.
+    sweep_max_m: float = 0.012
+    #: 제어 행 하나의 조각 수 상한 (실시간 상한). 묶이면 기록 `path_check.cap_bound_steps` 에 남는다.
+    sweep_max_samples: int = 16
+    #: 중간 자세 행의 QP 예산 — 제어 행마다 (그 행의 모든 중간 자세를 통틀어 가장 빠듯한 것부터).
+    #: `rows_per_step` 과 같은 이유로 고정이다 (희소성이 씬에 따라 움직이지 않는다).
+    sweep_rows_per_step: int = 24
 
     def validate(self) -> None:
+        if self.sweep_max_m <= 0.0 or not math.isfinite(self.sweep_max_m):
+            raise TrajOptConfigError(
+                f"reduction.sweep_max_m must be a finite value > 0, got {self.sweep_max_m}")
+        if self.sweep_max_samples < 1:
+            raise TrajOptConfigError(
+                f"reduction.sweep_max_samples must be >= 1, got {self.sweep_max_samples}")
+        if self.sweep_rows_per_step < 1:
+            raise TrajOptConfigError(
+                f"reduction.sweep_rows_per_step must be >= 1, got {self.sweep_rows_per_step}")
         if self.activation_band <= 0.0:
             raise TrajOptConfigError(
                 f"reduction.activation_band must be > 0, got {self.activation_band}"

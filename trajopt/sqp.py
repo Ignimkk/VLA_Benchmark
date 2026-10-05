@@ -87,12 +87,39 @@ class TrajectoryOptimizer:
         self.solver = QpSolver(self.config.qp)
         self._previous: Optional[np.ndarray] = None
         self.frame_index = 0
+        #: T43 Q — servo model (`limits.servo_model`) and the rows between waypoints
+        #: (`reduction.sweep_check`). Both `None` when both are off: nothing below reads them then.
+        self.servo = None
+        self.observer = None
+        self.path = None
+        if (getattr(self.config.limits, "servo_model", False)
+                or getattr(self.config.reduction, "sweep_check", False)):
+            self._build_path(robot_model)
+
+    def _build_path(self, robot_model) -> None:
+        """T43 Q — the servo (from the controlled MJCF) and the path checker. Only when on."""
+        from benchmark.trajopt.sweep import PathChecker
+
+        cfg = self.config
+        if getattr(cfg.limits, "servo_model", False):
+            from benchmark.trajopt.limits import limits_model_xml
+            from benchmark.trajopt.servo import ServoModel, ServoObserver, servo_params_from_xml
+
+            names = [str(robot_model.joint_names[int(i)]) for i in self.layout.q_indices]
+            params = servo_params_from_xml(limits_model_xml(cfg.limits), names,
+                                           control_hz=cfg.horizon.control_hz)
+            self.servo = ServoModel(params)
+            self.observer = ServoObserver(self.servo)
+        self.path = PathChecker(self.linearizer, self.layout, cfg, self.servo)
+        self.path.warm_seconds = self.path.warm()
 
     def reset(self) -> None:
         """Clear cross-chunk state. Between episodes, never mid-episode."""
         self.solver.reset()
         self._previous = None
         self.frame_index = 0
+        if self.observer is not None:
+            self.observer.reset()
 
     # ------------------------------------------------------------------------------------
     def solve(
@@ -105,6 +132,7 @@ class TrajectoryOptimizer:
         template: Optional[np.ndarray] = None,
         geometry_certified: bool = True,
         start_at_rest: bool = False,
+        servo_feedback: Optional[dict[str, Any]] = None,
     ) -> TrajOptResult:
         """Make `reference` safe against `scene`, or report how far short it fell.
 
@@ -124,6 +152,10 @@ class TrajectoryOptimizer:
                 in the QP box, in the eligibility of the initial iterate and in the limit projection.
                 `False` (default) leaves every number as it was. Who decides: `SafePolicy`, only when
                 `limits.rest_start` is on.
+            servo_feedback: T43 Q. ``{"feedback": exec_feedback, "seq": request seq}`` — what the
+                servo observer propagates to estimate the arm's velocity at `q_now`
+                (`servo.ServoObserver`). Read only when `limits.servo_model` is on; without it the
+                arm is taken to be at rest and the record says so.
         """
         started = time.perf_counter()
         cfg = self.config
@@ -135,6 +167,12 @@ class TrajectoryOptimizer:
                                         getattr(cfg.limits, "rest_start_tolerance", None))
                     if start_at_rest else None)
 
+        servo_state = None
+        if self.observer is not None:
+            fb = (servo_feedback or {}).get("feedback")
+            seq = (servo_feedback or {}).get("seq")
+            servo_state = self.observer.update(q_now[self.layout.q_indices], fb, seq)
+
         if scene is None or scene.is_empty:
             return self._passthrough(
                 reference, q_now, template, TrajOptStatus.UNCONSTRAINED,
@@ -142,7 +180,8 @@ class TrajectoryOptimizer:
                 started,
             )
 
-        n_slack = self.block.n_rows
+        n_path = self.path.n_slack if self.path is not None else 0
+        n_slack = self.block.n_rows + n_path
         iterate = reference.copy()
         if (cfg.sqp.warm_start and self._previous is not None
                 and cfg.horizon.execution_length < self.horizon):
@@ -167,6 +206,9 @@ class TrajectoryOptimizer:
             getattr(scene, "attached_points", None), getattr(scene, "attached_parent_link", None)
         )
         reference_violation = -self.linearizer.full_violation(reference, q_now, scene)
+        if self.path is not None:
+            # T43 Q — floors at `q_now` and the servo state, once per chunk (before any merit).
+            self.path.begin(q_now, scene, servo_state)
         # Forward kinematics for a whole chunk is the most expensive thing left in the loop, so each
         # trajectory's sphere states are computed once and carried: the iterate's states feed both
         # the linearization and its merit, and an accepted candidate hands its states to the next
@@ -196,6 +238,18 @@ class TrajectoryOptimizer:
         # 보다 작으면 `best_merit <= iterate_merit` 이므로 수락 조건도 만족한다. 그래서
         # `best_unaccepted` 는 **초기 iterate 가 부적격일 때만** 나온다. `returned` 는 이 성질을
         # 가정하지 않고 후보 기록에서 읽어 싣는다.
+        start_record = None
+        if self.path is not None:
+            # T43 Q — **a second starting point: stay where the robot is.** With the path rows a
+            # reference that runs through an obstacle is a poor place to linearize: the waypoint rows
+            # push the commands across the obstacle while the lagging path rows pull the robot back,
+            # and three SQP iterations from there end VIOLATED (T40 C1807 t=216, margin 10 mm). The
+            # plan `Q[:, k] = q_now` is the one the path rows always admit for a robot at rest (every
+            # row sits at its floor) and the one a HOLD would execute. It replaces the reference as
+            # the start only when its merit is lower — i.e. only when the reference violates.
+            iterate, iterate_states, iterate_merit, iterate_violation, start_record = (
+                self._stay_start(iterate, iterate_states, iterate_merit, iterate_violation,
+                                 reference, previous_chunk, q_now, scene, envelope))
         initial_merit, initial_violation = iterate_merit, iterate_violation
         initial_overshoot = self._limit_overshoot(iterate, q_now, envelope)
         initial_eligible = max(initial_overshoot.values()) <= _LIMIT_TOLERANCE
@@ -254,9 +308,14 @@ class TrajectoryOptimizer:
                 **({"anchor_envelope": envelope} if envelope is not None else {}),
             )
             problem = append_collision_rows(
-                problem, rows, iterate, self.block, cfg.reduction.linearization_backoff
+                problem, rows, iterate, self.block, cfg.reduction.linearization_backoff,
+                **({"extra_slack": n_path} if n_path else {})
             )
             timing["assemble"] += (time.perf_counter() - mark) * 1000.0
+            if self.path is not None:
+                mark = time.perf_counter()
+                problem = self._append_path(problem, iterate, scene)
+                timing["path"] = timing.get("path", 0.0) + (time.perf_counter() - mark) * 1000.0
 
             mark = time.perf_counter()
             solution = self.solver.solve(problem, warm_start=cfg.sqp.warm_start)
@@ -345,6 +404,8 @@ class TrajectoryOptimizer:
             "qp_failures": int(qp_failures),
             "min_iterations": int(min_iterations),
             "projection": projection,
+            # T43 Q — only with the path rows on.
+            **({"initial_source": start_record} if start_record is not None else {}),
         }
         result = self._finish(
             best, reference, q_now, scene, template, iterations, best_slack,
@@ -356,6 +417,53 @@ class TrajectoryOptimizer:
             result.metrics["rest_start"] = self._rest_start_record(
                 best, reference, q_now, envelope)
         return result
+
+    def _append_path(self, problem, iterate, scene):
+        """T43 Q — the rows between waypoints, below the collision block (their own slacks)."""
+        from benchmark.trajopt.sweep import append_path_rows
+
+        if not getattr(self.config.collision, "enabled", True):
+            # collision off (T15): the same shape, every row unused — as `LinearizedRows.all_unused`.
+            from benchmark.trajopt.sweep import PathRows
+
+            H, R, nq = self.horizon, self.path.rows_per_step, self.layout.nq_opt
+            rows = PathRows(np.full((H, R), np.inf), np.zeros((H, R, H, nq)), np.zeros((H, R), bool),
+                            np.zeros((H, R), int), np.zeros((H, R), int), 0)
+        else:
+            rows = self.path.linearize(iterate, scene)
+        return append_path_rows(problem, rows, iterate, self.path.block, self.block.n_rows,
+                                self.config.reduction.linearization_backoff)
+
+    def _stay_start(self, iterate, states, merit, violation, reference, previous_chunk, q_now,
+                    scene, envelope):
+        """T43 Q — keep the given start, or switch to ``Q[:, k] = q_now`` if that has lower merit.
+
+        Only looked at when the given start violates (`violation > violation_tolerance`); the stay
+        plan must also be inside the limits (`_limit_overshoot`), as every other candidate.
+        """
+        tol = self.config.safety.violation_tolerance
+        record = {"source": "reference", "stay_merit": None, "stay_violation_m": None}
+        if violation is None or violation <= tol:
+            return iterate, states, merit, violation, record
+        stay = np.tile(np.asarray(q_now, np.float64)[self.layout.q_indices][:, None],
+                       (1, iterate.shape[1]))
+        if max(self._limit_overshoot(stay, q_now, envelope).values()) > _LIMIT_TOLERANCE:
+            record["source"] = "reference (stay outside the limits)"
+            return iterate, states, merit, violation, record
+        stay_states = self.linearizer.sphere_states(stay, q_now)
+        stay_merit, stay_violation = self._merit_terms(stay, reference, previous_chunk, q_now,
+                                                       scene, states=stay_states)
+        record.update(stay_merit=float(stay_merit),
+                      stay_violation_m=None if stay_violation is None else float(stay_violation))
+        if stay_merit < merit:
+            record["source"] = "stay"
+            return stay, stay_states, stay_merit, stay_violation, record
+        return iterate, states, merit, violation, record
+
+    def _path_violation(self, trajectory, scene) -> float:
+        """T43 Q — penetration (m, ≥ 0) of the rows between waypoints, below their floors."""
+        worst, _ = self.path.violation(trajectory, scene)
+        return max(0.0, -worst)
 
     def _rest_start_record(self, trajectory, reference, q_now, envelope) -> dict[str, Any]:
         """T41 b — 정지 출발 범위가 무엇이었고 반환된 계획이 어디서 시작하나 (기록용, rad)."""
@@ -406,6 +514,8 @@ class TrajectoryOptimizer:
             # 수락 기준을 통해 미는 것뿐이다. 측정(`worst_row`)은 이것과 무관하게 계속 돈다.
             return cost, None
         violation = max(0.0, -self.linearizer.full_violation(trajectory, q_now, scene, states))
+        if self.path is not None:
+            violation = max(violation, self._path_violation(trajectory, scene))
         return cost + self.config.cost.w_slack * violation, violation
 
     def _limit_overshoot(self, trajectory: np.ndarray, q_now: np.ndarray,
@@ -477,6 +587,8 @@ class TrajectoryOptimizer:
             # FK 는 한 번 — `_finish` 가 같은 상태로 최종 검증을 한다.
             states = self.linearizer.sphere_states(projected, q_now)
             violation = max(0.0, -self.linearizer.full_violation(projected, q_now, scene, states))
+            if self.path is not None:
+                violation = max(violation, self._path_violation(projected, scene))
             out["violation_m"] = float(violation)
             if violation > tolerance:
                 out["reason"] = "projection_collides"
@@ -528,6 +640,21 @@ class TrajectoryOptimizer:
         clearance, worst_pair = self.linearizer.worst_row(trajectory, q_now, scene, states)
         violation = max(0.0, -clearance)
         tolerance = cfg.safety.violation_tolerance
+        path_record = None
+        if self.path is not None:
+            # T43 Q — the rows between waypoints, at full resolution, on what is returned. A
+            # violation there makes the chunk VIOLATED like any other row; `clearance_m` and
+            # `max_violation_pair` stay the waypoint numbers, the path's are in `path_check`.
+            path_worst, path_record = self.path.violation(trajectory, scene, record=True)
+            path_record["timing_ms"] = {k: round(v, 3) for k, v in self.path.timing.items()}
+            path_violation = max(0.0, -path_worst)
+            if path_violation > tolerance:
+                notes.append(
+                    f"path check ({self.path.mode}): {path_violation * 1000:.1f} mm below the floor "
+                    f"at step {path_record['worst']['step']} "
+                    f"({path_record['worst']['at_kind']} {path_record['worst']['at']:g}, "
+                    f"{path_record['worst']['link']}) — between the waypoints")
+            violation = max(violation, path_violation)
 
         if violation > tolerance:
             status = TrajOptStatus.VIOLATED
@@ -604,6 +731,7 @@ class TrajectoryOptimizer:
                 # 위의 `clearance_m`·`limit_overshoot`·상태는 **반환된 그 궤적**을 최종 기하와
                 # 실제 한계로 다시 잰 값이다 — 후보의 `violation_m` 은 루프 안의 merit 가 본 값이다.
                 **(selection if selection is not None else _no_selection()),
+                **({"path_check": path_record} if path_record is not None else {}),
             },
         )
 

@@ -390,6 +390,10 @@ class SafePolicy:
         self._last_rest_start = self._rest_start(feedback)
         if self._last_rest_start.get("applied"):
             context["start_at_rest"] = True
+        # T43 Q — the servo observer propagates the applied rows of the previous chunk to this
+        # capture (`servo.ServoObserver`). Only with `limits.servo_model`: otherwise no key.
+        if getattr(self.to_config.limits, "servo_model", False):
+            context["servo_feedback"] = {"feedback": feedback, "seq": seq}
         t = time.monotonic()
         refined = self.refiner.refine(chunk, context)
         timing["trajopt"] = (time.monotonic() - t) * 1000.0 - timing.get("ag3s", 0.0)
@@ -597,6 +601,8 @@ class SafePolicy:
             "continuity_reason": metrics.get("continuity_reason"),
             # T41 b — 정지 출발 범위로 푼 청크에만 키가 생긴다.
             **({"rest_start": _jsonable(metrics["rest_start"])} if "rest_start" in metrics else {}),
+            # T43 Q — servo / sweep rows: only when on.
+            **({"path_check": _jsonable(metrics["path_check"])} if "path_check" in metrics else {}),
             "reference_deviation": round(
                 float(getattr(result, "reference_deviation", 0.0) or 0.0), 6),
         }

@@ -1122,6 +1122,142 @@ class CollisionLinearizer:
         return str(names[label])
 
     # --- selection + linearization -------------------------------------------------------
+    # --- T43 Q: configurations off the waypoint grid ---------------------------------------
+    def _config_maps(self, n: int, with_jac: bool):
+        """FK mapped over `n` arbitrary configurations (cached per `n`) and its scatter indices.
+
+        `sphere_states` is mapped over the chunk's `horizon`; the sweep / servo rows (`sweep.py`)
+        need the same spheres at a varying number of intermediate configurations. Built lazily, so a
+        linearizer that never sees those rows never builds them.
+        """
+        import casadi as ca
+
+        key = (int(n), bool(with_jac))
+        cache = self.__dict__.setdefault("_config_map_cache", {})
+        if key in cache:
+            return cache[key]
+        if with_jac:
+            fn = self._fk.map(int(n))
+        else:
+            base = self.__dict__.get("_fk_positions")
+            if base is None:
+                q = ca.SX.sym("q", int(self.robot_model.nq), 1)
+                spheres = (self.robot_model.sphere_centers_symbolic(q, params=self._p_sym)
+                           if self.param_names else self.robot_model.sphere_centers_symbolic(q))
+                base = ca.Function("fk_pos", self._fk_inputs(q),
+                                   [ca.horzcat(*[c for c, _ in spheres])])
+                self.__dict__["_fk_positions"] = base
+            fn = base.map(int(n))
+        c_step, c_sphere = np.divmod(np.arange(int(n) * self.n_spheres), self.n_spheres)
+        centre_dest = np.ravel_multi_index(
+            (np.repeat(c_step, 3), np.repeat(c_sphere, 3), np.tile(np.arange(3), c_step.size)),
+            (int(n), self.n_spheres, 3))
+        jac_dest = jac_shape = None
+        if with_jac:
+            probe = fn(*self._args_for(np.zeros((int(self.robot_model.nq), int(n))),
+                                       None if self._p_sym is None
+                                       else np.zeros((len(self.param_names), int(n)))))
+            rows, cols = probe[1].sparsity().get_triplet()
+            rows = np.asarray(rows, np.int64)
+            cols = np.asarray(cols, np.int64)
+            jac_shape = (int(n), self.n_spheres, 3, self.nq_opt)
+            jac_dest = np.ravel_multi_index(
+                (cols // self.nq_opt, rows // 3, rows % 3, cols % self.nq_opt), jac_shape)
+        cache[key] = (fn, centre_dest, jac_dest, jac_shape)
+        return cache[key]
+
+    def _args_for(self, full: np.ndarray, params: Optional[np.ndarray]) -> list:
+        return [full] if self._p_sym is None else [full, params]
+
+    def config_states(self, full: np.ndarray, params: Optional[np.ndarray], *,
+                      with_jac: bool = True):
+        """``(centres[n, Q, 3], jac[n, Q, 3, nq_opt] | None)`` at `n` full-model configurations.
+
+        `full` is ``(nq_model, n)``; `params` the finger joints per configuration
+        ``(n_params, n)`` (ignored by a model without them). The held object rides along exactly as
+        in `sphere_states` — appended after the robot's spheres. Nothing here touches the
+        horizon-mapped functions `sphere_states` uses.
+        """
+        full = np.asarray(full, np.float64)
+        n = int(full.shape[1])
+        if self._p_sym is not None and params is None:
+            params = np.tile(np.asarray(self.robot_model.param_vector(), np.float64).reshape(-1, 1),
+                             (1, n))
+        fn, centre_dest, jac_dest, jac_shape = self._config_maps(n, with_jac)
+        out = fn(*self._args_for(full, params))
+        centres_dm = out[0] if with_jac else out
+        centres = np.zeros(n * self.n_spheres * 3)
+        centres[centre_dest] = np.asarray(centres_dm).T.reshape(-1)
+        centres = centres.reshape(n, self.n_spheres, 3)
+        jac = None
+        if with_jac:
+            jac = np.zeros(int(np.prod(jac_shape)))
+            jac[jac_dest] = np.asarray(out[1].nonzeros(), np.float64)
+            jac = jac.reshape(jac_shape)
+        if self._attached_local is None:
+            return centres, jac
+        a_pos, a_jac = self._attached_at(full, params, n, with_jac)
+        centres = np.concatenate([centres, a_pos], axis=1)
+        if with_jac:
+            jac = np.concatenate([jac, a_jac], axis=1)
+        return centres, jac
+
+    def _attached_at(self, full, params, n: int, with_jac: bool):
+        """`attached_states` at `n` arbitrary configurations (the same four-probe construction)."""
+        import casadi as ca
+
+        link = self._attached_link
+        cache = self.__dict__.setdefault("_config_probe_cache", {})
+        key = (link, int(n))
+        if key not in cache:
+            q = ca.SX.sym("q", int(self.robot_model.nq), 1)
+            T = (self.robot_model.link_pose_symbolic(q, link, params=self._p_sym)
+                 if self._p_sym is not None else self.robot_model.link_pose_symbolic(q, link))
+            origin = T[:3, 3]
+            probes = ca.horzcat(origin, origin + T[:3, 0], origin + T[:3, 1], origin + T[:3, 2])
+            free = [int(i) for i in self.layout.q_indices]
+            jac = ca.jacobian(ca.reshape(probes, -1, 1), q[free])
+            fn = ca.Function(f"probe_cfg_{link}", self._fk_inputs(q), [probes, jac]).map(int(n))
+            zero_p = None if self._p_sym is None else np.zeros((len(self.param_names), int(n)))
+            _, jac_dm = fn(*self._args_for(np.zeros((int(self.robot_model.nq), int(n))), zero_p))
+            rows, cols = jac_dm.sparsity().get_triplet()
+            rows = np.asarray(rows, np.int64)
+            cols = np.asarray(cols, np.int64)
+            shape = (int(n), 4, 3, self.nq_opt)
+            dest = np.ravel_multi_index((cols // self.nq_opt, rows // 3, rows % 3,
+                                         cols % self.nq_opt), shape)
+            c_step, c_probe = np.divmod(np.arange(int(n) * 4), 4)
+            c_dest = np.ravel_multi_index(
+                (np.repeat(c_step, 3), np.repeat(c_probe, 3), np.tile(np.arange(3), c_step.size)),
+                (int(n), 4, 3))
+            cache[key] = (fn, dest, shape, c_dest)
+        fn, dest, shape, c_dest = cache[key]
+        probe_dm, jac_dm = fn(*self._args_for(full, params))
+        probes = np.zeros(int(n) * 12)
+        probes[c_dest] = np.asarray(probe_dm).T.reshape(-1)
+        probes = probes.reshape(int(n), 4, 3)
+        a = self._attached_local
+        w = np.column_stack([1.0 - a.sum(axis=1), a])
+        pos = np.einsum("nk,hkj->hnj", w, probes)
+        if not with_jac:
+            return pos, None
+        pj = np.zeros(int(np.prod(shape)))
+        pj[dest] = np.asarray(jac_dm.nonzeros(), np.float64)
+        return pos, np.einsum("nk,hkjm->hnjm", w, pj.reshape(shape))
+
+    def flat_clearances(self, centres: np.ndarray, scene: SceneSnapshot) -> np.ndarray:
+        """``(n, S*M + S*K + Q)`` — every row `linearize` chooses from, in its column order.
+
+        The same three blocks `linearize` concatenates (candidate, plane, ESDF), for any leading
+        axis. The sweep rows (`sweep.py`) read the floor at `q_now` and the full-resolution check
+        from it, so the column a floor belongs to is the column `linearize` selects.
+        """
+        candidate, plane, _ = self._clearances_from(centres, scene)
+        esdf = self._esdf_clearance(centres, scene)
+        n = centres.shape[0]
+        return np.concatenate([candidate.reshape(n, -1), plane.reshape(n, -1),
+                               esdf.reshape(n, -1)], axis=1)
+
     def linearize(
         self,
         trajectory: np.ndarray,
@@ -1129,6 +1265,7 @@ class CollisionLinearizer:
         scene: SceneSnapshot,
         config: TrajOptConfig,
         states=None,
+        row_floor: Optional[np.ndarray] = None,
     ) -> LinearizedRows:
         """Evaluate, select and differentiate the rows the QP will hold.
 
@@ -1139,6 +1276,9 @@ class CollisionLinearizer:
         **`collision.enabled=False` 면 행이 하나도 안 나온다** (사용자 ablation, T15). 여기가
         QP 가 충돌을 보는 **유일한** 자리이므로, 여기서 비우면 추적·jerk·연속성·limit·trust
         region 은 그대로 돌면서 충돌만 없다 — `--no-safe`(TO 를 아예 안 돌림)와 다른 점이다.
+
+        `row_floor` (T43 Q, 기본 `None`): ``(width,)`` 또는 ``(H, width)`` — 행마다 0 대신 이 값
+        이상이면 된다 (선택 · 값 · QP 행 모두 ``h − floor`` 로 본다). waypoint 행은 넘기지 않는다.
 
         **여유거리 측정은 이 스위치와 무관하다.** `full_violation` 과 `worst_row` 는 이 함수를
         거치지 않고 기하를 직접 다시 재므로, 꺼도 `max_violation_m` 은 참값이 나온다. 꺼진 것은
@@ -1176,6 +1316,11 @@ class CollisionLinearizer:
             [candidate.reshape(horizon, -1), plane.reshape(horizon, -1),
              esdf.reshape(horizon, -1)], axis=1
         )  # (H, S*M + S*K + S)
+        if row_floor is not None:
+            # T43 Q — a row may sit at its floor instead of at zero (`sweep.py`: an intermediate
+            # state may not be deeper inside its margin than the robot already is). `None` (every
+            # waypoint call) leaves `flat` untouched.
+            flat = flat - np.asarray(row_floor, np.float64)
         if reduction.enabled and reduction.temporal_stride > 1:
             # Steps that are not enforced get +inf everywhere, so they select nothing while keeping
             # their rows allocated — the pattern must not depend on the stride either.
@@ -1499,8 +1644,12 @@ def append_collision_rows(
     iterate: np.ndarray,
     block: CollisionBlock,
     backoff: float = 0.0,
+    extra_slack: int = 0,
 ):
     """Write the linearized rows into a `QpProblem` that reserved slack for them.
+
+    `extra_slack` (T43 Q, default 0): slacks reserved **after** this block's own, for the sweep /
+    servo rows `sweep.append_path_rows` writes next. This block keeps the first `block.n_rows`.
 
     The row is ``value + grad . (Q - Q_k) + s >= backoff``, rearranged so the variable side is on
     the left:
@@ -1513,7 +1662,7 @@ def append_collision_rows(
     An unused row has a zero gradient and a lower bound of zero, leaving ``s >= 0`` — already true,
     so the row costs the solver nothing while keeping the pattern intact.
     """
-    if block.n_rows != problem.n_slack:
+    if block.n_rows + int(extra_slack) != problem.n_slack:
         raise ValueError(
             f"the collision block holds {block.n_rows} rows but {problem.n_slack} slacks were "
             "reserved; both come from reduction.rows_per_step x horizon and must agree"

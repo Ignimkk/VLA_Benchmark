@@ -506,6 +506,39 @@ def sphere_options(args) -> dict:
     return {k: v for k, v in given.items() if v is not None}
 
 
+def announce_gripper_cover(report: dict | None) -> None:
+    """T43 R — 덮개를 켰을 때만 (WARNING): 구 수 · link 별 수 · 못 덮은 표본. 꺼져 있으면 조용하다."""
+    if not report:
+        return
+    per = ", ".join(f"{link}+{r['n_spheres']} (r {r['radius_mm'][0]:.1f}–{r['radius_mm'][1]:.1f} mm, "
+                    f"미달 표본 {r['n_uncovered']}/{r['n_targets']})" if r.get("radius_mm")
+                    else f"{link}+0" for link, r in report["links"].items())
+    logging.warning(
+        "constraint gripper cover (T43 R): 구 %d → %d (+%d 내접 덮개, 최대 틈 %.1f mm, 손 %s) — %s. "
+        "ESDF 질의 · FK 비용이 구 수에 비례한다",
+        report["n_base_spheres"], report["n_base_spheres"] + report["n_cover_spheres"],
+        report["n_cover_spheres"], 1e3 * float(report["options"].get("max_gap", 0.0025)),
+        report["options"].get("hands", "both"), per)
+
+
+def gripper_cover_options(args) -> dict | None:
+    """`--gripper-cover [HANDS]` · `--gripper-cover-max-gap MM` → `build_constraint_robot_model` 의
+    `gripper_cover` (T43 R). 안 줬으면 `None` — 제약 모델이 예전과 글자 그대로 같다."""
+    hands = getattr(args, "gripper_cover", None)
+    gap_mm = getattr(args, "gripper_cover_max_gap", None)
+    if hands is None:
+        if gap_mm is not None:
+            raise SystemExit("--gripper-cover-max-gap 는 --gripper-cover 와 함께 줘야 합니다 — "
+                             "혼자서는 아무 일도 하지 않습니다")
+        return None
+    out: dict = {"hands": str(hands)}
+    if gap_mm is not None:
+        if not (math.isfinite(float(gap_mm)) and float(gap_mm) > 0):
+            raise SystemExit(f"--gripper-cover-max-gap 는 0 보다 커야 합니다 (mm): {gap_mm}")
+        out["max_gap"] = float(gap_mm) * 1e-3
+    return out
+
+
 def parse_self_filter_inflation(pairs: Sequence[str]) -> dict[str, float]:
     """`["gripper=0.01"]` → `{"gripper": 0.01}` (T19). 빈 입력이면 빈 dict (예전과 같은 필터).
 
@@ -643,13 +676,15 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
                max_field_age_sec: float | None = None,
                exclude_links: Sequence[str] = (),
                constraint_sphere_options: dict | None = None,
+               gripper_cover: dict | None = None,
                self_collision: bool = True,
                target_field_policy: str = "relax",
                plan_horizon_steps: int | None = None,
                rows_per_step: int | None = None,
                self_filter: dict | None = None,
                subtask_gate: bool | None = None,
-               subtask_probe_path: str | None = None):
+               subtask_probe_path: str | None = None,
+               held_body_cover: bool = False):
     """서버가 쓸 AG3S. 자기 필터는 전신, 제약은 `links` (T27 부터 기본 `gripper` — 손바닥 + 손가락).
 
     **두 모델은 일부러 다르다.** 자기 필터는 바퀴·베이스까지 있어야 한다 — 머리 카메라가 자기
@@ -694,8 +729,10 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     scene = TransportScene.attach(mj_model, mujoco.MjData(mj_model))
     filter_robot = build_robot_model(scene)
     spheres = dict(constraint_sphere_options or {})
+    # T43 R — 덮개는 준 것만 (`None` 이면 인자를 안 넘긴다 = 예전 호출 그대로).
+    cover = {"gripper_cover": gripper_cover} if gripper_cover else {}
     constraint_robot = build_constraint_robot_model(
-        scene, link_filter=constraint_link_filter(links), sphere_options=spheres)
+        scene, link_filter=constraint_link_filter(links), sphere_options=spheres, **cover)
     # **기본이 아닌 범위·자기충돌·굵기로 떠 있으면 여기서 크게 말한다.** 제약 모델을 만든
     # 직후에 찍는 이유는, 이 아래의 `--exclude-links` 경고와 coverage report 가 그 뒤에 오면서
     # 로그가 "무엇을 뺐는가" 순서로 읽히게 하기 위해서다.
@@ -723,7 +760,7 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
         keep = constraint_links_minus(constraint_robot.sphere_link_names, excluded,
                                       known=constraint_robot.model.links)
         constraint_robot = build_constraint_robot_model(scene, link_filter=keep,
-                                                       sphere_options=spheres)
+                                                       sphere_options=spheres, **cover)
         links_label = f"{links} minus {','.join(excluded)}"
         # 조용히 다른 제약으로 떠 있는 것이 가장 나쁘다 — legacy backend 경고와 같은 이유다.
         logging.warning(
@@ -762,6 +799,7 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     })
     logging.info("AG3S: self-filter %d spheres, constraints %d spheres (%s)",
                  filter_robot.n_spheres, constraint_robot.n_spheres, links_label)
+    announce_gripper_cover(getattr(constraint_robot, "gripper_cover_report", None))
     # **구 개수와 행 개수를 갈라 찍는다.** 구를 촘촘하게 만들면 구는 늘지만 QP 행은 안 늘고,
     # 그 구분이 없으면 "구를 늘렸다" 가 "실시간을 잃었다" 로 읽힌다.
     announce_row_budget(n_constraint_spheres=constraint_robot.n_spheres,
@@ -812,6 +850,12 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     # 생성 **뒤에** 찍는다 — 모르는 link 이름은 생성자가 거절하므로, 여기 도달한 표는 실제로
     # `robot_sphere_mask` 에 들어가는 값이다.
     announce_self_filter(ag3s.self_filter_settings(), cli=dict(self_filter or {}))
+    if held_body_cover:
+        # T43 R2 — 쥔 과일 질의 구 = 몸통 덮개 (바닥 반구 포함), J1 lift 는 받침 가까이에서만.
+        ag3s.held_body_cover = True
+        logging.warning("AG3S held query spheres: body cover (T43 R2) — slip %.1f mm, J1 lift "
+                        "only within band + %.1f mm of the support",
+                        ag3s.held_body_slip_m * 1000.0, ag3s.held_lift_hysteresis_m * 1000.0)
     return ag3s
 
 
@@ -954,6 +998,23 @@ def build_parser() -> argparse.ArgumentParser:
                     help="T41 b — --rest-start 의 첫 스텝 문턱 e0 (rad, 관절 공통). 기본 = 관절마다 "
                          "a_max·dt² (0.040 rad = 2.29°, 정지에서 한 주기에 닿는 거리). 0 이면 "
                          "Q0 = q_now. v_max·dt 보다 크면 그 값에서 잘린다")
+    ap.add_argument("--servo-model", action="store_true",
+                    help="T43 Q (1) — TO 가 위치 servo 의 응답 (제어 대상 MJCF 의 kp · kv · damping · "
+                         "armature 에서 유도, 속도는 exec_feedback 으로 추정) 으로 로봇이 **실제로 "
+                         "지날 자세** 를 예측하고, 각 제어 행 끝의 예측 자세에 충돌 행을 더한다. "
+                         "기본 꺼짐 = 예전 그대로 (명령 waypoint 만 검사)")
+    ap.add_argument("--sweep-check", action="store_true",
+                    help="T43 Q (2) — waypoint 사이 연속 충돌 검사. --servo-model 이 없으면 관절 공간 "
+                         "보간, 있으면 servo 예측 경로의 sub-step. 질의 구가 검사 사이에 "
+                         "--sweep-max-mm 이상 움직이지 않게 행마다 자른다. 기본 꺼짐")
+    ap.add_argument("--sweep-max-mm", type=float, default=None, metavar="MM",
+                    help="T43 Q — --sweep-check 의 검사 자세 사이 최대 이동 (mm). 기본 12 "
+                         "(24 mm 막대의 절반)")
+    ap.add_argument("--sweep-max-samples", type=int, default=None, metavar="N",
+                    help="T43 Q — --sweep-check 의 제어 행당 조각 수 상한. 기본 16")
+    ap.add_argument("--sweep-rows-per-step", type=int, default=None, metavar="N",
+                    help="T43 Q — 중간 자세 행의 QP 예산 (제어 행마다). 기본 24. --servo-model 또는 "
+                         "--sweep-check 와 함께만")
     ap.add_argument("--plan-horizon", default="execution",
                     metavar="execution|full|N",
                     help="최적화기가 **다듬는** 스텝 수. 기본 `execution` = 실행되는 창만 "
@@ -1067,6 +1128,15 @@ def build_parser() -> argparse.ArgumentParser:
                     help="제약 모델 구 반지름의 **절대 상한** (m). 팽창까지 끝난 값에 걸린다 "
                          "(팔뚝 기본값 81.2 mm). `--capsule-radius-scale` 과 같은 성질이고, "
                          "덮지 못하면 시작 로그에 크게 찍는다")
+    ap.add_argument("--gripper-cover", nargs="?", const="both", default=None,
+                    choices=("both", "left", "right"), metavar="HANDS",
+                    help="T43 R — 제약 모델의 손바닥 · 손가락에 **내접 덮개 구**를 더한다 "
+                         "(collision mesh 바깥 면을 --gripper-cover-max-gap 안으로, 반지름은 그 link "
+                         "의 지금 구 최대 이하, 파지 면 쪽으로는 지금 구보다 안 나온다). 값 없이 주면 "
+                         "both. 기본 꺼짐 = 예전 모델 그대로. 구 수가 크게 늘어 TO 시간이 는다 (T43R.impl)")
+    ap.add_argument("--gripper-cover-max-gap", type=float, default=None, metavar="MM",
+                    help="T43 R — 덮개 목표: 바깥 면에서 구 합집합까지 최대 거리 (mm, 기본 2.5). "
+                         "--gripper-cover 와 함께만")
     # --- 목적함수 가중치 (T9) ------------------------------------------------------------
     # **제약이 하나도 활성이 아닌 판에서도 TO 가 청크를 고친다** (실행되는 8 step 안에서 중앙값
     # 2.6°, 최대 8.8°). 그러면 남은 변형은 전부 이 넷이 만든 것이므로, 훑을 수 있어야 한다.
@@ -1151,6 +1221,10 @@ def build_parser() -> argparse.ArgumentParser:
                     help="직전 프레임에 확정한 target centroid 반경 R (미터) 안에서는 자기 필터가 "
                          "inflation 0 (구 실제 반지름) 으로만 지운다 — 예외가 아니다, 로봇 구 "
                          "내부 점은 여전히 지운다 (T19). 안 주면 코드 기본값 (0 = 끔)")
+    ap.add_argument("--held-body-cover", action="store_true",
+                    help="T43 R2 — 쥔 과일의 질의 구가 몸통 전체 (바닥 반구 포함) 를 덮는다: 맞춘 구 + "
+                         "받침면까지 내린 바닥 구 + 미끄럼 5 mm. J1 lift 는 몸통이 받침면 + 띠 + "
+                         "10 mm 안일 때만 (파지 · 들어 올림 · 내려놓기). 기본 off = T43 전과 같다")
     ap.add_argument("--static-geometry", default="none", metavar="none|auto|PATH",
                     help="아는 고정 기하(벽·선반·테이블·바닥)를 해석적 채널에 싣는다 — 거리장이 "
                          "min(복셀, 해석적) 을 답해 미관측·격자 밖의 낙관을 없앤다 (E4·N2). "
@@ -1240,6 +1314,11 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         if not args.fine_voxel:
             ap.error("--target-field-policy 는 미세 계층 한 겹으로 만들어집니다. "
                      "--fine-voxel 0 은 단일 계층이므로 정책이 아무 일도 하지 않습니다")
+    if getattr(args, "held_body_cover", False) and (args.no_safe
+                                                    or getattr(args, "no_perception", False)):
+        ap.error("--held-body-cover 는 AG3S 의 쥔 물체 질의 구를 고치는 flag 입니다 "
+                 "(--no-safe · --no-perception 은 AG3S 를 안 만듭니다). 그대로 띄우면 효과가 "
+                 "있었다고 믿게 됩니다 — 빼고 띄우십시오")
     # --- T27 ------------------------------------------------------------------------------
     if args.no_limits and args.no_safe:
         ap.error("--no-limits 는 최적화기의 joint limit 행을 끄는 flag 입니다 (--no-safe 는 "
@@ -1287,6 +1366,12 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
     if args.no_perception and options:
         ap.error("--sphere-* 는 충돌 제약 모델의 구를 고치는 flag 입니다 (--no-perception 서버에는 "
                  "충돌 행이 없습니다). 그대로 띄우면 효과가 있었다고 믿게 됩니다")
+    # T43 R — 같은 규율: 형식 오류는 체크포인트를 올리기 전에, 제약 모델이 없는 서버에서는 거절.
+    cover = gripper_cover_options(args)
+    if cover and (args.no_safe or args.no_perception):
+        ap.error("--gripper-cover 는 제약 모델의 그리퍼 구를 더하는 flag 입니다 (--no-safe · "
+                 "--no-perception 서버에는 그 모델의 충돌 행이 없습니다). 그대로 띄우면 효과가 "
+                 "있었다고 믿게 됩니다")
     # **self-filter flag 의 형식 오류도 여기서 죽는다** (T19). 모르는 link 이름은 모델이 있어야
     # 가를 수 있으므로 `AG3S` 생성자가 거절한다 — 그것도 체크포인트를 올리기 전이다.
     try:
@@ -1400,6 +1485,9 @@ def joint_limits_meta(limits_config) -> dict:
     if getattr(limits_config, "rest_start", False):
         # T41 b — 켰을 때만 키가 생긴다 (꺼진 기록의 meta 는 예전 그대로).
         out["rest_start"] = {"tolerance_rad": limits_config.rest_start_tolerance}
+    if getattr(limits_config, "servo_model", False):
+        # T43 Q — 같은 규약.
+        out["servo_model"] = True
     return out
 
 
@@ -1409,6 +1497,21 @@ def sqp_meta(sqp_config) -> dict:
             "max_iterations": int(sqp_config.max_iterations),
             "time_budget_ms": float(sqp_config.time_budget_ms),
             "limit_projection_fallback": bool(sqp_config.limit_projection_fallback)}
+
+
+def announce_path_check(to_config) -> None:
+    """T43 Q — 켰을 때만 한 줄 (WARNING). 꺼져 있으면 아무것도 찍지 않는다."""
+    servo = bool(getattr(to_config.limits, "servo_model", False))
+    red = to_config.reduction
+    sweep = bool(getattr(red, "sweep_check", False))
+    if not (servo or sweep):
+        return
+    logging.warning(
+        "TO path check (T43 Q): %s%s — 중간 자세 행 %d 개/제어 행, floor = min(0, q_now 의 여유)",
+        "servo model (MJCF kp·kv·damping·armature, exec_feedback 속도 추정) · 각 행 끝 예측 자세"
+        if servo else "관절 공간 보간",
+        (f" · sweep ≤ {red.sweep_max_m * 1000:.1f} mm (행당 ≤ {red.sweep_max_samples} 조각)"
+         if sweep else ""), red.sweep_rows_per_step)
 
 
 def announce_sqp_budget(sqp_config) -> None:
@@ -1457,6 +1560,34 @@ def rest_start_overrides(args) -> dict:
     return out
 
 
+def path_overrides(args) -> tuple[dict, dict]:
+    """`--servo-model` · `--sweep-*` → (`limits` 의 키, `reduction` 의 키) (T43 Q). 안 줬으면 둘 다 `{}`."""
+    limits: dict = {}
+    reduction: dict = {}
+    servo = bool(getattr(args, "servo_model", False))
+    sweep = bool(getattr(args, "sweep_check", False))
+    if servo:
+        limits["servo_model"] = True
+    if sweep:
+        reduction["sweep_check"] = True
+    for flag, key, scale, needs in (("sweep_max_mm", "sweep_max_m", 1e-3, sweep),
+                                    ("sweep_max_samples", "sweep_max_samples", None, sweep),
+                                    ("sweep_rows_per_step", "sweep_rows_per_step", None,
+                                     sweep or servo)):
+        value = getattr(args, flag, None)
+        if value is None:
+            continue
+        if not needs:
+            raise SystemExit(f"--{flag.replace('_', '-')} 는 "
+                             + ("--sweep-check" if flag != "sweep_rows_per_step"
+                                else "--servo-model 또는 --sweep-check")
+                             + " 와 함께 줘야 합니다 — 혼자서는 아무 일도 하지 않습니다")
+        if not (math.isfinite(float(value)) and float(value) > 0):
+            raise SystemExit(f"--{flag.replace('_', '-')} 는 0 보다 커야 합니다: {value}")
+        reduction[key] = float(value) * scale if scale is not None else int(value)
+    return limits, reduction
+
+
 def trajopt_config_from_args(args):
     """CLI → `TrajOptConfig`. `SafePolicy` 경로와 `--no-perception` 경로가 **같은 함수**를 쓴다.
 
@@ -1470,6 +1601,7 @@ def trajopt_config_from_args(args):
         getattr(args, "no_perception", False))
     limits = limits_overrides(args)
     sqp = sqp_overrides(args)
+    path_limits, path_reduction = path_overrides(args)
     return TrajOptConfig.from_dict({
         "collision": {"backend": "esdf", "esdf_margin": args.esdf_margin,
                       "use_support_planes": False,
@@ -1483,7 +1615,10 @@ def trajopt_config_from_args(args):
         "limits": {**limits,
                    **(dict(NO_LIMITS) if getattr(args, "no_limits", False) else {}),
                    # T41 b — 준 것만 (기본 off 면 키가 없다).
-                   **rest_start_overrides(args)},
+                   **rest_start_overrides(args),
+                   # T43 Q — 준 것만.
+                   **path_limits},
+        **({"reduction": path_reduction} if path_reduction else {}),
         **({"sqp": sqp} if sqp else {}),
         # 기하 인증 요구는 여기 **한 곳**에서만 켜고 끈다 (`--no-perception` 은 `ToOnlyPolicy` 가
         # 끈다 — 인증할 기하가 애초에 없다).
@@ -1659,6 +1794,9 @@ def main() -> None:
                       "plan_horizon": args.plan_horizon,
                       **({"sphere_options": sphere_options(args)}
                          if sphere_options(args) else {}),
+                      # T43 R — 켰을 때만 키가 생긴다.
+                      **({"gripper_cover": gripper_cover_options(args)}
+                         if gripper_cover_options(args) else {}),
                       **({"self_filter": self_filter_options(args)}
                          if self_filter_options(args) else {}),
                       # SUBTASK-c — **항상 남긴다**: 이 키가 없는 기록은 SUBTASK-c 전이다.
@@ -1714,6 +1852,7 @@ def main() -> None:
                 "TO rest_start: 직전 청크가 통째로 HOLD 인 청크는 정지 출발 범위로 푼다 — 첫 스텝 "
                 "|Q0 − q_now| ≤ %s, 이후 a_max·dt² 씩 늘어난다 (T41 b)",
                 "a_max·dt² (관절마다)" if tol is None else f"{tol:.4f} rad ({math.degrees(tol):.2f}°)")
+        announce_path_check(to_config)
         announce_collision_switch(to_config.collision.enabled)
         announce_limits_switch(to_config.limits)
         announce_cost_weights(weights)
@@ -1735,13 +1874,15 @@ def main() -> None:
                             max_field_age_sec=args.max_field_age_sec,
                             exclude_links=args.exclude_links,
                             constraint_sphere_options=sphere_options(args),
+                            gripper_cover=gripper_cover_options(args),
                             self_collision=not args.no_self_collision,
                             target_field_policy=args.target_field_policy,
                             plan_horizon_steps=horizon.planned,
                             rows_per_step=to_config.reduction.rows_per_step,
                             self_filter=self_filter_options(args),
                             subtask_gate=args.subtask_gate,
-                            subtask_probe_path=args.subtask_probe),
+                            subtask_probe_path=args.subtask_probe,
+                            held_body_cover=args.held_body_cover),
             static_geometry=load_static_geometry(args.static_geometry, args.model_xml,
                                                  links=args.links),
             to_config=to_config,

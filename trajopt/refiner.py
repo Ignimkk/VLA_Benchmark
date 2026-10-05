@@ -151,6 +151,8 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
         # T41 b — 로봇이 정지해 있다고 호출자가 말한 청크만 (`SafePolicy`, `limits.rest_start`).
         # 키가 없으면 인자를 아예 넘기지 않는다 — 호출이 예전과 글자 그대로 같다.
         at_rest = bool(context.get("start_at_rest")) if context is not None else False
+        # T43 Q — the servo observer's facts (`SafePolicy`, only with `limits.servo_model`). Same rule.
+        servo = context.get("servo_feedback") if context is not None else None
         result = self.optimizer.solve(
             reference,
             q_now,
@@ -159,6 +161,7 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
             template=chunk,
             geometry_certified=certified,
             **({"start_at_rest": True} if at_rest else {}),
+            **({"servo_feedback": servo} if servo is not None else {}),
         )
         # T37 — 이 청크의 목적함수에 continuity 항이 **들어갔나**, 아니면 왜 빠졌나. `metrics` 에 싣는
         # 이유: 기록(`summary_json.to.metrics`)만 보고 청크마다 셀 수 있어야 한다.
