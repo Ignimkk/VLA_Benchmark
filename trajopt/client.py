@@ -53,7 +53,8 @@ __all__ = ["SafeRemoteClient", "HOLD_GRIPPER_NORM", "ExecutionLog", "HoldControl
 #: |---|---|---|
 #: | `fixed` | HOLD 에 **들어갈 때 한 번** 잡은 `q_hold` = 직전 스텝에 **명령한** 팔 목표 (`d.ctrl`). HOLD 가 이어지는 동안 그대로 | 마지막으로 **명령한** gripper — 열지도 닫지도 않는다 |
 #: | `legacy` | 매 스텝 측정 `qpos` (T23 전) | 매 스텝 측정 개도 (T23 전) |
-HOLD_MODES = ("fixed", "legacy")
+#: | `measured` | HOLD 에 **들어갈 때 한 번** 잡은 `q_hold` = 그 순간의 **측정** 팔 관절 (`rby1_state()`). 이어지는 HOLD 동안 그대로 (T41 c) | `fixed` 와 같다 — 마지막으로 **명령한** gripper |
+HOLD_MODES = ("fixed", "legacy", "measured")
 
 #: 로컬 게이트 (T23). 첫 항목이 기본이다.
 #:
@@ -968,6 +969,19 @@ class HoldController:
 
     `legacy` 는 T23 전 그대로 매 스텝 측정값이다.
 
+    `measured` (T41 c) 는 팔만 `fixed` 와 다르다:
+
+    * **`q_hold` = HOLD 에 들어가는 순간의 측정 팔 관절**, 한 번. `fixed` 의 `q_hold` (직전 명령)
+      는 움직이던 팔에서 측정보다 앞서 있다 — T40 I C1982 에서 7.3° 앞이었고 HOLD 중 팔이 그쪽으로
+      가다 막대에 닿았다. `measured` 는 그 자리에 선다. 매 스텝 다시 잡지 않으므로 `legacy` 의 누적
+      드리프트(T16)는 없다; 남는 것은 위치 servo 의 중력 처짐 한 번(정상상태 오차)이다.
+    * **gripper 는 `fixed` 와 같다 — 마지막 명령.** 측정 개도를 목표로 주면 쥔 사과에서 손가락이
+      이미 사과 폭에 멈춰 있으므로 (명령 − 측정) 이 사라지고 = 쥐는 힘이 사라진다. 명령을 모르면
+      (에피소드 첫 스텝, 쥔 것이 없다) 측정 개도.
+    * `record` 에 `gripper_source` 와 `entry_command_dev_rad` (진입 때 직전 명령 − `q_hold` 최대값,
+      = `fixed` 였다면 HOLD 가 움직였을 거리) 를 더 싣는다 — `measured` 일 때만 (`fixed` 의 기록 키는
+      그대로).
+
     **복구 한도**: 연속 HOLD 청크 수가 `max_hold_chunks` 를 넘으면 `begin_chunk` 가 중단 사유를
     돌려준다 (`None` = 한도 없음). 멈추는 것은 제어 루프다.
 
@@ -994,6 +1008,10 @@ class HoldController:
         self.gripper_hold: Optional[np.ndarray] = None
         #: `q_hold` 를 어디서 잡았나: `command` (직전 `d.ctrl`) · `measured` (명령을 몰랐다).
         self.source: Optional[str] = None
+        #: `measured` 만: gripper 기준의 출처 (`command` · `measured`) 와 진입 때 직전 명령 팔 −
+        #: `q_hold` 의 최대 |차| (rad, 명령을 몰랐으면 `None`).
+        self.gripper_source: Optional[str] = None
+        self.entry_command_dev_rad: Optional[float] = None
         #: 이번 HOLD 에 들어간 뒤 적용한 HOLD 스텝 수.
         self.age = 0
         #: 연속 HOLD 청크 수 (청크가 실행되면 0).
@@ -1035,7 +1053,9 @@ class HoldController:
             self.entry_reason, self.entry_kinds = self.reason, list(self.kinds)
             self.age = 0
             n = (measured.shape[0] - 2) // 2
-            if self.mode == "fixed" and last_command is not None:
+            if self.mode == "measured":
+                self._latch_measured(last_command, measured, n)
+            elif self.mode == "fixed" and last_command is not None:
                 self.q_hold = np.asarray(last_command["arm"], np.float64).reshape(-1).copy()
                 self.gripper_hold = np.asarray(last_command["gripper"],
                                                np.float64).reshape(-1).copy()
@@ -1051,11 +1071,29 @@ class HoldController:
             return measured
         return action_row(self.q_hold, self.gripper_hold)
 
+    def _latch_measured(self, last_command: Optional[dict[str, Any]], measured: np.ndarray,
+                        n: int) -> None:
+        """`measured` 모드의 진입 (T41 c): 팔 = 측정, gripper = 마지막 명령 (모르면 측정)."""
+        self.q_hold = np.concatenate([measured[:n], measured[n + 1:2 * n + 1]])
+        self.source = "measured"
+        if last_command is not None:
+            self.gripper_hold = np.asarray(last_command["gripper"], np.float64).reshape(-1).copy()
+            self.gripper_source = "command"
+            cmd = np.asarray(last_command["arm"], np.float64).reshape(-1)
+            self.entry_command_dev_rad = (float(np.max(np.abs(cmd - self.q_hold)))
+                                          if cmd.shape == self.q_hold.shape else None)
+        else:
+            self.gripper_hold = np.asarray([measured[n], measured[2 * n + 1]])
+            self.gripper_source = "measured"
+            self.entry_command_dev_rad = None
+
     def release(self) -> None:
         """청크가 실행되는 스텝. HOLD 기준을 푼다 (다음 HOLD 는 새로 잡는다)."""
         self.q_hold = None
         self.gripper_hold = None
         self.source = None
+        self.gripper_source = None
+        self.entry_command_dev_rad = None
         self.age = 0
 
     @property
@@ -1076,6 +1114,9 @@ class HoldController:
                "q_hold": [float(v) for v in self.q_hold],
                "gripper_hold": [float(v) for v in self.gripper_hold],
                "age": int(self.age), "hold_chunks": int(self.consecutive)}
+        if self.mode == "measured":
+            out["gripper_source"] = self.gripper_source
+            out["entry_command_dev_rad"] = self.entry_command_dev_rad
         if measured is not None:
             m = np.asarray(measured, np.float64).reshape(-1)
             n = (m.shape[0] - 2) // 2
