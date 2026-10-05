@@ -1,0 +1,330 @@
+{
+ "definitions": "T41c figures (verifier). usage: fig_t41c.py COMPARE_C_JSON [--overwrite]\n-> benchmark/ag3s/docs/figures/t41/t41c-scene-C.png, t41c-scene-D.png, t41c-scene-C1982.png, t41c-distance.png, t41c-hold.png,\n   t41c-table.png (+ .json sidecars)\n\nscene      : per hurdle episode, T41a | T41c third-person front frame (recorded third_person_front.mp4, one frame per control step) at\n             the control row of the run's minimum gripper (EE_BODY_L + fingers) to hurdle distance (true MuJoCo geoms, t41a client\n             distance code). T41c recordings carry the avoidance-arrow overlay (--viz-avoidance-arrow; green = execute\n             refined - reference, red = HOLD), T41a recordings have none.\nscene C1982: T40 | T41a | T41c, frame at the first row of each HOLD episode's last row (+1 = pose after the HOLD) or the contact row.\ndistance   : gripper (solid) to hurdle distance (mm, capped 150) vs control step; T40 = CATEGORICAL slot 0, T41a = slot 1,\n             T41c = slot 3; shaded bands = T41c HOLD rows; x = last row of an obstacle-stopped run; lines at 0 and 10 mm.\nhold       : per HOLD episode (hold_c.py physics replay): left-arm joint max |q - q_entry| (deg), TCP max displacement (mm),\n             fruit-in-TCP slip max (mm; filled marker = apple in hand at entry), vs HOLD duration (control steps); T40 / T41a = mode fixed,\n             T41c = mode measured.\ntable      : outcome per run, T40 / T40 J / T41a / T41c.",
+ "stage": "C",
+ "episodes": {
+  "1807": {
+   "T41a": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1807_s18071",
+    "frame_index": 276,
+    "n_frames": 277,
+    "t": 276,
+    "gripper_min_m": 0.00017115427845901775,
+    "fingers_min_mm": 0.17,
+    "EE_BODY_L_min_mm": 13.72,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_events": [
+     {
+      "t_first": 276,
+      "t_last": 276,
+      "robot_substeps": 26,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "n_hold_rows": 0,
+      "phase": "before_lift"
+     }
+    ]
+   },
+   "T41c": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/c/runs/E3b/C/E3b_ep1807_s18071",
+    "frame_index": 263,
+    "n_frames": 264,
+    "t": 263,
+    "gripper_min_m": 0.007248373683648838,
+    "fingers_min_mm": 7.25,
+    "EE_BODY_L_min_mm": 14.91,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_events": [
+     {
+      "t_first": 263,
+      "t_last": 263,
+      "robot_substeps": 7,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "n_hold_rows": 0,
+      "phase": "before_lift"
+     }
+    ]
+   }
+  },
+  "1968": {
+   "T41a": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1968_s19681",
+    "frame_index": 181,
+    "n_frames": 600,
+    "t": 181,
+    "gripper_min_m": 0.002761627347683244,
+    "fingers_min_mm": 2.76,
+    "EE_BODY_L_min_mm": 15.54,
+    "success": true,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_events": [
+     {
+      "t_first": 181,
+      "t_last": 197,
+      "robot_substeps": 0,
+      "payload_substeps": 523,
+      "pairs": [
+       [
+        "apple_geom",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "n_hold_rows": 0,
+      "phase": "carry"
+     }
+    ]
+   },
+   "T41c": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/c/runs/E3b/C/E3b_ep1968_s19681",
+    "frame_index": 181,
+    "n_frames": 600,
+    "t": 181,
+    "gripper_min_m": 0.002761627347683244,
+    "fingers_min_mm": 2.76,
+    "EE_BODY_L_min_mm": 15.54,
+    "success": true,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_events": [
+     {
+      "t_first": 181,
+      "t_last": 197,
+      "robot_substeps": 0,
+      "payload_substeps": 523,
+      "pairs": [
+       [
+        "apple_geom",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "n_hold_rows": 0,
+      "phase": "carry"
+     }
+    ]
+   }
+  },
+  "1982": {
+   "T41a": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1982_s19822",
+    "frame_index": 393,
+    "n_frames": 394,
+    "t": 393,
+    "gripper_min_m": 0.0013225323558714568,
+    "fingers_min_mm": 1.32,
+    "EE_BODY_L_min_mm": 19.97,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_events": [
+     {
+      "t_first": 393,
+      "t_last": 393,
+      "robot_substeps": 20,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "n_hold_rows": 0,
+      "phase": "before_lift"
+     }
+    ]
+   },
+   "T41c": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/c/runs/E3b/C/E3b_ep1982_s19822",
+    "frame_index": 320,
+    "n_frames": 600,
+    "t": 320,
+    "gripper_min_m": 0.004429387614265288,
+    "fingers_min_mm": 4.43,
+    "EE_BODY_L_min_mm": 19.97,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_events": []
+   }
+  },
+  "1995": {
+   "T41a": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1995_s19952",
+    "frame_index": 4,
+    "n_frames": 222,
+    "t": 4,
+    "gripper_min_m": 0.0015317820596309432,
+    "fingers_min_mm": 15.11,
+    "EE_BODY_L_min_mm": 1.53,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_events": [
+     {
+      "t_first": 221,
+      "t_last": 221,
+      "robot_substeps": 31,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#957",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "n_hold_rows": 0,
+      "phase": "before_lift"
+     }
+    ]
+   },
+   "T41c": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/c/runs/E3b/C/E3b_ep1995_s19952",
+    "frame_index": 4,
+    "n_frames": 222,
+    "t": 4,
+    "gripper_min_m": 0.0015317820596309432,
+    "fingers_min_mm": 15.11,
+    "EE_BODY_L_min_mm": 1.53,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_events": [
+     {
+      "t_first": 221,
+      "t_last": 221,
+      "robot_substeps": 31,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#957",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "n_hold_rows": 0,
+      "phase": "before_lift"
+     }
+    ]
+   }
+  },
+  "1967": {
+   "T41a": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1967_s19672",
+    "frame_index": 160,
+    "n_frames": 600,
+    "t": 160,
+    "gripper_min_m": 0.012757751939668667,
+    "fingers_min_mm": 12.76,
+    "EE_BODY_L_min_mm": 30.77,
+    "success": true,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_events": [
+     {
+      "t_first": 161,
+      "t_last": 166,
+      "robot_substeps": 0,
+      "payload_substeps": 134,
+      "pairs": [
+       [
+        "apple_geom",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "n_hold_rows": 0,
+      "phase": "carry"
+     }
+    ]
+   },
+   "T41c": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/c/runs/E3b/C/E3b_ep1967_s19672",
+    "frame_index": 160,
+    "n_frames": 600,
+    "t": 160,
+    "gripper_min_m": 0.012757751939668667,
+    "fingers_min_mm": 12.76,
+    "EE_BODY_L_min_mm": 30.77,
+    "success": true,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_events": [
+     {
+      "t_first": 161,
+      "t_last": 166,
+      "robot_substeps": 0,
+      "payload_substeps": 134,
+      "pairs": [
+       [
+        "apple_geom",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "n_hold_rows": 0,
+      "phase": "carry"
+     }
+    ]
+   }
+  }
+ }
+}

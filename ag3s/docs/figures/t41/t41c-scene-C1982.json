@@ -1,0 +1,344 @@
+{
+ "definitions": "T41c figures (verifier). usage: fig_t41c.py COMPARE_C_JSON [--overwrite]\n-> benchmark/ag3s/docs/figures/t41/t41c-scene-C.png, t41c-scene-D.png, t41c-scene-C1982.png, t41c-distance.png, t41c-hold.png,\n   t41c-table.png (+ .json sidecars)\n\nscene      : per hurdle episode, T41a | T41c third-person front frame (recorded third_person_front.mp4, one frame per control step) at\n             the control row of the run's minimum gripper (EE_BODY_L + fingers) to hurdle distance (true MuJoCo geoms, t41a client\n             distance code). T41c recordings carry the avoidance-arrow overlay (--viz-avoidance-arrow; green = execute\n             refined - reference, red = HOLD), T41a recordings have none.\nscene C1982: T40 | T41a | T41c, frame at the first row of each HOLD episode's last row (+1 = pose after the HOLD) or the contact row.\ndistance   : gripper (solid) to hurdle distance (mm, capped 150) vs control step; T40 = CATEGORICAL slot 0, T41a = slot 1,\n             T41c = slot 3; shaded bands = T41c HOLD rows; x = last row of an obstacle-stopped run; lines at 0 and 10 mm.\nhold       : per HOLD episode (hold_c.py physics replay): left-arm joint max |q - q_entry| (deg), TCP max displacement (mm),\n             fruit-in-TCP slip max (mm; filled marker = apple in hand at entry), vs HOLD duration (control steps); T40 / T41a = mode fixed,\n             T41c = mode measured.\ntable      : outcome per run, T40 / T40 J / T41a / T41c.",
+ "run": "E3b/C/E3b_ep1982_s19822",
+ "frames": {
+  "T40": [
+   {
+    "label": "HOLD entry",
+    "t": 176,
+    "frame_index": 176,
+    "gripper_mm": 3.895326008367946,
+    "hold": {
+     "t_first": 176,
+     "t_last": 178,
+     "duration_steps": 3,
+     "n_chunks": 1,
+     "chunk_seqs": [
+      23
+     ],
+     "kinds": [
+      "collision"
+     ],
+     "mode": "fixed",
+     "source": "command",
+     "gripper_source": null,
+     "entry_command_dev_rad_recorded": null,
+     "q_hold_vs_entry_measured_deg": 7.274124357730307,
+     "joint_max_deg": 5.470177541352699,
+     "tcp_max_mm": 21.612882801599522,
+     "dev_from_q_hold_max_deg": 7.274124357730307,
+     "fruit": {
+      "apple_finger_mid_entry_mm": 230.54812793318004,
+      "apple_lift_entry_mm": -0.005318145456012502,
+      "in_hand_at_entry": false,
+      "slip_max_mm": 26.57337235700255,
+      "slip_end_mm": 26.57337235700255,
+      "apple_dz_end_mm": 0.006524732216184326,
+      "apple_finger_mid_end_mm": 216.78066684574074
+     },
+     "contacts_in_hold": {
+      "robot_substeps": 9,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1052",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "robot_clearance_min_mm": -0.19490642370171946
+     },
+     "phase": "before_lift"
+    }
+   },
+   {
+    "label": "HOLD last row",
+    "t": 178,
+    "frame_index": 178,
+    "gripper_mm": 0.03173386860235404,
+    "hold": {
+     "t_first": 176,
+     "t_last": 178,
+     "duration_steps": 3,
+     "n_chunks": 1,
+     "chunk_seqs": [
+      23
+     ],
+     "kinds": [
+      "collision"
+     ],
+     "mode": "fixed",
+     "source": "command",
+     "gripper_source": null,
+     "entry_command_dev_rad_recorded": null,
+     "q_hold_vs_entry_measured_deg": 7.274124357730307,
+     "joint_max_deg": 5.470177541352699,
+     "tcp_max_mm": 21.612882801599522,
+     "dev_from_q_hold_max_deg": 7.274124357730307,
+     "fruit": {
+      "apple_finger_mid_entry_mm": 230.54812793318004,
+      "apple_lift_entry_mm": -0.005318145456012502,
+      "in_hand_at_entry": false,
+      "slip_max_mm": 26.57337235700255,
+      "slip_end_mm": 26.57337235700255,
+      "apple_dz_end_mm": 0.006524732216184326,
+      "apple_finger_mid_end_mm": 216.78066684574074
+     },
+     "contacts_in_hold": {
+      "robot_substeps": 9,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1052",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "robot_clearance_min_mm": -0.19490642370171946
+     },
+     "phase": "before_lift"
+    }
+   }
+  ],
+  "T41a": [
+   {
+    "label": "HOLD entry",
+    "t": 368,
+    "frame_index": 368,
+    "gripper_mm": 24.476607460551204,
+    "hold": {
+     "t_first": 368,
+     "t_last": 375,
+     "duration_steps": 8,
+     "n_chunks": 1,
+     "chunk_seqs": [
+      47
+     ],
+     "kinds": [
+      "uncertified"
+     ],
+     "mode": "fixed",
+     "source": "command",
+     "gripper_source": null,
+     "entry_command_dev_rad_recorded": null,
+     "q_hold_vs_entry_measured_deg": 1.379725842578371,
+     "joint_max_deg": 1.2890361941728898,
+     "tcp_max_mm": 6.922244233955592,
+     "dev_from_q_hold_max_deg": 1.379725842578371,
+     "fruit": {
+      "apple_finger_mid_entry_mm": 294.3926695009402,
+      "apple_lift_entry_mm": 0.004214263754076519,
+      "in_hand_at_entry": false,
+      "slip_max_mm": 6.980868761916802,
+      "slip_end_mm": 6.980868761916802,
+      "apple_dz_end_mm": -0.0032753955121478384,
+      "apple_finger_mid_end_mm": 287.9014497329718
+     },
+     "contacts_in_hold": {
+      "robot_substeps": 0,
+      "payload_substeps": 0,
+      "pairs": [],
+      "robot_clearance_min_mm": 18.12935409155279
+     },
+     "phase": "before_lift"
+    }
+   },
+   {
+    "label": "HOLD last row",
+    "t": 375,
+    "frame_index": 375,
+    "gripper_mm": 18.150994012009765,
+    "hold": {
+     "t_first": 368,
+     "t_last": 375,
+     "duration_steps": 8,
+     "n_chunks": 1,
+     "chunk_seqs": [
+      47
+     ],
+     "kinds": [
+      "uncertified"
+     ],
+     "mode": "fixed",
+     "source": "command",
+     "gripper_source": null,
+     "entry_command_dev_rad_recorded": null,
+     "q_hold_vs_entry_measured_deg": 1.379725842578371,
+     "joint_max_deg": 1.2890361941728898,
+     "tcp_max_mm": 6.922244233955592,
+     "dev_from_q_hold_max_deg": 1.379725842578371,
+     "fruit": {
+      "apple_finger_mid_entry_mm": 294.3926695009402,
+      "apple_lift_entry_mm": 0.004214263754076519,
+      "in_hand_at_entry": false,
+      "slip_max_mm": 6.980868761916802,
+      "slip_end_mm": 6.980868761916802,
+      "apple_dz_end_mm": -0.0032753955121478384,
+      "apple_finger_mid_end_mm": 287.9014497329718
+     },
+     "contacts_in_hold": {
+      "robot_substeps": 0,
+      "payload_substeps": 0,
+      "pairs": [],
+      "robot_clearance_min_mm": 18.12935409155279
+     },
+     "phase": "before_lift"
+    }
+   },
+   {
+    "label": "contact",
+    "t": 393,
+    "frame_index": 393,
+    "gripper_mm": 1.3225323558714568,
+    "hold": null
+   }
+  ],
+  "T41c": [
+   {
+    "label": "closest approach",
+    "t": 320,
+    "frame_index": 320,
+    "gripper_mm": 4.429387614265288,
+    "hold": null
+   },
+   {
+    "label": "HOLD entry",
+    "t": 368,
+    "frame_index": 368,
+    "gripper_mm": 24.476607460551204,
+    "hold": {
+     "t_first": 368,
+     "t_last": 599,
+     "duration_steps": 232,
+     "n_chunks": 29,
+     "chunk_seqs": [
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75
+     ],
+     "kinds": [
+      "uncertified"
+     ],
+     "mode": "measured",
+     "source": "measured",
+     "gripper_source": "command",
+     "entry_command_dev_rad_recorded": 0.02408075872784554,
+     "q_hold_vs_entry_measured_deg": 0.0,
+     "joint_max_deg": 0.5769679850279311,
+     "tcp_max_mm": 9.007155356788969,
+     "dev_from_q_hold_max_deg": 0.5769679850279311,
+     "fruit": {
+      "apple_finger_mid_entry_mm": 294.3926695009402,
+      "apple_lift_entry_mm": 0.004214263754076519,
+      "in_hand_at_entry": false,
+      "slip_max_mm": 11.089385706799195,
+      "slip_end_mm": 11.01784583329244,
+      "apple_dz_end_mm": 0.0009200504785811248,
+      "apple_finger_mid_end_mm": 286.49779768775613
+     },
+     "contacts_in_hold": {
+      "robot_substeps": 0,
+      "payload_substeps": 0,
+      "pairs": [],
+      "robot_clearance_min_mm": 16.03227617756982
+     },
+     "phase": "before_lift"
+    }
+   },
+   {
+    "label": "HOLD last row",
+    "t": 599,
+    "frame_index": 599,
+    "gripper_mm": 16.03246888066545,
+    "hold": {
+     "t_first": 368,
+     "t_last": 599,
+     "duration_steps": 232,
+     "n_chunks": 29,
+     "chunk_seqs": [
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75
+     ],
+     "kinds": [
+      "uncertified"
+     ],
+     "mode": "measured",
+     "source": "measured",
+     "gripper_source": "command",
+     "entry_command_dev_rad_recorded": 0.02408075872784554,
+     "q_hold_vs_entry_measured_deg": 0.0,
+     "joint_max_deg": 0.5769679850279311,
+     "tcp_max_mm": 9.007155356788969,
+     "dev_from_q_hold_max_deg": 0.5769679850279311,
+     "fruit": {
+      "apple_finger_mid_entry_mm": 294.3926695009402,
+      "apple_lift_entry_mm": 0.004214263754076519,
+      "in_hand_at_entry": false,
+      "slip_max_mm": 11.089385706799195,
+      "slip_end_mm": 11.01784583329244,
+      "apple_dz_end_mm": 0.0009200504785811248,
+      "apple_finger_mid_end_mm": 286.49779768775613
+     },
+     "contacts_in_hold": {
+      "robot_substeps": 0,
+      "payload_substeps": 0,
+      "pairs": [],
+      "robot_clearance_min_mm": 16.03227617756982
+     },
+     "phase": "before_lift"
+    }
+   }
+  ]
+ }
+}

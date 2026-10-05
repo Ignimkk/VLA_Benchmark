@@ -1,0 +1,499 @@
+{
+ "definitions": "T41c figures (verifier). usage: fig_t41c.py COMPARE_C_JSON [--overwrite]\n-> benchmark/ag3s/docs/figures/t41/t41c-scene-C.png, t41c-scene-D.png, t41c-scene-C1982.png, t41c-distance.png, t41c-hold.png,\n   t41c-table.png (+ .json sidecars)\n\nscene      : per hurdle episode, T41a | T41c third-person front frame (recorded third_person_front.mp4, one frame per control step) at\n             the control row of the run's minimum gripper (EE_BODY_L + fingers) to hurdle distance (true MuJoCo geoms, t41a client\n             distance code). T41c recordings carry the avoidance-arrow overlay (--viz-avoidance-arrow; green = execute\n             refined - reference, red = HOLD), T41a recordings have none.\nscene C1982: T40 | T41a | T41c, frame at the first row of each HOLD episode's last row (+1 = pose after the HOLD) or the contact row.\ndistance   : gripper (solid) to hurdle distance (mm, capped 150) vs control step; T40 = CATEGORICAL slot 0, T41a = slot 1,\n             T41c = slot 3; shaded bands = T41c HOLD rows; x = last row of an obstacle-stopped run; lines at 0 and 10 mm.\nhold       : per HOLD episode (hold_c.py physics replay): left-arm joint max |q - q_entry| (deg), TCP max displacement (mm),\n             fruit-in-TCP slip max (mm; filled marker = apple in hand at entry), vs HOLD duration (control steps); T40 / T41a = mode fixed,\n             T41c = mode measured.\ntable      : outcome per run, T40 / T40 J / T41a / T41c.",
+ "holds": [
+  {
+   "set": "T40",
+   "run": "E3b/B/E3b_ep1967_s19672",
+   "t_first": 224,
+   "duration_steps": 8,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "fixed",
+   "phase": "after",
+   "joint_max_deg": 2.7610712728711135,
+   "tcp_max_mm": 12.906838035614683,
+   "q_hold_vs_entry_measured_deg": 2.882146791309205,
+   "dev_from_q_hold_max_deg": 2.882146791309205,
+   "slip_max_mm": 12.757115074833601,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/B/E3b_ep1982_s19822",
+   "t_first": 312,
+   "duration_steps": 8,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "fixed",
+   "phase": "after",
+   "joint_max_deg": 0.04710744895770507,
+   "tcp_max_mm": 0.6299644132794379,
+   "q_hold_vs_entry_measured_deg": 0.40331651008698666,
+   "dev_from_q_hold_max_deg": 0.4504239590446917,
+   "slip_max_mm": 0.9334495535361564,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/B/E3b_ep1982_s19822",
+   "t_first": 336,
+   "duration_steps": 16,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "fixed",
+   "phase": "after",
+   "joint_max_deg": 0.03357194620760962,
+   "tcp_max_mm": 0.40875706908350085,
+   "q_hold_vs_entry_measured_deg": 0.43593635057414337,
+   "dev_from_q_hold_max_deg": 0.45132201438928954,
+   "slip_max_mm": 0.6960322189173034,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/B/E3b_ep1982_s19822",
+   "t_first": 360,
+   "duration_steps": 16,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "fixed",
+   "phase": "after",
+   "joint_max_deg": 0.05400834808779749,
+   "tcp_max_mm": 0.32528329252784816,
+   "q_hold_vs_entry_measured_deg": 0.4465686184385137,
+   "dev_from_q_hold_max_deg": 0.4512954426097747,
+   "slip_max_mm": 0.9025879538234699,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/B/E3b_ep1982_s19822",
+   "t_first": 456,
+   "duration_steps": 16,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "fixed",
+   "phase": "after",
+   "joint_max_deg": 0.030976119959739732,
+   "tcp_max_mm": 0.15501078747943722,
+   "q_hold_vs_entry_measured_deg": 0.45803633247224634,
+   "dev_from_q_hold_max_deg": 0.45803633247224634,
+   "slip_max_mm": 0.2515151536941819,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/B/E3b_ep1982_s19822",
+   "t_first": 552,
+   "duration_steps": 16,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "fixed",
+   "phase": "after",
+   "joint_max_deg": 0.04807403208690713,
+   "tcp_max_mm": 0.2551009432776861,
+   "q_hold_vs_entry_measured_deg": 0.440809156482979,
+   "dev_from_q_hold_max_deg": 0.45157688283517095,
+   "slip_max_mm": 0.5182550068264462,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/B/E3b_ep1995_s19952",
+   "t_first": 248,
+   "duration_steps": 8,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "fixed",
+   "phase": "after",
+   "joint_max_deg": 0.027573819813178906,
+   "tcp_max_mm": 0.12422244384088736,
+   "q_hold_vs_entry_measured_deg": 0.43079573181725184,
+   "dev_from_q_hold_max_deg": 0.43079573181725184,
+   "slip_max_mm": 36.184180699111735,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/C/E3b_ep1807_s18071",
+   "t_first": 136,
+   "duration_steps": 8,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "fixed",
+   "phase": "before_lift",
+   "joint_max_deg": 0.12096502675574619,
+   "tcp_max_mm": 2.004163669966389,
+   "q_hold_vs_entry_measured_deg": 0.35174428244240064,
+   "dev_from_q_hold_max_deg": 0.44492573242677064,
+   "slip_max_mm": 1.362602181448606,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/C/E3b_ep1807_s18071",
+   "t_first": 176,
+   "duration_steps": 8,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "fixed",
+   "phase": "before_lift",
+   "joint_max_deg": 2.0894562034182615,
+   "tcp_max_mm": 9.159653246951425,
+   "q_hold_vs_entry_measured_deg": 2.0779770916677216,
+   "dev_from_q_hold_max_deg": 2.0779770916677216,
+   "slip_max_mm": 11.383283910731926,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/C/E3b_ep1807_s18071",
+   "t_first": 192,
+   "duration_steps": 24,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "fixed",
+   "phase": "before_lift",
+   "joint_max_deg": 3.095326261556361,
+   "tcp_max_mm": 3.666349859875658,
+   "q_hold_vs_entry_measured_deg": 3.111764355434702,
+   "dev_from_q_hold_max_deg": 3.111764355434702,
+   "slip_max_mm": 6.63668014144497,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/C/E3b_ep1967_s19672",
+   "t_first": 192,
+   "duration_steps": 8,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "fixed",
+   "phase": "before_lift",
+   "joint_max_deg": 2.27576984564173,
+   "tcp_max_mm": 12.103436025265117,
+   "q_hold_vs_entry_measured_deg": 2.3115026700756727,
+   "dev_from_q_hold_max_deg": 2.3115026700756727,
+   "slip_max_mm": 9.112947222016201,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/C/E3b_ep1982_s19822",
+   "t_first": 176,
+   "duration_steps": 3,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "fixed",
+   "phase": "before_lift",
+   "joint_max_deg": 5.470177541352699,
+   "tcp_max_mm": 21.612882801599522,
+   "q_hold_vs_entry_measured_deg": 7.274124357730307,
+   "dev_from_q_hold_max_deg": 7.274124357730307,
+   "slip_max_mm": 26.57337235700255,
+   "in_hand": false,
+   "robot_contact_substeps": 9,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T40",
+   "run": "E3b/D/E3b_ep1967_s19672",
+   "t_first": 136,
+   "duration_steps": 2,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "fixed",
+   "phase": "before_lift",
+   "joint_max_deg": 0.10462361430842246,
+   "tcp_max_mm": 0.4527762395403082,
+   "q_hold_vs_entry_measured_deg": 0.5428621203641716,
+   "dev_from_q_hold_max_deg": 0.5428621203641716,
+   "slip_max_mm": 0.6030687434415185,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41a",
+   "run": "E3b/B/E3b_ep1982_s19822",
+   "t_first": 136,
+   "duration_steps": 32,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "fixed",
+   "phase": "before_lift",
+   "joint_max_deg": 0.12063614619412061,
+   "tcp_max_mm": 1.9973790817018278,
+   "q_hold_vs_entry_measured_deg": 0.5071723931927975,
+   "dev_from_q_hold_max_deg": 0.510204030905067,
+   "slip_max_mm": 1.5196768818482635,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41a",
+   "run": "E3b/C/E3b_ep1807_s18071",
+   "t_first": 224,
+   "duration_steps": 8,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "fixed",
+   "phase": "before_lift",
+   "joint_max_deg": 1.6517831950292572,
+   "tcp_max_mm": 3.3317882311416214,
+   "q_hold_vs_entry_measured_deg": 1.7085282411276643,
+   "dev_from_q_hold_max_deg": 1.7085282411276643,
+   "slip_max_mm": 6.604325478298817,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41a",
+   "run": "E3b/C/E3b_ep1982_s19822",
+   "t_first": 368,
+   "duration_steps": 8,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "fixed",
+   "phase": "before_lift",
+   "joint_max_deg": 1.2890361941728898,
+   "tcp_max_mm": 6.922244233955592,
+   "q_hold_vs_entry_measured_deg": 1.379725842578371,
+   "dev_from_q_hold_max_deg": 1.379725842578371,
+   "slip_max_mm": 6.980868761916802,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41a",
+   "run": "E3b/D/E3b_ep1982_s19822",
+   "t_first": 352,
+   "duration_steps": 32,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "fixed",
+   "phase": "before_lift",
+   "joint_max_deg": 4.535337540216682,
+   "tcp_max_mm": 46.98993385039394,
+   "q_hold_vs_entry_measured_deg": 4.724386279199686,
+   "dev_from_q_hold_max_deg": 4.724386279199686,
+   "slip_max_mm": 44.94445532972034,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41a",
+   "run": "E3b/D/E3b_ep1982_s19822",
+   "t_first": 480,
+   "duration_steps": 8,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "fixed",
+   "phase": "before_lift",
+   "joint_max_deg": 1.9319634161687438,
+   "tcp_max_mm": 8.475965932661621,
+   "q_hold_vs_entry_measured_deg": 2.0453745608401612,
+   "dev_from_q_hold_max_deg": 2.0453745608401612,
+   "slip_max_mm": 11.646581416565468,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41a",
+   "run": "E3b/D/E3b_ep1995_s19952",
+   "t_first": 320,
+   "duration_steps": 24,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "fixed",
+   "phase": "after",
+   "joint_max_deg": 3.791471254419873,
+   "tcp_max_mm": 30.038106950674056,
+   "q_hold_vs_entry_measured_deg": 3.976656304520269,
+   "dev_from_q_hold_max_deg": 3.976656304520269,
+   "slip_max_mm": 29.388034859500518,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41a",
+   "run": "E3b/D/E3b_ep1995_s19952",
+   "t_first": 352,
+   "duration_steps": 24,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "fixed",
+   "phase": "after",
+   "joint_max_deg": 0.7159112111798952,
+   "tcp_max_mm": 5.052825352178958,
+   "q_hold_vs_entry_measured_deg": 1.2226251278695652,
+   "dev_from_q_hold_max_deg": 1.2226251278695652,
+   "slip_max_mm": 4.84695643692406,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41c",
+   "run": "E3b/B/E3b_ep1982_s19822",
+   "t_first": 136,
+   "duration_steps": 16,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "measured",
+   "phase": "before_lift",
+   "joint_max_deg": 0.3808890059929848,
+   "tcp_max_mm": 6.157329994286314,
+   "q_hold_vs_entry_measured_deg": 0.0,
+   "dev_from_q_hold_max_deg": 0.3808890059929848,
+   "slip_max_mm": 3.501314810316187,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41c",
+   "run": "E3b/B/E3b_ep1982_s19822",
+   "t_first": 160,
+   "duration_steps": 16,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "measured",
+   "phase": "carry",
+   "joint_max_deg": 0.4755109254415134,
+   "tcp_max_mm": 9.085178660786058,
+   "q_hold_vs_entry_measured_deg": 0.0,
+   "dev_from_q_hold_max_deg": 0.4755109254415134,
+   "slip_max_mm": 1.3576758654596077,
+   "in_hand": true,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41c",
+   "run": "E3b/C/E3b_ep1807_s18071",
+   "t_first": 224,
+   "duration_steps": 8,
+   "kinds": [
+    "collision"
+   ],
+   "mode": "measured",
+   "phase": "before_lift",
+   "joint_max_deg": 0.5477457520598316,
+   "tcp_max_mm": 8.806325183086974,
+   "q_hold_vs_entry_measured_deg": 0.0,
+   "dev_from_q_hold_max_deg": 0.5477457520598316,
+   "slip_max_mm": 11.095766596065928,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41c",
+   "run": "E3b/C/E3b_ep1982_s19822",
+   "t_first": 368,
+   "duration_steps": 232,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "measured",
+   "phase": "before_lift",
+   "joint_max_deg": 0.5769679850279311,
+   "tcp_max_mm": 9.007155356788969,
+   "q_hold_vs_entry_measured_deg": 0.0,
+   "dev_from_q_hold_max_deg": 0.5769679850279311,
+   "slip_max_mm": 11.089385706799195,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41c",
+   "run": "E3b/D/E3b_ep1982_s19822",
+   "t_first": 352,
+   "duration_steps": 248,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "measured",
+   "phase": "before_lift",
+   "joint_max_deg": 0.7356464750851897,
+   "tcp_max_mm": 11.191095308168082,
+   "q_hold_vs_entry_measured_deg": 0.0,
+   "dev_from_q_hold_max_deg": 0.7356464750851897,
+   "slip_max_mm": 12.332961508185125,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  },
+  {
+   "set": "T41c",
+   "run": "E3b/D/E3b_ep1995_s19952",
+   "t_first": 320,
+   "duration_steps": 24,
+   "kinds": [
+    "uncertified"
+   ],
+   "mode": "measured",
+   "phase": "after",
+   "joint_max_deg": 0.6112189712052061,
+   "tcp_max_mm": 8.293290667439198,
+   "q_hold_vs_entry_measured_deg": 0.0,
+   "dev_from_q_hold_max_deg": 0.6112189712052061,
+   "slip_max_mm": 9.980276069383358,
+   "in_hand": false,
+   "robot_contact_substeps": 0,
+   "payload_contact_substeps": 0
+  }
+ ]
+}
