@@ -1,0 +1,357 @@
+{
+ "definitions": "T43V figures (verifier). usage: fig_t43v.py [--overwrite]\ninputs : outputs/verify/T43/V/analysis/analysis.json (analyze_t43v.py), numbers.json (partial_v.py --final), hold_v.json.\noutputs: benchmark/ag3s/docs/figures/t43/t43v-scene.png, t43v-distance.png, t43v-table.png, t43v-chunk-time.png (+ .json sidecars)\n\nscene      : per hurdle episode (T40 seed), V0 | V2 third-person front frame (recorded third_person_front.mp4, one frame per control step,\n             avoidance-arrow overlay drawn by the client: green = executed refined - reference TCP vector x8, red = HOLD) at the control row\n             of the run's minimum hurdle distance over fingers, palm, other robot geoms and the apple (client pair_distance).\ndistance   : per hurdle run (episode x seed), min over robot sets (fingers Af, palm Ae, other robot C) to hurdle (solid) and apple B to\n             hurdle (dotted) vs control step, mm, clipped at 150; arm colours E0 / V0 / V1 / V2 / V3 = CATEGORICAL slots 0-4 (V3 = V2 without --gripper-cover); x = last row of a\n             run that ended in an obstacle stop; lines at 0 and 10 mm (V1 / V2 obstacle margin).\ntable      : outcome per hurdle run and arm: S (success) / G (grasp only) / - ; contact (client robot / payload collision, first contact\n             row phase); HOLD chunks (trailing to the end in brackets); min mm fingers / palm / apple / other. Second panel: V2 no-obstacle\n             runs vs T40 B / T41a B (outcome from T41c.verify.json numbers.outcome).\nchunk-time : per arm, ECDF of the client round trip per chunk (first chunk excluded, pooled over hurdle runs) and of the server TO\n             solve time (to.solve_ms); vertical line at 533.3 ms (8 control steps at 15 Hz).",
+ "episodes": {
+  "1807": {
+   "V2": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T43/V/runs/V2/H/V2_ep1807_s18071",
+    "frame_index": 240,
+    "n_frames": 600,
+    "t": 240,
+    "closest_mm": 16.148524327154433,
+    "closest_is_apple": false,
+    "hurdle_min_mm": {
+     "Af": 27.889100092859426,
+     "Ae": 16.148524327154433,
+     "B": 70.4513116909473,
+     "C": 29.86448464952916
+    },
+    "outcome": "-",
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V3": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T43/V/runs/V3/H/V3_ep1807_s18071",
+    "frame_index": 591,
+    "n_frames": 600,
+    "t": 591,
+    "closest_mm": 7.0282493896767395,
+    "closest_is_apple": false,
+    "hurdle_min_mm": {
+     "Af": 41.59872192647474,
+     "Ae": 7.0282493896767395,
+     "B": 92.69114410660741,
+     "C": 21.115234012036304
+    },
+    "outcome": "-",
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  },
+  "1968": {
+   "V2": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T43/V/runs/V2/H/V2_ep1968_s19681",
+    "frame_index": 220,
+    "n_frames": 600,
+    "t": 220,
+    "closest_mm": 15.74467375465833,
+    "closest_is_apple": false,
+    "hurdle_min_mm": {
+     "Af": 15.74467375465833,
+     "Ae": 21.5046163605957,
+     "B": 89.15718231417016,
+     "C": 92.41932739734497
+    },
+    "outcome": "-",
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V3": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T43/V/runs/V3/H/V3_ep1968_s19681",
+    "frame_index": 219,
+    "n_frames": 600,
+    "t": 219,
+    "closest_mm": 16.88115901396118,
+    "closest_is_apple": false,
+    "hurdle_min_mm": {
+     "Af": 16.88115901396118,
+     "Ae": 18.23822974207366,
+     "B": 87.99237103783827,
+     "C": 87.7864628166069
+    },
+    "outcome": "-",
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  },
+  "1982": {
+   "V2": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T43/V/runs/V2/H/V2_ep1982_s19822",
+    "frame_index": 184,
+    "n_frames": 600,
+    "t": 184,
+    "closest_mm": 16.503360668487332,
+    "closest_is_apple": false,
+    "hurdle_min_mm": {
+     "Af": 16.503360668487332,
+     "Ae": 22.044417901822005,
+     "B": 99.25414771515796,
+     "C": 92.89685321647362
+    },
+    "outcome": "-",
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V3": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T43/V/runs/V3/H/V3_ep1982_s19822",
+    "frame_index": 312,
+    "n_frames": 600,
+    "t": 312,
+    "closest_mm": 9.236328010431246,
+    "closest_is_apple": false,
+    "hurdle_min_mm": {
+     "Af": 15.181148928838924,
+     "Ae": 9.236328010431246,
+     "B": 87.40278788293341,
+     "C": 62.95185048635554
+    },
+    "outcome": "-",
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  },
+  "1967": {
+   "V2": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T43/V/runs/V2/H/V2_ep1967_s19672",
+    "frame_index": 235,
+    "n_frames": 600,
+    "t": 235,
+    "closest_mm": 15.688072003777032,
+    "closest_is_apple": false,
+    "hurdle_min_mm": {
+     "Af": 15.688072003777032,
+     "Ae": 19.023522536723043,
+     "B": 52.059544750051536,
+     "C": 70.07398469835536
+    },
+    "outcome": "-",
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V3": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T43/V/runs/V3/H/V3_ep1967_s19672",
+    "frame_index": 595,
+    "n_frames": 600,
+    "t": 595,
+    "closest_mm": 0.13252018334639765,
+    "closest_is_apple": false,
+    "hurdle_min_mm": {
+     "Af": 14.614399193033968,
+     "Ae": 0.13252018334639765,
+     "B": 51.341578602028385,
+     "C": 53.32558584624847
+    },
+    "outcome": "-",
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  }
+ }
+}
