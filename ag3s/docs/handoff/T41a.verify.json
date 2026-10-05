@@ -44,6 +44,13 @@
    "venv": ".venv-openpi-live",
    "raw_output": "benchmark/ag3s/docs/figures/t41/t41a-*.json",
    "stdout_log": null
+  },
+  {
+   "id": "control B1967 (margin 0 x3 seeds, margin 0.010 x2 seeds) + offline QP re-solve",
+   "command": "outputs/verify/T41/p/launch_ctl.sh; outputs/verify/T41/p/post_ctl.sh",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T41/ctl/",
+   "stdout_log": "outputs/verify/T41/ctl/runs/launch.out, outputs/verify/T41/ctl/analysis/*.log"
   }
  ],
  "code_state": {
@@ -7304,6 +7311,1237 @@
     "end": "2026-10-05T08:20:34+00:00",
     "wall_s": 194.0,
     "n_failed_attempts": 0
+   }
+  },
+  "control": {
+   "date": "2026-10-05",
+   "requested_by": "lead (2026-10-05)",
+   "snapshot": "/mnt/dev/work-t41a (benchmark 4d090ec, pi05_TO_hybrid bd6a002), --no-subtask-gate, other flags as T41a; margin 0 = --obstacle-margin omitted",
+   "seeds_note": "T40 G seed of ep1967 is 19672 (= 10*ep+2); the 2 other seeds run are 19671 and 19673",
+   "runs_dir": "outputs/verify/T41/ctl/runs/{m0,m10}/E3b/B",
+   "chain_logs": "outputs/verify/T41/ctl/runs/{m0,m10}/E3b/chain_8261.log, ctl/runs/launch.out",
+   "scripts": [
+    "outputs/verify/T41/p/launch_ctl.sh",
+    "outputs/verify/T41/p/post_ctl.sh",
+    "outputs/verify/T41/p/qp_resolve_ctl.py"
+   ],
+   "q1_margin0_s19672_vs_T40G_B1967": {
+    "all_bit_identical": true,
+    "traj_npz": {
+     "executed_actions": true,
+     "measured_qpos": true,
+     "predicted_chunks": true,
+     "inference_states": true,
+     "chunk_start_steps": true
+    },
+    "frames": {
+     "planning_actions": true,
+     "planning_actions_reference": true,
+     "planning_qpos": true,
+     "planning_object_poses": true,
+     "control_qpos": true,
+     "control_applied_ctrl": true
+    },
+    "server_record": {
+     "n_chunks": [
+      75,
+      75
+     ],
+     "refined_chunk": {
+      "equal": true,
+      "max_abs": 0.0,
+      "first_diff_chunk": null
+     },
+     "reference_chunk": {
+      "equal": true,
+      "max_abs": 0.0,
+      "first_diff_chunk": null
+     },
+     "clearance": {
+      "equal": true,
+      "max_abs": 0.0,
+      "first_diff_chunk": null
+     }
+    },
+    "first_executed_step_diff": null
+   },
+   "q2_offline_qp_resolve": {
+    "definitions": "T41a control step 2 — re-solve recorded B ep1967 chunks offline with obstacle_margin 0 and 0.010 (verifier, CPU only).\n\nusage: T41_SERVER_DIR=<T41a server dir> T41_MANIFEST=<manifest> qp_resolve_ctl.py RUN_DIR SEGMENT_FIRST_NPZ OUT_JSON [N_SEQ=2]\n\nInputs: the record of one run (server chunk npz seq 1..N, client frames.jsonl). Per seq the scene is rebuilt exactly as replay_t41.chunk_eval\n(recorded fields, contact policy, target points, AG3S support planes re-fitted from filtered_cloud); variant m0 = that scene,\nvariant m10 = the same + obstacle_margin 0.010 (support excluded) + support_planes. One TrajOptChunkRefiner per variant, chained over\nseq 1..N without reset (server-like: OSQP object / warm start / previous chunk carried), config = FIA 'replay' (server log settings, time\nbudget off = 1e9 ms, max_iterations = recorded sqp_iterations of that chunk), previous_physical_chunk = the recorded refined chunk of\nseq-1 (seq 1: none). QpSolver.solve is wrapped: every QP (P, q, A, l, u, row_blocks) and its OSQP status / iterations / eps are kept.\nReported per seq: per SQP iteration, l/u entries that differ between m0 and m10 (by row block; with the m0 primal A x at the m0\nsolution = how far from the bound, i.e. active or inactive), q/P/A equal?, OSQP status / iterations; refined m10 - m0 (rad), and each\nvs the recorded refined of the matching live run (m0 vs T40 G B1967 / control margin-0 run, m10 vs T41a B1967) when given.",
+    "raw": [
+     "outputs/verify/T41/ctl/analysis/qp_resolve_on_T41a_record.json",
+     "outputs/verify/T41/ctl/analysis/qp_resolve_on_T40G_record.json"
+    ],
+    "T41a_record": {
+     "1": {
+      "returned": {
+       "m0": "initial",
+       "m10": "initial"
+      },
+      "sqp_iterations": {
+       "m0": 3,
+       "m10": 3
+      },
+      "qp_iterations_total": {
+       "m0": 350,
+       "m10": 350
+      },
+      "TO_clearance_m": {
+       "m0": 0.028075600081366434,
+       "m10": 0.01807560008136643
+      },
+      "osqp": {
+       "status": "solved",
+       "iterations": 300,
+       "eps_abs": 0.001,
+       "eps_rel": 0.001,
+       "max_iter": 4000,
+       "polish": false,
+       "adaptive_rho": true,
+       "warm_start": true,
+       "n_var": 486,
+       "n_rows": 1042,
+       "per_qp_iterations_m0": [
+        300,
+        25,
+        25
+       ],
+       "per_qp_iterations_m10": [
+        300,
+        25,
+        25
+       ],
+       "status_m0": [
+        "solved",
+        "solved",
+        "solved"
+       ],
+       "status_m10": [
+        "solved",
+        "solved",
+        "solved"
+       ]
+      },
+      "refined_m10_minus_m0_max_abs_rad": 0.0,
+      "refined_m10_minus_m0_max_abs_rad_per_step": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "offline_m0_vs_this_record_refined_max_abs_rad": 0.0,
+      "offline_m10_vs_this_record_refined_max_abs_rad": 0.0,
+      "qp_compare": [
+       {
+        "sqp_qp_index": 0,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         300,
+         300
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": true,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.009495253277213567,
+        "n_rows_l_differ": 192,
+        "n_rows_u_differ": 0,
+        "differing_rows_by_block": {
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": 0.009999999999999953,
+           "median": 0.010000000000000009,
+           "max": 0.01000000000000012
+          },
+          "m0_slack_to_lower": {
+           "min": 0.03697117327204469,
+           "median": 0.061806041878568696,
+           "max": 0.08063834843167961
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.03697117327204469
+       },
+       {
+        "sqp_qp_index": 1,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         25,
+         25
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": true,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.007992453485365536,
+        "n_rows_l_differ": 192,
+        "n_rows_u_differ": 0,
+        "differing_rows_by_block": {
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": 0.009999999999999953,
+           "median": 0.010000000000000009,
+           "max": 0.01000000000000012
+          },
+          "m0_slack_to_lower": {
+           "min": 0.034910486358399384,
+           "median": 0.06000928888569898,
+           "max": 0.07489485387450245
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.034910486358399384
+       },
+       {
+        "sqp_qp_index": 2,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         25,
+         25
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": true,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.006831684828160989,
+        "n_rows_l_differ": 192,
+        "n_rows_u_differ": 0,
+        "differing_rows_by_block": {
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": 0.009999999999999953,
+           "median": 0.010000000000000009,
+           "max": 0.01000000000000012
+          },
+          "m0_slack_to_lower": {
+           "min": 0.03305758346061996,
+           "median": 0.05740135928050161,
+           "max": 0.07072747572791482
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.03305758346061996
+       }
+      ],
+      "row_blocks": {
+       "box": [
+        0,
+        112
+       ],
+       "velocity": [
+        112,
+        210
+       ],
+       "velocity_lower": [
+        210,
+        308
+       ],
+       "acceleration": [
+        308,
+        392
+       ],
+       "acceleration_lower": [
+        392,
+        476
+       ],
+       "slack": [
+        476,
+        850
+       ],
+       "collision": [
+        850,
+        1042
+       ]
+      }
+     },
+     "2": {
+      "returned": {
+       "m0": "accepted",
+       "m10": "accepted"
+      },
+      "sqp_iterations": {
+       "m0": 3,
+       "m10": 3
+      },
+      "qp_iterations_total": {
+       "m0": 75,
+       "m10": 75
+      },
+      "TO_clearance_m": {
+       "m0": 0.03206119649048973,
+       "m10": 0.02577835871850071
+      },
+      "osqp": {
+       "status": "solved",
+       "iterations": 25,
+       "eps_abs": 0.001,
+       "eps_rel": 0.001,
+       "max_iter": 4000,
+       "polish": false,
+       "adaptive_rho": true,
+       "warm_start": true,
+       "n_var": 486,
+       "n_rows": 1042,
+       "per_qp_iterations_m0": [
+        25,
+        25,
+        25
+       ],
+       "per_qp_iterations_m10": [
+        25,
+        25,
+        25
+       ],
+       "status_m0": [
+        "solved",
+        "solved",
+        "solved"
+       ],
+       "status_m10": [
+        "solved",
+        "solved",
+        "solved"
+       ]
+      },
+      "refined_m10_minus_m0_max_abs_rad": 0.0042108961694226526,
+      "refined_m10_minus_m0_max_abs_rad_per_step": [
+       0.0037973459448369194,
+       0.004174637285094336,
+       0.0042108961694226526,
+       0.004207208819893582,
+       0.004176854389643093,
+       0.0041249497797835885,
+       0.0040599603281551416,
+       0.0035677326218201046
+      ],
+      "offline_m0_vs_this_record_refined_max_abs_rad": 0.004210870206368309,
+      "offline_m10_vs_this_record_refined_max_abs_rad": 3.774419852775601e-07,
+      "qp_compare": [
+       {
+        "sqp_qp_index": 0,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         25,
+         25
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": true,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.005811654452503124,
+        "n_rows_l_differ": 192,
+        "n_rows_u_differ": 0,
+        "differing_rows_by_block": {
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": 0.009999999999999898,
+           "median": 0.010000000000000009,
+           "max": 0.010000000000000009
+          },
+          "m0_slack_to_lower": {
+           "min": 0.029303498745873263,
+           "median": 0.0544104064533337,
+           "max": 0.06837496648628233
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.029303498745873263
+       },
+       {
+        "sqp_qp_index": 1,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         25,
+         25
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": false,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.0048723704360960195,
+        "n_rows_l_differ": 304,
+        "n_rows_u_differ": 112,
+        "differing_rows_by_block": {
+         "box": {
+          "n": 112,
+          "bound_delta": {
+           "min": 0.05228863433270292,
+           "median": 0.22699234264859702,
+           "max": 0.24267476335484317
+          },
+          "m0_slack_to_lower": {
+           "min": 0.1258976902345743,
+           "median": 0.3007003772720932,
+           "max": 0.30671829250909
+          },
+          "m0_slack_to_upper": {
+           "min": 0.12492710362871873,
+           "median": 0.2990525203156954,
+           "max": 0.3062723076624112
+          },
+          "n_m0_active_within_eps_abs": null
+         },
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": -0.1637758529583997,
+           "median": 0.017817788597294715,
+           "max": 0.18914282282722095
+          },
+          "m0_slack_to_lower": {
+           "min": 0.027978930975176036,
+           "median": 0.052919718515685665,
+           "max": 0.06708306803770481
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.027978930975176036
+       },
+       {
+        "sqp_qp_index": 2,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         25,
+         25
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": false,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.0042108961694226526,
+        "n_rows_l_differ": 302,
+        "n_rows_u_differ": 110,
+        "differing_rows_by_block": {
+         "box": {
+          "n": 110,
+          "bound_delta": {
+           "min": 0.02341731210542619,
+           "median": 0.44826332238298383,
+           "max": 0.4548723704360961
+          },
+          "m0_slack_to_lower": {
+           "min": 0.17823158072766532,
+           "median": 0.6005044440994134,
+           "max": 0.6030566090284593
+          },
+          "m0_slack_to_upper": {
+           "min": 0.18140529217302745,
+           "median": 0.5988410098957895,
+           "max": 0.6025936617290245
+          },
+          "n_m0_active_within_eps_abs": null
+         },
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": -0.1825558604187419,
+           "median": 0.003250476793120821,
+           "max": 0.1999417013037506
+          },
+          "m0_slack_to_lower": {
+           "min": 0.026977875341537755,
+           "median": 0.051675306326349896,
+           "max": 0.06603640138540884
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.026977875341537755
+       }
+      ],
+      "row_blocks": {
+       "box": [
+        0,
+        112
+       ],
+       "velocity": [
+        112,
+        210
+       ],
+       "velocity_lower": [
+        210,
+        308
+       ],
+       "acceleration": [
+        308,
+        392
+       ],
+       "acceleration_lower": [
+        392,
+        476
+       ],
+       "slack": [
+        476,
+        850
+       ],
+       "collision": [
+        850,
+        1042
+       ]
+      }
+     }
+    },
+    "T40G_record": {
+     "1": {
+      "returned": {
+       "m0": "initial",
+       "m10": "initial"
+      },
+      "sqp_iterations": {
+       "m0": 3,
+       "m10": 3
+      },
+      "qp_iterations_total": {
+       "m0": 350,
+       "m10": 350
+      },
+      "TO_clearance_m": {
+       "m0": 0.028075600081366434,
+       "m10": 0.01807560008136643
+      },
+      "osqp": {
+       "status": "solved",
+       "iterations": 300,
+       "eps_abs": 0.001,
+       "eps_rel": 0.001,
+       "max_iter": 4000,
+       "polish": false,
+       "adaptive_rho": true,
+       "warm_start": true,
+       "n_var": 486,
+       "n_rows": 1042,
+       "per_qp_iterations_m0": [
+        300,
+        25,
+        25
+       ],
+       "per_qp_iterations_m10": [
+        300,
+        25,
+        25
+       ],
+       "status_m0": [
+        "solved",
+        "solved",
+        "solved"
+       ],
+       "status_m10": [
+        "solved",
+        "solved",
+        "solved"
+       ]
+      },
+      "refined_m10_minus_m0_max_abs_rad": 0.0,
+      "refined_m10_minus_m0_max_abs_rad_per_step": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "offline_m0_vs_this_record_refined_max_abs_rad": 0.0,
+      "offline_m10_vs_this_record_refined_max_abs_rad": 0.0,
+      "qp_compare": [
+       {
+        "sqp_qp_index": 0,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         300,
+         300
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": true,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.009495253277213567,
+        "n_rows_l_differ": 192,
+        "n_rows_u_differ": 0,
+        "differing_rows_by_block": {
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": 0.009999999999999953,
+           "median": 0.010000000000000009,
+           "max": 0.01000000000000012
+          },
+          "m0_slack_to_lower": {
+           "min": 0.03697117327204469,
+           "median": 0.061806041878568696,
+           "max": 0.08063834843167961
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.03697117327204469
+       },
+       {
+        "sqp_qp_index": 1,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         25,
+         25
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": true,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.007992453485365536,
+        "n_rows_l_differ": 192,
+        "n_rows_u_differ": 0,
+        "differing_rows_by_block": {
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": 0.009999999999999953,
+           "median": 0.010000000000000009,
+           "max": 0.01000000000000012
+          },
+          "m0_slack_to_lower": {
+           "min": 0.034910486358399384,
+           "median": 0.06000928888569898,
+           "max": 0.07489485387450245
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.034910486358399384
+       },
+       {
+        "sqp_qp_index": 2,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         25,
+         25
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": true,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.006831684828160989,
+        "n_rows_l_differ": 192,
+        "n_rows_u_differ": 0,
+        "differing_rows_by_block": {
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": 0.009999999999999953,
+           "median": 0.010000000000000009,
+           "max": 0.01000000000000012
+          },
+          "m0_slack_to_lower": {
+           "min": 0.03305758346061996,
+           "median": 0.05740135928050161,
+           "max": 0.07072747572791482
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.03305758346061996
+       }
+      ],
+      "row_blocks": {
+       "box": [
+        0,
+        112
+       ],
+       "velocity": [
+        112,
+        210
+       ],
+       "velocity_lower": [
+        210,
+        308
+       ],
+       "acceleration": [
+        308,
+        392
+       ],
+       "acceleration_lower": [
+        392,
+        476
+       ],
+       "slack": [
+        476,
+        850
+       ],
+       "collision": [
+        850,
+        1042
+       ]
+      }
+     },
+     "2": {
+      "returned": {
+       "m0": "accepted",
+       "m10": "accepted"
+      },
+      "sqp_iterations": {
+       "m0": 3,
+       "m10": 3
+      },
+      "qp_iterations_total": {
+       "m0": 75,
+       "m10": 75
+      },
+      "TO_clearance_m": {
+       "m0": 0.03206119649048973,
+       "m10": 0.02577835871850071
+      },
+      "osqp": {
+       "status": "solved",
+       "iterations": 25,
+       "eps_abs": 0.001,
+       "eps_rel": 0.001,
+       "max_iter": 4000,
+       "polish": false,
+       "adaptive_rho": true,
+       "warm_start": true,
+       "n_var": 486,
+       "n_rows": 1042,
+       "per_qp_iterations_m0": [
+        25,
+        25,
+        25
+       ],
+       "per_qp_iterations_m10": [
+        25,
+        25,
+        25
+       ],
+       "status_m0": [
+        "solved",
+        "solved",
+        "solved"
+       ],
+       "status_m10": [
+        "solved",
+        "solved",
+        "solved"
+       ]
+      },
+      "refined_m10_minus_m0_max_abs_rad": 0.0042108961694226526,
+      "refined_m10_minus_m0_max_abs_rad_per_step": [
+       0.0037973459448369194,
+       0.004174637285094336,
+       0.0042108961694226526,
+       0.004207208819893582,
+       0.004176854389643093,
+       0.0041249497797835885,
+       0.0040599603281551416,
+       0.0035677326218201046
+      ],
+      "offline_m0_vs_this_record_refined_max_abs_rad": 2.7926288032054103e-07,
+      "offline_m10_vs_this_record_refined_max_abs_rad": 0.0042109008670014585,
+      "qp_compare": [
+       {
+        "sqp_qp_index": 0,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         25,
+         25
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": true,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.005811654452503124,
+        "n_rows_l_differ": 192,
+        "n_rows_u_differ": 0,
+        "differing_rows_by_block": {
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": 0.009999999999999898,
+           "median": 0.010000000000000009,
+           "max": 0.010000000000000009
+          },
+          "m0_slack_to_lower": {
+           "min": 0.029303498745873263,
+           "median": 0.0544104064533337,
+           "max": 0.06837496648628233
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.029303498745873263
+       },
+       {
+        "sqp_qp_index": 1,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         25,
+         25
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": false,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.0048723704360960195,
+        "n_rows_l_differ": 304,
+        "n_rows_u_differ": 112,
+        "differing_rows_by_block": {
+         "box": {
+          "n": 112,
+          "bound_delta": {
+           "min": 0.05228863433270292,
+           "median": 0.22699234264859702,
+           "max": 0.24267476335484317
+          },
+          "m0_slack_to_lower": {
+           "min": 0.1258976902345743,
+           "median": 0.3007003772720932,
+           "max": 0.30671829250909
+          },
+          "m0_slack_to_upper": {
+           "min": 0.12492710362871873,
+           "median": 0.2990525203156954,
+           "max": 0.3062723076624112
+          },
+          "n_m0_active_within_eps_abs": null
+         },
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": -0.1637758529583997,
+           "median": 0.017817788597294715,
+           "max": 0.18914282282722095
+          },
+          "m0_slack_to_lower": {
+           "min": 0.027978930975176036,
+           "median": 0.052919718515685665,
+           "max": 0.06708306803770481
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.027978930975176036
+       },
+       {
+        "sqp_qp_index": 2,
+        "status": [
+         "solved",
+         "solved"
+        ],
+        "osqp_iterations": [
+         25,
+         25
+        ],
+        "shape_equal": true,
+        "P_equal": true,
+        "q_equal": true,
+        "A_equal": false,
+        "blocks_equal": true,
+        "x_max_abs_diff": 0.0042108961694226526,
+        "n_rows_l_differ": 302,
+        "n_rows_u_differ": 110,
+        "differing_rows_by_block": {
+         "box": {
+          "n": 110,
+          "bound_delta": {
+           "min": 0.02341731210542619,
+           "median": 0.44826332238298383,
+           "max": 0.4548723704360961
+          },
+          "m0_slack_to_lower": {
+           "min": 0.17823158072766532,
+           "median": 0.6005044440994134,
+           "max": 0.6030566090284593
+          },
+          "m0_slack_to_upper": {
+           "min": 0.18140529217302745,
+           "median": 0.5988410098957895,
+           "max": 0.6025936617290245
+          },
+          "n_m0_active_within_eps_abs": null
+         },
+         "collision": {
+          "n": 192,
+          "bound_delta": {
+           "min": -0.1825558604187419,
+           "median": 0.003250476793120821,
+           "max": 0.1999417013037506
+          },
+          "m0_slack_to_lower": {
+           "min": 0.026977875341537755,
+           "median": 0.051675306326349896,
+           "max": 0.06603640138540884
+          },
+          "m0_slack_to_upper": {
+           "min": 1e+20,
+           "median": 1e+20,
+           "max": 1e+20
+          },
+          "n_m0_active_within_eps_abs": null
+         }
+        },
+        "n_differing_rows_m0_within_10eps_of_a_bound": 0,
+        "m0_min_slack_over_differing_rows": 0.026977875341537755
+       }
+      ],
+      "row_blocks": {
+       "box": [
+        0,
+        112
+       ],
+       "velocity": [
+        112,
+        210
+       ],
+       "velocity_lower": [
+        210,
+        308
+       ],
+       "acceleration": [
+        308,
+        392
+       ],
+       "acceleration_lower": [
+        392,
+        476
+       ],
+       "slack": [
+        476,
+        850
+       ],
+       "collision": [
+        850,
+        1042
+       ]
+      }
+     }
+    }
+   },
+   "q3_variance_runs": {
+    "m0/s19671": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T41/ctl/runs/m0/E3b/B/E3b_ep1967_s19671",
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "apple_dz_max_mm": 53.19502336588145,
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "grasp_contact_settle": {
+      "t_close": 143,
+      "t_settle": 151,
+      "n_close_rows": 9,
+      "open_settle": 0.6874877495069808,
+      "d_l1_settle_mm": -0.23823744205253047,
+      "d_l2_settle_mm": -0.317285574931732,
+      "contact_mid_rel_apple_mm": [
+       0.2653084619250734,
+       -3.1575965814827356,
+       9.710009195839087
+      ],
+      "contact_mid_z_mm": 9.710009195839087,
+      "contact_lost_t": 162,
+      "first_grasp_held": false,
+      "hold_min_open": 0.47791769938973655,
+      "n_close_cycles": 3
+     }
+    },
+    "m0/s19672": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T41/ctl/runs/m0/E3b/B/E3b_ep1967_s19672",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 152,
+     "place_t": 200,
+     "apple_dz_max_mm": 232.75496085554605,
+     "n_hold_chunks": 1,
+     "hold_t": [
+      224
+     ],
+     "hold_kind_counts": {
+      "collision": 1
+     },
+     "grasp_contact_settle": {
+      "t_close": 134,
+      "t_settle": 135,
+      "n_close_rows": 2,
+      "open_settle": 0.8794349974468123,
+      "d_l1_settle_mm": 12.903542779720519,
+      "d_l2_settle_mm": 0.04507135885929822,
+      "contact_mid_rel_apple_mm": [
+       6.81297396619962,
+       1.4593578570805121,
+       1.2244863363410907
+      ],
+      "contact_mid_z_mm": 1.2244863363410907,
+      "contact_lost_t": null,
+      "first_grasp_held": true,
+      "hold_min_open": 0.6975725004304368,
+      "n_close_cycles": 2
+     }
+    },
+    "m0/s19673": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T41/ctl/runs/m0/E3b/B/E3b_ep1967_s19673",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 144,
+     "place_t": 216,
+     "apple_dz_max_mm": 237.52392407854128,
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "grasp_contact_settle": {
+      "t_close": 120,
+      "t_settle": 127,
+      "n_close_rows": 8,
+      "open_settle": 0.7235251376273665,
+      "d_l1_settle_mm": -0.25716588362912945,
+      "d_l2_settle_mm": -0.3191513826181546,
+      "contact_mid_rel_apple_mm": [
+       1.188493279986269,
+       -1.371658502126727,
+       -0.22766282478259292
+      ],
+      "contact_mid_z_mm": -0.22766282478259292,
+      "contact_lost_t": null,
+      "first_grasp_held": true,
+      "hold_min_open": 0.7236209191585614,
+      "n_close_cycles": 1
+     }
+    },
+    "m10/s19671": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T41/ctl/runs/m10/E3b/B/E3b_ep1967_s19671",
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "apple_dz_max_mm": 0.13668896869922786,
+     "n_hold_chunks": 1,
+     "hold_t": [
+      144
+     ],
+     "hold_kind_counts": {
+      "collision": 1
+     },
+     "grasp_contact_settle": {
+      "t_close": 143,
+      "t_settle": 240,
+      "n_close_rows": 98,
+      "open_settle": 0.41343185763913154,
+      "d_l1_settle_mm": 323.80193219715966,
+      "d_l2_settle_mm": 357.0965921232608,
+      "contact_mid_rel_apple_mm": [
+       -84.0805214361126,
+       -347.61205954653093,
+       105.7278823894049
+      ],
+      "contact_mid_z_mm": 105.7278823894049,
+      "contact_lost_t": 241,
+      "first_grasp_held": false,
+      "hold_min_open": 0.42229255409211947,
+      "n_close_cycles": 2
+     }
+    },
+    "m10/s19673": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T41/ctl/runs/m10/E3b/B/E3b_ep1967_s19673",
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 144,
+     "place_t": 216,
+     "apple_dz_max_mm": 237.15662677232297,
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "grasp_contact_settle": {
+      "t_close": 120,
+      "t_settle": 127,
+      "n_close_rows": 8,
+      "open_settle": 0.7188331873800395,
+      "d_l1_settle_mm": -0.35833650708809583,
+      "d_l2_settle_mm": -0.23724881489535443,
+      "contact_mid_rel_apple_mm": [
+       4.670781250894374,
+       -4.7415395180644975,
+       -0.5898383283363673
+      ],
+      "contact_mid_z_mm": -0.5898383283363673,
+      "contact_lost_t": null,
+      "first_grasp_held": true,
+      "hold_min_open": 0.7183550046871612,
+      "n_close_cycles": 1
+     }
+    },
+    "m10/s19672 (T41a main run)": {
+     "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/B/E3b_ep1967_s19672",
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "apple_dz_max_mm": 42.80020988842181,
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "grasp_contact_settle": {
+      "t_close": 136,
+      "t_settle": 143,
+      "n_close_rows": 8,
+      "open_settle": 0.6998303318784326,
+      "d_l1_settle_mm": -0.2421773676875553,
+      "d_l2_settle_mm": -0.35005670659114924,
+      "contact_mid_rel_apple_mm": [
+       -0.27711219429182865,
+       -2.5454065104695833,
+       7.9454268824569185
+      ],
+      "contact_mid_z_mm": 7.9454268824569185,
+      "contact_lost_t": 153,
+      "first_grasp_held": false,
+      "hold_min_open": 0.478832500851821,
+      "n_close_cycles": 3
+     }
+    }
+   },
+   "q3_divergence_pairs": {
+    "s19671_m10_vs_m0": {
+     "executed_actions_equal": false,
+     "first_executed_step_diff": 8,
+     "first_diff_chunk_seq": 2
+    },
+    "s19673_m10_vs_m0": {
+     "executed_actions_equal": false,
+     "first_executed_step_diff": 8,
+     "first_diff_chunk_seq": 2
+    },
+    "s19672_m10(T41a run)_vs_m0(control)": {
+     "executed_actions_equal": false,
+     "first_executed_step_diff": 8,
+     "first_diff_chunk_seq": 2
+    }
    }
   }
  },
