@@ -1098,6 +1098,21 @@ class SafePolicy:
             "evidence": dict(event.evidence or {}),
             "alignment": alignment,
         }
+        # T43 T (측정만): 손끝 중점 ↔ AG3S target centroid. 판단에 쓰지 않는다 — 기록 키 하나.
+        if manip is not None:
+            try:
+                fingers = tuple(f for f in allowed if f != self.hold_links.get(hand, parent_link))
+                col = self.gripper_columns[0 if hand == "left" else 1]
+                self._last_grasp_record["tip_alignment"] = {
+                    "definition": TIP_ALIGNMENT_DEFINITION,
+                    "manipulated_id": int(manip.id), "manipulated_state": str(manip.state),
+                    **fingertip_alignment(
+                        model, q, fingers, self.hold_links.get(hand, parent_link),
+                        manip.centroid, chunk=self._pending.get("chunk"), layout=self.layout,
+                        gripper_column=col, closed_below=float(cfg.gripper_closed_below))}
+            except Exception as exc:  # noqa: BLE001 — 측정이 판정을 죽이지 않는다
+                self._last_grasp_record["tip_alignment"] = {
+                    "error": f"{type(exc).__name__}: {exc}"}
         if self._last_grasp_record["transition"]:
             print(f"[safe_policy] grasp {phase_before.value} -> {self._latch.phase.value}: "
                   f"{event.note}")
@@ -1826,6 +1841,75 @@ def _classify_esdf_rows(hits, values, centres, radii, scene, name, n_spheres, au
             else:
                 row.update({"class": "unresolved", "why": f"unresolved_tier:{tier}"})
         out.append(row)
+    return out
+
+
+#: T43 T (측정만) — `grasp.tip_alignment` 의 정의 문자열. 기록을 읽는 쪽이 같은 말로 읽게.
+TIP_ALIGNMENT_DEFINITION = (
+    "tip = midpoint of the two finger tips; finger tip = centre of that finger link's constraint "
+    "sphere farthest along the approach axis (unit vector from the hold link origin to the mean of "
+    "all finger sphere centres), FK at the given arm pose with this frame's measured finger opening. "
+    "centroid = AG3S manipulated centroid (last observed geometry). d3 = |tip - centroid|, "
+    "dxy = horizontal (base x-y) part, dz = tip z - centroid z (signed). 'now' = q_now (capture "
+    "pose); 'plan_close' = first row of the incoming policy chunk whose gripper command for this "
+    "hand is below the latch threshold (planned arm pose of that row, fingers at the measured "
+    "opening). Measurement only: nothing reads it.")
+
+
+def fingertip_alignment(model, q_now: np.ndarray, finger_links: Sequence[str], hold_link: str,
+                        centroid, *, chunk: Optional[np.ndarray] = None,
+                        layout: Optional[ChunkLayout] = None,
+                        gripper_column: Optional[int] = None,
+                        closed_below: float = 0.85) -> dict[str, Any]:
+    """손끝 중점 ↔ AG3S 조작 대상 centroid 거리 (T43 T, **측정만**). 정의는 `TIP_ALIGNMENT_DEFINITION`.
+
+    순수 함수다 — 모델의 손가락 parameter (이번 프레임의 측정 개도) 를 읽기만 하고 바꾸지 않는다.
+    """
+    c = np.asarray(centroid, np.float64).reshape(3)
+    names = list(getattr(model, "sphere_link_names", ()) or ())
+    fingers = [str(f) for f in finger_links]
+
+    sources: dict[str, str] = {}
+
+    def tip_at(q: np.ndarray) -> np.ndarray:
+        q = np.asarray(q, np.float64).reshape(-1)
+        centres, _ = model.sphere_centers_numeric(q)
+        by_link = {}
+        for f in fingers:
+            pts = centres[[i for i, n in enumerate(names) if n == f]]
+            if pts.shape[0]:
+                sources[f] = "distal_sphere_centre"
+            else:   # 제약 모델에 그 손가락의 구가 없다 (예: --links arms) — link 원점으로, 기록에 남긴다
+                pts = np.asarray(model.link_pose(q, f), np.float64)[:3, 3].reshape(1, 3)
+                sources[f] = "link_origin (no constraint spheres on this link)"
+            by_link[f] = pts
+        origin = np.asarray(model.link_pose(q, hold_link), np.float64)[:3, 3]
+        axis = np.concatenate(list(by_link.values())).mean(axis=0) - origin
+        axis = axis / max(float(np.linalg.norm(axis)), 1e-12)
+        tips = [v[int(np.argmax((v - origin) @ axis))] for v in by_link.values()]
+        return np.mean(tips, axis=0)
+
+    def distances(tip: np.ndarray) -> dict[str, Any]:
+        d = tip - c
+        return {"tip_m": [round(float(v), 5) for v in tip],
+                "d3_mm": round(float(np.linalg.norm(d)) * 1000.0, 2),
+                "dxy_mm": round(float(np.linalg.norm(d[:2])) * 1000.0, 2),
+                "dz_mm": round(float(d[2]) * 1000.0, 2)}
+
+    out: dict[str, Any] = {"fingers": fingers, "hold_link": str(hold_link),
+                           "centroid_m": [round(float(v), 5) for v in c],
+                           "now": distances(tip_at(q_now)), "plan_close": None}
+    if chunk is not None and layout is not None and gripper_column is not None:
+        arr = np.asarray(chunk, np.float64)
+        if arr.ndim == 2 and arr.shape[1] > int(gripper_column):
+            rows = np.flatnonzero(arr[:, int(gripper_column)] < float(closed_below))
+            if rows.size:
+                k = int(rows[0])
+                traj = layout.chunk_to_trajectory(arr[k:k + 1])
+                q_k = layout.full_q(traj, np.asarray(q_now, np.float64))[:, 0]
+                out["plan_close"] = {"row": k, "command": round(float(arr[k, int(gripper_column)]), 4),
+                                     **distances(tip_at(q_k))}
+    out["tip_source"] = dict(sources)
     return out
 
 
