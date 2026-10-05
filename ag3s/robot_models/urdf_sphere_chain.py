@@ -204,6 +204,13 @@ class UrdfCapsule:
 #: `UrdfCapsule.role` of self-filter covering capsules (T29).
 COVER_ROLE = "self_filter_cover"
 
+#: T43 R — `UrdfCapsule.role` of the constraint model's **gripper outer cover**
+#: (`experiments/sources/gripper_cover.py`). Each is a zero-length capsule = one sphere already
+#: inscribed in the collision mesh, so it is used **as is**: no `capsule_radius_scale`, no spacing
+#: inflation (thinner would not cover, thicker would leave the mesh). `max_sphere_radius` still caps
+#: it, as it caps everything, and a cap that bites is reported like any other shortfall.
+EXACT_SPHERE_ROLE = "gripper_outer_cover"
+
 
 @dataclasses.dataclass(frozen=True)
 class UrdfModel:
@@ -866,6 +873,14 @@ class UrdfSphereChain:
         """
         if cap.radius <= 0.0:
             return [], 0.0, 0.0
+        if getattr(cap, "role", "collision") == EXACT_SPHERE_ROLE:
+            # T43 R: 내접 덮개 구 — 반지름 그대로 (배율 · 간격 inflation 없음). 길이는 0 이다.
+            if self._kept_axis_span(cap)[0] is None:
+                return [], 0.0, 0.0
+            radius = float(cap.radius)
+            if self.max_sphere_radius is not None:
+                radius = min(radius, self.max_sphere_radius)
+            return [np.asarray(cap.origin[:3, 3], np.float64).copy()], radius, float(cap.radius)
         # **link frame z 로 자른다** (`capsule_extent_by_link`). 축이 남는 구간만 구를 놓는다 —
         # 굵기를 줄이는 것과 **다른 축**이고, 한 link 에 둘을 같이 걸 수 있다.
         t_lo, t_hi = self._kept_axis_span(cap)
@@ -972,6 +987,10 @@ class UrdfSphereChain:
 
     def _sphere_zs(self, cap: UrdfCapsule, t_lo: float, t_hi: float):
         """`(구 중심의 link-frame z 목록, 유효 반지름)` — `_capsule_sphere_centres` 와 같은 규칙."""
+        if getattr(cap, "role", "collision") == EXACT_SPHERE_ROLE:
+            r = float(cap.radius) if self.max_sphere_radius is None else min(
+                float(cap.radius), self.max_sphere_radius)
+            return [float(cap.origin[2, 3])], r
         span = float(t_hi - t_lo)
         n = int(math.ceil(span / max(self.sphere_spacing * cap.radius, 1e-9))) + 1
         n = int(np.clip(n, 1, self.max_spheres_per_capsule))

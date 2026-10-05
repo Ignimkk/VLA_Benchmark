@@ -127,7 +127,16 @@ ARM_LINKS = tuple(
 ) + GRIPPER_LINKS
 
 
-def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options=None):
+#: T43 R — `gripper_cover={"hands": ...}` 이 덮개를 붙일 link. 손 하나만 덮으면 TO 비용이 반이다.
+GRIPPER_COVER_HANDS = {
+    "both": GRIPPER_LINKS,
+    "left": ("ee_left", "ee_finger_l1", "ee_finger_l2"),
+    "right": ("ee_right", "ee_finger_r1", "ee_finger_r2"),
+}
+
+
+def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options=None,
+                                 gripper_cover=None):
     """제약에 쓰는 모델. 자기 필터 모델과 **일부러 다르다**.
 
     제약 행은 최적화기가 실제로 움직일 수 있는 구에만 의미가 있다. RB-Y1 의 결정 변수는 양팔
@@ -147,15 +156,42 @@ def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options
     갈라진 쪽이 제약 모델의 굵기다. `None` 이면 `UrdfSphereChain` 의 기본값 그대로이므로
     호출이 예전과 글자 그대로 같다. 자기 필터 모델(`build_robot_model`)에는 이 통로가 **없다** —
     거기서 가늘어지면 그 link 의 점이 필터를 통과해 장애물로 샌다.
+
+    `gripper_cover` (T43 R, 기본 `None` = 꺼짐): `None`/`False` 면 위 모델 그대로 — 이 인자가 없던
+    때와 글자 그대로 같다. `True` 또는 `dict` (`hands` = `GRIPPER_COVER_HANDS` 의 키, 나머지는
+    `outer_cover_capsules` 의 키워드 — `max_gap` · `max_spheres_by_link` · `r_max_by_link`)
+    이면 그 모델의 그리퍼 link (`GRIPPER_LINKS` 중 모델에 있는 것) 에 **내접 덮개 구**를 더한다
+    (`experiments/sources/gripper_cover.py`): collision mesh 의 바깥 면을 `max_gap` (기본 2.5 mm)
+    안으로 덮고, 반지름은 그 link 의 지금 구 최대 반지름 이하, 파지 면 (손가락 안쪽 · 손가락 사이
+    손바닥 바닥) 쪽으로는 지금 구보다 한 점도 더 나오지 않는다. 덮개 구는 **뒤에 붙는다** — 앞의
+    구 순서 · 값은 꺼진 모델과 같다. 만든 결과는 `model.gripper_cover_report` 에 남는다.
     """
     from benchmark.ag3s.experiments.sources.mujoco_source import HEAD_JOINTS, gap_filling_capsules
     from benchmark.ag3s.robot_models import RBY1_URDF, UrdfSphereChain, parse_urdf
 
     urdf = parse_urdf(RBY1_URDF)
     head = {n: float(scene.data.qpos[scene._qadr[n]]) for n in HEAD_JOINTS if n in scene._qadr}
-    return UrdfSphereChain(urdf, extra_capsules=gap_filling_capsules(scene.model),
-                           fixed_joint_values=head, link_filter=link_filter,
-                           **dict(sphere_options or {}))
+    gap = gap_filling_capsules(scene.model)
+    model = UrdfSphereChain(urdf, extra_capsules=gap,
+                            fixed_joint_values=head, link_filter=link_filter,
+                            **dict(sphere_options or {}))
+    if not gripper_cover:
+        return model
+    from benchmark.ag3s.experiments.sources.gripper_cover import outer_cover_capsules
+
+    options = dict(gripper_cover) if isinstance(gripper_cover, dict) else {}
+    hands = str(options.pop("hands", "both"))
+    if hands not in GRIPPER_COVER_HANDS:
+        raise ValueError(f"gripper_cover hands 는 {sorted(GRIPPER_COVER_HANDS)} 중 하나: {hands!r}")
+    links = [n for n in GRIPPER_COVER_HANDS[hands] if n in set(model.sphere_link_names)]
+    cover, report = outer_cover_capsules(scene.model, model, links, **options)
+    options["hands"] = hands
+    covered = UrdfSphereChain(urdf, extra_capsules=list(gap) + list(cover),
+                              fixed_joint_values=head, link_filter=link_filter,
+                              **dict(sphere_options or {}))
+    covered.gripper_cover_report = {"options": options, "n_base_spheres": model.n_spheres,
+                                    "n_cover_spheres": len(cover), "links": report}
+    return covered
 
 
 def majority_body(labels: np.ndarray, names: dict) -> tuple[str, float]:
