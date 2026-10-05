@@ -1,0 +1,243 @@
+{
+ "columns": [
+  "C1807",
+  "C1967",
+  "C1982",
+  "C1968",
+  "D1807"
+ ],
+ "rows": [
+  [
+   "event row t / chunk seq",
+   "218 / 28",
+   "203 / 26",
+   "178 / 23",
+   "166 / 21",
+   "161 / 21"
+  ],
+  [
+   "hand geom (MuJoCo body) / URDF link",
+   "geom#1086 ee_finger_l2 / ee_finger_l1",
+   "geom#1086 ee_finger_l2 / ee_finger_l1",
+   "geom#1052 EE_BODY_L / ee_left",
+   "geom#1086 ee_finger_l2 / ee_finger_l1",
+   "geom#1086 ee_finger_l2 / ee_finger_l1"
+  ],
+  [
+   "hand geom to bar at row (mm)",
+   4.4,
+   3.2,
+   0.0,
+   9.1,
+   11.3
+  ],
+  [
+   "(1) coarse 20 mm: field at bar axis (true -12)",
+   -6.2,
+   -4.2,
+   -6.3,
+   -1.2,
+   -10.0
+  ],
+  [
+   "(1) fine 5 mm: field at bar axis",
+   -6.5,
+   -4.4,
+   -5.3,
+   -6.0,
+   -6.3
+  ],
+  [
+   "(1) target-free 5 mm: field at bar axis",
+   -6.5,
+   -4.4,
+   -5.3,
+   "no layer",
+   "no layer"
+  ],
+  [
+   "(1) fine: field at true surface, median (true 0)",
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  [
+   "(1) coarse: field at true surface, median",
+   1.9,
+   1.1,
+   1.1,
+   2.1,
+   1.1
+  ],
+  [
+   "(2) mesh vertices inside a query sphere (fraction)",
+   0.043,
+   0.043,
+   0.008,
+   0.043,
+   0.043
+  ],
+  [
+   "(2) mesh vertex gap to link spheres, median (mm)",
+   2.7,
+   2.7,
+   12.1,
+   2.6,
+   2.6
+  ],
+  [
+   "(2) closest-to-bar mesh point: gap to spheres (mm)",
+   4.6,
+   1.7,
+   8.2,
+   1.6,
+   1.8
+  ],
+  [
+   "(2) link spheres to bar at row, true (mm)",
+   5.9,
+   3.2,
+   -1.4,
+   10.3,
+   11.4
+  ],
+  [
+   "(2) event chunk: gate / TO status",
+   "execute / feasible",
+   "execute / feasible",
+   "hold / violated",
+   "execute / feasible",
+   "execute / feasible"
+  ],
+  [
+   "(2) event chunk: worst row (link, tier, mm)",
+   "ee_finger_l1, target_free, 0.4",
+   "ee_finger_l2, target_free, 1.1",
+   "ee_finger_l2, target_free, -10.2",
+   "attached:ee_left[0], fine, 4.0",
+   "attached:ee_left[0], coarse, 4.9"
+  ],
+  [
+   "(2) event chunk: TO view, this link, refined (mm)",
+   "0.4",
+   "5.1",
+   "21.1",
+   "8.8 (reconstruction; held-object rows not recorded)",
+   "35.0 (reconstruction; held-object rows not recorded)"
+  ],
+  [
+   "(2) event chunk: refined plan, true mesh, min (mm)",
+   -0.6,
+   6.9,
+   6.0,
+   15.5,
+   40.1
+  ],
+  [
+   "(3) event chunk executed as",
+   "refined",
+   "refined",
+   "q_hold",
+   "refined",
+   "refined"
+  ],
+  [
+   "(3) applied - refined, max |rad|",
+   "0",
+   "0",
+   "0.207",
+   "0",
+   "0"
+  ],
+  [
+   "(3) plan step 0 jump from q_now (deg)",
+   10.8,
+   2.5,
+   3.7,
+   2.4,
+   5.3
+  ],
+  [
+   "(3) first chunk executed after a collision HOLD",
+   "seq 28 (t 216) = event chunk",
+   "seq 26 (t 200) = event chunk",
+   "none: contact inside HOLD seq 23",
+   "no HOLD in run",
+   "no HOLD in run"
+  ],
+  [
+   "(3) measured row k vs plan target k-1, max (deg)",
+   9.8,
+   2.3,
+   8.0,
+   3.6,
+   4.2
+  ],
+  [
+   "(3) same, link centroid, max (mm)",
+   55.2,
+   23.9,
+   60.1,
+   45.5,
+   43.9
+  ],
+  [
+   "(3) HOLD: q_hold pose, true mesh to bar (mm)",
+   "-",
+   "-",
+   2.3,
+   "-",
+   "-"
+  ],
+  [
+   "(3) HOLD: q_hold vs measured at entry (deg)",
+   "-",
+   "-",
+   7.3,
+   "-",
+   "-"
+  ],
+  [
+   "(4) |reference - refined| joint max (deg)",
+   15.8,
+   1.7,
+   0.0,
+   3.2,
+   2.7
+  ],
+  [
+   "(4) reference - refined toward bar, max (mm)",
+   48.6,
+   26.2,
+   0.0,
+   46.8,
+   37.0
+  ],
+  [
+   "(4) policy displacement toward bar (mm)",
+   142.4,
+   80.8,
+   89.6,
+   116.0,
+   74.6
+  ],
+  [
+   "(4) policy direction vs bar inward normal (deg)",
+   20.1,
+   31.9,
+   53.3,
+   23.6,
+   61.4
+  ],
+  [
+   "(4) reference plan, true mesh, min (mm)",
+   -16.9,
+   -18.1,
+   6.0,
+   -12.2,
+   5.6
+  ]
+ ]
+}
