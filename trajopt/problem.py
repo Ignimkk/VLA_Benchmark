@@ -123,6 +123,7 @@ def build_problem(
     previous_chunk: Optional[np.ndarray] = None,
     n_slack: int = 0,
     trust_radius: Optional[float] = None,
+    anchor_envelope: Optional[np.ndarray] = None,
 ) -> QpProblem:
     """The QP around `iterate`, tracking `reference`, with room for `n_slack` collision rows.
 
@@ -137,6 +138,12 @@ def build_problem(
             continuity term. `None` disables it, which is correct for the first chunk of an episode.
         n_slack: how many collision rows the caller will add. Their slack variables and the
             ``s >= 0`` block are reserved here so the layout is complete before any geometry arrives.
+        anchor_envelope: ``(nq, H)`` or `None` (default — the anchor is step 0 only, as before).
+            T41 b: when the robot starts **at rest** (`limits.rest_start_envelope`), every step is
+            held to ``|Q[:, k] - q_now| <= anchor_envelope[:, k]``. It is intersected into the same
+            box block, so the QP keeps its rows and sparsity; where the trust region and the envelope
+            do not overlap, **the envelope wins** (the trust region is a numerical device, the
+            envelope is what the robot can physically do from rest). Needs `q_now`.
 
     Collision rows are **not** added here — `linearize.append_collision_rows` does that. Keeping the
     split means this function can be tested against a problem with no geometry at all, where the
@@ -248,6 +255,15 @@ def build_problem(
             raise ValueError(f"q_now has {q_now.shape[0]} entries, expected {nq}")
         box_lo[:nq] = np.maximum(box_lo[:nq], q_now - limits.max_step)
         box_hi[:nq] = np.minimum(box_hi[:nq], q_now + limits.max_step)
+        if anchor_envelope is not None:
+            # T41 b — clip (not max/min): the result lies inside the envelope even when the trust
+            # region or the joint box does not reach it, so the midpoint collapse below stays inside.
+            width = np.asarray(anchor_envelope, np.float64)[:, :horizon].T.reshape(-1)
+            centre = np.tile(q_now, horizon)
+            box_lo = np.clip(box_lo, centre - width, centre + width)
+            box_hi = np.clip(box_hi, centre - width, centre + width)
+    elif anchor_envelope is not None:
+        raise ValueError("anchor_envelope needs q_now — the envelope is centred on it")
     # The intersection can be empty when the robot starts outside its own limits — a real situation
     # after a fault or a bad hand-off. Collapsing to the midpoint keeps the QP solvable and lets the
     # trajectory walk back inside, rather than failing and leaving the caller with nothing.

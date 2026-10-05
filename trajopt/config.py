@@ -12,6 +12,7 @@ starting points to be measured, and the README records what the measurement said
 from __future__ import annotations
 
 import dataclasses
+import math
 import pathlib
 from typing import Any, Mapping
 
@@ -251,6 +252,18 @@ class LimitsConfig:
     #: 기본 `False` 는 예전 동작 그대로다: `enforce_velocity=False` 면 `max_step = inf` 이고 anchor 도
     #: 함께 사라진다 (`tests/trajopt/test_limits.py` 가 그것을 박고 있다).
     keep_anchor: bool = False
+    #: **T41 b — HOLD 뒤의 계획은 정지 상태에서 출발한다.** 기본 `False` = 예전 그대로 (anchor 는
+    #: 첫 스텝 ``|Q0 − q_now| ≤ v_max·dt`` 하나). `True` 면 **직전 청크가 통째로 HOLD 였던 청크에서만**
+    #: (`SafePolicy` 가 `exec_feedback.n_exec == 0` 으로 판단해 refiner context 의 `start_at_rest` 로
+    #: 넘긴다) anchor 를 정지 상태에서 가속도 한계로 닿을 수 있는 범위로 좁힌다 —
+    #: ``|Q[:, k] − q_now| ≤ e_k``, ``e_k = Σ_{i≤k} min(e0 + i·a_max·dt², v_max·dt)``
+    #: (`limits.rest_start_envelope`). 왜: T40 I C1807 seq 28 에서 HOLD 뒤 첫 스텝이 q_now 에서
+    #: 10.8° (= v_max·dt, anchor 경계) 였는데 그것은 정지 상태에서 a_max·dt² = 2.29° 의 4.7 배이고,
+    #: 실제 로봇은 첫 주기에 1.4–2.6° 만 움직여 실행 경로가 검사한 경로에서 최대 55 mm 벗어났다.
+    rest_start: bool = False
+    #: `rest_start` 의 첫 스텝 문턱 `e0` (rad, 관절 공통). `None` 이면 관절마다 `a_max·dt²`
+    #: (정지에서 한 주기에 닿는 거리). `0` 이면 `Q0 = q_now`. `v_max·dt` 보다 크게 줘도 그 값에서 잘린다.
+    rest_start_tolerance: float | None = None
 
     @property
     def enforces_nothing(self) -> bool:
@@ -266,6 +279,15 @@ class LimitsConfig:
             raise TrajOptConfigError(
                 f"limits.position_margin must be >= 0, got {self.position_margin}"
             )
+        if self.rest_start_tolerance is not None:
+            tol = float(self.rest_start_tolerance)
+            if not (math.isfinite(tol) and tol >= 0.0):
+                raise TrajOptConfigError(
+                    f"limits.rest_start_tolerance must be a finite value >= 0 (rad), got {tol}")
+            if not self.rest_start:
+                # 조용히 무시하지 않는다 — 문턱을 적었는데 꺼져 있으면 그 실행은 문턱으로 돈 것처럼 읽힌다.
+                raise TrajOptConfigError(
+                    "limits.rest_start_tolerance is only read when limits.rest_start=True")
         if self.source not in LIMIT_SOURCES:
             raise TrajOptConfigError(
                 f"limits.source must be one of {LIMIT_SOURCES}, got {self.source!r}")

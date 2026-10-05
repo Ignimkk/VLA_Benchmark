@@ -412,8 +412,37 @@ def clamp_to_limits(trajectory: np.ndarray, limits: JointLimits) -> np.ndarray:
     return np.clip(np.asarray(trajectory, np.float64), limits.lower[:, None], limits.upper[:, None])
 
 
+def rest_start_envelope(limits: JointLimits, horizon: int,
+                        tolerance: Optional[float] = None) -> np.ndarray:
+    """T41 b — 정지 상태의 로봇이 스텝 `k` 까지 `q_now` 에서 벗어날 수 있는 최대 거리 ``(nq, H)``.
+
+    로봇이 `q_now` 에 **멈춰 있다** (직전 청크가 통째로 HOLD) 고 두면 ``Q[-2] = Q[-1] = q_now`` 이고,
+    가속도 한계 ``|Q[k] − 2Q[k-1] + Q[k-2]| ≤ a`` (`max_step_change` = a_max·scale·dt²) 와 속도 한계
+    ``|Q[k] − Q[k-1]| ≤ v`` (`max_step`) 아래에서 스텝 속도는 ``|v_i| ≤ min(e0 + i·a, v)`` 이다.
+    그래서 ``|Q[k] − q_now| ≤ e_k = Σ_{i=0..k} min(e0 + i·a, v)``.
+
+    `tolerance` (`e0`, rad) 가 `None` 이면 관절마다 `a` — 정지에서 한 주기에 닿는 거리다. 어느 경우든
+    `v` 에서 잘린다 (예전 anchor 보다 넓어지지 않는다). `a` 나 `v` 가 무한이면 그 항은 제약이 없다.
+
+    이것은 원소별 box 다 — `build_problem` 의 box 행 · `sqp._limit_overshoot` · `project_to_limits`
+    가 모두 원소별이라 QP 의 행 수와 sparsity 가 바뀌지 않는다. 가속도 이음매(``Q1 − 2Q0 + q_now``)
+    를 행으로 넣는 것보다 느슨하지만 (지그재그를 막지 않는다) 그 안쪽 모양은 기존 가속도 행이 잡는다.
+    """
+    v = np.asarray(limits.max_step, np.float64).reshape(-1)
+    a = np.asarray(limits.max_step_change, np.float64).reshape(-1)
+    e0 = a.copy() if tolerance is None else np.full_like(v, float(tolerance))
+    e0 = np.minimum(e0, v)
+    steps = np.arange(int(horizon), dtype=np.float64)
+    with np.errstate(invalid="ignore"):
+        # `a = inf` 이고 i = 0 이면 0·inf = nan — 첫 스텝은 `e0` 그대로다.
+        grow = np.where(steps[None, :] == 0.0, 0.0, steps[None, :] * a[:, None])
+    speed = np.minimum(e0[:, None] + grow, v[:, None])
+    return np.cumsum(speed, axis=1)
+
+
 def project_to_limits(trajectory: np.ndarray, limits: JointLimits,
-                      q_now_opt: Optional[np.ndarray] = None) -> Optional[np.ndarray]:
+                      q_now_opt: Optional[np.ndarray] = None, *,
+                      envelope: Optional[np.ndarray] = None) -> Optional[np.ndarray]:
     """**최소 투영** — position box 와 첫 스텝 anchor 의 교집합(원소별 box)으로 자른다 (T31 G2-ii).
 
     둘 다 원소별 구간이라 교집합도 원소별 구간이고, 원소별 `clip` 이 곧 유클리드 최소 투영이다:
@@ -435,6 +464,12 @@ def project_to_limits(trajectory: np.ndarray, limits: JointLimits,
         q0 = np.asarray(q_now_opt, np.float64).reshape(-1)
         lower[:, 0] = np.maximum(lower[:, 0], q0 - step)
         upper[:, 0] = np.minimum(upper[:, 0], q0 + step)
+    if envelope is not None and q_now_opt is not None and Q.shape[1]:
+        # T41 b — 정지 출발 범위 (`rest_start_envelope`). 기본 `None` 이면 이 줄은 돌지 않는다.
+        q0 = np.asarray(q_now_opt, np.float64).reshape(-1)[:, None]
+        env = np.asarray(envelope, np.float64)[:, :Q.shape[1]]
+        lower = np.maximum(lower, q0 - env)
+        upper = np.minimum(upper, q0 + env)
     if np.any(lower > upper):
         return None
     return np.clip(Q, lower, upper)
@@ -474,4 +509,4 @@ def limit_report(trajectory: np.ndarray, limits: JointLimits) -> dict[str, float
 
 __all__ = ["RelaxedJointLimits", "build_limits", "clamp_to_limits", "format_position_limit_table",
            "joint_ranges_from_mj_model", "limit_report", "mismatch_with_mj_model", "limits_model_xml", "mjcf_joint_ranges", "position_limit_table",
-           "project_to_limits", "resolve_position_ranges", "velocity_rows"]
+           "project_to_limits", "resolve_position_ranges", "rest_start_envelope", "velocity_rows"]

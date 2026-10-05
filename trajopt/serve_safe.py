@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import math
 import pathlib
 import sys
 from collections.abc import Sequence
@@ -943,6 +944,16 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--obstacle-margin-support", action="store_true",
                     help="T41 a — 지지면(테이블·바닥)에도 --obstacle-margin 을 건다. 기본은 "
                          "제외 (파지하려면 손가락이 테이블 가까이 가야 한다). ablation 용")
+    ap.add_argument("--rest-start", action="store_true",
+                    help="T41 b — 직전 청크가 통째로 HOLD 였으면 (exec_feedback n_exec=0, 로봇이 "
+                         "q_now 에 정지) 그 청크의 TO 계획을 **정지에서 출발**시킨다: 모든 스텝을 "
+                         "|Q_k − q_now| ≤ Σ_{i≤k} min(e0 + i·a_max·dt², v_max·dt) 로 묶는다. 기본 "
+                         "꺼짐 = 예전 anchor (첫 스텝 |Q0 − q_now| ≤ v_max·dt = 10.8°) 그대로. "
+                         "HOLD 가 아닌 청크는 켜도 바뀌지 않는다")
+    ap.add_argument("--rest-start-tolerance", type=float, default=None, metavar="RAD",
+                    help="T41 b — --rest-start 의 첫 스텝 문턱 e0 (rad, 관절 공통). 기본 = 관절마다 "
+                         "a_max·dt² (0.040 rad = 2.29°, 정지에서 한 주기에 닿는 거리). 0 이면 "
+                         "Q0 = q_now. v_max·dt 보다 크면 그 값에서 잘린다")
     ap.add_argument("--plan-horizon", default="execution",
                     metavar="execution|full|N",
                     help="최적화기가 **다듬는** 스텝 수. 기본 `execution` = 실행되는 창만 "
@@ -1386,6 +1397,9 @@ def joint_limits_meta(limits_config) -> dict:
     elif limits_config.source == "config":
         out["position_ranges"] = {k: list(v) for k, v in
                                   dict(limits_config.position_ranges or {}).items()}
+    if getattr(limits_config, "rest_start", False):
+        # T41 b — 켰을 때만 키가 생긴다 (꺼진 기록의 meta 는 예전 그대로).
+        out["rest_start"] = {"tolerance_rad": limits_config.rest_start_tolerance}
     return out
 
 
@@ -1426,6 +1440,23 @@ def obstacle_overrides(args) -> dict:
     return out
 
 
+def rest_start_overrides(args) -> dict:
+    """`--rest-start` · `--rest-start-tolerance` → `limits` 의 키 (T41 b). 안 줬으면 `{}`."""
+    out: dict = {}
+    tol = getattr(args, "rest_start_tolerance", None)
+    if getattr(args, "rest_start", False):
+        out["rest_start"] = True
+        if tol is not None:
+            tol = float(tol)
+            if not (math.isfinite(tol) and tol >= 0.0):
+                raise SystemExit(f"--rest-start-tolerance 는 0 이상의 rad 이어야 합니다: {tol}")
+            out["rest_start_tolerance"] = tol
+    elif tol is not None:
+        raise SystemExit("--rest-start-tolerance 는 --rest-start 와 함께 줘야 합니다 — 혼자서는 "
+                         "아무 일도 하지 않습니다")
+    return out
+
+
 def trajopt_config_from_args(args):
     """CLI → `TrajOptConfig`. `SafePolicy` 경로와 `--no-perception` 경로가 **같은 함수**를 쓴다.
 
@@ -1450,7 +1481,9 @@ def trajopt_config_from_args(args):
         # T27 — `--no-limits`. 무엇이 빠지고 무엇이 남는지는 `config.NO_LIMITS` 한 곳에.
         # T31 — position 범위의 출처 (`limits_overrides`): 기본은 `--model-xml` 의 MJCF.
         "limits": {**limits,
-                   **(dict(NO_LIMITS) if getattr(args, "no_limits", False) else {})},
+                   **(dict(NO_LIMITS) if getattr(args, "no_limits", False) else {}),
+                   # T41 b — 준 것만 (기본 off 면 키가 없다).
+                   **rest_start_overrides(args)},
         **({"sqp": sqp} if sqp else {}),
         # 기하 인증 요구는 여기 **한 곳**에서만 켜고 끈다 (`--no-perception` 은 `ToOnlyPolicy` 가
         # 끈다 — 인증할 기하가 애초에 없다).
@@ -1675,6 +1708,12 @@ def main() -> None:
                 "지지면 %s · target · 쥔 물체 행은 제외 (T41 a)",
                 to_config.collision.obstacle_margin * 1000,
                 "포함" if to_config.collision.obstacle_margin_support else "제외")
+        if getattr(to_config.limits, "rest_start", False):
+            tol = to_config.limits.rest_start_tolerance
+            logging.warning(
+                "TO rest_start: 직전 청크가 통째로 HOLD 인 청크는 정지 출발 범위로 푼다 — 첫 스텝 "
+                "|Q0 − q_now| ≤ %s, 이후 a_max·dt² 씩 늘어난다 (T41 b)",
+                "a_max·dt² (관절마다)" if tol is None else f"{tol:.4f} rad ({math.degrees(tol):.2f}°)")
         announce_collision_switch(to_config.collision.enabled)
         announce_limits_switch(to_config.limits)
         announce_cost_weights(weights)

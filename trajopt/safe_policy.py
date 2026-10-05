@@ -246,6 +246,8 @@ class SafePolicy:
         #: 이번 청크가 받은 실행 피드백과 그것으로 한 일 — 기록(`summary_json`)과 응답 `notes` 용.
         self._last_feedback: dict[str, Any] = wire.no_exec_feedback("no request yet")
         self._last_continuity: dict[str, Any] = {}
+        #: T41 b — 이 청크를 정지 출발 범위로 풀었나 (`limits.rest_start` 가 켜졌을 때만 채운다).
+        self._last_rest_start: dict[str, Any] = {}
         #: T37 — 지난 청크에서 grasp latch 가 continuity 항을 껐나 (켜짐/꺼짐이 바뀔 때만 로그 한 줄).
         self._continuity_gate_on = False
         self._last_latch_signal: dict[str, Any] = {}
@@ -318,6 +320,7 @@ class SafePolicy:
         self._last_q_now = None
         self._pending = {}
         self._last_continuity = {}
+        self._last_rest_start = {}
         self._continuity_gate_on = False
         self._episode_seed = None
         self._last_latch_signal = {}
@@ -382,6 +385,11 @@ class SafePolicy:
         context: dict[str, Any] = {"t_step": seq, "previous_physical_chunk": previous}
         if executed_steps is not None:
             context["previous_executed_steps"] = executed_steps
+        # T41 b — 직전 청크가 통째로 HOLD 였으면 로봇은 q_now 에 정지해 있다. 꺼져 있으면 `{}` 이고
+        # context 에 키가 생기지 않는다 (refiner 호출이 예전 그대로).
+        self._last_rest_start = self._rest_start(feedback)
+        if self._last_rest_start.get("applied"):
+            context["start_at_rest"] = True
         t = time.monotonic()
         refined = self.refiner.refine(chunk, context)
         timing["trajopt"] = (time.monotonic() - t) * 1000.0 - timing.get("ag3s", 0.0)
@@ -501,6 +509,31 @@ class SafePolicy:
         info["previous_chunk"] = which if n_exec > 0 else None
         return np.asarray(plan[which], np.float64), n_exec
 
+    def _rest_start(self, feedback: dict[str, Any]) -> dict[str, Any]:
+        """T41 b — 이 청크의 계획을 **정지 상태에서 출발**시키나. `limits.rest_start` 가 꺼져 있으면 `{}`.
+
+        정지라고 아는 경우는 하나다: 직전 청크의 **모든 스텝이 HOLD** 였다 (`exec_feedback.n_exec == 0`).
+        HOLD 는 한 자세를 8 스텝 명령하므로 로봇은 그 안에 멈춘다 (T41 c: `measured` · `fixed` 모두 8 스텝
+        값과 64 스텝 값의 차이 < 0.1°). 일부만 HOLD 였거나 피드백이 없으면 속도를 모른다 — 적용하지 않는다.
+        """
+        if not getattr(self.to_config.limits, "rest_start", False):
+            return {}
+        out: dict[str, Any] = {"enabled": True, "applied": False,
+                               "tolerance_rad": self.to_config.limits.rest_start_tolerance}
+        if not feedback.get("available"):
+            out["reason"] = f"no exec_feedback ({feedback.get('reason')}); velocity unknown"
+            return out
+        n_exec, n_steps = int(feedback.get("n_exec") or 0), int(feedback.get("n_steps") or 0)
+        if n_steps > 0 and n_exec == 0:
+            out.update(applied=True,
+                       reason=(f"previous chunk seq {feedback.get('seq')} was held for all "
+                               f"{n_steps} steps (hold_kind={feedback.get('hold_kind')}); "
+                               "the robot is at rest at q_now"))
+        else:
+            out["reason"] = (f"previous chunk seq {feedback.get('seq')} executed {n_exec}/{n_steps} "
+                             "steps; the robot is not known to be at rest")
+        return out
+
     def _feedback_notes(self) -> list[str]:
         """응답 `notes` 에 더할 줄. 피드백 한 줄 + (있으면) 연속성·latch 신호 한 줄씩."""
         fb = self._last_feedback
@@ -519,6 +552,16 @@ class SafePolicy:
         latch = self._last_latch_signal or {}
         if latch.get("source") == "planned":
             notes.append(latch["note"])
+        # T41 b — 정지 출발 범위로 푼 청크만 한 줄 (꺼져 있으면 notes 가 예전 그대로).
+        rest = self._last_rest_start or {}
+        if rest.get("applied"):
+            record = ((getattr(self.refiner.last_result, "metrics", None) or {}).get("rest_start")
+                      if self.refiner.last_result is not None else None) or {}
+            line = "rest start: " + str(rest.get("reason"))
+            if record:
+                line += (f"; plan step 0 is {np.degrees(record['step0_offset_rad']):.2f} deg from "
+                         f"q_now (policy {np.degrees(record['reference_step0_offset_rad']):.2f} deg)")
+            notes.append(line)
         # T22 — 파지 상태가 **바뀐** 청크(attach · detach · 거절 · 상태 전이)만 한 줄.
         grasp = self._last_grasp_record or {}
         if grasp.get("transition") and grasp.get("note"):
@@ -552,6 +595,8 @@ class SafePolicy:
             # T37 — 이 청크의 목적함수에 continuity 항이 있었나 · 없으면 왜 (로컬 기록에서도 센다).
             "continuity_active": bool(metrics.get("continuity_active", False)),
             "continuity_reason": metrics.get("continuity_reason"),
+            # T41 b — 정지 출발 범위로 푼 청크에만 키가 생긴다.
+            **({"rest_start": _jsonable(metrics["rest_start"])} if "rest_start" in metrics else {}),
             "reference_deviation": round(
                 float(getattr(result, "reference_deviation", 0.0) or 0.0), 6),
         }
@@ -1210,6 +1255,8 @@ class SafePolicy:
             # T39 — 정책 RNG seed. `applied` 는 이 요청에 적용한 값, `episode` 는 이 에피소드의 값.
             # 둘 다 `null` 이면 seed 없이 서버 순서대로 이어진 noise 다.
             "policy_seed": {"applied": self._seed_applied, "episode": self._episode_seed},
+            # T41 b — `limits.rest_start` 가 켜졌을 때만 (적용 여부 · 이유). 꺼져 있으면 키가 없다.
+            **({"rest_start": _jsonable(self._last_rest_start)} if self._last_rest_start else {}),
             # T23 — 판정 사유와 위반 행 분류. `reasons` 가 `None` 이면 판정 전(기록 순서상 없음).
             "verdict": _jsonable({
                 "policy": self.verdict_policy,

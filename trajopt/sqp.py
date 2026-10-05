@@ -50,7 +50,7 @@ from benchmark.trajopt.linearize import (
     SceneSnapshot,
     append_collision_rows,
 )
-from benchmark.trajopt.limits import limit_report, project_to_limits
+from benchmark.trajopt.limits import limit_report, project_to_limits, rest_start_envelope
 from benchmark.trajopt.problem import build_problem, objective
 from benchmark.trajopt.qp import QpSolver
 from benchmark.trajopt.types import ChunkLayout, JointLimits, TrajOptResult, TrajOptStatus
@@ -104,6 +104,7 @@ class TrajectoryOptimizer:
         previous_chunk: Optional[np.ndarray] = None,
         template: Optional[np.ndarray] = None,
         geometry_certified: bool = True,
+        start_at_rest: bool = False,
     ) -> TrajOptResult:
         """Make `reference` safe against `scene`, or report how far short it fell.
 
@@ -117,12 +118,22 @@ class TrajectoryOptimizer:
                 untouched. Defaults to zeros, which is only right when the caller has no chunk.
             geometry_certified: AG3S's own verdict on the scene. A frame it could not certify may
                 still be optimized against; the result simply cannot be called safe.
+            start_at_rest: T41 b. `True` = the robot is known to be at rest at `q_now` (the previous
+                chunk was held throughout). The step-0 anchor becomes the reach-from-rest envelope
+                (`limits.rest_start_envelope`, `config.limits.rest_start_tolerance`) on every step —
+                in the QP box, in the eligibility of the initial iterate and in the limit projection.
+                `False` (default) leaves every number as it was. Who decides: `SafePolicy`, only when
+                `limits.rest_start` is on.
         """
         started = time.perf_counter()
         cfg = self.config
         reference = np.asarray(reference, np.float64)
         q_now = np.asarray(q_now, np.float64).reshape(-1)
         notes: list[str] = []
+        #: T41 b — `None` 이면 예전 anchor (첫 스텝 `max_step`) 그대로.
+        envelope = (rest_start_envelope(self.limits, self.horizon,
+                                        getattr(cfg.limits, "rest_start_tolerance", None))
+                    if start_at_rest else None)
 
         if scene is None or scene.is_empty:
             return self._passthrough(
@@ -186,7 +197,7 @@ class TrajectoryOptimizer:
         # `best_unaccepted` 는 **초기 iterate 가 부적격일 때만** 나온다. `returned` 는 이 성질을
         # 가정하지 않고 후보 기록에서 읽어 싣는다.
         initial_merit, initial_violation = iterate_merit, iterate_violation
-        initial_overshoot = self._limit_overshoot(iterate, q_now)
+        initial_overshoot = self._limit_overshoot(iterate, q_now, envelope)
         initial_eligible = max(initial_overshoot.values()) <= _LIMIT_TOLERANCE
         best = iterate
         best_states = iterate_states
@@ -240,6 +251,7 @@ class TrajectoryOptimizer:
                 reference, iterate, self.limits, cfg,
                 q_now=q_now[self.layout.q_indices], previous_chunk=previous_chunk,
                 n_slack=n_slack, trust_radius=radius,
+                **({"anchor_envelope": envelope} if envelope is not None else {}),
             )
             problem = append_collision_rows(
                 problem, rows, iterate, self.block, cfg.reduction.linearization_backoff
@@ -297,7 +309,8 @@ class TrajectoryOptimizer:
         # **limit 만 어긴 초기 iterate 의 대비는 reference 의 최소 투영이다** (T31 G2-ii).
         projection = None
         if not initial_eligible and not any(c["accepted"] for c in candidates):
-            projection = self._limit_projection(reference, q_now, scene, initial_violation)
+            projection = self._limit_projection(reference, q_now, scene, initial_violation,
+                                                envelope)
             if projection["used"]:
                 best, best_slack = projection.pop("_trajectory"), 0.0
                 best_states = projection.pop("_states")
@@ -333,12 +346,34 @@ class TrajectoryOptimizer:
             "min_iterations": int(min_iterations),
             "projection": projection,
         }
-        return self._finish(
+        result = self._finish(
             best, reference, q_now, scene, template, iterations, best_slack,
             reference_violation, previous_chunk, notes, started, geometry_certified,
             states=best_states, timing=timing, qp_iterations=qp_iterations,
             time_budget_hit=time_budget_hit, selection=selection,
         )
+        if envelope is not None:
+            result.metrics["rest_start"] = self._rest_start_record(
+                best, reference, q_now, envelope)
+        return result
+
+    def _rest_start_record(self, trajectory, reference, q_now, envelope) -> dict[str, Any]:
+        """T41 b — 정지 출발 범위가 무엇이었고 반환된 계획이 어디서 시작하나 (기록용, rad)."""
+        q0 = np.asarray(q_now, np.float64).reshape(-1)[self.layout.q_indices][:, None]
+        traj = np.asarray(trajectory, np.float64)
+        ref = np.asarray(reference, np.float64)
+        n = min(traj.shape[1], envelope.shape[1])
+        off = np.abs(traj[:, :n] - q0)
+        return {
+            "applied": True,
+            "tolerance_rad": (None if getattr(self.config.limits, "rest_start_tolerance", None)
+                              is None else float(self.config.limits.rest_start_tolerance)),
+            "envelope_rad_max_per_step": [float(v) for v in envelope[:, :n].max(axis=0)],
+            "step0_offset_rad": float(off[:, 0].max(initial=0.0)) if n else 0.0,
+            "reference_step0_offset_rad": (float(np.abs(ref[:, 0] - q0[:, 0]).max(initial=0.0))
+                                           if ref.shape[1] else 0.0),
+            "envelope_overshoot_rad": float(np.max(off - envelope[:, :n], initial=0.0)),
+        }
 
     # --- helpers --------------------------------------------------------------------------
     def _merit(self, trajectory, reference, previous_chunk, q_now, scene, states=None) -> float:
@@ -373,11 +408,15 @@ class TrajectoryOptimizer:
         violation = max(0.0, -self.linearizer.full_violation(trajectory, q_now, scene, states))
         return cost + self.config.cost.w_slack * violation, violation
 
-    def _limit_overshoot(self, trajectory: np.ndarray, q_now: np.ndarray) -> dict[str, float]:
+    def _limit_overshoot(self, trajectory: np.ndarray, q_now: np.ndarray,
+                         envelope: Optional[np.ndarray] = None) -> dict[str, float]:
         """`limit_report` + **anchor** — QP 가 hard 로 지키는 첫 스텝 조건까지.
 
         `build_problem` 은 ``|Q[:, 0] - q_now| <= max_step`` 을 box 에 넣어 hard 로 지킨다. 초기
         iterate 가 그것을 넘으면 QP 후보와 같은 자격이 아니므로 여기서 함께 잰다.
+
+        T41 b: `envelope` (정지 출발 범위) 가 있으면 anchor 는 **모든 스텝**의
+        ``|Q[:, k] - q_now| - envelope[:, k]`` 최대값이다 — QP box 가 지키는 것과 같은 조건.
         """
         report = dict(limit_report(trajectory, self.limits))
         anchor = 0.0
@@ -385,10 +424,16 @@ class TrajectoryOptimizer:
         if trajectory.shape[1] and np.all(np.isfinite(step)):
             q0 = np.asarray(q_now, np.float64).reshape(-1)[self.layout.q_indices]
             anchor = float(np.max(np.abs(trajectory[:, 0] - q0) - step, initial=0.0))
+        if envelope is not None and trajectory.shape[1]:
+            q0 = np.asarray(q_now, np.float64).reshape(-1)[self.layout.q_indices][:, None]
+            n = min(trajectory.shape[1], envelope.shape[1])
+            anchor = max(anchor, float(np.max(np.abs(trajectory[:, :n] - q0) - envelope[:, :n],
+                                              initial=0.0)))
         report["anchor"] = max(anchor, 0.0)
         return report
 
-    def _limit_projection(self, reference, q_now, scene, initial_violation) -> dict[str, Any]:
+    def _limit_projection(self, reference, q_now, scene, initial_violation,
+                          envelope: Optional[np.ndarray] = None) -> dict[str, Any]:
         """T31 G2-ii — **reference 의 최소 투영**을 반환할 수 있는가, 그리고 그 궤적.
 
         | 조건 | 아니면 |
@@ -416,12 +461,13 @@ class TrajectoryOptimizer:
             out.update(tried=False, reason="initial_collision_violation")
             return out
         projected = project_to_limits(reference, self.limits,
-                                      np.asarray(q_now, np.float64)[self.layout.q_indices])
+                                      np.asarray(q_now, np.float64)[self.layout.q_indices],
+                                      **({"envelope": envelope} if envelope is not None else {}))
         if projected is None:
             out["reason"] = "no_projection"
             return out
         out["max_change_rad"] = float(np.abs(projected - reference).max(initial=0.0))
-        overshoot = self._limit_overshoot(projected, q_now)
+        overshoot = self._limit_overshoot(projected, q_now, envelope)
         out["limit_overshoot"] = {k: float(v) for k, v in overshoot.items()}
         if max(overshoot.values()) > _LIMIT_TOLERANCE:
             out["reason"] = "projection_outside_limits"
