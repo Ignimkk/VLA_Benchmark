@@ -1,0 +1,1692 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only. Interpretation limited to the ranked fix proposals for (4), as the task allows.",
+ "step": "T43S",
+ "date": "2026-10-05",
+ "runs": [
+  {
+   "id": "chunk index",
+   "command": "nice -n 19 .venv-openpi-live/bin/python outputs/verify/T43/S/p/scan_t42.py raw/chunk_index_t42.json outputs/verify/T42/1/runs/E3b (and raw/chunk_index_t40t41.json for T40 G/J, T41 a/c)",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/T43/S/raw/chunk_index_t42.json, chunk_index_t40t41.json",
+   "stdout_log": "outputs/verify/T43/S/raw/scan_t42.log, scan_t40t41.log"
+  },
+  {
+   "id": "(4) pick geometry + server grasp chunks + audit",
+   "command": "p/measure_pick.py 4",
+   "venv": ".venv-openpi-live (CPU, nice 19, 4 workers)",
+   "raw_output": "outputs/verify/T43/S/raw/pick_runs.json",
+   "stdout_log": "raw/measure_pick.log"
+  },
+  {
+   "id": "(4) training demos",
+   "command": "p/measure_demo.py 4",
+   "venv": ".venv-openpi-live",
+   "raw_output": "raw/demo_grasp.json, raw/demo_fruit_in_ee_frame.txt",
+   "stdout_log": "raw/measure_demo.log"
+  },
+  {
+   "id": "(4) policy vs TO target at close",
+   "command": "p/pick_ref_target.py 4",
+   "venv": ".venv-openpi-live",
+   "raw_output": "raw/pick_ref_target.json",
+   "stdout_log": "raw/pick_ref_target.log"
+  },
+  {
+   "id": "(4) target / destination",
+   "command": "p/target_dest.py 4; p/dest_delay.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "raw/target_dest.json, raw/dest_delay.json",
+   "stdout_log": null
+  },
+  {
+   "id": "(4) summary",
+   "command": "p/summarize_pick.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "raw/pick_summary.json, raw/rollout_fruit_in_ee_frame.json",
+   "stdout_log": null
+  },
+  {
+   "id": "(5) held rows, all hurdle runs",
+   "command": "cd /mnt/dev/work-t41c && p/measure_held.py 4",
+   "venv": ".venv-openpi-live (CPU, PYTHONPATH snapshot work-t41c)",
+   "raw_output": "raw/held_runs_all.json, raw/held_sections_all.npy, raw/held_aggregate.json",
+   "stdout_log": "raw/measure_held_all.log"
+  },
+  {
+   "id": "(5) contact point",
+   "command": "cd /mnt/dev/work-t41c && p/contact_detail.py (+ inline unlifted-fit check)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "raw/contact_detail.json, raw/contact_vs_unlifted.json",
+   "stdout_log": null
+  },
+  {
+   "id": "figures",
+   "command": "cd /mnt/dev/work-t41c && p/fig_t43s.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "benchmark/ag3s/docs/figures/t43/t43s-*.json",
+   "stdout_log": null
+  }
+ ],
+ "code_state": {
+  "benchmark_head": "d309550 (dirty: trajopt/{config,linearize,refiner,safe_policy,serve_safe,sqp}.py, ag3s/robot_models/urdf_sphere_chain.py, grounding_report.py)",
+  "measured_code": "records produced by snapshots work-t42 (T42-1), work-t40 / work-t40h (T40 G / J), work-t41a / work-t41c (T41 a / c); reconstruction code from work-t41c; pipeline.py, held_object.py, attached.py, curobo_field.py, fixed_input_ablation.py, gripper_state.py md5-identical in work-t40/t40h/t41a/t41c/t42/main",
+  "dirty_files": [],
+  "note": "no server, no GPU, no .venv-ag3s; T42-1 run dirs read-only; frozen run list raw/t42_runs_frozen.json at 2026-10-05T11:41:38Z (91 runs with .done + robust.json)"
+ },
+ "numbers": {
+  "_comment": "mm unless noted. 'lifted' = T42-1 rule (target z >= z0 + 50 mm). settled row = first close command + 16 control rows (demo: grasp_close_start_frame + 16). tip = midpoint of the two fingertips (collision-mesh vertex farthest along the approach axis per finger), relative to the fruit body centre.",
+  "q4_outcomes": {
+   "E0/left": {
+    "runs": 7,
+    "lifted": 7,
+    "success": 7,
+    "by_fruit": {
+     "apple": {
+      "n": 4,
+      "grasp": 4,
+      "success": 4
+     },
+     "orange": {
+      "n": 3,
+      "grasp": 3,
+      "success": 3
+     }
+    }
+   },
+   "E0/right": {
+    "runs": 6,
+    "lifted": 5,
+    "success": 5,
+    "by_fruit": {
+     "apple": {
+      "n": 6,
+      "grasp": 5,
+      "success": 5
+     }
+    }
+   },
+   "E3b/left": {
+    "runs": 40,
+    "lifted": 25,
+    "success": 22,
+    "by_fruit": {
+     "banana": {
+      "n": 14,
+      "grasp": 9,
+      "success": 8
+     },
+     "pear": {
+      "n": 10,
+      "grasp": 5,
+      "success": 4
+     },
+     "orange": {
+      "n": 11,
+      "grasp": 6,
+      "success": 5
+     },
+     "apple": {
+      "n": 5,
+      "grasp": 5,
+      "success": 5
+     }
+    }
+   },
+   "E3b/right": {
+    "runs": 38,
+    "lifted": 30,
+    "success": 24,
+    "by_fruit": {
+     "orange": {
+      "n": 9,
+      "grasp": 7,
+      "success": 5
+     },
+     "banana": {
+      "n": 13,
+      "grasp": 8,
+      "success": 6
+     },
+     "apple": {
+      "n": 10,
+      "grasp": 10,
+      "success": 9
+     },
+     "pear": {
+      "n": 6,
+      "grasp": 5,
+      "success": 4
+     }
+    }
+   }
+  },
+  "q4_paired_E0_E3b_same_episode_seed": [
+   {
+    "episode": 1828,
+    "seed": 18281,
+    "arm": "left",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1830,
+    "seed": 18301,
+    "arm": "left",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1830,
+    "seed": 18302,
+    "arm": "left",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1830,
+    "seed": 18303,
+    "arm": "left",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1925,
+    "seed": 19253,
+    "arm": "left",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1939,
+    "seed": 19393,
+    "arm": "left",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1968,
+    "seed": 19683,
+    "arm": "left",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1834,
+    "seed": 18341,
+    "arm": "right",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1834,
+    "seed": 18342,
+    "arm": "right",
+    "E0_lifted": false,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1834,
+    "seed": 18343,
+    "arm": "right",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1977,
+    "seed": 19771,
+    "arm": "right",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1977,
+    "seed": 19772,
+    "arm": "right",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   },
+   {
+    "episode": 1977,
+    "seed": 19773,
+    "arm": "right",
+    "E0_lifted": true,
+    "E3b_lifted": true
+   }
+  ],
+  "q4_grasp_geometry_settled": {
+   "demo_left": {
+    "tip_dz_mm": {
+     "median": -18.0,
+     "q25": -20.2,
+     "q75": -15.8,
+     "n": 1000
+    },
+    "tip_dxy_mm": {
+     "median": 12.5,
+     "q25": 10.5,
+     "q75": 14.6,
+     "n": 1000
+    },
+    "tilt_deg": {
+     "median": 38.9,
+     "q25": 37.6,
+     "q75": 40.2,
+     "n": 1000
+    }
+   },
+   "demo_right": {
+    "tip_dz_mm": {
+     "median": -9.4,
+     "q25": -11.7,
+     "q75": -7.1,
+     "n": 1000
+    },
+    "tip_dxy_mm": {
+     "median": 24.1,
+     "q25": 22.4,
+     "q75": 26.0,
+     "n": 1000
+    },
+    "tilt_deg": {
+     "median": 38.8,
+     "q25": 37.4,
+     "q75": 40.2,
+     "n": 1000
+    }
+   },
+   "demo_left_apple": {
+    "tip_dz_mm": {
+     "median": -17.4,
+     "q25": -18.0,
+     "q75": -16.8,
+     "n": 250
+    },
+    "tip_dxy_mm": {
+     "median": 12.1,
+     "q25": 10.3,
+     "q75": 13.8,
+     "n": 250
+    },
+    "tilt_deg": {
+     "median": 38.7,
+     "q25": 37.5,
+     "q75": 40.1,
+     "n": 250
+    }
+   },
+   "demo_right_apple": {
+    "tip_dz_mm": {
+     "median": -8.7,
+     "q25": -9.5,
+     "q75": -7.8,
+     "n": 250
+    },
+    "tip_dxy_mm": {
+     "median": 24.0,
+     "q25": 22.4,
+     "q75": 26.1,
+     "n": 250
+    },
+    "tilt_deg": {
+     "median": 38.4,
+     "q25": 37.3,
+     "q75": 39.9,
+     "n": 250
+    }
+   },
+   "E0_left": {
+    "tip_dz_mm": {
+     "median": -14.8,
+     "q25": -17.4,
+     "q75": -13.6,
+     "n": 7
+    },
+    "tip_dxy_mm": {
+     "median": 19.8,
+     "q25": 16.8,
+     "q75": 20.0,
+     "n": 7
+    },
+    "tilt_deg": {
+     "median": 40.0,
+     "q25": 38.3,
+     "q75": 40.9,
+     "n": 7
+    }
+   },
+   "E0_right": {
+    "tip_dz_mm": {
+     "median": -6.1,
+     "q25": -8.0,
+     "q75": -3.9,
+     "n": 6
+    },
+    "tip_dxy_mm": {
+     "median": 20.2,
+     "q25": 18.7,
+     "q75": 23.3,
+     "n": 6
+    },
+    "tilt_deg": {
+     "median": 36.2,
+     "q25": 35.4,
+     "q75": 37.5,
+     "n": 6
+    }
+   },
+   "E3b_left_lifted": {
+    "tip_dz_mm": {
+     "median": -12.8,
+     "q25": -16.8,
+     "q75": -9.4,
+     "n": 25
+    },
+    "tip_dxy_mm": {
+     "median": 19.4,
+     "q25": 16.7,
+     "q75": 22.4,
+     "n": 25
+    },
+    "tilt_deg": {
+     "median": 40.8,
+     "q25": 39.6,
+     "q75": 42.0,
+     "n": 25
+    }
+   },
+   "E3b_left_not_lifted": {
+    "tip_dz_mm": {
+     "median": -9.7,
+     "q25": -14.3,
+     "q75": -0.1,
+     "n": 15
+    },
+    "tip_dxy_mm": {
+     "median": 27.7,
+     "q25": 24.4,
+     "q75": 30.6,
+     "n": 15
+    },
+    "tilt_deg": {
+     "median": 41.1,
+     "q25": 40.3,
+     "q75": 44.0,
+     "n": 15
+    }
+   },
+   "E3b_right_lifted": {
+    "tip_dz_mm": {
+     "median": -5.0,
+     "q25": -7.4,
+     "q75": -2.6,
+     "n": 30
+    },
+    "tip_dxy_mm": {
+     "median": 28.6,
+     "q25": 25.0,
+     "q75": 32.8,
+     "n": 30
+    },
+    "tilt_deg": {
+     "median": 39.6,
+     "q25": 38.9,
+     "q75": 40.5,
+     "n": 30
+    }
+   },
+   "E3b_right_not_lifted": {
+    "tip_dz_mm": {
+     "median": 0.1,
+     "q25": -3.3,
+     "q75": 12.7,
+     "n": 8
+    },
+    "tip_dxy_mm": {
+     "median": 42.2,
+     "q25": 31.7,
+     "q75": 64.9,
+     "n": 8
+    },
+    "tilt_deg": {
+     "median": 41.7,
+     "q25": 39.6,
+     "q75": 43.3,
+     "n": 8
+    }
+   },
+   "E3b_left_apple": {
+    "tip_dz_mm": {
+     "median": -16.5,
+     "q25": -16.9,
+     "q75": -14.2,
+     "n": 5
+    },
+    "tip_dxy_mm": {
+     "median": 19.4,
+     "q25": 16.7,
+     "q75": 22.4,
+     "n": 5
+    },
+    "tilt_deg": {
+     "median": 41.0,
+     "q25": 37.3,
+     "q75": 42.7,
+     "n": 5
+    }
+   },
+   "E3b_right_apple": {
+    "tip_dz_mm": {
+     "median": -5.7,
+     "q25": -6.2,
+     "q75": -4.0,
+     "n": 10
+    },
+    "tip_dxy_mm": {
+     "median": 27.8,
+     "q25": 25.4,
+     "q75": 29.9,
+     "n": 10
+    },
+    "tilt_deg": {
+     "median": 38.5,
+     "q25": 37.5,
+     "q75": 39.2,
+     "n": 10
+    }
+   }
+  },
+  "q4_demo_fruit_in_hand_frame_mm": {
+   "left": {
+    "n": 195,
+    "median_xyz": [
+     -3.3,
+     -6.3,
+     -112.3
+    ]
+   },
+   "right": {
+    "n": 205,
+    "median_xyz": [
+     2.7,
+     -5.3,
+     -112.2
+    ]
+   },
+   "frame": "EE_BODY_<S>; x = finger closing axis, z = along the hand; every 5th demo episode",
+   "source": "raw/demo_fruit_in_ee_frame.txt"
+  },
+  "q4_hand_models": "EE_BODY_L/R, finger bodies and collision meshes identical in their own frames (finger bodies at x=+-48, z=-73 mm; tips z=-134 mm); left_ee/right_ee sites both pos (0,0,-0.1) on EE_BODY_<S>",
+  "q4_policy_vs_TO_target_at_close_row": {
+   "left/no_grasp/close_m8": {
+    "ref_minus_refined_tip_mm": {
+     "median": 0.7,
+     "max": 10.3,
+     "n": 15
+    },
+    "reference_tip_dxy_mm": {
+     "median": 25.2,
+     "max": 74.9,
+     "n": 15
+    },
+    "refined_tip_dxy_mm": {
+     "median": 25.8,
+     "max": 74.8,
+     "n": 15
+    },
+    "measured_tip_dxy_mm": {
+     "median": 23.2,
+     "max": 65.7,
+     "n": 15
+    },
+    "reference_tip_dz_mm": {
+     "median": -9.1,
+     "max": 54.7,
+     "n": 15
+    },
+    "measured_tip_dz_mm": {
+     "median": -4.5,
+     "max": 44.2,
+     "n": 15
+    }
+   },
+   "left/no_grasp/close": {
+    "ref_minus_refined_tip_mm": {
+     "median": 1.8,
+     "max": 11.6,
+     "n": 15
+    },
+    "reference_tip_dxy_mm": {
+     "median": 27.0,
+     "max": 79.6,
+     "n": 15
+    },
+    "refined_tip_dxy_mm": {
+     "median": 27.6,
+     "max": 82.3,
+     "n": 15
+    },
+    "measured_tip_dxy_mm": {
+     "median": 24.4,
+     "max": 73.4,
+     "n": 15
+    },
+    "reference_tip_dz_mm": {
+     "median": -9.5,
+     "max": 63.0,
+     "n": 15
+    },
+    "measured_tip_dz_mm": {
+     "median": -12.8,
+     "max": 52.9,
+     "n": 15
+    }
+   },
+   "left/grasp/close_m8": {
+    "ref_minus_refined_tip_mm": {
+     "median": 0.0,
+     "max": 8.4,
+     "n": 25
+    },
+    "reference_tip_dxy_mm": {
+     "median": 23.1,
+     "max": 33.7,
+     "n": 25
+    },
+    "refined_tip_dxy_mm": {
+     "median": 23.6,
+     "max": 30.9,
+     "n": 25
+    },
+    "measured_tip_dxy_mm": {
+     "median": 20.2,
+     "max": 28.9,
+     "n": 25
+    },
+    "reference_tip_dz_mm": {
+     "median": -7.6,
+     "max": 9.5,
+     "n": 25
+    },
+    "measured_tip_dz_mm": {
+     "median": -12.2,
+     "max": 14.8,
+     "n": 25
+    }
+   },
+   "left/grasp/close": {
+    "ref_minus_refined_tip_mm": {
+     "median": 0.9,
+     "max": 7.1,
+     "n": 25
+    },
+    "reference_tip_dxy_mm": {
+     "median": 23.9,
+     "max": 34.6,
+     "n": 25
+    },
+    "refined_tip_dxy_mm": {
+     "median": 24.6,
+     "max": 33.7,
+     "n": 25
+    },
+    "measured_tip_dxy_mm": {
+     "median": 20.0,
+     "max": 30.1,
+     "n": 25
+    },
+    "reference_tip_dz_mm": {
+     "median": -8.4,
+     "max": -1.2,
+     "n": 25
+    },
+    "measured_tip_dz_mm": {
+     "median": -13.7,
+     "max": -4.9,
+     "n": 25
+    }
+   },
+   "right/grasp/close_m8": {
+    "ref_minus_refined_tip_mm": {
+     "median": 0.9,
+     "max": 8.4,
+     "n": 30
+    },
+    "reference_tip_dxy_mm": {
+     "median": 30.3,
+     "max": 45.2,
+     "n": 30
+    },
+    "refined_tip_dxy_mm": {
+     "median": 31.7,
+     "max": 48.5,
+     "n": 30
+    },
+    "measured_tip_dxy_mm": {
+     "median": 27.1,
+     "max": 43.3,
+     "n": 30
+    },
+    "reference_tip_dz_mm": {
+     "median": -0.4,
+     "max": 21.2,
+     "n": 30
+    },
+    "measured_tip_dz_mm": {
+     "median": -4.0,
+     "max": 28.4,
+     "n": 30
+    }
+   },
+   "right/grasp/close": {
+    "ref_minus_refined_tip_mm": {
+     "median": 1.0,
+     "max": 10.1,
+     "n": 30
+    },
+    "reference_tip_dxy_mm": {
+     "median": 31.2,
+     "max": 48.4,
+     "n": 30
+    },
+    "refined_tip_dxy_mm": {
+     "median": 32.4,
+     "max": 48.6,
+     "n": 30
+    },
+    "measured_tip_dxy_mm": {
+     "median": 28.5,
+     "max": 44.0,
+     "n": 30
+    },
+    "reference_tip_dz_mm": {
+     "median": -1.2,
+     "max": 5.2,
+     "n": 30
+    },
+    "measured_tip_dz_mm": {
+     "median": -5.8,
+     "max": 0.8,
+     "n": 30
+    }
+   },
+   "right/no_grasp/close_m8": {
+    "ref_minus_refined_tip_mm": {
+     "median": 4.1,
+     "max": 42.6,
+     "n": 8
+    },
+    "reference_tip_dxy_mm": {
+     "median": 33.8,
+     "max": 63.5,
+     "n": 8
+    },
+    "refined_tip_dxy_mm": {
+     "median": 37.4,
+     "max": 63.7,
+     "n": 8
+    },
+    "measured_tip_dxy_mm": {
+     "median": 30.6,
+     "max": 61.9,
+     "n": 8
+    },
+    "reference_tip_dz_mm": {
+     "median": -4.9,
+     "max": 12.4,
+     "n": 8
+    },
+    "measured_tip_dz_mm": {
+     "median": -1.2,
+     "max": 7.9,
+     "n": 8
+    }
+   },
+   "right/no_grasp/close": {
+    "ref_minus_refined_tip_mm": {
+     "median": 2.1,
+     "max": 12.8,
+     "n": 8
+    },
+    "reference_tip_dxy_mm": {
+     "median": 40.7,
+     "max": 63.6,
+     "n": 8
+    },
+    "refined_tip_dxy_mm": {
+     "median": 41.2,
+     "max": 69.0,
+     "n": 8
+    },
+    "measured_tip_dxy_mm": {
+     "median": 36.6,
+     "max": 66.0,
+     "n": 8
+    },
+    "reference_tip_dz_mm": {
+     "median": 1.9,
+     "max": 7.6,
+     "n": 8
+    },
+    "measured_tip_dz_mm": {
+     "median": -1.8,
+     "max": 7.6,
+     "n": 8
+    }
+   }
+  },
+  "q4_post_close_window_close-16_to_close+64": {
+   "E0/left/grasp": {
+    "runs": 7,
+    "runs_with_hold": 0,
+    "hold_chunks": 0,
+    "dq_max_per_run": null,
+    "hold_kinds": {}
+   },
+   "E0/right/grasp": {
+    "runs": 5,
+    "runs_with_hold": 0,
+    "hold_chunks": 0,
+    "dq_max_per_run": null,
+    "hold_kinds": {}
+   },
+   "E0/right/no_grasp": {
+    "runs": 1,
+    "runs_with_hold": 0,
+    "hold_chunks": 0,
+    "dq_max_per_run": null,
+    "hold_kinds": {}
+   },
+   "E3b/left/no_grasp": {
+    "runs": 15,
+    "runs_with_hold": 3,
+    "hold_chunks": 8,
+    "dq_max_per_run": {
+     "n": 15,
+     "q25": 4.391036409847402,
+     "median": 5.50027919473816,
+     "q75": 7.809860278140604,
+     "min": 3.0507791248670655,
+     "max": 11.552599037632492
+    },
+    "hold_kinds": {
+     "unverified": 5,
+     "collision": 7
+    }
+   },
+   "E3b/left/grasp": {
+    "runs": 25,
+    "runs_with_hold": 5,
+    "hold_chunks": 21,
+    "dq_max_per_run": {
+     "n": 25,
+     "q25": 2.416988796308657,
+     "median": 4.156211091087779,
+     "q75": 5.495467753354709,
+     "min": 0.8326615315270844,
+     "max": 21.02887862418905
+    },
+    "hold_kinds": {
+     "unverified": 6,
+     "collision": 17
+    }
+   },
+   "E3b/right/grasp": {
+    "runs": 30,
+    "runs_with_hold": 3,
+    "hold_chunks": 3,
+    "dq_max_per_run": {
+     "n": 30,
+     "q25": 2.3442370363642664,
+     "median": 4.425142959467861,
+     "q75": 5.653635084294929,
+     "min": 1.3886500290235237,
+     "max": 9.580030160049054
+    },
+    "hold_kinds": {
+     "collision": 2,
+     "unverified": 1
+    }
+   },
+   "E3b/right/no_grasp": {
+    "runs": 8,
+    "runs_with_hold": 3,
+    "hold_chunks": 10,
+    "dq_max_per_run": {
+     "n": 8,
+     "q25": 4.098279134095024,
+     "median": 6.144382682056465,
+     "q75": 8.76634887045179,
+     "min": 1.914396156422439,
+     "max": 10.97555392069855
+    },
+    "hold_kinds": {
+     "collision": 10,
+     "unverified": 2
+    }
+   }
+  },
+  "q4_E3b_right_not_lifted_runs": {
+   "fingertips_off_fruit_at_close (miss)": {
+    "runs": [
+     "ep1503 s15031 banana",
+     "ep351 s3511 banana",
+     "ep496 s4961 banana",
+     "ep1959 s19591 orange"
+    ],
+    "measured_tip_dxy_at_close_mm": [
+     57,
+     66,
+     63,
+     42
+    ],
+    "policy_reference_tip_dxy_at_close_mm": [
+     61,
+     64,
+     61,
+     46
+    ],
+    "policy_minus_TO_tip_at_close_mm": [
+     10,
+     8,
+     13,
+     0
+    ],
+    "policy_minus_TO_tip_at_close-8_mm": [
+     2,
+     0,
+     15,
+     43
+    ]
+   },
+   "fingers_on_fruit_not_lifted": {
+    "runs": [
+     "ep1764 s17641 banana",
+     "ep452 s4521 banana",
+     "ep307 s3072 orange",
+     "ep1908 s19082 pear"
+    ],
+    "target_dz_max_close_to_close+64_mm": [
+     20,
+     13,
+     18,
+     0
+    ],
+    "HOLD_chunks_close-16_to_close+64": [
+     0,
+     0,
+     1,
+     8
+    ],
+    "hold_kinds": [
+     {},
+     {},
+     {
+      "collision": 1
+     },
+     {
+      "collision": 8,
+      "unverified": 2
+     }
+    ]
+   },
+   "E0_right_not_lifted": {
+    "run": "E0 ep1834 s18342 apple",
+    "settled_tip_dz_mm": -8.3,
+    "settled_tip_dxy_mm": 20.5,
+    "finger_contacts_F1_F2": [
+     1,
+     1
+    ],
+    "target_dz_max_mm": 2
+   }
+  },
+  "q4_post_attach_HOLD_deadlock": {
+   "E3b_right_ep1908_s19082": "seq 15-25 HOLD, worst rows ee_finger_r2 vs field -8.1 to -16.2 mm, reasons collision nearest_is_not_manipulated -4.2 to -7.4 mm",
+   "E3b_left_ep1992_s19922": "seq 15-25 HOLD, worst rows attached:ee_left[0] / ee_finger_l1 vs field -9.5 to -16.1 mm"
+  },
+  "q4_audit_every_E3b_chunk": {
+   "left": {
+    "runs": 40,
+    "chunks": 3000,
+    "grasp_hand": {
+     "left": 3000
+    },
+    "grasp_parent_link": {
+     "ee_finger_l1": 3000
+    },
+    "hold_link": {
+     "ee_left": 3000
+    },
+    "attached_parent_link": {
+     "None": 2516,
+     "ee_left": 484
+    },
+    "authorized_links": {
+     "[\"ee_finger_l1\", \"ee_finger_l2\", \"ee_left\"]": 3000
+    },
+    "fine_window_links": {
+     "[\"ee_finger_l1\", \"ee_finger_l2\", \"ee_left\"]": 3000
+    },
+    "latch_signal_hand": {
+     "left": 3000
+    },
+    "finger_joints_checked": 3000,
+    "finger_joints_mismatch": 0,
+    "worst_row_kind": {
+     "used_hand": 1050,
+     "other_hand": 1788,
+     "attached": 162
+    },
+    "attach": 37,
+    "detach": 36,
+    "attach_revoked": 11,
+    "chunks_initial_position_limit_overshoot_gt0": 241
+   },
+   "right": {
+    "runs": 38,
+    "chunks": 2850,
+    "grasp_hand": {
+     "right": 2850
+    },
+    "grasp_parent_link": {
+     "ee_finger_r1": 2850
+    },
+    "hold_link": {
+     "ee_right": 2850
+    },
+    "attached_parent_link": {
+     "None": 2354,
+     "ee_right": 496
+    },
+    "authorized_links": {
+     "[\"ee_finger_r1\", \"ee_finger_r2\", \"ee_right\"]": 2850
+    },
+    "fine_window_links": {
+     "[\"ee_finger_r1\", \"ee_finger_r2\", \"ee_right\"]": 2850
+    },
+    "latch_signal_hand": {
+     "right": 2850
+    },
+    "finger_joints_checked": 2850,
+    "finger_joints_mismatch": 0,
+    "worst_row_kind": {
+     "other_hand": 1025,
+     "used_hand": 1654,
+     "attached": 171
+    },
+    "attach": 41,
+    "detach": 37,
+    "attach_revoked": 9,
+    "chunks_initial_position_limit_overshoot_gt0": 154
+   }
+  },
+  "q4_target_destination": {
+   "left": {
+    "pre_close_chunks": 609,
+    "pre_close_has_target": 609,
+    "target_centroid_error_mm": {
+     "n": 609,
+     "q25": 9.8,
+     "median": 14.9,
+     "q75": 16.0,
+     "q95": 18.7
+    },
+    "held_chunks": 484,
+    "held_chunks_with_destination": 227,
+    "destination_centroid_to_crate_body_mm": {
+     "n": 227,
+     "q25": 38.4,
+     "median": 49.5,
+     "q75": 56.6,
+     "q95": 88.9
+    },
+    "runs_no_destination": 6,
+    "runs_destination_after_attach": 33
+   },
+   "right": {
+    "pre_close_chunks": 582,
+    "pre_close_has_target": 582,
+    "target_centroid_error_mm": {
+     "n": 582,
+     "q25": 11.2,
+     "median": 14.7,
+     "q75": 16.8,
+     "q95": 19.1
+    },
+    "held_chunks": 496,
+    "held_chunks_with_destination": 131,
+    "destination_centroid_to_crate_body_mm": {
+     "n": 131,
+     "q25": 28.9,
+     "median": 34.6,
+     "q75": 53.4,
+     "q95": 65.5
+    },
+    "runs_no_destination": 11,
+    "runs_destination_after_attach": 26
+   }
+  },
+  "q4_code_evidence": {
+   "hand_default_left_if_no_manipulators": [
+    "work-t42 benchmark/trajopt/safe_policy.py:857",
+    "safe_policy.py:859 (grasp_links fallback 'left')",
+    "safe_policy.py:918",
+    "safe_policy.py:920",
+    "main safe_policy.py:913,915,974,976"
+   ],
+   "binary_hand_index": [
+    "safe_policy.py:949 (feedback gripper index 0 if left else 1)",
+    "safe_policy.py:1118",
+    "safe_policy.py:1124"
+   ],
+   "per_hand_tables": [
+    "safe_policy.py:46-49 DEFAULT_GRASP_LINKS left/right",
+    "safe_policy.py:54 DEFAULT_HOLD_LINKS",
+    "ag3s/config.py:723-726 DEFAULT_CONTACT_LINKS",
+    "ag3s/robot_models/gripper_state.py:60-63,137-138 (GRIPPER_L/R_JOINT)",
+    "trajopt/types.py:195-198 ChunkLayout left/right columns",
+    "trajopt/limits.py:84 mjcf_joint_ranges by joint name"
+   ],
+   "left_hand_calibrated_constants": [
+    "trajopt/grasp_latch.py:129-133 reach 0.12 m (measured on ee_finger_l1, T17)",
+    "ag3s/constraints/attached.py:42-49 DEFAULT_ATTACH_REACH_M 0.12 (ee_finger_l1)"
+   ],
+   "demo_grasp_orientation_source": [
+    "rby1_manipulation/planning/transport.py:72-76 capture_grasp_frames (each arm's ready-pose site rotation)",
+    "transport.py:79-96",
+    "simulation/randomized_pick_place.py:262-272 grasp_site_target(target + grasp_dz, frames.<arm>)",
+    "control/bimanual.py:61-64"
+   ],
+   "runtime_records": "no chunk where the server used the other hand (see q4_audit_every_E3b_chunk)"
+  },
+  "q5_held_rows": {
+   "hurdle_runs_scanned": 31,
+   "apple_bar_contact_runs": [
+    "T40/G/runs/E3b/C/E3b_ep1968_s19681",
+    "T40/J/runs/E3b/D/E3b_ep1995_s19952",
+    "T41/a/runs/E3b/C/E3b_ep1968_s19681",
+    "T41/a/runs/E3b/C/E3b_ep1967_s19672",
+    "T41/a/runs/E3b/D/E3b_ep1807_s18071",
+    "T41/c/runs/E3b/C/E3b_ep1968_s19681",
+    "T41/c/runs/E3b/C/E3b_ep1967_s19672",
+    "T41/c/runs/E3b/D/E3b_ep1807_s18071"
+   ],
+   "held_chunks_up_to_contact": 87,
+   "held_parent_link": {
+    "ee_left": 87
+   },
+   "held_rows_per_chunk": {
+    "2": 48,
+    "1": 15,
+    "3": 24
+   },
+   "held_radius_mm_range": [
+    5.0,
+    40.7
+   ],
+   "chunks_TO_worst_row_is_held_row": 21,
+   "target_free_layer_present_in_held_chunks": 0,
+   "held_row_margin": "esdf_margin 0 (class held, no obstacle_margin: work-t41c trajopt/linearize.py:839); destination-labelled rows destination_margin 0.020 (ag3s/config.py:1089, linearize.py:752)",
+   "reconstruction_check": {
+    "worst_rows_checked": 21,
+    "point_diff_max_mm": 0.001,
+    "clearance_match_within_0p01mm": 10,
+    "destination_rows_recorded_minus_reconstructed_mm": -20.0,
+    "destination_rows": 11
+   },
+   "held_centre_moves_over_8_step_plan_mm": {
+    "n": 87,
+    "min": 5.2,
+    "median": 76.8,
+    "max": 161.3
+   },
+   "bar_in_TO_field_last5_chunks_before_contact": {
+    "chunks": 40,
+    "composite_at_bar_point_nearest_apple_mm": {
+     "n": 40,
+     "min": -9.0,
+     "median": -5.9,
+     "max": -4.2
+    },
+    "true_mm": -12.0,
+    "max_bar_axis_points_with_field_gt0": 0,
+    "max_bar_axis_points_inside_held_free_volume": 0,
+    "max_bar_axis_points_inside_self_filter_sphere": 12,
+    "n_axis_points": 49
+   },
+   "coverage_last5_chunks": {
+    "frac_apple_vertices_inside_held_spheres": {
+     "n": 40,
+     "min": 0.432,
+     "median": 0.486,
+     "max": 0.635
+    },
+    "max_vertex_outside_mm": {
+     "n": 40,
+     "min": 4.6,
+     "median": 9.4,
+     "max": 16.3
+    },
+    "apple_bottom_below_held_sphere_bottom_mm": {
+     "n": 40,
+     "min": 1.5,
+     "median": 7.0,
+     "max": 15.6
+    }
+   },
+   "per_contact_run": {
+    "T40/G/runs/E3b/C/E3b_ep1968_s19681": {
+     "contact_t": 169,
+     "n_held_rows": 1,
+     "held_radii_mm": [
+      36.9
+     ],
+     "held_parent_link": "ee_left",
+     "J1_lift_mm": [
+      14.852
+     ],
+     "fit_mode": "fit",
+     "coverage_last_chunk": {
+      "frac_apple_vertices_inside": 0.446,
+      "max_outside_mm": 13.3,
+      "apple_bottom_below_sphere_bottom_mm": 11.7
+     },
+     "contact_point_z_vs_apple_centre_mm": -30.2,
+     "apple_half_height_mm": 30.1,
+     "contact_point_outside_held_spheres_mm": 13.2,
+     "contact_point_vs_unlifted_fit_sphere_mm": -0.8,
+     "field_composite_at_bar_point_nearest_apple_mm": -5.1,
+     "bar_axis_points_in_held_free": 0,
+     "bar_axis_points_in_filter_sphere": 12,
+     "at_contact_row": {
+      "true_apple_bar_mm": -0.1,
+      "TO_view_held_mm": 7.6,
+      "held_sphere_to_true_bar_mm": 11.5,
+      "hand_to_bar_mm": 23.5
+     },
+     "last_chunk_plan": {
+      "TO_view_held_mm_per_step": [
+       7.5,
+       10.8,
+       17.7,
+       25.5,
+       33.9,
+       41.6,
+       49.0,
+       57.1
+      ],
+      "true_apple_bar_mm_per_step": [
+       -0.6,
+       2.7,
+       9.9,
+       18.9,
+       29.5,
+       40.6,
+       50.9,
+       61.9
+      ]
+     }
+    },
+    "T40/J/runs/E3b/D/E3b_ep1995_s19952": {
+     "contact_t": 184,
+     "n_held_rows": 2,
+     "held_radii_mm": [
+      36.8,
+      13.4
+     ],
+     "held_parent_link": "ee_left",
+     "J1_lift_mm": [
+      15.225,
+      0.0
+     ],
+     "fit_mode": "fit",
+     "coverage_last_chunk": {
+      "frac_apple_vertices_inside": 0.432,
+      "max_outside_mm": 16.3,
+      "apple_bottom_below_sphere_bottom_mm": 15.6
+     },
+     "contact_point_z_vs_apple_centre_mm": -27.8,
+     "apple_half_height_mm": 30.4,
+     "contact_point_outside_held_spheres_mm": 15.5,
+     "contact_point_vs_unlifted_fit_sphere_mm": 1.2,
+     "field_composite_at_bar_point_nearest_apple_mm": -5.0,
+     "bar_axis_points_in_held_free": 0,
+     "bar_axis_points_in_filter_sphere": 12,
+     "at_contact_row": {
+      "true_apple_bar_mm": -0.8,
+      "TO_view_held_mm": 10.4,
+      "held_sphere_to_true_bar_mm": 14.5,
+      "hand_to_bar_mm": 15.4
+     },
+     "last_chunk_plan": {
+      "TO_view_held_mm_per_step": [
+       12.9,
+       14.4,
+       22.4,
+       36.1,
+       44.6,
+       54.1,
+       64.1,
+       78.3
+      ],
+      "true_apple_bar_mm_per_step": [
+       1.9,
+       5.6,
+       14.6,
+       29.4,
+       39.2,
+       49.2,
+       59.4,
+       74.1
+      ]
+     }
+    },
+    "T41/a/runs/E3b/C/E3b_ep1968_s19681": {
+     "contact_t": 182,
+     "n_held_rows": 2,
+     "held_radii_mm": [
+      36.6,
+      7.9
+     ],
+     "held_parent_link": "ee_left",
+     "J1_lift_mm": [
+      16.881,
+      0.0
+     ],
+     "fit_mode": "fit",
+     "coverage_last_chunk": {
+      "frac_apple_vertices_inside": 0.432,
+      "max_outside_mm": 15.0,
+      "apple_bottom_below_sphere_bottom_mm": 13.1
+     },
+     "contact_point_z_vs_apple_centre_mm": -23.8,
+     "apple_half_height_mm": 30.1,
+     "contact_point_outside_held_spheres_mm": 11.4,
+     "contact_point_vs_unlifted_fit_sphere_mm": -4.2,
+     "field_composite_at_bar_point_nearest_apple_mm": -5.3,
+     "bar_axis_points_in_held_free": 0,
+     "bar_axis_points_in_filter_sphere": 0,
+     "at_contact_row": {
+      "true_apple_bar_mm": -2.6,
+      "TO_view_held_mm": 3.3,
+      "held_sphere_to_true_bar_mm": 8.5,
+      "hand_to_bar_mm": 10.7
+     },
+     "last_chunk_plan": {
+      "TO_view_held_mm_per_step": [
+       37.4,
+       30.8,
+       21.7,
+       11.8,
+       9.4,
+       10.6,
+       13.6,
+       14.5
+      ],
+      "true_apple_bar_mm_per_step": [
+       42.8,
+       31.1,
+       15.7,
+       2.8,
+       -0.3,
+       0.2,
+       5.3,
+       12.6
+      ]
+     }
+    },
+    "T41/a/runs/E3b/C/E3b_ep1967_s19672": {
+     "contact_t": 162,
+     "n_held_rows": 2,
+     "held_radii_mm": [
+      40.7,
+      14.2
+     ],
+     "held_parent_link": "ee_left",
+     "J1_lift_mm": [
+      14.496,
+      0.0
+     ],
+     "fit_mode": "fit",
+     "coverage_last_chunk": {
+      "frac_apple_vertices_inside": 0.595,
+      "max_outside_mm": 6.8,
+      "apple_bottom_below_sphere_bottom_mm": 5.7
+     },
+     "contact_point_z_vs_apple_centre_mm": -29.4,
+     "apple_half_height_mm": 30.1,
+     "contact_point_outside_held_spheres_mm": 4.7,
+     "contact_point_vs_unlifted_fit_sphere_mm": -9.5,
+     "field_composite_at_bar_point_nearest_apple_mm": -6.2,
+     "bar_axis_points_in_held_free": 0,
+     "bar_axis_points_in_filter_sphere": 10,
+     "at_contact_row": {
+      "true_apple_bar_mm": -0.5,
+      "TO_view_held_mm": 2.0,
+      "held_sphere_to_true_bar_mm": 4.2,
+      "hand_to_bar_mm": 19.5
+     },
+     "last_chunk_plan": {
+      "TO_view_held_mm_per_step": [
+       4.9,
+       5.5,
+       5.2,
+       15.9,
+       22.5,
+       20.0,
+       20.9,
+       27.7
+      ],
+      "true_apple_bar_mm_per_step": [
+       1.0,
+       1.8,
+       3.5,
+       14.9,
+       24.2,
+       23.3,
+       28.0,
+       37.6
+      ]
+     }
+    },
+    "T41/a/runs/E3b/D/E3b_ep1807_s18071": {
+     "contact_t": 164,
+     "n_held_rows": 3,
+     "held_radii_mm": [
+      34.0,
+      5.0,
+      9.5
+     ],
+     "held_parent_link": "ee_left",
+     "J1_lift_mm": [
+      1.942,
+      0.0,
+      0.0
+     ],
+     "fit_mode": "fit",
+     "coverage_last_chunk": {
+      "frac_apple_vertices_inside": 0.473,
+      "max_outside_mm": 8.4,
+      "apple_bottom_below_sphere_bottom_mm": 4.7
+     },
+     "contact_point_z_vs_apple_centre_mm": -29.3,
+     "apple_half_height_mm": 30.3,
+     "contact_point_outside_held_spheres_mm": 3.6,
+     "contact_point_vs_unlifted_fit_sphere_mm": 1.7,
+     "field_composite_at_bar_point_nearest_apple_mm": -8.4,
+     "bar_axis_points_in_held_free": 0,
+     "bar_axis_points_in_filter_sphere": 0,
+     "at_contact_row": {
+      "true_apple_bar_mm": -0.2,
+      "TO_view_held_mm": -0.2,
+      "held_sphere_to_true_bar_mm": 2.6,
+      "hand_to_bar_mm": 19.9
+     },
+     "last_chunk_plan": {
+      "TO_view_held_mm_per_step": [
+       8.7,
+       5.7,
+       7.0,
+       5.4,
+       12.2,
+       19.0,
+       29.2,
+       34.8
+      ],
+      "true_apple_bar_mm_per_step": [
+       7.8,
+       3.6,
+       4.2,
+       2.9,
+       11.5,
+       18.3,
+       29.8,
+       38.2
+      ]
+     }
+    },
+    "T41/c/runs/E3b/C/E3b_ep1968_s19681": {
+     "contact_t": 182,
+     "n_held_rows": 2,
+     "held_radii_mm": [
+      36.6,
+      7.9
+     ],
+     "held_parent_link": "ee_left",
+     "J1_lift_mm": [
+      16.881,
+      0.0
+     ],
+     "fit_mode": "fit",
+     "coverage_last_chunk": {
+      "frac_apple_vertices_inside": 0.432,
+      "max_outside_mm": 15.0,
+      "apple_bottom_below_sphere_bottom_mm": 13.1
+     },
+     "contact_point_z_vs_apple_centre_mm": -23.8,
+     "apple_half_height_mm": 30.1,
+     "contact_point_outside_held_spheres_mm": 11.4,
+     "contact_point_vs_unlifted_fit_sphere_mm": -4.2,
+     "field_composite_at_bar_point_nearest_apple_mm": -5.3,
+     "bar_axis_points_in_held_free": 0,
+     "bar_axis_points_in_filter_sphere": 0,
+     "at_contact_row": {
+      "true_apple_bar_mm": -2.6,
+      "TO_view_held_mm": 3.3,
+      "held_sphere_to_true_bar_mm": 8.5,
+      "hand_to_bar_mm": 10.7
+     },
+     "last_chunk_plan": {
+      "TO_view_held_mm_per_step": [
+       37.4,
+       30.8,
+       21.7,
+       11.8,
+       9.4,
+       10.6,
+       13.6,
+       14.5
+      ],
+      "true_apple_bar_mm_per_step": [
+       42.8,
+       31.1,
+       15.7,
+       2.8,
+       -0.3,
+       0.2,
+       5.3,
+       12.6
+      ]
+     }
+    },
+    "T41/c/runs/E3b/C/E3b_ep1967_s19672": {
+     "contact_t": 162,
+     "n_held_rows": 2,
+     "held_radii_mm": [
+      40.7,
+      14.2
+     ],
+     "held_parent_link": "ee_left",
+     "J1_lift_mm": [
+      14.496,
+      0.0
+     ],
+     "fit_mode": "fit",
+     "coverage_last_chunk": {
+      "frac_apple_vertices_inside": 0.595,
+      "max_outside_mm": 6.8,
+      "apple_bottom_below_sphere_bottom_mm": 5.7
+     },
+     "contact_point_z_vs_apple_centre_mm": -29.4,
+     "apple_half_height_mm": 30.1,
+     "contact_point_outside_held_spheres_mm": 4.7,
+     "contact_point_vs_unlifted_fit_sphere_mm": -9.5,
+     "field_composite_at_bar_point_nearest_apple_mm": -6.2,
+     "bar_axis_points_in_held_free": 0,
+     "bar_axis_points_in_filter_sphere": 10,
+     "at_contact_row": {
+      "true_apple_bar_mm": -0.5,
+      "TO_view_held_mm": 2.0,
+      "held_sphere_to_true_bar_mm": 4.2,
+      "hand_to_bar_mm": 19.5
+     },
+     "last_chunk_plan": {
+      "TO_view_held_mm_per_step": [
+       4.9,
+       5.5,
+       5.2,
+       15.9,
+       22.5,
+       20.0,
+       20.9,
+       27.7
+      ],
+      "true_apple_bar_mm_per_step": [
+       1.0,
+       1.8,
+       3.5,
+       14.9,
+       24.2,
+       23.3,
+       28.0,
+       37.6
+      ]
+     }
+    },
+    "T41/c/runs/E3b/D/E3b_ep1807_s18071": {
+     "contact_t": 164,
+     "n_held_rows": 3,
+     "held_radii_mm": [
+      34.0,
+      5.0,
+      9.5
+     ],
+     "held_parent_link": "ee_left",
+     "J1_lift_mm": [
+      1.942,
+      0.0,
+      0.0
+     ],
+     "fit_mode": "fit",
+     "coverage_last_chunk": {
+      "frac_apple_vertices_inside": 0.473,
+      "max_outside_mm": 8.4,
+      "apple_bottom_below_sphere_bottom_mm": 4.7
+     },
+     "contact_point_z_vs_apple_centre_mm": -29.3,
+     "apple_half_height_mm": 30.3,
+     "contact_point_outside_held_spheres_mm": 3.6,
+     "contact_point_vs_unlifted_fit_sphere_mm": 1.7,
+     "field_composite_at_bar_point_nearest_apple_mm": -8.4,
+     "bar_axis_points_in_held_free": 0,
+     "bar_axis_points_in_filter_sphere": 0,
+     "at_contact_row": {
+      "true_apple_bar_mm": -0.2,
+      "TO_view_held_mm": -0.2,
+      "held_sphere_to_true_bar_mm": 2.6,
+      "hand_to_bar_mm": 19.9
+     },
+     "last_chunk_plan": {
+      "TO_view_held_mm_per_step": [
+       8.7,
+       5.7,
+       7.0,
+       5.4,
+       12.2,
+       19.0,
+       29.2,
+       34.8
+      ],
+      "true_apple_bar_mm_per_step": [
+       7.8,
+       3.6,
+       4.2,
+       2.9,
+       11.5,
+       18.3,
+       29.8,
+       38.2
+      ]
+     }
+    }
+   },
+   "code_evidence": [
+    "work-t41c trajopt/linearize.py:525 link_pose_symbolic(q, link) for the attached parent link",
+    "linearize.py:550-560 attached_states (probe FK per plan step)",
+    "linearize.py:592 held rows appended to sphere states",
+    "linearize.py:1386-1388 held_spheres_of(attached) -> attached_points/radii",
+    "ag3s/constraints/to_adapter.py:227-241 target_field_exclude only when attached is None",
+    "ag3s/runtime/pipeline.py:2233-2235 + 2317-2350 _held_free_points (held query spheres freed in the TSDF each held frame)",
+    "pipeline.py:1941-1948 self-filter copy = unlifted fit + held_filter_slip 0.020 (held_object.py:273)",
+    "pipeline.py:683, 739 J1 _lift_off_support moves query sphere centres up (held_object.py:473)"
+   ]
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43s-pick-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43s-pick-graph.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43s-held-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43s-held-graph.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43s-table.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": null,
+  "note": "not run: lane S is records-only (no server, no GPU) and the legacy baseline command uses .venv-ag3s (forbidden). Fidelity instead: server npz refined_chunk == client planning actions and reference == actions_reference, max abs 0.0 in 80/80 T42-1 E3b runs and 49/49 T40/T41 runs; TO worst held row reproduced (point 0.001 mm, clearance 0.01 mm) in 10/10 non-destination rows, destination rows offset exactly -20.000 mm (destination_margin)."
+ },
+ "verdict": "no baseline comparison (records only); T43 S measurements complete",
+ "fix_proposals_ranked_q4": [
+  {
+   "rank": 1,
+   "proposal": "grasp-time alignment check: before/while the close command, compare the fingertip midpoint with the AG3S target centroid and do not close (or let the TO pull the fingertips toward the centroid in the closing chunk) beyond a threshold",
+   "evidence": "E3b right not-lifted 4/8 are misses: measured tip 42-66 mm from the fruit centre at close, the policy's own target 46-64 mm, policy-vs-TO <= 13 mm at the close row; left misses of the same kind (ep1374, ep502, ep1957, ep1958 s3); lifted-run tip dxy median 28.6 (right) / 19.4 (left) mm; pre-close target centroid error median 14.7 (right) / 14.9 (left) mm"
+  },
+  {
+   "rank": 2,
+   "proposal": "post-attach lift deadlock: rows of the grasping fingers / held sphere against the field right after attach should not hold the lift (e.g. relax used-hand finger and held rows whose violating surface is within the held/support band during the first lift chunks)",
+   "evidence": "E3b right ep1908 s19082 and left ep1992 s19922: HOLD every chunk from attach (seq 15-25), worst rows -8 to -16 mm, fruit never lifted (dz 0 mm); both arms"
+  },
+  {
+   "rank": 3,
+   "proposal": "limit the TO's displacement of the fingertips in the chunk(s) just before the close command (grasp phase)",
+   "evidence": "ep1959 s19591 (right, orange): policy-vs-TO fingertip target 43 mm at close-8, chunk seq 12 arm joints 8.0 deg / fingertip 74 mm; then miss (tip dxy 51 mm, no contact)"
+  },
+  {
+   "rank": 4,
+   "proposal": "right-arm demonstrations: build the right-hand grasp frame as the mirror of the left (or add demos) so the right fingertip/fruit geometry matches the left's; retraining needed",
+   "evidence": "demos: tip dz -9.4 vs -18.0 mm, dxy 24.1 vs 12.5 mm (1000 each); fruit in each hand frame nearly equal (x +2.7/-3.3, y -5.3/-6.3, z -112); grasp frames come from each arm's ready-pose wrist rotation (transport.py:72-76); E0/E3b rollouts reproduce (E0 right tip dz -6.1, E3b right -4.9 mm); right lifted 30/38 vs left 25/40 in E3b, so no lift deficit is shown for the right arm"
+  },
+  {
+   "rank": 5,
+   "proposal": "make the hand selection fail closed (raise instead of defaulting to 'left' when manipulators is empty or unknown) and re-measure the 0.12 m reach constant on the right hand",
+   "evidence": "safe_policy.py:857/918 default ['left'], :859/:920 fallback to the left grasp links (main :913/:974); reach measured on ee_finger_l1 only (grasp_latch.py:129-133, attached.py:42-49); no runtime case observed (2850/2850 right chunks used the right hand)"
+  },
+  {
+   "rank": 6,
+   "proposal": "check why the destination is registered later / less often in right-arm runs",
+   "evidence": "held chunks with a destination: right 131/496, left 227/484; runs without destination: right 11/38, left 6/40"
+  }
+ ],
+ "not_measured": [
+  "no new runs (E0 counterparts of the 8 right-arm E3b failures do not exist; T42-1 E0 right = ep1834, ep1977 only)",
+  "T39/T40/T41 contain no right-arm runs (171 manifests, all left)",
+  "why the policy misses at close (no attention/model internals measured)",
+  "whether rank-1..6 fixes change outcomes",
+  "held_free voxel counts at the bar (only bar-axis membership in the freed volume)",
+  "T42-1 runs finished after 2026-10-05T11:41:38Z"
+ ]
+}
