@@ -1,0 +1,1084 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only.",
+ "step": "T43U",
+ "date": "2026-10-05",
+ "runs": [
+  {
+   "id": "baseline (legacy, CPU)",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= nice -n 19 .venv-openpi-live/bin/python -m benchmark.trajopt.experiments.esdf_rollout --records run_16d_ep1800 --attention benchmark/ag3s/asset/data/attention_16d_ep1800.npz --frames 15 --voxel 0.020 --esdf-margin 0.05 --cameras all --support-surfaces field --constraint-links arms",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/T43/U/baseline/legacy.json, judge.json",
+   "stdout_log": "outputs/verify/T43/U/baseline/legacy.log"
+  },
+  {
+   "id": "chunk index T43 V (V0-V3) + T42-2",
+   "command": "p/scan_index.py raw/chunk_index_t43v_t42_2.json <roots> (copy of T43/S/p/scan_t42.py)",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/T43/U/raw/chunk_index_t43v_t42_2.json (+ T43/S/raw/chunk_index_t40t41.json, chunk_index_t42.json)",
+   "stdout_log": "outputs/verify/T43/U/raw/scan_index.log"
+  },
+  {
+   "id": "run list",
+   "command": "p/runs_u.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/U/raw/runs_u.json",
+   "stdout_log": null
+  },
+  {
+   "id": "per-run measurement",
+   "command": "nice -n 19 p/measure_u.py 4 (T42-2: U_SNAP=/mnt/dev/work-t42c p/measure_u.py 4 T42/2/); p/fix_points.py 4",
+   "venv": ".venv-openpi-live (CPU, 4 workers, OMP 1)",
+   "raw_output": "outputs/verify/T43/U/raw/runs/*.json, raw/t41_a_vs_c.json",
+   "stdout_log": "outputs/verify/T43/U/raw/{measure_u.log, measure_u_t42_2.log, fix_points.log}"
+  },
+  {
+   "id": "aggregation",
+   "command": "p/summarize_u.py; p/v_closing.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/U/raw/summary_u.json, raw/v_closing.json",
+   "stdout_log": "outputs/verify/T43/U/raw/summarize_u.log"
+  },
+  {
+   "id": "figures",
+   "command": "p/fig_t43u.py <timeline runs> <scene specs>",
+   "venv": ".venv-openpi-live",
+   "raw_output": "benchmark/ag3s/docs/figures/t43/t43u-*.json",
+   "stdout_log": "outputs/verify/T43/U/raw/fig.log"
+  }
+ ],
+ "code_state": {
+  "benchmark_head": "f8f8913",
+  "root_head": "7672078",
+  "dirty_files": [
+   "ag3s/docs/handoff/T41a.verify.partial.json",
+   "ag3s/docs/handoff/T43V.verify.partial.json"
+  ],
+  "measured_code": "records of snapshots work-t40/t40h (T40), work-t41a/t41c (T41), work-t42/t42c (T42), work-t43v (T43 V); TO-row rebuild with main-tree fixed_input_ablation helpers; GT obstacles from work-t43v (T40/T41/T43 V configs) and work-t42c (T42-2 configs) PickPlaceObstacleManager",
+  "note": "no server, no GPU, no .venv-ag3s, no commits"
+ },
+ "numbers": {
+  "_comment": "Definitions: outputs/verify/T43/U/p/measure_u.py and summarize_u.py docstrings. fail = miss (closed, fruit never >= z0 + 50 mm) or slip_at_pick (lifted, back below z0 + 20 mm within 64 rows). switch away = manipulated id differs from the run's first id AND its centroid's nearest GT surface is not the fruit. fruit in field at close = at the chunk issuing the first close or the next one, the target-free layer the hand rows read holds the fruit (manipulated not the fruit, or >= 25 % of the fruit's upper vertices far (> 25 mm) from every other GT surface incl. both hands read <= 10 mm). Headline counts exclude T41 c (identical to T41 a through first close + 64 rows in 14 / 15 runs).",
+  "n_runs": {
+   "server_runs": 101,
+   "E0_runs": 35,
+   "headline_obstacle_with_close": 61,
+   "headline_clear_with_close": 22
+  },
+  "outcomes": {
+   "server_obstacle": {
+    "miss": 34,
+    "success": 11,
+    "no_close": 3,
+    "slip_at_pick": 9,
+    "lifted_not_placed": 6,
+    "drop_carry": 1
+   },
+   "server_clear": {
+    "success": 17,
+    "miss": 4,
+    "slip_at_pick": 1
+   },
+   "E0_obstacle": {
+    "miss": 10,
+    "lifted_not_placed": 12,
+    "no_close": 2,
+    "success": 4
+   },
+   "E0_clear": {
+    "success": 7
+   }
+  },
+  "table_switch_away_before_attach_x_outcome": {
+   "obstacle": {
+    "False": {
+     "fail": 37,
+     "success": 11,
+     "lifted_not_placed": 6,
+     "drop_carry": 1
+    },
+    "True": {
+     "fail": 6
+    }
+   },
+   "clear": {
+    "False": {
+     "success": 16,
+     "fail": 4
+    },
+    "True": {
+     "success": 1,
+     "fail": 1
+    }
+   }
+  },
+  "table_switch_away_before_first_close_x_outcome": {
+   "obstacle": {
+    "False": {
+     "fail": 43,
+     "success": 11,
+     "lifted_not_placed": 6,
+     "drop_carry": 1
+    }
+   },
+   "clear": {
+    "False": {
+     "success": 17,
+     "fail": 5
+    }
+   }
+  },
+  "table_fruit_in_field_at_close_x_outcome": {
+   "obstacle": {
+    "False": {
+     "fail": 36,
+     "success": 9,
+     "lifted_not_placed": 5,
+     "drop_carry": 1
+    },
+    "True": {
+     "success": 2,
+     "fail": 7,
+     "lifted_not_placed": 1
+    }
+   },
+   "clear": {
+    "False": {
+     "success": 15,
+     "fail": 5
+    },
+    "True": {
+     "success": 2
+    }
+   }
+  },
+  "table_a_margin_on_fruit_nearest_hand_rows_at_close_x_outcome": {
+   "obstacle": {
+    "True": {
+     "fail": 27,
+     "success": 5
+    },
+    "False": {
+     "fail": 1
+    }
+   },
+   "clear": {
+    "True": {
+     "success": 6,
+     "fail": 5
+    }
+   }
+  },
+  "switch_away_runs": [
+   {
+    "key": "T41/a/C/E3b_ep1982_s19822",
+    "outcome": "miss",
+    "seq": 39,
+    "t": 304,
+    "state": "latched",
+    "target": "obstacle",
+    "cam_max": {
+     "head": 0.00095367431640625,
+     "left_wrist": 0.36328125,
+     "right_wrist": 0.002471923828125
+    },
+    "cam_cell": {
+     "head": [
+      9,
+      6
+     ],
+     "left_wrist": [
+      13,
+      3
+     ],
+     "right_wrist": [
+      14,
+      5
+     ]
+    },
+    "peak_nearest": "obstacle",
+    "after_first_close": true,
+    "first_close_t": 113
+   },
+   {
+    "key": "T41/a/D/E3b_ep1982_s19822",
+    "outcome": "miss",
+    "seq": 39,
+    "t": 304,
+    "state": "latched",
+    "target": "obstacle",
+    "cam_max": {
+     "head": 0.0030059814453125,
+     "left_wrist": 0.71484375,
+     "right_wrist": 0.001922607421875
+    },
+    "cam_cell": {
+     "head": [
+      8,
+      6
+     ],
+     "left_wrist": [
+      15,
+      1
+     ],
+     "right_wrist": [
+      14,
+      0
+     ]
+    },
+    "peak_nearest": "obstacle",
+    "after_first_close": true,
+    "first_close_t": 127
+   },
+   {
+    "key": "T43/V/H/V0_ep1967_s19673",
+    "outcome": "miss",
+    "seq": 34,
+    "t": 264,
+    "state": "latched",
+    "target": "other_fruit",
+    "cam_max": {
+     "head": 0.0005340576171875,
+     "left_wrist": 0.33984375,
+     "right_wrist": 0.0081787109375
+    },
+    "cam_cell": {
+     "head": [
+      9,
+      5
+     ],
+     "left_wrist": [
+      14,
+      13
+     ],
+     "right_wrist": [
+      15,
+      8
+     ]
+    },
+    "peak_nearest": "crate",
+    "after_first_close": true,
+    "first_close_t": 136
+   },
+   {
+    "key": "T43/V/H/V1_ep1982_s19822",
+    "outcome": "miss",
+    "seq": 36,
+    "t": 280,
+    "state": "latched",
+    "target": "other_fruit",
+    "cam_max": {
+     "head": 0.01556396484375,
+     "left_wrist": 0.1923828125,
+     "right_wrist": 0.0284423828125
+    },
+    "cam_cell": {
+     "head": [
+      9,
+      5
+     ],
+     "left_wrist": [
+      14,
+      13
+     ],
+     "right_wrist": [
+      14,
+      0
+     ]
+    },
+    "peak_nearest": "crate",
+    "after_first_close": true,
+    "first_close_t": 113
+   },
+   {
+    "key": "T43/V/H/V2_ep1967_s19673",
+    "outcome": "miss",
+    "seq": 38,
+    "t": 296,
+    "state": "latched",
+    "target": "other_fruit",
+    "cam_max": {
+     "head": 0.000507354736328125,
+     "left_wrist": 0.01239013671875,
+     "right_wrist": 0.00518798828125
+    },
+    "cam_cell": {
+     "head": [
+      11,
+      2
+     ],
+     "left_wrist": [
+      13,
+      1
+     ],
+     "right_wrist": [
+      15,
+      13
+     ]
+    },
+    "peak_nearest": "table",
+    "after_first_close": true,
+    "first_close_t": 144
+   },
+   {
+    "key": "T43/V/H/V3_ep1967_s19673",
+    "outcome": "miss",
+    "seq": 31,
+    "t": 240,
+    "state": "latched",
+    "target": "other_fruit",
+    "cam_max": {
+     "head": 0.002899169921875,
+     "left_wrist": 0.2236328125,
+     "right_wrist": 0.006927490234375
+    },
+    "cam_cell": {
+     "head": [
+      9,
+      5
+     ],
+     "left_wrist": [
+      14,
+      13
+     ],
+     "right_wrist": [
+      15,
+      8
+     ]
+    },
+    "peak_nearest": "crate",
+    "after_first_close": true,
+    "first_close_t": 120
+   }
+  ],
+  "switch_away_first_after_first_close": 6,
+  "switch_away_first_targets": {
+   "obstacle": 2,
+   "other_fruit": 4
+  },
+  "switch_away_first_dominant_camera": {
+   "left_wrist": 6
+  },
+  "switch_away_first_left_wrist_argmax_row": [
+   13,
+   15,
+   14,
+   14,
+   13,
+   14
+  ],
+  "defl_at_close_mm": {
+   "obstacle_median": 20.072262978140344,
+   "clear_median": 16.42139547696598,
+   "obstacle_fail_median": 24.66010079649488,
+   "obstacle_success_median": 15.729148342705841,
+   "clear_fail_median": 27.25086225997207,
+   "clear_success_median": 12.117249199311786
+  },
+  "radial_at_close_mm": {
+   "obstacle_median": 1.273548406158124,
+   "clear_median": 0.0,
+   "obstacle_fail_median": 4.687780458694606,
+   "obstacle_success_median": 0.770859602631506
+  },
+  "pre_close_contact_x_outcome": {
+   "obstacle": {
+    "False": {
+     "fail": 21,
+     "success": 8,
+     "lifted_not_placed": 5,
+     "drop_carry": 1
+    },
+    "True": {
+     "fail": 22,
+     "success": 3,
+     "lifted_not_placed": 1
+    }
+   },
+   "clear": {
+    "False": {
+     "success": 9,
+     "fail": 2
+    },
+    "True": {
+     "success": 8,
+     "fail": 3
+    }
+   }
+  },
+  "pre_close_fruit_disp_mm": {
+   "obstacle_fail_median": 0.46881954285194466,
+   "obstacle_success_median": 0.10725836043357319,
+   "clear_median": 0.2579287452171903
+  },
+  "pairs_obstacle_vs_clear": {
+   "n": 29,
+   "obst_switch": 2,
+   "clear_switch": 1,
+   "obst_infield": 5,
+   "clear_infield": 3,
+   "obst_fail": 15,
+   "clear_fail": 5,
+   "obst_defl_median": 18.248461936269315,
+   "clear_defl_median": 13.310590694192939
+  },
+  "pairs_by_family": {
+   "T40/G": {
+    "n": 9,
+    "obst_switch": 0,
+    "clear_switch": 0,
+    "obst_infield": 2,
+    "clear_infield": 0,
+    "obst_outcomes": {
+     "miss": 4,
+     "success": 2,
+     "no_close": 3
+    },
+    "clear_outcomes": {
+     "success": 9
+    },
+    "obst_defl_median": 15.754354038727152,
+    "clear_defl_median": 4.061011960847127
+   },
+   "T41/a": {
+    "n": 9,
+    "obst_switch": 2,
+    "clear_switch": 0,
+    "obst_infield": 2,
+    "clear_infield": 0,
+    "obst_outcomes": {
+     "miss": 4,
+     "success": 4,
+     "slip_at_pick": 1
+    },
+    "clear_outcomes": {
+     "success": 7,
+     "miss": 2
+    },
+    "obst_defl_median": 24.335942301031107,
+    "clear_defl_median": 27.25086225997207
+   },
+   "T42": {
+    "n": 7,
+    "obst_switch": 0,
+    "clear_switch": 0,
+    "obst_infield": 1,
+    "clear_infield": 3,
+    "obst_outcomes": {
+     "lifted_not_placed": 2,
+     "success": 3,
+     "miss": 2
+    },
+    "clear_outcomes": {
+     "success": 7
+    },
+    "obst_defl_median": 7.081339361996385,
+    "clear_defl_median": 12.117249199311786
+   },
+   "T43/V/V2": {
+    "n": 4,
+    "obst_switch": 0,
+    "clear_switch": 1,
+    "obst_infield": 0,
+    "clear_infield": 0,
+    "obst_outcomes": {
+     "miss": 4
+    },
+    "clear_outcomes": {
+     "miss": 2,
+     "slip_at_pick": 1,
+     "success": 1
+    },
+    "obst_defl_median": 46.230836687654296,
+    "clear_defl_median": 27.04283614431855
+   }
+  },
+  "groups": {
+   "T40/G/E3b/clear": {
+    "n": 6,
+    "outcomes": {
+     "success": 6
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 1,
+    "n_with_close": 6,
+    "fruit_in_field_at_close": 0,
+    "a_on_fruit_rows_at_close": 0,
+    "defl_at_close_median_mm": 4.4614399554203015,
+    "radial_at_close_median_mm": 0.00016854675457395052,
+    "pre_close_contact_runs": 2,
+    "pre_close_fruit_disp_median_mm": 0.13256619364408023,
+    "fid_rows": 133,
+    "fid_same_row": 133,
+    "fid_max_centre0_mm": 9.211940810160968e-05,
+    "fid_max_record_clearance_mm": 5.4681633897095405e-05,
+    "fid_errors": 0
+   },
+   "T40/G/E3b/obst": {
+    "n": 9,
+    "outcomes": {
+     "miss": 4,
+     "success": 2,
+     "no_close": 3
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 0,
+    "n_with_close": 6,
+    "fruit_in_field_at_close": 2,
+    "a_on_fruit_rows_at_close": 0,
+    "defl_at_close_median_mm": 15.754354038727152,
+    "radial_at_close_median_mm": 2.5990907012272846,
+    "pre_close_contact_runs": 3,
+    "pre_close_fruit_disp_median_mm": 0.9512279043019052,
+    "fid_rows": 132,
+    "fid_same_row": 132,
+    "fid_max_centre0_mm": 9.70301119451733e-05,
+    "fid_max_record_clearance_mm": 8.799558635572136e-05,
+    "fid_errors": 0
+   },
+   "T40/J/E3b/obst": {
+    "n": 4,
+    "outcomes": {
+     "slip_at_pick": 2,
+     "miss": 1,
+     "success": 1
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 0,
+    "n_with_close": 4,
+    "fruit_in_field_at_close": 1,
+    "a_on_fruit_rows_at_close": 0,
+    "defl_at_close_median_mm": 16.610525519733248,
+    "radial_at_close_median_mm": -1.5093473725619981,
+    "pre_close_contact_runs": 2,
+    "pre_close_fruit_disp_median_mm": 0.34424202072779686,
+    "fid_rows": 95,
+    "fid_same_row": 95,
+    "fid_max_centre0_mm": 8.751666458195473e-05,
+    "fid_max_record_clearance_mm": 6.194920672275561e-05,
+    "fid_errors": 0
+   },
+   "T41/a/E3b/clear": {
+    "n": 6,
+    "outcomes": {
+     "success": 5,
+     "miss": 1
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 0,
+    "n_with_close": 6,
+    "fruit_in_field_at_close": 0,
+    "a_on_fruit_rows_at_close": 6,
+    "defl_at_close_median_mm": 20.280726477082503,
+    "radial_at_close_median_mm": -8.028407781745372,
+    "pre_close_contact_runs": 4,
+    "pre_close_fruit_disp_median_mm": 0.9405247076330052,
+    "fid_rows": 147,
+    "fid_same_row": 147,
+    "fid_max_centre0_mm": 9.624266228414058e-05,
+    "fid_max_record_clearance_mm": 6.152386021820999e-05,
+    "fid_errors": 0
+   },
+   "T41/a/E3b/obst": {
+    "n": 9,
+    "outcomes": {
+     "miss": 4,
+     "success": 4,
+     "slip_at_pick": 1
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 2,
+    "n_with_close": 9,
+    "fruit_in_field_at_close": 2,
+    "a_on_fruit_rows_at_close": 9,
+    "defl_at_close_median_mm": 24.335942301031107,
+    "radial_at_close_median_mm": 4.092899727240231,
+    "pre_close_contact_runs": 4,
+    "pre_close_fruit_disp_median_mm": 0.21966449860364912,
+    "fid_rows": 292,
+    "fid_same_row": 291,
+    "fid_max_centre0_mm": 0.00010137535588761182,
+    "fid_max_record_clearance_mm": 7.369665393393288e-05,
+    "fid_errors": 0
+   },
+   "T41/c/E3b/clear": {
+    "n": 6,
+    "outcomes": {
+     "success": 5,
+     "miss": 1
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 0,
+    "n_with_close": 6,
+    "fruit_in_field_at_close": 0,
+    "a_on_fruit_rows_at_close": 6,
+    "defl_at_close_median_mm": 20.280726477082503,
+    "radial_at_close_median_mm": -8.028407781745372,
+    "pre_close_contact_runs": 4,
+    "pre_close_fruit_disp_median_mm": 0.9405247076330052,
+    "fid_rows": 147,
+    "fid_same_row": 147,
+    "fid_max_centre0_mm": 9.624266228414058e-05,
+    "fid_max_record_clearance_mm": 6.152386021820999e-05,
+    "fid_errors": 0
+   },
+   "T41/c/E3b/obst": {
+    "n": 9,
+    "outcomes": {
+     "miss": 4,
+     "success": 4,
+     "slip_at_pick": 1
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 2,
+    "n_with_close": 9,
+    "fruit_in_field_at_close": 2,
+    "a_on_fruit_rows_at_close": 9,
+    "defl_at_close_median_mm": 24.335942301031107,
+    "radial_at_close_median_mm": 4.092899727240231,
+    "pre_close_contact_runs": 4,
+    "pre_close_fruit_disp_median_mm": 0.21966449860364912,
+    "fid_rows": 315,
+    "fid_same_row": 314,
+    "fid_max_centre0_mm": 0.00010137535588761182,
+    "fid_max_record_clearance_mm": 6.286684967049538e-05,
+    "fid_errors": 0
+   },
+   "T42/1/E3b/clear": {
+    "n": 4,
+    "outcomes": {
+     "success": 4
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 0,
+    "n_with_close": 4,
+    "fruit_in_field_at_close": 2,
+    "a_on_fruit_rows_at_close": 0,
+    "defl_at_close_median_mm": 15.824724729525403,
+    "radial_at_close_median_mm": 2.7237769121067728,
+    "pre_close_contact_runs": 1,
+    "pre_close_fruit_disp_median_mm": 0.09384082719892822,
+    "fid_rows": 58,
+    "fid_same_row": 58,
+    "fid_max_centre0_mm": 8.815256657968007e-05,
+    "fid_max_record_clearance_mm": 6.351361021318669e-05,
+    "fid_errors": 0
+   },
+   "T42/2/E3b/clear": {
+    "n": 1,
+    "outcomes": {
+     "success": 1
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 0,
+    "n_with_close": 1,
+    "fruit_in_field_at_close": 0,
+    "a_on_fruit_rows_at_close": 0,
+    "defl_at_close_median_mm": 12.117249199311786,
+    "radial_at_close_median_mm": 5.813829293543141,
+    "pre_close_contact_runs": 1,
+    "pre_close_fruit_disp_median_mm": 0.4446251638071593,
+    "fid_rows": 14,
+    "fid_same_row": 14,
+    "fid_max_centre0_mm": 8.815256657968007e-05,
+    "fid_max_record_clearance_mm": 3.8274773406232754e-05,
+    "fid_errors": 0
+   },
+   "T42/2/E3b/obst": {
+    "n": 6,
+    "outcomes": {
+     "miss": 3,
+     "success": 2,
+     "slip_at_pick": 1
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 0,
+    "n_with_close": 6,
+    "fruit_in_field_at_close": 0,
+    "a_on_fruit_rows_at_close": 0,
+    "defl_at_close_median_mm": 13.26239141106485,
+    "radial_at_close_median_mm": 0.006001006806550385,
+    "pre_close_contact_runs": 4,
+    "pre_close_fruit_disp_median_mm": 1.0118820502827366,
+    "fid_rows": 175,
+    "fid_same_row": 175,
+    "fid_max_centre0_mm": 9.55971286575874e-05,
+    "fid_max_record_clearance_mm": 0.00013027224560202555,
+    "fid_errors": 0
+   },
+   "T42/2/E3b/obst-invis": {
+    "n": 4,
+    "outcomes": {
+     "lifted_not_placed": 3,
+     "success": 1
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 0,
+    "n_with_close": 4,
+    "fruit_in_field_at_close": 1,
+    "a_on_fruit_rows_at_close": 0,
+    "defl_at_close_median_mm": 4.844584366701127,
+    "radial_at_close_median_mm": 0.3597375055381016,
+    "pre_close_contact_runs": 1,
+    "pre_close_fruit_disp_median_mm": 0.038328290481838834,
+    "fid_rows": 67,
+    "fid_same_row": 67,
+    "fid_max_centre0_mm": 9.809752365974589e-05,
+    "fid_max_record_clearance_mm": 5.17615078021727e-05,
+    "fid_errors": 0
+   },
+   "T43/V/V0/obst": {
+    "n": 8,
+    "outcomes": {
+     "slip_at_pick": 2,
+     "drop_carry": 1,
+     "miss": 2,
+     "lifted_not_placed": 3
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 1,
+    "n_with_close": 8,
+    "fruit_in_field_at_close": 1,
+    "a_on_fruit_rows_at_close": 0,
+    "defl_at_close_median_mm": 10.532398660835913,
+    "radial_at_close_median_mm": 2.9118121965954895,
+    "pre_close_contact_runs": 2,
+    "pre_close_fruit_disp_median_mm": 0.0958254581866185,
+    "fid_rows": 190,
+    "fid_same_row": 190,
+    "fid_max_centre0_mm": 9.706972226020127e-05,
+    "fid_max_record_clearance_mm": 6.590504225472901e-05,
+    "fid_errors": 0
+   },
+   "T43/V/V1/obst": {
+    "n": 8,
+    "outcomes": {
+     "slip_at_pick": 2,
+     "miss": 5,
+     "success": 1
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 1,
+    "n_with_close": 8,
+    "fruit_in_field_at_close": 2,
+    "a_on_fruit_rows_at_close": 8,
+    "defl_at_close_median_mm": 28.340515510947043,
+    "radial_at_close_median_mm": 3.190154181487921,
+    "pre_close_contact_runs": 4,
+    "pre_close_fruit_disp_median_mm": 2.4005355824502894,
+    "fid_rows": 412,
+    "fid_same_row": 412,
+    "fid_max_centre0_mm": 0.00010291863050682082,
+    "fid_max_record_clearance_mm": 5.587095848469392e-05,
+    "fid_errors": 0
+   },
+   "T43/V/V2/clear": {
+    "n": 5,
+    "outcomes": {
+     "miss": 3,
+     "slip_at_pick": 1,
+     "success": 1
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 1,
+    "n_with_close": 5,
+    "fruit_in_field_at_close": 0,
+    "a_on_fruit_rows_at_close": 5,
+    "defl_at_close_median_mm": 27.623112691940435,
+    "radial_at_close_median_mm": 0.0,
+    "pre_close_contact_runs": 3,
+    "pre_close_fruit_disp_median_mm": 0.37619982708678884,
+    "fid_rows": 294,
+    "fid_same_row": 263,
+    "fid_max_centre0_mm": 9.940464362756529e-05,
+    "fid_max_record_clearance_mm": 6.491070135301175e-05,
+    "fid_errors": 0
+   },
+   "T43/V/V2/obst": {
+    "n": 8,
+    "outcomes": {
+     "miss": 8
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 1,
+    "n_with_close": 8,
+    "fruit_in_field_at_close": 0,
+    "a_on_fruit_rows_at_close": 8,
+    "defl_at_close_median_mm": 43.09936012069433,
+    "radial_at_close_median_mm": 9.368547455609601,
+    "pre_close_contact_runs": 2,
+    "pre_close_fruit_disp_median_mm": 0.10123013342982418,
+    "fid_rows": 577,
+    "fid_same_row": 438,
+    "fid_max_centre0_mm": 9.757968877366352e-05,
+    "fid_max_record_clearance_mm": 0.00010373094925728021,
+    "fid_errors": 0
+   },
+   "T43/V/V3/obst": {
+    "n": 8,
+    "outcomes": {
+     "miss": 7,
+     "slip_at_pick": 1
+    },
+    "switch_away_before_close": 0,
+    "switch_away_before_attach": 1,
+    "n_with_close": 8,
+    "fruit_in_field_at_close": 1,
+    "a_on_fruit_rows_at_close": 7,
+    "defl_at_close_median_mm": 28.477754742992268,
+    "radial_at_close_median_mm": 2.8188484974147645,
+    "pre_close_contact_runs": 4,
+    "pre_close_fruit_disp_median_mm": 0.16422712524917082,
+    "fid_rows": 528,
+    "fid_same_row": 528,
+    "fid_max_centre0_mm": 0.00010759653235048461,
+    "fid_max_record_clearance_mm": 6.58906677414306e-05,
+    "fid_errors": 0
+   }
+  },
+  "t43v_closing_side_by_side": {
+   "V0 hurdle": {
+    "runs": 8,
+    "outcomes": {
+     "slip_at_pick": 2,
+     "drop_carry": 1,
+     "miss": 2,
+     "lifted_not_placed": 3
+    },
+    "closing_all": 47,
+    "closing_near": 13,
+    "near_man_not_fruit": 0,
+    "near_not_carved": 1,
+    "near_remnant_ge25": 4,
+    "near_binding": {
+     "wp:base": 13
+    },
+    "near_binding_point": {
+     "fruit": 12,
+     "table": 1
+    },
+    "near_binding_path_point_fruit": 0,
+    "near_path_target_rows_excluded": 0,
+    "near_fruit_rows_obstacle_class_chunks": 0,
+    "all_closing_binding": {
+     "wp:base": 47
+    },
+    "all_closing_binding_point": {
+     "fruit": 12,
+     "obstacle": 17,
+     "crate": 16,
+     "none": 1,
+     "table": 1
+    },
+    "all_path_target_rows_excluded": 0,
+    "held_rows_binding_preattach": 0,
+    "switch_away_before_attach": 1,
+    "near_defl_median": 15.93931087248723,
+    "near_radial_median": 0.0,
+    "near_binding_cl_median": 5.041529894003024
+   },
+   "V1 hurdle": {
+    "runs": 8,
+    "outcomes": {
+     "slip_at_pick": 2,
+     "miss": 5,
+     "success": 1
+    },
+    "closing_all": 168,
+    "closing_near": 11,
+    "near_man_not_fruit": 0,
+    "near_not_carved": 0,
+    "near_remnant_ge25": 3,
+    "near_binding": {
+     "wp:base": 11
+    },
+    "near_binding_point": {
+     "fruit": 8,
+     "crate": 3
+    },
+    "near_binding_path_point_fruit": 0,
+    "near_path_target_rows_excluded": 0,
+    "near_fruit_rows_obstacle_class_chunks": 9,
+    "all_closing_binding": {
+     "wp:base": 168
+    },
+    "all_closing_binding_point": {
+     "fruit": 8,
+     "crate": 88,
+     "table": 1,
+     "none": 43,
+     "obstacle": 28
+    },
+    "all_path_target_rows_excluded": 0,
+    "held_rows_binding_preattach": 0,
+    "switch_away_before_attach": 1,
+    "near_defl_median": 22.4683765926275,
+    "near_radial_median": -0.15427518364771742,
+    "near_binding_cl_median": 5.379606295781077
+   },
+   "V2 hurdle": {
+    "runs": 8,
+    "outcomes": {
+     "miss": 8
+    },
+    "closing_all": 378,
+    "closing_near": 18,
+    "near_man_not_fruit": 2,
+    "near_not_carved": 2,
+    "near_remnant_ge25": 2,
+    "near_binding": {
+     "wp:base": 2,
+     "wp:gripper_cover": 2,
+     "path:gripper_cover": 7,
+     "path:base": 7
+    },
+    "near_binding_point": {
+     "fruit": 13,
+     "crate": 5
+    },
+    "near_binding_path_point_fruit": 9,
+    "near_path_target_rows_excluded": 0,
+    "near_fruit_rows_obstacle_class_chunks": 13,
+    "all_closing_binding": {
+     "wp:base": 34,
+     "path:base": 248,
+     "wp:gripper_cover": 72,
+     "path:gripper_cover": 24
+    },
+    "all_closing_binding_point": {
+     "fruit": 13,
+     "crate": 223,
+     "obstacle": 136,
+     "none": 6
+    },
+    "all_path_target_rows_excluded": 3983,
+    "held_rows_binding_preattach": 0,
+    "switch_away_before_attach": 1,
+    "near_defl_median": 54.39194637811814,
+    "near_radial_median": 9.81947048235102,
+    "near_binding_cl_median": 3.644025934114352
+   },
+   "V3 hurdle": {
+    "runs": 8,
+    "outcomes": {
+     "miss": 7,
+     "slip_at_pick": 1
+    },
+    "closing_all": 348,
+    "closing_near": 13,
+    "near_man_not_fruit": 0,
+    "near_not_carved": 0,
+    "near_remnant_ge25": 4,
+    "near_binding": {
+     "path:base": 12,
+     "wp:base": 1
+    },
+    "near_binding_point": {
+     "crate": 3,
+     "fruit": 9,
+     "table": 1
+    },
+    "near_binding_path_point_fruit": 8,
+    "near_path_target_rows_excluded": 0,
+    "near_fruit_rows_obstacle_class_chunks": 9,
+    "all_closing_binding": {
+     "path:base": 248,
+     "wp:base": 100
+    },
+    "all_closing_binding_point": {
+     "crate": 153,
+     "obstacle": 171,
+     "fruit": 10,
+     "none": 13,
+     "table": 1
+    },
+    "all_path_target_rows_excluded": 62,
+    "held_rows_binding_preattach": 0,
+    "switch_away_before_attach": 1,
+    "near_defl_median": 26.751331951952636,
+    "near_radial_median": 0.0,
+    "near_binding_cl_median": 4.566409744789824
+   },
+   "V2 clear": {
+    "runs": 5,
+    "outcomes": {
+     "miss": 3,
+     "slip_at_pick": 1,
+     "success": 1
+    },
+    "closing_all": 99,
+    "closing_near": 11,
+    "near_man_not_fruit": 2,
+    "near_not_carved": 1,
+    "near_remnant_ge25": 1,
+    "near_binding": {
+     "path:base": 6,
+     "wp:base": 1,
+     "path:gripper_cover": 3,
+     "wp:gripper_cover": 1
+    },
+    "near_binding_point": {
+     "fruit": 9,
+     "other_fruit": 1,
+     "crate": 1
+    },
+    "near_binding_path_point_fruit": 7,
+    "near_path_target_rows_excluded": 0,
+    "near_fruit_rows_obstacle_class_chunks": 10,
+    "all_closing_binding": {
+     "path:base": 82,
+     "wp:base": 3,
+     "path:gripper_cover": 11,
+     "wp:gripper_cover": 3
+    },
+    "all_closing_binding_point": {
+     "fruit": 10,
+     "crate": 73,
+     "none": 15,
+     "other_fruit": 1
+    },
+    "all_path_target_rows_excluded": 29880,
+    "held_rows_binding_preattach": 0,
+    "switch_away_before_attach": 1,
+    "near_defl_median": 29.3740764224095,
+    "near_radial_median": 0.0,
+    "near_binding_cl_median": 4.914182959204637
+   }
+  },
+  "t41_a_vs_c_identical_through_close_plus_64": 14,
+  "t41_a_vs_c_pairs": 15,
+  "rebuild_fidelity": {
+   "hand_row_chunks": 3576,
+   "same_worst_row_as_recorded": 3404,
+   "max_sphere_centre_diff_mm": 0.00010759653235048461,
+   "max_plain_clearance_diff_mm": 0.00013027224560202555,
+   "note_not_same_row": "172 chunks differ: 170 in T43 V V2 (gripper-cover rows not rebuilt: 139 hurdle, 31 clear) and 1 each in T41 a / T41 c (same chunk)"
+  },
+  "grasp_tip_alignment_field_present": 0
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43u-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43u-timeline.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43u-table.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "legacy (CPU, .venv-openpi-live) 14/15 / 15/15 / -29.031048280806342; sha1 equal to T41c / T43V: True. cuRobo baseline not run (no GPU in this lane)."
+ },
+ "verdict": "legacy baseline matches. Facts only; judgement by lead and user.",
+ "not_measured": [
+  "cuRobo baseline (GPU not allowed in lane U)",
+  "T43 Q path rows and T43 R gripper-cover rows are not rebuilt (recorded worst rows only); hand-row facts are the 122-sphere waypoint rows",
+  "grasp.tip_alignment: absent in every record (all runs predate T43 T); fingertip-to-fruit computed from MuJoCo instead",
+  "per-camera 3D lift of each camera's own argmax cell (records hold one merged attention cloud); the global peak point is lifted",
+  "T42-1 pair for T42-2 ep1215 (none) and ep1925 (T42-1 has s19253, T42-2 s19251)"
+ ]
+}
