@@ -1,0 +1,63 @@
+{
+ "definitions": "T42-1 figures (verifier). usage: fig_t42_1.py SUMMARY_JSON\n-> benchmark/ag3s/docs/figures/t42/t42-1-table.png        per-fruit success table (episode x seed x condition), + .json\n   benchmark/ag3s/docs/figures/t42/t42-1-scene-<EP>.png   per selected episode, + .json\n   benchmark/ag3s/docs/figures/t42/t42-1-screening.png    graph: success count per (fruit, arm), E3b and E0, + .json\n\ntable : every screened episode, grouped by fruit and arm; E3b rep 1-3 and E0 rep 1-3 (seed = 10*ep + rep); Y = success\n        (grasp and place, T28 rule generalized to the episode's target fruit), g = grasp only, N = neither, '-' = not run;\n        apple + left rep 1-2 are T39 runs (marked *). Library = E3b 3/3; selected = up to 2 per fruit (plan.select()).\nscene : left  = third-person front frame at control step 0 (recorded third_person_front.mp4, frame 0) of the E3b rep-1 run\n                (rep 3 for apple + left), with the target-fruit carry path of every E3b run of that episode (solid) and every\n                E0 run (dashed) projected into the image with the recording camera (pi05_infer configure_view_camera 'front':\n                free camera lookat (0.45, 0, 0.85), distance 1.7, azimuth 180, elevation -18; fovy from the model, 640 x 480).\n        right = top view (world x-y) of the same paths, crate outer rectangle (half 0.090 x 0.150, crate pose at planning row 0),\n                fruit centres at planning row 0. Path = target centre qpos per control row, from t = 0 to the end of the run.",
+ "groups": [
+  "apple_left",
+  "apple_right",
+  "orange_left",
+  "orange_right",
+  "banana_left",
+  "banana_right",
+  "pear_left",
+  "pear_right"
+ ],
+ "screened": [
+  4,
+  4,
+  7,
+  9,
+  10,
+  10,
+  7,
+  7
+ ],
+ "E3b_screen_success": [
+  4,
+  3,
+  3,
+  3,
+  2,
+  1,
+  3,
+  6
+ ],
+ "E3b_3of3": [
+  3,
+  3,
+  1,
+  1,
+  0,
+  0,
+  1,
+  2
+ ],
+ "selected": [
+  1,
+  1,
+  1,
+  1,
+  0,
+  0,
+  1,
+  1
+ ],
+ "E0_3of3_selected": [
+  1,
+  0,
+  1,
+  1,
+  0,
+  0,
+  0,
+  0
+ ]
+}
