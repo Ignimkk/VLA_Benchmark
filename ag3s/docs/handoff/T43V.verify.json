@@ -1,0 +1,6754 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only; no interpretation.",
+ "step": "T43V",
+ "date": "2026-10-05",
+ "runs": [
+  {
+   "id": "runs: hurdle 4 ep x 2 seeds x {E0, V0, V1, V2} + V2 no-obstacle 5 (two chains, ports 8280 / 8281, <= 2 of our servers)",
+   "command": "setsid nohup outputs/verify/T43/V/p/launch_v.sh (run_chain.sh ARM PORT runs/ARM LIST; start_server.sh ARM; run_client.sh ARM; lists/hurdle.txt, lists/clear.txt)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/V/runs/{E0,V0,V1,V2}/{H,B}/<ARM>_ep<EP>_s<SEED>/ + runs/<ARM>/server_*/server_constraints",
+   "stdout_log": "outputs/verify/T43/V/runs/{launch.out, chainA.out, chainB.out, <ARM>/chain_<PORT>.log}"
+  },
+  {
+   "id": "analysis",
+   "command": "outputs/verify/T43/V/p/post_v.sh (analyze_t43v.py -> hold_v.py -> partial_v.py); partial_v.py --final analysis/numbers.json",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/T43/V/analysis/{analysis.json, hold_v.json, numbers.json}",
+   "stdout_log": "outputs/verify/T43/V/analysis/{analysis.log, hold_v.log, partial_v.log, watch.out}"
+  },
+  {
+   "id": "baseline",
+   "command": "outputs/verify/T43/V/baseline/run_baseline.sh; judge.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/V/baseline/{legacy,curobo}.json, judge.json",
+   "stdout_log": "outputs/verify/T43/V/baseline/{legacy,curobo}.log, judge.out"
+  },
+  {
+   "id": "T40 H replay on the snapshot (CPU)",
+   "command": "outputs/verify/T43/V/p/replay_snap_t43v.py",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/T43/V/replay/replay_snapshot.log",
+   "stdout_log": "outputs/verify/T43/V/replay/{replay_snapshot.log, diff_vs_T41c.txt}"
+  },
+  {
+   "id": "figures",
+   "command": "outputs/verify/T43/V/p/fig_t43v.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "benchmark/ag3s/docs/figures/t43/t43v-*.{png,json}",
+   "stdout_log": "outputs/verify/T43/V/analysis/fig.log"
+  }
+ ],
+ "code_state": {
+  "snapshot": "/mnt/dev/work-t43v",
+  "snapshot_txt": [
+   "created 2026-10-05T13:44:37+00:00",
+   "benchmark git archive f6af67cafe7b3de1931057e5c9c723b278b89a7b (HEAD; contains 78a64ed: yes; contains e2c6d1a: yes)",
+   "pi05_TO_hybrid rby1_description rby1_manipulation: git archive bd6a002",
+   "pi05_TO_hybrid rby1_bringup: git archive fce4af8",
+   "pi05_TO_hybrid HEAD now fce4af8",
+   "other entries: symlinks to /mnt/dev/work/pi05_TO_hybrid/*"
+  ],
+  "benchmark_head": "f6af67c (contains 78a64ed, e2c6d1a)",
+  "pi05_TO_hybrid": "rby1_description + rby1_manipulation bd6a002, rby1_bringup fce4af8 (trees equal to /mnt/dev/work-t41c)",
+  "code_md5": "outputs/verify/T43/V/p/code_md5_v0.txt (405 files); == V-0 at every chain preflight",
+  "md5_diff_vs_t41c_snapshot": [
+   "< benchmark/ag3s/experiments/reports/grounding_report.py",
+   "> benchmark/ag3s/experiments/reports/grounding_report.py",
+   "> benchmark/ag3s/experiments/sources/gripper_cover.py",
+   "< benchmark/ag3s/robot_models/held_object.py",
+   "> benchmark/ag3s/robot_models/held_object.py",
+   "< benchmark/ag3s/robot_models/urdf_sphere_chain.py",
+   "> benchmark/ag3s/robot_models/urdf_sphere_chain.py",
+   "< benchmark/ag3s/runtime/pipeline.py",
+   "> benchmark/ag3s/runtime/pipeline.py",
+   "< benchmark/trajopt/config.py",
+   "> benchmark/trajopt/config.py",
+   "< benchmark/trajopt/limits.py",
+   "> benchmark/trajopt/limits.py",
+   "< benchmark/trajopt/linearize.py",
+   "> benchmark/trajopt/linearize.py",
+   "< benchmark/trajopt/problem.py",
+   "> benchmark/trajopt/problem.py",
+   "< benchmark/trajopt/refiner.py",
+   "> benchmark/trajopt/refiner.py",
+   "< benchmark/trajopt/safe_policy.py",
+   "> benchmark/trajopt/safe_policy.py",
+   "< benchmark/trajopt/serve_safe.py",
+   "> benchmark/trajopt/serve_safe.py",
+   "> benchmark/trajopt/servo.py",
+   "< benchmark/trajopt/sqp.py",
+   "> benchmark/trajopt/sqp.py",
+   "> benchmark/trajopt/sweep.py"
+  ],
+  "import_check": {
+   "server": {
+    "all_benchmark_under_snapshot": true,
+    "file": "outputs/verify/T43/V/import_server.json"
+   },
+   "client": {
+    "all_benchmark_under_snapshot": true,
+    "file": "outputs/verify/T43/V/import_client.json"
+   }
+  },
+  "T40H_replay_vs_T41c_log": "identical apart from snapshot path and wall seconds (outputs/verify/T43/V/replay/diff_vs_T41c.txt)",
+  "dirty_files": []
+ },
+ "settings": {
+  "E0": "server --no-safe; client no safe flags",
+  "V0": "server T34 E3b flags (--esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links gripper --target-field-policy exclude-authorized --esdf-margin 0 --no-self-collision --capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32) + --no-subtask-gate; client --safe-hold-mode fixed",
+  "V1": "V0 + server --obstacle-margin 0.010; client --safe-hold-mode measured",
+  "V2": "V1 + server --gripper-cover left --gripper-cover-max-gap 3.0 --held-body-cover --servo-model --sweep-check (no --rest-start); server log: spheres 122 -> 651",
+  "client_common": "--safe-remote --safe-timeout 120 --safe-phase approach --safe-manipulators left --safe-gate reasons (V arms); all arms --obstacle-stop-distance 0 --viz-avoidance-arrow --record-frames --record --trajectory-out --warmup-steps 1000 --max-steps 600",
+  "hurdle_configs": {
+   "1807": "t43p_ep1807_s18071",
+   "1968": "t43p_ep1968_s19681",
+   "1982": "t43p_ep1982_s19822",
+   "1967": "t43p_ep1967_s19672_crelax"
+  },
+  "seeds": {
+   "1807": [
+    18071,
+    18073
+   ],
+   "1968": [
+    19681,
+    19683
+   ],
+   "1982": [
+    19822,
+    19823
+   ],
+   "1967": [
+    19672,
+    19673
+   ]
+  },
+  "no_obstacle_seeds": {
+   "1807": 18071,
+   "1968": 19681,
+   "1982": 19822,
+   "1995": 19952,
+   "1967": 19672
+  },
+  "xla_autotune": 0
+ },
+ "numbers": {
+  "_comment": "mm / ms unless noted; definitions in outputs/verify/T43/V/p/partial_v.py and analyze_t43v.py docstrings",
+  "summary_per_arm": {
+   "E0/H": {
+    "n": 8,
+    "success": 2,
+    "grasp": 6,
+    "place": 2,
+    "runs_client_robot_collision": 7,
+    "runs_client_payload_collision": 2,
+    "runs_obstacle_stop": 7,
+    "hold_chunks": 0,
+    "runs_with_hold": 0,
+    "trailing_hold_chunks_per_run": {
+     "1807_s18071": 0,
+     "1807_s18073": 0,
+     "1967_s19672": 0,
+     "1967_s19673": 0,
+     "1968_s19681": 0,
+     "1968_s19683": 0,
+     "1982_s19822": 0,
+     "1982_s19823": 0
+    },
+    "hurdle_min_mm_min": {
+     "Af": -0.46169881227796017,
+     "Ae": 3.6100070652485186,
+     "B": -0.6187090814692153,
+     "C": 73.20941261728676
+    },
+    "hurdle_min_mm_median_of_runs": {
+     "Af": 8.493441308766306,
+     "Ae": 31.16867467994051,
+     "B": 24.300171819816264,
+     "C": 96.31464450662273
+    },
+    "n_round_trip_gt_533": 3,
+    "n_chunks_excl_first": 284,
+    "round_trip_ms_pooled": {
+     "n": 284,
+     "median": 201.2035846710205,
+     "p90": 321.9465970993042,
+     "max": 789.1800403594971,
+     "min": 176.58329010009766
+    },
+    "to_solve_ms_pooled": null,
+    "deflected_binding_counts": {},
+    "all_binding_counts": {},
+    "to_status_counts": {},
+    "initial_source_counts": {},
+    "grasp_state_counts": {},
+    "hold_kind_counts": {},
+    "time_budget_hit_count": 0,
+    "n_deflected_chunks": 0,
+    "physics_replay_contact_events": 9,
+    "runs_with_physics_replay_contact": 8,
+    "apple_finger_mid_min_mm_per_run": {
+     "1807_s18071": 36.630782441216176,
+     "1807_s18073": 47.38381132184271,
+     "1967_s19672": 33.897684929460716,
+     "1967_s19673": 40.399445006072064,
+     "1968_s19681": 37.05505874240791,
+     "1968_s19683": 39.62725959457394,
+     "1982_s19822": 38.23510385000843,
+     "1982_s19823": 35.91615380340891
+    }
+   },
+   "V0/H": {
+    "n": 8,
+    "success": 0,
+    "grasp": 6,
+    "place": 0,
+    "runs_client_robot_collision": 7,
+    "runs_client_payload_collision": 1,
+    "runs_obstacle_stop": 7,
+    "hold_chunks": 11,
+    "runs_with_hold": 3,
+    "trailing_hold_chunks_per_run": {
+     "1807_s18071": 0,
+     "1807_s18073": 0,
+     "1967_s19672": 0,
+     "1967_s19673": 0,
+     "1968_s19681": 0,
+     "1968_s19683": 0,
+     "1982_s19822": 0,
+     "1982_s19823": 0
+    },
+    "hurdle_min_mm_min": {
+     "Af": 0.27972601103396466,
+     "Ae": 0.4617818541415731,
+     "B": -0.4190171227343945,
+     "C": 53.2899198890194
+    },
+    "hurdle_min_mm_median_of_runs": {
+     "Af": 3.60963074953012,
+     "Ae": 38.242505404773,
+     "B": 18.540567829137483,
+     "C": 98.42131135693428
+    },
+    "n_round_trip_gt_533": 302,
+    "n_chunks_excl_first": 302,
+    "round_trip_ms_pooled": {
+     "n": 302,
+     "median": 1005.9071779251099,
+     "p90": 1750.229477882386,
+     "max": 3606.304407119751,
+     "min": 844.2614078521729
+    },
+    "to_solve_ms_pooled": {
+     "n": 302,
+     "median": 59.10651828162372,
+     "p90": 213.5464794002474,
+     "max": 512.0683941058815,
+     "min": 34.13043403998017
+    },
+    "deflected_binding_counts": {
+     "waypoint:base": 140,
+     "waypoint:held": 11
+    },
+    "all_binding_counts": {
+     "waypoint:base": 290,
+     "waypoint:held": 20
+    },
+    "to_status_counts": {
+     "feasible": 297,
+     "violated": 13
+    },
+    "initial_source_counts": {
+     "None": 310
+    },
+    "grasp_state_counts": {
+     "closing": 47,
+     "held": 64,
+     "latched": 143,
+     "placed": 40,
+     "searching": 16
+    },
+    "hold_kind_counts": {
+     "collision": 11,
+     "unverified": 1
+    },
+    "time_budget_hit_count": 0,
+    "n_deflected_chunks": 151,
+    "physics_replay_contact_events": 8,
+    "runs_with_physics_replay_contact": 7,
+    "apple_finger_mid_min_mm_per_run": {
+     "1807_s18071": 42.47539317566958,
+     "1807_s18073": 40.150210768358114,
+     "1967_s19672": 38.608885052741584,
+     "1967_s19673": 38.883510282064265,
+     "1968_s19681": 37.71210290661424,
+     "1968_s19683": 38.39540604837793,
+     "1982_s19822": 39.31924585982192,
+     "1982_s19823": 34.99036040554488
+    }
+   },
+   "V1/H": {
+    "n": 8,
+    "success": 1,
+    "grasp": 3,
+    "place": 1,
+    "runs_client_robot_collision": 5,
+    "runs_client_payload_collision": 1,
+    "runs_obstacle_stop": 5,
+    "hold_chunks": 21,
+    "runs_with_hold": 6,
+    "trailing_hold_chunks_per_run": {
+     "1807_s18071": 0,
+     "1807_s18073": 0,
+     "1967_s19672": 0,
+     "1967_s19673": 0,
+     "1968_s19681": 0,
+     "1968_s19683": 0,
+     "1982_s19822": 0,
+     "1982_s19823": 0
+    },
+    "hurdle_min_mm_min": {
+     "Af": 0.6616554711960672,
+     "Ae": -0.41609937638499916,
+     "B": -0.7345859592667332,
+     "C": 49.37333912616301
+    },
+    "hurdle_min_mm_median_of_runs": {
+     "Af": 5.603702255898192,
+     "Ae": 19.888115656068464,
+     "B": 66.62917643513524,
+     "C": 73.32674957386995
+    },
+    "n_round_trip_gt_533": 462,
+    "n_chunks_excl_first": 462,
+    "round_trip_ms_pooled": {
+     "n": 462,
+     "median": 1531.4680337905884,
+     "p90": 2354.297256469727,
+     "max": 3032.7014923095703,
+     "min": 878.3702850341797
+    },
+    "to_solve_ms_pooled": {
+     "n": 462,
+     "median": 158.91442517749965,
+     "p90": 412.64697215519845,
+     "max": 924.3556819856167,
+     "min": 36.8180051445961
+    },
+    "deflected_binding_counts": {
+     "waypoint:base": 290,
+     "waypoint:held": 5
+    },
+    "all_binding_counts": {
+     "waypoint:base": 461,
+     "waypoint:held": 9
+    },
+    "to_status_counts": {
+     "feasible": 449,
+     "violated": 21
+    },
+    "initial_source_counts": {
+     "None": 470
+    },
+    "grasp_state_counts": {
+     "closing": 168,
+     "held": 27,
+     "latched": 244,
+     "placed": 15,
+     "searching": 16
+    },
+    "hold_kind_counts": {
+     "collision": 17,
+     "uncertified": 4
+    },
+    "time_budget_hit_count": 0,
+    "n_deflected_chunks": 295,
+    "physics_replay_contact_events": 6,
+    "runs_with_physics_replay_contact": 5,
+    "apple_finger_mid_min_mm_per_run": {
+     "1807_s18071": 43.11696073874889,
+     "1807_s18073": 39.12028785939058,
+     "1967_s19672": 37.72552481529687,
+     "1967_s19673": 40.16883591820912,
+     "1968_s19681": 36.54422322310176,
+     "1968_s19683": 40.03197161235634,
+     "1982_s19822": 37.302483142358156,
+     "1982_s19823": 38.91968945142789
+    }
+   },
+   "V2/H": {
+    "n": 8,
+    "success": 0,
+    "grasp": 0,
+    "place": 0,
+    "runs_client_robot_collision": 0,
+    "runs_client_payload_collision": 0,
+    "runs_obstacle_stop": 0,
+    "hold_chunks": 16,
+    "runs_with_hold": 6,
+    "trailing_hold_chunks_per_run": {
+     "1807_s18071": 0,
+     "1807_s18073": 0,
+     "1967_s19672": 0,
+     "1967_s19673": 0,
+     "1968_s19681": 0,
+     "1968_s19683": 0,
+     "1982_s19822": 0,
+     "1982_s19823": 0
+    },
+    "hurdle_min_mm_min": {
+     "Af": 15.688072003777032,
+     "Ae": 8.634491242727092,
+     "B": 52.059544750051536,
+     "C": 20.629444915566893
+    },
+    "hurdle_min_mm_median_of_runs": {
+     "Af": 16.79034577382823,
+     "Ae": 18.563649266523875,
+     "B": 90.72658137510594,
+     "C": 79.6053421824804
+    },
+    "n_round_trip_gt_533": 592,
+    "n_chunks_excl_first": 592,
+    "round_trip_ms_pooled": {
+     "n": 592,
+     "median": 3295.9375381469727,
+     "p90": 3845.096492767334,
+     "max": 6109.278917312622,
+     "min": 2375.399589538574
+    },
+    "to_solve_ms_pooled": {
+     "n": 592,
+     "median": 2064.623187761754,
+     "p90": 2415.8873507753015,
+     "max": 2935.254300944507,
+     "min": 1365.9803192131221
+    },
+    "deflected_binding_counts": {
+     "path:base": 219,
+     "path:gripper_cover": 42,
+     "waypoint:base": 39,
+     "waypoint:gripper_cover": 62,
+     "waypoint:held": 2
+    },
+    "all_binding_counts": {
+     "path:base": 409,
+     "path:gripper_cover": 63,
+     "waypoint:base": 51,
+     "waypoint:gripper_cover": 75,
+     "waypoint:held": 2
+    },
+    "to_status_counts": {
+     "feasible": 584,
+     "violated": 16
+    },
+    "initial_source_counts": {
+     "reference": 476,
+     "stay": 124
+    },
+    "grasp_state_counts": {
+     "closing": 378,
+     "held": 7,
+     "latched": 199,
+     "searching": 16
+    },
+    "hold_kind_counts": {
+     "collision": 16
+    },
+    "time_budget_hit_count": 0,
+    "n_deflected_chunks": 364,
+    "physics_replay_contact_events": 0,
+    "runs_with_physics_replay_contact": 0,
+    "apple_finger_mid_min_mm_per_run": {
+     "1807_s18071": 43.38462287255297,
+     "1807_s18073": 47.56143192793865,
+     "1967_s19672": 38.67293146426288,
+     "1967_s19673": 38.43931473408338,
+     "1968_s19681": 45.36925334373243,
+     "1968_s19683": 33.59362331034779,
+     "1982_s19822": 40.74476007107646,
+     "1982_s19823": 40.854513415370214
+    }
+   },
+   "V2/B": {
+    "n": 5,
+    "success": 1,
+    "grasp": 2,
+    "place": 1,
+    "runs_client_robot_collision": 0,
+    "runs_client_payload_collision": 0,
+    "runs_obstacle_stop": 0,
+    "hold_chunks": 12,
+    "runs_with_hold": 2,
+    "trailing_hold_chunks_per_run": {
+     "1807_s18071": 0,
+     "1967_s19672": 0,
+     "1968_s19681": 0,
+     "1982_s19822": 0,
+     "1995_s19952": 0
+    },
+    "hurdle_min_mm_min": {
+     "Af": null,
+     "Ae": null,
+     "B": null,
+     "C": null
+    },
+    "hurdle_min_mm_median_of_runs": {
+     "Af": null,
+     "Ae": null,
+     "B": null,
+     "C": null
+    },
+    "n_round_trip_gt_533": 370,
+    "n_chunks_excl_first": 370,
+    "round_trip_ms_pooled": {
+     "n": 370,
+     "median": 3082.3190212249756,
+     "p90": 3399.5738983154297,
+     "max": 3731.541395187378,
+     "min": 2573.836326599121
+    },
+    "to_solve_ms_pooled": {
+     "n": 370,
+     "median": 2052.9738522600383,
+     "p90": 2329.2345525231212,
+     "max": 2605.9005819261074,
+     "min": 1514.0098962001503
+    },
+    "deflected_binding_counts": {
+     "path:base": 160,
+     "path:gripper_cover": 21,
+     "waypoint:base": 15,
+     "waypoint:gripper_cover": 6,
+     "waypoint:held": 6
+    },
+    "all_binding_counts": {
+     "path:base": 304,
+     "path:gripper_cover": 31,
+     "waypoint:base": 25,
+     "waypoint:gripper_cover": 8,
+     "waypoint:held": 7
+    },
+    "to_status_counts": {
+     "feasible": 362,
+     "violated": 13
+    },
+    "initial_source_counts": {
+     "reference": 343,
+     "stay": 32
+    },
+    "grasp_state_counts": {
+     "closing": 99,
+     "held": 26,
+     "latched": 195,
+     "placed": 45,
+     "searching": 10
+    },
+    "hold_kind_counts": {
+     "collision": 12,
+     "unverified": 4
+    },
+    "time_budget_hit_count": 0,
+    "n_deflected_chunks": 208,
+    "physics_replay_contact_events": 0,
+    "runs_with_physics_replay_contact": 0,
+    "apple_finger_mid_min_mm_per_run": {
+     "1807_s18071": null,
+     "1967_s19672": null,
+     "1968_s19681": null,
+     "1982_s19822": null,
+     "1995_s19952": null
+    }
+   }
+  },
+  "pairs": {
+   "V2_vs_V0": {
+    "n_pairs": 8,
+    "keys": [
+     "1807_s18071",
+     "1807_s18073",
+     "1967_s19672",
+     "1967_s19673",
+     "1968_s19681",
+     "1968_s19683",
+     "1982_s19822",
+     "1982_s19823"
+    ],
+    "success": {
+     "both": 0,
+     "V2_only": 0,
+     "V0_only": 0,
+     "neither": 8,
+     "mcnemar_exact_p": 1.0
+    },
+    "grasp": {
+     "both": 0,
+     "V2_only": 0,
+     "V0_only": 6,
+     "neither": 2,
+     "mcnemar_exact_p": 0.03125
+    },
+    "place": {
+     "both": 0,
+     "V2_only": 0,
+     "V0_only": 0,
+     "neither": 8,
+     "mcnemar_exact_p": 1.0
+    }
+   },
+   "V2_vs_V1": {
+    "n_pairs": 8,
+    "keys": [
+     "1807_s18071",
+     "1807_s18073",
+     "1967_s19672",
+     "1967_s19673",
+     "1968_s19681",
+     "1968_s19683",
+     "1982_s19822",
+     "1982_s19823"
+    ],
+    "success": {
+     "both": 0,
+     "V2_only": 0,
+     "V1_only": 1,
+     "neither": 7,
+     "mcnemar_exact_p": 1.0
+    },
+    "grasp": {
+     "both": 0,
+     "V2_only": 0,
+     "V1_only": 3,
+     "neither": 5,
+     "mcnemar_exact_p": 0.25
+    },
+    "place": {
+     "both": 0,
+     "V2_only": 0,
+     "V1_only": 1,
+     "neither": 7,
+     "mcnemar_exact_p": 1.0
+    }
+   },
+   "V1_vs_V0": {
+    "n_pairs": 8,
+    "keys": [
+     "1807_s18071",
+     "1807_s18073",
+     "1967_s19672",
+     "1967_s19673",
+     "1968_s19681",
+     "1968_s19683",
+     "1982_s19822",
+     "1982_s19823"
+    ],
+    "success": {
+     "both": 0,
+     "V1_only": 1,
+     "V0_only": 0,
+     "neither": 7,
+     "mcnemar_exact_p": 1.0
+    },
+    "grasp": {
+     "both": 3,
+     "V1_only": 0,
+     "V0_only": 3,
+     "neither": 2,
+     "mcnemar_exact_p": 0.25
+    },
+    "place": {
+     "both": 0,
+     "V1_only": 1,
+     "V0_only": 0,
+     "neither": 7,
+     "mcnemar_exact_p": 1.0
+    }
+   },
+   "V0_vs_E0": {
+    "n_pairs": 8,
+    "keys": [
+     "1807_s18071",
+     "1807_s18073",
+     "1967_s19672",
+     "1967_s19673",
+     "1968_s19681",
+     "1968_s19683",
+     "1982_s19822",
+     "1982_s19823"
+    ],
+    "success": {
+     "both": 0,
+     "V0_only": 0,
+     "E0_only": 2,
+     "neither": 6,
+     "mcnemar_exact_p": 0.5
+    },
+    "grasp": {
+     "both": 5,
+     "V0_only": 1,
+     "E0_only": 1,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0
+    },
+    "place": {
+     "both": 0,
+     "V0_only": 0,
+     "E0_only": 2,
+     "neither": 6,
+     "mcnemar_exact_p": 0.5
+    }
+   }
+  },
+  "per_run": {
+   "E0/H/E0_ep1807_s18071": {
+    "arm": "E0",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18071,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 224,
+    "place_t": null,
+    "n_control": 247,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 2,
+    "client_contact_pairs": [
+     [
+      "geom#1051",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ],
+     [
+      "geom#1055",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0006 m collision=True"
+    ],
+    "lift_t": 208,
+    "hurdle_min_mm": {
+     "Af": 18.216125126644464,
+     "Ae": 8.66549481456682,
+     "B": 42.197734650995024,
+     "C": 76.512404539033
+    },
+    "hurdle_min_t": {
+     "Af": 246,
+     "Ae": 246,
+     "B": 246,
+     "C": 246
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1085"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1051"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 60.28523390198099,
+      "Ae": 62.288453869562346,
+      "B": 90.68775803984799,
+      "C": 92.99213364487923
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 18.216125126644464,
+      "Ae": 8.66549481456682,
+      "B": 42.197734650995024,
+      "C": 76.512404539033
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 246,
+      "t_last": 246,
+      "robot_substeps": 14,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1051(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ],
+       [
+        "geom#1055(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "carry",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 30,
+     "median": 192.05236434936523,
+     "p90": 350.6509304046631,
+     "max": 447.4313259124756,
+     "min": 177.60443687438965
+    },
+    "n_round_trip_gt_533": 0,
+    "n_chunks_excl_first": 30,
+    "to_solve_ms": null,
+    "server_ms": {
+     "infer": null,
+     "ag3s": null,
+     "trajopt": null,
+     "total": null
+    },
+    "wall_s": 131.0,
+    "apple_finger_mid_min_mm": 36.630782441216176,
+    "apple_finger_mid_min_t": 205
+   },
+   "E0/H/E0_ep1807_s18073": {
+    "arm": "E0",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18073,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 217,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 5,
+    "client_contact_pairs": [
+     [
+      "geom#1051",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ],
+     [
+      "geom#1055",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0008 m collision=True"
+    ],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 24.645608260278454,
+     "Ae": 3.6100070652485186,
+     "B": 91.09969766824611,
+     "C": 73.20941261728676
+    },
+    "hurdle_min_t": {
+     "Af": 216,
+     "Ae": 216,
+     "B": 154,
+     "C": 216
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1085"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1051"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 24.645608260278454,
+      "Ae": 3.6100070652485186,
+      "B": 91.09969766824611,
+      "C": 73.20941261728676
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 216,
+      "t_last": 216,
+      "robot_substeps": 12,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1051(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ],
+       [
+        "geom#1055(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "before_lift",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 27,
+     "median": 188.53998184204102,
+     "p90": 320.6020832061768,
+     "max": 449.14889335632324,
+     "min": 176.58329010009766
+    },
+    "n_round_trip_gt_533": 0,
+    "n_chunks_excl_first": 27,
+    "to_solve_ms": null,
+    "server_ms": {
+     "infer": null,
+     "ag3s": null,
+     "trajopt": null,
+     "total": null
+    },
+    "wall_s": 102.0,
+    "apple_finger_mid_min_mm": 47.38381132184271,
+    "apple_finger_mid_min_t": 149
+   },
+   "E0/H/E0_ep1967_s19672": {
+    "arm": "E0",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19672,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 168,
+    "place_t": 240,
+    "n_control": 332,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": true,
+    "client_contact_steps": 47,
+    "client_contact_pairs": [
+     [
+      "apple_geom",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ],
+     [
+      "geom#1086",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0000 m collision=True"
+    ],
+    "lift_t": 157,
+    "hurdle_min_mm": {
+     "Af": 4.669913473482726,
+     "Ae": 31.17649536598267,
+     "B": -0.004989063420415135,
+     "C": 91.1427608350707
+    },
+    "hurdle_min_t": {
+     "Af": 331,
+     "Ae": 331,
+     "B": 196,
+     "C": 104
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1012"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 40.891950185676635,
+      "Ae": 42.129994202278446,
+      "B": 52.059544750051536,
+      "C": 91.1427608350707
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 7.556596369350029,
+      "Ae": 45.37728219703185,
+      "B": -0.004989063420415135,
+      "C": 95.27903642019695
+     },
+     "after": {
+      "Af": 4.669913473482726,
+      "Ae": 31.17649536598267,
+      "B": 165.65933538635502,
+      "C": 93.0565115380161
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 2,
+      "first_t": 196,
+      "first_phase": "carry"
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 195,
+      "t_last": 197,
+      "robot_substeps": 0,
+      "payload_substeps": 46,
+      "pairs": [
+       [
+        "apple_geom",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "carry",
+      "kind": "+payload"
+     },
+     {
+      "t_first": 331,
+      "t_last": 331,
+      "robot_substeps": 23,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086(ee_finger_l2)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "after",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 41,
+     "median": 199.91827011108398,
+     "p90": 232.56206512451172,
+     "max": 302.1509647369385,
+     "min": 187.18266487121582
+    },
+    "n_round_trip_gt_533": 0,
+    "n_chunks_excl_first": 41,
+    "to_solve_ms": null,
+    "server_ms": {
+     "infer": null,
+     "ag3s": null,
+     "trajopt": null,
+     "total": null
+    },
+    "wall_s": 103.0,
+    "apple_finger_mid_min_mm": 33.897684929460716,
+    "apple_finger_mid_min_t": 154
+   },
+   "E0/H/E0_ep1967_s19673": {
+    "arm": "E0",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19673,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 136,
+    "place_t": 176,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": true,
+    "client_contact_steps": 275,
+    "client_contact_pairs": [
+     [
+      "apple_geom",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": 130,
+    "hurdle_min_mm": {
+     "Af": 7.10777770647996,
+     "Ae": 42.35493979640659,
+     "B": -0.6187090814692153,
+     "C": 93.77422400230962
+    },
+    "hurdle_min_t": {
+     "Af": 162,
+     "Ae": 0,
+     "B": 167,
+     "C": 97
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1055"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1012"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 41.157432786732535,
+      "Ae": 42.35493979640659,
+      "B": 52.059544750051536,
+      "C": 93.77422400230962
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 7.10777770647996,
+      "Ae": 46.977767554371276,
+      "B": -0.6187090814692153,
+      "C": 95.5054687183655
+     },
+     "after": {
+      "Af": 11.404375499577187,
+      "Ae": 47.272163221384226,
+      "B": 111.7719985673293,
+      "C": 107.10801178038503
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 8,
+      "first_t": 163,
+      "first_phase": "carry"
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 162,
+      "t_last": 171,
+      "robot_substeps": 0,
+      "payload_substeps": 275,
+      "pairs": [
+       [
+        "apple_geom",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "carry",
+      "kind": "+payload"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 202.48758792877197,
+     "p90": 290.99113941192627,
+     "max": 380.60641288757324,
+     "min": 185.6837272644043
+    },
+    "n_round_trip_gt_533": 0,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": null,
+    "server_ms": {
+     "infer": null,
+     "ag3s": null,
+     "trajopt": null,
+     "total": null
+    },
+    "wall_s": 186.0,
+    "apple_finger_mid_min_mm": 40.399445006072064,
+    "apple_finger_mid_min_t": 121
+   },
+   "E0/H/E0_ep1968_s19681": {
+    "arm": "E0",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19681,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 232,
+    "place_t": null,
+    "n_control": 262,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 2,
+    "client_contact_pairs": [
+     [
+      "geom#1086",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0005 m collision=True"
+    ],
+    "lift_t": 225,
+    "hurdle_min_mm": {
+     "Af": -0.46169881227796017,
+     "Ae": 31.16085399389835,
+     "B": 12.586371087981473,
+     "C": 105.35073257656562
+    },
+    "hurdle_min_t": {
+     "Af": 261,
+     "Ae": 261,
+     "B": 261,
+     "C": 261
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1039"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 61.319374190518765,
+      "Ae": 60.73523857151159,
+      "B": 89.77629251506109,
+      "C": 113.66863850640136
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": -0.46169881227796017,
+      "Ae": 31.16085399389835,
+      "B": 12.586371087981473,
+      "C": 105.35073257656562
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 1,
+      "first_t": 261,
+      "first_phase": "carry"
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 260,
+      "t_last": 261,
+      "robot_substeps": 34,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086(ee_finger_l2)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "carry",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 32,
+     "median": 213.83607387542725,
+     "p90": 503.99692058563244,
+     "max": 789.1800403594971,
+     "min": 188.3859634399414
+    },
+    "n_round_trip_gt_533": 1,
+    "n_chunks_excl_first": 32,
+    "to_solve_ms": null,
+    "server_ms": {
+     "infer": null,
+     "ag3s": null,
+     "trajopt": null,
+     "total": null
+    },
+    "wall_s": 133.0,
+    "apple_finger_mid_min_mm": 37.05505874240791,
+    "apple_finger_mid_min_t": 222
+   },
+   "E0/H/E0_ep1968_s19683": {
+    "arm": "E0",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19683,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 152,
+    "place_t": null,
+    "n_control": 176,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 5,
+    "client_contact_pairs": [
+     [
+      "geom#1086",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0011 m collision=True"
+    ],
+    "lift_t": 139,
+    "hurdle_min_mm": {
+     "Af": 9.87910491105265,
+     "Ae": 44.28673317979413,
+     "B": 21.431110789032388,
+     "C": 113.21855115332662
+    },
+    "hurdle_min_t": {
+     "Af": 175,
+     "Ae": 175,
+     "B": 175,
+     "C": 4
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 61.166312535552365,
+      "Ae": 60.51469666320472,
+      "B": 88.41541947147714,
+      "C": 113.21855115332662
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 9.87910491105265,
+      "Ae": 44.28673317979413,
+      "B": 21.431110789032388,
+      "C": 118.39458184948525
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 175,
+      "t_last": 175,
+      "robot_substeps": 12,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086(ee_finger_l2)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "carry",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 21,
+     "median": 206.34984970092773,
+     "p90": 344.9528217315674,
+     "max": 489.41516876220703,
+     "min": 190.03701210021973
+    },
+    "n_round_trip_gt_533": 0,
+    "n_chunks_excl_first": 21,
+    "to_solve_ms": null,
+    "server_ms": {
+     "infer": null,
+     "ag3s": null,
+     "trajopt": null,
+     "total": null
+    },
+    "wall_s": 94.0,
+    "apple_finger_mid_min_mm": 39.62725959457394,
+    "apple_finger_mid_min_t": 137
+   },
+   "E0/H/E0_ep1982_s19822": {
+    "arm": "E0",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19822,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 244,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 5,
+    "client_contact_pairs": [
+     [
+      "geom#1086",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0012 m collision=True"
+    ],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 9.984569273269024,
+     "Ae": 25.046982469156482,
+     "B": 94.27329436884072,
+     "C": 98.85506501093583
+    },
+    "hurdle_min_t": {
+     "Af": 243,
+     "Ae": 243,
+     "B": 137,
+     "C": 243
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1055"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 9.984569273269024,
+      "Ae": 25.046982469156482,
+      "B": 94.27329436884072,
+      "C": 98.85506501093583
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 243,
+      "t_last": 243,
+      "robot_substeps": 7,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086(ee_finger_l2)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "before_lift",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 30,
+     "median": 199.1751194000244,
+     "p90": 360.6475353240967,
+     "max": 564.0451908111572,
+     "min": 189.76378440856934
+    },
+    "n_round_trip_gt_533": 2,
+    "n_chunks_excl_first": 30,
+    "to_solve_ms": null,
+    "server_ms": {
+     "infer": null,
+     "ag3s": null,
+     "trajopt": null,
+     "total": null
+    },
+    "wall_s": 103.0,
+    "apple_finger_mid_min_mm": 38.23510385000843,
+    "apple_finger_mid_min_t": 122
+   },
+   "E0/H/E0_ep1982_s19823": {
+    "arm": "E0",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19823,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 208,
+    "place_t": null,
+    "n_control": 240,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 5,
+    "client_contact_pairs": [
+     [
+      "geom#1086",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0013 m collision=True"
+    ],
+    "lift_t": 200,
+    "hurdle_min_mm": {
+     "Af": 6.664412356278061,
+     "Ae": 42.83701911057537,
+     "B": 27.169232850600142,
+     "C": 116.6933586936331
+    },
+    "hurdle_min_t": {
+     "Af": 239,
+     "Ae": 239,
+     "B": 239,
+     "C": 239
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1055"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 61.1808494390818,
+      "Ae": 61.305020336029806,
+      "B": 95.9238433135318,
+      "C": 116.98704411988285
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 6.664412356278061,
+      "Ae": 42.83701911057537,
+      "B": 27.169232850600142,
+      "C": 116.6933586936331
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 239,
+      "t_last": 239,
+      "robot_substeps": 17,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086(ee_finger_l2)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "carry",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 29,
+     "median": 193.38703155517578,
+     "p90": 225.78687667846677,
+     "max": 389.36638832092285,
+     "min": 183.87556076049805
+    },
+    "n_round_trip_gt_533": 0,
+    "n_chunks_excl_first": 29,
+    "to_solve_ms": null,
+    "server_ms": {
+     "infer": null,
+     "ag3s": null,
+     "trajopt": null,
+     "total": null
+    },
+    "wall_s": 87.0,
+    "apple_finger_mid_min_mm": 35.91615380340891,
+    "apple_finger_mid_min_t": 197
+   },
+   "V0/H/V0_ep1807_s18071": {
+    "arm": "V0",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18071,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 160,
+    "place_t": null,
+    "n_control": 509,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": true,
+    "client_contact_steps": 32,
+    "client_contact_pairs": [
+     [
+      "apple_geom",
+      "pick_obstacle_hurdle_0_collision_foot_right"
+     ],
+     [
+      "geom#1052",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ],
+     [
+      "geom#1054",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0010 m collision=True"
+    ],
+    "lift_t": 151,
+    "hurdle_min_mm": {
+     "Af": 22.175608163384744,
+     "Ae": 19.72724538938146,
+     "B": -0.4190171227343945,
+     "C": 64.07392933259598
+    },
+    "hurdle_min_t": {
+     "Af": 508,
+     "Ae": 508,
+     "B": 199,
+     "C": 508
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1078"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1042"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 59.13770559012566,
+      "Ae": 62.288449787910245,
+      "B": 89.72376096329126,
+      "C": 92.99213250409424
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 45.45965904513662,
+      "Ae": 36.71769612073331,
+      "B": 65.16150055672965,
+      "C": 101.18069653088415
+     },
+     "after": {
+      "Af": 22.175608163384744,
+      "Ae": 19.72724538938146,
+      "B": -0.4190171227343945,
+      "C": 64.07392933259598
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 1,
+      "first_t": 199,
+      "first_phase": "after"
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 198,
+      "t_last": 199,
+      "robot_substeps": 0,
+      "payload_substeps": 30,
+      "pairs": [
+       [
+        "apple_geom",
+        "pick_obstacle_hurdle_0_collision_foot_right"
+       ]
+      ],
+      "in_hold_first_row": true,
+      "phase": "after",
+      "kind": "+payload"
+     },
+     {
+      "t_first": 508,
+      "t_last": 508,
+      "robot_substeps": 14,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1051(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ],
+       [
+        "geom#1052(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ],
+       [
+        "geom#1054(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ],
+       [
+        "geom#1058(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ],
+       [
+        "geom#1078(ee_finger_l1)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "after",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 2,
+    "hold_kind_counts": {
+     "collision": 2
+    },
+    "hold_t": [
+     176,
+     192
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 1,
+    "round_trip_ms": {
+     "n": 63,
+     "median": 999.1343021392822,
+     "p90": 1121.562147140503,
+     "max": 1255.1045417785645,
+     "min": 884.8898410797119
+    },
+    "n_round_trip_gt_533": 63,
+    "n_chunks_excl_first": 63,
+    "to_solve_ms": {
+     "n": 63,
+     "median": 58.23682667687535,
+     "p90": 77.69439220428468,
+     "max": 214.96372437104583,
+     "min": 37.73005912080407
+    },
+    "server_ms": {
+     "infer": 416.4107982069254,
+     "ag3s": 287.84915897995234,
+     "trajopt": 62.88802111521363,
+     "total": 781.2676439061761
+    },
+    "wall_s": 224.0,
+    "apple_finger_mid_min_mm": 42.47539317566958,
+    "apple_finger_mid_min_t": 137,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 15,
+     "closing": 1,
+     "held": 21,
+     "placed": 25
+    },
+    "tcp_deflection_mm": {
+     "n": 64,
+     "median": 4.92539634655415,
+     "p90": 19.059320915480498,
+     "max": 175.58883655063394,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 62,
+     "violated": 2
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 64
+    },
+    "n_deflected_chunks": 32,
+    "deflected_binding_counts": {
+     "waypoint:base": 28,
+     "waypoint:held": 4
+    },
+    "all_binding_counts": {
+     "waypoint:base": 58,
+     "waypoint:held": 6
+    },
+    "attached_chunks": 21,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 64
+    }
+   },
+   "V0/H/V0_ep1807_s18073": {
+    "arm": "V0",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18073,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 144,
+    "place_t": null,
+    "n_control": 277,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 4,
+    "client_contact_pairs": [
+     [
+      "geom#1052",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0001 m collision=True"
+    ],
+    "lift_t": 129,
+    "hurdle_min_mm": {
+     "Af": 10.537514211935271,
+     "Ae": 0.4617818541415731,
+     "B": 36.168187160853755,
+     "C": 61.89980710204411
+    },
+    "hurdle_min_t": {
+     "Af": 276,
+     "Ae": 276,
+     "B": 216,
+     "C": 249
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_post_right",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 60.444821360469675,
+      "Ae": 62.474426524609285,
+      "B": 90.6077585945605,
+      "C": 93.13812804320396
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 35.33658191444787,
+      "Ae": 27.739760950416507,
+      "B": 55.52668270897706,
+      "C": 93.42718694806685
+     },
+     "after": {
+      "Af": 10.537514211935271,
+      "Ae": 0.4617818541415731,
+      "B": 36.168187160853755,
+      "C": 61.89980710204411
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 276,
+      "t_last": 276,
+      "robot_substeps": 9,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1052(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "after",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 7,
+    "hold_kind_counts": {
+     "collision": 7,
+     "unverified": 1
+    },
+    "hold_t": [
+     160,
+     168,
+     176,
+     184,
+     192,
+     200,
+     208
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 7,
+    "round_trip_ms": {
+     "n": 34,
+     "median": 944.4444179534912,
+     "p90": 1186.5789890289307,
+     "max": 3606.304407119751,
+     "min": 850.1815795898438
+    },
+    "n_round_trip_gt_533": 34,
+    "n_chunks_excl_first": 34,
+    "to_solve_ms": {
+     "n": 34,
+     "median": 54.400809574872255,
+     "p90": 89.78471742011604,
+     "max": 320.4278307966888,
+     "min": 34.387046936899424
+    },
+    "server_ms": {
+     "infer": 406.9227776490152,
+     "ag3s": 272.0644280780107,
+     "trajopt": 58.2305402494967,
+     "total": 724.0302541758865
+    },
+    "wall_s": 137.0,
+    "apple_finger_mid_min_mm": 40.150210768358114,
+    "apple_finger_mid_min_t": 128,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 14,
+     "closing": 8,
+     "held": 11
+    },
+    "tcp_deflection_mm": {
+     "n": 35,
+     "median": 7.474972295646569,
+     "p90": 31.34305003488428,
+     "max": 121.0949980961405,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 28,
+     "violated": 7
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 35
+    },
+    "n_deflected_chunks": 18,
+    "deflected_binding_counts": {
+     "waypoint:base": 15,
+     "waypoint:held": 3
+    },
+    "all_binding_counts": {
+     "waypoint:base": 28,
+     "waypoint:held": 7
+    },
+    "attached_chunks": 11,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 35
+    }
+   },
+   "V0/H/V0_ep1967_s19672": {
+    "arm": "V0",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19672,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 168,
+    "place_t": null,
+    "n_control": 399,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 1,
+    "client_contact_pairs": [
+     [
+      "geom#1052",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0000 m collision=True"
+    ],
+    "lift_t": 154,
+    "hurdle_min_mm": {
+     "Af": 8.493708875989864,
+     "Ae": 2.749407257158408,
+     "B": 22.813307891765273,
+     "C": 53.2899198890194
+    },
+    "hurdle_min_t": {
+     "Af": 190,
+     "Ae": 398,
+     "B": 188,
+     "C": 398
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#974"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 40.8919501485151,
+      "Ae": 42.129994558701256,
+      "B": 52.059544750051536,
+      "C": 94.70632391249187
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 12.082592268599223,
+      "Ae": 50.798175483745865,
+      "B": 22.813307891765273,
+      "C": 98.1170368057883
+     },
+     "after": {
+      "Af": 8.493708875989864,
+      "Ae": 2.749407257158408,
+      "B": 51.77015868380982,
+      "C": 53.2899198890194
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 398,
+      "t_last": 398,
+      "robot_substeps": 13,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1052(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "after",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 2,
+    "hold_kind_counts": {
+     "collision": 2
+    },
+    "hold_t": [
+     232,
+     248
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 1,
+    "round_trip_ms": {
+     "n": 49,
+     "median": 1338.9122486114502,
+     "p90": 1891.4667129516602,
+     "max": 2786.7183685302734,
+     "min": 908.4110260009766
+    },
+    "n_round_trip_gt_533": 49,
+    "n_chunks_excl_first": 49,
+    "to_solve_ms": {
+     "n": 49,
+     "median": 71.44027762115002,
+     "p90": 306.6467468626798,
+     "max": 512.0683941058815,
+     "min": 40.590501856058836
+    },
+    "server_ms": {
+     "infer": 560.8586296439171,
+     "ag3s": 351.2697289697826,
+     "trajopt": 76.09304413199425,
+     "total": 1103.075662162155
+    },
+    "wall_s": 257.0,
+    "apple_finger_mid_min_mm": 38.608885052741584,
+    "apple_finger_mid_min_t": 137,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 16,
+     "closing": 1,
+     "held": 16,
+     "placed": 15
+    },
+    "tcp_deflection_mm": {
+     "n": 50,
+     "median": 4.757957713061822,
+     "p90": 19.64914797186788,
+     "max": 52.60389726255175,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 46,
+     "violated": 4
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 50
+    },
+    "n_deflected_chunks": 24,
+    "deflected_binding_counts": {
+     "waypoint:base": 23,
+     "waypoint:held": 1
+    },
+    "all_binding_counts": {
+     "waypoint:base": 46,
+     "waypoint:held": 4
+    },
+    "attached_chunks": 16,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 50
+    }
+   },
+   "V0/H/V0_ep1967_s19673": {
+    "arm": "V0",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19673,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 4.522784328067429,
+     "Ae": 35.95257474085955,
+     "B": 50.88571275717376,
+     "C": 83.6240723075313
+    },
+    "hurdle_min_t": {
+     "Af": 326,
+     "Ae": 467,
+     "B": 149,
+     "C": 149
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#952"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 4.522784328067429,
+      "Ae": 35.95257474085955,
+      "B": 50.88571275717376,
+      "C": 83.6240723075313
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 1108.2221269607544,
+     "p90": 1755.080604553223,
+     "max": 2686.816453933716,
+     "min": 851.0668277740479
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 66.8769390322268,
+     "p90": 219.73694362677634,
+     "max": 507.3089520446956,
+     "min": 48.538867849856615
+    },
+    "server_ms": {
+     "infer": 421.1738689336926,
+     "ag3s": 289.0127943828702,
+     "trajopt": 70.22111373953521,
+     "total": 808.1845894921571
+    },
+    "wall_s": 363.0,
+    "apple_finger_mid_min_mm": 38.883510282064265,
+    "apple_finger_mid_min_t": 137,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 48,
+     "closing": 25
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 5.3279718848846125,
+     "p90": 18.300297602455043,
+     "max": 42.9376120687379,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 75
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 75
+    },
+    "n_deflected_chunks": 40,
+    "deflected_binding_counts": {
+     "waypoint:base": 40
+    },
+    "all_binding_counts": {
+     "waypoint:base": 75
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V0/H/V0_ep1968_s19681": {
+    "arm": "V0",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19681,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 152,
+    "place_t": null,
+    "n_control": 178,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 3,
+    "client_contact_pairs": [
+     [
+      "geom#1086",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0001 m collision=True"
+    ],
+    "lift_t": 137,
+    "hurdle_min_mm": {
+     "Af": 0.27972601103396466,
+     "Ae": 41.25313230054202,
+     "B": 9.77094819879466,
+     "C": 113.66863803321333
+    },
+    "hurdle_min_t": {
+     "Af": 177,
+     "Ae": 176,
+     "B": 177,
+     "C": 4
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 61.31937428237805,
+      "Ae": 60.73523852283477,
+      "B": 90.16934351384978,
+      "C": 113.66863803321333
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 0.27972601103396466,
+      "Ae": 41.25313230054202,
+      "B": 9.77094819879466,
+      "C": 113.6911611772579
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 177,
+      "t_last": 177,
+      "robot_substeps": 3,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086(ee_finger_l2)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "carry",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 22,
+     "median": 915.086030960083,
+     "p90": 1012.1641159057618,
+     "max": 1139.833688735962,
+     "min": 844.2614078521729
+    },
+    "n_round_trip_gt_533": 22,
+    "n_chunks_excl_first": 22,
+    "to_solve_ms": {
+     "n": 22,
+     "median": 49.480251502245665,
+     "p90": 54.325346276164055,
+     "max": 61.17965094745159,
+     "min": 35.21754266694188
+    },
+    "server_ms": {
+     "infer": 400.12893406674266,
+     "ag3s": 253.868387080729,
+     "trajopt": 53.296779980883,
+     "total": 697.6823820732534
+    },
+    "wall_s": 82.0,
+    "apple_finger_mid_min_mm": 37.71210290661424,
+    "apple_finger_mid_min_t": 128,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 13,
+     "closing": 2,
+     "held": 6
+    },
+    "tcp_deflection_mm": {
+     "n": 23,
+     "median": 4.107697339672083,
+     "p90": 19.49257553237117,
+     "max": 46.60853053623533,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 23
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 23
+    },
+    "n_deflected_chunks": 10,
+    "deflected_binding_counts": {
+     "waypoint:base": 9,
+     "waypoint:held": 1
+    },
+    "all_binding_counts": {
+     "waypoint:base": 22,
+     "waypoint:held": 1
+    },
+    "attached_chunks": 6,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 23
+    }
+   },
+   "V0/H/V0_ep1968_s19683": {
+    "arm": "V0",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19683,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 128,
+    "place_t": null,
+    "n_control": 154,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 4,
+    "client_contact_pairs": [
+     [
+      "geom#1086",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0005 m collision=True"
+    ],
+    "lift_t": 119,
+    "hurdle_min_mm": {
+     "Af": 2.431132025023248,
+     "Ae": 42.819930507993476,
+     "B": 14.267827766509694,
+     "C": 113.21855040633726
+    },
+    "hurdle_min_t": {
+     "Af": 153,
+     "Ae": 153,
+     "B": 153,
+     "C": 4
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 61.16631121351745,
+      "Ae": 60.514695450461645,
+      "B": 90.26984066763674,
+      "C": 113.21855040633726
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 2.431132025023248,
+      "Ae": 42.819930507993476,
+      "B": 14.267827766509694,
+      "C": 115.78842947949707
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 153,
+      "t_last": 153,
+      "robot_substeps": 21,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086(ee_finger_l2)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "carry",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 19,
+     "median": 964.6162986755371,
+     "p90": 2043.2859897613523,
+     "max": 2568.33815574646,
+     "min": 863.3999824523926
+    },
+    "n_round_trip_gt_533": 19,
+    "n_chunks_excl_first": 19,
+    "to_solve_ms": {
+     "n": 19,
+     "median": 49.78483635932207,
+     "p90": 229.93392851203674,
+     "max": 397.47471269220114,
+     "min": 34.74372439086437
+    },
+    "server_ms": {
+     "infer": 412.8471030853689,
+     "ag3s": 271.6656890697777,
+     "trajopt": 53.13563114032149,
+     "total": 737.0513738133013
+    },
+    "wall_s": 103.0,
+    "apple_finger_mid_min_mm": 38.39540604837793,
+    "apple_finger_mid_min_t": 112,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 12,
+     "closing": 1,
+     "held": 5
+    },
+    "tcp_deflection_mm": {
+     "n": 20,
+     "median": 2.6766689482133814,
+     "p90": 15.699891410079797,
+     "max": 48.10055635263156,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 20
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 20
+    },
+    "n_deflected_chunks": 6,
+    "deflected_binding_counts": {
+     "waypoint:base": 5,
+     "waypoint:held": 1
+    },
+    "all_binding_counts": {
+     "waypoint:base": 19,
+     "waypoint:held": 1
+    },
+    "attached_chunks": 5,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 20
+    }
+   },
+   "V0/H/V0_ep1982_s19822": {
+    "arm": "V0",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19822,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 169,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 5,
+    "client_contact_pairs": [
+     [
+      "geom#1086",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0003 m collision=True"
+    ],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 2.6964771709928113,
+     "Ae": 40.53243606868644,
+     "B": 97.70592421955163,
+     "C": 114.74597133641058
+    },
+    "hurdle_min_t": {
+     "Af": 168,
+     "Ae": 167,
+     "B": 119,
+     "C": 166
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 2.6964771709928113,
+      "Ae": 40.53243606868644,
+      "B": 97.70592421955163,
+      "C": 114.74597133641058
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 168,
+      "t_last": 168,
+      "robot_substeps": 12,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086(ee_finger_l2)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "before_lift",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 21,
+     "median": 1004.9712657928467,
+     "p90": 1938.3745193481445,
+     "max": 2591.3491249084473,
+     "min": 878.6544799804688
+    },
+    "n_round_trip_gt_533": 21,
+    "n_chunks_excl_first": 21,
+    "to_solve_ms": {
+     "n": 21,
+     "median": 55.949512869119644,
+     "p90": 193.53144196793437,
+     "max": 285.2413640357554,
+     "min": 48.767664935439825
+    },
+    "server_ms": {
+     "infer": 405.46413604170084,
+     "ag3s": 262.2217978350818,
+     "trajopt": 59.02825389057398,
+     "total": 784.147554077208
+    },
+    "wall_s": 117.0,
+    "apple_finger_mid_min_mm": 39.31924585982192,
+    "apple_finger_mid_min_t": 110,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 12,
+     "closing": 8
+    },
+    "tcp_deflection_mm": {
+     "n": 22,
+     "median": 5.104417683248443,
+     "p90": 19.571918447081952,
+     "max": 47.616992851316674,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 22
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 22
+    },
+    "n_deflected_chunks": 12,
+    "deflected_binding_counts": {
+     "waypoint:base": 12
+    },
+    "all_binding_counts": {
+     "waypoint:base": 22
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 22
+    }
+   },
+   "V0/H/V0_ep1982_s19823": {
+    "arm": "V0",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19823,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 136,
+    "place_t": null,
+    "n_control": 168,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 4,
+    "client_contact_pairs": [
+     [
+      "geom#1086",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0006 m collision=True"
+    ],
+    "lift_t": 130,
+    "hurdle_min_mm": {
+     "Af": 2.2070597505016774,
+     "Ae": 44.9402919097546,
+     "B": 14.210450649319709,
+     "C": 116.98704349518059
+    },
+    "hurdle_min_t": {
+     "Af": 167,
+     "Ae": 167,
+     "B": 167,
+     "C": 5
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 61.18084555488533,
+      "Ae": 61.30501705661322,
+      "B": 96.85280571231952,
+      "C": 116.98704349518059
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 2.2070597505016774,
+      "Ae": 44.9402919097546,
+      "B": 14.210450649319709,
+      "C": 117.74120246356883
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 167,
+      "t_last": 167,
+      "robot_substeps": 21,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086(ee_finger_l2)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "carry",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 20,
+     "median": 929.3379783630371,
+     "p90": 1910.609126091004,
+     "max": 2439.439058303833,
+     "min": 861.5474700927734
+    },
+    "n_round_trip_gt_533": 20,
+    "n_chunks_excl_first": 20,
+    "to_solve_ms": {
+     "n": 20,
+     "median": 50.41454848833382,
+     "p90": 141.63317899219714,
+     "max": 339.85199173912406,
+     "min": 34.13043403998017
+    },
+    "server_ms": {
+     "infer": 394.84586496837437,
+     "ag3s": 285.6541278306395,
+     "trajopt": 53.78675018437207,
+     "total": 731.9517838768661
+    },
+    "wall_s": 111.0,
+    "apple_finger_mid_min_mm": 34.99036040554488,
+    "apple_finger_mid_min_t": 128,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 13,
+     "closing": 1,
+     "held": 5
+    },
+    "tcp_deflection_mm": {
+     "n": 21,
+     "median": 2.714177474625302,
+     "p90": 40.00271483746379,
+     "max": 85.75110230423307,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 21
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 21
+    },
+    "n_deflected_chunks": 9,
+    "deflected_binding_counts": {
+     "waypoint:base": 8,
+     "waypoint:held": 1
+    },
+    "all_binding_counts": {
+     "waypoint:base": 20,
+     "waypoint:held": 1
+    },
+    "attached_chunks": 5,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 21
+    }
+   },
+   "V1/H/V1_ep1807_s18071": {
+    "arm": "V1",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18071,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 144,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": 122,
+    "hurdle_min_mm": {
+     "Af": 34.16219007018865,
+     "Ae": 33.961068167116075,
+     "B": 84.6597270241426,
+     "C": 85.99675390290281
+    },
+    "hurdle_min_t": {
+     "Af": 521,
+     "Ae": 525,
+     "B": 201,
+     "C": 523
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_sleeve_right",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_post_right",
+      "geom#1055"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1039"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 61.48065954127732,
+      "Ae": 62.288449787910245,
+      "B": 89.66639544777898,
+      "C": 92.99213250409424
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 73.24952749184173,
+      "Ae": 74.94685328251308,
+      "B": 92.26013078983975,
+      "C": 115.1536941086966
+     },
+     "after": {
+      "Af": 34.16219007018865,
+      "Ae": 33.961068167116075,
+      "B": 84.6597270241426,
+      "C": 85.99675390290281
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 7,
+    "hold_kind_counts": {
+     "collision": 7
+    },
+    "hold_t": [
+     152,
+     160,
+     168,
+     176,
+     184,
+     192,
+     352
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 6,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 1686.6527795791626,
+     "p90": 2117.3182487487798,
+     "max": 2921.055555343628,
+     "min": 878.3702850341797
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 200.92354551889002,
+     "p90": 375.8055372629315,
+     "max": 502.2339769639075,
+     "min": 48.569663893431425
+    },
+    "server_ms": {
+     "infer": 577.1347368136048,
+     "ag3s": 560.913068940863,
+     "trajopt": 204.50336951762438,
+     "total": 1492.7134064491838
+    },
+    "wall_s": 432.0,
+    "apple_finger_mid_min_mm": 43.11696073874889,
+    "apple_finger_mid_min_t": 120,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 33,
+     "closing": 31,
+     "held": 9
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 8.035697809771607,
+     "p90": 22.828043055697307,
+     "max": 177.00308536273093,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 68,
+     "violated": 7
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 75
+    },
+    "n_deflected_chunks": 48,
+    "deflected_binding_counts": {
+     "waypoint:base": 46,
+     "waypoint:held": 2
+    },
+    "all_binding_counts": {
+     "waypoint:base": 72,
+     "waypoint:held": 3
+    },
+    "attached_chunks": 9,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V1/H/V1_ep1807_s18073": {
+    "arm": "V1",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18073,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 136,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": 121,
+    "hurdle_min_mm": {
+     "Af": 20.945792137387823,
+     "Ae": 18.851239933270158,
+     "B": 48.963765391363715,
+     "C": 70.71682871882467
+    },
+    "hurdle_min_t": {
+     "Af": 351,
+     "Ae": 366,
+     "B": 194,
+     "C": 376
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_sleeve_right",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_post_right",
+      "geom#1051"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 62.28555713165697,
+      "Ae": 62.474426524609285,
+      "B": 91.07715493210107,
+      "C": 93.13812804320396
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 41.7694597441805,
+      "Ae": 31.64501032193219,
+      "B": 62.608105819217855,
+      "C": 91.15028905163888
+     },
+     "after": {
+      "Af": 20.945792137387823,
+      "Ae": 18.851239933270158,
+      "B": 48.963765391363715,
+      "C": 70.71682871882467
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 5,
+    "hold_kind_counts": {
+     "collision": 5
+    },
+    "hold_t": [
+     160,
+     168,
+     176,
+     184,
+     368
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 4,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 1268.700361251831,
+     "p90": 2144.7486639022827,
+     "max": 2930.8981895446777,
+     "min": 1021.4169025421143
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 85.31694253906608,
+     "p90": 274.01789040304726,
+     "max": 494.8269580490887,
+     "min": 44.86823687329888
+    },
+    "server_ms": {
+     "infer": 471.2035364937037,
+     "ag3s": 331.939700525254,
+     "trajopt": 89.62289849296212,
+     "total": 995.0982131995261
+    },
+    "wall_s": 380.0,
+    "apple_finger_mid_min_mm": 39.12028785939058,
+    "apple_finger_mid_min_t": 119,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 14,
+     "closing": 51,
+     "held": 8
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 12.584823416604474,
+     "p90": 37.13071488066057,
+     "max": 128.11512006412642,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 70,
+     "violated": 5
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 75
+    },
+    "n_deflected_chunks": 58,
+    "deflected_binding_counts": {
+     "waypoint:base": 57,
+     "waypoint:held": 1
+    },
+    "all_binding_counts": {
+     "waypoint:base": 71,
+     "waypoint:held": 4
+    },
+    "attached_chunks": 8,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V1/H/V1_ep1967_s19672": {
+    "arm": "V1",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19672,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 412,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 3,
+    "client_contact_pairs": [
+     [
+      "geom#1052",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0000 m collision=True"
+    ],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 7.793712240957575,
+     "Ae": 0.2688934971688001,
+     "B": 52.059544750051536,
+     "C": 61.45134626579726
+    },
+    "hurdle_min_t": {
+     "Af": 392,
+     "Ae": 411,
+     "B": 10,
+     "C": 411
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1039"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 7.793712240957575,
+      "Ae": 0.2688934971688001,
+      "B": 52.059544750051536,
+      "C": 61.45134626579726
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 411,
+      "t_last": 411,
+      "robot_substeps": 15,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1052(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "before_lift",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 51,
+     "median": 1671.983003616333,
+     "p90": 2258.8510513305664,
+     "max": 2851.7727851867676,
+     "min": 995.049238204956
+    },
+    "n_round_trip_gt_533": 51,
+    "n_chunks_excl_first": 51,
+    "to_solve_ms": {
+     "n": 51,
+     "median": 223.9220659248531,
+     "p90": 412.72457502782345,
+     "max": 698.730971198529,
+     "min": 63.101176638156176
+    },
+    "server_ms": {
+     "infer": 657.7930427156389,
+     "ag3s": 409.13972491398454,
+     "trajopt": 229.3643094599247,
+     "total": 1316.8755541555583
+    },
+    "wall_s": 292.0,
+    "apple_finger_mid_min_mm": 37.72552481529687,
+    "apple_finger_mid_min_t": 136,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 37,
+     "closing": 13
+    },
+    "tcp_deflection_mm": {
+     "n": 52,
+     "median": 7.313339104287541,
+     "p90": 19.946764868829177,
+     "max": 39.186563664079614,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 52
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 52
+    },
+    "n_deflected_chunks": 36,
+    "deflected_binding_counts": {
+     "waypoint:base": 36
+    },
+    "all_binding_counts": {
+     "waypoint:base": 52
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 52
+    }
+   },
+   "V1/H/V1_ep1967_s19673": {
+    "arm": "V1",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19673,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 12.224263171729609,
+     "Ae": 37.555847900402185,
+     "B": 52.059544750051536,
+     "C": 90.37701127689839
+    },
+    "hurdle_min_t": {
+     "Af": 309,
+     "Ae": 356,
+     "B": 10,
+     "C": 449
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1051"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1011"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 12.224263171729609,
+      "Ae": 37.555847900402185,
+      "B": 52.059544750051536,
+      "C": 90.37701127689839
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 1196.7384815216064,
+     "p90": 2362.4236583709717,
+     "max": 2764.2440795898438,
+     "min": 920.7556247711182
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 77.32719648629427,
+     "p90": 314.10874882712966,
+     "max": 490.2196088805795,
+     "min": 54.28053392097354
+    },
+    "server_ms": {
+     "infer": 448.2097376603633,
+     "ag3s": 308.23908234015107,
+     "trajopt": 82.50258234329522,
+     "total": 937.0643966831267
+    },
+    "wall_s": 369.0,
+    "apple_finger_mid_min_mm": 40.16883591820912,
+    "apple_finger_mid_min_t": 121,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 48,
+     "closing": 25
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 6.122131104995573,
+     "p90": 21.664459906888904,
+     "max": 50.64232456222784,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 75
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 75
+    },
+    "n_deflected_chunks": 45,
+    "deflected_binding_counts": {
+     "waypoint:base": 45
+    },
+    "all_binding_counts": {
+     "waypoint:base": 75
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V1/H/V1_ep1968_s19681": {
+    "arm": "V1",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19681,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 440,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 5,
+    "client_contact_pairs": [
+     [
+      "geom#1052",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0003 m collision=True"
+    ],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 3.4136922708388076,
+     "Ae": 0.9475498714772747,
+     "B": 88.02318096834338,
+     "C": 49.37333912616301
+    },
+    "hurdle_min_t": {
+     "Af": 198,
+     "Ae": 439,
+     "B": 150,
+     "C": 439
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1027"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 3.4136922708388076,
+      "Ae": 0.9475498714772747,
+      "B": 88.02318096834338,
+      "C": 49.37333912616301
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 439,
+      "t_last": 439,
+      "robot_substeps": 22,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1052(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "before_lift",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 4,
+    "hold_kind_counts": {
+     "uncertified": 4
+    },
+    "hold_t": [
+     288,
+     296,
+     304,
+     312
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 4,
+    "round_trip_ms": {
+     "n": 54,
+     "median": 1080.4363489151,
+     "p90": 2113.3492708206186,
+     "max": 2846.6956615448,
+     "min": 928.5264015197754
+    },
+    "n_round_trip_gt_533": 54,
+    "n_chunks_excl_first": 54,
+    "to_solve_ms": {
+     "n": 54,
+     "median": 75.76643954962492,
+     "p90": 264.19415054842835,
+     "max": 419.22389483079314,
+     "min": 47.00411017984152
+    },
+    "server_ms": {
+     "infer": 467.4222848843783,
+     "ag3s": 292.53216832876205,
+     "trajopt": 80.32501023262739,
+     "total": 850.260047474876
+    },
+    "wall_s": 281.0,
+    "apple_finger_mid_min_mm": 36.54422322310176,
+    "apple_finger_mid_min_t": 122,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 38,
+     "closing": 13,
+     "held": 2
+    },
+    "tcp_deflection_mm": {
+     "n": 55,
+     "median": 6.303370231511097,
+     "p90": 22.466781699084777,
+     "max": 56.54416498436886,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 51,
+     "violated": 4
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 55
+    },
+    "n_deflected_chunks": 30,
+    "deflected_binding_counts": {
+     "waypoint:base": 30
+    },
+    "all_binding_counts": {
+     "waypoint:base": 55
+    },
+    "attached_chunks": 2,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 55
+    }
+   },
+   "V1/H/V1_ep1968_s19683": {
+    "arm": "V1",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19683,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 136,
+    "place_t": 176,
+    "n_control": 293,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": true,
+    "client_contact_steps": 303,
+    "client_contact_pairs": [
+     [
+      "apple_geom",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ],
+     [
+      "geom#1079",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0007 m collision=True"
+    ],
+    "lift_t": 122,
+    "hurdle_min_mm": {
+     "Af": 1.0218696032076764,
+     "Ae": 32.30879076399713,
+     "B": -0.7345859592667332,
+     "C": 78.84789581423173
+    },
+    "hurdle_min_t": {
+     "Af": 161,
+     "Ae": 292,
+     "B": 168,
+     "C": 292
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#997"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 61.16631121351745,
+      "Ae": 60.514695450461645,
+      "B": 89.88915105066998,
+      "C": 113.21855040633726
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 1.0218696032076764,
+      "Ae": 41.704235065503845,
+      "B": -0.7345859592667332,
+      "C": 104.49039357182163
+     },
+     "after": {
+      "Af": 7.175635947866566,
+      "Ae": 32.30879076399713,
+      "B": 66.467406142177,
+      "C": 78.84789581423173
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 8,
+      "first_t": 162,
+      "first_phase": "carry"
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 161,
+      "t_last": 171,
+      "robot_substeps": 0,
+      "payload_substeps": 300,
+      "pairs": [
+       [
+        "apple_geom",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "carry",
+      "kind": "+payload"
+     },
+     {
+      "t_first": 292,
+      "t_last": 292,
+      "robot_substeps": 20,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1079(ee_finger_l1)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "after",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 1,
+    "hold_kind_counts": {
+     "collision": 1
+    },
+    "hold_t": [
+     176
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 1,
+    "round_trip_ms": {
+     "n": 36,
+     "median": 1132.3431730270386,
+     "p90": 2353.4218072891235,
+     "max": 3014.772653579712,
+     "min": 890.5189037322998
+    },
+    "n_round_trip_gt_533": 36,
+    "n_chunks_excl_first": 36,
+    "to_solve_ms": {
+     "n": 36,
+     "median": 76.79982390254736,
+     "p90": 233.84638759307563,
+     "max": 502.8761359862983,
+     "min": 36.8180051445961
+    },
+    "server_ms": {
+     "infer": 494.1617336589843,
+     "ag3s": 301.43656418658793,
+     "trajopt": 81.98821265250444,
+     "total": 865.0712303351611
+    },
+    "wall_s": 197.0,
+    "apple_finger_mid_min_mm": 40.03197161235634,
+    "apple_finger_mid_min_t": 120,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 12,
+     "closing": 1,
+     "held": 7,
+     "placed": 15
+    },
+    "tcp_deflection_mm": {
+     "n": 37,
+     "median": 4.056241521039063,
+     "p90": 55.59347498970932,
+     "max": 77.16857053166547,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 36,
+     "violated": 1
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 37
+    },
+    "n_deflected_chunks": 17,
+    "deflected_binding_counts": {
+     "waypoint:base": 16,
+     "waypoint:held": 1
+    },
+    "all_binding_counts": {
+     "waypoint:base": 36,
+     "waypoint:held": 1
+    },
+    "attached_chunks": 7,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 37
+    }
+   },
+   "V1/H/V1_ep1982_s19822": {
+    "arm": "V1",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19822,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 438,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 2,
+    "client_contact_pairs": [
+     [
+      "geom#1052",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0004 m collision=True"
+    ],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 1.309677899064372,
+     "Ae": -0.41609937638499916,
+     "B": 81.19880812021894,
+     "C": 49.88832816886682
+    },
+    "hurdle_min_t": {
+     "Af": 320,
+     "Ae": 437,
+     "B": 136,
+     "C": 437
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1079"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1027"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 1.309677899064372,
+      "Ae": -0.41609937638499916,
+      "B": 81.19880812021894,
+      "C": 49.88832816886682
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 1,
+      "first_t": 437,
+      "first_phase": "before_lift"
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 436,
+      "t_last": 437,
+      "robot_substeps": 34,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1052(EE_BODY_L)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "before_lift",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 3,
+    "hold_kind_counts": {
+     "collision": 3
+    },
+    "hold_t": [
+     408,
+     416,
+     424
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 3,
+    "round_trip_ms": {
+     "n": 54,
+     "median": 2056.3576221466064,
+     "p90": 2461.828136444092,
+     "max": 2778.84578704834,
+     "min": 1404.827356338501
+    },
+    "n_round_trip_gt_533": 54,
+    "n_chunks_excl_first": 54,
+    "to_solve_ms": {
+     "n": 54,
+     "median": 337.00359985232353,
+     "p90": 583.0942182801665,
+     "max": 623.897282872349,
+     "min": 61.40920706093311
+    },
+    "server_ms": {
+     "infer": 787.3286704998463,
+     "ag3s": 620.9977478720248,
+     "trajopt": 341.1969675216824,
+     "total": 1774.6484517119825
+    },
+    "wall_s": 317.0,
+    "apple_finger_mid_min_mm": 37.302483142358156,
+    "apple_finger_mid_min_t": 115,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 35,
+     "closing": 18
+    },
+    "tcp_deflection_mm": {
+     "n": 55,
+     "median": 9.545233965168654,
+     "p90": 42.40208136859178,
+     "max": 218.2015207721034,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 52,
+     "violated": 3
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 55
+    },
+    "n_deflected_chunks": 37,
+    "deflected_binding_counts": {
+     "waypoint:base": 37
+    },
+    "all_binding_counts": {
+     "waypoint:base": 55
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 55
+    }
+   },
+   "V1/H/V1_ep1982_s19823": {
+    "arm": "V1",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19823,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 367,
+    "check_mode": "obstacle_stop",
+    "client_robot_collision": true,
+    "client_payload_collision": false,
+    "client_contact_steps": 2,
+    "client_contact_pairs": [
+     [
+      "geom#1086",
+      "pick_obstacle_hurdle_0_collision_bar"
+     ]
+    ],
+    "obstacle_stop": true,
+    "obstacle_stop_lines": [
+     "[SAFETY] obstacle stop: clearance=-0.0008 m collision=True"
+    ],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 0.6616554711960672,
+     "Ae": 20.92499137886677,
+     "B": 85.24611334095925,
+     "C": 75.93667042891522
+    },
+    "hurdle_min_t": {
+     "Af": 361,
+     "Ae": 364,
+     "B": 179,
+     "C": 360
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1079"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1011"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 0.6616554711960672,
+      "Ae": 20.92499137886677,
+      "B": 85.24611334095925,
+      "C": 75.93667042891522
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [
+     {
+      "t_first": 366,
+      "t_last": 366,
+      "robot_substeps": 9,
+      "payload_substeps": 0,
+      "pairs": [
+       [
+        "geom#1086(ee_finger_l2)",
+        "pick_obstacle_hurdle_0_collision_bar"
+       ]
+      ],
+      "in_hold_first_row": false,
+      "phase": "before_lift",
+      "kind": "robot"
+     }
+    ],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 1,
+    "hold_kind_counts": {
+     "collision": 1
+    },
+    "hold_t": [
+     208
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 1,
+    "round_trip_ms": {
+     "n": 45,
+     "median": 1899.0683555603027,
+     "p90": 2599.0384101867676,
+     "max": 3032.7014923095703,
+     "min": 1011.6713047027588
+    },
+    "n_round_trip_gt_533": 45,
+    "n_chunks_excl_first": 45,
+    "to_solve_ms": {
+     "n": 45,
+     "median": 281.36072820052505,
+     "p90": 566.8470351025462,
+     "max": 924.3556819856167,
+     "min": 49.48251461610198
+    },
+    "server_ms": {
+     "infer": 722.1475541591644,
+     "ag3s": 645.7195552065969,
+     "trajopt": 289.0104837715626,
+     "total": 1636.3816671073437
+    },
+    "wall_s": 267.0,
+    "apple_finger_mid_min_mm": 38.91968945142789,
+    "apple_finger_mid_min_t": 149,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 27,
+     "closing": 16,
+     "held": 1
+    },
+    "tcp_deflection_mm": {
+     "n": 46,
+     "median": 6.125041231185626,
+     "p90": 25.049844086280643,
+     "max": 48.898837715830574,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 45,
+     "violated": 1
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "None": 46
+    },
+    "n_deflected_chunks": 24,
+    "deflected_binding_counts": {
+     "waypoint:base": 23,
+     "waypoint:held": 1
+    },
+    "all_binding_counts": {
+     "waypoint:base": 45,
+     "waypoint:held": 1
+    },
+    "attached_chunks": 1,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 46
+    }
+   },
+   "V2/H/V2_ep1807_s18071": {
+    "arm": "V2",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18071,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 27.889100092859426,
+     "Ae": 16.148524327154433,
+     "B": 70.4513116909473,
+     "C": 29.86448464952916
+    },
+    "hurdle_min_t": {
+     "Af": 194,
+     "Ae": 240,
+     "B": 150,
+     "C": 234
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_sleeve_right",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1053"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#995"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 27.889100092859426,
+      "Ae": 16.148524327154433,
+      "B": 70.4513116909473,
+      "C": 29.86448464952916
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 4,
+    "hold_kind_counts": {
+     "collision": 4
+    },
+    "hold_t": [
+     552,
+     560,
+     568,
+     576
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 4,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 3536.702275276184,
+     "p90": 3946.8884229660034,
+     "max": 4478.588581085205,
+     "min": 2552.9944896698
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 2042.511620093137,
+     "p90": 2435.464813373983,
+     "max": 2736.192751675844,
+     "min": 1525.705415289849
+    },
+    "server_ms": {
+     "infer": 695.5941650085151,
+     "ag3s": 384.666895493865,
+     "trajopt": 2046.8774111941457,
+     "total": 3270.7330230623484
+    },
+    "wall_s": 450.0,
+    "apple_finger_mid_min_mm": 43.38462287255297,
+    "apple_finger_mid_min_t": 142,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 16,
+     "closing": 56,
+     "held": 1
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 9.113666923191676,
+     "p90": 42.15064426548839,
+     "max": 103.9439371686975,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 71,
+     "violated": 4
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 45,
+     "stay": 30
+    },
+    "n_deflected_chunks": 55,
+    "deflected_binding_counts": {
+     "path:base": 22,
+     "path:gripper_cover": 2,
+     "waypoint:base": 9,
+     "waypoint:gripper_cover": 22
+    },
+    "all_binding_counts": {
+     "path:base": 35,
+     "path:gripper_cover": 2,
+     "waypoint:base": 10,
+     "waypoint:gripper_cover": 28
+    },
+    "attached_chunks": 1,
+    "held_body_cover_chunks": 1,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/H/V2_ep1807_s18073": {
+    "arm": "V2",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18073,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 35.12526108846493,
+     "Ae": 11.230137791001752,
+     "B": 92.29598043604172,
+     "C": 20.629444915566893
+    },
+    "hurdle_min_t": {
+     "Af": 184,
+     "Ae": 588,
+     "B": 109,
+     "C": 415
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_sleeve_right",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1053"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#941"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 35.12526108846493,
+      "Ae": 11.230137791001752,
+      "B": 92.29598043604172,
+      "C": 20.629444915566893
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 3424.0200519561768,
+     "p90": 3817.121124267578,
+     "max": 4384.779691696167,
+     "min": 2947.795867919922
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 2212.226349627599,
+     "p90": 2490.947596821934,
+     "max": 2718.2292491197586,
+     "min": 1602.759427856654
+    },
+    "server_ms": {
+     "infer": 535.92963446863,
+     "ag3s": 329.3883234728128,
+     "trajopt": 2217.8252150770277,
+     "total": 3108.3361255005
+    },
+    "wall_s": 430.0,
+    "apple_finger_mid_min_mm": 47.56143192793865,
+    "apple_finger_mid_min_t": 104,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 12,
+     "closing": 61
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 11.659573879910488,
+     "p90": 31.089664160102718,
+     "max": 68.35171595800033,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 75
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 39,
+     "stay": 36
+    },
+    "n_deflected_chunks": 51,
+    "deflected_binding_counts": {
+     "path:base": 11,
+     "path:gripper_cover": 2,
+     "waypoint:base": 3,
+     "waypoint:gripper_cover": 35
+    },
+    "all_binding_counts": {
+     "path:base": 21,
+     "path:gripper_cover": 10,
+     "waypoint:base": 3,
+     "waypoint:gripper_cover": 41
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/H/V2_ep1967_s19672": {
+    "arm": "V2",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19672,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 15.688072003777032,
+     "Ae": 19.023522536723043,
+     "B": 52.059544750051536,
+     "C": 70.07398469835536
+    },
+    "hurdle_min_t": {
+     "Af": 235,
+     "Ae": 486,
+     "B": 10,
+     "C": 491
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1051"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#989"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 15.688072003777032,
+      "Ae": 19.023522536723043,
+      "B": 52.059544750051536,
+      "C": 70.07398469835536
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 4,
+    "hold_kind_counts": {
+     "collision": 4
+    },
+    "hold_t": [
+     112,
+     120,
+     128,
+     136
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 4,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 3005.093812942505,
+     "p90": 3285.1423501968384,
+     "max": 3877.1584033966064,
+     "min": 2419.633388519287
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 1998.7480374984443,
+     "p90": 2248.0014987755567,
+     "max": 2535.423710010946,
+     "min": 1472.8949558921158
+    },
+    "server_ms": {
+     "infer": 415.7816444057971,
+     "ag3s": 282.1302553638816,
+     "trajopt": 2018.7837518751621,
+     "total": 2732.8831700142473
+    },
+    "wall_s": 389.0,
+    "apple_finger_mid_min_mm": 38.67293146426288,
+    "apple_finger_mid_min_t": 143,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 49,
+     "closing": 22,
+     "held": 2
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 9.877762974433434,
+     "p90": 36.32307175636214,
+     "max": 120.6888183128728,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 71,
+     "violated": 4
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 60,
+     "stay": 15
+    },
+    "n_deflected_chunks": 50,
+    "deflected_binding_counts": {
+     "path:base": 34,
+     "path:gripper_cover": 5,
+     "waypoint:base": 10,
+     "waypoint:gripper_cover": 1
+    },
+    "all_binding_counts": {
+     "path:base": 54,
+     "path:gripper_cover": 6,
+     "waypoint:base": 13,
+     "waypoint:gripper_cover": 2
+    },
+    "attached_chunks": 2,
+    "held_body_cover_chunks": 2,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/H/V2_ep1967_s19673": {
+    "arm": "V2",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19673,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 17.85548822548027,
+     "Ae": 8.634491242727092,
+     "B": 52.059544750051536,
+     "C": 49.57682124069855
+    },
+    "hurdle_min_t": {
+     "Af": 384,
+     "Ae": 496,
+     "B": 10,
+     "C": 496
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1011"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 17.85548822548027,
+      "Ae": 8.634491242727092,
+      "B": 52.059544750051536,
+      "C": 49.57682124069855
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 1,
+    "hold_kind_counts": {
+     "collision": 1
+    },
+    "hold_t": [
+     112
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 1,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 2948.565721511841,
+     "p90": 3279.0589570999146,
+     "max": 3503.438949584961,
+     "min": 2475.4600524902344
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 1995.4485525377095,
+     "p90": 2243.7583960592747,
+     "max": 2536.2232900224626,
+     "min": 1557.1059258654714
+    },
+    "server_ms": {
+     "infer": 407.96534321270883,
+     "ag3s": 281.827675877139,
+     "trajopt": 1999.2208953481168,
+     "total": 2702.823911095038
+    },
+    "wall_s": 384.0,
+    "apple_finger_mid_min_mm": 38.43931473408338,
+    "apple_finger_mid_min_t": 120,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 60,
+     "closing": 13
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 7.232463082064856,
+     "p90": 34.95511641018307,
+     "max": 90.39663807523617,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 74,
+     "violated": 1
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 67,
+     "stay": 8
+    },
+    "n_deflected_chunks": 46,
+    "deflected_binding_counts": {
+     "path:base": 23,
+     "path:gripper_cover": 20,
+     "waypoint:base": 3
+    },
+    "all_binding_counts": {
+     "path:base": 38,
+     "path:gripper_cover": 30,
+     "waypoint:base": 7
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/H/V2_ep1968_s19681": {
+    "arm": "V2",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19681,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 15.74467375465833,
+     "Ae": 21.5046163605957,
+     "B": 89.15718231417016,
+     "C": 92.41932739734497
+    },
+    "hurdle_min_t": {
+     "Af": 220,
+     "Ae": 204,
+     "B": 162,
+     "C": 204
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1039"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 15.74467375465833,
+      "Ae": 21.5046163605957,
+      "B": 89.15718231417016,
+      "C": 92.41932739734497
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 1,
+    "hold_kind_counts": {
+     "collision": 1
+    },
+    "hold_t": [
+     128
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 1,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 3096.933603286743,
+     "p90": 3444.4313764572144,
+     "max": 6109.278917312622,
+     "min": 2375.399589538574
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 1971.8106610234827,
+     "p90": 2367.6103674340993,
+     "max": 2905.0903413444757,
+     "min": 1380.2624898962677
+    },
+    "server_ms": {
+     "infer": 447.8567377664149,
+     "ag3s": 292.5566609483212,
+     "trajopt": 1986.2271496094763,
+     "total": 2782.4330627918243
+    },
+    "wall_s": 417.0,
+    "apple_finger_mid_min_mm": 45.36925334373243,
+    "apple_finger_mid_min_t": 120,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 14,
+     "closing": 59
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 7.152320849144249,
+     "p90": 37.06175265999927,
+     "max": 129.5626200867724,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 74,
+     "violated": 1
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 65,
+     "stay": 10
+    },
+    "n_deflected_chunks": 45,
+    "deflected_binding_counts": {
+     "path:base": 38,
+     "path:gripper_cover": 3,
+     "waypoint:base": 2,
+     "waypoint:gripper_cover": 2
+    },
+    "all_binding_counts": {
+     "path:base": 68,
+     "path:gripper_cover": 3,
+     "waypoint:base": 2,
+     "waypoint:gripper_cover": 2
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/H/V2_ep1968_s19683": {
+    "arm": "V2",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19683,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 16.07419252283027,
+     "Ae": 18.103775996324703,
+     "B": 93.22850018916166,
+     "C": 89.13669966660544
+    },
+    "hurdle_min_t": {
+     "Af": 179,
+     "Ae": 176,
+     "B": 100,
+     "C": 176
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1039"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 16.07419252283027,
+      "Ae": 18.103775996324703,
+      "B": 93.22850018916166,
+      "C": 89.13669966660544
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 1,
+    "hold_kind_counts": {
+     "collision": 1
+    },
+    "hold_t": [
+     104
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 1,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 3544.398307800293,
+     "p90": 3963.1322860717773,
+     "max": 4228.7328243255615,
+     "min": 2471.653699874878
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 2101.465325569734,
+     "p90": 2450.757716689259,
+     "max": 2935.254300944507,
+     "min": 1618.4887262061238
+    },
+    "server_ms": {
+     "infer": 735.525218071416,
+     "ag3s": 420.23393395356834,
+     "trajopt": 2105.9481834527105,
+     "total": 3305.6604939047247
+    },
+    "wall_s": 424.0,
+    "apple_finger_mid_min_mm": 33.59362331034779,
+    "apple_finger_mid_min_t": 112,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 13,
+     "closing": 60
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 3.433951563050047,
+     "p90": 56.27576271601406,
+     "max": 160.98465147930742,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 74,
+     "violated": 1
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 66,
+     "stay": 9
+    },
+    "n_deflected_chunks": 31,
+    "deflected_binding_counts": {
+     "path:base": 23,
+     "path:gripper_cover": 4,
+     "waypoint:base": 3,
+     "waypoint:gripper_cover": 1
+    },
+    "all_binding_counts": {
+     "path:base": 67,
+     "path:gripper_cover": 4,
+     "waypoint:base": 3,
+     "waypoint:gripper_cover": 1
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/H/V2_ep1982_s19822": {
+    "arm": "V2",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19822,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 16.503360668487332,
+     "Ae": 22.044417901822005,
+     "B": 99.25414771515796,
+     "C": 92.89685321647362
+    },
+    "hurdle_min_t": {
+     "Af": 184,
+     "Ae": 187,
+     "B": 111,
+     "C": 187
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1039"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 16.503360668487332,
+      "Ae": 22.044417901822005,
+      "B": 99.25414771515796,
+      "C": 92.89685321647362
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 3669.9702739715576,
+     "p90": 4044.855546951294,
+     "max": 4302.28853225708,
+     "min": 3028.048038482666
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 2104.2064561042935,
+     "p90": 2383.382567157969,
+     "max": 2615.7196052372456,
+     "min": 1664.9272902868688
+    },
+    "server_ms": {
+     "infer": 805.2257436793298,
+     "ag3s": 470.2869672328234,
+     "trajopt": 2108.2859139423817,
+     "total": 3412.1298685204238
+    },
+    "wall_s": 429.0,
+    "apple_finger_mid_min_mm": 40.74476007107646,
+    "apple_finger_mid_min_t": 109,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 12,
+     "closing": 61
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 3.428378307122624,
+     "p90": 30.08427654023657,
+     "max": 135.80289335793094,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 75
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 69,
+     "stay": 6
+    },
+    "n_deflected_chunks": 31,
+    "deflected_binding_counts": {
+     "path:base": 27,
+     "path:gripper_cover": 1,
+     "waypoint:base": 3
+    },
+    "all_binding_counts": {
+     "path:base": 70,
+     "path:gripper_cover": 2,
+     "waypoint:base": 3
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/H/V2_ep1982_s19823": {
+    "arm": "V2",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19823,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": false,
+    "client_payload_collision": false,
+    "client_contact_steps": 0,
+    "client_contact_pairs": [],
+    "obstacle_stop": false,
+    "obstacle_stop_lines": [],
+    "lift_t": null,
+    "hurdle_min_mm": {
+     "Af": 17.077330879169125,
+     "Ae": 19.1060260602338,
+     "B": 98.15794698183895,
+     "C": 90.46835512191254
+    },
+    "hurdle_min_t": {
+     "Af": 304,
+     "Ae": 258,
+     "B": 184,
+     "C": 259
+    },
+    "hurdle_min_pair": {
+     "Af": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1086"
+     ],
+     "Ae": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1052"
+     ],
+     "B": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ],
+     "C": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1039"
+     ]
+    },
+    "hurdle_min_mm_by_phase": {
+     "before_lift": {
+      "Af": 17.077330879169125,
+      "Ae": 19.1060260602338,
+      "B": 98.15794698183895,
+      "C": 90.46835512191254
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     }
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    },
+    "physics_replay_contact_events": [],
+    "physics_replay_qpos_mismatch_rows": 0,
+    "n_hold_chunks": 5,
+    "hold_kind_counts": {
+     "collision": 5
+    },
+    "hold_t": [
+     128,
+     136,
+     144,
+     152,
+     160
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 5,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 3367.5142526626587,
+     "p90": 3760.70613861084,
+     "max": 4459.964036941528,
+     "min": 2430.4261207580566
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 2150.0688260421157,
+     "p90": 2422.119628172368,
+     "max": 2816.3982816040516,
+     "min": 1365.9803192131221
+    },
+    "server_ms": {
+     "infer": 548.4357026871294,
+     "ag3s": 327.8390639461577,
+     "trajopt": 2154.6187994536012,
+     "total": 3099.790037609637
+    },
+    "wall_s": 419.0,
+    "apple_finger_mid_min_mm": 40.854513415370214,
+    "apple_finger_mid_min_t": 118,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 23,
+     "closing": 46,
+     "held": 4
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 11.242651127778242,
+     "p90": 53.603258442818934,
+     "max": 233.5779033475679,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 70,
+     "violated": 5
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 65,
+     "stay": 10
+    },
+    "n_deflected_chunks": 55,
+    "deflected_binding_counts": {
+     "path:base": 41,
+     "path:gripper_cover": 5,
+     "waypoint:base": 6,
+     "waypoint:gripper_cover": 1,
+     "waypoint:held": 2
+    },
+    "all_binding_counts": {
+     "path:base": 56,
+     "path:gripper_cover": 6,
+     "waypoint:base": 10,
+     "waypoint:gripper_cover": 1,
+     "waypoint:held": 2
+    },
+    "attached_chunks": 4,
+    "held_body_cover_chunks": 4,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/B/V2_ep1807_s18071": {
+    "arm": "V2",
+    "stage": "B",
+    "episode": 1807,
+    "seed": 18071,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": null,
+    "client_payload_collision": null,
+    "client_contact_steps": null,
+    "client_contact_pairs": null,
+    "obstacle_stop": false,
+    "obstacle_stop_lines": null,
+    "lift_t": null,
+    "hurdle_min_mm": null,
+    "hurdle_min_t": null,
+    "hurdle_min_pair": null,
+    "hurdle_min_mm_by_phase": null,
+    "contact_rows": null,
+    "physics_replay_contact_events": null,
+    "physics_replay_qpos_mismatch_rows": null,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 3214.099884033203,
+     "p90": 3486.2576961517334,
+     "max": 3614.483118057251,
+     "min": 2701.2252807617188
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 2149.0439635235816,
+     "p90": 2417.62145543471,
+     "max": 2605.9005819261074,
+     "min": 1738.5409190319479
+    },
+    "server_ms": {
+     "infer": 419.2026690579951,
+     "ag3s": 277.80880662612617,
+     "trajopt": 2153.1226101797074,
+     "total": 2921.2811160832644
+    },
+    "wall_s": 423.0,
+    "apple_finger_mid_min_mm": null,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 45,
+     "closing": 28
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 6.669439288319227,
+     "p90": 26.828280686264694,
+     "max": 53.273922429713025,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 75
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 73,
+     "stay": 2
+    },
+    "n_deflected_chunks": 46,
+    "deflected_binding_counts": {
+     "path:base": 44,
+     "path:gripper_cover": 2
+    },
+    "all_binding_counts": {
+     "path:base": 68,
+     "path:gripper_cover": 5,
+     "waypoint:base": 2
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/B/V2_ep1967_s19672": {
+    "arm": "V2",
+    "stage": "B",
+    "episode": 1967,
+    "seed": 19672,
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 152,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": null,
+    "client_payload_collision": null,
+    "client_contact_steps": null,
+    "client_contact_pairs": null,
+    "obstacle_stop": false,
+    "obstacle_stop_lines": null,
+    "lift_t": null,
+    "hurdle_min_mm": null,
+    "hurdle_min_t": null,
+    "hurdle_min_pair": null,
+    "hurdle_min_mm_by_phase": null,
+    "contact_rows": null,
+    "physics_replay_contact_events": null,
+    "physics_replay_qpos_mismatch_rows": null,
+    "n_hold_chunks": 1,
+    "hold_kind_counts": {
+     "collision": 1
+    },
+    "hold_t": [
+     112
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 1,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 3044.860363006592,
+     "p90": 3223.543930053711,
+     "max": 3460.777759552002,
+     "min": 2573.836326599121
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 2044.6320052724332,
+     "p90": 2283.7994646746665,
+     "max": 2430.282029788941,
+     "min": 1640.5535149388015
+    },
+    "server_ms": {
+     "infer": 419.16505503468215,
+     "ag3s": 266.70309668406844,
+     "trajopt": 2053.296318743378,
+     "total": 2758.407089393586
+    },
+    "wall_s": 385.0,
+    "apple_finger_mid_min_mm": null,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 56,
+     "closing": 15,
+     "held": 2
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 7.539530194134946,
+     "p90": 22.762182783098915,
+     "max": 50.28545808122813,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 74,
+     "violated": 1
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 67,
+     "stay": 8
+    },
+    "n_deflected_chunks": 50,
+    "deflected_binding_counts": {
+     "path:base": 35,
+     "path:gripper_cover": 5,
+     "waypoint:base": 8,
+     "waypoint:gripper_cover": 2
+    },
+    "all_binding_counts": {
+     "path:base": 54,
+     "path:gripper_cover": 7,
+     "waypoint:base": 12,
+     "waypoint:gripper_cover": 2
+    },
+    "attached_chunks": 2,
+    "held_body_cover_chunks": 2,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/B/V2_ep1968_s19681": {
+    "arm": "V2",
+    "stage": "B",
+    "episode": 1968,
+    "seed": 19681,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 144,
+    "place_t": 224,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": null,
+    "client_payload_collision": null,
+    "client_contact_steps": null,
+    "client_contact_pairs": null,
+    "obstacle_stop": false,
+    "obstacle_stop_lines": null,
+    "lift_t": null,
+    "hurdle_min_mm": null,
+    "hurdle_min_t": null,
+    "hurdle_min_pair": null,
+    "hurdle_min_mm_by_phase": null,
+    "contact_rows": null,
+    "physics_replay_contact_events": null,
+    "physics_replay_qpos_mismatch_rows": null,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 3185.653805732727,
+     "p90": 3393.4386491775513,
+     "max": 3572.6418495178223,
+     "min": 2804.2757511138916
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 2090.0852631311864,
+     "p90": 2324.4360542856157,
+     "max": 2429.367291275412,
+     "min": 1514.0098962001503
+    },
+    "server_ms": {
+     "infer": 520.1428385917097,
+     "ag3s": 294.4671977311373,
+     "trajopt": 2110.5361685622483,
+     "total": 2933.6578568909317
+    },
+    "wall_s": 399.0,
+    "apple_finger_mid_min_mm": null,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 15,
+     "closing": 1,
+     "held": 12,
+     "placed": 45
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 1.012721053449174,
+     "p90": 17.46105018902222,
+     "max": 55.18302382630641,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 75
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 73,
+     "stay": 2
+    },
+    "n_deflected_chunks": 20,
+    "deflected_binding_counts": {
+     "path:base": 16,
+     "path:gripper_cover": 1,
+     "waypoint:base": 1,
+     "waypoint:held": 2
+    },
+    "all_binding_counts": {
+     "path:base": 70,
+     "path:gripper_cover": 1,
+     "waypoint:base": 1,
+     "waypoint:held": 3
+    },
+    "attached_chunks": 12,
+    "held_body_cover_chunks": 12,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/B/V2_ep1982_s19822": {
+    "arm": "V2",
+    "stage": "B",
+    "episode": 1982,
+    "seed": 19822,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": null,
+    "client_payload_collision": null,
+    "client_contact_steps": null,
+    "client_contact_pairs": null,
+    "obstacle_stop": false,
+    "obstacle_stop_lines": null,
+    "lift_t": null,
+    "hurdle_min_mm": null,
+    "hurdle_min_t": null,
+    "hurdle_min_pair": null,
+    "hurdle_min_mm_by_phase": null,
+    "contact_rows": null,
+    "physics_replay_contact_events": null,
+    "physics_replay_qpos_mismatch_rows": null,
+    "n_hold_chunks": 11,
+    "hold_kind_counts": {
+     "collision": 11,
+     "unverified": 4
+    },
+    "hold_t": [
+     120,
+     128,
+     136,
+     144,
+     152,
+     160,
+     168,
+     176,
+     184,
+     192,
+     200
+    ],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 11,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 3064.716339111328,
+     "p90": 3351.385712623596,
+     "max": 3731.541395187378,
+     "min": 2718.926429748535
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 2042.3226379789412,
+     "p90": 2323.109715152532,
+     "max": 2540.8587199635804,
+     "min": 1739.8009076714516
+    },
+    "server_ms": {
+     "infer": 407.94303291477263,
+     "ag3s": 283.1757722888142,
+     "trajopt": 2045.4776941332966,
+     "total": 2790.279050823301
+    },
+    "wall_s": 391.0,
+    "apple_finger_mid_min_mm": null,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 34,
+     "closing": 27,
+     "held": 12
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 6.278737162965636,
+     "p90": 73.3045756061678,
+     "max": 472.85521403829955,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 63,
+     "violated": 12
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 70,
+     "stay": 5
+    },
+    "n_deflected_chunks": 43,
+    "deflected_binding_counts": {
+     "path:base": 30,
+     "path:gripper_cover": 4,
+     "waypoint:base": 3,
+     "waypoint:gripper_cover": 2,
+     "waypoint:held": 4
+    },
+    "all_binding_counts": {
+     "path:base": 54,
+     "path:gripper_cover": 7,
+     "waypoint:base": 6,
+     "waypoint:gripper_cover": 4,
+     "waypoint:held": 4
+    },
+    "attached_chunks": 12,
+    "held_body_cover_chunks": 12,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   },
+   "V2/B/V2_ep1995_s19952": {
+    "arm": "V2",
+    "stage": "B",
+    "episode": 1995,
+    "seed": 19952,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "n_control": 600,
+    "check_mode": "full",
+    "client_robot_collision": null,
+    "client_payload_collision": null,
+    "client_contact_steps": null,
+    "client_contact_pairs": null,
+    "obstacle_stop": false,
+    "obstacle_stop_lines": null,
+    "lift_t": null,
+    "hurdle_min_mm": null,
+    "hurdle_min_t": null,
+    "hurdle_min_pair": null,
+    "hurdle_min_mm_by_phase": null,
+    "contact_rows": null,
+    "physics_replay_contact_events": null,
+    "physics_replay_qpos_mismatch_rows": null,
+    "n_hold_chunks": 0,
+    "hold_kind_counts": {},
+    "hold_t": [],
+    "trailing_hold_chunks": 0,
+    "longest_hold_run_chunks": 0,
+    "round_trip_ms": {
+     "n": 74,
+     "median": 2934.8514080047607,
+     "p90": 3170.781350135803,
+     "max": 3415.8833026885986,
+     "min": 2596.555709838867
+    },
+    "n_round_trip_gt_533": 74,
+    "n_chunks_excl_first": 74,
+    "to_solve_ms": {
+     "n": 74,
+     "median": 2005.9472473803908,
+     "p90": 2251.247571967542,
+     "max": 2436.4645397290587,
+     "min": 1656.3252178020775
+    },
+    "server_ms": {
+     "infer": 405.95751046203077,
+     "ag3s": 261.3203916698694,
+     "trajopt": 2009.8924080375582,
+     "total": 2682.5992302037776
+    },
+    "wall_s": 373.0,
+    "apple_finger_mid_min_mm": null,
+    "grasp_state_counts": {
+     "searching": 2,
+     "latched": 45,
+     "closing": 28
+    },
+    "tcp_deflection_mm": {
+     "n": 75,
+     "median": 7.528817402321966,
+     "p90": 25.982268750262357,
+     "max": 40.318382781520505,
+     "min": 0.0
+    },
+    "to_status_counts": {
+     "feasible": 75
+    },
+    "time_budget_hit_count": 0,
+    "initial_source_counts": {
+     "reference": 60,
+     "stay": 15
+    },
+    "n_deflected_chunks": 49,
+    "deflected_binding_counts": {
+     "path:base": 35,
+     "path:gripper_cover": 9,
+     "waypoint:base": 3,
+     "waypoint:gripper_cover": 2
+    },
+    "all_binding_counts": {
+     "path:base": 58,
+     "path:gripper_cover": 11,
+     "waypoint:base": 4,
+     "waypoint:gripper_cover": 2
+    },
+    "attached_chunks": 0,
+    "held_body_cover_chunks": 0,
+    "sqp_iterations_counts": {
+     "3": 75
+    }
+   }
+  },
+  "resources": {
+   "servers": {
+    "E0/server_8281_20261005T143549": {
+     "gpu_used_before_mib": 19604,
+     "gpu_total_peak_mib": 26732,
+     "server_rss_max_gib": 4.092552185058594,
+     "client_rss_max_gib": 2.7647132873535156,
+     "start": "2026-10-05T14:35:55+00:00",
+     "end": "2026-10-05T14:53:52+00:00"
+    },
+    "V0/server_8280_20261005T144715": {
+     "gpu_used_before_mib": 8738,
+     "gpu_total_peak_mib": 35990,
+     "server_rss_max_gib": 6.915138244628906,
+     "client_rss_max_gib": 3.0164718627929688,
+     "start": "2026-10-05T14:47:26+00:00",
+     "end": "2026-10-05T15:13:01+00:00"
+    },
+    "V1/server_8281_20261005T134938": {
+     "gpu_used_before_mib": 43592,
+     "gpu_total_peak_mib": 63188,
+     "server_rss_max_gib": 7.066623687744141,
+     "client_rss_max_gib": 3.0173301696777344,
+     "start": "2026-10-05T13:51:13+00:00",
+     "end": "2026-10-05T14:35:44+00:00"
+    },
+    "V2/server_8280_20261005T134908": {
+     "gpu_used_before_mib": 26668,
+     "gpu_total_peak_mib": 63188,
+     "server_rss_max_gib": 7.706501007080078,
+     "client_rss_max_gib": 3.0173873901367188,
+     "start": "2026-10-05T13:49:13+00:00",
+     "end": "2026-10-05T14:47:10+00:00"
+    },
+    "V2/server_8281_20261005T145357": {
+     "gpu_used_before_mib": 17990,
+     "gpu_total_peak_mib": 36432,
+     "server_rss_max_gib": 7.749027252197266,
+     "client_rss_max_gib": 3.00811767578125,
+     "start": "2026-10-05T14:54:02+00:00",
+     "end": "2026-10-05T15:29:13+00:00"
+    }
+   },
+   "load_avg_1min": {
+    "mean": 21.793705882352942,
+    "max": 48.6,
+    "n_samples": 170,
+    "file": "outputs/verify/T43/V/runs/load_samples.txt"
+   },
+   "rules": "working set + estimate <= 64 GiB, >= 120 s after every serve_safe start, GPU used + 28 GB <= 130 GB, <= 2 of our servers; another verifier (T42-2) ran up to 2 servers concurrently"
+  },
+  "baseline": {
+   "legacy": {
+    "violated_start": "14/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -29.031048280806342,
+    "clearance_before_mm": [
+     -29.031048280806342,
+     -25.459368335319574,
+     -9.242646574210797,
+     -0.5363804303415154,
+     -0.5152471840129957,
+     -0.6554878048135593,
+     0.14454196427604593,
+     -7.216120518425156,
+     -46.090465035965686,
+     -73.88725230223834,
+     -105.97849109174706,
+     -123.3170138151228,
+     -122.63332596933374,
+     -124.0329667235858,
+     -127.49956534763415
+    ],
+    "sha1": {
+     "repr_json_list": "40798fb0a4d2e4ff49f67ea707c24437bc7def2c",
+     "repr_join": "c253217ef47b8c907e799140b98f7857e3b570ae"
+    },
+    "matched": true,
+    "sha1_repr_json_list_equals_T41c": true
+   },
+   "curobo": {
+    "violated_start": "10/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "clearance_before_mm": [
+     -9.171877401271193,
+     -5.648570689139543,
+     9.852846656040997,
+     6.450196027978722,
+     19.553017889882284,
+     19.501786239009668,
+     16.686905812824588,
+     -4.039648023169362,
+     -37.37479033574455,
+     -65.55879375889504,
+     -100.1568691779972,
+     -123.23158677074396,
+     -126.17007996410706,
+     -125.69421446109195,
+     -124.97617978154466
+    ],
+    "sha1": {
+     "repr_json_list": "fe73bd7a6ba68623b67ee063ad489ea9806bfad9",
+     "repr_join": "5cfa8d066db3a55f602ef85f0d75f3132917ec0c"
+    },
+    "matched": true,
+    "sha1_repr_json_list_equals_T41c": true
+   }
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43v-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43v-distance.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43v-chunk-time.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43v-table.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "legacy 14/15 / 15/15 / -29.031048280806342; cuRobo 10/15 / 15/15 / -9.171877401271193; sha1 repr_json_list equal to T41c (legacy True, cuRobo True)"
+ },
+ "verdict": "기준선 일치 (legacy · cuRobo). 판정은 lead 와 사용자가 한다.",
+ "not_measured": [
+  "per-frame clearance and SQP iteration counts are not baselines (wall-clock time budget)",
+  "hurdle distance of the no-obstacle runs (B): no virtual hurdle (ep1995 has no T43 P placement)",
+  "grasp contact height (analyze_t39 do_contact) not computed",
+  "server TO / round-trip times were measured on a shared pod (load samples in runs/load_samples.txt); no isolated timing run",
+  "contacts: client robot_collision / payload_collision (every sim step) and physics replay contact events (hold_v.py); hurdle_metrics rows <= 0 are on pre-step control-row poses only"
+ ]
+}

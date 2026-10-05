@@ -1,0 +1,1774 @@
+{
+ "definitions": "T43V figures (verifier). usage: fig_t43v.py [--overwrite]\ninputs : outputs/verify/T43/V/analysis/analysis.json (analyze_t43v.py), numbers.json (partial_v.py --final), hold_v.json.\noutputs: benchmark/ag3s/docs/figures/t43/t43v-scene.png, t43v-distance.png, t43v-table.png, t43v-chunk-time.png (+ .json sidecars)\n\nscene      : per hurdle episode (T40 seed), V0 | V2 third-person front frame (recorded third_person_front.mp4, one frame per control step,\n             avoidance-arrow overlay drawn by the client: green = executed refined - reference TCP vector x8, red = HOLD) at the control row\n             of the run's minimum hurdle distance over fingers, palm, other robot geoms and the apple (client pair_distance).\ndistance   : per hurdle run (episode x seed), min over robot sets (fingers Af, palm Ae, other robot C) to hurdle (solid) and apple B to\n             hurdle (dotted) vs control step, mm, clipped at 150; arm colours E0 / V0 / V1 / V2 = CATEGORICAL slots 0-3; x = last row of a\n             run that ended in an obstacle stop; lines at 0 and 10 mm (V1 / V2 obstacle margin).\ntable      : outcome per hurdle run and arm: S (success) / G (grasp only) / - ; contact (client robot / payload collision, first contact\n             row phase); HOLD chunks (trailing to the end in brackets); min mm fingers / palm / apple / other. Second panel: V2 no-obstacle\n             runs vs T40 B / T41a B (outcome from T41c.verify.json numbers.outcome).\nchunk-time : per arm, ECDF of the client round trip per chunk (first chunk excluded, pooled over hurdle runs) and of the server TO\n             solve time (to.solve_ms); vertical line at 533.3 ms (8 control steps at 15 Hz).",
+ "rows": [
+  {
+   "episode": 1807,
+   "seed": 18071,
+   "E0": {
+    "outcome": "G",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 18.216125126644464,
+     "Ae": 8.66549481456682,
+     "B": 42.197734650995024,
+     "C": 76.512404539033
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V0": {
+    "outcome": "G",
+    "hold_chunks": 2,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": true,
+    "hurdle_min_mm": {
+     "Af": 22.175608163384744,
+     "Ae": 19.72724538938146,
+     "B": -0.4190171227343945,
+     "C": 64.07392933259598
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 1,
+      "first_t": 199,
+      "first_phase": "after"
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V1": {
+    "outcome": "G",
+    "hold_chunks": 7,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 34.16219007018865,
+     "Ae": 33.961068167116075,
+     "B": 84.6597270241426,
+     "C": 85.99675390290281
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V2": {
+    "outcome": "-",
+    "hold_chunks": 4,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 27.889100092859426,
+     "Ae": 16.148524327154433,
+     "B": 70.4513116909473,
+     "C": 29.86448464952916
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  },
+  {
+   "episode": 1807,
+   "seed": 18073,
+   "E0": {
+    "outcome": "-",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 24.645608260278454,
+     "Ae": 3.6100070652485186,
+     "B": 91.09969766824611,
+     "C": 73.20941261728676
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V0": {
+    "outcome": "G",
+    "hold_chunks": 7,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 10.537514211935271,
+     "Ae": 0.4617818541415731,
+     "B": 36.168187160853755,
+     "C": 61.89980710204411
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V1": {
+    "outcome": "G",
+    "hold_chunks": 5,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 20.945792137387823,
+     "Ae": 18.851239933270158,
+     "B": 48.963765391363715,
+     "C": 70.71682871882467
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V2": {
+    "outcome": "-",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 35.12526108846493,
+     "Ae": 11.230137791001752,
+     "B": 92.29598043604172,
+     "C": 20.629444915566893
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  },
+  {
+   "episode": 1968,
+   "seed": 19681,
+   "E0": {
+    "outcome": "G",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": -0.46169881227796017,
+     "Ae": 31.16085399389835,
+     "B": 12.586371087981473,
+     "C": 105.35073257656562
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 1,
+      "first_t": 261,
+      "first_phase": "carry"
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V0": {
+    "outcome": "G",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 0.27972601103396466,
+     "Ae": 41.25313230054202,
+     "B": 9.77094819879466,
+     "C": 113.66863803321333
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V1": {
+    "outcome": "-",
+    "hold_chunks": 4,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 3.4136922708388076,
+     "Ae": 0.9475498714772747,
+     "B": 88.02318096834338,
+     "C": 49.37333912616301
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V2": {
+    "outcome": "-",
+    "hold_chunks": 1,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 15.74467375465833,
+     "Ae": 21.5046163605957,
+     "B": 89.15718231417016,
+     "C": 92.41932739734497
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  },
+  {
+   "episode": 1968,
+   "seed": 19683,
+   "E0": {
+    "outcome": "G",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 9.87910491105265,
+     "Ae": 44.28673317979413,
+     "B": 21.431110789032388,
+     "C": 113.21855115332662
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V0": {
+    "outcome": "G",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 2.431132025023248,
+     "Ae": 42.819930507993476,
+     "B": 14.267827766509694,
+     "C": 113.21855040633726
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V1": {
+    "outcome": "S",
+    "hold_chunks": 1,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": true,
+    "hurdle_min_mm": {
+     "Af": 1.0218696032076764,
+     "Ae": 32.30879076399713,
+     "B": -0.7345859592667332,
+     "C": 78.84789581423173
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 8,
+      "first_t": 162,
+      "first_phase": "carry"
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V2": {
+    "outcome": "-",
+    "hold_chunks": 1,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 16.07419252283027,
+     "Ae": 18.103775996324703,
+     "B": 93.22850018916166,
+     "C": 89.13669966660544
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  },
+  {
+   "episode": 1982,
+   "seed": 19822,
+   "E0": {
+    "outcome": "-",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 9.984569273269024,
+     "Ae": 25.046982469156482,
+     "B": 94.27329436884072,
+     "C": 98.85506501093583
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V0": {
+    "outcome": "-",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 2.6964771709928113,
+     "Ae": 40.53243606868644,
+     "B": 97.70592421955163,
+     "C": 114.74597133641058
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V1": {
+    "outcome": "-",
+    "hold_chunks": 3,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 1.309677899064372,
+     "Ae": -0.41609937638499916,
+     "B": 81.19880812021894,
+     "C": 49.88832816886682
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 1,
+      "first_t": 437,
+      "first_phase": "before_lift"
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V2": {
+    "outcome": "-",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 16.503360668487332,
+     "Ae": 22.044417901822005,
+     "B": 99.25414771515796,
+     "C": 92.89685321647362
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  },
+  {
+   "episode": 1982,
+   "seed": 19823,
+   "E0": {
+    "outcome": "G",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 6.664412356278061,
+     "Ae": 42.83701911057537,
+     "B": 27.169232850600142,
+     "C": 116.6933586936331
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V0": {
+    "outcome": "G",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 2.2070597505016774,
+     "Ae": 44.9402919097546,
+     "B": 14.210450649319709,
+     "C": 116.98704349518059
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V1": {
+    "outcome": "-",
+    "hold_chunks": 1,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 0.6616554711960672,
+     "Ae": 20.92499137886677,
+     "B": 85.24611334095925,
+     "C": 75.93667042891522
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V2": {
+    "outcome": "-",
+    "hold_chunks": 5,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 17.077330879169125,
+     "Ae": 19.1060260602338,
+     "B": 98.15794698183895,
+     "C": 90.46835512191254
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  },
+  {
+   "episode": 1967,
+   "seed": 19672,
+   "E0": {
+    "outcome": "S",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": true,
+    "hurdle_min_mm": {
+     "Af": 4.669913473482726,
+     "Ae": 31.17649536598267,
+     "B": -0.004989063420415135,
+     "C": 91.1427608350707
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 2,
+      "first_t": 196,
+      "first_phase": "carry"
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V0": {
+    "outcome": "G",
+    "hold_chunks": 2,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 8.493708875989864,
+     "Ae": 2.749407257158408,
+     "B": 22.813307891765273,
+     "C": 53.2899198890194
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V1": {
+    "outcome": "-",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": true,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 7.793712240957575,
+     "Ae": 0.2688934971688001,
+     "B": 52.059544750051536,
+     "C": 61.45134626579726
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V2": {
+    "outcome": "-",
+    "hold_chunks": 4,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 15.688072003777032,
+     "Ae": 19.023522536723043,
+     "B": 52.059544750051536,
+     "C": 70.07398469835536
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  },
+  {
+   "episode": 1967,
+   "seed": 19673,
+   "E0": {
+    "outcome": "S",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": true,
+    "hurdle_min_mm": {
+     "Af": 7.10777770647996,
+     "Ae": 42.35493979640659,
+     "B": -0.6187090814692153,
+     "C": 93.77422400230962
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 8,
+      "first_t": 163,
+      "first_phase": "carry"
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V0": {
+    "outcome": "-",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 4.522784328067429,
+     "Ae": 35.95257474085955,
+     "B": 50.88571275717376,
+     "C": 83.6240723075313
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V1": {
+    "outcome": "-",
+    "hold_chunks": 0,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 12.224263171729609,
+     "Ae": 37.555847900402185,
+     "B": 52.059544750051536,
+     "C": 90.37701127689839
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   },
+   "V2": {
+    "outcome": "-",
+    "hold_chunks": 1,
+    "trailing_hold_chunks": 0,
+    "robot_collision": false,
+    "payload_collision": false,
+    "hurdle_min_mm": {
+     "Af": 17.85548822548027,
+     "Ae": 8.634491242727092,
+     "B": 52.059544750051536,
+     "C": 49.57682124069855
+    },
+    "contact_rows": {
+     "Af": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "Ae": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "B": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     },
+     "C": {
+      "n_rows_le_0": 0,
+      "first_t": null,
+      "first_phase": null
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "E0": {
+   "n": 8,
+   "success": 2,
+   "grasp": 6,
+   "place": 2,
+   "runs_client_robot_collision": 7,
+   "runs_client_payload_collision": 2,
+   "runs_obstacle_stop": 7,
+   "hold_chunks": 0,
+   "runs_with_hold": 0,
+   "trailing_hold_chunks_per_run": {
+    "1807_s18071": 0,
+    "1807_s18073": 0,
+    "1967_s19672": 0,
+    "1967_s19673": 0,
+    "1968_s19681": 0,
+    "1968_s19683": 0,
+    "1982_s19822": 0,
+    "1982_s19823": 0
+   },
+   "hurdle_min_mm_min": {
+    "Af": -0.46169881227796017,
+    "Ae": 3.6100070652485186,
+    "B": -0.6187090814692153,
+    "C": 73.20941261728676
+   },
+   "hurdle_min_mm_median_of_runs": {
+    "Af": 8.493441308766306,
+    "Ae": 31.16867467994051,
+    "B": 24.300171819816264,
+    "C": 96.31464450662273
+   },
+   "n_round_trip_gt_533": 3,
+   "n_chunks_excl_first": 284,
+   "round_trip_ms_pooled": {
+    "n": 284,
+    "median": 201.2035846710205,
+    "p90": 321.9465970993042,
+    "max": 789.1800403594971,
+    "min": 176.58329010009766
+   },
+   "to_solve_ms_pooled": null,
+   "deflected_binding_counts": {},
+   "all_binding_counts": {},
+   "to_status_counts": {},
+   "initial_source_counts": {},
+   "grasp_state_counts": {},
+   "hold_kind_counts": {},
+   "time_budget_hit_count": 0,
+   "n_deflected_chunks": 0,
+   "physics_replay_contact_events": 9,
+   "runs_with_physics_replay_contact": 8,
+   "apple_finger_mid_min_mm_per_run": {
+    "1807_s18071": 36.630782441216176,
+    "1807_s18073": 47.38381132184271,
+    "1967_s19672": 33.897684929460716,
+    "1967_s19673": 40.399445006072064,
+    "1968_s19681": 37.05505874240791,
+    "1968_s19683": 39.62725959457394,
+    "1982_s19822": 38.23510385000843,
+    "1982_s19823": 35.91615380340891
+   }
+  },
+  "V0": {
+   "n": 8,
+   "success": 0,
+   "grasp": 6,
+   "place": 0,
+   "runs_client_robot_collision": 7,
+   "runs_client_payload_collision": 1,
+   "runs_obstacle_stop": 7,
+   "hold_chunks": 11,
+   "runs_with_hold": 3,
+   "trailing_hold_chunks_per_run": {
+    "1807_s18071": 0,
+    "1807_s18073": 0,
+    "1967_s19672": 0,
+    "1967_s19673": 0,
+    "1968_s19681": 0,
+    "1968_s19683": 0,
+    "1982_s19822": 0,
+    "1982_s19823": 0
+   },
+   "hurdle_min_mm_min": {
+    "Af": 0.27972601103396466,
+    "Ae": 0.4617818541415731,
+    "B": -0.4190171227343945,
+    "C": 53.2899198890194
+   },
+   "hurdle_min_mm_median_of_runs": {
+    "Af": 3.60963074953012,
+    "Ae": 38.242505404773,
+    "B": 18.540567829137483,
+    "C": 98.42131135693428
+   },
+   "n_round_trip_gt_533": 302,
+   "n_chunks_excl_first": 302,
+   "round_trip_ms_pooled": {
+    "n": 302,
+    "median": 1005.9071779251099,
+    "p90": 1750.229477882386,
+    "max": 3606.304407119751,
+    "min": 844.2614078521729
+   },
+   "to_solve_ms_pooled": {
+    "n": 302,
+    "median": 59.10651828162372,
+    "p90": 213.5464794002474,
+    "max": 512.0683941058815,
+    "min": 34.13043403998017
+   },
+   "deflected_binding_counts": {
+    "waypoint:base": 140,
+    "waypoint:held": 11
+   },
+   "all_binding_counts": {
+    "waypoint:base": 290,
+    "waypoint:held": 20
+   },
+   "to_status_counts": {
+    "feasible": 297,
+    "violated": 13
+   },
+   "initial_source_counts": {
+    "None": 310
+   },
+   "grasp_state_counts": {
+    "closing": 47,
+    "held": 64,
+    "latched": 143,
+    "placed": 40,
+    "searching": 16
+   },
+   "hold_kind_counts": {
+    "collision": 11,
+    "unverified": 1
+   },
+   "time_budget_hit_count": 0,
+   "n_deflected_chunks": 151,
+   "physics_replay_contact_events": 8,
+   "runs_with_physics_replay_contact": 7,
+   "apple_finger_mid_min_mm_per_run": {
+    "1807_s18071": 42.47539317566958,
+    "1807_s18073": 40.150210768358114,
+    "1967_s19672": 38.608885052741584,
+    "1967_s19673": 38.883510282064265,
+    "1968_s19681": 37.71210290661424,
+    "1968_s19683": 38.39540604837793,
+    "1982_s19822": 39.31924585982192,
+    "1982_s19823": 34.99036040554488
+   }
+  },
+  "V1": {
+   "n": 8,
+   "success": 1,
+   "grasp": 3,
+   "place": 1,
+   "runs_client_robot_collision": 5,
+   "runs_client_payload_collision": 1,
+   "runs_obstacle_stop": 5,
+   "hold_chunks": 21,
+   "runs_with_hold": 6,
+   "trailing_hold_chunks_per_run": {
+    "1807_s18071": 0,
+    "1807_s18073": 0,
+    "1967_s19672": 0,
+    "1967_s19673": 0,
+    "1968_s19681": 0,
+    "1968_s19683": 0,
+    "1982_s19822": 0,
+    "1982_s19823": 0
+   },
+   "hurdle_min_mm_min": {
+    "Af": 0.6616554711960672,
+    "Ae": -0.41609937638499916,
+    "B": -0.7345859592667332,
+    "C": 49.37333912616301
+   },
+   "hurdle_min_mm_median_of_runs": {
+    "Af": 5.603702255898192,
+    "Ae": 19.888115656068464,
+    "B": 66.62917643513524,
+    "C": 73.32674957386995
+   },
+   "n_round_trip_gt_533": 462,
+   "n_chunks_excl_first": 462,
+   "round_trip_ms_pooled": {
+    "n": 462,
+    "median": 1531.4680337905884,
+    "p90": 2354.297256469727,
+    "max": 3032.7014923095703,
+    "min": 878.3702850341797
+   },
+   "to_solve_ms_pooled": {
+    "n": 462,
+    "median": 158.91442517749965,
+    "p90": 412.64697215519845,
+    "max": 924.3556819856167,
+    "min": 36.8180051445961
+   },
+   "deflected_binding_counts": {
+    "waypoint:base": 290,
+    "waypoint:held": 5
+   },
+   "all_binding_counts": {
+    "waypoint:base": 461,
+    "waypoint:held": 9
+   },
+   "to_status_counts": {
+    "feasible": 449,
+    "violated": 21
+   },
+   "initial_source_counts": {
+    "None": 470
+   },
+   "grasp_state_counts": {
+    "closing": 168,
+    "held": 27,
+    "latched": 244,
+    "placed": 15,
+    "searching": 16
+   },
+   "hold_kind_counts": {
+    "collision": 17,
+    "uncertified": 4
+   },
+   "time_budget_hit_count": 0,
+   "n_deflected_chunks": 295,
+   "physics_replay_contact_events": 6,
+   "runs_with_physics_replay_contact": 5,
+   "apple_finger_mid_min_mm_per_run": {
+    "1807_s18071": 43.11696073874889,
+    "1807_s18073": 39.12028785939058,
+    "1967_s19672": 37.72552481529687,
+    "1967_s19673": 40.16883591820912,
+    "1968_s19681": 36.54422322310176,
+    "1968_s19683": 40.03197161235634,
+    "1982_s19822": 37.302483142358156,
+    "1982_s19823": 38.91968945142789
+   }
+  },
+  "V2": {
+   "n": 8,
+   "success": 0,
+   "grasp": 0,
+   "place": 0,
+   "runs_client_robot_collision": 0,
+   "runs_client_payload_collision": 0,
+   "runs_obstacle_stop": 0,
+   "hold_chunks": 16,
+   "runs_with_hold": 6,
+   "trailing_hold_chunks_per_run": {
+    "1807_s18071": 0,
+    "1807_s18073": 0,
+    "1967_s19672": 0,
+    "1967_s19673": 0,
+    "1968_s19681": 0,
+    "1968_s19683": 0,
+    "1982_s19822": 0,
+    "1982_s19823": 0
+   },
+   "hurdle_min_mm_min": {
+    "Af": 15.688072003777032,
+    "Ae": 8.634491242727092,
+    "B": 52.059544750051536,
+    "C": 20.629444915566893
+   },
+   "hurdle_min_mm_median_of_runs": {
+    "Af": 16.79034577382823,
+    "Ae": 18.563649266523875,
+    "B": 90.72658137510594,
+    "C": 79.6053421824804
+   },
+   "n_round_trip_gt_533": 592,
+   "n_chunks_excl_first": 592,
+   "round_trip_ms_pooled": {
+    "n": 592,
+    "median": 3295.9375381469727,
+    "p90": 3845.096492767334,
+    "max": 6109.278917312622,
+    "min": 2375.399589538574
+   },
+   "to_solve_ms_pooled": {
+    "n": 592,
+    "median": 2064.623187761754,
+    "p90": 2415.8873507753015,
+    "max": 2935.254300944507,
+    "min": 1365.9803192131221
+   },
+   "deflected_binding_counts": {
+    "path:base": 219,
+    "path:gripper_cover": 42,
+    "waypoint:base": 39,
+    "waypoint:gripper_cover": 62,
+    "waypoint:held": 2
+   },
+   "all_binding_counts": {
+    "path:base": 409,
+    "path:gripper_cover": 63,
+    "waypoint:base": 51,
+    "waypoint:gripper_cover": 75,
+    "waypoint:held": 2
+   },
+   "to_status_counts": {
+    "feasible": 584,
+    "violated": 16
+   },
+   "initial_source_counts": {
+    "reference": 476,
+    "stay": 124
+   },
+   "grasp_state_counts": {
+    "closing": 378,
+    "held": 7,
+    "latched": 199,
+    "searching": 16
+   },
+   "hold_kind_counts": {
+    "collision": 16
+   },
+   "time_budget_hit_count": 0,
+   "n_deflected_chunks": 364,
+   "physics_replay_contact_events": 0,
+   "runs_with_physics_replay_contact": 0,
+   "apple_finger_mid_min_mm_per_run": {
+    "1807_s18071": 43.38462287255297,
+    "1807_s18073": 47.56143192793865,
+    "1967_s19672": 38.67293146426288,
+    "1967_s19673": 38.43931473408338,
+    "1968_s19681": 45.36925334373243,
+    "1968_s19683": 33.59362331034779,
+    "1982_s19822": 40.74476007107646,
+    "1982_s19823": 40.854513415370214
+   }
+  }
+ },
+ "no_obstacle": [
+  {
+   "episode": 1807,
+   "seed": 18071,
+   "T40_B": {
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 160,
+    "place_t": 240,
+    "lift_t": 153,
+    "n_control": 600
+   },
+   "T41a_B": {
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 120,
+    "place_t": 200,
+    "lift_t": 113,
+    "n_control": 600
+   },
+   "V2": {
+    "outcome": "-",
+    "hold_chunks": 0,
+    "grasp_t": null,
+    "place_t": null
+   }
+  },
+  {
+   "episode": 1968,
+   "seed": 19681,
+   "T40_B": {
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 152,
+    "place_t": 224,
+    "lift_t": 138,
+    "n_control": 600
+   },
+   "T41a_B": {
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 152,
+    "place_t": 224,
+    "lift_t": 143,
+    "n_control": 600
+   },
+   "V2": {
+    "outcome": "S",
+    "hold_chunks": 0,
+    "grasp_t": 144,
+    "place_t": 224
+   }
+  },
+  {
+   "episode": 1982,
+   "seed": 19822,
+   "T40_B": {
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 160,
+    "place_t": 240,
+    "lift_t": 145,
+    "n_control": 600
+   },
+   "T41a_B": {
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 184,
+    "place_t": 272,
+    "lift_t": 169,
+    "n_control": 600
+   },
+   "V2": {
+    "outcome": "-",
+    "hold_chunks": 11,
+    "grasp_t": null,
+    "place_t": null
+   }
+  },
+  {
+   "episode": 1995,
+   "seed": 19952,
+   "T40_B": {
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 168,
+    "place_t": 240,
+    "lift_t": 154,
+    "n_control": 600
+   },
+   "T41a_B": {
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 160,
+    "place_t": 240,
+    "lift_t": 145,
+    "n_control": 600
+   },
+   "V2": {
+    "outcome": "-",
+    "hold_chunks": 0,
+    "grasp_t": null,
+    "place_t": null
+   }
+  },
+  {
+   "episode": 1967,
+   "seed": 19672,
+   "T40_B": {
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 152,
+    "place_t": 200,
+    "lift_t": 139,
+    "n_control": 600
+   },
+   "T41a_B": {
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "lift_t": null,
+    "n_control": 600
+   },
+   "V2": {
+    "outcome": "G",
+    "hold_chunks": 1,
+    "grasp_t": 152,
+    "place_t": null
+   }
+  }
+ ],
+ "pairs": {
+  "V2_vs_V0": {
+   "n_pairs": 8,
+   "keys": [
+    "1807_s18071",
+    "1807_s18073",
+    "1967_s19672",
+    "1967_s19673",
+    "1968_s19681",
+    "1968_s19683",
+    "1982_s19822",
+    "1982_s19823"
+   ],
+   "success": {
+    "both": 0,
+    "V2_only": 0,
+    "V0_only": 0,
+    "neither": 8,
+    "mcnemar_exact_p": 1.0
+   },
+   "grasp": {
+    "both": 0,
+    "V2_only": 0,
+    "V0_only": 6,
+    "neither": 2,
+    "mcnemar_exact_p": 0.03125
+   },
+   "place": {
+    "both": 0,
+    "V2_only": 0,
+    "V0_only": 0,
+    "neither": 8,
+    "mcnemar_exact_p": 1.0
+   }
+  },
+  "V2_vs_V1": {
+   "n_pairs": 8,
+   "keys": [
+    "1807_s18071",
+    "1807_s18073",
+    "1967_s19672",
+    "1967_s19673",
+    "1968_s19681",
+    "1968_s19683",
+    "1982_s19822",
+    "1982_s19823"
+   ],
+   "success": {
+    "both": 0,
+    "V2_only": 0,
+    "V1_only": 1,
+    "neither": 7,
+    "mcnemar_exact_p": 1.0
+   },
+   "grasp": {
+    "both": 0,
+    "V2_only": 0,
+    "V1_only": 3,
+    "neither": 5,
+    "mcnemar_exact_p": 0.25
+   },
+   "place": {
+    "both": 0,
+    "V2_only": 0,
+    "V1_only": 1,
+    "neither": 7,
+    "mcnemar_exact_p": 1.0
+   }
+  },
+  "V1_vs_V0": {
+   "n_pairs": 8,
+   "keys": [
+    "1807_s18071",
+    "1807_s18073",
+    "1967_s19672",
+    "1967_s19673",
+    "1968_s19681",
+    "1968_s19683",
+    "1982_s19822",
+    "1982_s19823"
+   ],
+   "success": {
+    "both": 0,
+    "V1_only": 1,
+    "V0_only": 0,
+    "neither": 7,
+    "mcnemar_exact_p": 1.0
+   },
+   "grasp": {
+    "both": 3,
+    "V1_only": 0,
+    "V0_only": 3,
+    "neither": 2,
+    "mcnemar_exact_p": 0.25
+   },
+   "place": {
+    "both": 0,
+    "V1_only": 1,
+    "V0_only": 0,
+    "neither": 7,
+    "mcnemar_exact_p": 1.0
+   }
+  },
+  "V0_vs_E0": {
+   "n_pairs": 8,
+   "keys": [
+    "1807_s18071",
+    "1807_s18073",
+    "1967_s19672",
+    "1967_s19673",
+    "1968_s19681",
+    "1968_s19683",
+    "1982_s19822",
+    "1982_s19823"
+   ],
+   "success": {
+    "both": 0,
+    "V0_only": 0,
+    "E0_only": 2,
+    "neither": 6,
+    "mcnemar_exact_p": 0.5
+   },
+   "grasp": {
+    "both": 5,
+    "V0_only": 1,
+    "E0_only": 1,
+    "neither": 1,
+    "mcnemar_exact_p": 1.0
+   },
+   "place": {
+    "both": 0,
+    "V0_only": 0,
+    "E0_only": 2,
+    "neither": 6,
+    "mcnemar_exact_p": 0.5
+   }
+  }
+ }
+}
