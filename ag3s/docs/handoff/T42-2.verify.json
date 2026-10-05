@@ -1,0 +1,1962 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only; no interpretation.",
+ "step": "T42-2",
+ "date": "2026-10-05",
+ "runs": [
+  {
+   "id": "regression baseline on the snapshot",
+   "command": "outputs/verify/T42/2/baseline/run_baseline.sh; judge.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T42/2/baseline/",
+   "stdout_log": "outputs/verify/T42/2/baseline/{legacy,curobo}.log"
+  },
+  {
+   "id": "placement search (place phase)",
+   "command": "p/capture.py; p/run_searches.sh -> p/search.py (plib.py); p/select.py (place only) -> p/dryrun.py",
+   "venv": ".venv-openpi-live (CPU, nice 19, <= 4 workers)",
+   "raw_output": "outputs/verify/T42/2/raw/{search_*,select,dryrun_*}.json, configs/t42_2_ep*.json",
+   "stdout_log": "outputs/verify/T42/2/raw/logs/"
+  },
+  {
+   "id": "place-phase obstacle runs E0 / E3b",
+   "command": "p/launch_t42_2.sh place1 (E3b 8251, E0 8250) -> run_chain.sh / start_server.sh / run_client.sh / check_run.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T42/2/runs/{E0,E3b}/place/",
+   "stdout_log": "outputs/verify/T42/2/runs/launch_place1.out, runs/{E0,E3b}/chain_825*.log"
+  },
+  {
+   "id": "analysis",
+   "command": "p/analyze_t42_2.py (obst_metrics.py, analyze_t42.py, grasp_robust.py); p/divergence.py; p/fig_t42_2.py; p/build_verify_t42_2.py",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/T42/2/analysis_place1.json"
+  }
+ ],
+ "code_state": {
+  "snapshot": "/mnt/dev/work-t42c",
+  "benchmark_head": "61f10aa (git archive + ag3s/asset/data symlink)",
+  "pi05_TO_hybrid_head": "fce4af8 (git archive rby1_bringup, rby1_description/models, rby1_manipulation)",
+  "code_md5": "outputs/verify/T42/2/p/code_md5_t42c.txt (402 files)",
+  "import_check": [
+   "outputs/verify/T42/2/import_server.json",
+   "outputs/verify/T42/2/import_client.json"
+  ],
+  "superseded_snapshot": "/mnt/dev/work-t42b (c7c1cc9, before the arrow commit; no runs)",
+  "dirty_files": []
+ },
+ "numbers": {
+  "_comment": "seed = 10*ep + 1 (rep 1). Distances: snapshot manager.pair_distance on recorded control rows. Groups: GRIP = EE_BODY_<arm> + fingers, TARGET = target fruit, ROBOT_OTHER = other robot geoms, FRUITS = other fruits. Stop phases relative to lift_t / place_t of the run.",
+  "settings": {
+   "E3b_server": "T34 settings + --no-subtask-gate (as T42-1)",
+   "E0_server": "--no-safe --no-subtask-gate",
+   "client": "as T42-1 + --obstacle-config CFG --obstacle-profile PROF --obstacle-stop-distance 0; E3b + --viz-avoidance-arrow (defaults 5 mm, x8)",
+   "extra_arm_obstacle_margin_hold_measured": "not run"
+  },
+  "regression_baseline": {
+   "legacy": {
+    "violated_start": "14/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -29.031048280806342,
+    "clearance_before_mm": [
+     -29.031048280806342,
+     -25.459368335319574,
+     -9.242646574210797,
+     -0.5363804303415154,
+     -0.5152471840129957,
+     -0.6554878048135593,
+     0.14454196427604593,
+     -7.216120518425156,
+     -46.090465035965686,
+     -73.88725230223834,
+     -105.97849109174706,
+     -123.3170138151228,
+     -122.63332596933374,
+     -124.0329667235858,
+     -127.49956534763415
+    ],
+    "sha1": {
+     "repr_json_list": "40798fb0a4d2e4ff49f67ea707c24437bc7def2c",
+     "repr_join": "c253217ef47b8c907e799140b98f7857e3b570ae"
+    },
+    "matched": true
+   },
+   "curobo": {
+    "violated_start": "10/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "clearance_before_mm": [
+     -9.171877401271193,
+     -5.648570689139543,
+     9.852846656040997,
+     6.450196027978722,
+     19.553017889882284,
+     19.501786239009668,
+     16.686905812824588,
+     -4.039648023169362,
+     -37.37479033574455,
+     -65.55879375889504,
+     -100.1568691779972,
+     -123.23158677074396,
+     -126.17007996410706,
+     -125.69421446109195,
+     -124.97617978154466
+    ],
+    "sha1": {
+     "repr_json_list": "fe73bd7a6ba68623b67ee063ad489ea9806bfad9",
+     "repr_join": "5cfa8d066db3a55f602ef85f0d75f3132917ec0c"
+    },
+    "matched": true
+   }
+  },
+  "placement_criteria": {
+   "a": "client reset check robot > 0 and object > 0",
+   "a_prime": "every robot geom >= 0.030 m at reset, every 50 of 1000 warmup steps (replay, obstacle parked), and recorded t0 rows of E0 and E3b",
+   "b": "t0 rows: robot, target, other fruits, crate > 0",
+   "d_f": "whole recorded pick window (0 <= t < lift_t) of E0 and E3b: robot, target, other fruits >= 0.030 m",
+   "c": "recorded carry window (lift_t <= t < place_t): min(robot, target) <= 0 in every run with a carry window",
+   "candidates": "crate-frame grid (target side) + recorded target carry path (search.py docstring)",
+   "selection": "select.py tiers (margin, room)"
+  },
+  "placements": {
+   "1830": {
+    "seed": 18301,
+    "slot": "hurdle_0",
+    "assigned_slot": "hurdle_0",
+    "fallback": false,
+    "entry": {
+     "slot": "hurdle_0",
+     "position": [
+      0.4885960455296488,
+      0.17976906394225292,
+      0.82
+     ],
+     "yaw": 0.34905474429068334,
+     "bar_height": 0.32
+    },
+    "source": "grid",
+    "grid_u_v": [
+     -0.02,
+     0.16
+    ],
+    "tier": 2,
+    "margin_m": 0.007759532474065714,
+    "room_m": 0.46737173778917923,
+    "reset_robot_m": 0.03757885226768687,
+    "reset_object_m": 0.007762961812738192,
+    "mins_recorded_m": {
+     "E0:t0": {
+      "robot": 0.03754518534431142,
+      "target": 0.05,
+      "fruits": 0.049360371209455745,
+      "crate": 0.007759532474065714
+     },
+     "E0:pick": {
+      "robot": 0.03694877645550451,
+      "target": 0.05,
+      "fruits": 0.04936036795903195
+     },
+     "E0:carry": {
+      "grip": -0.030928420009953023,
+      "robot": -0.030928420009953023,
+      "target": 0.048086477844142536
+     },
+     "E3b:t0": {
+      "robot": 0.03754518534431142,
+      "target": 0.05,
+      "fruits": 0.049360371209455745,
+      "crate": 0.007759532474065714
+     },
+     "E3b:pick": {
+      "robot": 0.03590493553629827,
+      "target": 0.05,
+      "fruits": 0.04936036795903195
+     },
+     "E3b:carry": {
+      "grip": -0.025467679239552173,
+      "robot": -0.025467679239552173,
+      "target": 0.05
+     }
+    },
+    "search_counts": {
+     "candidates": 43883,
+     "validator_xy": 41468,
+     "a": 990,
+     "a_prime": 66,
+     "b": 66,
+     "d": 3,
+     "c": 1
+    },
+    "n_feasible": 1,
+    "tried": [
+     {
+      "slot": "hurdle_0",
+      "n_feasible": 1,
+      "counts": {
+       "candidates": 43883,
+       "validator_xy": 41468,
+       "a": 990,
+       "a_prime": 66,
+       "b": 66,
+       "d": 3,
+       "c": 1
+      }
+     }
+    ],
+    "dryrun_client": {
+     "outcome": "reached load_remote_policy",
+     "robot_clearance_m": 0.03755220686558915,
+     "object_clearance_m": 0.0077589971910117204,
+     "active_slots": [
+      "hurdle_0"
+     ]
+    },
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1830.json"
+   },
+   "1925": {
+    "seed": 19251,
+    "slot": "crate_post_0",
+    "assigned_slot": "crate_post_0",
+    "fallback": false,
+    "entry": {
+     "slot": "crate_post_0",
+     "position": [
+      0.5784361122831614,
+      0.19132864373850414,
+      0.82
+     ],
+     "yaw": 0.0,
+     "height": 0.26,
+     "radius": 0.015
+    },
+    "source": "E0",
+    "grid_u_v": [
+     null,
+     null
+    ],
+    "tier": 3,
+    "margin_m": 0.0001491117599613632,
+    "room_m": 0.4810820172070507,
+    "reset_robot_m": 0.06128255682968013,
+    "reset_object_m": 0.0001530078726640516,
+    "mins_recorded_m": {
+     "E0:t0": {
+      "robot": 0.05,
+      "target": 0.05,
+      "fruits": 0.05,
+      "crate": 0.0001491117599613632
+     },
+     "E0:pick": {
+      "robot": 0.03773937514756324,
+      "target": 0.05,
+      "fruits": 0.05
+     },
+     "E0:carry": {
+      "grip": -0.007519652251420988,
+      "robot": -0.007519652251420988,
+      "target": -0.007838778198785406
+     },
+     "E3b:t0": {
+      "robot": 0.05,
+      "target": 0.05,
+      "fruits": 0.05,
+      "crate": 0.0001491117599613632
+     },
+     "E3b:pick": {
+      "robot": 0.037739579881596576,
+      "target": 0.05,
+      "fruits": 0.05
+     },
+     "E3b:carry": {
+      "grip": -0.0049920437903801925,
+      "robot": -0.0049920437903801925,
+      "target": -0.0007831497162659822
+     }
+    },
+    "search_counts": {
+     "candidates": 15060,
+     "validator_xy": 14568,
+     "a": 1518,
+     "a_prime": 1345,
+     "b": 1345,
+     "d": 164,
+     "c": 2
+    },
+    "n_feasible": 2,
+    "tried": [
+     {
+      "slot": "crate_post_0",
+      "n_feasible": 2,
+      "counts": {
+       "candidates": 15060,
+       "validator_xy": 14568,
+       "a": 1518,
+       "a_prime": 1345,
+       "b": 1345,
+       "d": 164,
+       "c": 2
+      }
+     }
+    ],
+    "dryrun_client": {
+     "outcome": "reached load_remote_policy",
+     "robot_clearance_m": 0.06125360340122555,
+     "object_clearance_m": 0.0001168951749023571,
+     "active_slots": [
+      "crate_post_0"
+     ]
+    },
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1925.json"
+   },
+   "983": {
+    "seed": 9831,
+    "slot": "hurdle_0",
+    "assigned_slot": "hurdle_0",
+    "fallback": false,
+    "entry": {
+     "slot": "hurdle_0",
+     "position": [
+      0.4986627824238372,
+      0.17460451860507153,
+      0.82
+     ],
+     "yaw": 0.5236137624969122,
+     "bar_height": 0.24
+    },
+    "source": "grid",
+    "grid_u_v": [
+     -0.04,
+     0.18
+    ],
+    "tier": 1,
+    "margin_m": 0.015999901635028246,
+    "room_m": 0.5495455893610105,
+    "reset_robot_m": 0.030613240298593237,
+    "reset_object_m": 0.015999901635028246,
+    "mins_recorded_m": {
+     "E0:t0": {
+      "robot": 0.03058783716131021,
+      "target": 0.05,
+      "fruits": 0.036374953500282386,
+      "crate": 0.01600514039435456
+     },
+     "E0:pick": {
+      "robot": 0.03039847045142582,
+      "target": 0.05,
+      "fruits": 0.03623911105244122
+     },
+     "E3b:t0": {
+      "robot": 0.03058783716131021,
+      "target": 0.05,
+      "fruits": 0.036374953500282386,
+      "crate": 0.01600514039435456
+     },
+     "E3b:pick": {
+      "robot": 0.03039847202451112,
+      "target": 0.05,
+      "fruits": 0.0362301225783919
+     },
+     "E3b:carry": {
+      "grip": -0.023034269293879642,
+      "robot": -0.023034269293879642,
+      "target": -0.03678839404911951
+     }
+    },
+    "search_counts": {
+     "candidates": 29918,
+     "validator_xy": 28672,
+     "a": 1204,
+     "a_prime": 222,
+     "b": 222,
+     "d": 113,
+     "c": 106
+    },
+    "n_feasible": 106,
+    "tried": [
+     {
+      "slot": "hurdle_0",
+      "n_feasible": 106,
+      "counts": {
+       "candidates": 29918,
+       "validator_xy": 28672,
+       "a": 1204,
+       "a_prime": 222,
+       "b": 222,
+       "d": 113,
+       "c": 106
+      }
+     }
+    ],
+    "dryrun_client": {
+     "outcome": "reached load_remote_policy",
+     "robot_clearance_m": 0.03063539898299111,
+     "object_clearance_m": 0.015995407154224005,
+     "active_slots": [
+      "hurdle_0"
+     ]
+    },
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep983.json"
+   },
+   "1834": {
+    "seed": 18341,
+    "slot": "crate_post_0",
+    "assigned_slot": "crate_post_0",
+    "fallback": false,
+    "entry": {
+     "slot": "crate_post_0",
+     "position": [
+      0.4294502671251643,
+      -0.1568405366235755,
+      0.82
+     ],
+     "yaw": 0.0,
+     "height": 0.26,
+     "radius": 0.015
+    },
+    "source": "E3b",
+    "grid_u_v": [
+     null,
+     null
+    ],
+    "tier": 1,
+    "margin_m": 0.01829120055899417,
+    "room_m": 0.537660172655142,
+    "reset_robot_m": 0.0402606587096214,
+    "reset_object_m": 0.01829120055899417,
+    "mins_recorded_m": {
+     "E0:t0": {
+      "robot": 0.04029123247609694,
+      "target": 0.05,
+      "fruits": 0.05,
+      "crate": 0.018296439596453905
+     },
+     "E0:pick": {
+      "robot": 0.03969642453786339,
+      "target": 0.05,
+      "fruits": 0.05
+     },
+     "E0:carry": {
+      "grip": 0.0015926969348137505,
+      "robot": -0.0018986977595856975,
+      "target": 0.011197087146727062
+     },
+     "E3b:t0": {
+      "robot": 0.04029123247609694,
+      "target": 0.05,
+      "fruits": 0.05,
+      "crate": 0.018296439596453905
+     },
+     "E3b:pick": {
+      "robot": 0.0398413247819215,
+      "target": 0.05,
+      "fruits": 0.05
+     },
+     "E3b:carry": {
+      "grip": 0.002655018904540738,
+      "robot": -0.0021405087551160176,
+      "target": 0.012331861175804752
+     }
+    },
+    "search_counts": {
+     "candidates": 12708,
+     "validator_xy": 11784,
+     "a": 2313,
+     "a_prime": 1548,
+     "b": 1538,
+     "d": 705,
+     "c": 38
+    },
+    "n_feasible": 38,
+    "tried": [
+     {
+      "slot": "crate_post_0",
+      "n_feasible": 38,
+      "counts": {
+       "candidates": 12708,
+       "validator_xy": 11784,
+       "a": 2313,
+       "a_prime": 1548,
+       "b": 1538,
+       "d": 705,
+       "c": 38
+      }
+     }
+    ],
+    "dryrun_client": {
+     "outcome": "reached load_remote_policy",
+     "robot_clearance_m": 0.0402847781563866,
+     "object_clearance_m": 0.018229938178106985,
+     "active_slots": [
+      "crate_post_0"
+     ]
+    },
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1834.json"
+   },
+   "1623": {
+    "seed": 16231,
+    "slot": "hurdle_0",
+    "assigned_slot": "hurdle_0",
+    "fallback": false,
+    "entry": {
+     "slot": "hurdle_0",
+     "position": [
+      0.5138883089878244,
+      -0.16064440047814424,
+      0.82
+     ],
+     "yaw": 2.967055145579283,
+     "bar_height": 0.22
+    },
+    "source": "grid",
+    "grid_u_v": [
+     -0.02,
+     -0.18
+    ],
+    "tier": 1,
+    "margin_m": 0.014040653110022215,
+    "room_m": 0.5320343807438529,
+    "reset_robot_m": 0.03127514658216056,
+    "reset_object_m": 0.014040653110022215,
+    "mins_recorded_m": {
+     "E0:t0": {
+      "robot": 0.031303265671378575,
+      "target": 0.05,
+      "fruits": 0.05,
+      "crate": 0.014044967750215251
+     },
+     "E0:pick": {
+      "robot": 0.031303265671378575,
+      "target": 0.05,
+      "fruits": 0.05
+     },
+     "E0:carry": {
+      "grip": 0.00245623789538528,
+      "robot": 0.00245623789538528,
+      "target": -0.008719219881028254
+     },
+     "E3b:t0": {
+      "robot": 0.031303265671378575,
+      "target": 0.05,
+      "fruits": 0.05,
+      "crate": 0.014044967750215251
+     },
+     "E3b:pick": {
+      "robot": 0.031303265671378575,
+      "target": 0.05,
+      "fruits": 0.05
+     },
+     "E3b:carry": {
+      "grip": 0.0011685098809842576,
+      "robot": 0.0011685098809842576,
+      "target": -0.010759990132242641
+     }
+    },
+    "search_counts": {
+     "candidates": 44863,
+     "validator_xy": 40124,
+     "a": 3002,
+     "a_prime": 443,
+     "b": 443,
+     "d": 130,
+     "c": 118
+    },
+    "n_feasible": 118,
+    "tried": [
+     {
+      "slot": "hurdle_0",
+      "n_feasible": 118,
+      "counts": {
+       "candidates": 44863,
+       "validator_xy": 40124,
+       "a": 3002,
+       "a_prime": 443,
+       "b": 443,
+       "d": 130,
+       "c": 118
+      }
+     }
+    ],
+    "dryrun_client": {
+     "outcome": "reached load_remote_policy",
+     "robot_clearance_m": 0.0313207456955269,
+     "object_clearance_m": 0.014020884216587353,
+     "active_slots": [
+      "hurdle_0"
+     ]
+    },
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1623.json"
+   },
+   "1215": {
+    "seed": 12151,
+    "slot": "hurdle_0",
+    "assigned_slot": "crate_post_0",
+    "fallback": true,
+    "entry": {
+     "slot": "hurdle_0",
+     "position": [
+      0.4858718157302498,
+      -0.17407793435296556,
+      0.82
+     ],
+     "yaw": 2.792511849342446,
+     "bar_height": 0.26
+    },
+    "source": "grid",
+    "grid_u_v": [
+     -0.02,
+     -0.16
+    ],
+    "tier": 2,
+    "margin_m": 0.007763209004785693,
+    "room_m": 0.47241110353717497,
+    "reset_robot_m": 0.038831899840369,
+    "reset_object_m": 0.007763209004785693,
+    "mins_recorded_m": {
+     "E0:t0": {
+      "robot": 0.038860883881245575,
+      "target": 0.05,
+      "fruits": 0.04029192696893461,
+      "crate": 0.0077650771280391015
+     },
+     "E0:pick": {
+      "robot": 0.038860883881245575,
+      "target": 0.05,
+      "fruits": 0.04012269321379726
+     },
+     "E3b:t0": {
+      "robot": 0.038860883881245575,
+      "target": 0.05,
+      "fruits": 0.04029192696893461,
+      "crate": 0.0077650771280391015
+     },
+     "E3b:pick": {
+      "robot": 0.038860883881245575,
+      "target": 0.05,
+      "fruits": 0.04012269321379726
+     },
+     "E3b:carry": {
+      "grip": -0.023138035813955245,
+      "robot": -0.023138035813955245,
+      "target": -0.03695617061436059
+     }
+    },
+    "search_counts": {
+     "candidates": 23548,
+     "validator_xy": 20762,
+     "a": 480,
+     "a_prime": 66,
+     "b": 66,
+     "d": 2,
+     "c": 2
+    },
+    "n_feasible": 2,
+    "tried": [
+     {
+      "slot": "crate_post_0",
+      "n_feasible": 0,
+      "counts": {
+       "candidates": 6912,
+       "validator_xy": 6408,
+       "a": 979,
+       "a_prime": 643,
+       "b": 643,
+       "d": 89,
+       "c": 0
+      }
+     },
+     {
+      "slot": "hurdle_0",
+      "n_feasible": 2,
+      "counts": {
+       "candidates": 23548,
+       "validator_xy": 20762,
+       "a": 480,
+       "a_prime": 66,
+       "b": 66,
+       "d": 2,
+       "c": 2
+      }
+     }
+    ],
+    "dryrun_client": {
+     "outcome": "reached load_remote_policy",
+     "robot_clearance_m": 0.03882218575430077,
+     "object_clearance_m": 0.007735030588421269,
+     "active_slots": [
+      "hurdle_0"
+     ]
+    },
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1215.json"
+   }
+  },
+  "slots_used": [
+   "crate_post_0",
+   "hurdle_0"
+  ],
+  "counts": {
+   "E0": {
+    "n": 6,
+    "success": 1,
+    "grasp": 3,
+    "place": 1,
+    "obstacle_stop": 4,
+    "stop_phase": {
+     "before_lift": 1,
+     "carry": 2,
+     "after": 1
+    },
+    "diverge_at_step_le_1": 6
+   },
+   "E3b": {
+    "n": 6,
+    "success": 2,
+    "grasp": 3,
+    "place": 2,
+    "obstacle_stop": 5,
+    "stop_phase": {
+     "before_lift": 2,
+     "carry": 1,
+     "after": 2
+    },
+    "diverge_at_step_le_1": 6
+   }
+  },
+  "runs": {
+   "E0/place/E0_ep1215_s12151": {
+    "cond": "E0",
+    "episode": 1215,
+    "seed": 12151,
+    "target_fruit": "pear",
+    "used_arm": "right",
+    "slots": [
+     "hurdle_0"
+    ],
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "robust_grasp_B": false,
+    "failure_mode_B": "no_grasp",
+    "n_control": 600,
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "gate_action_counts": {
+     "None": 75
+    },
+    "obstacle_stop": false,
+    "stop_t": null,
+    "stop_phase": null,
+    "lift_t": null,
+    "client_contact": {
+     "robot_collision": false,
+     "payload_collision": false,
+     "contact_steps": 0,
+     "min_robot_clearance_m": 0.03882218575430077,
+     "contact_pairs": []
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "hurdle_0:GRIP": 0.038851170013005115,
+      "hurdle_0:TARGET": 0.1075597023667266,
+      "hurdle_0:ROBOT_OTHER": 0.07025905394012893,
+      "hurdle_0:FRUITS": 0.040114026488339415
+     },
+     "carry": {},
+     "after": {},
+     "all": {
+      "hurdle_0:GRIP": 0.038851170013005115,
+      "hurdle_0:TARGET": 0.1075597023667266,
+      "hurdle_0:ROBOT_OTHER": 0.07025905394012893,
+      "hurdle_0:FRUITS": 0.040114026488339415
+     }
+    },
+    "min_distance_pair_all": {
+     "hurdle_0:GRIP": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#730"
+     ],
+     "hurdle_0:TARGET": [
+      "pick_obstacle_hurdle_0_collision_foot_left",
+      "pear_geom"
+     ],
+     "hurdle_0:ROBOT_OTHER": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#725"
+     ],
+     "hurdle_0:FRUITS": [
+      "pick_obstacle_hurdle_0_collision_foot_left",
+      "orange_geom"
+     ]
+    },
+    "ag3s": null,
+    "n_server_segments_matching": null,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1215_s12151",
+     "n_compared": 600,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "reference_lift_t": null,
+     "reference_grasp_t": null,
+     "diverges_before_reference_lift": null
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep1215_s12151",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1215.json",
+    "profile": "t42_2_ep1215_place"
+   },
+   "E0/place/E0_ep1623_s16231": {
+    "cond": "E0",
+    "episode": 1623,
+    "seed": 16231,
+    "target_fruit": "orange",
+    "used_arm": "right",
+    "slots": [
+     "hurdle_0"
+    ],
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 160,
+    "place_t": 256,
+    "robust_grasp_B": true,
+    "failure_mode_B": "ok",
+    "n_control": 324,
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "gate_action_counts": {
+     "None": 41
+    },
+    "obstacle_stop": true,
+    "stop_t": 323,
+    "stop_phase": "after",
+    "lift_t": 135,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 4,
+     "min_robot_clearance_m": -0.0004442589655091079,
+     "contact_pairs": [
+      [
+       "geom#758",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ]
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "hurdle_0:GRIP": 0.03134886463907999,
+      "hurdle_0:TARGET": 0.11410034535598469,
+      "hurdle_0:ROBOT_OTHER": 0.08443173670651889,
+      "hurdle_0:FRUITS": 0.0861376115462811
+     },
+     "carry": {
+      "hurdle_0:GRIP": 0.012891992297389541,
+      "hurdle_0:TARGET": 0.002333964053313731,
+      "hurdle_0:ROBOT_OTHER": 0.0589532294596828,
+      "hurdle_0:FRUITS": 0.08613112223461646
+     },
+     "after": {
+      "hurdle_0:GRIP": 0.0056842134445870135,
+      "hurdle_0:TARGET": 0.05150750401467124,
+      "hurdle_0:ROBOT_OTHER": 0.05837787078959901,
+      "hurdle_0:FRUITS": 0.08613296859150146
+     },
+     "all": {
+      "hurdle_0:GRIP": 0.0056842134445870135,
+      "hurdle_0:TARGET": 0.002333964053313731,
+      "hurdle_0:ROBOT_OTHER": 0.05837787078959901,
+      "hurdle_0:FRUITS": 0.08613112223461646
+     }
+    },
+    "min_distance_pair_all": {
+     "hurdle_0:GRIP": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#758"
+     ],
+     "hurdle_0:TARGET": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "orange_geom"
+     ],
+     "hurdle_0:ROBOT_OTHER": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#678"
+     ],
+     "hurdle_0:FRUITS": [
+      "pick_obstacle_hurdle_0_collision_foot_left",
+      "banana_geom_3"
+     ]
+    },
+    "ag3s": null,
+    "n_server_segments_matching": null,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1623_s16231",
+     "n_compared": 324,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "reference_lift_t": 136,
+     "reference_grasp_t": 160,
+     "diverges_before_reference_lift": true
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep1623_s16231",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1623.json",
+    "profile": "t42_2_ep1623_place"
+   },
+   "E0/place/E0_ep1830_s18301": {
+    "cond": "E0",
+    "episode": 1830,
+    "seed": 18301,
+    "target_fruit": "orange",
+    "used_arm": "left",
+    "slots": [
+     "hurdle_0"
+    ],
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "robust_grasp_B": false,
+    "failure_mode_B": "no_grasp",
+    "n_control": 197,
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "gate_action_counts": {
+     "None": 25
+    },
+    "obstacle_stop": true,
+    "stop_t": 196,
+    "stop_phase": "before_lift",
+    "lift_t": null,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 1,
+     "min_robot_clearance_m": -0.00014782899193985753,
+     "contact_pairs": [
+      [
+       "geom#1050",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ]
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "hurdle_0:GRIP": 0.0017734624043426721,
+      "hurdle_0:TARGET": 0.09748734676122249,
+      "hurdle_0:ROBOT_OTHER": 0.03269741945168081,
+      "hurdle_0:FRUITS": 0.049334648806435046
+     },
+     "carry": {},
+     "after": {},
+     "all": {
+      "hurdle_0:GRIP": 0.0017734624043426721,
+      "hurdle_0:TARGET": 0.09748734676122249,
+      "hurdle_0:ROBOT_OTHER": 0.03269741945168081,
+      "hurdle_0:FRUITS": 0.049334648806435046
+     }
+    },
+    "min_distance_pair_all": {
+     "hurdle_0:GRIP": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1051"
+     ],
+     "hurdle_0:TARGET": [
+      "pick_obstacle_hurdle_0_collision_foot_left",
+      "orange_geom"
+     ],
+     "hurdle_0:ROBOT_OTHER": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1012"
+     ],
+     "hurdle_0:FRUITS": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ]
+    },
+    "ag3s": null,
+    "n_server_segments_matching": null,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1830_s18301",
+     "n_compared": 197,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 1,
+     "reference_lift_t": 106,
+     "reference_grasp_t": 112,
+     "diverges_before_reference_lift": true
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep1830_s18301",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1830.json",
+    "profile": "t42_2_ep1830_place"
+   },
+   "E0/place/E0_ep1834_s18341": {
+    "cond": "E0",
+    "episode": 1834,
+    "seed": 18341,
+    "target_fruit": "apple",
+    "used_arm": "right",
+    "slots": [
+     "crate_post_0"
+    ],
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 144,
+    "place_t": null,
+    "robust_grasp_B": true,
+    "failure_mode_B": "not_placed",
+    "n_control": 180,
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "gate_action_counts": {
+     "None": 23
+    },
+    "obstacle_stop": true,
+    "stop_t": 179,
+    "stop_phase": "carry",
+    "lift_t": 135,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 1,
+     "min_robot_clearance_m": -2.513260040006123e-05,
+     "contact_pairs": [
+      [
+       "geom#765",
+       "pick_obstacle_crate_post_0_collision"
+      ]
+     ]
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "crate_post_0:GRIP": 0.03988451216958579,
+      "crate_post_0:TARGET": 0.1103798607878363,
+      "crate_post_0:ROBOT_OTHER": 0.07038088930412448,
+      "crate_post_0:FRUITS": 0.16340654794879456
+     },
+     "carry": {
+      "crate_post_0:GRIP": 0.0011339188472338562,
+      "crate_post_0:TARGET": 0.011466320342436496,
+      "crate_post_0:ROBOT_OTHER": 0.09775566246652967,
+      "crate_post_0:FRUITS": 0.16339862319968257
+     },
+     "after": {},
+     "all": {
+      "crate_post_0:GRIP": 0.0011339188472338562,
+      "crate_post_0:TARGET": 0.011466320342436496,
+      "crate_post_0:ROBOT_OTHER": 0.07038088930412448,
+      "crate_post_0:FRUITS": 0.16339862319968257
+     }
+    },
+    "min_distance_pair_all": {
+     "crate_post_0:GRIP": [
+      "pick_obstacle_crate_post_0_collision",
+      "geom#765"
+     ],
+     "crate_post_0:TARGET": [
+      "pick_obstacle_crate_post_0_collision",
+      "apple_geom"
+     ],
+     "crate_post_0:ROBOT_OTHER": [
+      "pick_obstacle_crate_post_0_collision",
+      "geom#716"
+     ],
+     "crate_post_0:FRUITS": [
+      "pick_obstacle_crate_post_0_collision",
+      "pear_geom"
+     ]
+    },
+    "ag3s": null,
+    "n_server_segments_matching": null,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep1834_s18341",
+     "n_compared": 180,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "reference_lift_t": 134,
+     "reference_grasp_t": 144,
+     "diverges_before_reference_lift": true
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep1834_s18341",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1834.json",
+    "profile": "t42_2_ep1834_place"
+   },
+   "E0/place/E0_ep1925_s19251": {
+    "cond": "E0",
+    "episode": 1925,
+    "seed": 19251,
+    "target_fruit": "apple",
+    "used_arm": "left",
+    "slots": [
+     "crate_post_0"
+    ],
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 176,
+    "place_t": null,
+    "robust_grasp_B": false,
+    "failure_mode_B": "slip_in_transport",
+    "n_control": 210,
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "gate_action_counts": {
+     "None": 27
+    },
+    "obstacle_stop": true,
+    "stop_t": 209,
+    "stop_phase": "carry",
+    "lift_t": 169,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": true,
+     "contact_steps": 5,
+     "min_robot_clearance_m": -0.00048158617035826774,
+     "contact_pairs": [
+      [
+       "apple_geom",
+       "pick_obstacle_crate_post_0_collision"
+      ],
+      [
+       "geom#1079",
+       "pick_obstacle_crate_post_0_collision"
+      ]
+     ]
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "crate_post_0:GRIP": 0.036754632368049864,
+      "crate_post_0:TARGET": 0.06185256968815268,
+      "crate_post_0:ROBOT_OTHER": 0.09026126947241196,
+      "crate_post_0:FRUITS": 0.13620446211629528
+     },
+     "carry": {
+      "crate_post_0:GRIP": 0.007764826070997583,
+      "crate_post_0:TARGET": -3.35468616253136e-05,
+      "crate_post_0:ROBOT_OTHER": 0.07917476353426298,
+      "crate_post_0:FRUITS": 0.13624196861318258
+     },
+     "after": {},
+     "all": {
+      "crate_post_0:GRIP": 0.007764826070997583,
+      "crate_post_0:TARGET": -3.35468616253136e-05,
+      "crate_post_0:ROBOT_OTHER": 0.07917476353426298,
+      "crate_post_0:FRUITS": 0.13620446211629528
+     }
+    },
+    "min_distance_pair_all": {
+     "crate_post_0:GRIP": [
+      "pick_obstacle_crate_post_0_collision",
+      "geom#1079"
+     ],
+     "crate_post_0:TARGET": [
+      "pick_obstacle_crate_post_0_collision",
+      "apple_geom"
+     ],
+     "crate_post_0:ROBOT_OTHER": [
+      "pick_obstacle_crate_post_0_collision",
+      "geom#1012"
+     ],
+     "crate_post_0:FRUITS": [
+      "pick_obstacle_crate_post_0_collision",
+      "pear_geom"
+     ]
+    },
+    "ag3s": null,
+    "n_server_segments_matching": null,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T39/runs/E0/E0_ep1925_s19251",
+     "n_compared": 210,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 1,
+     "reference_lift_t": 160,
+     "reference_grasp_t": 176,
+     "diverges_before_reference_lift": true
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep1925_s19251",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1925.json",
+    "profile": "t42_2_ep1925_place"
+   },
+   "E0/place/E0_ep983_s9831": {
+    "cond": "E0",
+    "episode": 983,
+    "seed": 9831,
+    "target_fruit": "pear",
+    "used_arm": "left",
+    "slots": [
+     "hurdle_0"
+    ],
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "robust_grasp_B": false,
+    "failure_mode_B": "no_grasp",
+    "n_control": 600,
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "gate_action_counts": {
+     "None": 75
+    },
+    "obstacle_stop": false,
+    "stop_t": null,
+    "stop_phase": null,
+    "lift_t": null,
+    "client_contact": {
+     "robot_collision": false,
+     "payload_collision": false,
+     "contact_steps": 0,
+     "min_robot_clearance_m": 0.030431520191761898,
+     "contact_pairs": []
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "hurdle_0:GRIP": 0.030435254554078143,
+      "hurdle_0:TARGET": 0.11657779016981382,
+      "hurdle_0:ROBOT_OTHER": 0.08409175885943368,
+      "hurdle_0:FRUITS": 0.036259440277113766
+     },
+     "carry": {},
+     "after": {},
+     "all": {
+      "hurdle_0:GRIP": 0.030435254554078143,
+      "hurdle_0:TARGET": 0.11657779016981382,
+      "hurdle_0:ROBOT_OTHER": 0.08409175885943368,
+      "hurdle_0:FRUITS": 0.036259440277113766
+     }
+    },
+    "min_distance_pair_all": {
+     "hurdle_0:GRIP": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1051"
+     ],
+     "hurdle_0:TARGET": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "pear_geom"
+     ],
+     "hurdle_0:ROBOT_OTHER": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1012"
+     ],
+     "hurdle_0:FRUITS": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "orange_geom"
+     ]
+    },
+    "ag3s": null,
+    "n_server_segments_matching": null,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T42/1/runs/E0/noobs/E0_ep983_s9831",
+     "n_compared": 600,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "reference_lift_t": 519,
+     "reference_grasp_t": 528,
+     "diverges_before_reference_lift": true
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep983_s9831",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep983.json",
+    "profile": "t42_2_ep983_place"
+   },
+   "E3b/place/E3b_ep1215_s12151": {
+    "cond": "E3b",
+    "episode": 1215,
+    "seed": 12151,
+    "target_fruit": "pear",
+    "used_arm": "right",
+    "slots": [
+     "hurdle_0"
+    ],
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "robust_grasp_B": false,
+    "failure_mode_B": "no_grasp",
+    "n_control": 600,
+    "holds": {
+     "hold_t": [
+      160,
+      304
+     ],
+     "n_hold": 2,
+     "hold_kinds": {
+      "unverified": 1,
+      "collision": 2
+     },
+     "max_consecutive_hold": 1
+    },
+    "gate_action_counts": {
+     "execute": 73,
+     "hold": 2
+    },
+    "obstacle_stop": false,
+    "stop_t": null,
+    "stop_phase": null,
+    "lift_t": null,
+    "client_contact": {
+     "robot_collision": false,
+     "payload_collision": false,
+     "contact_steps": 0,
+     "min_robot_clearance_m": 0.013889956015655652,
+     "contact_pairs": []
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "hurdle_0:GRIP": 0.013929078516833865,
+      "hurdle_0:TARGET": 0.09563238917822901,
+      "hurdle_0:ROBOT_OTHER": 0.07026339606965318,
+      "hurdle_0:FRUITS": 0.040114026488339415
+     },
+     "carry": {},
+     "after": {},
+     "all": {
+      "hurdle_0:GRIP": 0.013929078516833865,
+      "hurdle_0:TARGET": 0.09563238917822901,
+      "hurdle_0:ROBOT_OTHER": 0.07026339606965318,
+      "hurdle_0:FRUITS": 0.040114026488339415
+     }
+    },
+    "min_distance_pair_all": {
+     "hurdle_0:GRIP": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#765"
+     ],
+     "hurdle_0:TARGET": [
+      "pick_obstacle_hurdle_0_collision_foot_left",
+      "pear_geom"
+     ],
+     "hurdle_0:ROBOT_OTHER": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#725"
+     ],
+     "hurdle_0:FRUITS": [
+      "pick_obstacle_hurdle_0_collision_foot_left",
+      "orange_geom"
+     ]
+    },
+    "ag3s": {
+     "ag3s_n_chunks": 75,
+     "ag3s_n_target_nearest_obstacle": 7,
+     "ag3s_n_manipulated_nearest_obstacle": 7,
+     "ag3s_n_chunks_with_target_points_on_obstacle": 0,
+     "ag3s_min_target_to_obstacle_m": 0.09623756351583086
+    },
+    "n_server_segments_matching": 1,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1215_s12151",
+     "n_compared": 600,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "reference_lift_t": 154,
+     "reference_grasp_t": 168,
+     "diverges_before_reference_lift": true
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep1215_s12151",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1215.json",
+    "profile": "t42_2_ep1215_place"
+   },
+   "E3b/place/E3b_ep1623_s16231": {
+    "cond": "E3b",
+    "episode": 1623,
+    "seed": 16231,
+    "target_fruit": "orange",
+    "used_arm": "right",
+    "slots": [
+     "hurdle_0"
+    ],
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 160,
+    "place_t": 216,
+    "robust_grasp_B": false,
+    "failure_mode_B": "slip_in_transport",
+    "n_control": 234,
+    "holds": {
+     "hold_t": [
+      224
+     ],
+     "n_hold": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "max_consecutive_hold": 1
+    },
+    "gate_action_counts": {
+     "execute": 29,
+     "hold": 1
+    },
+    "obstacle_stop": true,
+    "stop_t": 233,
+    "stop_phase": "after",
+    "lift_t": 149,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": true,
+     "contact_steps": 275,
+     "min_robot_clearance_m": -0.0004510026403005147,
+     "contact_pairs": [
+      [
+       "geom#731",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ],
+      [
+       "orange_geom",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ]
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "hurdle_0:GRIP": 0.03134886463907999,
+      "hurdle_0:TARGET": 0.11410034535598469,
+      "hurdle_0:ROBOT_OTHER": 0.08002191144163223,
+      "hurdle_0:FRUITS": 0.08613751195988292
+     },
+     "carry": {
+      "hurdle_0:GRIP": 0.005802993800176064,
+      "hurdle_0:TARGET": -0.00036020190781914027,
+      "hurdle_0:ROBOT_OTHER": 0.08059569152445129,
+      "hurdle_0:FRUITS": 0.08613112223461646
+     },
+     "after": {
+      "hurdle_0:GRIP": 0.001419403009968994,
+      "hurdle_0:TARGET": 0.08555039108754571,
+      "hurdle_0:ROBOT_OTHER": 0.06231904029781715,
+      "hurdle_0:FRUITS": 0.0861491370528753
+     },
+     "all": {
+      "hurdle_0:GRIP": 0.001419403009968994,
+      "hurdle_0:TARGET": -0.00036020190781914027,
+      "hurdle_0:ROBOT_OTHER": 0.06231904029781715,
+      "hurdle_0:FRUITS": 0.08613112223461646
+     }
+    },
+    "min_distance_pair_all": {
+     "hurdle_0:GRIP": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#758"
+     ],
+     "hurdle_0:TARGET": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "orange_geom"
+     ],
+     "hurdle_0:ROBOT_OTHER": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#704"
+     ],
+     "hurdle_0:FRUITS": [
+      "pick_obstacle_hurdle_0_collision_foot_left",
+      "banana_geom_3"
+     ]
+    },
+    "ag3s": {
+     "ag3s_n_chunks": 30,
+     "ag3s_n_target_nearest_obstacle": 0,
+     "ag3s_n_manipulated_nearest_obstacle": 0,
+     "ag3s_n_chunks_with_target_points_on_obstacle": 0,
+     "ag3s_min_target_to_obstacle_m": 0.13834116323775164
+    },
+    "n_server_segments_matching": 1,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1623_s16231",
+     "n_compared": 234,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "reference_lift_t": 149,
+     "reference_grasp_t": 160,
+     "diverges_before_reference_lift": true
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep1623_s16231",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1623.json",
+    "profile": "t42_2_ep1623_place"
+   },
+   "E3b/place/E3b_ep1830_s18301": {
+    "cond": "E3b",
+    "episode": 1830,
+    "seed": 18301,
+    "target_fruit": "orange",
+    "used_arm": "left",
+    "slots": [
+     "hurdle_0"
+    ],
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "robust_grasp_B": false,
+    "failure_mode_B": "no_grasp",
+    "n_control": 296,
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "gate_action_counts": {
+     "execute": 37
+    },
+    "obstacle_stop": true,
+    "stop_t": 295,
+    "stop_phase": "before_lift",
+    "lift_t": null,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 4,
+     "min_robot_clearance_m": -0.0013401396867987348,
+     "contact_pairs": [
+      [
+       "geom#1053",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ]
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "hurdle_0:GRIP": 0.004737448234875187,
+      "hurdle_0:TARGET": 0.09915492696988755,
+      "hurdle_0:ROBOT_OTHER": 0.020774112848215915,
+      "hurdle_0:FRUITS": 0.04933464873759763
+     },
+     "carry": {},
+     "after": {},
+     "all": {
+      "hurdle_0:GRIP": 0.004737448234875187,
+      "hurdle_0:TARGET": 0.09915492696988755,
+      "hurdle_0:ROBOT_OTHER": 0.020774112848215915,
+      "hurdle_0:FRUITS": 0.04933464873759763
+     }
+    },
+    "min_distance_pair_all": {
+     "hurdle_0:GRIP": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1050"
+     ],
+     "hurdle_0:TARGET": [
+      "pick_obstacle_hurdle_0_collision_foot_left",
+      "orange_geom"
+     ],
+     "hurdle_0:ROBOT_OTHER": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1012"
+     ],
+     "hurdle_0:FRUITS": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "apple_geom"
+     ]
+    },
+    "ag3s": {
+     "ag3s_n_chunks": 37,
+     "ag3s_n_target_nearest_obstacle": 0,
+     "ag3s_n_manipulated_nearest_obstacle": 0,
+     "ag3s_n_chunks_with_target_points_on_obstacle": 0,
+     "ag3s_min_target_to_obstacle_m": 0.11611897500820237
+    },
+    "n_server_segments_matching": 1,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1830_s18301",
+     "n_compared": 296,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 1,
+     "reference_lift_t": 114,
+     "reference_grasp_t": 128,
+     "diverges_before_reference_lift": true
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep1830_s18301",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1830.json",
+    "profile": "t42_2_ep1830_place"
+   },
+   "E3b/place/E3b_ep1834_s18341": {
+    "cond": "E3b",
+    "episode": 1834,
+    "seed": 18341,
+    "target_fruit": "apple",
+    "used_arm": "right",
+    "slots": [
+     "crate_post_0"
+    ],
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "grasp_t": 200,
+    "place_t": 248,
+    "robust_grasp_B": false,
+    "failure_mode_B": "regrasp",
+    "n_control": 259,
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "gate_action_counts": {
+     "execute": 33
+    },
+    "obstacle_stop": true,
+    "stop_t": 258,
+    "stop_phase": "after",
+    "lift_t": 186,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 1,
+     "min_robot_clearance_m": -2.5395804406337188e-05,
+     "contact_pairs": [
+      [
+       "geom#731",
+       "pick_obstacle_crate_post_0_collision"
+      ]
+     ]
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "crate_post_0:GRIP": 0.03996415005233865,
+      "crate_post_0:TARGET": 0.11035722937505757,
+      "crate_post_0:ROBOT_OTHER": 0.07051288876951994,
+      "crate_post_0:FRUITS": 0.16337333655798594
+     },
+     "carry": {
+      "crate_post_0:GRIP": 0.014571155204353696,
+      "crate_post_0:TARGET": 0.01714283304514449,
+      "crate_post_0:ROBOT_OTHER": 0.07097353540853102,
+      "crate_post_0:FRUITS": 0.1633451636874633
+     },
+     "after": {
+      "crate_post_0:GRIP": 0.0019867000914655375,
+      "crate_post_0:TARGET": 0.1339952716013797,
+      "crate_post_0:ROBOT_OTHER": 0.043576255433652615,
+      "crate_post_0:FRUITS": 0.16332672438969986
+     },
+     "all": {
+      "crate_post_0:GRIP": 0.0019867000914655375,
+      "crate_post_0:TARGET": 0.01714283304514449,
+      "crate_post_0:ROBOT_OTHER": 0.043576255433652615,
+      "crate_post_0:FRUITS": 0.16332672438969986
+     }
+    },
+    "min_distance_pair_all": {
+     "crate_post_0:GRIP": [
+      "pick_obstacle_crate_post_0_collision",
+      "geom#731"
+     ],
+     "crate_post_0:TARGET": [
+      "pick_obstacle_crate_post_0_collision",
+      "apple_geom"
+     ],
+     "crate_post_0:ROBOT_OTHER": [
+      "pick_obstacle_crate_post_0_collision",
+      "geom#706"
+     ],
+     "crate_post_0:FRUITS": [
+      "pick_obstacle_crate_post_0_collision",
+      "pear_geom"
+     ]
+    },
+    "ag3s": {
+     "ag3s_n_chunks": 33,
+     "ag3s_n_target_nearest_obstacle": 0,
+     "ag3s_n_manipulated_nearest_obstacle": 0,
+     "ag3s_n_chunks_with_target_points_on_obstacle": 0,
+     "ag3s_min_target_to_obstacle_m": 0.13043166043946625
+    },
+    "n_server_segments_matching": 1,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep1834_s18341",
+     "n_compared": 259,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "reference_lift_t": 114,
+     "reference_grasp_t": 128,
+     "diverges_before_reference_lift": true
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep1834_s18341",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1834.json",
+    "profile": "t42_2_ep1834_place"
+   },
+   "E3b/place/E3b_ep1925_s19251": {
+    "cond": "E3b",
+    "episode": 1925,
+    "seed": 19251,
+    "target_fruit": "apple",
+    "used_arm": "left",
+    "slots": [
+     "crate_post_0"
+    ],
+    "success": false,
+    "grasp": true,
+    "place": false,
+    "grasp_t": 168,
+    "place_t": null,
+    "robust_grasp_B": false,
+    "failure_mode_B": "slip_at_lift",
+    "n_control": 279,
+    "holds": {
+     "hold_t": [],
+     "n_hold": 0,
+     "hold_kinds": {},
+     "max_consecutive_hold": 0
+    },
+    "gate_action_counts": {
+     "execute": 35
+    },
+    "obstacle_stop": true,
+    "stop_t": 278,
+    "stop_phase": "carry",
+    "lift_t": 157,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 4,
+     "min_robot_clearance_m": -0.00023865135107508447,
+     "contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_crate_post_0_collision"
+      ]
+     ]
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "crate_post_0:GRIP": 0.0383795399404398,
+      "crate_post_0:TARGET": 0.0658811149814971,
+      "crate_post_0:ROBOT_OTHER": 0.09128525609152414,
+      "crate_post_0:FRUITS": 0.13620446211629528
+     },
+     "carry": {
+      "crate_post_0:GRIP": 0.001493713681301169,
+      "crate_post_0:TARGET": 0.06458133880290805,
+      "crate_post_0:ROBOT_OTHER": 0.05165664359645669,
+      "crate_post_0:FRUITS": 0.1362060585586459
+     },
+     "after": {},
+     "all": {
+      "crate_post_0:GRIP": 0.001493713681301169,
+      "crate_post_0:TARGET": 0.06458133880290805,
+      "crate_post_0:ROBOT_OTHER": 0.05165664359645669,
+      "crate_post_0:FRUITS": 0.13620446211629528
+     }
+    },
+    "min_distance_pair_all": {
+     "crate_post_0:GRIP": [
+      "pick_obstacle_crate_post_0_collision",
+      "geom#1086"
+     ],
+     "crate_post_0:TARGET": [
+      "pick_obstacle_crate_post_0_collision",
+      "apple_geom"
+     ],
+     "crate_post_0:ROBOT_OTHER": [
+      "pick_obstacle_crate_post_0_collision",
+      "geom#1012"
+     ],
+     "crate_post_0:FRUITS": [
+      "pick_obstacle_crate_post_0_collision",
+      "pear_geom"
+     ]
+    },
+    "ag3s": {
+     "ag3s_n_chunks": 35,
+     "ag3s_n_target_nearest_obstacle": 0,
+     "ag3s_n_manipulated_nearest_obstacle": 0,
+     "ag3s_n_chunks_with_target_points_on_obstacle": 0,
+     "ag3s_min_target_to_obstacle_m": 0.0927799931686477
+    },
+    "n_server_segments_matching": 1,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T39/runs/E3b/E3b_ep1925_s19251",
+     "n_compared": 279,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 1,
+     "reference_lift_t": 137,
+     "reference_grasp_t": 152,
+     "diverges_before_reference_lift": true
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep1925_s19251",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep1925.json",
+    "profile": "t42_2_ep1925_place"
+   },
+   "E3b/place/E3b_ep983_s9831": {
+    "cond": "E3b",
+    "episode": 983,
+    "seed": 9831,
+    "target_fruit": "pear",
+    "used_arm": "left",
+    "slots": [
+     "hurdle_0"
+    ],
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "grasp_t": null,
+    "place_t": null,
+    "robust_grasp_B": false,
+    "failure_mode_B": "no_grasp",
+    "n_control": 370,
+    "holds": {
+     "hold_t": [
+      360
+     ],
+     "n_hold": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "max_consecutive_hold": 1
+    },
+    "gate_action_counts": {
+     "execute": 46,
+     "hold": 1
+    },
+    "obstacle_stop": true,
+    "stop_t": 369,
+    "stop_phase": "before_lift",
+    "lift_t": null,
+    "client_contact": {
+     "robot_collision": true,
+     "payload_collision": false,
+     "contact_steps": 2,
+     "min_robot_clearance_m": -0.000522341804660079,
+     "contact_pairs": [
+      [
+       "geom#1079",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ]
+    },
+    "min_distance_m_by_phase": {
+     "before_lift": {
+      "hurdle_0:GRIP": 0.00829250394802394,
+      "hurdle_0:TARGET": 0.1165780599109077,
+      "hurdle_0:ROBOT_OTHER": 0.06490634053428612,
+      "hurdle_0:FRUITS": 0.03627330420330467
+     },
+     "carry": {},
+     "after": {},
+     "all": {
+      "hurdle_0:GRIP": 0.00829250394802394,
+      "hurdle_0:TARGET": 0.1165780599109077,
+      "hurdle_0:ROBOT_OTHER": 0.06490634053428612,
+      "hurdle_0:FRUITS": 0.03627330420330467
+     }
+    },
+    "min_distance_pair_all": {
+     "hurdle_0:GRIP": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1079"
+     ],
+     "hurdle_0:TARGET": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "pear_geom"
+     ],
+     "hurdle_0:ROBOT_OTHER": [
+      "pick_obstacle_hurdle_0_collision_bar",
+      "geom#1011"
+     ],
+     "hurdle_0:FRUITS": [
+      "pick_obstacle_hurdle_0_collision_foot_right",
+      "orange_geom"
+     ]
+    },
+    "ag3s": {
+     "ag3s_n_chunks": 47,
+     "ag3s_n_target_nearest_obstacle": 0,
+     "ag3s_n_manipulated_nearest_obstacle": 0,
+     "ag3s_n_chunks_with_target_points_on_obstacle": 0,
+     "ag3s_min_target_to_obstacle_m": 0.14886668756223992
+    },
+    "n_server_segments_matching": 1,
+    "divergence_from_no_obstacle_run": {
+     "reference_run": "/mnt/dev/work/outputs/verify/T42/1/runs/E3b/noobs/E3b_ep983_s9831",
+     "n_compared": 370,
+     "first_step_diff_gt0": 0,
+     "first_step_diff_gt_1e-3": 0,
+     "reference_lift_t": 298,
+     "reference_grasp_t": 312,
+     "diverges_before_reference_lift": true
+    },
+    "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep983_s9831",
+    "config": "/mnt/dev/work/outputs/verify/T42/2/configs/t42_2_ep983.json",
+    "profile": "t42_2_ep983_place"
+   }
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t42/t42-2-scene-1830-place.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t42/t42-2-scene-1830-place.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t42/t42-2-scene-1925-place.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t42/t42-2-scene-1925-place.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t42/t42-2-scene-983-place.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t42/t42-2-scene-983-place.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t42/t42-2-scene-1834-place.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t42/t42-2-scene-1834-place.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t42/t42-2-scene-1623-place.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t42/t42-2-scene-1623-place.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t42/t42-2-scene-1215-place.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t42/t42-2-scene-1215-place.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t42/t42-2-distance-place.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t42/t42-2-distance-place.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t42/t42-2-table-place.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t42/t42-2-table-place.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "legacy 14/15 / 15/15 / -29.031048280806342; cuRobo 10/15 / 15/15 / -9.171877401271193; snapshot /mnt/dev/work-t42c"
+ },
+ "verdict": "baseline matched; 12/12 place-phase runs complete (check_run); executed actions differ from the no-obstacle run of the same seed from control step 0-1 in 12/12",
+ "not_measured": [
+  "pick-phase obstacles (post_0, fence_0, overbar_0) runs",
+  "combined pick + place runs",
+  "seeds rep 2-3 with obstacles",
+  "E3b with --obstacle-margin 0.010 --safe-hold-mode measured",
+  "source of the step-0 divergence (camera image vs model XML vs physics) not separated"
+ ]
+}

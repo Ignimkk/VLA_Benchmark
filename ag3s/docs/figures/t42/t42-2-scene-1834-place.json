@@ -1,0 +1,50 @@
+{
+ "definitions": "T42-2 figures (verifier). usage: fig_t42_2.py ANALYSIS_JSON [KIND]   (KIND default 'place')\n-> benchmark/ag3s/docs/figures/t42/t42-2-scene-<EP>-<KIND>.png, t42-2-distance-<KIND>.png, t42-2-table-<KIND>.png (+ .json sidecars)\nscene    : per episode, E0 | E3b third-person front frames (recorded third_person_front.mp4, E3b with the --viz-avoidance-arrow overlay;\n           one frame per control step) at the control row of the minimum obstacle distance min(gripper, target, other robot) of that\n           run (obst_metrics series), titled with t, the distance, outcome and obstacle stop.\ndistance : per episode, min(gripper, target) obstacle distance (mm, client distance code, capped 300) vs control step, E0 / E3b\n           (CATEGORICAL slots 0 / 1); x = last row of a run that ended with an obstacle stop; dotted vertical = lift_t of the run.\ntable    : outcome per episode x condition: success / grasp / place, robust grasp (B), HOLD chunks and kinds, minimum distance per\n           group (gripper, target, other robot, other fruits; whole run), client contact pairs and obstacle stop (phase, t),\n           AG3S chunks with target points within 15 mm of the obstacle / chunks, min target centroid -> obstacle (mm).",
+ "episode": 1834,
+ "E0": {
+  "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep1834_s18341",
+  "frame_index": 179,
+  "n_frames": 180,
+  "t": 179,
+  "min_dist_m": 0.0011339188472338562,
+  "min_gripper_or_target_m": 0.0011339188472338562,
+  "success": false,
+  "obstacle_stop": true,
+  "obstacles": [
+   {
+    "slot": "crate_post_0",
+    "position": [
+     0.4295,
+     -0.1568,
+     0.82
+    ],
+    "yaw": 0.0,
+    "height": 0.26,
+    "radius": 0.015
+   }
+  ]
+ },
+ "E3b": {
+  "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep1834_s18341",
+  "frame_index": 258,
+  "n_frames": 259,
+  "t": 258,
+  "min_dist_m": 0.0019867000914655375,
+  "min_gripper_or_target_m": 0.0019867000914655375,
+  "success": true,
+  "obstacle_stop": true,
+  "obstacles": [
+   {
+    "slot": "crate_post_0",
+    "position": [
+     0.4295,
+     -0.1568,
+     0.82
+    ],
+    "yaw": 0.0,
+    "height": 0.26,
+    "radius": 0.015
+   }
+  ]
+ }
+}

@@ -1,0 +1,48 @@
+{
+ "definitions": "T42-2 figures (verifier). usage: fig_t42_2.py ANALYSIS_JSON [KIND]   (KIND default 'place')\n-> benchmark/ag3s/docs/figures/t42/t42-2-scene-<EP>-<KIND>.png, t42-2-distance-<KIND>.png, t42-2-table-<KIND>.png (+ .json sidecars)\nscene    : per episode, E0 | E3b third-person front frames (recorded third_person_front.mp4, E3b with the --viz-avoidance-arrow overlay;\n           one frame per control step) at the control row of the minimum obstacle distance min(gripper, target, other robot) of that\n           run (obst_metrics series), titled with t, the distance, outcome and obstacle stop.\ndistance : per episode, min(gripper, target) obstacle distance (mm, client distance code, capped 300) vs control step, E0 / E3b\n           (CATEGORICAL slots 0 / 1); x = last row of a run that ended with an obstacle stop; dotted vertical = lift_t of the run.\ntable    : outcome per episode x condition: success / grasp / place, robust grasp (B), HOLD chunks and kinds, minimum distance per\n           group (gripper, target, other robot, other fruits; whole run), client contact pairs and obstacle stop (phase, t),\n           AG3S chunks with target points within 15 mm of the obstacle / chunks, min target centroid -> obstacle (mm).",
+ "episode": 983,
+ "E0": {
+  "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E0/place/E0_ep983_s9831",
+  "frame_index": 2,
+  "n_frames": 600,
+  "t": 2,
+  "min_dist_m": 0.030435254554078143,
+  "min_gripper_or_target_m": 0.030435254554078143,
+  "success": false,
+  "obstacle_stop": false,
+  "obstacles": [
+   {
+    "slot": "hurdle_0",
+    "position": [
+     0.4987,
+     0.1746,
+     0.82
+    ],
+    "yaw": 0.523614,
+    "bar_height": 0.24
+   }
+  ]
+ },
+ "E3b": {
+  "run_dir": "/mnt/dev/work/outputs/verify/T42/2/runs/E3b/place/E3b_ep983_s9831",
+  "frame_index": 369,
+  "n_frames": 370,
+  "t": 369,
+  "min_dist_m": 0.00829250394802394,
+  "min_gripper_or_target_m": 0.00829250394802394,
+  "success": false,
+  "obstacle_stop": true,
+  "obstacles": [
+   {
+    "slot": "hurdle_0",
+    "position": [
+     0.4987,
+     0.1746,
+     0.82
+    ],
+    "yaw": 0.523614,
+    "bar_height": 0.24
+   }
+  ]
+ }
+}
