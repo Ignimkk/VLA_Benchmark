@@ -1,0 +1,7337 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only; no interpretation.",
+ "step": "T41a",
+ "date": "2026-10-05",
+ "runs": [
+  {
+   "id": "E3b runs B 6 / C 5 / D 4 (one server, port 8260)",
+   "command": "nohup outputs/verify/T41/p/launch_a.sh  (run_chain.sh E3b 8260 ... lists/E3b_a.txt; start_server.sh = T40 E3b flags + --obstacle-margin 0.010 --no-subtask-gate; run_client.sh --obstacle-stop-distance 0 --warmup-steps 1000 --policy-seed --record ... --view front --record-frames --trajectory-out)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T41/a/runs/E3b/{B,C,D}/E3b_ep*_s*/ + server_8260_*/server_constraints",
+   "stdout_log": "outputs/verify/T41/a/runs/E3b/chain_8260.log, outputs/verify/T41/a/runs/launch.out"
+  },
+  {
+   "id": "analysis",
+   "command": "outputs/verify/T41/p/analyze_t41.py (T41a runs; T41_ROOT=T40/G/runs for the T40 re-analysis)",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/T41/a/analysis/{analysis_a.json, t40g_reanalysis.json, t40j_reanalysis.json}",
+   "stdout_log": "outputs/verify/T41/a/analysis/*.log"
+  },
+  {
+   "id": "TO row replay",
+   "command": "outputs/verify/T41/p/replay_t41.py",
+   "venv": ".venv-openpi-live (CPU)",
+   "raw_output": "outputs/verify/T41/a/analysis/replay_a.json (T41a), replay_t40.json (T40 records, same rule)",
+   "stdout_log": "outputs/verify/T41/a/analysis/replay_a.log, replay_a_1828.log, replay_t40.log"
+  },
+  {
+   "id": "comparison",
+   "command": "outputs/verify/T41/p/compare_t41.py analysis_a.json t40g_reanalysis.json replay_a.json compare.json replay_t40.json t40j_reanalysis.json",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T41/a/analysis/compare.json",
+   "stdout_log": null
+  },
+  {
+   "id": "baseline",
+   "command": "outputs/verify/T41/a/baseline/run_baseline.sh",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T41/a/baseline/{legacy,curobo}.json, judge.json",
+   "stdout_log": "outputs/verify/T41/a/baseline/{legacy,curobo}.log"
+  },
+  {
+   "id": "figures",
+   "command": "outputs/verify/T41/p/fig_t41a.py compare.json analysis_a.json t40g_reanalysis.json t40j_reanalysis.json",
+   "venv": ".venv-openpi-live",
+   "raw_output": "benchmark/ag3s/docs/figures/t41/t41a-*.json",
+   "stdout_log": null
+  }
+ ],
+ "code_state": {
+  "snapshot": "/mnt/dev/work-t41a",
+  "benchmark": "git archive 4d090ec",
+  "pi05_TO_hybrid": "git archive bd6a002 (rby1_bringup, rby1_description, rby1_manipulation; other entries symlinked as /mnt/dev/work-t40h)",
+  "code_md5": "outputs/verify/T41/p/code_md5_a0.txt (400 files; md5 == A-0 at chain preflight)",
+  "files_differing_from_t40_snapshot": [
+   "benchmark/ag3s/config.py",
+   "benchmark/trajopt/config.py",
+   "benchmark/trajopt/linearize.py",
+   "benchmark/trajopt/safe_policy.py",
+   "benchmark/trajopt/serve_safe.py",
+   "pi05_TO_hybrid/rby1_manipulation/src/rby1_manipulation/simulation/pick_place_obstacles.py"
+  ],
+  "import_check": [
+   "outputs/verify/T41/a/import_server.json",
+   "outputs/verify/T41/a/import_client.json"
+  ],
+  "benchmark_head_now": "6025156",
+  "pi05_TO_hybrid_head_now": "c7c1cc9",
+  "dirty_files": []
+ },
+ "numbers": {
+  "_comment": "mm unless noted. T40 = T40 G (B, C) / T40 D records re-analysed with the same scripts and the t41a client distance code (H fix); T40_original_table = T40FG.verify.json outcome_table as recorded (pre-fix distance code). B: hurdle placed virtually (r1 config), no physics.",
+  "settings": {
+   "server_flags_added": "--obstacle-margin 0.010 --no-subtask-gate (support planes excluded = default)",
+   "obstacle_stop_distance": 0.0,
+   "warmup_steps": 1000,
+   "xla_autotune": 0,
+   "port": 8260,
+   "seeds": "T40 seeds (10*ep + k as in T40 G lists)",
+   "server_log_check": "TO obstacle_margin: 10.0 mm ... 지지면 제외 (present); subtask gate off (기록만)"
+  },
+  "baseline": {
+   "legacy": {
+    "violated_start": "14/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -29.031048280806342,
+    "matched": true,
+    "sha1": {
+     "repr_json_list": "40798fb0a4d2e4ff49f67ea707c24437bc7def2c",
+     "repr_join": "c253217ef47b8c907e799140b98f7857e3b570ae"
+    }
+   },
+   "curobo": {
+    "violated_start": "10/15",
+    "has_target": "15/15",
+    "frame0_clearance_before_mm": -9.171877401271193,
+    "matched": true,
+    "sha1": {
+     "repr_json_list": "fe73bd7a6ba68623b67ee063ad489ea9806bfad9",
+     "repr_join": "5cfa8d066db3a55f602ef85f0d75f3132917ec0c"
+    }
+   },
+   "reference": "legacy 14/15 · 15/15 · -29.031048280806342; cuRobo 10/15 · 15/15 · -9.171877401271193 (sha1 repr_json_list equal to T42-1 / T40 G)"
+  },
+  "summary_counts": {
+   "B": {
+    "T40": {
+     "n": 6,
+     "episodes": [
+      1807,
+      1828,
+      1967,
+      1968,
+      1982,
+      1995
+     ],
+     "success": 6,
+     "grasp": 6,
+     "place": 6,
+     "robot_contact": 0,
+     "payload_contact": 0,
+     "obstacle_stop": 0
+    },
+    "T40J": {
+     "n": 0,
+     "episodes": [],
+     "success": 0,
+     "grasp": 0,
+     "place": 0,
+     "robot_contact": 0,
+     "payload_contact": 0,
+     "obstacle_stop": 0
+    },
+    "T41a": {
+     "n": 6,
+     "episodes": [
+      1807,
+      1828,
+      1967,
+      1968,
+      1982,
+      1995
+     ],
+     "success": 5,
+     "grasp": 5,
+     "place": 5,
+     "robot_contact": 0,
+     "payload_contact": 0,
+     "obstacle_stop": 0
+    }
+   },
+   "C": {
+    "T40": {
+     "n": 5,
+     "episodes": [
+      1807,
+      1967,
+      1968,
+      1982,
+      1995
+     ],
+     "success": 1,
+     "grasp": 1,
+     "place": 1,
+     "robot_contact": 4,
+     "payload_contact": 1,
+     "obstacle_stop": 5
+    },
+    "T40J": {
+     "n": 1,
+     "episodes": [
+      1995
+     ],
+     "success": 0,
+     "grasp": 1,
+     "place": 0,
+     "robot_contact": 1,
+     "payload_contact": 0,
+     "obstacle_stop": 1
+    },
+    "T41a": {
+     "n": 5,
+     "episodes": [
+      1807,
+      1967,
+      1968,
+      1982,
+      1995
+     ],
+     "success": 2,
+     "grasp": 2,
+     "place": 2,
+     "robot_contact": 3,
+     "payload_contact": 2,
+     "obstacle_stop": 3
+    }
+   },
+   "D": {
+    "T40": {
+     "n": 4,
+     "episodes": [
+      1807,
+      1967,
+      1982,
+      1995
+     ],
+     "success": 1,
+     "grasp": 1,
+     "place": 1,
+     "robot_contact": 1,
+     "payload_contact": 0,
+     "obstacle_stop": 4
+    },
+    "T40J": {
+     "n": 3,
+     "episodes": [
+      1967,
+      1982,
+      1995
+     ],
+     "success": 1,
+     "grasp": 1,
+     "place": 1,
+     "robot_contact": 2,
+     "payload_contact": 1,
+     "obstacle_stop": 2
+    },
+    "T41a": {
+     "n": 4,
+     "episodes": [
+      1807,
+      1967,
+      1982,
+      1995
+     ],
+     "success": 2,
+     "grasp": 3,
+     "place": 2,
+     "robot_contact": 2,
+     "payload_contact": 1,
+     "obstacle_stop": 2
+    }
+   }
+  },
+  "outcome": {
+   "B_ep1807": {
+    "T40": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 160,
+     "place_t": 240,
+     "lift_t": 153,
+     "n_control": 600
+    },
+    "T41a": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 120,
+     "place_t": 200,
+     "lift_t": 113,
+     "n_control": 600
+    },
+    "T40_original_table": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    }
+   },
+   "B_ep1828": {
+    "T40": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 432,
+     "place_t": 480,
+     "lift_t": null,
+     "n_control": 600
+    },
+    "T41a": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 208,
+     "lift_t": null,
+     "n_control": 600
+    },
+    "T40_original_table": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    }
+   },
+   "B_ep1967": {
+    "T40": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 152,
+     "place_t": 200,
+     "lift_t": 139,
+     "n_control": 600
+    },
+    "T41a": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 600
+    },
+    "T40_original_table": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    }
+   },
+   "B_ep1968": {
+    "T40": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 152,
+     "place_t": 224,
+     "lift_t": 138,
+     "n_control": 600
+    },
+    "T41a": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 152,
+     "place_t": 224,
+     "lift_t": 143,
+     "n_control": 600
+    },
+    "T40_original_table": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    }
+   },
+   "B_ep1982": {
+    "T40": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 160,
+     "place_t": 240,
+     "lift_t": 145,
+     "n_control": 600
+    },
+    "T41a": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 184,
+     "place_t": 272,
+     "lift_t": 169,
+     "n_control": 600
+    },
+    "T40_original_table": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 9,
+     "hold_kinds": {
+      "uncertified": 9
+     },
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    }
+   },
+   "B_ep1995": {
+    "T40": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 168,
+     "place_t": 240,
+     "lift_t": 154,
+     "n_control": 600
+    },
+    "T41a": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 160,
+     "place_t": 240,
+     "lift_t": 145,
+     "n_control": 600
+    },
+    "T40_original_table": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 600,
+     "n_hold_chunks": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_min_robot_clearance_m": null,
+     "client_contact_pairs": null,
+     "bit_identical_to_T39": true
+    }
+   },
+   "C_ep1807": {
+    "T40": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 219
+    },
+    "T41a": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 277
+    },
+    "T40_original_table": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 219,
+     "n_hold_chunks": 5,
+     "hold_kinds": {
+      "collision": 5
+     },
+     "obstacle_stop_t": 218,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.0009381777707047068,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    }
+   },
+   "C_ep1967": {
+    "T40": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 204
+    },
+    "T41a": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 136,
+     "place_t": 176,
+     "lift_t": 125,
+     "n_control": 600
+    },
+    "T40_original_table": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 204,
+     "n_hold_chunks": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "obstacle_stop_t": 203,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.00020544193343107267,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    }
+   },
+   "C_ep1968": {
+    "T40": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 144,
+     "place_t": 232,
+     "lift_t": 122,
+     "n_control": 281
+    },
+    "T41a": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 160,
+     "place_t": 208,
+     "lift_t": 145,
+     "n_control": 600
+    },
+    "T40_original_table": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 281,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 280,
+     "client_robot_collision": true,
+     "client_payload_collision": true,
+     "client_min_robot_clearance_m": -0.0016484139729421414,
+     "client_contact_pairs": [
+      [
+       "apple_geom",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ],
+      [
+       "geom#1079",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    }
+   },
+   "C_ep1982": {
+    "T40": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 179
+    },
+    "T41a": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 394
+    },
+    "T40_original_table": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 179,
+     "n_hold_chunks": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "obstacle_stop_t": 178,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.00019490642370171944,
+     "client_contact_pairs": [
+      [
+       "geom#1052",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    }
+   },
+   "C_ep1995": {
+    "T40": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 104
+    },
+    "T40J": {
+     "success": false,
+     "grasp": true,
+     "place": false,
+     "grasp_t": 168,
+     "place_t": null,
+     "lift_t": 130,
+     "n_control": 530
+    },
+    "T41a": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 222
+    },
+    "T40_original_table": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 104,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 103,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": 0.0,
+     "client_contact_pairs": [],
+     "bit_identical_to_T39": null
+    }
+   },
+   "D_ep1807": {
+    "T40": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 136,
+     "place_t": 216,
+     "lift_t": 125,
+     "n_control": 276
+    },
+    "T41a": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 136,
+     "place_t": 176,
+     "lift_t": 126,
+     "n_control": 290
+    },
+    "T40_original_table": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "n_control": 276,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 275,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": -0.001995142528328173,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "bit_identical_to_T39": null
+    }
+   },
+   "D_ep1967": {
+    "T40": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 138
+    },
+    "T40J": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 383
+    },
+    "T41a": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 472,
+     "place_t": 552,
+     "lift_t": 461,
+     "n_control": 600
+    },
+    "T40_original_table": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 138,
+     "n_hold_chunks": 1,
+     "hold_kinds": {
+      "collision": 1
+     },
+     "obstacle_stop_t": 137,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": 0.0,
+     "client_contact_pairs": [],
+     "bit_identical_to_T39": null
+    }
+   },
+   "D_ep1982": {
+    "T40": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 24
+    },
+    "T40J": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 179
+    },
+    "T41a": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 600
+    },
+    "T40_original_table": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 24,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 23,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": 0.0,
+     "client_contact_pairs": [],
+     "bit_identical_to_T39": null
+    }
+   },
+   "D_ep1995": {
+    "T40": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 72
+    },
+    "T40J": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 160,
+     "place_t": 192,
+     "lift_t": 145,
+     "n_control": 600
+    },
+    "T41a": {
+     "success": false,
+     "grasp": true,
+     "place": false,
+     "grasp_t": 152,
+     "place_t": null,
+     "lift_t": 137,
+     "n_control": 415
+    },
+    "T40_original_table": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "n_control": 72,
+     "n_hold_chunks": 0,
+     "hold_kinds": {},
+     "obstacle_stop_t": 71,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_min_robot_clearance_m": 0.0,
+     "client_contact_pairs": [],
+     "bit_identical_to_T39": null
+    }
+   }
+  },
+  "hold": {
+   "B_ep1807": {
+    "T40": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 75
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 75
+     }
+    }
+   },
+   "B_ep1828": {
+    "T40": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 75
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "allowed_contact": 1,
+      "budget_only": 75
+     }
+    }
+   },
+   "B_ep1967": {
+    "T40": {
+     "n_hold_chunks": 1,
+     "hold_t": [
+      224
+     ],
+     "hold_kind_counts": {
+      "collision": 1
+     },
+     "gate_action_counts": {
+      "execute": 74,
+      "hold": 1
+     },
+     "verdict_reason_kind_counts": {
+      "allowed_contact": 2,
+      "budget_only": 74,
+      "collision": 1
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 75
+     }
+    }
+   },
+   "B_ep1968": {
+    "T40": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 75
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "allowed_contact": 1,
+      "budget_only": 75
+     }
+    }
+   },
+   "B_ep1982": {
+    "T40": {
+     "n_hold_chunks": 9,
+     "hold_t": [
+      312,
+      336,
+      344,
+      360,
+      368,
+      456,
+      464,
+      552,
+      560
+     ],
+     "hold_kind_counts": {
+      "uncertified": 9
+     },
+     "gate_action_counts": {
+      "execute": 66,
+      "hold": 9
+     },
+     "verdict_reason_kind_counts": {
+      "allowed_contact": 1,
+      "budget_only": 75,
+      "uncertified": 9
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 4,
+     "hold_t": [
+      136,
+      144,
+      152,
+      160
+     ],
+     "hold_kind_counts": {
+      "collision": 4
+     },
+     "gate_action_counts": {
+      "execute": 71,
+      "hold": 4
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 71,
+      "collision": 4
+     }
+    }
+   },
+   "B_ep1995": {
+    "T40": {
+     "n_hold_chunks": 1,
+     "hold_t": [
+      248
+     ],
+     "hold_kind_counts": {
+      "collision": 1
+     },
+     "gate_action_counts": {
+      "execute": 74,
+      "hold": 1
+     },
+     "verdict_reason_kind_counts": {
+      "allowed_contact": 2,
+      "budget_only": 74,
+      "collision": 1
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 75
+     }
+    }
+   },
+   "C_ep1807": {
+    "T40": {
+     "n_hold_chunks": 5,
+     "hold_t": [
+      136,
+      176,
+      192,
+      200,
+      208
+     ],
+     "hold_kind_counts": {
+      "collision": 5
+     },
+     "gate_action_counts": {
+      "execute": 23,
+      "hold": 5
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 23,
+      "collision": 5
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 1,
+     "hold_t": [
+      224
+     ],
+     "hold_kind_counts": {
+      "collision": 1
+     },
+     "gate_action_counts": {
+      "execute": 34,
+      "hold": 1
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 34,
+      "collision": 1
+     }
+    }
+   },
+   "C_ep1967": {
+    "T40": {
+     "n_hold_chunks": 1,
+     "hold_t": [
+      192
+     ],
+     "hold_kind_counts": {
+      "collision": 1
+     },
+     "gate_action_counts": {
+      "execute": 25,
+      "hold": 1
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 25,
+      "collision": 1
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "allowed_contact": 1,
+      "budget_only": 75
+     }
+    }
+   },
+   "C_ep1968": {
+    "T40": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 36
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 36
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 75
+     }
+    }
+   },
+   "C_ep1982": {
+    "T40": {
+     "n_hold_chunks": 1,
+     "hold_t": [
+      176
+     ],
+     "hold_kind_counts": {
+      "collision": 1
+     },
+     "gate_action_counts": {
+      "execute": 22,
+      "hold": 1
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 22,
+      "collision": 1
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 1,
+     "hold_t": [
+      368
+     ],
+     "hold_kind_counts": {
+      "uncertified": 1
+     },
+     "gate_action_counts": {
+      "execute": 49,
+      "hold": 1
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 50,
+      "uncertified": 1
+     }
+    }
+   },
+   "C_ep1995": {
+    "T40": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 13
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 13
+     }
+    },
+    "T40J": {
+     "n_hold_chunks": 8,
+     "hold_t": [
+      184,
+      200,
+      208,
+      232,
+      280,
+      320,
+      336,
+      360
+     ],
+     "hold_kind_counts": {
+      "collision": 8,
+      "unverified": 1
+     },
+     "gate_action_counts": {
+      "execute": 59,
+      "hold": 8
+     },
+     "verdict_reason_kind_counts": {
+      "allowed_contact": 5,
+      "budget_only": 59,
+      "collision": 8,
+      "unverified": 1
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 28
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 28
+     }
+    }
+   },
+   "D_ep1807": {
+    "T40": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 35
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 35
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 37
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 37
+     }
+    }
+   },
+   "D_ep1967": {
+    "T40": {
+     "n_hold_chunks": 1,
+     "hold_t": [
+      136
+     ],
+     "hold_kind_counts": {
+      "collision": 1
+     },
+     "gate_action_counts": {
+      "execute": 17,
+      "hold": 1
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 17,
+      "collision": 1
+     }
+    },
+    "T40J": {
+     "n_hold_chunks": 2,
+     "hold_t": [
+      136,
+      240
+     ],
+     "hold_kind_counts": {
+      "collision": 2
+     },
+     "gate_action_counts": {
+      "execute": 46,
+      "hold": 2
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 46,
+      "collision": 2
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "allowed_contact": 1,
+      "budget_only": 75
+     }
+    }
+   },
+   "D_ep1982": {
+    "T40": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 3
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 3
+     }
+    },
+    "T40J": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 23
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 23
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 5,
+     "hold_t": [
+      352,
+      360,
+      368,
+      376,
+      480
+     ],
+     "hold_kind_counts": {
+      "collision": 1,
+      "uncertified": 4
+     },
+     "gate_action_counts": {
+      "execute": 70,
+      "hold": 5
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 74,
+      "collision": 1,
+      "uncertified": 4
+     }
+    }
+   },
+   "D_ep1995": {
+    "T40": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 9
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 9
+     }
+    },
+    "T40J": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "allowed_contact": 1,
+      "budget_only": 75
+     }
+    },
+    "T41a": {
+     "n_hold_chunks": 6,
+     "hold_t": [
+      320,
+      328,
+      336,
+      352,
+      360,
+      368
+     ],
+     "hold_kind_counts": {
+      "uncertified": 6
+     },
+     "gate_action_counts": {
+      "execute": 46,
+      "hold": 6
+     },
+     "verdict_reason_kind_counts": {
+      "allowed_contact": 1,
+      "budget_only": 52,
+      "uncertified": 6
+     }
+    }
+   }
+  },
+  "contact": {
+   "B_ep1807": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": {
+       "t": 182,
+       "vs_lift": "after_lift",
+       "n_rows": 12
+      },
+      "EE_BODY_L": {
+       "t": 182,
+       "vs_lift": "after_lift",
+       "n_rows": 16
+      },
+      "apple": {
+       "t": 184,
+       "vs_lift": "after_lift",
+       "n_rows": 3
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": {
+       "t": 143,
+       "vs_lift": "after_lift",
+       "n_rows": 8
+      },
+      "EE_BODY_L": {
+       "t": 143,
+       "vs_lift": "after_lift",
+       "n_rows": 15
+      },
+      "apple": {
+       "t": 144,
+       "vs_lift": "after_lift",
+       "n_rows": 4
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    }
+   },
+   "B_ep1828": {
+    "T40": {
+     "first_t_dist_le_0": {},
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    },
+    "T41a": {
+     "first_t_dist_le_0": {},
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    }
+   },
+   "B_ep1967": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": {
+       "t": 173,
+       "vs_lift": "after_lift",
+       "n_rows": 5
+      },
+      "EE_BODY_L": null,
+      "apple": {
+       "t": 173,
+       "vs_lift": "after_lift",
+       "n_rows": 7
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": {
+       "t": 186,
+       "vs_lift": "before_lift",
+       "n_rows": 9
+      },
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    }
+   },
+   "B_ep1968": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": {
+       "t": 173,
+       "vs_lift": "after_lift",
+       "n_rows": 11
+      },
+      "EE_BODY_L": null,
+      "apple": {
+       "t": 174,
+       "vs_lift": "after_lift",
+       "n_rows": 6
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": {
+       "t": 173,
+       "vs_lift": "after_lift",
+       "n_rows": 128
+      },
+      "EE_BODY_L": null,
+      "apple": {
+       "t": 174,
+       "vs_lift": "after_lift",
+       "n_rows": 6
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    }
+   },
+   "B_ep1982": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": {
+       "t": 183,
+       "vs_lift": "after_lift",
+       "n_rows": 7
+      },
+      "EE_BODY_L": null,
+      "apple": {
+       "t": 184,
+       "vs_lift": "after_lift",
+       "n_rows": 5
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": {
+       "t": 210,
+       "vs_lift": "after_lift",
+       "n_rows": 264
+      },
+      "EE_BODY_L": null,
+      "apple": {
+       "t": 210,
+       "vs_lift": "after_lift",
+       "n_rows": 6
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    }
+   },
+   "B_ep1995": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": {
+       "t": 190,
+       "vs_lift": "after_lift",
+       "n_rows": 295
+      },
+      "apple": null,
+      "other_robot": {
+       "t": 192,
+       "vs_lift": "after_lift",
+       "n_rows": 11
+      }
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": {
+       "t": 184,
+       "vs_lift": "after_lift",
+       "n_rows": 201
+      },
+      "EE_BODY_L": {
+       "t": 183,
+       "vs_lift": "after_lift",
+       "n_rows": 301
+      },
+      "apple": {
+       "t": 187,
+       "vs_lift": "after_lift",
+       "n_rows": 1
+      },
+      "other_robot": {
+       "t": 187,
+       "vs_lift": "after_lift",
+       "n_rows": 10
+      }
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": null,
+     "client_payload_collision": null,
+     "client_contact_steps": null,
+     "client_min_robot_clearance_mm": null,
+     "client_contact_pairs": null,
+     "contact_t": null,
+     "contact_vs_lift": null
+    }
+   },
+   "C_ep1807": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 218,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_contact_steps": 2,
+     "client_min_robot_clearance_mm": -0.94,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 218,
+     "contact_vs_lift": "before_lift"
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 276,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_contact_steps": 5,
+     "client_min_robot_clearance_mm": -1.06,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 276,
+     "contact_vs_lift": "before_lift"
+    }
+   },
+   "C_ep1967": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 203,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_contact_steps": 5,
+     "client_min_robot_clearance_mm": -0.21,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 203,
+     "contact_vs_lift": "before_lift"
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": {
+       "t": 162,
+       "vs_lift": "after_lift",
+       "n_rows": 5
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": false,
+     "client_payload_collision": true,
+     "client_contact_steps": 134,
+     "client_min_robot_clearance_mm": 12.76,
+     "client_contact_pairs": [
+      [
+       "apple_geom",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": null,
+     "contact_vs_lift": null
+    }
+   },
+   "C_ep1968": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": {
+       "t": 169,
+       "vs_lift": "after_lift",
+       "n_rows": 3
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 280,
+     "client_robot_collision": true,
+     "client_payload_collision": true,
+     "client_contact_steps": 37,
+     "client_min_robot_clearance_mm": -1.65,
+     "client_contact_pairs": [
+      [
+       "apple_geom",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ],
+      [
+       "geom#1079",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 280,
+     "contact_vs_lift": "after_lift"
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": {
+       "t": 182,
+       "vs_lift": "after_lift",
+       "n_rows": 16
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": false,
+     "client_payload_collision": true,
+     "client_contact_steps": 523,
+     "client_min_robot_clearance_mm": 1.99,
+     "client_contact_pairs": [
+      [
+       "apple_geom",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": null,
+     "contact_vs_lift": null
+    }
+   },
+   "C_ep1982": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 178,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_contact_steps": 5,
+     "client_min_robot_clearance_mm": -0.19,
+     "client_contact_pairs": [
+      [
+       "geom#1052",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 178,
+     "contact_vs_lift": "before_lift"
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 393,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_contact_steps": 3,
+     "client_min_robot_clearance_mm": -0.25,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 393,
+     "contact_vs_lift": "before_lift"
+    }
+   },
+   "C_ep1995": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 103,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_contact_steps": 0,
+     "client_min_robot_clearance_mm": 0.0,
+     "client_contact_pairs": [],
+     "contact_t": null,
+     "contact_vs_lift": null
+    },
+    "T40J": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 529,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_contact_steps": 4,
+     "client_min_robot_clearance_mm": -0.02,
+     "client_contact_pairs": [
+      [
+       "geom#856",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 529,
+     "contact_vs_lift": "after_lift"
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 221,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_contact_steps": 4,
+     "client_min_robot_clearance_mm": -0.34,
+     "client_contact_pairs": [
+      [
+       "geom#957",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 221,
+     "contact_vs_lift": "before_lift"
+    }
+   },
+   "D_ep1807": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 275,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_contact_steps": 5,
+     "client_min_robot_clearance_mm": -2.0,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 275,
+     "contact_vs_lift": "after_lift"
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": {
+       "t": 164,
+       "vs_lift": "after_lift",
+       "n_rows": 4
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 289,
+     "client_robot_collision": true,
+     "client_payload_collision": true,
+     "client_contact_steps": 100,
+     "client_min_robot_clearance_mm": -0.45,
+     "client_contact_pairs": [
+      [
+       "apple_geom",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ],
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 289,
+     "contact_vs_lift": "after_lift"
+    }
+   },
+   "D_ep1967": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 137,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_contact_steps": 0,
+     "client_min_robot_clearance_mm": 0.0,
+     "client_contact_pairs": [],
+     "contact_t": null,
+     "contact_vs_lift": null
+    },
+    "T40J": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 382,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_contact_steps": 1,
+     "client_min_robot_clearance_mm": -0.08,
+     "client_contact_pairs": [
+      [
+       "geom#1052",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 382,
+     "contact_vs_lift": "before_lift"
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_contact_steps": 0,
+     "client_min_robot_clearance_mm": 10.78,
+     "client_contact_pairs": [],
+     "contact_t": null,
+     "contact_vs_lift": null
+    }
+   },
+   "D_ep1982": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 23,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_contact_steps": 0,
+     "client_min_robot_clearance_mm": 0.0,
+     "client_contact_pairs": [],
+     "contact_t": null,
+     "contact_vs_lift": null
+    },
+    "T40J": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 178,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_contact_steps": 3,
+     "client_min_robot_clearance_mm": -0.6,
+     "client_contact_pairs": [
+      [
+       "geom#1086",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 178,
+     "contact_vs_lift": "before_lift"
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_contact_steps": 0,
+     "client_min_robot_clearance_mm": 4.24,
+     "client_contact_pairs": [],
+     "contact_t": null,
+     "contact_vs_lift": null
+    }
+   },
+   "D_ep1995": {
+    "T40": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 71,
+     "client_robot_collision": false,
+     "client_payload_collision": false,
+     "client_contact_steps": 0,
+     "client_min_robot_clearance_mm": 0.0,
+     "client_contact_pairs": [],
+     "contact_t": null,
+     "contact_vs_lift": null
+    },
+    "T40J": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": {
+       "t": 184,
+       "vs_lift": "after_lift",
+       "n_rows": 3
+      },
+      "other_robot": null
+     },
+     "obstacle_stop": false,
+     "obstacle_stop_t": null,
+     "client_robot_collision": false,
+     "client_payload_collision": true,
+     "client_contact_steps": 148,
+     "client_min_robot_clearance_mm": 1.09,
+     "client_contact_pairs": [
+      [
+       "apple_geom",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": null,
+     "contact_vs_lift": null
+    },
+    "T41a": {
+     "first_t_dist_le_0": {
+      "fingers": null,
+      "EE_BODY_L": null,
+      "apple": null,
+      "other_robot": null
+     },
+     "obstacle_stop": true,
+     "obstacle_stop_t": 414,
+     "client_robot_collision": true,
+     "client_payload_collision": false,
+     "client_contact_steps": 5,
+     "client_min_robot_clearance_mm": -0.64,
+     "client_contact_pairs": [
+      [
+       "geom#1052",
+       "pick_obstacle_hurdle_0_collision_bar"
+      ]
+     ],
+     "contact_t": 414,
+     "contact_vs_lift": "after_lift"
+    }
+   }
+  },
+  "min_distance_to_hurdle_by_group": {
+   "B_ep1807": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": -22.24,
+       "t": 187,
+       "n_rows_le_0": 12
+      },
+      "before_lift": {
+       "min_mm": 15.76,
+       "t": 139,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -22.24,
+       "t": 187,
+       "n_rows_le_0": 7
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": -28.5,
+       "t": 312,
+       "n_rows_le_0": 16
+      },
+      "before_lift": {
+       "min_mm": 18.49,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -19.77,
+       "t": 185,
+       "n_rows_le_0": 8
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -9.09,
+       "t": 185,
+       "n_rows_le_0": 3
+      },
+      "before_lift": {
+       "min_mm": 39.24,
+       "t": 141,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -9.09,
+       "t": 185,
+       "n_rows_le_0": 3
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 16.07,
+       "t": 313,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 45.16,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 35.58,
+       "t": 187,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": false
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": -24.27,
+       "t": 148,
+       "n_rows_le_0": 8
+      },
+      "before_lift": {
+       "min_mm": 21.7,
+       "t": 105,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -24.27,
+       "t": 148,
+       "n_rows_le_0": 6
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": -30.92,
+       "t": 259,
+       "n_rows_le_0": 15
+      },
+      "before_lift": {
+       "min_mm": 18.49,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -17.03,
+       "t": 146,
+       "n_rows_le_0": 8
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -8.08,
+       "t": 146,
+       "n_rows_le_0": 4
+      },
+      "before_lift": {
+       "min_mm": 35.01,
+       "t": 107,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -8.08,
+       "t": 146,
+       "n_rows_le_0": 4
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 5.07,
+       "t": 259,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 45.16,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 39.77,
+       "t": 148,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": false
+    }
+   },
+   "B_ep1828": {
+    "T40": {
+     "fingers": {
+      "all": null,
+      "before_lift": null,
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": null,
+      "before_lift": null,
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": null,
+      "before_lift": null,
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": null,
+      "before_lift": null,
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": null
+    },
+    "T41a": {
+     "fingers": {
+      "all": null,
+      "before_lift": null,
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": null,
+      "before_lift": null,
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": null,
+      "before_lift": null,
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": null,
+      "before_lift": null,
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": null
+    }
+   },
+   "B_ep1967": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": -10.16,
+       "t": 177,
+       "n_rows_le_0": 5
+      },
+      "before_lift": {
+       "min_mm": 20.26,
+       "t": 136,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -10.16,
+       "t": 177,
+       "n_rows_le_0": 4
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 22.36,
+       "t": 176,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 30.82,
+       "t": 2,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 22.36,
+       "t": 176,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -33.13,
+       "t": 177,
+       "n_rows_le_0": 7
+      },
+      "before_lift": {
+       "min_mm": 25.37,
+       "t": 10,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -33.13,
+       "t": 177,
+       "n_rows_le_0": 7
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 78.98,
+       "t": 150,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 86.6,
+       "t": 92,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 78.98,
+       "t": 150,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": false
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": -22.03,
+       "t": 190,
+       "n_rows_le_0": 9
+      },
+      "before_lift": {
+       "min_mm": -22.03,
+       "t": 190,
+       "n_rows_le_0": 9
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 4.96,
+       "t": 193,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 4.96,
+       "t": 193,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 17.37,
+       "t": 159,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 17.37,
+       "t": 159,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 60.2,
+       "t": 516,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 60.2,
+       "t": 516,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": false
+    }
+   },
+   "B_ep1968": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": -22.18,
+       "t": 177,
+       "n_rows_le_0": 11
+      },
+      "before_lift": {
+       "min_mm": 22.4,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -22.18,
+       "t": 177,
+       "n_rows_le_0": 6
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 6.76,
+       "t": 177,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 22.03,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 6.76,
+       "t": 177,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -33.92,
+       "t": 176,
+       "n_rows_le_0": 6
+      },
+      "before_lift": {
+       "min_mm": 46.85,
+       "t": 121,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -33.92,
+       "t": 176,
+       "n_rows_le_0": 6
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 61.03,
+       "t": 179,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 81.84,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 61.03,
+       "t": 179,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": false
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": -22.39,
+       "t": 177,
+       "n_rows_le_0": 128
+      },
+      "before_lift": {
+       "min_mm": 22.4,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -22.39,
+       "t": 177,
+       "n_rows_le_0": 6
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 7.18,
+       "t": 177,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 22.03,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 7.18,
+       "t": 177,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -35.46,
+       "t": 176,
+       "n_rows_le_0": 6
+      },
+      "before_lift": {
+       "min_mm": 46.63,
+       "t": 132,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -35.46,
+       "t": 176,
+       "n_rows_le_0": 6
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 61.82,
+       "t": 179,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 81.84,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 61.82,
+       "t": 179,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": false
+    }
+   },
+   "B_ep1982": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": -12.61,
+       "t": 301,
+       "n_rows_le_0": 7
+      },
+      "before_lift": {
+       "min_mm": 13.09,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -11.18,
+       "t": 187,
+       "n_rows_le_0": 4
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 19.77,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 19.77,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 30.11,
+       "t": 188,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -23.76,
+       "t": 186,
+       "n_rows_le_0": 5
+      },
+      "before_lift": {
+       "min_mm": 60.43,
+       "t": 142,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -23.76,
+       "t": 186,
+       "n_rows_le_0": 5
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 81.04,
+       "t": 298,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 86.54,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 86.19,
+       "t": 189,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": false
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": -18.68,
+       "t": 342,
+       "n_rows_le_0": 264
+      },
+      "before_lift": {
+       "min_mm": 13.09,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -15.23,
+       "t": 214,
+       "n_rows_le_0": 4
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 15.89,
+       "t": 216,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 19.77,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 15.89,
+       "t": 216,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -24.04,
+       "t": 213,
+       "n_rows_le_0": 6
+      },
+      "before_lift": {
+       "min_mm": 59.69,
+       "t": 139,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -24.04,
+       "t": 213,
+       "n_rows_le_0": 6
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 74.97,
+       "t": 338,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 86.54,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 76.53,
+       "t": 216,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": false
+    }
+   },
+   "B_ep1995": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": 4.8,
+       "t": 316,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 13.84,
+       "t": 139,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 17.57,
+       "t": 194,
+       "n_rows_le_0": 0
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": -36.38,
+       "t": 317,
+       "n_rows_le_0": 295
+      },
+      "before_lift": {
+       "min_mm": 1.45,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -31.34,
+       "t": 193,
+       "n_rows_le_0": 9
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": 26.65,
+       "t": 192,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 36.64,
+       "t": 150,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 26.65,
+       "t": 192,
+       "n_rows_le_0": 0
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": -18.74,
+       "t": 195,
+       "n_rows_le_0": 11
+      },
+      "before_lift": {
+       "min_mm": 16.61,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -18.74,
+       "t": 195,
+       "n_rows_le_0": 6
+      }
+     },
+     "physical_hurdle": false
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": -14.75,
+       "t": 312,
+       "n_rows_le_0": 201
+      },
+      "before_lift": {
+       "min_mm": 17.87,
+       "t": 136,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -5.79,
+       "t": 190,
+       "n_rows_le_0": 3
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": -33.68,
+       "t": 188,
+       "n_rows_le_0": 301
+      },
+      "before_lift": {
+       "min_mm": 1.45,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -33.68,
+       "t": 188,
+       "n_rows_le_0": 11
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -0.52,
+       "t": 187,
+       "n_rows_le_0": 1
+      },
+      "before_lift": {
+       "min_mm": 39.83,
+       "t": 136,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -0.52,
+       "t": 187,
+       "n_rows_le_0": 1
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": -17.68,
+       "t": 190,
+       "n_rows_le_0": 10
+      },
+      "before_lift": {
+       "min_mm": 16.61,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -17.68,
+       "t": 190,
+       "n_rows_le_0": 6
+      }
+     },
+     "physical_hurdle": false
+    }
+   },
+   "C_ep1807": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": 4.37,
+       "t": 218,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 4.37,
+       "t": 218,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 2.95,
+       "t": 218,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 2.95,
+       "t": 218,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 40.23,
+       "t": 125,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 40.23,
+       "t": 125,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 45.3,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 45.3,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": 0.17,
+       "t": 276,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 0.17,
+       "t": 276,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 13.72,
+       "t": 266,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 13.72,
+       "t": 266,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 33.65,
+       "t": 186,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 33.65,
+       "t": 186,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 45.3,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 45.3,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    }
+   },
+   "C_ep1967": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": 3.23,
+       "t": 203,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 3.23,
+       "t": 203,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 30.77,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 30.77,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 25.37,
+       "t": 10,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 25.37,
+       "t": 10,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 79.72,
+       "t": 162,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 79.72,
+       "t": 162,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": 12.76,
+       "t": 160,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 28.27,
+       "t": 123,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 12.76,
+       "t": 160,
+       "n_rows_le_0": 0
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 30.77,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 30.77,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 42.76,
+       "t": 139,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -1.16,
+       "t": 164,
+       "n_rows_le_0": 5
+      },
+      "before_lift": {
+       "min_mm": 25.37,
+       "t": 10,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -1.16,
+       "t": 164,
+       "n_rows_le_0": 5
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 87.27,
+       "t": 2,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 87.27,
+       "t": 2,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 88.03,
+       "t": 135,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": true
+    }
+   },
+   "C_ep1968": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": 0.03,
+       "t": 280,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 22.46,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 9.15,
+       "t": 166,
+       "n_rows_le_0": 0
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 22.15,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 22.15,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 45.02,
+       "t": 173,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -0.4,
+       "t": 171,
+       "n_rows_le_0": 3
+      },
+      "before_lift": {
+       "min_mm": 44.28,
+       "t": 117,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -0.4,
+       "t": 171,
+       "n_rows_le_0": 3
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 69.12,
+       "t": 280,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 82.07,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 92.42,
+       "t": 143,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": true
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": 2.76,
+       "t": 181,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 22.46,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 2.76,
+       "t": 181,
+       "n_rows_le_0": 0
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 15.54,
+       "t": 471,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 22.15,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 40.86,
+       "t": 164,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -2.59,
+       "t": 182,
+       "n_rows_le_0": 16
+      },
+      "before_lift": {
+       "min_mm": 45.87,
+       "t": 133,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -2.59,
+       "t": 182,
+       "n_rows_le_0": 16
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 60.75,
+       "t": 459,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 82.07,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 88.94,
+       "t": 159,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": true
+    }
+   },
+   "C_ep1982": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": 0.35,
+       "t": 178,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 0.35,
+       "t": 178,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 0.03,
+       "t": 178,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 0.03,
+       "t": 178,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 56.99,
+       "t": 144,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 56.99,
+       "t": 144,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 73.01,
+       "t": 178,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 73.01,
+       "t": 178,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": 1.32,
+       "t": 393,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 1.32,
+       "t": 393,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 19.97,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 19.97,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 58.62,
+       "t": 141,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 58.62,
+       "t": 141,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 86.7,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 86.7,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    }
+   },
+   "C_ep1995": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": 22.24,
+       "t": 103,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 22.24,
+       "t": 103,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 1.53,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 1.53,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 41.08,
+       "t": 7,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 41.08,
+       "t": 7,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 16.64,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 16.64,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    },
+    "T40J": {
+     "fingers": {
+      "all": {
+       "min_mm": 19.86,
+       "t": 114,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 19.86,
+       "t": 114,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 24.95,
+       "t": 130,
+       "n_rows_le_0": 0
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 1.53,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 1.53,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 5.06,
+       "t": 205,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": 24.06,
+       "t": 207,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 40.51,
+       "t": 116,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 43.41,
+       "t": 130,
+       "n_rows_le_0": 0
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 0.4,
+       "t": 529,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 16.64,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 40.32,
+       "t": 205,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": true
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": 15.11,
+       "t": 209,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 15.11,
+       "t": 209,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 1.53,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 1.53,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 36.72,
+       "t": 144,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 36.72,
+       "t": 144,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 0.29,
+       "t": 221,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 0.29,
+       "t": 221,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    }
+   },
+   "D_ep1807": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": 1.96,
+       "t": 272,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 40.85,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 11.35,
+       "t": 161,
+       "n_rows_le_0": 0
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 26.02,
+       "t": 275,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 41.79,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 52.41,
+       "t": 160,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": 5.39,
+       "t": 164,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 80.82,
+       "t": 120,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 5.39,
+       "t": 164,
+       "n_rows_le_0": 0
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 82.59,
+       "t": 273,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 102.09,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 108.72,
+       "t": 128,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": true
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": 3.74,
+       "t": 286,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 40.85,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 8.86,
+       "t": 162,
+       "n_rows_le_0": 0
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 25.31,
+       "t": 289,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 41.79,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 49.45,
+       "t": 163,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -1.36,
+       "t": 165,
+       "n_rows_le_0": 4
+      },
+      "before_lift": {
+       "min_mm": 77.23,
+       "t": 125,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -1.36,
+       "t": 165,
+       "n_rows_le_0": 4
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 82.93,
+       "t": 287,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 102.09,
+       "t": 3,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 108.0,
+       "t": 168,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": true
+    }
+   },
+   "D_ep1967": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": 22.05,
+       "t": 132,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 22.05,
+       "t": 132,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 38.28,
+       "t": 2,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 38.28,
+       "t": 2,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 23.67,
+       "t": 10,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 23.67,
+       "t": 10,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 87.99,
+       "t": 96,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 87.99,
+       "t": 96,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    },
+    "T40J": {
+     "fingers": {
+      "all": {
+       "min_mm": 2.31,
+       "t": 191,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 2.31,
+       "t": 191,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 3.73,
+       "t": 382,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 3.73,
+       "t": 382,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 23.67,
+       "t": 10,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 23.67,
+       "t": 10,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 58.24,
+       "t": 382,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 58.24,
+       "t": 382,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": 10.99,
+       "t": 200,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 10.99,
+       "t": 200,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 18.44,
+       "t": 482,
+       "n_rows_le_0": 0
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 36.87,
+       "t": 160,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 36.87,
+       "t": 160,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 39.95,
+       "t": 478,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": 3.83,
+       "t": 504,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 6.73,
+       "t": 159,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 3.83,
+       "t": 504,
+       "n_rows_le_0": 0
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 85.94,
+       "t": 155,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 85.94,
+       "t": 155,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 94.21,
+       "t": 509,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": true
+    }
+   },
+   "D_ep1982": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": 16.45,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 16.45,
+       "t": 4,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 23.07,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 23.07,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 127.51,
+       "t": 13,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 127.51,
+       "t": 13,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 88.95,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 88.95,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    },
+    "T40J": {
+     "fingers": {
+      "all": {
+       "min_mm": 5.61,
+       "t": 178,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 5.61,
+       "t": 178,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 23.07,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 23.07,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 114.17,
+       "t": 126,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 114.17,
+       "t": 126,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 88.95,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 88.95,
+       "t": 5,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": 8.63,
+       "t": 481,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 8.63,
+       "t": 481,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 4.24,
+       "t": 518,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 4.24,
+       "t": 518,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 117.64,
+       "t": 129,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 117.64,
+       "t": 129,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 47.88,
+       "t": 518,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 47.88,
+       "t": 518,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    }
+   },
+   "D_ep1995": {
+    "T40": {
+     "fingers": {
+      "all": {
+       "min_mm": 1.1,
+       "t": 8,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 1.1,
+       "t": 8,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 12.24,
+       "t": 67,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 12.24,
+       "t": 67,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "apple": {
+      "all": {
+       "min_mm": 75.92,
+       "t": 71,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 75.92,
+       "t": 71,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 45.95,
+       "t": 71,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 45.95,
+       "t": 71,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": null
+     },
+     "physical_hurdle": true
+    },
+    "T40J": {
+     "fingers": {
+      "all": {
+       "min_mm": 1.1,
+       "t": 8,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 1.1,
+       "t": 8,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 14.1,
+       "t": 183,
+       "n_rows_le_0": 0
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 12.24,
+       "t": 67,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 12.24,
+       "t": 67,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 28.31,
+       "t": 163,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": -0.82,
+       "t": 184,
+       "n_rows_le_0": 3
+      },
+      "before_lift": {
+       "min_mm": 75.73,
+       "t": 123,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": -0.82,
+       "t": 184,
+       "n_rows_le_0": 3
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 18.31,
+       "t": 133,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 18.31,
+       "t": 133,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 21.82,
+       "t": 145,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": true
+    },
+    "T41a": {
+     "fingers": {
+      "all": {
+       "min_mm": 1.1,
+       "t": 8,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 1.1,
+       "t": 8,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 44.17,
+       "t": 156,
+       "n_rows_le_0": 0
+      }
+     },
+     "EE_BODY_L": {
+      "all": {
+       "min_mm": 5.06,
+       "t": 414,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 13.63,
+       "t": 63,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 29.17,
+       "t": 156,
+       "n_rows_le_0": 0
+      }
+     },
+     "apple": {
+      "all": {
+       "min_mm": 41.83,
+       "t": 177,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 75.52,
+       "t": 95,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 60.82,
+       "t": 161,
+       "n_rows_le_0": 0
+      }
+     },
+     "other_robot": {
+      "all": {
+       "min_mm": 20.87,
+       "t": 128,
+       "n_rows_le_0": 0
+      },
+      "before_lift": {
+       "min_mm": 20.87,
+       "t": 128,
+       "n_rows_le_0": 0
+      },
+      "carry_lift_to_place_or_end": {
+       "min_mm": 22.49,
+       "t": 137,
+       "n_rows_le_0": 0
+      }
+     },
+     "physical_hurdle": true
+    }
+   }
+  },
+  "B_bit_identity_vs_T40G": {
+   "B_ep1807": {
+    "all": false,
+    "first_executed_step_diff": 8,
+    "traj_npz": {
+     "executed_actions": false,
+     "measured_qpos": false,
+     "predicted_chunks": false,
+     "inference_states": false,
+     "chunk_start_steps": true
+    },
+    "server_record": {
+     "n_chunks": [
+      75,
+      75
+     ],
+     "refined_chunk": {
+      "equal": false,
+      "max_abs": 1.062494695186615,
+      "first_diff_chunk": 1
+     },
+     "reference_chunk": {
+      "equal": false,
+      "max_abs": 1.062494695186615,
+      "first_diff_chunk": 2
+     },
+     "clearance": {
+      "equal": false,
+      "max_abs": 0.2047673910856247,
+      "first_diff_chunk": 1
+     }
+    }
+   },
+   "B_ep1828": {
+    "all": false,
+    "first_executed_step_diff": 8,
+    "traj_npz": {
+     "executed_actions": false,
+     "measured_qpos": false,
+     "predicted_chunks": false,
+     "inference_states": false,
+     "chunk_start_steps": true
+    },
+    "server_record": {
+     "n_chunks": [
+      75,
+      75
+     ],
+     "refined_chunk": {
+      "equal": false,
+      "max_abs": 1.5270550064742565,
+      "first_diff_chunk": 1
+     },
+     "reference_chunk": {
+      "equal": false,
+      "max_abs": 1.5270550064742565,
+      "first_diff_chunk": 2
+     },
+     "clearance": {
+      "equal": false,
+      "max_abs": 0.15157850831747055,
+      "first_diff_chunk": 1
+     }
+    }
+   },
+   "B_ep1967": {
+    "all": false,
+    "first_executed_step_diff": 8,
+    "traj_npz": {
+     "executed_actions": false,
+     "measured_qpos": false,
+     "predicted_chunks": false,
+     "inference_states": false,
+     "chunk_start_steps": true
+    },
+    "server_record": {
+     "n_chunks": [
+      75,
+      75
+     ],
+     "refined_chunk": {
+      "equal": false,
+      "max_abs": 1.4857985973358154,
+      "first_diff_chunk": 1
+     },
+     "reference_chunk": {
+      "equal": false,
+      "max_abs": 1.4857985973358154,
+      "first_diff_chunk": 2
+     },
+     "clearance": {
+      "equal": false,
+      "max_abs": 0.11689381673932076,
+      "first_diff_chunk": 1
+     }
+    }
+   },
+   "B_ep1968": {
+    "all": false,
+    "first_executed_step_diff": 8,
+    "traj_npz": {
+     "executed_actions": false,
+     "measured_qpos": false,
+     "predicted_chunks": false,
+     "inference_states": false,
+     "chunk_start_steps": true
+    },
+    "server_record": {
+     "n_chunks": [
+      75,
+      75
+     ],
+     "refined_chunk": {
+      "equal": false,
+      "max_abs": 1.0100528661860153,
+      "first_diff_chunk": 1
+     },
+     "reference_chunk": {
+      "equal": false,
+      "max_abs": 1.0100528661860153,
+      "first_diff_chunk": 2
+     },
+     "clearance": {
+      "equal": false,
+      "max_abs": 0.06296803057193756,
+      "first_diff_chunk": 1
+     }
+    }
+   },
+   "B_ep1982": {
+    "all": false,
+    "first_executed_step_diff": 8,
+    "traj_npz": {
+     "executed_actions": false,
+     "measured_qpos": false,
+     "predicted_chunks": false,
+     "inference_states": false,
+     "chunk_start_steps": true
+    },
+    "server_record": {
+     "n_chunks": [
+      75,
+      75
+     ],
+     "refined_chunk": {
+      "equal": false,
+      "max_abs": 1.0171619653701782,
+      "first_diff_chunk": 1
+     },
+     "reference_chunk": {
+      "equal": false,
+      "max_abs": 1.0171619653701782,
+      "first_diff_chunk": 2
+     },
+     "clearance": {
+      "equal": false,
+      "max_abs": 0.22170171700417995,
+      "first_diff_chunk": 1
+     }
+    }
+   },
+   "B_ep1995": {
+    "all": false,
+    "first_executed_step_diff": 8,
+    "traj_npz": {
+     "executed_actions": false,
+     "measured_qpos": false,
+     "predicted_chunks": false,
+     "inference_states": false,
+     "chunk_start_steps": true
+    },
+    "server_record": {
+     "n_chunks": [
+      75,
+      75
+     ],
+     "refined_chunk": {
+      "equal": false,
+      "max_abs": 1.0028140009380877,
+      "first_diff_chunk": 1
+     },
+     "reference_chunk": {
+      "equal": false,
+      "max_abs": 1.0028140009380877,
+      "first_diff_chunk": 2
+     },
+     "clearance": {
+      "equal": false,
+      "max_abs": 0.08987629041075706,
+      "first_diff_chunk": 1
+     }
+    }
+   }
+  },
+  "B_failures": {
+   "B_ep1967": {
+    "T41a_outcome": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "lift_t": null,
+     "n_control": 600
+    },
+    "hold": {
+     "n_hold_chunks": 0,
+     "hold_t": [],
+     "hold_kind_counts": {},
+     "gate_action_counts": {
+      "execute": 75
+     },
+     "verdict_reason_kind_counts": {
+      "budget_only": 75
+     }
+    },
+    "apple_dz_max_mm": 42.80020988842181,
+    "apple_dz_final_mm": 1.784956939913429,
+    "grasp_contact_settle": {
+     "t_close": 136,
+     "t_settle": 143,
+     "n_close_rows": 8,
+     "open_settle": 0.6998303318784326,
+     "d_l1_settle_mm": -0.2421773676875553,
+     "d_l2_settle_mm": -0.35005670659114924,
+     "contact_mid_rel_apple_mm": [
+      -0.27711219429182865,
+      -2.5454065104695833,
+      7.9454268824569185
+     ],
+     "contact_mid_z_mm": 7.9454268824569185,
+     "contact_lost_t": 153,
+     "first_grasp_held": false,
+     "hold_min_open": 0.478832500851821,
+     "n_close_cycles": 3
+    },
+    "T41a_obstacle_rows_lt10mm_total": 0,
+    "T41a_chunks_with_obstacle_rows_lt10mm": [],
+    "T40_record_obstacle_rows_lt10mm_by_T41a_rule": [
+     {
+      "seq": 29,
+      "t": 224,
+      "phase": "after",
+      "n": 13,
+      "n_hand": 13,
+      "gate": "hold",
+      "hold_kinds": [
+       "collision"
+      ]
+     }
+    ],
+    "divergence_vs_T40G": {
+     "all": false,
+     "first_executed_step_diff": 8,
+     "traj_npz": {
+      "executed_actions": false,
+      "measured_qpos": false,
+      "predicted_chunks": false,
+      "inference_states": false,
+      "chunk_start_steps": true
+     },
+     "server_record": {
+      "n_chunks": [
+       75,
+       75
+      ],
+      "refined_chunk": {
+       "equal": false,
+       "max_abs": 1.4857985973358154,
+       "first_diff_chunk": 1
+      },
+      "reference_chunk": {
+       "equal": false,
+       "max_abs": 1.4857985973358154,
+       "first_diff_chunk": 2
+      },
+      "clearance": {
+       "equal": false,
+       "max_abs": 0.11689381673932076,
+       "first_diff_chunk": 1
+      }
+     }
+    }
+   }
+  },
+  "TO_rows_by_class_T41a": {
+   "definitions": "T41a — TO row classes per phase + TO-predicted vs true-mesh hand clearance at the closest-approach chunk (verifier, CPU only).\n\nusage: T41_SERVER_DIR=<T41a server dir> T41_MANIFEST=<any T41a run manifest.json>        replay_t41.py ANALYSIS_JSON OUT_JSON [RUN_KEY ...]\n       (ANALYSIS_JSON = analyze_t41.py output; RUN_KEY like E3b/C/E3b_ep1807_s18071; default all E3b runs with a server segment)\n\nPer paired server chunk (analyze_t41 pairing: server t_step == planning seq, refined_chunk == planning actions):\n  scene     : as the server built it, rebuilt from the record with fixed_input_ablation (T40 I method): field = recorded coarse /\n              fine / target-free grids; contact policy (manipulated_link_margin, target_free_mask) = FIA.contact_policy;\n              not held -> manipulated_points = recorded target_points (when has_target);\n              held (summary.grasp.attached_in_constraints) -> manipulated_spheres = summary.grasp.attached.held.spheres_parent_frame\n              placed with the URDF pose of grasp.attached.parent_link at q_now (static over the window, as SceneSnapshot);\n              support_planes = AG3S fit_support_surfaces(filtered_cloud, AG3SConfig().support_surface) — recomputed; the recomputed\n              inlier mask is compared with the recorded support_mask (support_mask_equal);\n              obstacle_margin = 0.010, obstacle_margin_support False (server flags).\n  rows      : robot query rows only = plan steps (meter horizon, 8) x 122 spheres on the recorded REFINED trajectory, finger\n              path FingerJointMap.path(summary.finger_joints.opening_norm, reference gripper columns). Held-object query rows\n              (attached spheres, class 'held' by definition) are NOT rebuilt; their count = 8 x grasp.attached.n_spheres is reported.\n  class     : CollisionLinearizer._last_obstacle_class after esdf_clearance with the margin on (obstacle / target / support).\n  clear_off : the same rows with obstacle_margin 0 (= the field clearance the margin floor acts on). 'margin binding' = obstacle\n              row with clear_off < 10 mm.\n  fidelity  : reconstructed worst_row (scene with margin) vs recorded summary.to.metrics clearance_m / max_violation_pair\n              (incl. obstacle_margin_class); recorded worst rows on held-object queries (query >= 122) cannot match.\nPhases (by the chunk's first control step t, analysis hurdle lift_t / place_t): before_lift t < lift_t; carry lift_t <= t <= place_t\n  (or end); after t > place_t. No grasp -> all before_lift.\nClosest approach: control row t* of the run's minimum gripper (EE_BODY_L + fingers, true MuJoCo mesh) to hurdle distance\n  (analysis hurdle series A, all rows); chunk = last planning row with t_step <= t*. There, per hand link (URDF ee_left,\n  ee_finger_l1, ee_finger_l2; MuJoCo bodies by T40 I geometric mapping):\n  TO_view_mm      : min over the 8 refined plan steps of the TO clearance (margin on) and of clear_off;\n  TO_view_class   : class of that row;\n  sphere_true_mm  : analytic distance URDF query spheres -> true hurdle primitives (all hurdle geoms) on the refined plan;\n  mesh_true_mm    : MuJoCo mesh distance (pair_distance, fixed GJK client code) of the link's collision geoms -> hurdle geoms,\n                    on the refined plan (fingers as at the planning row) and on the executed control rows of that chunk.",
+   "per_run": {
+    "B_ep1807": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 15,
+       "rows": 14640,
+       "held_query_rows_not_rebuilt": 0,
+       "obstacle": 13163,
+       "obstacle_hand": 5843,
+       "target": 549,
+       "target_hand": 549,
+       "support": 928,
+       "support_hand": 928,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "carry": {
+       "chunks": 11,
+       "rows": 10736,
+       "held_query_rows_not_rebuilt": 176,
+       "obstacle": 10505,
+       "obstacle_hand": 5137,
+       "target": 231,
+       "target_hand": 231,
+       "support": 0,
+       "support_hand": 0,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "after": {
+       "chunks": 49,
+       "rows": 47824,
+       "held_query_rows_not_rebuilt": 16,
+       "obstacle": 44757,
+       "obstacle_hand": 23815,
+       "target": 3067,
+       "target_hand": 97,
+       "support": 0,
+       "support_hand": 0,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 75,
+      "same_row": 73,
+      "recorded_worst_held_query": 0,
+      "abs_diff_mm_max_non_held": 9.588109810933455,
+      "abs_diff_mm_le_0p01_non_held": 73,
+      "class_match_where_recorded": 73,
+      "n_recorded_class": 75,
+      "support_mask_equal": 74
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 20,
+        "rows": 19520,
+        "held_query_rows_not_rebuilt": 16,
+        "obstacle": 16376,
+        "obstacle_hand": 6616,
+        "target": 1038,
+        "target_hand": 1038,
+        "support": 2106,
+        "support_hand": 2106,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       },
+       "carry": {
+        "chunks": 11,
+        "rows": 10736,
+        "held_query_rows_not_rebuilt": 176,
+        "obstacle": 10635,
+        "obstacle_hand": 5267,
+        "target": 101,
+        "target_hand": 101,
+        "support": 0,
+        "support_hand": 0,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       },
+       "after": {
+        "chunks": 44,
+        "rows": 42944,
+        "held_query_rows_not_rebuilt": 16,
+        "obstacle": 42865,
+        "obstacle_hand": 21416,
+        "target": 79,
+        "target_hand": 56,
+        "support": 0,
+        "support_hand": 0,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": []
+     }
+    },
+    "B_ep1828": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 15,
+       "rows": 14640,
+       "held_query_rows_not_rebuilt": 0,
+       "obstacle": 13090,
+       "obstacle_hand": 5770,
+       "target": 629,
+       "target_hand": 629,
+       "support": 921,
+       "support_hand": 921,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "carry": {
+       "chunks": 12,
+       "rows": 11712,
+       "held_query_rows_not_rebuilt": 192,
+       "obstacle": 11542,
+       "obstacle_hand": 5686,
+       "target": 138,
+       "target_hand": 138,
+       "support": 32,
+       "support_hand": 32,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "after": {
+       "chunks": 48,
+       "rows": 46848,
+       "held_query_rows_not_rebuilt": 16,
+       "obstacle": 46846,
+       "obstacle_hand": 23422,
+       "target": 2,
+       "target_hand": 2,
+       "support": 0,
+       "support_hand": 0,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 75,
+      "same_row": 69,
+      "recorded_worst_held_query": 1,
+      "abs_diff_mm_max_non_held": 16.77215768760399,
+      "abs_diff_mm_le_0p01_non_held": 69,
+      "class_match_where_recorded": 69,
+      "n_recorded_class": 75,
+      "support_mask_equal": 73
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 53,
+        "rows": 51728,
+        "held_query_rows_not_rebuilt": 0,
+        "obstacle": 50015,
+        "obstacle_hand": 24151,
+        "target": 906,
+        "target_hand": 906,
+        "support": 807,
+        "support_hand": 807,
+        "obstacle_lt10mm": 48,
+        "obstacle_lt10mm_hand": 6,
+        "obstacle_lt0mm": 0
+       },
+       "carry": {
+        "chunks": 8,
+        "rows": 7808,
+        "held_query_rows_not_rebuilt": 128,
+        "obstacle": 7736,
+        "obstacle_hand": 3832,
+        "target": 72,
+        "target_hand": 72,
+        "support": 0,
+        "support_hand": 0,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       },
+       "after": {
+        "chunks": 14,
+        "rows": 13664,
+        "held_query_rows_not_rebuilt": 64,
+        "obstacle": 13604,
+        "obstacle_hand": 6772,
+        "target": 60,
+        "target_hand": 60,
+        "support": 0,
+        "support_hand": 0,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 38,
+        "t": 296,
+        "phase": "before_lift",
+        "n": 8,
+        "n_hand": 0,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 39,
+        "t": 304,
+        "phase": "before_lift",
+        "n": 17,
+        "n_hand": 0,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 40,
+        "t": 312,
+        "phase": "before_lift",
+        "n": 17,
+        "n_hand": 0,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 53,
+        "t": 416,
+        "phase": "before_lift",
+        "n": 6,
+        "n_hand": 6,
+        "gate": "execute",
+        "hold_kinds": []
+       }
+      ]
+     }
+    },
+    "B_ep1967": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 75,
+       "rows": 73200,
+       "held_query_rows_not_rebuilt": 16,
+       "obstacle": 71248,
+       "obstacle_hand": 34648,
+       "target": 684,
+       "target_hand": 684,
+       "support": 1268,
+       "support_hand": 1268,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 75,
+      "same_row": 74,
+      "recorded_worst_held_query": 0,
+      "abs_diff_mm_max_non_held": 0.9421092140380634,
+      "abs_diff_mm_le_0p01_non_held": 74,
+      "class_match_where_recorded": 74,
+      "n_recorded_class": 75,
+      "support_mask_equal": 74
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 18,
+        "rows": 17568,
+        "held_query_rows_not_rebuilt": 0,
+        "obstacle": 15951,
+        "obstacle_hand": 7167,
+        "target": 476,
+        "target_hand": 476,
+        "support": 1141,
+        "support_hand": 1141,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       },
+       "carry": {
+        "chunks": 8,
+        "rows": 7808,
+        "held_query_rows_not_rebuilt": 112,
+        "obstacle": 7698,
+        "obstacle_hand": 3818,
+        "target": 104,
+        "target_hand": 80,
+        "support": 6,
+        "support_hand": 6,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       },
+       "after": {
+        "chunks": 49,
+        "rows": 47824,
+        "held_query_rows_not_rebuilt": 96,
+        "obstacle": 47748,
+        "obstacle_hand": 23846,
+        "target": 76,
+        "target_hand": 66,
+        "support": 0,
+        "support_hand": 0,
+        "obstacle_lt10mm": 13,
+        "obstacle_lt10mm_hand": 13,
+        "obstacle_lt0mm": 0
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 29,
+        "t": 224,
+        "phase": "after",
+        "n": 13,
+        "n_hand": 13,
+        "gate": "hold",
+        "hold_kinds": [
+         "collision"
+        ]
+       }
+      ]
+     }
+    },
+    "B_ep1968": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 18,
+       "rows": 17568,
+       "held_query_rows_not_rebuilt": 0,
+       "obstacle": 14766,
+       "obstacle_hand": 5982,
+       "target": 1545,
+       "target_hand": 1545,
+       "support": 1257,
+       "support_hand": 1257,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "carry": {
+       "chunks": 11,
+       "rows": 10736,
+       "held_query_rows_not_rebuilt": 176,
+       "obstacle": 10580,
+       "obstacle_hand": 5212,
+       "target": 104,
+       "target_hand": 104,
+       "support": 52,
+       "support_hand": 52,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "after": {
+       "chunks": 46,
+       "rows": 44896,
+       "held_query_rows_not_rebuilt": 32,
+       "obstacle": 44862,
+       "obstacle_hand": 22414,
+       "target": 34,
+       "target_hand": 34,
+       "support": 0,
+       "support_hand": 0,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 75,
+      "same_row": 71,
+      "recorded_worst_held_query": 1,
+      "abs_diff_mm_max_non_held": 14.04200651890465,
+      "abs_diff_mm_le_0p01_non_held": 71,
+      "class_match_where_recorded": 71,
+      "n_recorded_class": 75,
+      "support_mask_equal": 75
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 18,
+        "rows": 17568,
+        "held_query_rows_not_rebuilt": 8,
+        "obstacle": 15158,
+        "obstacle_hand": 6374,
+        "target": 1218,
+        "target_hand": 1218,
+        "support": 1192,
+        "support_hand": 1192,
+        "obstacle_lt10mm": 31,
+        "obstacle_lt10mm_hand": 31,
+        "obstacle_lt0mm": 0
+       },
+       "carry": {
+        "chunks": 11,
+        "rows": 10736,
+        "held_query_rows_not_rebuilt": 88,
+        "obstacle": 10598,
+        "obstacle_hand": 5230,
+        "target": 108,
+        "target_hand": 108,
+        "support": 30,
+        "support_hand": 30,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       },
+       "after": {
+        "chunks": 46,
+        "rows": 44896,
+        "held_query_rows_not_rebuilt": 16,
+        "obstacle": 44876,
+        "obstacle_hand": 22428,
+        "target": 20,
+        "target_hand": 20,
+        "support": 0,
+        "support_hand": 0,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 17,
+        "t": 128,
+        "phase": "before_lift",
+        "n": 31,
+        "n_hand": 31,
+        "gate": "execute",
+        "hold_kinds": []
+       }
+      ]
+     }
+    },
+    "B_ep1982": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 22,
+       "rows": 21472,
+       "held_query_rows_not_rebuilt": 64,
+       "obstacle": 18451,
+       "obstacle_hand": 7715,
+       "target": 1045,
+       "target_hand": 1045,
+       "support": 1976,
+       "support_hand": 1976,
+       "obstacle_lt10mm": 15,
+       "obstacle_lt10mm_hand": 15,
+       "obstacle_lt0mm": 0
+      },
+      "carry": {
+       "chunks": 13,
+       "rows": 12688,
+       "held_query_rows_not_rebuilt": 208,
+       "obstacle": 12575,
+       "obstacle_hand": 6231,
+       "target": 113,
+       "target_hand": 113,
+       "support": 0,
+       "support_hand": 0,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "after": {
+       "chunks": 40,
+       "rows": 39040,
+       "held_query_rows_not_rebuilt": 16,
+       "obstacle": 39013,
+       "obstacle_hand": 19493,
+       "target": 27,
+       "target_hand": 27,
+       "support": 0,
+       "support_hand": 0,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 75,
+      "same_row": 68,
+      "recorded_worst_held_query": 3,
+      "abs_diff_mm_max_non_held": 11.846514595038421,
+      "abs_diff_mm_le_0p01_non_held": 68,
+      "class_match_where_recorded": 68,
+      "n_recorded_class": 75,
+      "support_mask_equal": 75
+     },
+     "chunks_with_obstacle_rows_lt10mm": [
+      {
+       "seq": 18,
+       "t": 136,
+       "phase": "before_lift",
+       "n": 2,
+       "n_hand": 2,
+       "gate": "hold",
+       "hold_kinds": [
+        "collision"
+       ]
+      },
+      {
+       "seq": 19,
+       "t": 144,
+       "phase": "before_lift",
+       "n": 13,
+       "n_hand": 13,
+       "gate": "hold",
+       "hold_kinds": [
+        "collision"
+       ]
+      }
+     ],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 19,
+        "rows": 18544,
+        "held_query_rows_not_rebuilt": 16,
+        "obstacle": 15609,
+        "obstacle_hand": 6337,
+        "target": 1176,
+        "target_hand": 1176,
+        "support": 1759,
+        "support_hand": 1759,
+        "obstacle_lt10mm": 15,
+        "obstacle_lt10mm_hand": 15,
+        "obstacle_lt0mm": 0
+       },
+       "carry": {
+        "chunks": 12,
+        "rows": 11712,
+        "held_query_rows_not_rebuilt": 192,
+        "obstacle": 11596,
+        "obstacle_hand": 5741,
+        "target": 85,
+        "target_hand": 84,
+        "support": 31,
+        "support_hand": 31,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       },
+       "after": {
+        "chunks": 44,
+        "rows": 42944,
+        "held_query_rows_not_rebuilt": 16,
+        "obstacle": 42899,
+        "obstacle_hand": 21427,
+        "target": 45,
+        "target_hand": 45,
+        "support": 0,
+        "support_hand": 0,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 18,
+        "t": 136,
+        "phase": "before_lift",
+        "n": 15,
+        "n_hand": 15,
+        "gate": "execute",
+        "hold_kinds": []
+       }
+      ]
+     }
+    },
+    "B_ep1995": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 19,
+       "rows": 18544,
+       "held_query_rows_not_rebuilt": 0,
+       "obstacle": 15932,
+       "obstacle_hand": 6660,
+       "target": 683,
+       "target_hand": 683,
+       "support": 1929,
+       "support_hand": 1929,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "carry": {
+       "chunks": 12,
+       "rows": 11712,
+       "held_query_rows_not_rebuilt": 192,
+       "obstacle": 11597,
+       "obstacle_hand": 5741,
+       "target": 97,
+       "target_hand": 97,
+       "support": 18,
+       "support_hand": 18,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "after": {
+       "chunks": 44,
+       "rows": 42944,
+       "held_query_rows_not_rebuilt": 16,
+       "obstacle": 42760,
+       "obstacle_hand": 21438,
+       "target": 184,
+       "target_hand": 34,
+       "support": 0,
+       "support_hand": 0,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 75,
+      "same_row": 70,
+      "recorded_worst_held_query": 1,
+      "abs_diff_mm_max_non_held": 16.627927358524847,
+      "abs_diff_mm_le_0p01_non_held": 70,
+      "class_match_where_recorded": 70,
+      "n_recorded_class": 75,
+      "support_mask_equal": 75
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 20,
+        "rows": 19520,
+        "held_query_rows_not_rebuilt": 16,
+        "obstacle": 16861,
+        "obstacle_hand": 7101,
+        "target": 818,
+        "target_hand": 818,
+        "support": 1841,
+        "support_hand": 1841,
+        "obstacle_lt10mm": 90,
+        "obstacle_lt10mm_hand": 90,
+        "obstacle_lt0mm": 0
+       },
+       "carry": {
+        "chunks": 11,
+        "rows": 10736,
+        "held_query_rows_not_rebuilt": 176,
+        "obstacle": 10511,
+        "obstacle_hand": 5143,
+        "target": 205,
+        "target_hand": 205,
+        "support": 20,
+        "support_hand": 20,
+        "obstacle_lt10mm": 30,
+        "obstacle_lt10mm_hand": 30,
+        "obstacle_lt0mm": 0
+       },
+       "after": {
+        "chunks": 44,
+        "rows": 42944,
+        "held_query_rows_not_rebuilt": 16,
+        "obstacle": 36762,
+        "obstacle_hand": 21394,
+        "target": 6182,
+        "target_hand": 78,
+        "support": 0,
+        "support_hand": 0,
+        "obstacle_lt10mm": 44,
+        "obstacle_lt10mm_hand": 44,
+        "obstacle_lt0mm": 6
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 9,
+        "t": 64,
+        "phase": "before_lift",
+        "n": 60,
+        "n_hand": 60,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 10,
+        "t": 72,
+        "phase": "before_lift",
+        "n": 8,
+        "n_hand": 8,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 11,
+        "t": 80,
+        "phase": "before_lift",
+        "n": 19,
+        "n_hand": 19,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 12,
+        "t": 88,
+        "phase": "before_lift",
+        "n": 3,
+        "n_hand": 3,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 31,
+        "t": 240,
+        "phase": "carry",
+        "n": 30,
+        "n_hand": 30,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 32,
+        "t": 248,
+        "phase": "after",
+        "n": 34,
+        "n_hand": 34,
+        "gate": "hold",
+        "hold_kinds": [
+         "collision"
+        ]
+       },
+       {
+        "seq": 33,
+        "t": 256,
+        "phase": "after",
+        "n": 10,
+        "n_hand": 10,
+        "gate": "execute",
+        "hold_kinds": []
+       }
+      ]
+     }
+    },
+    "C_ep1807": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 35,
+       "rows": 34160,
+       "held_query_rows_not_rebuilt": 0,
+       "obstacle": 31017,
+       "obstacle_hand": 13937,
+       "target": 707,
+       "target_hand": 707,
+       "support": 2436,
+       "support_hand": 2436,
+       "obstacle_lt10mm": 58,
+       "obstacle_lt10mm_hand": 58,
+       "obstacle_lt0mm": 1
+      }
+     },
+     "fidelity": {
+      "n": 35,
+      "same_row": 35,
+      "recorded_worst_held_query": 0,
+      "abs_diff_mm_max_non_held": 2.6246961389031487e-05,
+      "abs_diff_mm_le_0p01_non_held": 35,
+      "class_match_where_recorded": 35,
+      "n_recorded_class": 35,
+      "support_mask_equal": 35
+     },
+     "chunks_with_obstacle_rows_lt10mm": [
+      {
+       "seq": 29,
+       "t": 224,
+       "phase": "before_lift",
+       "n": 58,
+       "n_hand": 58,
+       "gate": "hold",
+       "hold_kinds": [
+        "collision"
+       ]
+      }
+     ],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 28,
+        "rows": 27328,
+        "held_query_rows_not_rebuilt": 32,
+        "obstacle": 25637,
+        "obstacle_hand": 11973,
+        "target": 702,
+        "target_hand": 702,
+        "support": 989,
+        "support_hand": 989,
+        "obstacle_lt10mm": 443,
+        "obstacle_lt10mm_hand": 443,
+        "obstacle_lt0mm": 44
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 17,
+        "t": 128,
+        "phase": "before_lift",
+        "n": 15,
+        "n_hand": 15,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 20,
+        "t": 152,
+        "phase": "before_lift",
+        "n": 2,
+        "n_hand": 2,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 23,
+        "t": 176,
+        "phase": "before_lift",
+        "n": 102,
+        "n_hand": 102,
+        "gate": "hold",
+        "hold_kinds": [
+         "collision"
+        ]
+       },
+       {
+        "seq": 24,
+        "t": 184,
+        "phase": "before_lift",
+        "n": 4,
+        "n_hand": 4,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 25,
+        "t": 192,
+        "phase": "before_lift",
+        "n": 91,
+        "n_hand": 91,
+        "gate": "hold",
+        "hold_kinds": [
+         "collision"
+        ]
+       },
+       {
+        "seq": 26,
+        "t": 200,
+        "phase": "before_lift",
+        "n": 71,
+        "n_hand": 71,
+        "gate": "hold",
+        "hold_kinds": [
+         "collision"
+        ]
+       },
+       {
+        "seq": 27,
+        "t": 208,
+        "phase": "before_lift",
+        "n": 81,
+        "n_hand": 81,
+        "gate": "hold",
+        "hold_kinds": [
+         "collision"
+        ]
+       },
+       {
+        "seq": 28,
+        "t": 216,
+        "phase": "before_lift",
+        "n": 77,
+        "n_hand": 77,
+        "gate": "execute",
+        "hold_kinds": []
+       }
+      ]
+     }
+    },
+    "C_ep1967": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 16,
+       "rows": 15616,
+       "held_query_rows_not_rebuilt": 0,
+       "obstacle": 14366,
+       "obstacle_hand": 6558,
+       "target": 392,
+       "target_hand": 392,
+       "support": 858,
+       "support_hand": 858,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "carry": {
+       "chunks": 7,
+       "rows": 6832,
+       "held_query_rows_not_rebuilt": 112,
+       "obstacle": 6659,
+       "obstacle_hand": 3243,
+       "target": 154,
+       "target_hand": 154,
+       "support": 19,
+       "support_hand": 19,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "after": {
+       "chunks": 52,
+       "rows": 50752,
+       "held_query_rows_not_rebuilt": 96,
+       "obstacle": 50684,
+       "obstacle_hand": 25356,
+       "target": 68,
+       "target_hand": 20,
+       "support": 0,
+       "support_hand": 0,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 75,
+      "same_row": 68,
+      "recorded_worst_held_query": 3,
+      "abs_diff_mm_max_non_held": 11.55230482228371,
+      "abs_diff_mm_le_0p01_non_held": 68,
+      "class_match_where_recorded": 68,
+      "n_recorded_class": 75,
+      "support_mask_equal": 74
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 26,
+        "rows": 25376,
+        "held_query_rows_not_rebuilt": 0,
+        "obstacle": 22956,
+        "obstacle_hand": 10268,
+        "target": 646,
+        "target_hand": 646,
+        "support": 1774,
+        "support_hand": 1774,
+        "obstacle_lt10mm": 54,
+        "obstacle_lt10mm_hand": 54,
+        "obstacle_lt0mm": 1
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 20,
+        "t": 152,
+        "phase": "before_lift",
+        "n": 13,
+        "n_hand": 13,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 21,
+        "t": 160,
+        "phase": "before_lift",
+        "n": 1,
+        "n_hand": 1,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 24,
+        "t": 184,
+        "phase": "before_lift",
+        "n": 4,
+        "n_hand": 4,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 25,
+        "t": 192,
+        "phase": "before_lift",
+        "n": 19,
+        "n_hand": 19,
+        "gate": "hold",
+        "hold_kinds": [
+         "collision"
+        ]
+       },
+       {
+        "seq": 26,
+        "t": 200,
+        "phase": "before_lift",
+        "n": 17,
+        "n_hand": 17,
+        "gate": "execute",
+        "hold_kinds": []
+       }
+      ]
+     }
+    },
+    "C_ep1968": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 19,
+       "rows": 18544,
+       "held_query_rows_not_rebuilt": 16,
+       "obstacle": 16150,
+       "obstacle_hand": 6878,
+       "target": 1184,
+       "target_hand": 1184,
+       "support": 1210,
+       "support_hand": 1210,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "carry": {
+       "chunks": 8,
+       "rows": 7808,
+       "held_query_rows_not_rebuilt": 80,
+       "obstacle": 7670,
+       "obstacle_hand": 3766,
+       "target": 138,
+       "target_hand": 138,
+       "support": 0,
+       "support_hand": 0,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "after": {
+       "chunks": 48,
+       "rows": 46848,
+       "held_query_rows_not_rebuilt": 0,
+       "obstacle": 45668,
+       "obstacle_hand": 22244,
+       "target": 1125,
+       "target_hand": 1125,
+       "support": 55,
+       "support_hand": 55,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 75,
+      "same_row": 71,
+      "recorded_worst_held_query": 0,
+      "abs_diff_mm_max_non_held": 9.768072757058867,
+      "abs_diff_mm_le_0p01_non_held": 71,
+      "class_match_where_recorded": 71,
+      "n_recorded_class": 75,
+      "support_mask_equal": 74
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 16,
+        "rows": 15616,
+        "held_query_rows_not_rebuilt": 0,
+        "obstacle": 14053,
+        "obstacle_hand": 6245,
+        "target": 876,
+        "target_hand": 876,
+        "support": 687,
+        "support_hand": 687,
+        "obstacle_lt10mm": 23,
+        "obstacle_lt10mm_hand": 23,
+        "obstacle_lt0mm": 0
+       },
+       "carry": {
+        "chunks": 14,
+        "rows": 13664,
+        "held_query_rows_not_rebuilt": 112,
+        "obstacle": 13333,
+        "obstacle_hand": 6551,
+        "target": 254,
+        "target_hand": 204,
+        "support": 77,
+        "support_hand": 77,
+        "obstacle_lt10mm": 1,
+        "obstacle_lt10mm_hand": 1,
+        "obstacle_lt0mm": 0
+       },
+       "after": {
+        "chunks": 6,
+        "rows": 5856,
+        "held_query_rows_not_rebuilt": 8,
+        "obstacle": 5835,
+        "obstacle_hand": 2907,
+        "target": 21,
+        "target_hand": 21,
+        "support": 0,
+        "support_hand": 0,
+        "obstacle_lt10mm": 29,
+        "obstacle_lt10mm_hand": 29,
+        "obstacle_lt0mm": 0
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 16,
+        "t": 120,
+        "phase": "before_lift",
+        "n": 23,
+        "n_hand": 23,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 21,
+        "t": 160,
+        "phase": "carry",
+        "n": 1,
+        "n_hand": 1,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 35,
+        "t": 272,
+        "phase": "after",
+        "n": 3,
+        "n_hand": 3,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 36,
+        "t": 280,
+        "phase": "after",
+        "n": 26,
+        "n_hand": 26,
+        "gate": "execute",
+        "hold_kinds": []
+       }
+      ]
+     }
+    },
+    "C_ep1982": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 50,
+       "rows": 48800,
+       "held_query_rows_not_rebuilt": 0,
+       "obstacle": 46151,
+       "obstacle_hand": 21751,
+       "target": 1392,
+       "target_hand": 1392,
+       "support": 1257,
+       "support_hand": 1257,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 50,
+      "same_row": 50,
+      "recorded_worst_held_query": 0,
+      "abs_diff_mm_max_non_held": 4.367614989120305e-05,
+      "abs_diff_mm_le_0p01_non_held": 50,
+      "class_match_where_recorded": 50,
+      "n_recorded_class": 50,
+      "support_mask_equal": 50
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 23,
+        "rows": 22448,
+        "held_query_rows_not_rebuilt": 8,
+        "obstacle": 20115,
+        "obstacle_hand": 8891,
+        "target": 631,
+        "target_hand": 631,
+        "support": 1702,
+        "support_hand": 1702,
+        "obstacle_lt10mm": 108,
+        "obstacle_lt10mm_hand": 108,
+        "obstacle_lt0mm": 30
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 17,
+        "t": 128,
+        "phase": "before_lift",
+        "n": 24,
+        "n_hand": 24,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 22,
+        "t": 168,
+        "phase": "before_lift",
+        "n": 18,
+        "n_hand": 18,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 23,
+        "t": 176,
+        "phase": "before_lift",
+        "n": 66,
+        "n_hand": 66,
+        "gate": "hold",
+        "hold_kinds": [
+         "collision"
+        ]
+       }
+      ]
+     }
+    },
+    "C_ep1995": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 28,
+       "rows": 27328,
+       "held_query_rows_not_rebuilt": 16,
+       "obstacle": 25385,
+       "obstacle_hand": 11721,
+       "target": 521,
+       "target_hand": 521,
+       "support": 1422,
+       "support_hand": 1422,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 28,
+      "same_row": 27,
+      "recorded_worst_held_query": 0,
+      "abs_diff_mm_max_non_held": 3.6189908041614847,
+      "abs_diff_mm_le_0p01_non_held": 27,
+      "class_match_where_recorded": 27,
+      "n_recorded_class": 28,
+      "support_mask_equal": 27
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 13,
+        "rows": 12688,
+        "held_query_rows_not_rebuilt": 0,
+        "obstacle": 12120,
+        "obstacle_hand": 5776,
+        "target": 127,
+        "target_hand": 127,
+        "support": 441,
+        "support_hand": 441,
+        "obstacle_lt10mm": 156,
+        "obstacle_lt10mm_hand": 156,
+        "obstacle_lt0mm": 0
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 9,
+        "t": 64,
+        "phase": "before_lift",
+        "n": 7,
+        "n_hand": 7,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 10,
+        "t": 72,
+        "phase": "before_lift",
+        "n": 57,
+        "n_hand": 57,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 11,
+        "t": 80,
+        "phase": "before_lift",
+        "n": 59,
+        "n_hand": 59,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 12,
+        "t": 88,
+        "phase": "before_lift",
+        "n": 30,
+        "n_hand": 30,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 13,
+        "t": 96,
+        "phase": "before_lift",
+        "n": 3,
+        "n_hand": 3,
+        "gate": "execute",
+        "hold_kinds": []
+       }
+      ]
+     }
+    },
+    "D_ep1807": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 16,
+       "rows": 15616,
+       "held_query_rows_not_rebuilt": 0,
+       "obstacle": 13933,
+       "obstacle_hand": 6125,
+       "target": 603,
+       "target_hand": 603,
+       "support": 1080,
+       "support_hand": 1080,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "carry": {
+       "chunks": 7,
+       "rows": 6832,
+       "held_query_rows_not_rebuilt": 168,
+       "obstacle": 6664,
+       "obstacle_hand": 3248,
+       "target": 145,
+       "target_hand": 145,
+       "support": 23,
+       "support_hand": 23,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "after": {
+       "chunks": 14,
+       "rows": 13664,
+       "held_query_rows_not_rebuilt": 144,
+       "obstacle": 12894,
+       "obstacle_hand": 6507,
+       "target": 770,
+       "target_hand": 325,
+       "support": 0,
+       "support_hand": 0,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 37,
+      "same_row": 34,
+      "recorded_worst_held_query": 0,
+      "abs_diff_mm_max_non_held": 10.306133965823394,
+      "abs_diff_mm_le_0p01_non_held": 34,
+      "class_match_where_recorded": 34,
+      "n_recorded_class": 37,
+      "support_mask_equal": 37
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 16,
+        "rows": 15616,
+        "held_query_rows_not_rebuilt": 0,
+        "obstacle": 14083,
+        "obstacle_hand": 6275,
+        "target": 571,
+        "target_hand": 571,
+        "support": 962,
+        "support_hand": 962,
+        "obstacle_lt10mm": 42,
+        "obstacle_lt10mm_hand": 42,
+        "obstacle_lt0mm": 0
+       },
+       "carry": {
+        "chunks": 12,
+        "rows": 11712,
+        "held_query_rows_not_rebuilt": 88,
+        "obstacle": 11524,
+        "obstacle_hand": 5668,
+        "target": 182,
+        "target_hand": 182,
+        "support": 6,
+        "support_hand": 6,
+        "obstacle_lt10mm": 4,
+        "obstacle_lt10mm_hand": 4,
+        "obstacle_lt0mm": 0
+       },
+       "after": {
+        "chunks": 7,
+        "rows": 6832,
+        "held_query_rows_not_rebuilt": 8,
+        "obstacle": 6808,
+        "obstacle_hand": 3392,
+        "target": 24,
+        "target_hand": 24,
+        "support": 0,
+        "support_hand": 0,
+        "obstacle_lt10mm": 9,
+        "obstacle_lt10mm_hand": 9,
+        "obstacle_lt0mm": 0
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 16,
+        "t": 120,
+        "phase": "before_lift",
+        "n": 42,
+        "n_hand": 42,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 17,
+        "t": 128,
+        "phase": "carry",
+        "n": 1,
+        "n_hand": 1,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 20,
+        "t": 152,
+        "phase": "carry",
+        "n": 3,
+        "n_hand": 3,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 34,
+        "t": 264,
+        "phase": "after",
+        "n": 2,
+        "n_hand": 2,
+        "gate": "execute",
+        "hold_kinds": []
+       },
+       {
+        "seq": 35,
+        "t": 272,
+        "phase": "after",
+        "n": 7,
+        "n_hand": 7,
+        "gate": "execute",
+        "hold_kinds": []
+       }
+      ]
+     }
+    },
+    "D_ep1967": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 58,
+       "rows": 56608,
+       "held_query_rows_not_rebuilt": 32,
+       "obstacle": 52173,
+       "obstacle_hand": 23869,
+       "target": 1166,
+       "target_hand": 1166,
+       "support": 3269,
+       "support_hand": 3269,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "carry": {
+       "chunks": 12,
+       "rows": 11712,
+       "held_query_rows_not_rebuilt": 288,
+       "obstacle": 11426,
+       "obstacle_hand": 5646,
+       "target": 285,
+       "target_hand": 209,
+       "support": 1,
+       "support_hand": 1,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "after": {
+       "chunks": 5,
+       "rows": 4880,
+       "held_query_rows_not_rebuilt": 24,
+       "obstacle": 4789,
+       "obstacle_hand": 2349,
+       "target": 91,
+       "target_hand": 91,
+       "support": 0,
+       "support_hand": 0,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 75,
+      "same_row": 64,
+      "recorded_worst_held_query": 4,
+      "abs_diff_mm_max_non_held": 9.781709782077838,
+      "abs_diff_mm_le_0p01_non_held": 64,
+      "class_match_where_recorded": 64,
+      "n_recorded_class": 75,
+      "support_mask_equal": 75
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 18,
+        "rows": 17568,
+        "held_query_rows_not_rebuilt": 0,
+        "obstacle": 15967,
+        "obstacle_hand": 7183,
+        "target": 497,
+        "target_hand": 497,
+        "support": 1104,
+        "support_hand": 1104,
+        "obstacle_lt10mm": 30,
+        "obstacle_lt10mm_hand": 30,
+        "obstacle_lt0mm": 8
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 18,
+        "t": 136,
+        "phase": "before_lift",
+        "n": 30,
+        "n_hand": 30,
+        "gate": "hold",
+        "hold_kinds": [
+         "collision"
+        ]
+       }
+      ]
+     }
+    },
+    "D_ep1982": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 75,
+       "rows": 73200,
+       "held_query_rows_not_rebuilt": 0,
+       "obstacle": 69921,
+       "obstacle_hand": 33321,
+       "target": 1516,
+       "target_hand": 1516,
+       "support": 1763,
+       "support_hand": 1763,
+       "obstacle_lt10mm": 11,
+       "obstacle_lt10mm_hand": 11,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 75,
+      "same_row": 75,
+      "recorded_worst_held_query": 0,
+      "abs_diff_mm_max_non_held": 3.109616397364845e-05,
+      "abs_diff_mm_le_0p01_non_held": 75,
+      "class_match_where_recorded": 75,
+      "n_recorded_class": 75,
+      "support_mask_equal": 75
+     },
+     "chunks_with_obstacle_rows_lt10mm": [
+      {
+       "seq": 61,
+       "t": 480,
+       "phase": "before_lift",
+       "n": 11,
+       "n_hand": 11,
+       "gate": "hold",
+       "hold_kinds": [
+        "collision"
+       ]
+      }
+     ],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 3,
+        "rows": 2928,
+        "held_query_rows_not_rebuilt": 0,
+        "obstacle": 2907,
+        "obstacle_hand": 1443,
+        "target": 21,
+        "target_hand": 21,
+        "support": 0,
+        "support_hand": 0,
+        "obstacle_lt10mm": 0,
+        "obstacle_lt10mm_hand": 0,
+        "obstacle_lt0mm": 0
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": []
+     }
+    },
+    "D_ep1995": {
+     "by_phase": {
+      "before_lift": {
+       "chunks": 18,
+       "rows": 17568,
+       "held_query_rows_not_rebuilt": 16,
+       "obstacle": 15246,
+       "obstacle_hand": 6462,
+       "target": 758,
+       "target_hand": 758,
+       "support": 1564,
+       "support_hand": 1564,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      },
+      "carry": {
+       "chunks": 34,
+       "rows": 33184,
+       "held_query_rows_not_rebuilt": 240,
+       "obstacle": 32842,
+       "obstacle_hand": 16250,
+       "target": 258,
+       "target_hand": 258,
+       "support": 84,
+       "support_hand": 84,
+       "obstacle_lt10mm": 0,
+       "obstacle_lt10mm_hand": 0,
+       "obstacle_lt0mm": 0
+      }
+     },
+     "fidelity": {
+      "n": 52,
+      "same_row": 45,
+      "recorded_worst_held_query": 0,
+      "abs_diff_mm_max_non_held": 12.535338171297544,
+      "abs_diff_mm_le_0p01_non_held": 45,
+      "class_match_where_recorded": 45,
+      "n_recorded_class": 52,
+      "support_mask_equal": 52
+     },
+     "chunks_with_obstacle_rows_lt10mm": [],
+     "T40_record_same_rule": {
+      "by_phase": {
+       "before_lift": {
+        "chunks": 9,
+        "rows": 8784,
+        "held_query_rows_not_rebuilt": 0,
+        "obstacle": 8734,
+        "obstacle_hand": 4342,
+        "target": 44,
+        "target_hand": 44,
+        "support": 6,
+        "support_hand": 6,
+        "obstacle_lt10mm": 6,
+        "obstacle_lt10mm_hand": 6,
+        "obstacle_lt0mm": 0
+       }
+      },
+      "chunks_with_obstacle_rows_lt10mm": [
+       {
+        "seq": 9,
+        "t": 64,
+        "phase": "before_lift",
+        "n": 6,
+        "n_hand": 6,
+        "gate": "execute",
+        "hold_kinds": []
+       }
+      ]
+     }
+    }
+   }
+  },
+  "closest_approach_TO_vs_true_mesh_T41a": {
+   "B_ep1807": {
+    "seq": 33,
+    "t": 256,
+    "phase": "after",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.011886549626055695,
+     "reconstructed_clearance_m": 0.011886553271693674,
+     "recorded_pair": {
+      "step": 5,
+      "query": 79,
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle": "destination",
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 5,
+      "query": 79,
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 3.6456379789995275e-06,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 67.80272045008081,
+     "TO_view_on_step": 2,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 77.80272045008081,
+     "sphere_true_hurdle_min_mm": -5.922251868303927,
+     "mesh_true_hurdle_min_mm_refined_plan": -27.69453692959434,
+     "mesh_true_hurdle_min_mm_executed_rows": -30.919623112618766
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 22.01716706272673,
+     "TO_view_on_step": 2,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 32.017167062726735,
+     "sphere_true_hurdle_min_mm": 9.899013214020473,
+     "mesh_true_hurdle_min_mm_refined_plan": 6.161197321738085,
+     "mesh_true_hurdle_min_mm_executed_rows": 12.490646036865646
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 60.20244653106712,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 70.20244653106712,
+     "sphere_true_hurdle_min_mm": 18.491093969620962,
+     "mesh_true_hurdle_min_mm_refined_plan": 13.695323102383506,
+     "mesh_true_hurdle_min_mm_executed_rows": -9.519325633286762
+    }
+   },
+   "B_ep1967": {
+    "seq": 24,
+    "t": 184,
+    "phase": "before_lift",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.03405062428972112,
+     "reconstructed_clearance_m": 0.03405064315734923,
+     "recorded_pair": {
+      "step": 4,
+      "query": 79,
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle": null,
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 4,
+      "query": 79,
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 1.886762811265097e-05,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 83.28297690348928,
+     "TO_view_on_step": 4,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 93.28297690348927,
+     "sphere_true_hurdle_min_mm": 23.491211246092707,
+     "mesh_true_hurdle_min_mm_refined_plan": 7.94436098218812,
+     "mesh_true_hurdle_min_mm_executed_rows": 13.050593586764084
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 38.5087567657787,
+     "TO_view_on_step": 5,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 48.508756765778706,
+     "sphere_true_hurdle_min_mm": -12.395647970506321,
+     "mesh_true_hurdle_min_mm_refined_plan": -14.62798796875821,
+     "mesh_true_hurdle_min_mm_executed_rows": -22.03061208374968
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 40.22683890724865,
+     "TO_view_on_step": 7,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 50.22683890724865,
+     "sphere_true_hurdle_min_mm": -12.37983371838167,
+     "mesh_true_hurdle_min_mm_refined_plan": -19.79978437218638,
+     "mesh_true_hurdle_min_mm_executed_rows": -9.74333415462006
+    }
+   },
+   "B_ep1968": {
+    "seq": 23,
+    "t": 176,
+    "phase": "carry",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.01618432279720508,
+     "reconstructed_clearance_m": 0.016184317531061025,
+     "recorded_pair": {
+      "step": 0,
+      "query": 79,
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle": "destination",
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 0,
+      "query": 79,
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 5.266144055549038e-06,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 109.46654838240941,
+     "TO_view_on_step": 1,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 119.46654838240941,
+     "sphere_true_hurdle_min_mm": 25.561028227794857,
+     "mesh_true_hurdle_min_mm_refined_plan": 14.246057693343978,
+     "mesh_true_hurdle_min_mm_executed_rows": 7.175664269107422
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 69.33304226186416,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 79.33304226186416,
+     "sphere_true_hurdle_min_mm": 48.27664853428246,
+     "mesh_true_hurdle_min_mm_refined_plan": 45.879571064932605,
+     "mesh_true_hurdle_min_mm_executed_rows": 4.223989419465602
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 55.94742848996972,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 65.94742848996972,
+     "sphere_true_hurdle_min_mm": 2.429719417539283,
+     "mesh_true_hurdle_min_mm_refined_plan": 3.782841207426366,
+     "mesh_true_hurdle_min_mm_executed_rows": -22.391835947707815
+    }
+   },
+   "B_ep1982": {
+    "seq": 43,
+    "t": 336,
+    "phase": "after",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.02219036435139849,
+     "reconstructed_clearance_m": 0.02219037755082332,
+     "recorded_pair": {
+      "step": 2,
+      "query": 79,
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle": "destination",
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 2,
+      "query": 79,
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 1.3199424830911966e-05,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 89.26143180062046,
+     "TO_view_on_step": 3,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 99.26143180062046,
+     "sphere_true_hurdle_min_mm": 29.377731984108607,
+     "mesh_true_hurdle_min_mm_refined_plan": 24.110849744758124,
+     "mesh_true_hurdle_min_mm_executed_rows": 16.849364446366316
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 44.51157103646324,
+     "TO_view_on_step": 3,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 54.51157103646324,
+     "sphere_true_hurdle_min_mm": -12.555395751821456,
+     "mesh_true_hurdle_min_mm_refined_plan": -11.222273318870066,
+     "mesh_true_hurdle_min_mm_executed_rows": -18.683067929587743
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 72.38240964344823,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 82.38240964344821,
+     "sphere_true_hurdle_min_mm": 26.588308129691114,
+     "mesh_true_hurdle_min_mm_refined_plan": 24.06201441675271,
+     "mesh_true_hurdle_min_mm_executed_rows": -5.787953618458799
+    }
+   },
+   "B_ep1995": {
+    "seq": 24,
+    "t": 184,
+    "phase": "carry",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.034120665207304,
+     "reconstructed_clearance_m": 0.034120662994277365,
+     "recorded_pair": {
+      "step": 1,
+      "query": 79,
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle": null,
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 1,
+      "query": 79,
+      "link": "ee_finger_r2",
+      "tier": "coarse",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 2.2130266369435603e-06,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 112.08341065335532,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 122.0834106533553,
+     "sphere_true_hurdle_min_mm": -16.015638084031032,
+     "mesh_true_hurdle_min_mm_refined_plan": -32.95510718435776,
+     "mesh_true_hurdle_min_mm_executed_rows": -33.683745406012434
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 69.8355979174876,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 79.83559791748759,
+     "sphere_true_hurdle_min_mm": 21.23126150549555,
+     "mesh_true_hurdle_min_mm_refined_plan": 17.780026781961865,
+     "mesh_true_hurdle_min_mm_executed_rows": -0.6603058829517461
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 73.24902188965163,
+     "TO_view_on_step": 4,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 83.24902188965163,
+     "sphere_true_hurdle_min_mm": -10.232612662002362,
+     "mesh_true_hurdle_min_mm_refined_plan": -9.296217960640492,
+     "mesh_true_hurdle_min_mm_executed_rows": -5.790002991208938
+    }
+   },
+   "C_ep1807": {
+    "seq": 35,
+    "t": 272,
+    "phase": "before_lift",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.004934379585385102,
+     "reconstructed_clearance_m": 0.0049343909667256495,
+     "recorded_pair": {
+      "step": 6,
+      "query": 117,
+      "link": "ee_finger_l2",
+      "tier": "target_free",
+      "obstacle": null,
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 6,
+      "query": 117,
+      "link": "ee_finger_l2",
+      "tier": "target_free",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 1.1381340547095276e-05,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 11.485387956473597,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 21.485387956473595,
+     "sphere_true_hurdle_min_mm": 24.91393483158403,
+     "mesh_true_hurdle_min_mm_refined_plan": 25.429415426367527,
+     "mesh_true_hurdle_min_mm_executed_rows": 15.888975057329242
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 5.420742196515152,
+     "TO_view_on_step": 2,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 15.420742196515153,
+     "sphere_true_hurdle_min_mm": 16.891448549594557,
+     "mesh_true_hurdle_min_mm_refined_plan": 18.592718734414582,
+     "mesh_true_hurdle_min_mm_executed_rows": 0.17115427845901776
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 4.934390966725649,
+     "TO_view_on_step": 6,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 14.93439096672565,
+     "sphere_true_hurdle_min_mm": 17.403333113630435,
+     "mesh_true_hurdle_min_mm_refined_plan": 19.951907387410003,
+     "mesh_true_hurdle_min_mm_executed_rows": 45.97097583970264
+    }
+   },
+   "C_ep1967": {
+    "seq": 21,
+    "t": 160,
+    "phase": "carry",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.004907462878182965,
+     "reconstructed_clearance_m": 0.006470357235600065,
+     "recorded_pair": {
+      "step": 0,
+      "query": 122,
+      "link": "attached:ee_left[0]",
+      "tier": "fine",
+      "obstacle": null,
+      "obstacle_margin_class": "held"
+     },
+     "reconstructed_pair": {
+      "step": 2,
+      "query": 117,
+      "link": "ee_finger_l2",
+      "tier": "fine",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 1.5628943574171,
+     "same_row": false,
+     "recorded_worst_is_held_query": true
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 48.3528153793792,
+     "TO_view_on_step": 6,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 58.3528153793792,
+     "sphere_true_hurdle_min_mm": 61.17575646448712,
+     "mesh_true_hurdle_min_mm_refined_plan": 48.269655025656846,
+     "mesh_true_hurdle_min_mm_executed_rows": 48.636710972834635
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 12.76714596095946,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 22.76714596095946,
+     "sphere_true_hurdle_min_mm": 25.085714798351315,
+     "mesh_true_hurdle_min_mm_refined_plan": 28.008364995867094,
+     "mesh_true_hurdle_min_mm_executed_rows": 12.757751939668667
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 6.470357235600065,
+     "TO_view_on_step": 2,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 16.470357235600066,
+     "sphere_true_hurdle_min_mm": 18.44894537071488,
+     "mesh_true_hurdle_min_mm_refined_plan": 21.553701228838932,
+     "mesh_true_hurdle_min_mm_executed_rows": 18.453887076103385
+    }
+   },
+   "C_ep1968": {
+    "seq": 23,
+    "t": 176,
+    "phase": "carry",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.0015391041352606563,
+     "reconstructed_clearance_m": 0.004785860665982163,
+     "recorded_pair": {
+      "step": 0,
+      "query": 99,
+      "link": "ee_finger_l1",
+      "tier": "fine",
+      "obstacle": null,
+      "obstacle_margin_class": "target"
+     },
+     "reconstructed_pair": {
+      "step": 2,
+      "query": 102,
+      "link": "ee_finger_l1",
+      "tier": "fine",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 3.2467565307215067,
+     "same_row": false,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 30.81110104084657,
+     "TO_view_on_step": 7,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 40.81110104084657,
+     "sphere_true_hurdle_min_mm": 44.264041471096256,
+     "mesh_true_hurdle_min_mm_refined_plan": 32.18280768328307,
+     "mesh_true_hurdle_min_mm_executed_rows": 42.47504559157986
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 4.785860665982163,
+     "TO_view_on_step": 2,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 14.785860665982163,
+     "sphere_true_hurdle_min_mm": 18.1751070895635,
+     "mesh_true_hurdle_min_mm_refined_plan": 18.433394722633672,
+     "mesh_true_hurdle_min_mm_executed_rows": 2.7616273476832442
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 5.2896657323619465,
+     "TO_view_on_step": 7,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 15.289665732361946,
+     "sphere_true_hurdle_min_mm": 17.137368426682123,
+     "mesh_true_hurdle_min_mm_refined_plan": 20.556864178644688,
+     "mesh_true_hurdle_min_mm_executed_rows": 32.516473933364516
+    }
+   },
+   "C_ep1982": {
+    "seq": 50,
+    "t": 392,
+    "phase": "before_lift",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.010289223162888208,
+     "reconstructed_clearance_m": 0.010289179486738317,
+     "recorded_pair": {
+      "step": 7,
+      "query": 102,
+      "link": "ee_finger_l1",
+      "tier": "target_free",
+      "obstacle": null,
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 7,
+      "query": 102,
+      "link": "ee_finger_l1",
+      "tier": "target_free",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 4.367614989120305e-05,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 58.30658658442739,
+     "TO_view_on_step": 7,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 68.3065865844274,
+     "sphere_true_hurdle_min_mm": -5.783813367097205,
+     "mesh_true_hurdle_min_mm_refined_plan": -27.155136679776533,
+     "mesh_true_hurdle_min_mm_executed_rows": 28.25227586007455
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 10.289179486738316,
+     "TO_view_on_step": 7,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 20.289179486738316,
+     "sphere_true_hurdle_min_mm": -8.428622670504451,
+     "mesh_true_hurdle_min_mm_refined_plan": -12.763923801449542,
+     "mesh_true_hurdle_min_mm_executed_rows": 1.3225323558714568
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 87.24043046090605,
+     "TO_view_on_step": 6,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 93.08543548645045,
+     "sphere_true_hurdle_min_mm": 77.45476105438482,
+     "mesh_true_hurdle_min_mm_refined_plan": 73.60924249733425,
+     "mesh_true_hurdle_min_mm_executed_rows": 84.87067176498273
+    }
+   },
+   "C_ep1995": {
+    "seq": 1,
+    "t": 0,
+    "phase": "before_lift",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.007969633844857464,
+     "reconstructed_clearance_m": 0.007969637409794726,
+     "recorded_pair": {
+      "step": 2,
+      "query": 3,
+      "link": "ee_left",
+      "tier": "target_free",
+      "obstacle": null,
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 2,
+      "query": 3,
+      "link": "ee_left",
+      "tier": "target_free",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 3.5649372620571995e-06,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 7.969637409794726,
+     "TO_view_on_step": 2,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 17.969637409794725,
+     "sphere_true_hurdle_min_mm": 10.363760740108763,
+     "mesh_true_hurdle_min_mm_refined_plan": 0.45433334580014667,
+     "mesh_true_hurdle_min_mm_executed_rows": 1.5317820596309433
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 10.913896132695855,
+     "TO_view_on_step": 7,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 20.913896132695857,
+     "sphere_true_hurdle_min_mm": 30.70892881358761,
+     "mesh_true_hurdle_min_mm_refined_plan": 29.656987163930534,
+     "mesh_true_hurdle_min_mm_executed_rows": 35.486893788106514
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 69.66038860462636,
+     "TO_view_on_step": 3,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 79.66038860462636,
+     "sphere_true_hurdle_min_mm": 83.98739497782122,
+     "mesh_true_hurdle_min_mm_refined_plan": 81.09839459831011,
+     "mesh_true_hurdle_min_mm_executed_rows": 83.4751033300746
+    }
+   },
+   "D_ep1807": {
+    "seq": 36,
+    "t": 280,
+    "phase": "after",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.005087875630032178,
+     "reconstructed_clearance_m": 0.005087869491926179,
+     "recorded_pair": {
+      "step": 7,
+      "query": 91,
+      "link": "ee_finger_l1",
+      "tier": "target_free",
+      "obstacle": null,
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 7,
+      "query": 91,
+      "link": "ee_finger_l1",
+      "tier": "target_free",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 6.138105999170529e-06,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 27.256697972397596,
+     "TO_view_on_step": 7,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 37.256697972397596,
+     "sphere_true_hurdle_min_mm": 40.960222431524166,
+     "mesh_true_hurdle_min_mm_refined_plan": 32.041711967765536,
+     "mesh_true_hurdle_min_mm_executed_rows": 29.68282865109684
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 5.087869491926178,
+     "TO_view_on_step": 7,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 15.08786949192618,
+     "sphere_true_hurdle_min_mm": -0.4318444703441749,
+     "mesh_true_hurdle_min_mm_refined_plan": -0.15895730792558557,
+     "mesh_true_hurdle_min_mm_executed_rows": 35.893181056953644
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 30.954999708572753,
+     "TO_view_on_step": 2,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 37.85909824539218,
+     "sphere_true_hurdle_min_mm": 11.775786998574578,
+     "mesh_true_hurdle_min_mm_refined_plan": 11.539958476335942,
+     "mesh_true_hurdle_min_mm_executed_rows": 3.736549178553889
+    }
+   },
+   "D_ep1967": {
+    "seq": 26,
+    "t": 200,
+    "phase": "before_lift",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.01941528118692544,
+     "reconstructed_clearance_m": 0.019415305169451225,
+     "recorded_pair": {
+      "step": 0,
+      "query": 117,
+      "link": "ee_finger_l2",
+      "tier": "target_free",
+      "obstacle": null,
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 0,
+      "query": 117,
+      "link": "ee_finger_l2",
+      "tier": "target_free",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 2.3982525784727038e-05,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 51.624029947852215,
+     "TO_view_on_step": 1,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 61.624029947852215,
+     "sphere_true_hurdle_min_mm": 62.83726813102069,
+     "mesh_true_hurdle_min_mm_refined_plan": 50.42792344093944,
+     "mesh_true_hurdle_min_mm_executed_rows": 44.52233339390031
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 37.24380436181431,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 47.24380436181431,
+     "sphere_true_hurdle_min_mm": 56.59825784488343,
+     "mesh_true_hurdle_min_mm_refined_plan": 56.82016389531056,
+     "mesh_true_hurdle_min_mm_executed_rows": 24.03797461813011
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 19.415305169451223,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 29.415305169451226,
+     "sphere_true_hurdle_min_mm": 31.42330780300724,
+     "mesh_true_hurdle_min_mm_refined_plan": 35.053693027762385,
+     "mesh_true_hurdle_min_mm_executed_rows": 10.990455717899472
+    }
+   },
+   "D_ep1982": {
+    "seq": 65,
+    "t": 512,
+    "phase": "before_lift",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.0016352952152814248,
+     "reconstructed_clearance_m": 0.0016352727670259446,
+     "recorded_pair": {
+      "step": 6,
+      "query": 102,
+      "link": "ee_finger_l1",
+      "tier": "target_free",
+      "obstacle": null,
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 6,
+      "query": 102,
+      "link": "ee_finger_l1",
+      "tier": "target_free",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 2.244825548017304e-05,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 36.95279961337025,
+     "TO_view_on_step": 4,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 46.95279961337025,
+     "sphere_true_hurdle_min_mm": 52.10007763997701,
+     "mesh_true_hurdle_min_mm_refined_plan": 13.7069573428013,
+     "mesh_true_hurdle_min_mm_executed_rows": 4.241028760872244
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 1.6352727670259446,
+     "TO_view_on_step": 6,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 11.635272767025945,
+     "sphere_true_hurdle_min_mm": 37.550988626315274,
+     "mesh_true_hurdle_min_mm_refined_plan": 35.687968167041284,
+     "mesh_true_hurdle_min_mm_executed_rows": 31.664370106347164
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 26.09861721568177,
+     "TO_view_on_step": 4,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 36.09861721568177,
+     "sphere_true_hurdle_min_mm": 38.611782194610925,
+     "mesh_true_hurdle_min_mm_refined_plan": 35.68924462168271,
+     "mesh_true_hurdle_min_mm_executed_rows": 30.79143268585494
+    }
+   },
+   "D_ep1995": {
+    "seq": 2,
+    "t": 8,
+    "phase": "before_lift",
+    "gate": "execute",
+    "hold_kinds": [],
+    "fidelity": {
+     "recorded_clearance_m": 0.004767179579965508,
+     "reconstructed_clearance_m": 0.004767191337732389,
+     "recorded_pair": {
+      "step": 3,
+      "query": 102,
+      "link": "ee_finger_l1",
+      "tier": "target_free",
+      "obstacle": null,
+      "obstacle_margin_class": "obstacle"
+     },
+     "reconstructed_pair": {
+      "step": 3,
+      "query": 102,
+      "link": "ee_finger_l1",
+      "tier": "target_free",
+      "obstacle_margin_class": "obstacle"
+     },
+     "abs_diff_mm": 1.175776688164265e-05,
+     "same_row": true,
+     "recorded_worst_is_held_query": false
+    },
+    "ee_left": {
+     "TO_view_on_min_mm": 42.31480691004883,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 52.31480691004883,
+     "sphere_true_hurdle_min_mm": 58.2270371117383,
+     "mesh_true_hurdle_min_mm_refined_plan": 45.42630544103618,
+     "mesh_true_hurdle_min_mm_executed_rows": 34.24763419362592
+    },
+    "ee_finger_l1": {
+     "TO_view_on_min_mm": 4.767191337732389,
+     "TO_view_on_step": 3,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 14.76719133773239,
+     "sphere_true_hurdle_min_mm": 11.036053321146397,
+     "mesh_true_hurdle_min_mm_refined_plan": 12.976368985515268,
+     "mesh_true_hurdle_min_mm_executed_rows": 1.0981263978524503
+    },
+    "ee_finger_l2": {
+     "TO_view_on_min_mm": 65.41234339633387,
+     "TO_view_on_step": 0,
+     "TO_view_class": "obstacle",
+     "TO_view_off_min_mm": 75.41234339633387,
+     "sphere_true_hurdle_min_mm": 78.54520497041989,
+     "mesh_true_hurdle_min_mm_refined_plan": 77.12559272632232,
+     "mesh_true_hurdle_min_mm_executed_rows": 73.34108150355127
+    }
+   }
+  },
+  "T40J": "T40FG.verify.json numbers.J runs (C1995, D1967, D1982, D1995; snapshot work-t40h, margin off) re-analysed with the same scripts: outputs/verify/T41/a/analysis/t40j_reanalysis.json; per-run entries under key T40J above",
+  "resources": {
+   "memory_rule": "working set (memory.current - inactive_file) + estimate <= 64 GiB (lead, 2026-10-05); GPU used + 28 GB <= 130 GB",
+   "rss_samples": "outputs/verify/T41/a/runs/E3b/server_8260_*/rss_samples.txt",
+   "gpu_samples": "outputs/verify/T41/a/runs/E3b/server_8260_*/gpu_samples.txt",
+   "aborted_first_chain": "outputs/verify/T41/a/runs/aborted_20261005T0721 (server started 07:21 under the old memory rule, killed before any run)"
+  },
+  "run_records": {
+   "B/E3b_ep1807_s18071": {
+    "stage": "B",
+    "cond": "E3b",
+    "episode": 1807,
+    "seed": 18071,
+    "status": "done",
+    "check_mode": "full",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/B/E3b_ep1807_s18071",
+    "port": 8260,
+    "obstacle": ":",
+    "start": "2026-10-05T07:23:19+00:00",
+    "end": "2026-10-05T07:27:52+00:00",
+    "wall_s": 273.0,
+    "n_failed_attempts": 0
+   },
+   "B/E3b_ep1828_s18281": {
+    "stage": "B",
+    "cond": "E3b",
+    "episode": 1828,
+    "seed": 18281,
+    "status": "done",
+    "check_mode": "full",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/B/E3b_ep1828_s18281",
+    "port": 8260,
+    "obstacle": ":",
+    "start": "2026-10-05T07:46:38+00:00",
+    "end": "2026-10-05T07:50:37+00:00",
+    "wall_s": 239.0,
+    "n_failed_attempts": 0
+   },
+   "B/E3b_ep1967_s19672": {
+    "stage": "B",
+    "cond": "E3b",
+    "episode": 1967,
+    "seed": 19672,
+    "status": "done",
+    "check_mode": "full",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/B/E3b_ep1967_s19672",
+    "port": 8260,
+    "obstacle": ":",
+    "start": "2026-10-05T07:56:45+00:00",
+    "end": "2026-10-05T08:01:17+00:00",
+    "wall_s": 272.0,
+    "n_failed_attempts": 0
+   },
+   "B/E3b_ep1968_s19681": {
+    "stage": "B",
+    "cond": "E3b",
+    "episode": 1968,
+    "seed": 19681,
+    "status": "done",
+    "check_mode": "full",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/B/E3b_ep1968_s19681",
+    "port": 8260,
+    "obstacle": ":",
+    "start": "2026-10-05T07:30:00+00:00",
+    "end": "2026-10-05T07:34:25+00:00",
+    "wall_s": 265.0,
+    "n_failed_attempts": 0
+   },
+   "B/E3b_ep1982_s19822": {
+    "stage": "B",
+    "cond": "E3b",
+    "episode": 1982,
+    "seed": 19822,
+    "status": "done",
+    "check_mode": "full",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/B/E3b_ep1982_s19822",
+    "port": 8260,
+    "obstacle": ":",
+    "start": "2026-10-05T07:38:56+00:00",
+    "end": "2026-10-05T07:43:32+00:00",
+    "wall_s": 276.0,
+    "n_failed_attempts": 0
+   },
+   "B/E3b_ep1995_s19952": {
+    "stage": "B",
+    "cond": "E3b",
+    "episode": 1995,
+    "seed": 19952,
+    "status": "done",
+    "check_mode": "full",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/B/E3b_ep1995_s19952",
+    "port": 8260,
+    "obstacle": ":",
+    "start": "2026-10-05T07:50:38+00:00",
+    "end": "2026-10-05T07:54:51+00:00",
+    "wall_s": 253.0,
+    "n_failed_attempts": 0
+   },
+   "C/E3b_ep1807_s18071": {
+    "stage": "C",
+    "cond": "E3b",
+    "episode": 1807,
+    "seed": 18071,
+    "status": "done",
+    "check_mode": "obstacle_stop",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1807_s18071",
+    "port": 8260,
+    "obstacle": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1807_s18071_r1.json:t40f_ep1807_s18071_r1",
+    "start": "2026-10-05T07:27:53+00:00",
+    "end": "2026-10-05T07:29:59+00:00",
+    "wall_s": 126.0,
+    "n_failed_attempts": 0
+   },
+   "C/E3b_ep1967_s19672": {
+    "stage": "C",
+    "cond": "E3b",
+    "episode": 1967,
+    "seed": 19672,
+    "status": "done",
+    "check_mode": "full",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1967_s19672",
+    "port": 8260,
+    "obstacle": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1967_s19672_r1.json:t40f_ep1967_s19672_r1",
+    "start": "2026-10-05T08:01:18+00:00",
+    "end": "2026-10-05T08:05:52+00:00",
+    "wall_s": 274.0,
+    "n_failed_attempts": 0
+   },
+   "C/E3b_ep1968_s19681": {
+    "stage": "C",
+    "cond": "E3b",
+    "episode": 1968,
+    "seed": 19681,
+    "status": "done",
+    "check_mode": "full",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1968_s19681",
+    "port": 8260,
+    "obstacle": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1968_s19681_r1.json:t40f_ep1968_s19681_r1",
+    "start": "2026-10-05T07:34:26+00:00",
+    "end": "2026-10-05T07:38:55+00:00",
+    "wall_s": 269.0,
+    "n_failed_attempts": 0
+   },
+   "C/E3b_ep1982_s19822": {
+    "stage": "C",
+    "cond": "E3b",
+    "episode": 1982,
+    "seed": 19822,
+    "status": "done",
+    "check_mode": "obstacle_stop",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1982_s19822",
+    "port": 8260,
+    "obstacle": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1982_s19822_r1.json:t40f_ep1982_s19822_r1",
+    "start": "2026-10-05T07:43:33+00:00",
+    "end": "2026-10-05T07:46:37+00:00",
+    "wall_s": 184.0,
+    "n_failed_attempts": 0
+   },
+   "C/E3b_ep1995_s19952": {
+    "stage": "C",
+    "cond": "E3b",
+    "episode": 1995,
+    "seed": 19952,
+    "status": "done",
+    "check_mode": "obstacle_stop",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1995_s19952",
+    "port": 8260,
+    "obstacle": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1995_s19952_r1.json:t40f_ep1995_s19952_r1",
+    "start": "2026-10-05T07:54:52+00:00",
+    "end": "2026-10-05T07:56:44+00:00",
+    "wall_s": 112.0,
+    "n_failed_attempts": 0
+   },
+   "D/E3b_ep1807_s18071": {
+    "stage": "D",
+    "cond": "E3b",
+    "episode": 1807,
+    "seed": 18071,
+    "status": "done",
+    "check_mode": "obstacle_stop",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/D/E3b_ep1807_s18071",
+    "port": 8260,
+    "obstacle": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1807_s18071_r2.json:t40f_ep1807_s18071_r2",
+    "start": "2026-10-05T08:05:53+00:00",
+    "end": "2026-10-05T08:08:11+00:00",
+    "wall_s": 138.0,
+    "n_failed_attempts": 0
+   },
+   "D/E3b_ep1967_s19672": {
+    "stage": "D",
+    "cond": "E3b",
+    "episode": 1967,
+    "seed": 19672,
+    "status": "done",
+    "check_mode": "full",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/D/E3b_ep1967_s19672",
+    "port": 8260,
+    "obstacle": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1967_s19672_r2.json:t40f_ep1967_s19672_r2",
+    "start": "2026-10-05T08:08:12+00:00",
+    "end": "2026-10-05T08:12:45+00:00",
+    "wall_s": 273.0,
+    "n_failed_attempts": 0
+   },
+   "D/E3b_ep1982_s19822": {
+    "stage": "D",
+    "cond": "E3b",
+    "episode": 1982,
+    "seed": 19822,
+    "status": "done",
+    "check_mode": "full",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/D/E3b_ep1982_s19822",
+    "port": 8260,
+    "obstacle": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1982_s19822_r2.json:t40f_ep1982_s19822_r2",
+    "start": "2026-10-05T08:12:46+00:00",
+    "end": "2026-10-05T08:17:20+00:00",
+    "wall_s": 274.0,
+    "n_failed_attempts": 0
+   },
+   "D/E3b_ep1995_s19952": {
+    "stage": "D",
+    "cond": "E3b",
+    "episode": 1995,
+    "seed": 19952,
+    "status": "done",
+    "check_mode": "obstacle_stop",
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/D/E3b_ep1995_s19952",
+    "port": 8260,
+    "obstacle": "/mnt/dev/work/outputs/verify/T40/F/configs/t40f_ep1995_s19952_r2.json:t40f_ep1995_s19952_r2",
+    "start": "2026-10-05T08:17:20+00:00",
+    "end": "2026-10-05T08:20:34+00:00",
+    "wall_s": 194.0,
+    "n_failed_attempts": 0
+   }
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t41/t41a-scene-C.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t41/t41a-scene-D.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t41/t41a-distance.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t41/t41a-table.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": true,
+  "note": "legacy 14/15 · 15/15 · -29.031048280806342; cuRobo 10/15 · 15/15 · -9.171877401271193"
+ },
+ "verdict": "기준선 일치 (legacy · cuRobo). 판정은 lead 와 사용자가 한다.",
+ "not_measured": [
+  "held-object query rows are not rebuilt in the TO row replay (count reported as held_query_rows_not_rebuilt)",
+  "per-frame clearance and SQP iteration counts are not baselines (wall-clock time budget)"
+ ]
+}

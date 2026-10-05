@@ -1,0 +1,214 @@
+{
+ "definitions": "T41a figures (verifier). usage: fig_t41a.py COMPARE_JSON T41A_ANALYSIS T40_REANALYSIS T40J_REANALYSIS\n-> benchmark/ag3s/docs/figures/t41/t41a-scene-C.png, t41a-scene-D.png, t41a-distance.png, t41a-table.png (+ .json sidecars)\n\nscene    : per hurdle episode (C = round-1 placement _r1, D = round-2 _r2), T40 (G/D record) | T41a third-person front frame (recorded\n           third_person_front.mp4, one frame per control step) at the control row of the run's minimum gripper (EE_BODY_L + fingers)\n           to hurdle distance (true MuJoCo geoms, t41a client distance code).\ndistance : gripper (solid) and apple (dotted) to hurdle distance (mm, capped 150) vs control step; T40 = CATEGORICAL slot 0,\n           T41a = slot 1; x = last row of an obstacle-stopped run; grey lines at 0 and 10 mm (= --obstacle-margin).\ntable    : outcome per run, T40 vs T41a (T39 rules; contact = client MuJoCo contact + obstacle stop; mins over the whole run).",
+ "stage": "C",
+ "episodes": {
+  "1807": {
+   "T40": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T40/G/runs/E3b/C/E3b_ep1807_s18071",
+    "frame_index": 218,
+    "n_frames": 219,
+    "t": 218,
+    "gripper_min_m": 0.0029467192857086776,
+    "fingers_min_mm": 4.37,
+    "EE_BODY_L_min_mm": 2.95,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "obstacle_stop_t": 218,
+    "contact": true
+   },
+   "T41a": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1807_s18071",
+    "frame_index": 276,
+    "n_frames": 277,
+    "t": 276,
+    "gripper_min_m": 0.00017115427845901775,
+    "fingers_min_mm": 0.17,
+    "EE_BODY_L_min_mm": 13.72,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "obstacle_stop_t": 276,
+    "contact": true
+   }
+  },
+  "1968": {
+   "T40": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T40/G/runs/E3b/C/E3b_ep1968_s19681",
+    "frame_index": 280,
+    "n_frames": 281,
+    "t": 280,
+    "gripper_min_m": 3.249645084708007e-05,
+    "fingers_min_mm": 0.03,
+    "EE_BODY_L_min_mm": 22.15,
+    "success": true,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "obstacle_stop_t": 280,
+    "contact": true
+   },
+   "T41a": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1968_s19681",
+    "frame_index": 181,
+    "n_frames": 600,
+    "t": 181,
+    "gripper_min_m": 0.002761627347683244,
+    "fingers_min_mm": 2.76,
+    "EE_BODY_L_min_mm": 15.54,
+    "success": true,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "obstacle_stop_t": null,
+    "contact": false
+   }
+  },
+  "1982": {
+   "T40": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T40/G/runs/E3b/C/E3b_ep1982_s19822",
+    "frame_index": 178,
+    "n_frames": 179,
+    "t": 178,
+    "gripper_min_m": 3.173386860235404e-05,
+    "fingers_min_mm": 0.35,
+    "EE_BODY_L_min_mm": 0.03,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "obstacle_stop_t": 178,
+    "contact": true
+   },
+   "T41a": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1982_s19822",
+    "frame_index": 393,
+    "n_frames": 394,
+    "t": 393,
+    "gripper_min_m": 0.0013225323558714568,
+    "fingers_min_mm": 1.32,
+    "EE_BODY_L_min_mm": 19.97,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "obstacle_stop_t": 393,
+    "contact": true
+   }
+  },
+  "1995": {
+   "T40": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T40/G/runs/E3b/C/E3b_ep1995_s19952",
+    "frame_index": 4,
+    "n_frames": 104,
+    "t": 4,
+    "gripper_min_m": 0.0015317820596309432,
+    "fingers_min_mm": 22.24,
+    "EE_BODY_L_min_mm": 1.53,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "obstacle_stop_t": 103,
+    "contact": false
+   },
+   "T40J": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T40/J/runs/E3b/C/E3b_ep1995_s19952",
+    "frame_index": 4,
+    "n_frames": 530,
+    "t": 4,
+    "gripper_min_m": 0.0015317820596309432,
+    "fingers_min_mm": 19.86,
+    "EE_BODY_L_min_mm": 1.53,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "obstacle_stop_t": 529,
+    "contact": true
+   },
+   "T41a": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1995_s19952",
+    "frame_index": 4,
+    "n_frames": 222,
+    "t": 4,
+    "gripper_min_m": 0.0015317820596309432,
+    "fingers_min_mm": 15.11,
+    "EE_BODY_L_min_mm": 1.53,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "obstacle_stop_t": 221,
+    "contact": true
+   }
+  },
+  "1967": {
+   "T40": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T40/G/runs/E3b/C/E3b_ep1967_s19672",
+    "frame_index": 203,
+    "n_frames": 204,
+    "t": 203,
+    "gripper_min_m": 0.003226348581005364,
+    "fingers_min_mm": 3.23,
+    "EE_BODY_L_min_mm": 30.77,
+    "success": false,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "obstacle_stop_t": 203,
+    "contact": true
+   },
+   "T41a": {
+    "run_dir": "/mnt/dev/work/outputs/verify/T41/a/runs/E3b/C/E3b_ep1967_s19672",
+    "frame_index": 160,
+    "n_frames": 600,
+    "t": 160,
+    "gripper_min_m": 0.012757751939668667,
+    "fingers_min_mm": 12.76,
+    "EE_BODY_L_min_mm": 30.77,
+    "success": true,
+    "crop_rows_cols": [
+     9,
+     384,
+     192,
+     627
+    ],
+    "obstacle_stop_t": null,
+    "contact": false
+   }
+  }
+ }
+}
