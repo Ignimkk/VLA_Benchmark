@@ -708,6 +708,11 @@ class SafePolicy:
         set_grasp = getattr(self.ag3s, "set_grasp_active", None)
         if callable(set_grasp):
             set_grasp(self._latch.phase in (GraspPhase.CLOSING, GraspPhase.HELD))
+        # T43 T 3(a): the pick target is locked (LATCHED) or closing. AG3S reads it only with
+        # `clustering.latched_identity_hold` (off by default — then this is a stored bool, unused).
+        set_latched = getattr(self.ag3s, "set_grasp_latched", None)
+        if callable(set_latched):
+            set_latched(self._latch.phase in (GraspPhase.LATCHED, GraspPhase.CLOSING))
         # SUBTASK-c: 이번 요청의 subtask label 과 latch 가 PLACED 인지 (B3). label 이 없으면 None —
         # AG3S 는 그것을 "label 없음" 으로 센다. **PLACED 만** 넘긴다: T34 의 거짓 attach 회수도
         # detach 지만 놓은 것이 아니다 (회수 뒤 phase 는 LATCHED). gate (`clustering.subtask_gate`)

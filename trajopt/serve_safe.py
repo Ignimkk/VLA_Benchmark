@@ -669,6 +669,20 @@ def subtask_config_section(subtask_gate: bool | None,
     return {"clustering": clustering} if clustering else {}
 
 
+def t43t_identity_section(args) -> dict:
+    """T43 T fix 3 — `clustering` keys for the given flags only (none given = `{}`, config as is)."""
+    out = {}
+    if getattr(args, "closing_keep_geometry", False):
+        out["closing_keep_geometry"] = True
+    if getattr(args, "latched_identity_hold", False):
+        out["latched_identity_hold"] = True
+    if getattr(args, "refused_identity_release", None) is not None:
+        out["refused_identity_release_frames"] = int(args.refused_identity_release)
+    if getattr(args, "supported_max_bottom_mm", None) is not None:
+        out["supported_max_bottom"] = float(args.supported_max_bottom_mm) / 1000.0
+    return out
+
+
 def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
                backend: str = "legacy", fine_voxel: float | None = None,
                tsdf_voxel: float | None = None,
@@ -684,7 +698,9 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
                self_filter: dict | None = None,
                subtask_gate: bool | None = None,
                subtask_probe_path: str | None = None,
-               held_body_cover: bool = False):
+               held_body_cover: bool = False,
+               identity: dict | None = None,
+               held_free_observed_pad: float | None = None):
     """서버가 쓸 AG3S. 자기 필터는 전신, 제약은 `links` (T27 부터 기본 `gripper` — 손바닥 + 손가락).
 
     **두 모델은 일부러 다르다.** 자기 필터는 바퀴·베이스까지 있어야 한다 — 머리 카메라가 자기
@@ -797,6 +813,9 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
         # 규약 그대로: 줄 때만.
         **subtask_config_section(subtask_gate, subtask_probe_path),
     })
+    if identity:
+        # T43 T — the identity / closing-geometry keys, only when a flag gave them.
+        config = config.with_overrides({"clustering": dict(identity)})
     logging.info("AG3S: self-filter %d spheres, constraints %d spheres (%s)",
                  filter_robot.n_spheres, constraint_robot.n_spheres, links_label)
     announce_gripper_cover(getattr(constraint_robot, "gripper_cover_report", None))
@@ -856,6 +875,15 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
         logging.warning("AG3S held query spheres: body cover (T43 R2) — slip %.1f mm, J1 lift "
                         "only within band + %.1f mm of the support",
                         ag3s.held_body_slip_m * 1000.0, ag3s.held_lift_hysteresis_m * 1000.0)
+    if identity:
+        logging.warning("AG3S identity (T43 T fix 3): %s", ", ".join(
+            f"{k}={v}" for k, v in sorted(identity.items())))
+    if held_free_observed_pad is not None:
+        # T43 T fix 2 — the pre-grasp observation, freed at its place on every held frame.
+        ag3s.held_free_observed_pad = float(held_free_observed_pad)
+        logging.warning("AG3S held_free: + the manipulated object's last pre-grasp observation "
+                        "(%.1f mm pad, at its place) on every held frame (T43 T fix 2)",
+                        ag3s.held_free_observed_pad * 1000.0)
     return ag3s
 
 
@@ -985,6 +1013,10 @@ def build_parser() -> argparse.ArgumentParser:
                          "(동작이 예전과 같다). 켜면 손 구 행 중 최근접 표면이 조작 대상(사과)도 "
                          "지지면(테이블·바닥)도 아닌 행만 `max(--esdf-margin, M)` 을 받는다. 쥔 "
                          "물체 행·target 행은 0 그대로. 질의 구는 키우지 않는다. 시험값 0.010")
+    ap.add_argument("--target-volume-exempt", action="store_true",
+                    help="T43 T step 2 — 최근접 표면점이 조작 대상의 carve-out 공 (target-free 계층이 "
+                         "물체로 보는 부피) 안인 손 구 행은 target 행이다: --obstacle-margin 을 안 받고 "
+                         "sweep 경로 행에서도 빠진다. 기본 off")
     ap.add_argument("--obstacle-margin-support", action="store_true",
                     help="T41 a — 지지면(테이블·바닥)에도 --obstacle-margin 을 건다. 기본은 "
                          "제외 (파지하려면 손가락이 테이블 가까이 가야 한다). ablation 용")
@@ -1225,6 +1257,27 @@ def build_parser() -> argparse.ArgumentParser:
                     help="T43 R2 — 쥔 과일의 질의 구가 몸통 전체 (바닥 반구 포함) 를 덮는다: 맞춘 구 + "
                          "받침면까지 내린 바닥 구 + 미끄럼 5 mm. J1 lift 는 몸통이 받침면 + 띠 + "
                          "10 mm 안일 때만 (파지 · 들어 올림 · 내려놓기). 기본 off = T43 전과 같다")
+    # --- T43 T ---------------------------------------------------------------------------
+    ap.add_argument("--closing-keep-geometry", action="store_true",
+                    help="T43 T step 2 — 닫는 동안 (closing, attach 전) 조작 대상 기하를 그 프레임 관측으로 "
+                         "바꾸지 않는다: 닫기 전 기하 (물체 전체) 가 carve-out 과 attach snapshot 에 남는다. "
+                         "기본 off (T30: 동결 중 기하가 관측을 따라감)")
+    ap.add_argument("--latched-identity-hold", action="store_true",
+                    help="T43 T 3(a) — grasp latch 가 pick 대상을 잠근 동안 (LATCHED · CLOSING) 조작 대상 "
+                         "정체는 '안 보임' 만으로 바뀌지 않는다: 물체가 사라졌다는 증거 (제자리 cluster 가 "
+                         "다르고 손이 비켜 있음) 나 손이 도전자로 간 증거가 있을 때만 switch 를 센다. "
+                         "기본 off")
+    ap.add_argument("--refused-identity-release", type=int, default=None, metavar="N",
+                    help="T43 T 3(b) — exclusion 관문이 조작 대상을 목적지 겹침으로 N 프레임 연속 "
+                         "거절하면 그 정체를 놓고 first 로 다시 고른다. 기본 off")
+    ap.add_argument("--supported-max-bottom-mm", type=float, default=None, metavar="MM",
+                    help="T43 T 3(c) — 후보 cluster 의 가장 낮은 점이 받침면 위 MM 보다 높고 손에 "
+                         "있지도 않으면 (손 구 hand_occlusion_reach 밖) admissible 이 아니다 (허들 막대 "
+                         "윗부분 · crate 테두리). 받침면 아래에만 있는 것도. 기본 off. 근거값 60")
+    ap.add_argument("--held-free-observed-mm", type=float, default=None, metavar="MM",
+                    help="T43 T fix 2 — 쥔 동안 매 프레임, 파지 직전 관측한 조작 대상 점들의 **그 자리** "
+                         "(base frame, 손을 따라가지 않음) 에서 MM 안의 TSDF voxel 을 비운다 (받침면 + 1 "
+                         "voxel 위만, 목적지 근처 제외). cuRobo backend 만. 기본 off. 근거값 15")
     ap.add_argument("--static-geometry", default="none", metavar="none|auto|PATH",
                     help="아는 고정 기하(벽·선반·테이블·바닥)를 해석적 채널에 싣는다 — 거리장이 "
                          "min(복셀, 해석적) 을 답해 미관측·격자 밖의 낙관을 없앤다 (E4·N2). "
@@ -1314,6 +1367,20 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         if not args.fine_voxel:
             ap.error("--target-field-policy 는 미세 계층 한 겹으로 만들어집니다. "
                      "--fine-voxel 0 은 단일 계층이므로 정책이 아무 일도 하지 않습니다")
+    t43t_ag3s = [name for name, on in (
+        ("--closing-keep-geometry", getattr(args, "closing_keep_geometry", False)),
+        ("--target-volume-exempt", getattr(args, "target_volume_exempt", False)),
+        ("--latched-identity-hold", getattr(args, "latched_identity_hold", False)),
+        ("--refused-identity-release", getattr(args, "refused_identity_release", None) is not None),
+        ("--supported-max-bottom-mm", getattr(args, "supported_max_bottom_mm", None) is not None),
+        ("--held-free-observed-mm", getattr(args, "held_free_observed_mm", None) is not None))
+        if on]
+    if t43t_ag3s and (args.no_safe or getattr(args, "no_perception", False)):
+        ap.error(f"{', '.join(t43t_ag3s)} 는 AG3S / SafePolicy 의 flag 입니다 (--no-safe · "
+                 "--no-perception 은 그것을 안 만듭니다) — 빼고 띄우십시오")
+    if (getattr(args, "held_free_observed_mm", None) is not None
+            and getattr(args, "esdf_backend", None) != "curobo"):
+        ap.error("--held-free-observed-mm 는 cuRobo TSDF 의 voxel 을 비웁니다 (--esdf-backend curobo)")
     if getattr(args, "held_body_cover", False) and (args.no_safe
                                                     or getattr(args, "no_perception", False)):
         ap.error("--held-body-cover 는 AG3S 의 쥔 물체 질의 구를 고치는 flag 입니다 "
@@ -1540,6 +1607,9 @@ def obstacle_overrides(args) -> dict:
             raise SystemExit("--obstacle-margin-support 는 --obstacle-margin M (> 0) 과 함께 줘야 "
                              "합니다 — 혼자서는 아무 일도 하지 않습니다")
         out["obstacle_margin_support"] = True
+    if getattr(args, "target_volume_exempt", False):
+        # T43 T step 2 — rows nearest the target's carve-out volume are target rows.
+        out["target_volume_exempt"] = True
     return out
 
 
@@ -1882,7 +1952,11 @@ def main() -> None:
                             self_filter=self_filter_options(args),
                             subtask_gate=args.subtask_gate,
                             subtask_probe_path=args.subtask_probe,
-                            held_body_cover=args.held_body_cover),
+                            held_body_cover=args.held_body_cover,
+                            identity=t43t_identity_section(args) or None,
+                            held_free_observed_pad=(
+                                None if args.held_free_observed_mm is None
+                                else float(args.held_free_observed_mm) / 1000.0)),
             static_geometry=load_static_geometry(args.static_geometry, args.model_xml,
                                                  links=args.links),
             to_config=to_config,

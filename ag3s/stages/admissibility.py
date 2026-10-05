@@ -56,6 +56,9 @@ NOT_GRASPABLE = "not_graspable"
 MAX_OPENING_UNKNOWN = "max_opening_unknown"
 NO_EXTENT = "no_extent"
 DESTINATION_OVERLAP = "destination_overlap"
+#: T43 T 3(c) (`clustering.supported_max_bottom`): not resting on a support surface and not in the
+#: hand — a bar top, a crate rim — or entirely at/below the support surface.
+NOT_SUPPORTED = "not_supported"
 
 
 class ExclusionInvariantViolation(RuntimeError):

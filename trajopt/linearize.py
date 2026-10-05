@@ -188,6 +188,11 @@ class SceneSnapshot:
     #: 않았고, `use_support_planes=False` 가 끄는 `plane_active` 와도 무관하다. 위 여유가 "최근접
     #: 표면이 지지면인가" 를 물을 때만 읽는다. `None` = 지지면 없음 (전부 장애물로 본다).
     support_planes: Optional[np.ndarray] = None
+    #: **T43 T step 2** — `[cx, cy, cz, radius, z_min]` (m) of the manipulated object's carve-out
+    #: ball (`collision.target_volume_exempt`); a row whose nearest surface point lies inside is a
+    #: target row for the obstacle margin and the sweep rows. `None` (default) = this axis does not
+    #: exist.
+    target_volume: Optional[np.ndarray] = None
 
     @property
     def has_esdf(self) -> bool:
@@ -828,6 +833,10 @@ class CollisionLinearizer:
         cls = np.full(d.shape, _OBSTACLE, np.int8)
         if d_object is not None:
             cls[np.abs(d - d_object) <= tol] = _TARGET
+        if getattr(scene, "target_volume", None) is not None:
+            # T43 T step 2 — nearest surface point inside the carve-out ball: target too.
+            inside = self.in_target_volume(d, flat, scene)
+            cls[inside & (cls == _OBSTACLE)] = _TARGET
         planes = getattr(scene, "support_planes", None)
         if planes is not None and not getattr(scene, "obstacle_margin_support", False):
             planes = np.asarray(planes, np.float64).reshape(-1, 4)
@@ -838,6 +847,26 @@ class CollisionLinearizer:
                 cls[on_plane & (cls == _OBSTACLE)] = _SUPPORT
         cls[:, self.n_spheres:] = _HELD
         return cls
+
+    def in_target_volume(self, d: np.ndarray, flat: np.ndarray, scene: SceneSnapshot) -> np.ndarray:
+        """T43 T step 2 — `(H, n_query)` bool: the row's nearest field surface point ``p − d·∇d``
+        (the direction from the same layer as the value, `_esdf_directions`) lies inside
+        `scene.target_volume` (ball, above its `z_min`). Robot spheres only; never the held points."""
+        vol = np.asarray(scene.target_volume, np.float64).reshape(5)
+        shape = d.shape
+        n_query = shape[1]
+        rows = np.tile(np.arange(n_query), shape[0])
+        keep_tiers = getattr(self, "last_target_free_tiers", {})
+        g = self._esdf_directions(flat, rows, scene, n_query)
+        self.last_target_free_tiers = keep_tiers      # a measurement, not the linearization's record
+        norm = np.linalg.norm(g, axis=1, keepdims=True)
+        g = np.where(norm > _EPS, g / np.maximum(norm, _EPS), 0.0)
+        surf = flat - d.reshape(-1, 1) * g
+        inside = ((np.linalg.norm(surf - vol[:3], axis=1) <= vol[3]) & (surf[:, 2] >= vol[4])
+                  & (norm[:, 0] > _EPS))
+        inside = inside.reshape(shape)
+        inside[:, self.n_spheres:] = False
+        return inside
 
     def _clearances_from(self, centres: np.ndarray, scene: SceneSnapshot):
         """``(candidate[H, S, M], plane[H, S, K], distance[H, S, M])`` — no ``delta`` array.
@@ -1572,6 +1601,15 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
     # 기본 off 의 스냅샷이 필드 하나까지 예전과 같다.
     collision_cfg = getattr(config, "collision", None)
     obstacle = {}
+    # T43 T step 2 — the carve-out ball, only with the option on and nothing held.
+    if (bool(getattr(collision_cfg, "target_volume_exempt", False)) and attached is None
+            and getattr(constraint_set, "esdf", None) is not None):
+        ball = ((getattr(constraint_set.esdf, "stats", None) or {}).get("target_free") or {})
+        ball = ball.get("ball") if isinstance(ball, dict) else None
+        if isinstance(ball, dict) and ball.get("centre_m") is not None:
+            obstacle["target_volume"] = np.asarray(
+                [*ball["centre_m"], float(ball["radius_mm"]) / 1000.0,
+                 -np.inf if ball.get("z_min_m") is None else float(ball["z_min_m"])], np.float64)
     obstacle_margin = float(getattr(collision_cfg, "obstacle_margin", 0.0) or 0.0)
     if obstacle_margin > 0.0:
         obstacle = dict(

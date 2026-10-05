@@ -183,6 +183,9 @@ class AG3S:
         #: T26: a grasp is in progress (closing … held) — set by the caller that owns the grasp
         #: (`SafePolicy`). Challengers do not count while it is set, and while an object is attached.
         self._grasp_active = False
+        #: T43 T 3(a): the caller's grasp latch has the pick target locked or is closing
+        #: (`set_grasp_latched`). Read by `TargetConfirm` only with `clustering.latched_identity_hold`.
+        self._grasp_latched = False
         #: SUBTASK-c: this request's subtask probabilities (`set_subtask`), handed to
         #: `TargetConfirm.note_subtask` by the next grounding call and consumed by it.
         self._subtask_p: Optional[dict[str, float]] = None
@@ -246,6 +249,12 @@ class AG3S:
         #: many held frames still get them.
         self._held_first_free: list[tuple[np.ndarray, float]] = []
         self._held_first_free_frames: int = 0
+        #: T43 T fix 2: the manipulated object's observed points on the last frame before the grasp
+        #: (the points `_last_object_fit` is fitted to), base frame — and, once attached, the copy
+        #: frozen at attach (`_held_capture_points`): where the object was, freed on every held frame
+        #: while `held_free_observed_pad` is set.
+        self._last_object_points: Optional[np.ndarray] = None
+        self._held_capture_points: Optional[np.ndarray] = None
         #: T34 J1: the last processed frame's support surfaces and ESDF field. `attach()` runs
         #: before its frame is processed (T22 order (a)), so these are what it can see of the table:
         #: the plane the held query spheres must not cross, and the field's surface band over it.
@@ -281,6 +290,18 @@ class AG3S:
         self._frame_attached: Optional[AttachedCollisionGeometry] = None
         #: T32 H3: free the held object's traces in the TSDF (cuRobo backend). Switch for ablation.
         self.free_held_traces: bool = True
+        #: **T43 T fix 2 — free the held object's pre-grasp observation at its place, every held
+        #: frame.** A distance (m) = on every held frame (cuRobo backend, `free_held_traces` on) the
+        #: TSDF voxels within this distance of the manipulated object's observed points on the last
+        #: frame before the grasp — **at the place they were observed, base frame, not riding the
+        #: hand** — are set free too (above the support plane + one fine voxel, never near the
+        #: destination: the `_held_free_points` rules). The held spheres cover only the fitted cap
+        #: (T42-1 ep1908 / ep1992: a pear's lower bulge and top 10–26 mm outside them); the rest of
+        #: the object stayed in the field as an obstacle to the very hand holding it, and no plan from
+        #: there clears it (T43T.impl §8). Static, so no band around the carried object goes blind:
+        #: the region is where the object stood, which while it is held holds only it or nothing.
+        #: `None` (default) = off, bit-identical.
+        self.held_free_observed_pad: Optional[float] = None
         #: T32 H1: the held object's spheres join the **self-filter** sphere set while attached
         #: (cuRobo attach semantics) — its pixels are removed like the robot's and never reach the
         #: TSDF. A public switch for ablation/measurement only; the live path keeps it on.
@@ -382,12 +403,15 @@ class AG3S:
         self._manipulated = None
         self._gated_manipulated = None
         self._grasp_active = False
+        self._grasp_latched = False
         self._subtask_p = None
         self.frame_index = 0
         self._attached = None
         self._held_record = None
         self._state_by_frame = {}
         self._last_object_fit = None
+        self._last_object_points = None
+        self._held_capture_points = None
         self._held_first_free = []
         self._held_first_free_frames = 0
         self._held_filter_local = None
@@ -433,6 +457,12 @@ class AG3S:
         set (and whenever an object is attached) challengers do not count toward a switch.
         """
         self._grasp_active = bool(active)
+
+    def set_grasp_latched(self, latched: bool) -> None:
+        """T43 T 3(a): the caller's grasp latch has the pick target locked (LATCHED) or is closing.
+        Given where `set_grasp_active` is. Only `clustering.latched_identity_hold` makes it a
+        decision: then an unseen locked target is not switched away from (`TargetConfirm`)."""
+        self._grasp_latched = bool(latched)
 
     def set_subtask(self, p: Optional[Mapping[str, Any]]) -> None:
         """This request's subtask label probabilities (SUBTASK-c), as `set_grasp_active` is given.
@@ -763,6 +793,11 @@ class AG3S:
                 {"centre_m": [round(float(v), 6) for v in c], "radius_mm": round(r * 1000.0, 3)}
                 for c, r in self._held_filter_local],
             "first_free_spheres": len(self._arm_first_free(fit_primitives, snap_state)),
+            # T43 T fix 2 — only with `held_free_observed_pad` set.
+            **({} if self.held_free_observed_pad is None else {"capture_free": {
+                "pad_mm": round(float(self.held_free_observed_pad) * 1000.0, 2),
+                "n_points": 0 if self._held_capture_points is None
+                else int(len(self._held_capture_points))}}),
             "hand_shift_since_capture_mm": round(
                 float(np.linalg.norm(T_now[:3, 3] - T_snap[:3, 3])) * 1000.0, 2),
             "spheres_parent_frame": [
@@ -886,6 +921,10 @@ class AG3S:
             extra.append((np.asarray(c, np.float64).copy(), float(r) + self._guard_pad()))
         self._held_first_free = extra
         self._held_first_free_frames = 2
+        # T43 T fix 2: the last pre-grasp observation, frozen at attach (freed every held frame).
+        self._held_capture_points = (
+            None if self.held_free_observed_pad is None or self._last_object_points is None
+            else self._last_object_points.copy())
         return extra
 
     def _snapshot_state(self, geometry, robot_state, geometry_state):
@@ -1150,6 +1189,7 @@ class AG3S:
         self._held_record = None
         self._held_first_free = []
         self._held_first_free_frames = 0
+        self._held_capture_points = None
         self._held_filter_local = None
         self._held_check_ref = None
         self._held_query = None
@@ -1373,6 +1413,13 @@ class AG3S:
             self._target_confirm.inject_destination(destination_points)
         # T26 §4: no switch while a grasp is in progress or an object is attached.
         self._target_confirm.freeze(self._grasp_active or self._attached is not None)
+        self._target_confirm.note_latched(self._grasp_latched)
+        # T43 T step 2: closing, nothing attached yet (read only with closing_keep_geometry).
+        self._target_confirm.note_pre_attach_grasp(self._grasp_active and self._attached is None)
+        # T43 T 3(c): this frame's support planes (read only with `clustering.supported_max_bottom`).
+        self._target_confirm.note_support(
+            np.asarray([[*np.asarray(sf.normal, np.float64).reshape(3), float(sf.offset)]
+                        for sf in surfaces], np.float64).reshape(-1, 4) if surfaces else None)
         # SUBTASK-c: this request's subtask label (consumed here; None when the caller gave none).
         self._target_confirm.note_subtask(self._subtask_p)
         self._subtask_p = None
@@ -1411,6 +1458,9 @@ class AG3S:
         # guard all read `manipulated_geometry` from here.
         manipulated_geometry, invariant = self._exclusion_gate(manipulated)
         self._gated_manipulated = manipulated if manipulated_geometry is not None else None
+        # T43 T 3(b): a destination-overlap refusal, counted (a release only with the option on).
+        self._target_confirm.note_exclusion_refused(
+            invariant is not None and invariant.get("destination_overlap_now") is not None)
         if invariant is not None:
             notes.append(reason("invariant_violation", invariant["detail"]))
             if grounding.target is not None:
@@ -1809,7 +1859,15 @@ class AG3S:
             "clusters": [a.record() for a in adm],
             "decision": None if decision is None else {
                 "mode": decision.mode, "rank": decision.rank, "reason": decision.reason,
-                "frozen": decision.frozen},
+                "frozen": decision.frozen,
+                # T43 T 3(a) / 3(b) — keys only when the option is on (off: the record is unchanged).
+                **({"latched": bool(self._grasp_latched), "latched_hold": decision.latched_hold}
+                   if self._target_confirm.latched_identity_hold else {}),
+                **({"refused_streak": self._target_confirm.refused_streak,
+                    "refused_released": self._target_confirm.refused_released}
+                   if self._target_confirm.refused_release_frames is not None else {})},
+            **({"support": self._target_confirm.last_support}
+               if self._target_confirm.supported_max_bottom is not None else {}),
             "destination_streak": self._target_confirm.destinations.streak,
         }
 
@@ -2398,6 +2456,9 @@ class AG3S:
                                      max_radius=0.5 * mo.value_m if mo.known else None)
             if fit.accepted:
                 self._last_object_fit = (fit.centre.copy(), float(fit.radius))
+            if self.held_free_observed_pad is not None:
+                # T43 T fix 2 — the same frame's observed points (freed at their place once held).
+                self._last_object_points = np.asarray(points, np.float64).reshape(-1, 3).copy()
         if nothing_held and points is not None and len(points):
             labelled = dict(labelled or {})
             labelled[TARGET_LABEL] = np.asarray(points, np.float64)
@@ -2539,7 +2600,11 @@ class AG3S:
         Sampled at half a TSDF voxel so every voxel whose centre is inside is hit.
         """
         from benchmark.ag3s.constraints.attached import _link_pose_numeric
-        from benchmark.ag3s.robot_models.held_object import held_spheres_of, sphere_volume_points
+        from benchmark.ag3s.robot_models.held_object import (
+            held_spheres_of,
+            points_near,
+            sphere_volume_points,
+        )
 
         held = self._attached
         local = held_spheres_of(held)
@@ -2557,6 +2622,13 @@ class AG3S:
         z_plane = self._support_plane_z(support_surfaces, spheres[0][0])
         pts = sphere_volume_points(spheres, 0.5 * tsdf_voxel,
                                    z_min=None if z_plane is None else float(z_plane) + pad)
+        if self.held_free_observed_pad is not None and self._held_capture_points is not None:
+            # T43 T fix 2: the pre-grasp observation at its place (static), same floor rule.
+            obs = points_near(self._held_capture_points, float(self.held_free_observed_pad),
+                              0.5 * tsdf_voxel)
+            if z_plane is not None:
+                obs = obs[obs[:, 2] >= float(z_plane) + pad]
+            pts = np.vstack([pts, obs]) if len(obs) else pts
         if len(pts) and destination_points is not None and len(destination_points):
             from scipy.spatial import cKDTree
 

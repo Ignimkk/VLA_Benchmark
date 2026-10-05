@@ -104,6 +104,7 @@ from benchmark.ag3s.stages.admissibility import (
     Association,
     DestinationGeometry,
     DestinationRegistry,
+    NOT_SUPPORTED,
     HandSpheres,
     anchor_cover,
     assess,
@@ -137,6 +138,9 @@ SUBSET_KEPT_ANCHOR = "subset_kept_anchor"
 #: and the cluster at its place is a cluster that may again be several objects but could not be
 #: split this frame — the anchor is kept, the object counts as seen (T31b).
 UNSPLIT_KEPT_ANCHOR = "unsplit_kept_anchor"
+#: T43 T step 2 (`clustering.closing_keep_geometry`): a grasp is closing (frozen, nothing attached
+#: yet) — the object has not moved, the fingers only hide it; the pre-closing geometry stands in.
+CLOSING_KEPT_GEOMETRY = "closing_kept_geometry"
 #: `ConfirmDecision.mode` (and `reason`) when nothing is held, a cluster is admissible, and the
 #: subtask gate is on with a confirmed `place` / `home` label — no first target (SUBTASK-c).
 SUBTASK_GATED = "subtask_gated"
@@ -506,6 +510,9 @@ class ConfirmDecision:
     #: `switch` (a challenger frame that would have counted did not) — None when it blocked nothing
     #: (always None with `clustering.subtask_gate` off).
     subtask_blocked: Optional[str] = None
+    #: T43 T 3(a): a challenger frame did not count because the pick target is locked
+    #: (`clustering.latched_identity_hold`) and it was only unseen this frame. Always False off.
+    latched_hold: bool = False
 
 
 class TargetConfirm:
@@ -680,6 +687,32 @@ class TargetConfirm:
         # --- anchor split on release (T32b S2) ---
         self.split_on_release = bool(
             cfg.split_anchor_on_release if split_on_release is None else split_on_release)
+        # --- T43 T step 2 (off by default) ---
+        self.closing_keep_geometry = bool(getattr(cfg, "closing_keep_geometry", False))
+        #: A grasp is in progress and nothing is attached yet (`note_pre_attach_grasp`).
+        self._pre_attach_grasp = False
+        # --- T43 T 3(a) · 3(b) (both off by default; off = not read anywhere) ---
+        self.latched_identity_hold = bool(getattr(cfg, "latched_identity_hold", False))
+        rr = getattr(cfg, "refused_identity_release_frames", None)
+        self.refused_release_frames: Optional[int] = None if rr is None else int(rr)
+        #: The caller's grasp latch has the pick target locked or is closing (`note_latched`).
+        self._latched = False
+        #: This frame's 3(a) suppression (recorded in `ConfirmDecision.latched_hold`).
+        self._latched_hold = False
+        #: Consecutive grounding calls whose manipulated object the exclusion gate refused for a
+        #: destination overlap (`note_exclusion_refused`), and the release armed by it.
+        self._refused_streak = 0
+        self._refused_release_pending = False
+        #: The id released by the latest call under 3(b), with its refusal count; None otherwise.
+        self._refused_released: Optional[dict] = None
+        # --- T43 T 3(c) ---
+        smb = getattr(cfg, "supported_max_bottom", None)
+        self.supported_max_bottom: Optional[float] = None if smb is None else float(smb)
+        self.supported_min_top = float(getattr(cfg, "supported_min_top", 0.01))
+        #: Support planes `(K, 4)` `[n, offset]` for the next grounding call (`note_support`).
+        self._support: Optional[np.ndarray] = None
+        #: This frame's per-cluster support evidence (score order), None when the test did not run.
+        self.last_support: Optional[list] = None
         #: The freeze was released and the next grounding call must split the standing geometry.
         self._release_pending = False
         #: Per-point attention of `_geometry` (the frame it was observed in), for that split.
@@ -833,6 +866,11 @@ class TargetConfirm:
         self._release_pending, self._geometry_attention = False, None
         self._release_split, self._release_event = None, None
         self.frozen = False
+        self._latched = self._latched_hold = False
+        self._pre_attach_grasp = False
+        self._refused_streak, self._refused_release_pending = 0, False
+        self._refused_released = None
+        self._support, self.last_support = None, None
         self.destinations.reset(destination_points)
 
     def inject_destination(self, points: np.ndarray) -> None:
@@ -853,6 +891,56 @@ class TargetConfirm:
         self.frozen = on
         if self.frozen:
             self._challenger, self._streak = None, 0
+
+    def note_pre_attach_grasp(self, on: bool) -> None:
+        """T43 T step 2: a grasp is in progress (closing) and nothing is attached yet. Given before
+        each grounding call (as `freeze`); read only with `clustering.closing_keep_geometry`."""
+        self._pre_attach_grasp = bool(on)
+
+    def note_latched(self, on: bool) -> None:
+        """T43 T 3(a): the caller's grasp latch has the pick target locked or is closing. Given
+        before each grounding call (as `freeze`); read only with `clustering.latched_identity_hold`."""
+        self._latched = bool(on)
+
+    def note_support(self, planes: Optional[np.ndarray]) -> None:
+        """T43 T 3(c): this frame's support planes `(K, 4)` = `[n_x, n_y, n_z, offset]` (free side
+        `n·p ≥ offset`), given before the grounding call; read only with
+        `clustering.supported_max_bottom`. None / empty = unknown (the test does not run)."""
+        arr = None if planes is None else np.asarray(planes, np.float64).reshape(-1, 4)
+        self._support = arr if arr is not None and len(arr) else None
+
+    def note_exclusion_refused(self, refused: bool) -> None:
+        """T43 T 3(b): after a grounding call, whether the exclusion gate refused this frame's
+        manipulated object **because it overlaps the destination**. N consecutive refusals
+        (`clustering.refused_identity_release_frames`) arm a release for the next grounding call.
+        Not while frozen (a grasp in progress keeps its object). Off (None) = counts only."""
+        self._refused_streak = self._refused_streak + 1 if refused else 0
+        n = self.refused_release_frames
+        if n is not None and refused and not self.frozen and self._refused_streak >= n:
+            self._refused_release_pending = True
+
+    @property
+    def refused_streak(self) -> int:
+        """3(b): consecutive destination-overlap refusals so far."""
+        return int(self._refused_streak)
+
+    @property
+    def refused_released(self) -> Optional[dict]:
+        """3(b): `{id, refused_frames}` when the latest grounding call released a refused identity."""
+        return None if self._refused_released is None else dict(self._refused_released)
+
+    def _release_if_refused(self) -> None:
+        """3(b): let a repeatedly refused identity go (armed by `note_exclusion_refused`)."""
+        self._refused_released = None
+        if not self._refused_release_pending:
+            return
+        self._refused_release_pending = False
+        if self.frozen or self._held is None:
+            return
+        self._refused_released = {"id": None if self._id is None else int(self._id),
+                                  "refused_frames": int(self._refused_streak)}
+        self._refused_streak = 0
+        self._forget_manipulated()
 
     def note_subtask(self, p: Optional[Any]) -> Optional[str]:
         """This request's subtask probabilities `{pick, place, home}` (or None = no label).
@@ -876,6 +964,10 @@ class TargetConfirm:
                 and not self.frozen and self._held is not None):
             return
         self._released_id = self._id
+        self._forget_manipulated()
+
+    def _forget_manipulated(self) -> None:
+        """No manipulated object from here on (ids keep counting). B3 and T43 T 3(b)."""
         self._held = self._challenger = None
         self._streak = 0
         self._id = None
@@ -1020,6 +1112,9 @@ class TargetConfirm:
         self._keep_anchor = False
         self._subtask_blocked = self._subtask_would = None
         self._release_if_placed_home()
+        if self.refused_release_frames is not None:
+            self._release_if_refused()
+        self._latched_hold = False
         self._hand_occluded, self._hand_gap = False, self._take_hand()
         adm = self._assess_frame(clusters, points)
         candidates = (list(range(len(clusters))) if adm is None
@@ -1071,6 +1166,13 @@ class TargetConfirm:
                 # so it is the object — but it must not replace it and bring the neighbour back
                 # into the exclusion (T31b).
                 reason, self._keep_anchor = UNSPLIT_KEPT_ANCHOR, True
+        if (held_rank is not None and reason is None and self.closing_keep_geometry
+                and self.frozen and self._pre_attach_grasp and self._geometry is not None):
+            # T43 T step 2: closing, not attached yet. The fruit is still where it stood — the
+            # fingers cut its observation (114 → 33 points, the carve ball 59.6 → 39.9 mm, T42-1
+            # ep1908), they do not move it. The geometry from before the closing stays; the frame
+            # counts as seen. Off: the T30 rule (frozen = the geometry follows the observation).
+            reason, self._keep_anchor = CLOSING_KEPT_GEOMETRY, True
         lead = candidates[0] if candidates else None
         # T32b S3: the held object is not seen whole this frame (unobserved for any reason, or only
         # a part of it), a hand sphere is within reach of it, and the hand is not nearer the
@@ -1094,6 +1196,11 @@ class TargetConfirm:
         challenger = clusters[lead] if lead is not None else None
         counts = (challenger is not None and not self.frozen and not self._hand_occluded
                   and float(challenger.target_score) >= self.switch_min_score)
+        if counts and self.latched_identity_hold and self._latched_keeps(
+                held_rank, reason, challenger, points):
+            # T43 T 3(a): the pick target is locked and this frame carries no evidence that it is
+            # gone or that the hand went elsewhere — a challenger frame is a gap (as while frozen).
+            self._latched_hold, counts = True, False
         if counts and subtask_gated:
             # SUBTASK-c: under place / home a challenger frame is a gap, as while frozen.
             self._subtask_would = "switch"
@@ -1143,6 +1250,9 @@ class TargetConfirm:
         self.last_admissibility = None
         self._subtask_blocked = self._subtask_would = None
         self._release_if_placed_home()
+        if self.refused_release_frames is not None:
+            self._release_if_refused()
+        self._latched_hold = False
         self._hand_occluded, self._hand_gap = False, self._take_hand()
         if self._held is None:
             return None
@@ -1190,6 +1300,36 @@ class TargetConfirm:
                 and self.extent_ratio is not None)
 
     # --- internals -------------------------------------------------------------------------
+    def _latched_keeps(self, held_rank: Optional[int], reason: Optional[str],
+                       challenger: Optional["ClusterInfo"], points) -> bool:
+        """3(a): True when the latch holds the pick target and this frame carries **no positive
+        evidence** for a change of object. Two kinds of evidence count (anything else — the object
+        unobserved, merged (`inadmissible_match`), or merely out-scored by a challenger while it is
+        seen in place — is attention moving, not the object changing):
+
+        * **the object is gone**: a cluster sits at its place that does not look like it
+          (`association_rejected`) while the hand is clear of it (gap known, above
+          `hand_occlusion_reach`) — the hand is not what makes it look different;
+        * **the hand went to the challenger**: a hand sphere within `hand_occlusion_reach` of the
+          challenger's points and no farther from them than from the object (T32b's own reading
+          of a genuine change of object, E3 ep1800 r3 t=416–424).
+        """
+        if not self._latched or self.frozen:
+            return False
+        gap, reach = self._hand_gap, self.hand_reach
+        if (held_rank is None and reason == ASSOCIATION_REJECTED and gap is not None
+                and reach is not None and gap > reach):
+            return False
+        hand = self._frame_hand
+        if (challenger is not None and hand is not None and reach is not None
+                and points is not None):
+            cpts = np.asarray(points, np.float64).reshape(-1, 3)[
+                np.asarray(challenger.point_indices, np.int64)]
+            cgap = hand.gap(cpts)
+            if cgap is not None and cgap <= reach and (gap is None or cgap <= gap):
+                return False
+        return True
+
     def _take_hand(self) -> Optional[float]:
         """Consume this call's hand spheres (T32b): the record, and the gap to the standing
         geometry (the last observed / kept anchor — what stands in while the object is hidden)."""
@@ -1329,7 +1469,34 @@ class TargetConfirm:
                       overlap_distance=self.overlap_distance,
                       overlap_fraction=self.overlap_fraction)
                for p, e in zip(cluster_points, extents)]
+        if self.supported_max_bottom is not None:
+            out = self._support_test(out, cluster_points)
         self.last_admissibility = out
+        return out
+
+    def _support_test(self, adm: list, cluster_points: list) -> list:
+        """T43 T 3(c): an admissible cluster that neither rests on a support plane nor is in the
+        hand becomes `not_supported` (see `clustering.supported_max_bottom`). Heights are measured
+        from the plane nearest the cluster's lowest point. Not while frozen, not without planes."""
+        planes, self.last_support = self._support, None
+        self._support = None
+        if self.frozen or planes is None:
+            return adm
+        hand = self._frame_hand
+        out, evidence = list(adm), []
+        for i, (a, p) in enumerate(zip(adm, cluster_points)):
+            h = p @ planes[:, :3].T - planes[:, 3][None, :]            # (n, K) heights
+            k = int(np.argmin(np.abs(h.min(axis=0))))
+            bottom, top = float(h[:, k].min()), float(h[:, k].max())
+            gap = None if hand is None else hand.gap(p)
+            carried = (gap is not None and self.hand_reach is not None and gap <= self.hand_reach)
+            ok = top >= self.supported_min_top and (bottom <= self.supported_max_bottom or carried)
+            evidence.append({"bottom_mm": round(bottom * 1000.0, 1), "top_mm": round(top * 1000.0, 1),
+                             "hand_gap_mm": None if gap is None else round(gap * 1000.0, 1),
+                             "supported": bool(ok)})
+            if a.admissible and not ok:
+                out[i] = dataclasses.replace(a, reason=NOT_SUPPORTED)
+        self.last_support = evidence
         return out
 
     def _adopt(self, cluster: "ClusterInfo", *, switched_from: Optional[int],
@@ -1366,7 +1533,8 @@ class TargetConfirm:
             n_admissible=None if adm is None else sum(1 for a in adm if a.admissible),
             frozen=bool(self.frozen), association=self._association,
             hand_occluded=bool(self._hand_occluded), hand_gap_m=self._hand_gap,
-            subtask_label=self.subtask.label, subtask_blocked=self._subtask_blocked)
+            subtask_label=self.subtask.label, subtask_blocked=self._subtask_blocked,
+            latched_hold=bool(self._latched_hold))
         return self.last
 
     def _within(self, a, b) -> bool:
@@ -1600,7 +1768,8 @@ def ground_target(
         return dataclasses.replace(
             _unobserved_result(decision, confirm, tuple(clusters), seeds, peak_index,
                                best.target_score), splits=splits)
-    if decision is not None and decision.reason in (SUBSET_KEPT_ANCHOR, UNSPLIT_KEPT_ANCHOR):
+    if decision is not None and decision.reason in (SUBSET_KEPT_ANCHOR, UNSPLIT_KEPT_ANCHOR,
+                                                    CLOSING_KEPT_GEOMETRY):
         # The object was seen, but only part of it: its anchor geometry stands in (T30 F3b).
         return dataclasses.replace(
             _anchor_result(decision, confirm, tuple(clusters), seeds, peak_index,

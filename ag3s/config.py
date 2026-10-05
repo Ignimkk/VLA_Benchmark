@@ -264,6 +264,46 @@ class ClusteringConfig:
     #: hand reaching the banana beside the apple, grasped at t=440), the rest ≥ 45 mm, most ≥ 90.
     #: 50 mm already blocks two genuine switches (t=432 · t=480). The margin is thin (25 → 31 mm).
     hand_occlusion_reach: float | None = 0.03
+    #: **T43 T 3(a) — a locked pick target is not replaced while it is merely unseen.** True = while
+    #: the caller's grasp latch has the target locked or is closing (`TargetConfirm.note_latched`,
+    #: `AG3S.set_grasp_latched`) and nothing is frozen, a challenger's frame counts toward a switch
+    #: only on **positive evidence** of a change of object: the object is gone (a cluster at its
+    #: place that does not look like it, `association_rejected`, with the hand clear of it — gap
+    #: above `hand_occlusion_reach`), or the hand went to the challenger (a hand sphere within
+    #: `hand_occlusion_reach` of it, no farther than from the object — T32b's genuine change).
+    #: Unseen, merged, or out-scored while seen in place: a gap, as while frozen. T41 c C/D ep1982:
+    #: at seq 39 the apple had been unobserved 2 frames (attention on the hurdle bar top) and the
+    #: bar won the switch; in the C replay the hurdle foot then out-scored the visible apple.
+    #: False (default) = the T32b rule, bit-identical.
+    latched_identity_hold: bool = False
+    #: **T43 T step 2 — the pre-closing geometry stands through the closing.** True = while a grasp
+    #: is closing and nothing is attached yet (frozen, `AG3S`: grasp active ∧ no attachment), the
+    #: manipulated object's geometry is **not** replaced by the frame's cluster at its place (the
+    #: frame counts as seen, `closing_kept_geometry`); the carve-out and the attach snapshot keep the
+    #: whole body seen before the closing. Off (default) = T30: frozen ⇒ the geometry follows the
+    #: observation ("the object moves with the hand"), true after the lift, false while closing — T42-1
+    #: ep1908 / ep1992: 114 → 33 / 112 → 34 points at the first closing chunk, carve ball 59.6 → 39.9
+    #: mm, and the attach snapshot (held spheres) a 33-point cap.
+    closing_keep_geometry: bool = False
+    #: **T43 T 3(b) — release an identity the exclusion gate keeps refusing.** An integer N = when
+    #: `AG3S._exclusion_gate` refuses the manipulated object because it overlaps the destination on
+    #: N consecutive grounding calls (and nothing is frozen), the identity is let go at the start of
+    #: the next call and `first` picks again from the admissible clusters (the refused geometry is
+    #: inadmissible by T26's own definition, so it cannot be re-adopted while it still overlaps).
+    #: T41 c C/D ep1982: the bar identity was refused from seq 47 / 45 to the end of the run.
+    #: `None` (default) = never, bit-identical.
+    refused_identity_release_frames: int | None = None
+    #: **T43 T 3(c) — a candidate must rest on a support surface (or be in the hand).** A float =
+    #: the highest the cluster's lowest point may sit above the support plane under it (m) for the
+    #: cluster to stay admissible; above it the cluster is admissible only while a hand sphere is
+    #: within `hand_occlusion_reach` of it (a carried object). A cluster whose highest point is less
+    #: than `supported_min_top` above the plane (at or under the table) is never admissible.
+    #: Evidence (T43T.impl §6, 263 recorded adoptions): fruit on the table — lowest point ≤ 45.1 mm,
+    #: highest ≥ 39.4 mm above the plane; fruit adopted in the air — hand gap ≤ 10.8 mm; obstacle
+    #: pieces adopted (hurdle bar top, crate rim) — lowest point 76.8–177 mm, hand gap ≥ 56.8 mm.
+    #: Not applied while frozen or when no support plane is known. `None` (default) = off.
+    supported_max_bottom: float | None = None
+    supported_min_top: float = 0.01
     #: **Subtask gate (SUBTASK-c, user spec 2026-10-02).** True = while the confirmed subtask label
     #: (`TargetConfirm.note_subtask`, from the kv_L4 probe) is `place` or `home`, the attention
     #: target is not carved: `TargetConfirm` adopts no first target and counts no challenger (the
@@ -372,6 +412,28 @@ class ClusteringConfig:
         if not isinstance(self.subtask_gate, bool):
             raise AG3SConfigError(
                 f"clustering.subtask_gate must be true or false, got {self.subtask_gate!r}")
+        if not isinstance(self.closing_keep_geometry, bool):
+            raise AG3SConfigError(
+                f"clustering.closing_keep_geometry must be true or false, "
+                f"got {self.closing_keep_geometry!r}")
+        if not isinstance(self.latched_identity_hold, bool):
+            raise AG3SConfigError(
+                f"clustering.latched_identity_hold must be true or false, "
+                f"got {self.latched_identity_hold!r}")
+        for name in ("supported_max_bottom", "supported_min_top"):
+            v = getattr(self, name)
+            if v is not None and not (isinstance(v, (int, float)) and not isinstance(v, bool)
+                                      and math.isfinite(float(v))):
+                raise AG3SConfigError(f"clustering.{name} must be a finite distance in metres, "
+                                      f"got {v!r}")
+        if self.supported_min_top is None:
+            raise AG3SConfigError("clustering.supported_min_top must be a distance in metres")
+        rr = self.refused_identity_release_frames
+        if rr is not None and (isinstance(rr, bool) or not isinstance(rr, (int, float))
+                               or not float(rr).is_integer() or rr < 1):
+            raise AG3SConfigError(
+                f"clustering.refused_identity_release_frames must be null (off) or an integer "
+                f">= 1, got {rr!r}")
         sf = self.subtask_confirm_frames
         if sf is not None and (isinstance(sf, bool) or not isinstance(sf, (int, float))
                                or not float(sf).is_integer() or sf < 1):

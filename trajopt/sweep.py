@@ -448,6 +448,11 @@ class PathChecker:
         free = self.lin._target_free_rows(scene, n_query)
         if free is not None:
             is_target &= ~free[None, :]
+        if getattr(scene, "target_volume", None) is not None:
+            # T43 T step 2 — the nearest surface point inside the carve-out ball is the target too
+            # (whichever layer answered the row).
+            is_target |= self.lin.in_target_volume(d_row_of(self.lin, pts, scene, n, n_query),
+                                                   pts, scene)
         is_target[:, self.lin.n_spheres:] = False
         width = self._floor.shape[0]
         out = np.zeros((n, width), bool)
@@ -501,6 +506,17 @@ class PathChecker:
         out["max_sweep_mm"] = round(float(np.linalg.norm(np.diff(chain, axis=0), axis=2).max(
             initial=0.0)) * 1e3, 3)
         return out
+
+
+def d_row_of(lin, pts: np.ndarray, scene, n: int, n_query: int) -> np.ndarray:
+    """T43 T step 2 — `(n, n_query)` the distance each row reads (`_esdf_clearance`'s layer choice:
+    the target-free layer for masked rows, the composite otherwise), before radius and margin."""
+    d = np.asarray(scene.esdf.distance(pts), np.float64).reshape(n, n_query)
+    free = lin._target_free_rows(scene, n_query)
+    if free is not None and free.any():
+        d_free = np.asarray(scene.esdf.target_free_distance(pts), np.float64).reshape(n, n_query)
+        d = np.where(free[None, :], d_free, d)
+    return d
 
 
 def append_path_rows(problem, rows: PathRows, iterate: np.ndarray, block: PathBlock,

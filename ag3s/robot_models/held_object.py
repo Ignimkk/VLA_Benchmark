@@ -565,6 +565,24 @@ def extend_inflation(inflation: Any, n_robot: int, n_held: int) -> Any:
     return np.concatenate([robot, np.zeros(int(n_held))])
 
 
+def points_near(points: np.ndarray, distance: float, spacing: float) -> np.ndarray:
+    """T43 T fix 2 — lattice points (`spacing`, base frame, a lattice anchored at the origin so
+    overlapping neighbourhoods share points) within `distance` of any of `points`. `(0, 3)` when
+    there are no points."""
+    from scipy.spatial import cKDTree
+
+    p = np.asarray(points, np.float64).reshape(-1, 3)
+    if not len(p) or distance <= 0.0:
+        return np.zeros((0, 3))
+    h = float(spacing)
+    lo = np.floor((p.min(axis=0) - distance) / h).astype(int)
+    hi = np.ceil((p.max(axis=0) + distance) / h).astype(int)
+    axes = [np.arange(a, b + 1) * h for a, b in zip(lo, hi)]
+    g = np.stack(np.meshgrid(*axes, indexing="ij"), axis=-1).reshape(-1, 3)
+    d, _ = cKDTree(p).query(g, distance_upper_bound=float(distance) + 1e-12)
+    return g[np.isfinite(d)]
+
+
 def sphere_volume_points(spheres: Sequence[tuple[np.ndarray, float]], spacing: float,
                          z_min: Optional[float] = None) -> np.ndarray:
     """구 합집합 **안**의 격자점 (`spacing` 간격, base 좌표). `z_min` 이 있으면 그 아래는 뺀다.

@@ -594,6 +594,16 @@ class CollisionBackendConfig:
     #: 지지면(테이블·바닥)도 위 여유를 받는가. 기본 `False` — 파지하려면 손가락이 테이블 가까이
     #: 가야 한다 (T40 B E3b 기록: 테이블이 최근접인 손 행 최소 3.9–5.0 mm, 6 run 중 4).
     obstacle_margin_support: bool = False
+    #: **T43 T step 2 — the target's carve-out volume counts as target.** True = a robot-sphere
+    #: ESDF row whose nearest field surface point (`p − d·∇d`) lies inside the manipulated object's
+    #: carve-out ball (AG3S `field.stats["target_free"]["ball"]`: centre, radius, z_min — the volume
+    #: the target-free layer already treats as the object) is a **target** row for the obstacle
+    #: margin (`obstacle_margin` does not apply) and for the sweep path rows (excluded like E1's
+    #: target rows) — not only rows that pass E1's `|d − d_object| ≤ voxel`, which misses apple
+    #: surfaces outside the observed points (T43 U: margin (a) on rows nearest the apple at close in
+    #: 32/33 obstacle runs; V3: 9/13 binding path rows nearest the apple). Nothing held only. Waypoint
+    #: rows keep their own margins. False (default) = bit-identical.
+    target_volume_exempt: bool = False
     #: **충돌 제약을 최적화기에 보이는가.** `True` 가 기본이고 그것이 지금까지의 TO 다.
     #:
     #: `False` 는 사용자가 요청한 ablation 이다 (*"TO 에 가장 기본적인 jerk 목적함수만 포함하고
