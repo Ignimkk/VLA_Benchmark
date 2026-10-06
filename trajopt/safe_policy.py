@@ -89,6 +89,20 @@ def held_slip_detach_enabled(ag3s) -> bool:
     return getattr(clustering, "held_slip_detach", False) is True
 
 
+def hold_follow_to_limit(ag3s) -> Optional[int]:
+    """T43 Z6: AG3S 의 config 가 `clustering.hold_follow_to` (연속 한도) 를 켰나 — 정수 또는 None (off).
+    config 가 없는 AG3S (테스트 stub) 는 None — 기본과 같다."""
+    clustering = getattr(getattr(ag3s, "config", None), "clustering", None)
+    value = getattr(clustering, "hold_follow_to", None)
+    if value is None or isinstance(value, bool):
+        return None
+    return int(value)
+
+
+#: T43 Z6 — refined 와 정책 reference 가 실행 창에서 이 이하로만 다르면 (rad) "TO 궤적이 아니다".
+FOLLOW_TO_SAME_AS_REFERENCE_RAD = 1e-6
+
+
 class SafePolicy:
     """정책 하나를 감싸 안전 판정이 붙은 청크를 돌려준다.
 
@@ -174,6 +188,14 @@ class SafePolicy:
         #: 배우던 길(파지 뒤의 target = 목적지)은 T26 뒤 target 이 사과로 남으므로 닫는다.
         self._latch = GraspLatch(latch_cfg, evidence=not latch_cfg.legacy_gripper_attach,
                                  external_destination=True)
+        #: **T43 Z6 — HOLD 대신 TO 궤적 따르기** (`clustering.hold_follow_to`, `serve_safe
+        #: --hold-follow-to N`). None (기본) = off: 판정 · 기록이 예전 그대로다. 정수 N = 연속 한도
+        #: (`_follow_to`). `_follow_to_streak` 은 스스로 인증된 청크 뒤로 따른 청크 수다.
+        self.follow_to_limit: Optional[int] = hold_follow_to_limit(ag3s)
+        self._follow_to_streak = 0
+        self._last_follow_to: dict[str, Any] = {}
+        #: flag on 일 때만 채운다 — `classify_violations(keep_rows=True)` 의 행 (기록에는 싣지 않는다).
+        self._last_violation_rows: Optional[list] = None
         #: attach/detach 가 일어날 때마다 +1 (T22). 제약이 어느 버전으로 지어졌는지와 비교해
         #: 어긋남을 검출한다 (`summary_json.grasp.state_version` / `constraint_version`).
         self._grasp_state_version = 0
@@ -325,6 +347,9 @@ class SafePolicy:
         # 잠금도 에피소드 상태다. 남기면 다음 과제가 지난 과제의 조작 대상을 물려받는다.
         self._latch.reset()
         self._identity.reset()
+        self._follow_to_streak = 0
+        self._last_follow_to = {}
+        self._last_violation_rows = None
         self._destination_points = None
         self._last_execution_path = {}
         self._latched_target = None
@@ -1307,6 +1332,9 @@ class SafePolicy:
                 "policy": self.verdict_policy,
                 "reasons": self._last_reasons,
                 "classification": self._last_classification or {},
+                # T43 Z6 — 켰을 때만 키가 생긴다.
+                **({"follow_to": self._last_follow_to or {}}
+                   if self.follow_to_limit is not None else {}),
             }),
         }
 
@@ -1334,6 +1362,9 @@ class SafePolicy:
 
     def _verdict(self, policy_chunk: np.ndarray) -> wire.SafetyVerdict:
         result = self.refiner.last_result
+        if self.follow_to_limit is not None:
+            self._last_follow_to = {}
+            self._last_violation_rows = None
         cs = self._last_constraint_set
         ag3s_status = getattr(getattr(cs, "status", None), "value", "no_geometry")
         certified = geometry_certified(cs)
@@ -1370,6 +1401,8 @@ class SafePolicy:
         # **사유를 나눈다** (T23, 지침 §8.3 · §9). `TrajOptStatus.safe` 는 `violated` 하나에 파지
         # 접촉 · 가려진 target · 진짜 충돌을 섞는다 — T16 의 25/34 HOLD 가 그것이었다.
         reasons = self._reasons(result, cs, certified, violation, pair)
+        if self.follow_to_limit is not None and self.verdict_policy != "legacy":
+            reasons = self._follow_to(result, reasons, policy_chunk)
         action, holding = wire.gate_decision(reasons)
         if self.verdict_policy == "legacy":
             # T23 전 그대로. 기하 미인증은 이미 그 안에 들어가 있다 — sqp 가
@@ -1539,7 +1572,11 @@ class SafePolicy:
                 getattr(c, "source_type", None), "value", str(getattr(c, "source_type", "")))
                 for c in (getattr(cs, "candidates", None) or ())},
             pad_m=self.allowed_contact_pad_m,
-            allow_unresolved_tier=self.allow_unresolved_contact_tier)
+            allow_unresolved_tier=self.allow_unresolved_contact_tier,
+            # T43 Z6 — the rows only for `_follow_to`; the recorded classification stays as it was.
+            **({"keep_rows": True} if self.follow_to_limit is not None else {}))
+        if self.follow_to_limit is not None:
+            self._last_violation_rows = cls.pop("rows", None)
         self._last_classification = cls
         out: list[dict[str, Any]] = []
         summary = {k: cls[k] for k in ("n_violating", "n_allowed", "n_unresolved", "n_collision",
@@ -1576,6 +1613,142 @@ class SafePolicy:
                 "re-measured above tolerance — the classification disagrees with the optimizer",
                 max_violation_pair=_jsonable(pair), **summary))
         return out
+
+    # --- T43 Z6: HOLD 대신 TO 궤적 따르기 ----------------------------------------------------
+    def _follow_to(self, result, reasons: list[dict[str, Any]],
+                   policy_chunk: np.ndarray) -> list[dict[str, Any]]:
+        """HOLD 였을 청크를 **TO refined chunk 실행** (`follow_to`) 으로 바꿀 수 있나 (T43 Z6).
+
+        사용자 원칙 (2026-10-06 07:10): crate 테두리 · 바닥은 장애물 그대로, margin 도 그대로. TO 가
+        그것을 피하는 궤적을 만들면 그 궤적을 따른다. 바꾸는 조건 (전부):
+
+        1. HOLD 를 만든 사유가 `collision` 뿐이다 (`uncertified` · `unverified` · … 가 하나라도 있으면
+           그대로 HOLD). `allowed_contact` · `budget_only` 같은 실행 사유는 그대로 둔다.
+        2. (i) 그 `collision` 행이 전부 ESDF 행이고 **margin 안쪽뿐** — 행마다 `d − r ≥ 0` (실제
+           침투 없음). `d` 는 그 행이 쓴 거리 (권한 행은 target 없는 계층, `_esdf_clearance` 와 같은
+           합성), `r` 은 질의 구 반지름. 평면 · 후보 행은 받지 않는다.
+        3. (ii) 그 행들의 최소 clearance (`d − r − margin`) 가 **같은 질의 구의 현재 상태 clearance**
+           (계획 `Q[:, k] = q_now`, 첫 스텝) 의 최솟값보다 작지 않다 — 비악화.
+        4. 실행 창의 refined 팔 행이 정책 reference 와 다르다 (> `FOLLOW_TO_SAME_AS_REFERENCE_RAD`) —
+           실행하는 것은 TO 궤적이지 정책 reference 가 아니다.
+        5. 스스로 인증된 마지막 청크 뒤로 따른 청크가 한도 (`follow_to_limit`) 보다 적다.
+
+        통과하면 `collision` 사유를 `follow_to` 사유 (실행) 로 바꾸고 원래 사유를 근거에 싣는다.
+        아니면 사유를 그대로 돌려준다 (HOLD). 결정은 `_last_follow_to` → `summary.verdict.follow_to`.
+        """
+        limit = int(self.follow_to_limit)
+        rec: dict[str, Any] = {"limit": limit, "streak_before": int(self._follow_to_streak)}
+        action, holding = wire.gate_decision(reasons)
+
+        def refuse(why: str, **extra) -> list[dict[str, Any]]:
+            rec.update({"decision": "hold", "refused": why, "streak": int(self._follow_to_streak),
+                        **extra})
+            self._last_follow_to = rec
+            return reasons
+
+        if action == "execute":
+            # 스스로 인증된 청크 — 한도를 다시 센다.
+            self._follow_to_streak = 0
+            rec.update({"decision": "not_needed", "streak": 0})
+            self._last_follow_to = rec
+            return reasons
+        kinds = sorted({str(r.get("kind")) for r in holding})
+        if kinds != ["collision"]:
+            return refuse("hold_kinds", hold_kinds=kinds)
+        rows = self._last_violation_rows
+        if not rows:
+            return refuse("no_rows")
+        coll = [r for r in rows if r.get("class") == "collision"]
+        if not coll:
+            return refuse("no_collision_rows")
+        blocks = sorted({str(r.get("block")) for r in coll})
+        if blocks != ["esdf"]:
+            return refuse("non_esdf_row", blocks=blocks)
+        gaps = self._row_gaps(coll)
+        if gaps is None:
+            return refuse("no_distance")
+        min_gap = float(np.min(gaps))
+        plan_min = float(min(r["clearance_m"] for r in coll))
+        rec.update({"n_rows": len(coll), "min_esdf_minus_r_m": min_gap, "plan_min_clearance_m": plan_min})
+        if min_gap < 0.0:
+            return refuse("penetration")
+        queries = sorted({int(r["query"]) for r in coll})
+        now = self._current_clearance(queries)
+        if now is None:
+            return refuse("no_current_state")
+        now_min = float(np.min(now))
+        rec["now_min_clearance_m"] = now_min
+        if plan_min < now_min:
+            return refuse("worsens")
+        if policy_chunk is None:
+            return refuse("no_reference")
+        k = int(self.to_config.horizon.execution_length)
+        refined = np.asarray(getattr(result, "chunk", policy_chunk), np.float64)
+        ref = np.asarray(policy_chunk, np.float64)
+        arm = [c for c in range(min(refined.shape[1], ref.shape[1])) if c not in self.gripper_columns]
+        moved = float(np.max(np.abs(refined[:k, arm] - ref[:k, arm]))) if arm else 0.0
+        rec["refined_minus_reference_max_rad"] = moved
+        if moved <= FOLLOW_TO_SAME_AS_REFERENCE_RAD:
+            return refuse("refined_is_reference")
+        if self._follow_to_streak >= limit:
+            return refuse("limit")
+        self._follow_to_streak += 1
+        rec.update({"decision": "follow_to", "streak": int(self._follow_to_streak)})
+        self._last_follow_to = rec
+        replaced = [dict(r) for r in reasons if r.get("kind") == "collision"]
+        follow = wire.make_reason(
+            "follow_to",
+            f"{len(coll)} margin-only row(s) (ESDF − r ≥ {min_gap * 1000:.1f} mm, no penetration), "
+            f"plan min {plan_min * 1000:.1f} mm ≥ current {now_min * 1000:.1f} mm; executing the TO "
+            f"refined chunk ({self._follow_to_streak}/{limit})",
+            replaced=replaced, n_rows=len(coll), min_esdf_minus_r_m=min_gap,
+            plan_min_clearance_m=plan_min, now_min_clearance_m=now_min,
+            streak=int(self._follow_to_streak), limit=limit)
+        return [r for r in reasons if r.get("kind") != "collision"] + [follow]
+
+    def _row_gaps(self, rows: list[dict[str, Any]]) -> Optional[np.ndarray]:
+        """ESDF 행마다 `d − r` (m) — `_esdf_clearance` 와 같은 거리 합성, margin 없이. 못 재면 None."""
+        scene = self._last_snapshot
+        linearizer = getattr(getattr(self.refiner, "optimizer", None), "linearizer", None)
+        if scene is None or linearizer is None or scene.esdf is None:
+            return None
+        pts = np.asarray([r["point_m"] for r in rows], np.float64).reshape(-1, 3)
+        queries = np.asarray([int(r["query"]) for r in rows], np.int64)
+        radii = np.asarray(linearizer.query_radii, np.float64).reshape(-1)
+        if queries.max() >= radii.shape[0]:
+            return None
+        try:
+            d = np.asarray(scene.esdf.distance(pts), np.float64).reshape(-1)
+            if scene.target_free_mask is not None:
+                full = np.asarray(scene.target_free_mask, bool).reshape(-1)
+                free = np.array([q < full.shape[0] and bool(full[q]) for q in queries], bool)
+                if free.any():
+                    d[free] = np.asarray(scene.esdf.target_free_distance(pts[free]),
+                                         np.float64).reshape(-1)
+        except Exception:  # noqa: BLE001 — 못 재면 따르지 않는다 (HOLD 그대로)
+            return None
+        return d - radii[queries]
+
+    def _current_clearance(self, queries: list[int]) -> Optional[np.ndarray]:
+        """그 질의 구들의 **현재 상태** clearance (m) — 정지 계획 `Q[:, k] = q_now` 의 첫 스텝을 TO 와
+        같은 씬 · 같은 attached 상태 · 같은 `_esdf_clearance` 로 잰다. 못 재면 None."""
+        scene = self._last_snapshot
+        q_now = self._last_q_now
+        linearizer = getattr(getattr(self.refiner, "optimizer", None), "linearizer", None)
+        if scene is None or q_now is None or linearizer is None:
+            return None
+        try:
+            layout = linearizer.layout
+            q = np.asarray(q_now, np.float64).reshape(-1)
+            stay = np.tile(q[layout.q_indices].reshape(-1, 1), (1, int(linearizer.horizon)))
+            kept = getattr(linearizer, "_last_obstacle_class", None)
+            cl = np.asarray(linearizer.esdf_clearance(stay, q, scene), np.float64)
+            linearizer._last_obstacle_class = kept
+        except Exception:  # noqa: BLE001
+            return None
+        if cl.ndim != 3 or cl.shape[-1] == 0 or max(queries) >= cl.shape[1]:
+            return None
+        return cl[0, queries, 0]
 
 
 #: `SafePolicy(verdict_policy=)` 의 선택지. 첫 항목이 기본이다.

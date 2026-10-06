@@ -285,6 +285,24 @@ class ClusteringConfig:
     #: is the latch's (execution feedback only). T43 W V5 1925 s19253: the apple slipped out at
     #: t 369 with the command at 0.59 and stayed attached to the end. False (default) = bit-identical.
     held_slip_detach: bool = False
+    #: **T43 Z6 — cap the held query spheres at attach.** A distance `a` (m) = at attach every held
+    #: query sphere (R2 body cover in `sphere` and `segments` mode, or the H2 covering spheres) gets
+    #: radius ≤ observed half-width + `a` and a centre within `a` of the observed body centre (pulled
+    #: in along its direction); duplicates and spheres inside another are removed
+    #: (`held_object.cap_held_spheres`). Observed = the attach-time target cluster: the fitted
+    #: centre and body radius (`held_object.held_cap_reference`); elongated objects are not capped.
+    #: The self-filter copy is untouched. T43 W V5 'segments' runs: radii 56.7–59.1 mm vs ~38 mm in
+    #: 'sphere' mode, apple half-extent ~33.5 mm, crate inner half-width 82 mm. `None` (default) =
+    #: off, bit-identical.
+    held_cover_cap: float | None = None
+    #: **T43 Z6 — follow the TO plan instead of holding (consecutive limit).** An integer N =
+    #: `SafePolicy` executes the TO's refined chunk when its only HOLD reasons are `collision` rows
+    #: that are all margin-only (ESDF − r ≥ 0, no penetration), their minimum clearance is not below
+    #: the same rows' clearance at the current state, and the refined arm rows are not the policy
+    #: reference; the verdict kind is `follow_to`. At most N such chunks since the last chunk that
+    #: certified on its own. Read by `SafePolicy` (`hold_follow_to_limit`); carried here so
+    #: `assert_ag3s_config` checks it like the other T43 keys. `None` (default) = off, bit-identical.
+    hold_follow_to: int | None = None
     #: **T43 T step 2 — the pre-closing geometry stands through the closing.** True = while a grasp
     #: is closing and nothing is attached yet (frozen, `AG3S`: grasp active ∧ no attachment), the
     #: manipulated object's geometry is **not** replaced by the frame's cluster at its place (the
@@ -432,6 +450,17 @@ class ClusteringConfig:
         if not isinstance(self.held_slip_detach, bool):
             raise AG3SConfigError(
                 f"clustering.held_slip_detach must be true or false, got {self.held_slip_detach!r}")
+        hc = self.held_cover_cap
+        if hc is not None and (isinstance(hc, bool) or not isinstance(hc, (int, float))
+                               or not math.isfinite(float(hc)) or float(hc) < 0.0):
+            raise AG3SConfigError(
+                f"clustering.held_cover_cap must be null (off) or a distance >= 0 in metres, "
+                f"got {hc!r}")
+        hf = self.hold_follow_to
+        if hf is not None and (isinstance(hf, bool) or not isinstance(hf, (int, float))
+                               or not float(hf).is_integer() or hf < 1):
+            raise AG3SConfigError(
+                f"clustering.hold_follow_to must be null (off) or an integer >= 1, got {hf!r}")
         for name in ("supported_max_bottom", "supported_min_top"):
             v = getattr(self, name)
             if v is not None and not (isinstance(v, (int, float)) and not isinstance(v, bool)

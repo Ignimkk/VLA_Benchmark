@@ -740,7 +740,14 @@ class AG3S:
         # T34 J1: the fit spheres as T32 made them are the self-filter copy (and the first-frame
         # TSDF free spheres at the capture pose); the query spheres are lifted off the support.
         fit_primitives = list(primitives)
+        cap_record = None
+        if self._held_cover_cap is not None:
+            # T43 Z6 — the query copy only; the self-filter keeps the fit spheres above.
+            primitives, cap_record = self._cap_query_primitives(pts, primitives)
         primitives, support_record = self._lift_off_support(primitives, T_now @ T_parent)
+        if cap_record is not None:
+            primitives, cap_record["n_removed_after_lift"] = self._dedupe_primitives(primitives)
+            held_record["cap"] = cap_record
         # `attach_from_target` reads `id`, `points` and `bounding_geometry` only; the primary sphere
         # stands in for the old centroid + max-distance bounding sphere, the covers ride along.
         snapshot_of = _HeldTarget(id=int(getattr(geometry, "id", -1)), points=geometry.points,
@@ -996,6 +1003,21 @@ class AG3S:
         body, rec = body_cover_spheres(pts, fit, pad=self._guard_pad(), support=plane,
                                        slip=float(self.held_body_slip_m), max_spheres=slots,
                                        max_radius=max_r)
+        cap = self._held_cover_cap
+        if cap is not None:
+            # T43 Z6 — radius ≤ observed half-width + cap, centre within cap of the observed body
+            # centre, duplicates removed; the lift below is computed on the capped spheres.
+            from benchmark.ag3s.robot_models.held_object import cap_held_spheres, held_cap_reference
+
+            if rec.get("segments_reason") == "elongated":
+                ref = {"skip": "elongated"}
+            else:
+                ref = held_cap_reference(pts, fit, body_radius=float(rec["body_radius_mm"]) / 1000.0)
+            if "skip" in ref:
+                rec["cap"] = {"applied": False, **ref}
+            else:
+                body, cap_rec = cap_held_spheres(body, ref["centre"], ref["half_width"], cap)
+                rec["cap"] = {"applied": True, "basis": ref["basis"], **cap_rec}
         band = None
         lifted = body
         if support_record.get("applied") and plane is not None:
@@ -1003,6 +1025,12 @@ class AG3S:
             lifted, lift_rec = lift_off_support(body, plane[0], plane[1], clearance=band,
                                                 relative_poses=[T_rel], snapshot_clearance=0.0)
             rec["lift"] = lift_rec
+            if cap is not None:
+                # Two body spheres lifted to the same height become one (T43 Z1: duplicates).
+                from benchmark.ag3s.robot_models.held_object import dedupe_spheres
+
+                lifted, n_dup = dedupe_spheres(lifted)
+                rec["cap"]["n_removed_after_lift"] = int(n_dup)
         else:
             rec["lift"] = {"applied": False, "reason": support_record.get("reason")}
 
@@ -1144,6 +1172,49 @@ class AG3S:
                            semantic_role=HELD_ROLE) for c, r in spheres]
         rec["max_radius_mm"] = None if max_r is None else round(max_r * 1000.0, 3)
         return prims, rec
+
+    @property
+    def _held_cover_cap(self) -> Optional[float]:
+        """T43 Z6 — `clustering.held_cover_cap` (m) or None (off)."""
+        cap = getattr(getattr(self.config, "clustering", None), "held_cover_cap", None)
+        return None if cap is None else float(cap)
+
+    def _cap_query_primitives(self, points, primitives) -> tuple[list, dict]:
+        """T43 Z6 on the H2 query spheres (body cover off): cap + dedupe. `(primitives, record)`."""
+        from benchmark.ag3s.robot_models.held_object import (
+            HELD_ROLE,
+            cap_held_spheres,
+            held_cap_reference,
+        )
+        from benchmark.ag3s.types import Primitive, PrimitiveType
+
+        pts, fit, _ = self._held_fit_input(points)
+        ref = held_cap_reference(pts, fit)
+        if "skip" in ref:
+            return list(primitives), {"applied": False, **ref}
+        spheres = [(np.asarray(p.center, np.float64), float(p.dimensions[0])) for p in primitives]
+        capped, rec = cap_held_spheres(spheres, ref["centre"], ref["half_width"],
+                                       float(self._held_cover_cap))
+        prims = [Primitive(type=PrimitiveType.SPHERE, center=c, dimensions=np.full(3, float(r)),
+                           semantic_role=HELD_ROLE) for c, r in capped]
+        return prims, {"applied": True, "basis": ref["basis"], **rec}
+
+    @staticmethod
+    def _dedupe_primitives(primitives) -> tuple[list, int]:
+        """T43 Z6 — drop duplicate / contained sphere primitives (after the J1 lift)."""
+        from benchmark.ag3s.robot_models.held_object import dedupe_spheres
+
+        spheres = [(np.asarray(p.center, np.float64), float(p.dimensions[0])) for p in primitives]
+        kept, n = dedupe_spheres(spheres)
+        if not n:
+            return list(primitives), 0
+        out, i = [], 0
+        for p in primitives:
+            if i < len(kept) and np.array_equal(np.asarray(p.center, np.float64), kept[i][0]) \
+                    and float(p.dimensions[0]) == kept[i][1]:
+                out.append(p)
+                i += 1
+        return out, int(n)
 
     @property
     def held_record(self) -> Optional[dict[str, Any]]:

@@ -701,6 +701,13 @@ def t43t_identity_section(args) -> dict:
         # T43 Z3 — read by `SafePolicy` (grasp latch `slip_detach`); carried in the AG3S config so
         # `assert_ag3s_config` checks it survived `with_overrides` like the other T43 T keys.
         out["held_slip_detach"] = True
+    if getattr(args, "held_cover_cap_mm", None) is not None:
+        # T43 Z6 — read by `AG3S.attach` (held query sphere cap).
+        out["held_cover_cap"] = float(args.held_cover_cap_mm) / 1000.0
+    if getattr(args, "hold_follow_to", None) is not None:
+        # T43 Z6 — read by `SafePolicy` (`hold_follow_to_limit`); carried in the AG3S config so
+        # `assert_ag3s_config` checks it survived `with_overrides`.
+        out["hold_follow_to"] = int(args.hold_follow_to)
     return out
 
 
@@ -1307,6 +1314,16 @@ def build_parser() -> argparse.ArgumentParser:
                          "attach 순간보다 0.05 이상 더 닫히고 마지막 실행 명령과의 차가 0.05 아래인 요청이 "
                          "2 번 연속이면 latch 가 PLACED 로 가고 그 뒤 물체는 장면 물체다 (쥔 구 · body "
                          "cover 없음). 실행 피드백만 본다. 기본 off = Z3 전과 같다")
+    ap.add_argument("--held-cover-cap-mm", type=float, default=None, metavar="MM",
+                    help="T43 Z6 — attach 때 쥔 질의 구 (body cover sphere · segments, H2 덮개 모두) 의 "
+                         "반지름 ≤ 관측 반폭 (attach 시점 target cluster 의 맞춘 반지름) + MM, 각 구 중심은 "
+                         "관측 몸통 중심에서 MM 안 (당김), 같은 구 · 다른 구 안에 든 구 제거. self-filter "
+                         "구는 그대로. 길쭉한 물체는 걸지 않는다. 기본 off. 근거값 10")
+    ap.add_argument("--hold-follow-to", type=int, default=None, metavar="N",
+                    help="T43 Z6 — HOLD 대신 TO refined chunk 실행 (verdict kind follow_to): HOLD 사유가 "
+                         "collision 뿐이고 그 행이 전부 margin 안쪽 (ESDF − r ≥ 0) 이며 최소 clearance 가 "
+                         "현재 상태 (q_now) 보다 작지 않고 refined 가 정책 reference 와 다를 때. 스스로 "
+                         "인증된 청크 뒤로 최대 N 청크. 기본 off")
     ap.add_argument("--held-free-observed-mm", type=float, default=None, metavar="MM",
                     help="T43 T fix 2 — 쥔 동안 매 프레임, 파지 직전 관측한 조작 대상 점들의 **그 자리** "
                          "(base frame, 손을 따라가지 않음) 에서 MM 안의 TSDF voxel 을 비운다 (받침면 + 1 "
@@ -1407,11 +1424,18 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         ("--refused-identity-release", getattr(args, "refused_identity_release", None) is not None),
         ("--supported-max-bottom-mm", getattr(args, "supported_max_bottom_mm", None) is not None),
         ("--held-slip-detach", getattr(args, "held_slip_detach", False)),
+        ("--held-cover-cap-mm", getattr(args, "held_cover_cap_mm", None) is not None),
+        ("--hold-follow-to", getattr(args, "hold_follow_to", None) is not None),
         ("--held-free-observed-mm", getattr(args, "held_free_observed_mm", None) is not None))
         if on]
     if t43t_ag3s and (args.no_safe or getattr(args, "no_perception", False)):
         ap.error(f"{', '.join(t43t_ag3s)} 는 AG3S / SafePolicy 의 flag 입니다 (--no-safe · "
                  "--no-perception 은 그것을 안 만듭니다) — 빼고 띄우십시오")
+    if getattr(args, "held_cover_cap_mm", None) is not None and not (
+            args.held_cover_cap_mm >= 0.0 and math.isfinite(args.held_cover_cap_mm)):
+        ap.error(f"--held-cover-cap-mm 는 0 이상의 mm 입니다 (받은 값 {args.held_cover_cap_mm})")
+    if getattr(args, "hold_follow_to", None) is not None and args.hold_follow_to < 1:
+        ap.error(f"--hold-follow-to 는 1 이상의 청크 수입니다 (받은 값 {args.hold_follow_to})")
     if (getattr(args, "held_free_observed_mm", None) is not None
             and getattr(args, "esdf_backend", None) != "curobo"):
         ap.error("--held-free-observed-mm 는 cuRobo TSDF 의 voxel 을 비웁니다 (--esdf-backend curobo)")

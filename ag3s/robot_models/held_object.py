@@ -396,6 +396,122 @@ def body_cover_spheres(points: np.ndarray, fit: SphereFit, *, pad: float,
     return spheres, rec
 
 
+# ---------------------------------------------------------------------------------------------
+# T43 Z6 — 쥔 질의 구의 크기 상한 (`clustering.held_cover_cap`)
+# ---------------------------------------------------------------------------------------------
+#: 같은 구로 보는 거리 (m) — 중심 차 · 반지름 차가 둘 다 이 안이면 하나로 본다 (0.1 mm).
+HELD_CAP_DEDUPE_TOL_M = 1e-4
+
+
+def held_cap_reference(points: np.ndarray, fit: SphereFit, *, body_radius: Optional[float] = None,
+                       elongation_ratio: float = HELD_ELONGATION_RATIO) -> dict[str, Any]:
+    """상한의 기준 — 관측 몸통 중심과 관측 반폭 (T43 Z6). base 좌표, `points` = attach 의 관측 점.
+
+    * 맞춤을 받아들였으면: 중심 = 맞춘 중심, 반폭 = `body_radius` (R2 가 받침으로 올린 몸통 반지름,
+      없으면 맞춘 반지름). 카메라가 cap 만 본 둥근 과일의 반폭은 맞춘 반지름이다.
+    * 물러났으면: 중심 = 관측 점 상자 중심, 반폭 = 수평 폭(주축에 수직)의 반.
+    * 수평 주축이 폭의 `elongation_ratio` 배를 넘으면 (바나나, R2 의 `elongated` 와 같은 판정)
+      `{"skip": "elongated"}` — 둥근 몸통의 상한을 길쭉한 물체에 걸면 양 끝이 덮이지 않는다.
+
+    돌려주는 것: `{"centre": (3,), "half_width": m, "basis": ...}` 또는 `{"skip": 이유}`.
+    """
+    pts = np.asarray(points, np.float64).reshape(-1, 3)
+    pts = pts[np.all(np.isfinite(pts), axis=1)]
+    if not len(pts):
+        return {"skip": "no_points"}
+    length = width = 0.0
+    if len(pts) >= 2:
+        hxy = pts[:, :2] - pts[:, :2].mean(axis=0)
+        _, v = np.linalg.eigh(hxy.T @ hxy)
+        major, minor = v[:, 1], v[:, 0]
+        length = float(np.ptp(hxy @ major))
+        width = float(np.ptp(hxy @ minor))
+    if fit.accepted:
+        w = float(fit.radius if body_radius is None else body_radius)
+        centre = np.asarray(fit.centre, np.float64).reshape(3).copy()
+        basis = "fit"
+        width_eff = max(width, 2.0 * w)
+    else:
+        w = 0.5 * width
+        centre = 0.5 * (pts.min(axis=0) + pts.max(axis=0))
+        basis = "observed_box"
+        width_eff = width
+    if width_eff > 0.0 and length > float(elongation_ratio) * width_eff:
+        return {"skip": "elongated", "horizontal_extent_mm": [round(length * 1000.0, 3),
+                                                             round(width * 1000.0, 3)]}
+    if not (w > 0.0 and np.all(np.isfinite(centre))):
+        return {"skip": "no_half_width"}
+    return {"centre": centre, "half_width": w, "basis": basis}
+
+
+def dedupe_spheres(spheres: Sequence[tuple[np.ndarray, float]], *,
+                   tol: float = HELD_CAP_DEDUPE_TOL_M) -> tuple[list[tuple[np.ndarray, float]], int]:
+    """같은 구 (중심 · 반지름이 `tol` 안) 와 다른 구 안에 통째로 든 구를 뺀다 — 합집합은 그대로다.
+
+    순서는 남는 것끼리 그대로 (첫 구 = 주 구). 같은 구가 여럿이면 앞의 것이 남는다.
+    `(남은 구, 뺀 수)`.
+    """
+    items = [(np.asarray(c, np.float64).reshape(3), float(r)) for c, r in spheres]
+    n = len(items)
+    drop = [False] * n
+    for i in range(n):
+        ci, ri = items[i]
+        for j in range(n):
+            if i == j or drop[j]:
+                continue
+            cj, rj = items[j]
+            gap = float(np.linalg.norm(ci - cj))
+            inside_j = gap + ri <= rj + tol            # i 가 j 안에 든다
+            same = gap <= tol and abs(ri - rj) <= tol
+            if inside_j and (not same or j < i):
+                drop[i] = True
+                break
+    kept = [items[i] for i in range(n) if not drop[i]]
+    return kept, n - len(kept)
+
+
+def cap_held_spheres(spheres: Sequence[tuple[np.ndarray, float]], centre, half_width: float,
+                     allowance: float, *, tol: float = HELD_CAP_DEDUPE_TOL_M,
+                     ) -> tuple[list[tuple[np.ndarray, float]], dict]:
+    """쥔 질의 구에 크기 상한을 건다 (T43 Z6, 사용자 판정 (a) 2026-10-06).
+
+    1. 반지름 ≤ `half_width + allowance` (관측 반폭 + slip 여유).
+    2. 중심이 관측 몸통 중심 `centre` 에서 `allowance` 밖이면 그 방향으로 `allowance` 까지 당긴다.
+    3. 같은 구 · 다른 구 안에 든 구를 뺀다 (`dedupe_spheres`).
+
+    그래서 모든 구는 `centre` 중심, 반지름 `half_width + 2·allowance` 의 공 안에 든다.
+    T43 W V5 'segments' 4 run 은 반지름 56.7–59.1 mm, 중심이 사과 중심에서 최대 ~45 mm 였다
+    (`T43Z.verify.json` numbers.Z1). `(구, 기록)`.
+    """
+    c0 = np.asarray(centre, np.float64).reshape(3)
+    r_max = float(half_width) + float(allowance)
+    d_max = float(allowance)
+    capped: list[tuple[np.ndarray, float]] = []
+    per = []
+    for c, r in spheres:
+        c = np.asarray(c, np.float64).reshape(3)
+        r = float(r)
+        v = c - c0
+        dist = float(np.linalg.norm(v))
+        moved = dist > d_max
+        c_new = c0 + v * (d_max / dist) if moved else c.copy()
+        r_new = min(r, r_max)
+        capped.append((c_new, r_new))
+        per.append({"radius_mm_before": round(r * 1000.0, 3), "radius_mm": round(r_new * 1000.0, 3),
+                    "centre_offset_mm_before": round(dist * 1000.0, 3),
+                    "centre_offset_mm": round(min(dist, d_max) * 1000.0, 3)})
+    kept, n_removed = dedupe_spheres(capped, tol=tol)
+    rec = {"half_width_mm": round(float(half_width) * 1000.0, 3),
+           "allowance_mm": round(float(allowance) * 1000.0, 3),
+           "radius_cap_mm": round(r_max * 1000.0, 3), "centre_limit_mm": round(d_max * 1000.0, 3),
+           "centre_m": [round(float(v), 6) for v in c0],
+           "n_before": len(per), "n_after": len(kept), "n_removed": int(n_removed),
+           "n_radius_capped": sum(1 for p in per if p["radius_mm"] < p["radius_mm_before"]),
+           "n_centre_moved": sum(1 for p in per if p["centre_offset_mm"] < p["centre_offset_mm_before"]),
+           "spheres": per}
+    return kept, rec
+
+
 #: J1 lift 를 켜는 높이 여유 (m, T43 R2). 몸통 구의 바닥이 받침면 + 띠 + 이 값 안이면 "받침 가까이"
 #: — 그때만 J1 lift 를 붙인다. 두 fine voxel: 띠에서 멈춘 내려놓기가 다음 프레임에 lift 로 넘어가고,
 #: 면 · 맞춤의 voxel 단위 잡음으로 프레임마다 뒤집히지 않을 만큼.
@@ -761,6 +877,7 @@ def held_observation_check(*, observed_centroid, held_centre, held_centre_at_att
 
 __all__ = [
     "HELD_BODY_SLIP_M",
+    "HELD_CAP_DEDUPE_TOL_M",
     "HELD_ELONGATION_RATIO",
     "HELD_LIFT_HYSTERESIS_M",
     "HELD_LINK_PREFIX",
@@ -771,11 +888,14 @@ __all__ = [
     "HeldSphereFilterModel",
     "SphereFit",
     "body_cover_spheres",
+    "cap_held_spheres",
     "covering_spheres",
+    "dedupe_spheres",
     "enclosing_ball",
     "extend_inflation",
     "field_support_band",
     "fit_surface_sphere",
+    "held_cap_reference",
     "held_observation_check",
     "held_spheres_of",
     "lift_off_support",
