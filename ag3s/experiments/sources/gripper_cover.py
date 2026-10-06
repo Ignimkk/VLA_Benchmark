@@ -578,3 +578,186 @@ def _cache_key(model, surf, c0, r0, r_max, max_gap, spacing, inner, channel) -> 
     # link 이름은 키에 넣지 않는다 — 왼손 · 오른손 (그리고 네 손가락) 은 mesh 와 지금 구가 같아서
     # 같은 답이고 (link frame), 한 번만 푼다.
     return (h.hexdigest(), float(r_max), float(max_gap), float(spacing))
+
+
+# =============================================================================================
+# T43 FC — 손가락 몸통 구 (`serve_safe --finger-cover`, 기본 꺼짐)
+# =============================================================================================
+#
+# 사용자 판정 (2026-10-06 10:00, "B"): 그리퍼마다 **두 손가락을 각각 따로**, 실제 굵기의 구로 감싼다.
+# 두 손가락을 한 덩어리로 감싸지 않는다 — 손가락 사이 공간은 비어 있다.
+#
+# 지금 손가락 구 (E3b: slab capsule 3 개의 축선 위 사슬, 배율 0.05) 는 반지름 2.6–3.3 mm 이고 손가락
+# collision mesh 표본의 4.4 % 만 담는다 (가장 먼 표면점 13.6 mm 밖). 배율을 1 로 올리면 URDF 상당
+# capsule (r 13.0–17.6 mm) 이 되는데, 손가락 판은 두께 9.5 mm (x −3.3…6.2 mm) 라 그 capsule 은 안쪽
+# (사과 쪽) 으로 13 mm, 손끝 아래로 14 mm 넘친다. capsule 축이 판의 폭 방향 (y) 이라 판 길이 (z) 를
+# 덮으려면 반지름이 slab 반길이 (~10 mm) 이상이어야 하므로 어떤 배율도 "실제 굵기" 가 되지 않는다.
+#
+# 그래서 손가락마다 구를 **mesh 에서 다시 만든다**:
+#
+# * 후보 중심 = mesh 안 격자점 `c` (간격 `grid`). 반지름 = `depth(c) + overflow`.
+#   `depth(c)` = max(한 볼록 조각 안의 정확한 깊이 (`hull_depth`), 겉면 표본까지 거리 − `union_eps`).
+#   `ball(c, depth) ⊂ mesh` 이므로 `ball(c, depth + overflow)` 의 어느 점도 mesh 에서 `overflow` 보다
+#   멀지 않다 — **넘친 양 ≤ overflow** (뒤 항은 표본 간격만큼의 근사; 보고서가 실측을 싣는다).
+# * 대상 = 그 손가락의 collision 겉면 표본 **전부** (파지 면 포함 — 실제 굵기). 같은 body 의 다른 조각에
+#   맞붙어 묻힌 면 (표본에서 법선 쪽 `face_probe` 가 mesh 안) 은 겉면이 아니므로 뺀다.
+# * greedy set cover (아직 안 덮인 대상을 가장 많이 담는 후보) 로 대상 전부를 **구 안에** (틈 0) 담고,
+#   다른 구들만으로 이미 담기는 구는 뒤에서부터 지운다.
+#
+# 결과는 그 손가락 link 의 gap-filling capsule 을 **대신한다** (덮개처럼 뒤에 붙이지 않는다 — 옛 축선
+# 사슬은 새 구 안에 들어 있어 행만 늘린다). role = `FINGER_BODY_ROLE` (반지름 그대로).
+# 손바닥 · 다른 link 은 그대로다.
+
+from benchmark.ag3s.robot_models.urdf_sphere_chain import FINGER_BODY_ROLE  # noqa: E402
+
+#: 넘친 양 (m): 구 합집합이 손가락 collision mesh 밖으로 나가는 최대 거리. 2.5 mm = T43 R 의 덮개 틈과
+#: 같은 크기 (사용자 "최대 틈 약 2–3 mm"). 구 수와 맞바꾼다 (손가락 하나: 1.0 mm 253 · 2.0 mm 91 ·
+#: 2.5 mm 56 · 3.0 mm 48 구, `outputs/impl/T43FC/build_check.json`).
+FINGER_COVER_OVERFLOW = 0.0025
+#: 표면 표본 · 후보 격자 간격 (m).
+FINGER_COVER_SPACING = 0.0005
+#: 겉면 표본까지 거리로 잰 깊이에서 빼는 여유 (m) — 표본 간격 (0.5 mm 격자에서 표면점과 가장 가까운
+#: 표본 사이 거리) 을 흡수한다.
+FINGER_COVER_UNION_EPS = 0.0005
+#: 맞붙은 면 판정: 표본에서 바깥 법선으로 이만큼 (m) 나간 점이 mesh 안이면 겉면이 아니다.
+FINGER_COVER_FACE_PROBE = 0.0003
+
+
+def finger_body_targets(surface: LinkSurface, face_probe: float = FINGER_COVER_FACE_PROBE
+                        ) -> np.ndarray:
+    """덮을 대상: 겉면 표본 중 같은 body 의 다른 볼록 조각에 맞붙어 묻힌 면이 아닌 것 (bool mask).
+
+    `body_collision_surface` 는 다른 조각 **안으로** 들어간 표본만 뺀다. 두 조각이 면을 맞대면 그 면의
+    표본은 경계 위라 남는다 — 그 면은 겉이 아니고, 그것을 대상으로 두면 구가 쓸데없이 는다.
+    파지 면 · 이웃 강체 표시는 쓰지 않는다 (실제 굵기 — 손가락 전부).
+    """
+    return ~(hull_depth(surface.points + float(face_probe) * surface.normals, surface.hulls) > 0.0)
+
+
+def _greedy_exact_cover(target: np.ndarray, C: np.ndarray, R: np.ndarray):
+    """`(chosen, n_uncovered)` — 대상점 전부를 구 **안에** 담는 greedy set cover + 중복 제거."""
+    from scipy.spatial import cKDTree
+
+    tree = cKDTree(target)
+    covers = [np.asarray(tree.query_ball_point(c, float(r)), np.int64) for c, r in zip(C, R)]
+    gain = np.array([cv.size for cv in covers])
+    uncovered = np.ones(target.shape[0], bool)
+    chosen: list[int] = []
+    while uncovered.any():
+        order = np.lexsort((R, -gain))
+        best, best_gain = -1, 0
+        for j in order:
+            if gain[j] <= best_gain:
+                break
+            g = int(uncovered[covers[j]].sum())
+            gain[j] = g
+            if g > best_gain:
+                best, best_gain = j, g
+        if best < 0 or best_gain == 0:
+            break
+        chosen.append(int(best))
+        uncovered[covers[best]] = False
+    # 중복 제거: 나중에 고른 (덜 담은) 구부터, 그 구의 대상이 모두 다른 구에도 담기면 지운다
+    count = np.zeros(target.shape[0], np.int64)
+    for j in chosen:
+        count[covers[j]] += 1
+    kept = list(chosen)
+    for j in reversed(chosen):
+        if covers[j].size and np.all(count[covers[j]] >= 2):
+            count[covers[j]] -= 1
+            kept.remove(j)
+    return np.asarray(sorted(kept, key=chosen.index), np.int64), int(uncovered.sum())
+
+
+def _sampled_overflow(C: np.ndarray, R: np.ndarray, hulls, surface_points: np.ndarray,
+                      n: int = 600) -> float:
+    """구 표면 표본 중 mesh 밖인 점에서 가장 가까운 mesh 표면 표본까지 거리의 최대 (m, 실측 넘친 양)."""
+    from scipy.spatial import cKDTree
+
+    tree = cKDTree(surface_points)
+    rng = np.random.default_rng(0)
+    v = rng.normal(size=(n, 3))
+    v /= np.linalg.norm(v, axis=1, keepdims=True)
+    out = 0.0
+    for c, r in zip(C, R):
+        P = c + r * v
+        outside = P[hull_depth(P, hulls) < 0.0]
+        if outside.size:
+            out = max(out, float(tree.query(outside)[0].max()))
+    return out
+
+
+def finger_body_spheres(surface: LinkSurface, *, overflow: float = FINGER_COVER_OVERFLOW,
+                        grid: float = FINGER_COVER_SPACING,
+                        union_eps: float = FINGER_COVER_UNION_EPS,
+                        face_probe: float = FINGER_COVER_FACE_PROBE,
+                        ) -> tuple[np.ndarray, np.ndarray, dict]:
+    """`(centres, radii, report)` — 손가락 collision mesh 전부를 담고 `overflow` 넘게 나가지 않는 구.
+
+    `surface` 는 `link_surface(..., spacing=grid)` (link frame). 위 머리말의 규칙.
+    """
+    from scipy.spatial import cKDTree
+
+    if not overflow > 0.0:
+        raise ValueError(f"overflow 는 0 보다 커야 합니다 (m): {overflow}")
+    outer = finger_body_targets(surface, face_probe)
+    target = surface.points[outer]
+    lo, hi = surface.vertices.min(0), surface.vertices.max(0)
+    axes = [np.arange(a, b + 1e-9, float(grid)) for a, b in zip(lo, hi)]
+    G = np.stack(np.meshgrid(*axes, indexing="ij"), -1).reshape(-1, 3)
+    piece = hull_depth(G, surface.hulls)
+    inside = piece > 0.0
+    G, piece = G[inside], piece[inside]
+    surf = cKDTree(target).query(G)[0] - float(union_eps)
+    depth = np.maximum(piece, surf)
+    R_all = depth + float(overflow)
+    idx, n_unc = _greedy_exact_cover(target, G, R_all)
+    C, R = G[idx], R_all[idx]
+    gap = _gap(target, C, R)
+    report = {
+        "n_spheres": int(R.size),
+        "radius_mm": [float(R.min() * 1e3), float(R.max() * 1e3)] if R.size else None,
+        "overflow_mm": float(overflow * 1e3),
+        "n_targets": int(target.shape[0]),
+        "n_uncovered": int(n_unc),
+        "max_gap_mm": float(max(gap.max(), 0.0) * 1e3) if gap.size else 0.0,
+        "overflow_sampled_mm": _sampled_overflow(C, R, surface.hulls, surface.points) * 1e3,
+        "mesh_bbox_mm": [np.round(lo * 1e3, 2).tolist(), np.round(hi * 1e3, 2).tolist()],
+        "spheres_bbox_mm": [np.round((C - R[:, None]).min(0) * 1e3, 2).tolist(),
+                            np.round((C + R[:, None]).max(0) * 1e3, 2).tolist()],
+    }
+    return C, R, report
+
+
+def finger_body_capsules(model, robot_model, links: Sequence[str], *,
+                         overflow: float = FINGER_COVER_OVERFLOW,
+                         grid: float = FINGER_COVER_SPACING) -> tuple[list, dict]:
+    """`(capsules, report)` — 손가락 link 마다 몸통 구 (길이 0 `UrdfCapsule`, role `FINGER_BODY_ROLE`).
+
+    `robot_model` 은 mesh 를 찾는 데만 쓴다 (URDF link → MJCF body, `MJCF_BODY_ALIASES`). 네 손가락은
+    link frame 에서 mesh 가 같아 한 번만 푼다 (캐시 키 = 표본 digest).
+    """
+    import hashlib
+
+    from benchmark.ag3s.robot_models.urdf_sphere_chain import UrdfCapsule
+
+    out: list = []
+    report: dict = {}
+    for link in links:
+        surf = link_surface(model, robot_model, link, spacing=grid)
+        h = hashlib.sha1()
+        for a in (surf.points, surf.normals):
+            h.update(np.ascontiguousarray(a).tobytes())
+        key = ("finger_body", h.hexdigest(), float(overflow), float(grid))
+        hit = _CACHE.get(key)
+        if hit is None:
+            hit = finger_body_spheres(surf, overflow=overflow, grid=grid)
+            _CACHE[key] = hit
+        centres, radii, rep = hit
+        report[link] = {**rep, "mujoco_body": surf.body}
+        for c, r in zip(centres, radii):
+            origin = np.eye(4)
+            origin[:3, 3] = c
+            out.append(UrdfCapsule(link=link, origin=origin, radius=float(r), length=0.0,
+                                   role=FINGER_BODY_ROLE))
+    return out, report

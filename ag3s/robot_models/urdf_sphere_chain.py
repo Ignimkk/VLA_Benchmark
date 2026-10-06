@@ -211,6 +211,17 @@ COVER_ROLE = "self_filter_cover"
 #: it, as it caps everything, and a cap that bites is reported like any other shortfall.
 EXACT_SPHERE_ROLE = "gripper_outer_cover"
 
+#: T43 FC — `UrdfCapsule.role` of the **finger body spheres** (`gripper_cover.finger_body_capsules`,
+#: `serve_safe --finger-cover`). They *replace* a finger's gap-filling capsule chain: each one is
+#: (depth of its centre in the finger collision mesh) + a fixed overflow, so their union contains
+#: the whole finger mesh and leaves it by at most that overflow. Exact like `EXACT_SPHERE_ROLE` — a
+#: radius scale would make them stop covering. Unlike the outer cover they *are* the finger's
+#: geometry (the grasp face included), so `gripper_openings` and `grasp_limits` read them.
+FINGER_BODY_ROLE = "finger_body"
+
+#: Roles whose sphere radius is used as is (no `capsule_radius_scale`, no spacing inflation).
+EXACT_SPHERE_ROLES = frozenset({EXACT_SPHERE_ROLE, FINGER_BODY_ROLE})
+
 
 @dataclasses.dataclass(frozen=True)
 class UrdfModel:
@@ -873,8 +884,8 @@ class UrdfSphereChain:
         """
         if cap.radius <= 0.0:
             return [], 0.0, 0.0
-        if getattr(cap, "role", "collision") == EXACT_SPHERE_ROLE:
-            # T43 R: 내접 덮개 구 — 반지름 그대로 (배율 · 간격 inflation 없음). 길이는 0 이다.
+        if getattr(cap, "role", "collision") in EXACT_SPHERE_ROLES:
+            # T43 R 내접 덮개 구 · T43 FC 손가락 몸통 구 — 반지름 그대로 (배율 · 간격 inflation 없음). 길이는 0 이다.
             if self._kept_axis_span(cap)[0] is None:
                 return [], 0.0, 0.0
             radius = float(cap.radius)
@@ -987,7 +998,7 @@ class UrdfSphereChain:
 
     def _sphere_zs(self, cap: UrdfCapsule, t_lo: float, t_hi: float):
         """`(구 중심의 link-frame z 목록, 유효 반지름)` — `_capsule_sphere_centres` 와 같은 규칙."""
-        if getattr(cap, "role", "collision") == EXACT_SPHERE_ROLE:
+        if getattr(cap, "role", "collision") in EXACT_SPHERE_ROLES:
             r = float(cap.radius) if self.max_sphere_radius is None else min(
                 float(cap.radius), self.max_sphere_radius)
             return [float(cap.origin[2, 3])], r

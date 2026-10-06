@@ -135,8 +135,16 @@ GRIPPER_COVER_HANDS = {
 }
 
 
+#: T43 FC — `finger_cover={"hands": ...}` 이 몸통 구로 바꿀 손가락 link.
+FINGER_COVER_HANDS = {
+    "both": FINGER_LINKS,
+    "left": ("ee_finger_l1", "ee_finger_l2"),
+    "right": ("ee_finger_r1", "ee_finger_r2"),
+}
+
+
 def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options=None,
-                                 gripper_cover=None):
+                                 gripper_cover=None, finger_cover=None):
     """제약에 쓰는 모델. 자기 필터 모델과 **일부러 다르다**.
 
     제약 행은 최적화기가 실제로 움직일 수 있는 구에만 의미가 있다. RB-Y1 의 결정 변수는 양팔
@@ -165,6 +173,13 @@ def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options
     안으로 덮고, 반지름은 그 link 의 지금 구 최대 반지름 이하, 파지 면 (손가락 안쪽 · 손가락 사이
     손바닥 바닥) 쪽으로는 지금 구보다 한 점도 더 나오지 않는다. 덮개 구는 **뒤에 붙는다** — 앞의
     구 순서 · 값은 꺼진 모델과 같다. 만든 결과는 `model.gripper_cover_report` 에 남는다.
+
+    `finger_cover` (T43 FC, 기본 `None` = 꺼짐): `None`/`False` 면 위 모델 그대로. `True` 또는 `dict`
+    (`hands` = `FINGER_COVER_HANDS` 의 키, `overflow` = m) 이면 그 손가락 link 의 gap-filling capsule
+    사슬을 **손가락 몸통 구** (`gripper_cover.finger_body_capsules`) 로 바꾼다 — 손가락마다 따로,
+    collision mesh 전부 (파지 면 포함) 를 담고 `overflow` (기본 2.5 mm) 넘게 나가지 않는다. 손바닥 ·
+    다른 link 의 구는 순서 · 값 그대로 (손가락 구는 원래 손가락 capsule 이 있던 자리에 들어간다).
+    결과는 `model.finger_cover_report`. `gripper_cover` 와 같이 주면 덮개는 바뀐 모델 위에서 만든다.
     """
     from benchmark.ag3s.experiments.sources.mujoco_source import HEAD_JOINTS, gap_filling_capsules
     from benchmark.ag3s.robot_models import RBY1_URDF, UrdfSphereChain, parse_urdf
@@ -175,6 +190,42 @@ def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options
     model = UrdfSphereChain(urdf, extra_capsules=gap,
                             fixed_joint_values=head, link_filter=link_filter,
                             **dict(sphere_options or {}))
+    finger_report = None
+    if finger_cover:
+        from benchmark.ag3s.experiments.sources.gripper_cover import (
+            FINGER_COVER_OVERFLOW, finger_body_capsules)
+
+        f_opts = dict(finger_cover) if isinstance(finger_cover, dict) else {}
+        f_hands = str(f_opts.pop("hands", "both"))
+        if f_hands not in FINGER_COVER_HANDS:
+            raise ValueError(
+                f"finger_cover hands 는 {sorted(FINGER_COVER_HANDS)} 중 하나: {f_hands!r}")
+        overflow = float(f_opts.pop("overflow", FINGER_COVER_OVERFLOW))
+        if f_opts:
+            raise ValueError(f"finger_cover 의 모르는 키: {sorted(f_opts)}")
+        f_links = [n for n in FINGER_COVER_HANDS[f_hands] if n in set(model.sphere_link_names)]
+        body, per_link = finger_body_capsules(scene.model, model, f_links, overflow=overflow)
+        by_link: dict = {}
+        for cap in body:
+            by_link.setdefault(cap.link, []).append(cap)
+        # 손가락 capsule 이 있던 자리에 그 손가락의 몸통 구를 넣는다 — 앞의 손바닥 구 순서가 그대로다.
+        new_gap, placed = [], set()
+        for cap in gap:
+            if cap.link in by_link:
+                if cap.link not in placed:
+                    new_gap.extend(by_link[cap.link])
+                    placed.add(cap.link)
+                continue
+            new_gap.append(cap)
+        gap = new_gap
+        n_before = model.n_spheres
+        model = UrdfSphereChain(urdf, extra_capsules=gap,
+                                fixed_joint_values=head, link_filter=link_filter,
+                                **dict(sphere_options or {}))
+        finger_report = {"options": {"hands": f_hands, "overflow": overflow},
+                         "n_spheres_before": n_before, "n_spheres_after": model.n_spheres,
+                         "links": per_link}
+        model.finger_cover_report = finger_report
     if not gripper_cover:
         return model
     from benchmark.ag3s.experiments.sources.gripper_cover import outer_cover_capsules
@@ -191,6 +242,8 @@ def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options
                               **dict(sphere_options or {}))
     covered.gripper_cover_report = {"options": options, "n_base_spheres": model.n_spheres,
                                     "n_cover_spheres": len(cover), "links": report}
+    if finger_report is not None:
+        covered.finger_cover_report = finger_report
     return covered
 
 

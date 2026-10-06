@@ -539,6 +539,40 @@ def gripper_cover_options(args) -> dict | None:
     return out
 
 
+def announce_finger_cover(report: dict | None) -> None:
+    """T43 FC — 손가락 몸통 구를 켰을 때만 (WARNING): 구 수 · 손가락마다 반지름 · 못 덮은 표본 · 넘친 양."""
+    if not report:
+        return
+    per = ", ".join(
+        f"{link} {r['n_spheres']} 구 (r {r['radius_mm'][0]:.1f}–{r['radius_mm'][1]:.1f} mm, 미달 표본 "
+        f"{r['n_uncovered']}/{r['n_targets']}, 넘침 실측 {r['overflow_sampled_mm']:.2f} mm)"
+        if r.get("radius_mm") else f"{link} 0 구" for link, r in report["links"].items())
+    logging.warning(
+        "constraint finger cover (T43 FC): 구 %d → %d — 손가락마다 따로 collision mesh 전부를 담는 "
+        "몸통 구 (넘침 ≤ %.1f mm, 손 %s; 손가락 사이는 비어 있다): %s. ESDF 질의 · FK 비용이 구 수에 "
+        "비례한다",
+        report["n_spheres_before"], report["n_spheres_after"],
+        1e3 * float(report["options"]["overflow"]), report["options"]["hands"], per)
+
+
+def finger_cover_options(args) -> dict | None:
+    """`--finger-cover [HANDS]` · `--finger-cover-overflow MM` → `build_constraint_robot_model` 의
+    `finger_cover` (T43 FC). 안 줬으면 `None` — 제약 모델이 예전과 글자 그대로 같다."""
+    hands = getattr(args, "finger_cover", None)
+    overflow_mm = getattr(args, "finger_cover_overflow", None)
+    if hands is None:
+        if overflow_mm is not None:
+            raise SystemExit("--finger-cover-overflow 는 --finger-cover 와 함께 줘야 합니다 — "
+                             "혼자서는 아무 일도 하지 않습니다")
+        return None
+    out: dict = {"hands": str(hands)}
+    if overflow_mm is not None:
+        if not (math.isfinite(float(overflow_mm)) and float(overflow_mm) > 0):
+            raise SystemExit(f"--finger-cover-overflow 는 0 보다 커야 합니다 (mm): {overflow_mm}")
+        out["overflow"] = float(overflow_mm) * 1e-3
+    return out
+
+
 def parse_self_filter_inflation(pairs: Sequence[str]) -> dict[str, float]:
     """`["gripper=0.01"]` → `{"gripper": 0.01}` (T19). 빈 입력이면 빈 dict (예전과 같은 필터).
 
@@ -719,6 +753,7 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
                exclude_links: Sequence[str] = (),
                constraint_sphere_options: dict | None = None,
                gripper_cover: dict | None = None,
+               finger_cover: dict | None = None,
                self_collision: bool = True,
                target_field_policy: str = "relax",
                plan_horizon_steps: int | None = None,
@@ -775,6 +810,9 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     spheres = dict(constraint_sphere_options or {})
     # T43 R — 덮개는 준 것만 (`None` 이면 인자를 안 넘긴다 = 예전 호출 그대로).
     cover = {"gripper_cover": gripper_cover} if gripper_cover else {}
+    # T43 FC — 손가락 몸통 구도 같은 규약 (`None` 이면 키가 없다).
+    if finger_cover:
+        cover["finger_cover"] = finger_cover
     constraint_robot = build_constraint_robot_model(
         scene, link_filter=constraint_link_filter(links), sphere_options=spheres, **cover)
     # **기본이 아닌 범위·자기충돌·굵기로 떠 있으면 여기서 크게 말한다.** 제약 모델을 만든
@@ -852,6 +890,7 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     logging.info("AG3S: self-filter %d spheres, constraints %d spheres (%s)",
                  filter_robot.n_spheres, constraint_robot.n_spheres, links_label)
     announce_gripper_cover(getattr(constraint_robot, "gripper_cover_report", None))
+    announce_finger_cover(getattr(constraint_robot, "finger_cover_report", None))
     # **구 개수와 행 개수를 갈라 찍는다.** 구를 촘촘하게 만들면 구는 늘지만 QP 행은 안 늘고,
     # 그 구분이 없으면 "구를 늘렸다" 가 "실시간을 잃었다" 로 읽힌다.
     announce_row_budget(n_constraint_spheres=constraint_robot.n_spheres,
@@ -1204,6 +1243,15 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--gripper-cover-max-gap", type=float, default=None, metavar="MM",
                     help="T43 R — 덮개 목표: 바깥 면에서 구 합집합까지 최대 거리 (mm, 기본 2.5). "
                          "--gripper-cover 와 함께만")
+    ap.add_argument("--finger-cover", nargs="?", const="both", default=None,
+                    choices=("both", "left", "right"), metavar="HANDS",
+                    help="T43 FC — 제약 모델의 손가락 구를 **손가락마다 따로** 실제 굵기의 몸통 구로 "
+                         "바꾼다 (collision mesh 전부, 파지 면 포함, 넘침 ≤ --finger-cover-overflow; "
+                         "손가락 사이는 비어 있다). 손바닥 구는 그대로. 값 없이 주면 both. 기본 꺼짐 = "
+                         "예전 모델 그대로 (T43FC.impl)")
+    ap.add_argument("--finger-cover-overflow", type=float, default=None, metavar="MM",
+                    help="T43 FC — 몸통 구가 손가락 mesh 밖으로 나가는 최대 거리 (mm, 기본 2.5). "
+                         "--finger-cover 와 함께만")
     # --- 목적함수 가중치 (T9) ------------------------------------------------------------
     # **제약이 하나도 활성이 아닌 판에서도 TO 가 청크를 고친다** (실행되는 8 step 안에서 중앙값
     # 2.6°, 최대 8.8°). 그러면 남은 변형은 전부 이 넷이 만든 것이므로, 훑을 수 있어야 한다.
@@ -1495,6 +1543,10 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
     cover = gripper_cover_options(args)
     if cover and (args.no_safe or args.no_perception):
         ap.error("--gripper-cover 는 제약 모델의 그리퍼 구를 더하는 flag 입니다 (--no-safe · "
+                 "--no-perception 서버에는 그 모델의 충돌 행이 없습니다). 그대로 띄우면 효과가 "
+                 "있었다고 믿게 됩니다")
+    if finger_cover_options(args) and (args.no_safe or args.no_perception):
+        ap.error("--finger-cover 는 제약 모델의 손가락 구를 바꾸는 flag 입니다 (--no-safe · "
                  "--no-perception 서버에는 그 모델의 충돌 행이 없습니다). 그대로 띄우면 효과가 "
                  "있었다고 믿게 됩니다")
     # **self-filter flag 의 형식 오류도 여기서 죽는다** (T19). 모르는 link 이름은 모델이 있어야
@@ -1925,6 +1977,9 @@ def main() -> None:
                       # T43 R — 켰을 때만 키가 생긴다.
                       **({"gripper_cover": gripper_cover_options(args)}
                          if gripper_cover_options(args) else {}),
+                      # T43 FC — 켰을 때만 키가 생긴다.
+                      **({"finger_cover": finger_cover_options(args)}
+                         if finger_cover_options(args) else {}),
                       **({"self_filter": self_filter_options(args)}
                          if self_filter_options(args) else {}),
                       # SUBTASK-c — **항상 남긴다**: 이 키가 없는 기록은 SUBTASK-c 전이다.
@@ -2003,6 +2058,7 @@ def main() -> None:
                             exclude_links=args.exclude_links,
                             constraint_sphere_options=sphere_options(args),
                             gripper_cover=gripper_cover_options(args),
+                            finger_cover=finger_cover_options(args),
                             self_collision=not args.no_self_collision,
                             target_field_policy=args.target_field_policy,
                             plan_horizon_steps=horizon.planned,
