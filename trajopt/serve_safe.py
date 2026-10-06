@@ -669,6 +669,23 @@ def subtask_config_section(subtask_gate: bool | None,
     return {"clustering": clustering} if clustering else {}
 
 
+def assert_ag3s_config(config, *, collision_backend: str, esdf_backend: str,
+                       clustering: dict | None = None) -> None:
+    """Fail loudly (`RuntimeError`) if the AG3S config is not what the server asked for: the
+    top-level `collision_backend`, `esdf.backend`, and every `clustering` key a flag set. A server
+    that silently runs another backend holds every chunk ("no scene") or, worse, checks nothing."""
+    problems = []
+    if config.collision_backend != collision_backend:
+        problems.append(f"collision_backend={config.collision_backend!r}, asked {collision_backend!r}")
+    if config.esdf.backend != esdf_backend:
+        problems.append(f"esdf.backend={config.esdf.backend!r}, asked {esdf_backend!r}")
+    for key, value in (clustering or {}).items():
+        if getattr(config.clustering, key) != value:
+            problems.append(f"clustering.{key}={getattr(config.clustering, key)!r}, asked {value!r}")
+    if problems:
+        raise RuntimeError("AG3S config is not what the server asked for: " + "; ".join(problems))
+
+
 def t43t_identity_section(args) -> dict:
     """T43 T fix 3 — `clustering` keys for the given flags only (none given = `{}`, config as is)."""
     out = {}
@@ -816,6 +833,11 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     if identity:
         # T43 T — the identity / closing-geometry keys, only when a flag gave them.
         config = config.with_overrides({"clustering": dict(identity)})
+    # The config the server asked for, checked before anything is built on it (T43 T2 bug:
+    # `with_overrides` dropped `collision_backend` and the server ran on `primitive` — every chunk
+    # "no scene").
+    assert_ag3s_config(config, collision_backend="esdf", esdf_backend=backend,
+                       clustering=dict(identity or {}))
     logging.info("AG3S: self-filter %d spheres, constraints %d spheres (%s)",
                  filter_robot.n_spheres, constraint_robot.n_spheres, links_label)
     announce_gripper_cover(getattr(constraint_robot, "gripper_cover_report", None))
@@ -866,6 +888,8 @@ def build_ag3s(model_xml: str, *, voxel: float, range_max: float, links: str,
     logging.info("AG3S attached slots: %s", ", ".join(parents))
     ag3s = AG3S(config, robot_model=filter_robot, constraint_robot_model=constraint_robot,
                 attached_parent_links=parents)
+    assert_ag3s_config(ag3s.config, collision_backend="esdf", esdf_backend=backend,
+                       clustering=dict(identity or {}))
     # 생성 **뒤에** 찍는다 — 모르는 link 이름은 생성자가 거절하므로, 여기 도달한 표는 실제로
     # `robot_sphere_mask` 에 들어가는 값이다.
     announce_self_filter(ag3s.self_filter_settings(), cli=dict(self_filter or {}))

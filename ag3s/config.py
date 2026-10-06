@@ -1408,17 +1408,16 @@ class AG3SConfig:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any] | None) -> "AG3SConfig":
         data = dict(data or {})
-        extra = {"frame_id", "collision_backend"}
+        extra = set(_top_level_fields())
         unknown = set(data) - set(_SECTIONS) - extra
         if unknown:
             raise AG3SConfigError(
                 f"unknown top-level config key(s): {sorted(unknown)}; expected {sorted(set(_SECTIONS) | extra)}"
             )
         kwargs: dict[str, Any] = {}
-        if "frame_id" in data:
-            kwargs["frame_id"] = str(data["frame_id"])
-        if "collision_backend" in data:
-            kwargs["collision_backend"] = str(data["collision_backend"])
+        for name in sorted(extra):
+            if name in data:
+                kwargs[name] = str(data[name])
         for name, section_cls in _SECTIONS.items():
             if name in data:
                 kwargs[name] = _build_section(section_cls, name, data[name])
@@ -1451,10 +1450,20 @@ class AG3SConfig:
 
     # --- serialization ------------------------------------------------------------------
     def to_dict(self) -> dict[str, Any]:
-        out: dict[str, Any] = {"frame_id": self.frame_id}
+        """Every field — the top-level scalars (`frame_id`, `collision_backend`, …) and every
+        section — so `from_dict(to_dict())` and `with_overrides` keep what they are not asked to
+        change. T43 T2 bug: `collision_backend` was missing here, so any `with_overrides` call
+        silently reset an `esdf` config to `primitive` (V5 / V6: every chunk "no scene")."""
+        out: dict[str, Any] = {name: getattr(self, name) for name in _top_level_fields()}
         for name in _SECTIONS:
             out[name] = _section_to_dict(getattr(self, name))
         return out
+
+
+def _top_level_fields() -> tuple[str, ...]:
+    """`AG3SConfig`'s non-section fields (all `str` today) — derived, so a new one cannot be left out
+    of `to_dict` / `from_dict` again."""
+    return tuple(f.name for f in dataclasses.fields(AG3SConfig) if f.name not in _SECTIONS)
 
 
 def _build_section(section_cls: type, name: str, raw: Any) -> Any:
