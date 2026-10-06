@@ -50,6 +50,7 @@ attach 는 "물체가 손에 붙어 함께 움직인다" 는 충돌 모델의 �
     CLOSING   ─(명령·개도 다시 열림)► LATCHED  시도 포기
     HELD      ─(개도 열림 N 프레임 · 또는 placed ∧ 열림)─► PLACED  놓임 확인  detach
     HELD      ─(attach 뒤 N 실행 청크 안의 반증, T34)─► LATCHED  attach_revoked  detach
+    HELD      ─(닫힌 채 개도가 명령까지 닫힘 N 요청, T43 Z3 · 기본 off)─► PLACED  slipped  detach
 
 **파지 증거** (배포에서 쓸 추정치 — 시뮬레이터 참값이 아니다, `observe_grasp`):
 
@@ -78,6 +79,17 @@ attach 는 "물체가 손에 붙어 함께 움직인다" 는 충돌 모델의 �
 계속 "쥐고 있음" 인가 (더 닫히지 않았나 · 명령에 막혀 있나), 조작 대상이 보이면 쥔 구 자리에
 있나, 손을 들었으면 따라 올라왔나. 어긋나면 detach 하고 `attach_revoked` 를 남기며 LATCHED 로
 돌아간다 (PLACED 가 아니다 — 대상은 그대로이고 다음 닫힘을 다시 판정한다).
+
+## 닫힌 채 손에서 빠짐 (T43 Z3, `LatchConfig.slip_detach`, 기본 off)
+
+놓기 규칙(열림 N 프레임 · placed ∧ 열림)은 그리퍼가 열려야 답한다. T43 W V5 1925 s19253 은 HOLD 중
+gripper 명령이 닫힌 채(0.59) 사과가 t 369 에 빠졌고, 그 뒤 서버는 끝까지 attached — 쥔 구(body
+cover)가 빈손에 붙은 채 crate 와 겹쳐 HOLD 를 냈다. 빠지면 손가락을 벌려 두던 것이 없어지므로
+손가락이 마지막 실행 명령까지 닫힌다 (위치 제어 — T22 `blocked` 의 반대). 그래서 attach 순간 개도보다
+`slip_drop` 이상 더 닫혔고 명령과의 차가 `slip_gap` 아래인 요청이 `slip_frames` 번 이어지면 detach 하고
+PLACED 로 간다. 조작 대상 관측(target cluster)은 쓰지 않는다: 쥔 동안 self-filter · held_free 가 그 점을
+지워 조작 대상은 `occluded` 로 attach 전 마지막 관측에 동결돼 있다 (T43 W V4 · V5 38 run 에서 HELD 로
+끝난 요청 720 개 전부 — 관측 3 번은 모두 그 요청에서 attach 가 회수된 뒤다).
 
 ## 이 모듈은 부르지 않는다
 
@@ -185,6 +197,34 @@ class LatchConfig:
     #: 개도 두 검사(`opening_dropped` · `not_blocked`)를 쓰나. 측정·대조군용 스위치 (관측 두 검사만 남는다).
     revoke_use_opening: bool = True
 
+    # --- T43 Z3: 닫힌 채 손에서 빠짐 (`slip`) -------------------------------------------------------
+    #: **기본 False = Z3 전과 비트 동일.** True 면 HELD 에서 (회수 창 · 열림 놓기가 답하지 않은 요청에)
+    #: 측정 개도로 "물체가 손을 떠났다" 를 본다 — 쥔 물체가 손가락을 벌려 두던 것이 없어져 손가락이
+    #: 마지막 실행 명령까지 닫혔다:
+    #:
+    #:     drop = attach 순간 개도 − 지금 개도 ≥ `slip_drop`   (물체 폭이 허락하는 것보다 더 닫혔다)
+    #:     gap  = 지금 개도 − 마지막 실행 명령 < `slip_gap`     (명령에 막혀 있지 않다)
+    #:
+    #: 둘 다 `slip_frames` 요청 연속이면 detach 하고 PLACED 로 간다 (`LatchEvent.slipped`). 그 뒤 물체는
+    #: 쥔 구 · body cover 없이 장면 물체다 (열림 놓기와 같은 뒤처리 — `SafePolicy` 가 `detach()` ·
+    #: `set_grasp_active(False)` · `set_placed(True)` 를 부른다). 판정은 실행 피드백(측정 개도 · 실행
+    #: 명령)만 본다 — 시뮬레이터 참값을 보지 않는다. 근거: T43 W V4 · V5 38 run (`T43Z3.impl.md`) —
+    #: MuJoCo release 전 HELD 요청 368 개에서 drop ≤ 0.031 이고 두 조건이 함께 선 요청은 0 개. Y 의 닫힌 채
+    #: 빠진 4 run 은 빠진 뒤 첫 요청 (1925 s19253 · B 1807 s18071 · H 1807 s18071: drop 0.108–0.135, gap
+    #: 0.002–0.036) 또는 둘째 요청 (H 1807 s18073 — 첫 요청이 빠진 지 1 스텝 뒤: drop 0.165, gap −0.001)
+    #: 부터 둘 다 선다. 마지막 실행 명령은 HOLD 청크(실행 0)에서 갱신하지 않고 들고 간다; attach 순간의
+    #: 값은 닫힘 시도의 마지막 실행 명령이다.
+    slip_detach: bool = False
+    #: attach 순간 개도 − 지금 개도의 하한 (정규화, 1 = 열림). `revoke_drop` 과 같은 0.05 — 참 release
+    #: 전 최대 0.031 (V5 1834 s18343, 빠지기 직전 사과가 손 안에서 천천히 미끄러질 때) 의 1.6 배.
+    slip_drop: float = 0.05
+    #: 지금 개도 − 마지막 실행 명령의 상한. `blocked_gap` 과 같은 0.05 — 닫힌 명령으로 쥔 동안 0.114 이상.
+    #: (정책이 열기 시작하면 gap 은 음수가 되지만 그때 손가락은 벌어지므로 drop 이 음수다 — 그래서 AND.)
+    slip_gap: float = 0.05
+    #: 연속 몇 요청이어야 detach 하나. `release_frames` 와 같은 2 — 한 요청의 측정 튐으로 쥔 물체를
+    #: 잃지 않는다. 대가는 한 청크(8 스텝) 늦은 detach.
+    slip_frames: int = 2
+
 
 @dataclasses.dataclass(frozen=True)
 class LatchEvent:
@@ -206,6 +246,9 @@ class LatchEvent:
     #: T34 J2: 이번 `detach` 는 놓기가 아니라 **거짓 attach 의 회수**다 (`attach_revoked`). 상태는
     #: `LATCHED` 로 돌아간다 — 대상은 그대로 잠겨 있고 다음 닫힘을 다시 판정한다.
     revoked: bool = False
+    #: T43 Z3: 이번 `detach` 는 열림 놓기가 아니라 **닫힌 채 손에서 빠짐**이다 (`LatchConfig.slip_detach`).
+    #: 상태는 열림 놓기와 같은 `PLACED` 다.
+    slipped: bool = False
 
 
 @dataclasses.dataclass(frozen=True)
@@ -544,6 +587,9 @@ class GraspLatch:
                     # T34 J2: 회수 창을 연다 — attach 순간의 개도가 "쥐고 있음" 의 기준이다.
                     self._attach_opening = None if opening is None else float(opening)
                     self._held_exec_chunks = 0
+                    # T43 Z3: 쥔 동안의 "마지막 실행 명령" 은 닫힘 시도의 마지막 실행 명령에서 시작한다.
+                    self._hold_command = self._last_command
+                    self._slip_streak = 0
                     note = (f"파지 확인 — attach(manipulated id={manipulated_id}): 개도 "
                             f"{self._opening_before:.3f}→{opening:.3f} (정지: 직전 요청과 차 "
                             f"{ev['opening_delta']:.4f} < {cfg.settle_epsilon:g}), "
@@ -580,12 +626,28 @@ class GraspLatch:
                     self._last_opening = float(opening)
                 self._last_grasp = self._event(False, True, note, ev, revoked=True)
                 return self._last_grasp
+            slipped = self._slip_check(signal, opening, ev) if cfg.slip_detach else False
             if placed_now or self._open_streak >= cfg.release_frames:
                 self.phase = GraspPhase.PLACED
                 detach = True
                 note = ((f"성공 판정 + 개도 {opening:.3f} 열림" if placed_now else
                          f"개도가 {self._open_streak} 프레임 열려 있다 ({opening:.3f})")
                         + f" — detach() (feedback seq {signal.feedback_seq})")
+            elif slipped:
+                # T43 Z3 — 닫힌 채 손에서 빠졌다. 열림 놓기와 같은 PLACED 로 간다: 그 뒤 물체는 장면
+                # 물체이고 (쥔 구 · body cover 없음), 이 에피소드에서 다시 attach 하지 않는다.
+                self.phase = GraspPhase.PLACED
+                detach = True
+                s = ev["slip"]
+                note = (f"slip — 닫힌 채 손에서 빠졌다: 개도 {opening:.3f} (attach {s['attach_opening']:.3f}, "
+                        f"drop {s['drop']:.3f} ≥ {cfg.slip_drop:g}), 마지막 실행 명령 "
+                        f"{s['hold_command']:.3f} (gap {s['gap']:.3f} < {cfg.slip_gap:g}), "
+                        f"{s['streak']}/{cfg.slip_frames} 요청 — detach() "
+                        f"(feedback seq {signal.feedback_seq})")
+                if opening is not None:
+                    self._last_opening = float(opening)
+                self._last_grasp = self._event(False, True, note, ev, slipped=True)
+                return self._last_grasp
 
         if opening is not None:
             self._last_opening = float(opening)
@@ -694,8 +756,28 @@ class GraspLatch:
                 failed.append("not_following")
         return failed
 
+    def _slip_check(self, signal: GraspSignal, opening, ev: dict) -> bool:
+        """T43 Z3 — 닫힌 채 손에서 빠졌나 (`LatchConfig.slip_detach` 일 때만 부른다).
+
+        `ev["slip"]` 에 근거를 남기고, `slip_frames` 요청 연속 참이면 True. 모르는 값(측정 개도 ·
+        attach 개도 · 실행 명령 중 하나라도 없음)이면 그 요청은 거짓이다 (fail-safe: 쥔 채로 둔다 —
+        Z3 전의 동작).
+        """
+        cfg = self.config
+        if signal.last_command is not None:
+            self._hold_command = float(signal.last_command)
+        a, c = self._attach_opening, self._hold_command
+        known = opening is not None and a is not None and c is not None
+        drop = None if not known else round(a - float(opening), 4)
+        gap = None if not known else round(float(opening) - c, 4)
+        now = bool(known and drop >= float(cfg.slip_drop) and gap < float(cfg.slip_gap))
+        self._slip_streak = self._slip_streak + 1 if now else 0
+        ev["slip"] = {"attach_opening": a, "hold_command": c, "drop": drop, "gap": gap,
+                      "now": now, "streak": int(self._slip_streak), "frames": int(cfg.slip_frames)}
+        return self._slip_streak >= int(cfg.slip_frames)
+
     def _event(self, attach: bool, detach: bool, note: str, evidence: dict, *,
-               revoked: bool = False) -> LatchEvent:
+               revoked: bool = False, slipped: bool = False) -> LatchEvent:
         evidence = dict(evidence)
         evidence["state"] = self.phase.value
         return LatchEvent(
@@ -707,6 +789,7 @@ class GraspLatch:
             note=note,
             evidence=evidence,
             revoked=bool(revoked),
+            slipped=bool(slipped),
         )
 
     def _reset_grasp(self, *, keep_opening: bool = False) -> None:
@@ -719,6 +802,9 @@ class GraspLatch:
         #: T34 J2: attach 순간의 측정 개도와 attach 뒤 실행된 청크 수 (회수 창).
         self._attach_opening: Optional[float] = None
         self._held_exec_chunks = 0
+        #: T43 Z3: 쥔 동안 마지막으로 **실행된** gripper 명령 (HOLD 청크는 들고 간다) · slip 연속 요청 수.
+        self._hold_command: Optional[float] = None
+        self._slip_streak = 0
         if not keep_opening:
             #: 직전 요청의 측정 개도.
             self._last_opening: Optional[float] = None

@@ -82,6 +82,13 @@ def grasp_parent_links(grasp_links: Optional[dict] = None,
     return tuple(hold_links_for(grasp_links, hold_links).values())
 
 
+def held_slip_detach_enabled(ag3s) -> bool:
+    """T43 Z3: AG3S 의 config 가 `clustering.held_slip_detach` 를 켰나. config 가 없는 AG3S (테스트
+    stub) 는 False — 기본과 같다."""
+    clustering = getattr(getattr(ag3s, "config", None), "clustering", None)
+    return getattr(clustering, "held_slip_detach", False) is True
+
+
 class SafePolicy:
     """정책 하나를 감싸 안전 판정이 붙은 청크를 돌려준다.
 
@@ -157,6 +164,12 @@ class SafePolicy:
         #: 그 판단은 **제약을 짓기 전에** 한다 (`_advance_grasp`). 계획값으로 attach 하는 경로는
         #: `legacy_gripper_attach=True` 로만 켜진다 (옛 기록 재생용).
         latch_cfg = latch or LatchConfig()
+        if held_slip_detach_enabled(ag3s) and not latch_cfg.slip_detach:
+            # T43 Z3 — `clustering.held_slip_detach` (`serve_safe --held-slip-detach`) 가 켜면 latch 도
+            # 켠다. 끄는 길은 없다: 직접 `LatchConfig(slip_detach=True)` 를 준 호출자는 그대로다.
+            import dataclasses as _dc
+
+            latch_cfg = _dc.replace(latch_cfg, slip_detach=True)
         #: T26: 목적지는 **AG3S 가 등록한 destination** 이다 (`ag3s.destination`). grounding 이름으로
         #: 배우던 길(파지 뒤의 target = 목적지)은 T26 뒤 target 이 사과로 남으므로 닫는다.
         self._latch = GraspLatch(latch_cfg, evidence=not latch_cfg.legacy_gripper_attach,
@@ -1084,6 +1097,9 @@ class SafePolicy:
                            "held_observation": held_observation,
                            "anchor": None if manip is None else getattr(manip, "anchor", None)}
                 print(f"[safe_policy] attach_revoked: {event.note}")
+            elif event.slipped:
+                # T43 Z3: 닫힌 채 손에서 빠졌다 — 열림 놓기와 같은 PLACED 뒤처리 (아래 기록 · 다음 줄들).
+                print(f"[safe_policy] held_slip: {event.note}")
 
         self._last_grasp_record = {
             "mode": "evidence",
@@ -1103,6 +1119,9 @@ class SafePolicy:
             "evidence": dict(event.evidence or {}),
             "alignment": alignment,
         }
+        if cfg.slip_detach:
+            # T43 Z3 — flag 가 켜졌을 때만 싣는다 (꺼지면 기록이 Z3 전과 같다). 근거는 `evidence.slip`.
+            self._last_grasp_record["held_slip"] = bool(event.slipped)
         # T43 T (측정만): 손끝 중점 ↔ AG3S target centroid. 판단에 쓰지 않는다 — 기록 키 하나.
         if manip is not None:
             try:

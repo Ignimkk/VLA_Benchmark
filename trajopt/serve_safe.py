@@ -697,6 +697,10 @@ def t43t_identity_section(args) -> dict:
         out["refused_identity_release_frames"] = int(args.refused_identity_release)
     if getattr(args, "supported_max_bottom_mm", None) is not None:
         out["supported_max_bottom"] = float(args.supported_max_bottom_mm) / 1000.0
+    if getattr(args, "held_slip_detach", False):
+        # T43 Z3 — read by `SafePolicy` (grasp latch `slip_detach`); carried in the AG3S config so
+        # `assert_ag3s_config` checks it survived `with_overrides` like the other T43 T keys.
+        out["held_slip_detach"] = True
     return out
 
 
@@ -1298,6 +1302,11 @@ def build_parser() -> argparse.ArgumentParser:
                     help="T43 T 3(c) — 후보 cluster 의 가장 낮은 점이 받침면 위 MM 보다 높고 손에 "
                          "있지도 않으면 (손 구 hand_occlusion_reach 밖) admissible 이 아니다 (허들 막대 "
                          "윗부분 · crate 테두리). 받침면 아래에만 있는 것도. 기본 off. 근거값 60")
+    ap.add_argument("--held-slip-detach", action="store_true",
+                    help="T43 Z3 — 쥔 물체가 gripper 가 닫힌 채 손에서 빠지면 detach 한다: 측정 개도가 "
+                         "attach 순간보다 0.05 이상 더 닫히고 마지막 실행 명령과의 차가 0.05 아래인 요청이 "
+                         "2 번 연속이면 latch 가 PLACED 로 가고 그 뒤 물체는 장면 물체다 (쥔 구 · body "
+                         "cover 없음). 실행 피드백만 본다. 기본 off = Z3 전과 같다")
     ap.add_argument("--held-free-observed-mm", type=float, default=None, metavar="MM",
                     help="T43 T fix 2 — 쥔 동안 매 프레임, 파지 직전 관측한 조작 대상 점들의 **그 자리** "
                          "(base frame, 손을 따라가지 않음) 에서 MM 안의 TSDF voxel 을 비운다 (받침면 + 1 "
@@ -1397,6 +1406,7 @@ def reject_bad_flag_combinations(ap: argparse.ArgumentParser, args) -> None:
         ("--latched-identity-hold", getattr(args, "latched_identity_hold", False)),
         ("--refused-identity-release", getattr(args, "refused_identity_release", None) is not None),
         ("--supported-max-bottom-mm", getattr(args, "supported_max_bottom_mm", None) is not None),
+        ("--held-slip-detach", getattr(args, "held_slip_detach", False)),
         ("--held-free-observed-mm", getattr(args, "held_free_observed_mm", None) is not None))
         if on]
     if t43t_ag3s and (args.no_safe or getattr(args, "no_perception", False)):

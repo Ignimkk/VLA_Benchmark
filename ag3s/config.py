@@ -276,6 +276,15 @@ class ClusteringConfig:
     #: bar won the switch; in the C replay the hurdle foot then out-scored the visible apple.
     #: False (default) = the T32b rule, bit-identical.
     latched_identity_hold: bool = False
+    #: **T43 Z3 — a held object that left the closed hand is let go.** True = the caller's grasp
+    #: latch (`SafePolicy` → `trajopt.grasp_latch.LatchConfig.slip_detach`) detaches when, while
+    #: held and the gripper still commanded closed, the measured opening has closed past what the
+    #: object allowed (attach opening − now ≥ 0.05) down to the last executed command (now − command
+    #: < 0.05) on 2 consecutive requests; the latch goes to PLACED and the object is an ordinary
+    #: scene object from then on (no held query spheres / body cover). AG3S stores it; the decision
+    #: is the latch's (execution feedback only). T43 W V5 1925 s19253: the apple slipped out at
+    #: t 369 with the command at 0.59 and stayed attached to the end. False (default) = bit-identical.
+    held_slip_detach: bool = False
     #: **T43 T step 2 — the pre-closing geometry stands through the closing.** True = while a grasp
     #: is closing and nothing is attached yet (frozen, `AG3S`: grasp active ∧ no attachment), the
     #: manipulated object's geometry is **not** replaced by the frame's cluster at its place (the
@@ -420,6 +429,9 @@ class ClusteringConfig:
             raise AG3SConfigError(
                 f"clustering.latched_identity_hold must be true or false, "
                 f"got {self.latched_identity_hold!r}")
+        if not isinstance(self.held_slip_detach, bool):
+            raise AG3SConfigError(
+                f"clustering.held_slip_detach must be true or false, got {self.held_slip_detach!r}")
         for name in ("supported_max_bottom", "supported_min_top"):
             v = getattr(self, name)
             if v is not None and not (isinstance(v, (int, float)) and not isinstance(v, bool)
