@@ -175,7 +175,8 @@ def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options
     구 순서 · 값은 꺼진 모델과 같다. 만든 결과는 `model.gripper_cover_report` 에 남는다.
 
     `finger_cover` (T43 FC, 기본 `None` = 꺼짐): `None`/`False` 면 위 모델 그대로. `True` 또는 `dict`
-    (`hands` = `FINGER_COVER_HANDS` 의 키, `overflow` = m) 이면 그 손가락 link 의 gap-filling capsule
+    (`hands` = `FINGER_COVER_HANDS` 의 키, `overflow` = m; T43 FR 선택지 `gap` = m · `max_spheres` ·
+    `solver` = `"greedy"|"ilp"` 는 `gripper_cover.finger_body_spheres`) 이면 그 손가락 link 의 gap-filling capsule
     사슬을 **손가락 몸통 구** (`gripper_cover.finger_body_capsules`) 로 바꾼다 — 손가락마다 따로,
     collision mesh 전부 (파지 면 포함) 를 담고 `overflow` (기본 2.5 mm) 넘게 나가지 않는다. 손바닥 ·
     다른 link 의 구는 순서 · 값 그대로 (손가락 구는 원래 손가락 capsule 이 있던 자리에 들어간다).
@@ -201,10 +202,13 @@ def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options
             raise ValueError(
                 f"finger_cover hands 는 {sorted(FINGER_COVER_HANDS)} 중 하나: {f_hands!r}")
         overflow = float(f_opts.pop("overflow", FINGER_COVER_OVERFLOW))
+        # T43 FR — 구 수 선택지. 준 것만 넘기고 보고서에도 준 것만 적는다 (안 주면 FC 와 글자 그대로 같다).
+        reduce = {k: f_opts.pop(k) for k in ("gap", "max_spheres", "solver") if k in f_opts}
         if f_opts:
             raise ValueError(f"finger_cover 의 모르는 키: {sorted(f_opts)}")
         f_links = [n for n in FINGER_COVER_HANDS[f_hands] if n in set(model.sphere_link_names)]
-        body, per_link = finger_body_capsules(scene.model, model, f_links, overflow=overflow)
+        body, per_link = finger_body_capsules(scene.model, model, f_links, overflow=overflow,
+                                              **reduce)
         by_link: dict = {}
         for cap in body:
             by_link.setdefault(cap.link, []).append(cap)
@@ -222,7 +226,7 @@ def build_constraint_robot_model(scene, link_filter=ARM_LINKS, *, sphere_options
         model = UrdfSphereChain(urdf, extra_capsules=gap,
                                 fixed_joint_values=head, link_filter=link_filter,
                                 **dict(sphere_options or {}))
-        finger_report = {"options": {"hands": f_hands, "overflow": overflow},
+        finger_report = {"options": {"hands": f_hands, "overflow": overflow, **reduce},
                          "n_spheres_before": n_before, "n_spheres_after": model.n_spheres,
                          "links": per_link}
         model.finger_cover_report = finger_report

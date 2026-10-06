@@ -634,16 +634,22 @@ def finger_body_targets(surface: LinkSurface, face_probe: float = FINGER_COVER_F
     return ~(hull_depth(surface.points + float(face_probe) * surface.normals, surface.hulls) > 0.0)
 
 
-def _greedy_exact_cover(target: np.ndarray, C: np.ndarray, R: np.ndarray):
-    """`(chosen, n_uncovered)` — 대상점 전부를 구 **안에** 담는 greedy set cover + 중복 제거."""
+def _greedy_exact_cover(target: np.ndarray, C: np.ndarray, R: np.ndarray, *, pad: float = 0.0,
+                        max_count: Optional[int] = None):
+    """`(chosen, n_uncovered)` — 대상점 전부를 구 **안에** 담는 greedy set cover + 중복 제거.
+
+    T43 FR 선택지 (기본값이면 예전과 같은 계산): `pad` > 0 이면 대상이 구 표면에서 `pad` 안에만 있어도
+    담긴 것으로 친다 (덮임 허용 틈). `max_count` 를 주면 그만큼 고르고 멈춘다 (남은 대상은 안 덮인다).
+    """
     from scipy.spatial import cKDTree
 
     tree = cKDTree(target)
-    covers = [np.asarray(tree.query_ball_point(c, float(r)), np.int64) for c, r in zip(C, R)]
+    covers = [np.asarray(tree.query_ball_point(c, float(r) + float(pad) if pad else float(r)), np.int64)
+              for c, r in zip(C, R)]
     gain = np.array([cv.size for cv in covers])
     uncovered = np.ones(target.shape[0], bool)
     chosen: list[int] = []
-    while uncovered.any():
+    while uncovered.any() and (max_count is None or len(chosen) < int(max_count)):
         order = np.lexsort((R, -gain))
         best, best_gain = -1, 0
         for j in order:
@@ -687,55 +693,172 @@ def _sampled_overflow(C: np.ndarray, R: np.ndarray, hulls, surface_points: np.nd
     return out
 
 
-def finger_body_spheres(surface: LinkSurface, *, overflow: float = FINGER_COVER_OVERFLOW,
-                        grid: float = FINGER_COVER_SPACING,
-                        union_eps: float = FINGER_COVER_UNION_EPS,
-                        face_probe: float = FINGER_COVER_FACE_PROBE,
-                        ) -> tuple[np.ndarray, np.ndarray, dict]:
-    """`(centres, radii, report)` — 손가락 collision mesh 전부를 담고 `overflow` 넘게 나가지 않는 구.
+#: T43 FR — 손가락 몸통 구를 고르는 방법. `greedy` = FC 그대로 (기본). `ilp` = 같은 후보 · 같은 보장
+#: (넘침 ≤ overflow, 대상 전부 덮음) 에서 구 수를 정수계획 (set cover, HiGHS) 으로 최소화한다.
+FINGER_COVER_SOLVERS = ("greedy", "ilp")
+#: `ilp` 후보 격자 = 0.5 mm 격자에서 축마다 하나 건너 (1 mm) + greedy 가 고른 중심. 0.5 mm 전부 (13.6 만)
+#: 는 정수계획이 너무 크다.
+FINGER_COVER_ILP_STRIDE = 2
+#: `ilp` 를 그 자리에서 풀 때 시간 상한 (s). 미리 푼 답 (`finger_cover_presets`) 이 있으면 풀지 않는다.
+FINGER_COVER_ILP_TIME_LIMIT = 300.0
 
-    `surface` 는 `link_surface(..., spacing=grid)` (link frame). 위 머리말의 규칙.
-    """
+
+def _finger_candidates(surface: LinkSurface, target: np.ndarray, grid: float, union_eps: float):
+    """`(G, depth, ijk)` — mesh 안 격자점 · 그 깊이 · 격자 index (`finger_body_spheres` 머리말의 후보)."""
     from scipy.spatial import cKDTree
 
-    if not overflow > 0.0:
-        raise ValueError(f"overflow 는 0 보다 커야 합니다 (m): {overflow}")
-    outer = finger_body_targets(surface, face_probe)
-    target = surface.points[outer]
     lo, hi = surface.vertices.min(0), surface.vertices.max(0)
     axes = [np.arange(a, b + 1e-9, float(grid)) for a, b in zip(lo, hi)]
     G = np.stack(np.meshgrid(*axes, indexing="ij"), -1).reshape(-1, 3)
     piece = hull_depth(G, surface.hulls)
     inside = piece > 0.0
-    G, piece = G[inside], piece[inside]
+    ijk = np.stack(np.meshgrid(*[np.arange(a.size) for a in axes], indexing="ij"), -1).reshape(-1, 3)
+    G, piece, ijk = G[inside], piece[inside], ijk[inside]
     surf = cKDTree(target).query(G)[0] - float(union_eps)
     depth = np.maximum(piece, surf)
+    return G, depth, ijk
+
+
+def _ilp_cover(target: np.ndarray, C: np.ndarray, R: np.ndarray, *, pad: float = 0.0,
+               time_limit: float = FINGER_COVER_ILP_TIME_LIMIT):
+    """`(chosen, info)` — 대상 전부를 담는 최소 개수 구 (0/1 정수계획, `scipy.optimize.milp`).
+
+    시간 상한에 걸리면 그때까지 찾은 가장 좋은 답 (최적이 아닐 수 있다 — `info["optimal"]`). 답이 없으면
+    `chosen = None`."""
+    import time
+
+    from scipy.optimize import Bounds, LinearConstraint, milp
+    from scipy.sparse import csc_matrix
+    from scipy.spatial import cKDTree
+
+    tree = cKDTree(target)
+    cols = [np.asarray(tree.query_ball_point(c, float(r) + float(pad)), np.int64) for c, r in zip(C, R)]
+    indptr = np.cumsum([0] + [c.size for c in cols])
+    A = csc_matrix((np.ones(int(indptr[-1])), np.concatenate(cols), indptr),
+                   shape=(target.shape[0], C.shape[0]))
+    t0 = time.perf_counter()
+    res = milp(c=np.ones(C.shape[0]), constraints=LinearConstraint(A, lb=1, ub=np.inf),
+               integrality=np.ones(C.shape[0]), bounds=Bounds(0, 1),
+               options={"time_limit": float(time_limit), "disp": False, "mip_rel_gap": 0.0})
+    info = {"status": int(res.status), "optimal": int(res.status) == 0,
+            "dual_bound": None if getattr(res, "mip_dual_bound", None) is None
+            else float(res.mip_dual_bound),
+            "sec": round(time.perf_counter() - t0, 1), "n_candidates": int(C.shape[0])}
+    if res.x is None:
+        return None, info
+    return np.flatnonzero(res.x > 0.5), info
+
+
+def _covered(target: np.ndarray, C: np.ndarray, R: np.ndarray, pad: float) -> bool:
+    return bool(R.size) and bool(np.all(_gap(target, C, R) <= float(pad) + 1e-12))
+
+
+def finger_body_spheres(surface: LinkSurface, *, overflow: float = FINGER_COVER_OVERFLOW,
+                        grid: float = FINGER_COVER_SPACING,
+                        union_eps: float = FINGER_COVER_UNION_EPS,
+                        face_probe: float = FINGER_COVER_FACE_PROBE,
+                        gap: float = 0.0, max_spheres: Optional[int] = None,
+                        solver: str = "greedy",
+                        ilp_time_limit: float = FINGER_COVER_ILP_TIME_LIMIT,
+                        use_presets: bool = True,
+                        ) -> tuple[np.ndarray, np.ndarray, dict]:
+    """`(centres, radii, report)` — 손가락 collision mesh 전부를 담고 `overflow` 넘게 나가지 않는 구.
+
+    `surface` 는 `link_surface(..., spacing=grid)` (link frame). 위 머리말의 규칙.
+
+    T43 FR — 구 수를 줄이는 선택지 (기본값이면 FC 와 같은 계산 · 같은 답):
+
+    * `gap` (m, 기본 0): 대상이 구 합집합 표면에서 `gap` 안이면 담긴 것으로 친다. 안 덮인 표본이 생기지만
+      그 깊이는 `gap` 이하다 (보고서 `max_gap_mm`). 넘침 보장은 그대로다.
+    * `max_spheres` (기본 없음, `greedy` 만): 손가락마다 그만큼 고르고 멈춘다. 덮임 보장이 없다.
+    * `solver="ilp"`: 같은 후보 (1 mm 격자 + greedy 의 중심) 에서 구 수 최소화. 보장 (넘침 ≤ overflow,
+      대상 전부 `gap` 안) 은 greedy 와 같다. 미리 푼 답 (`finger_cover_presets`, 격자 index) 이 있으면
+      그 중심의 반지름을 다시 계산하고 덮임을 검사해서 쓴다 (풀지 않는다). 없거나 검사에 떨어지면 그
+      자리에서 푼다 (`ilp_time_limit`). greedy 보다 많으면 greedy 답을 쓴다.
+    """
+    if not overflow > 0.0:
+        raise ValueError(f"overflow 는 0 보다 커야 합니다 (m): {overflow}")
+    if not (gap >= 0.0 and np.isfinite(gap)):
+        raise ValueError(f"gap 은 0 이상이어야 합니다 (m): {gap}")
+    if solver not in FINGER_COVER_SOLVERS:
+        raise ValueError(f"solver 는 {FINGER_COVER_SOLVERS} 중 하나: {solver!r}")
+    if max_spheres is not None:
+        if int(max_spheres) < 1 or int(max_spheres) != max_spheres:
+            raise ValueError(f"max_spheres 는 1 이상의 정수: {max_spheres}")
+        if solver != "greedy":
+            raise ValueError("max_spheres 는 solver='greedy' 에서만 씁니다 (ilp 는 전부 덮는 최소 개수)")
+    outer = finger_body_targets(surface, face_probe)
+    target = surface.points[outer]
+    lo, hi = surface.vertices.min(0), surface.vertices.max(0)
+    G, depth, ijk = _finger_candidates(surface, target, grid, union_eps)
     R_all = depth + float(overflow)
-    idx, n_unc = _greedy_exact_cover(target, G, R_all)
+    idx, n_unc = _greedy_exact_cover(target, G, R_all, pad=gap, max_count=max_spheres)
+    extra: dict = {}
+    if solver == "ilp":
+        extra = {"solver": "ilp", "greedy_n_spheres": int(idx.size)}
+        chosen, src = None, None
+        preset = None
+        if use_presets and float(grid) == FINGER_COVER_SPACING and float(union_eps) == \
+                FINGER_COVER_UNION_EPS and float(face_probe) == FINGER_COVER_FACE_PROBE:
+            from benchmark.ag3s.experiments.sources.finger_cover_presets import (
+                FINGER_BODY_ILP_PRESETS)
+
+            preset = FINGER_BODY_ILP_PRESETS.get((int(round(overflow * 1e6)), int(round(gap * 1e6))))
+        if preset is not None:
+            key = {tuple(v): i for i, v in enumerate(ijk.tolist())}
+            pick = [key.get(tuple(v)) for v in preset["ijk"]]
+            if all(p is not None for p in pick) and _covered(
+                    target, G[pick], R_all[pick], gap):
+                chosen, src = np.asarray(pick, np.int64), "preset"
+                extra["ilp"] = {k: v for k, v in preset.items() if k != "ijk"}
+            else:
+                _LOG.warning("finger cover ilp preset (overflow %.2f mm, gap %.2f mm) 가 이 mesh 에 "
+                             "맞지 않습니다 — 그 자리에서 풉니다", overflow * 1e3, gap * 1e3)
+        if chosen is None:
+            sub = np.all(ijk % FINGER_COVER_ILP_STRIDE == 0, axis=1)
+            sub[idx] = True
+            cand = np.flatnonzero(sub)
+            sel, info = _ilp_cover(target, G[cand], R_all[cand], pad=gap, time_limit=ilp_time_limit)
+            extra["ilp"] = info
+            if sel is not None and sel.size < idx.size and _covered(
+                    target, G[cand[sel]], R_all[cand[sel]], gap):
+                chosen, src = cand[sel], "solved"
+            else:
+                chosen, src = idx, "greedy_fallback"
+        extra["source"] = src
+        idx, n_unc = chosen, 0
     C, R = G[idx], R_all[idx]
-    gap = _gap(target, C, R)
+    gaps = _gap(target, C, R)
+    if gap or max_spheres is not None:
+        n_unc = int((gaps > 1e-12).sum())
+        extra.update({"gap_mm": float(gap * 1e3),
+                      **({"max_spheres": int(max_spheres)} if max_spheres is not None else {})})
     report = {
         "n_spheres": int(R.size),
         "radius_mm": [float(R.min() * 1e3), float(R.max() * 1e3)] if R.size else None,
         "overflow_mm": float(overflow * 1e3),
         "n_targets": int(target.shape[0]),
         "n_uncovered": int(n_unc),
-        "max_gap_mm": float(max(gap.max(), 0.0) * 1e3) if gap.size else 0.0,
+        "max_gap_mm": float(max(gaps.max(), 0.0) * 1e3) if gaps.size else 0.0,
         "overflow_sampled_mm": _sampled_overflow(C, R, surface.hulls, surface.points) * 1e3,
         "mesh_bbox_mm": [np.round(lo * 1e3, 2).tolist(), np.round(hi * 1e3, 2).tolist()],
         "spheres_bbox_mm": [np.round((C - R[:, None]).min(0) * 1e3, 2).tolist(),
                             np.round((C + R[:, None]).max(0) * 1e3, 2).tolist()],
+        **extra,
     }
     return C, R, report
 
 
 def finger_body_capsules(model, robot_model, links: Sequence[str], *,
                          overflow: float = FINGER_COVER_OVERFLOW,
-                         grid: float = FINGER_COVER_SPACING) -> tuple[list, dict]:
+                         grid: float = FINGER_COVER_SPACING,
+                         gap: float = 0.0, max_spheres: Optional[int] = None,
+                         solver: str = "greedy") -> tuple[list, dict]:
     """`(capsules, report)` — 손가락 link 마다 몸통 구 (길이 0 `UrdfCapsule`, role `FINGER_BODY_ROLE`).
 
     `robot_model` 은 mesh 를 찾는 데만 쓴다 (URDF link → MJCF body, `MJCF_BODY_ALIASES`). 네 손가락은
-    link frame 에서 mesh 가 같아 한 번만 푼다 (캐시 키 = 표본 digest).
+    link frame 에서 mesh 가 같아 한 번만 푼다 (캐시 키 = 표본 digest). `gap` · `max_spheres` · `solver`
+    는 T43 FR 의 구 수 선택지 (`finger_body_spheres`; 기본값 = FC 그대로).
     """
     import hashlib
 
@@ -748,10 +871,12 @@ def finger_body_capsules(model, robot_model, links: Sequence[str], *,
         h = hashlib.sha1()
         for a in (surf.points, surf.normals):
             h.update(np.ascontiguousarray(a).tobytes())
-        key = ("finger_body", h.hexdigest(), float(overflow), float(grid))
+        key = ("finger_body", h.hexdigest(), float(overflow), float(grid), float(gap),
+               None if max_spheres is None else int(max_spheres), str(solver))
         hit = _CACHE.get(key)
         if hit is None:
-            hit = finger_body_spheres(surf, overflow=overflow, grid=grid)
+            hit = finger_body_spheres(surf, overflow=overflow, grid=grid, gap=gap,
+                                      max_spheres=max_spheres, solver=solver)
             _CACHE[key] = hit
         centres, radii, rep = hit
         report[link] = {**rep, "mujoco_body": surf.body}

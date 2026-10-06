@@ -553,6 +553,15 @@ def announce_finger_cover(report: dict | None) -> None:
         "비례한다",
         report["n_spheres_before"], report["n_spheres_after"],
         1e3 * float(report["options"]["overflow"]), report["options"]["hands"], per)
+    reduce = {k: report["options"][k] for k in ("gap", "max_spheres", "solver")
+              if k in report["options"]}
+    if reduce:
+        src = sorted({str(r.get("source")) for r in report["links"].values() if r.get("source")})
+        logging.warning(
+            "constraint finger cover (T43 FR): 구 수 선택지 %s%s — 기본 (greedy · 틈 0 · 개수 제한 없음) "
+            "과 다르다. 틈 > 0 이거나 개수 제한이면 손가락 mesh 일부가 구 밖이다 (위 '미달 표본')",
+            {k: (round(1e3 * v, 3) if k == "gap" else v) for k, v in reduce.items()},
+            f", ilp 답 출처 {src}" if src else "")
 
 
 def finger_cover_options(args) -> dict | None:
@@ -560,9 +569,17 @@ def finger_cover_options(args) -> dict | None:
     `finger_cover` (T43 FC). 안 줬으면 `None` — 제약 모델이 예전과 글자 그대로 같다."""
     hands = getattr(args, "finger_cover", None)
     overflow_mm = getattr(args, "finger_cover_overflow", None)
+    # T43 FR — 구 수 선택지 (기본 None = FC 그대로, 키를 넘기지 않는다)
+    gap_mm = getattr(args, "finger_cover_gap", None)
+    max_spheres = getattr(args, "finger_cover_max_spheres", None)
+    solver = getattr(args, "finger_cover_solver", None)
     if hands is None:
-        if overflow_mm is not None:
-            raise SystemExit("--finger-cover-overflow 는 --finger-cover 와 함께 줘야 합니다 — "
+        given = [f for f, v in (("--finger-cover-overflow", overflow_mm),
+                                ("--finger-cover-gap", gap_mm),
+                                ("--finger-cover-max-spheres", max_spheres),
+                                ("--finger-cover-solver", solver)) if v is not None]
+        if given:
+            raise SystemExit(f"{' · '.join(given)} 는 --finger-cover 와 함께 줘야 합니다 — "
                              "혼자서는 아무 일도 하지 않습니다")
         return None
     out: dict = {"hands": str(hands)}
@@ -570,6 +587,19 @@ def finger_cover_options(args) -> dict | None:
         if not (math.isfinite(float(overflow_mm)) and float(overflow_mm) > 0):
             raise SystemExit(f"--finger-cover-overflow 는 0 보다 커야 합니다 (mm): {overflow_mm}")
         out["overflow"] = float(overflow_mm) * 1e-3
+    if gap_mm is not None:
+        if not (math.isfinite(float(gap_mm)) and float(gap_mm) >= 0):
+            raise SystemExit(f"--finger-cover-gap 은 0 이상이어야 합니다 (mm): {gap_mm}")
+        out["gap"] = float(gap_mm) * 1e-3
+    if max_spheres is not None:
+        if int(max_spheres) < 1:
+            raise SystemExit(f"--finger-cover-max-spheres 는 1 이상: {max_spheres}")
+        if solver == "ilp":
+            raise SystemExit("--finger-cover-max-spheres 는 --finger-cover-solver greedy 에서만 씁니다 "
+                             "(ilp 는 전부 덮는 최소 개수를 찾는다)")
+        out["max_spheres"] = int(max_spheres)
+    if solver is not None:
+        out["solver"] = str(solver)
     return out
 
 
@@ -1252,6 +1282,16 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--finger-cover-overflow", type=float, default=None, metavar="MM",
                     help="T43 FC — 몸통 구가 손가락 mesh 밖으로 나가는 최대 거리 (mm, 기본 2.5). "
                          "--finger-cover 와 함께만")
+    ap.add_argument("--finger-cover-solver", default=None, choices=("greedy", "ilp"),
+                    help="T43 FR — 몸통 구 고르기. greedy (기본, FC 그대로) · ilp = 같은 보장 (넘침 · "
+                         "전부 덮음) 에서 구 수 최소 (정수계획; 미리 푼 답이 있는 overflow 는 즉시, "
+                         "없으면 시작 때 수 분). --finger-cover 와 함께만 (T43FR.impl)")
+    ap.add_argument("--finger-cover-gap", type=float, default=None, metavar="MM",
+                    help="T43 FR — 손가락 mesh 표본이 구 합집합에서 이만큼 (mm) 안이면 덮인 것으로 친다 "
+                         "(기본 0 = 전부 구 안). 구 수가 준다. --finger-cover 와 함께만")
+    ap.add_argument("--finger-cover-max-spheres", type=int, default=None, metavar="N",
+                    help="T43 FR — 손가락마다 몸통 구 최대 N 개 (greedy 를 N 개에서 멈춤; 덮임 보장 없음). "
+                         "기본 제한 없음. --finger-cover 와 함께만")
     # --- 목적함수 가중치 (T9) ------------------------------------------------------------
     # **제약이 하나도 활성이 아닌 판에서도 TO 가 청크를 고친다** (실행되는 8 step 안에서 중앙값
     # 2.6°, 최대 8.8°). 그러면 남은 변형은 전부 이 넷이 만든 것이므로, 훑을 수 있어야 한다.
