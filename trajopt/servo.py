@@ -102,6 +102,38 @@ class ServoParams:
                 "timestep_s": float(self.timestep), "substeps": int(self.substeps),
                 "row_seconds": self.row_seconds, "source": dict(self.source)}
 
+    def shape_coefficient(self) -> np.ndarray:
+        """`κ = (2ζ² − 1) / ωn²` (s²) per joint — how far the servo's path bends off the commanded one
+        per unit command acceleration (T43 TA, C).
+
+        The joint obeys ``I q̈ + c q̇ + kp q = kp u`` (`c = kv + damping`), i.e.
+        ``u = q + τ q̇ + (I/kp) q̈`` with ``τ = c / kp``. Inverting to second order,
+
+            q(t) = u(t) − τ u̇(t) + (τ² − I/kp) ü(t) + O(d³u)
+                 = u(t − τ) + (τ²/2 − I/kp) ü(t) + O(d³u)
+
+        The first term is the command **delayed** by τ (0.16–0.18 s here, ≈ 2.5 rows — T43 TK's
+        C − M ≈ 2 rows); a delay common to the joints moves along the commanded path, it does not
+        leave it. The second is the **shape error**, ``κ ü`` with ``κ = τ²/2 − I/kp = (2ζ² − 1)/ωn²``
+        (ωn² = kp/I, ζ = c / (2√(kp I))). It is what cuts the corners of a sharply accelerating
+        command. Positive for ζ > 1/√2 (the RB-Y1 arm: ζ ≈ 1.10–1.15).
+        """
+        kp, inertia = np.asarray(self.kp, np.float64), np.asarray(self.inertia, np.float64)
+        c = np.asarray(self.kv, np.float64) + np.asarray(self.damping, np.float64)
+        return c * c / (2.0 * kp * kp) - inertia / kp
+
+    def accel_bound(self, tolerance_rad: float, row_seconds: Optional[float] = None) -> np.ndarray:
+        """`a_C` (rad/row²) per joint: the command second difference whose shape error is
+        `tolerance_rad` (T43 TA, C) — ``a_C = ε Δt² / κ`` with `κ` from `shape_coefficient`,
+        ``Δt`` one control row (default `row_seconds`). Raises when ζ ≤ 1/√2 (κ ≤ 0: the
+        second-order term no longer bounds the deviation and this derivation does not apply)."""
+        kappa = self.shape_coefficient()
+        if np.any(kappa <= 0.0):
+            raise ValueError(f"servo shape coefficient must be > 0 (damping ratio > 1/sqrt 2); got "
+                             f"{_round(kappa, 6)}")
+        dt = float(self.row_seconds if row_seconds is None else row_seconds)
+        return float(tolerance_rad) * dt * dt / kappa
+
     @classmethod
     def from_mj_model(cls, model, joint_names: Sequence[str], *, control_hz: float,
                       qpos: Optional[np.ndarray] = None, source: Optional[dict] = None

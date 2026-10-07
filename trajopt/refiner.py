@@ -153,6 +153,10 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
         at_rest = bool(context.get("start_at_rest")) if context is not None else False
         # T43 Q — the servo observer's facts (`SafePolicy`, only with `limits.servo_model`). Same rule.
         servo = context.get("servo_feedback") if context is not None else None
+        # T43 TA (B, C) — the executed history (`SafePolicy`, only with those flags on). Same rule:
+        # an absent key passes nothing.
+        history = {key: context[key] for key in ("deflection_history", "command_history")
+                   if context is not None and context.get(key) is not None}
         result = self.optimizer.solve(
             reference,
             q_now,
@@ -162,6 +166,7 @@ class TrajOptChunkRefiner(DecodedChunkRefiner):
             geometry_certified=certified,
             **({"start_at_rest": True} if at_rest else {}),
             **({"servo_feedback": servo} if servo is not None else {}),
+            **history,
         )
         # T37 — 이 청크의 목적함수에 continuity 항이 **들어갔나**, 아니면 왜 빠졌나. `metrics` 에 싣는
         # 이유: 기록(`summary_json.to.metrics`)만 보고 청크마다 셀 수 있어야 한다.

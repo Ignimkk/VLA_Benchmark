@@ -283,6 +283,8 @@ class SafePolicy:
         self._last_continuity: dict[str, Any] = {}
         #: T41 b — 이 청크를 정지 출발 범위로 풀었나 (`limits.rest_start` 가 켜졌을 때만 채운다).
         self._last_rest_start: dict[str, Any] = {}
+        #: T43 TA — the B / C history of this chunk (`_ta_history`); empty when both are off.
+        self._last_ta_history: dict[str, Any] = {}
         #: T37 — 지난 청크에서 grasp latch 가 continuity 항을 껐나 (켜짐/꺼짐이 바뀔 때만 로그 한 줄).
         self._continuity_gate_on = False
         self._last_latch_signal: dict[str, Any] = {}
@@ -434,6 +436,10 @@ class SafePolicy:
         # capture (`servo.ServoObserver`). Only with `limits.servo_model`: otherwise no key.
         if getattr(self.to_config.limits, "servo_model", False):
             context["servo_feedback"] = {"feedback": feedback, "seq": seq}
+        # T43 TA (B, C) — the executed history. Only the keys whose flag is on (else none at all).
+        self._last_ta_history = {}
+        history = self._ta_history(feedback)
+        context.update(history)
         t = time.monotonic()
         refined = self.refiner.refine(chunk, context)
         timing["trajopt"] = (time.monotonic() - t) * 1000.0 - timing.get("ag3s", 0.0)
@@ -504,6 +510,64 @@ class SafePolicy:
                                   ag3s=ag3s_block,
                                   to=self._to_block(),
                                   extra=extra)
+
+    def _ta_history(self, feedback: dict[str, Any]) -> dict[str, np.ndarray]:
+        """T43 TA — `{"deflection_history", "command_history"}` for the refiner, only for the flags
+        that are on (`cost.w_deflection_rate > 0` · `limits.servo_accel != "off"`).
+
+        | key | value | when |
+        |---|---|---|
+        | `command_history` | ``(nq_opt, 2)`` the last two applied arm rows (`exec_feedback.applied_arm`, HOLD rows included — what `d.ctrl` held) | ≥ 2 applied rows in the feedback |
+        | `deflection_history` | ``(nq_opt,)`` last applied row − the previous plan's reference at that row | that row executed the plan, and the feedback is for the plan cached here |
+
+        Facts only: anything missing or mismatched gives no key, and the reason is recorded
+        (`summary_json.ta_history`).
+        """
+        cost_on = float(getattr(self.to_config.cost, "w_deflection_rate", 0.0) or 0.0) > 0.0
+        accel_on = getattr(self.to_config.limits, "servo_accel", "off") != "off"
+        if not (cost_on or accel_on):
+            return {}
+        rec: dict[str, Any] = {}
+        out: dict[str, np.ndarray] = {}
+        nq = int(self.layout.nq_opt)
+        arm = None
+        if feedback.get("available") and feedback.get("applied_arm") is not None:
+            arm = np.asarray(feedback["applied_arm"], np.float64)
+            if arm.ndim != 2 or arm.shape[1] != nq:
+                rec["note"] = f"applied_arm has shape {arm.shape}, expected (n, {nq})"
+                arm = None
+        else:
+            rec["note"] = "no exec_feedback"
+        if accel_on:
+            if arm is not None and arm.shape[0] >= 2:
+                out["command_history"] = np.ascontiguousarray(arm[-2:].T)
+                rec["command"] = "applied_arm[-2:]"
+            else:
+                rec["command"] = None
+        if cost_on:
+            plan = self._previous_plan
+            executed = list(feedback.get("executed") or [])
+            why = None
+            if arm is None or not executed:
+                why = "no applied rows"
+            elif not executed[-1]:
+                why = "last row was a HOLD"
+            elif plan is None or int(plan.get("seq", -1)) != int(feedback.get("seq", -2)):
+                why = "feedback is not for the cached plan"
+            else:
+                ref = self.layout.chunk_to_trajectory(np.asarray(plan["reference"], np.float64))
+                row = len(executed) - 1
+                if row >= ref.shape[1]:
+                    why = f"row {row} is outside the previous reference"
+                else:
+                    out["deflection_history"] = arm[-1] - ref[:, row]
+                    rec["deflection"] = {"row": row, "max_abs_rad": float(
+                        np.abs(out["deflection_history"]).max(initial=0.0))}
+            if why is not None:
+                rec["deflection"] = None
+                rec["deflection_note"] = why
+        self._last_ta_history = rec
+        return out
 
     def _continuity_input(self, feedback: dict[str, Any]
                           ) -> tuple[Optional[np.ndarray], Optional[int]]:
@@ -816,8 +880,10 @@ class SafePolicy:
 
     def _held_capture_for_scene(self):
         """T43 HM — `AG3S.held_capture_spheres` (where the held object was when the grasp closed)
-        for `scene_from_constraint_set`, only with `collision.held_obstacle_margin` on; else None."""
-        if not getattr(self.to_config.collision, "held_obstacle_margin", False):
+        for `scene_from_constraint_set`, only with `collision.held_obstacle_margin` or (T43 TA A)
+        `horizon.lookahead` on — the tail drops the held object's remnant rows; else None."""
+        if not (getattr(self.to_config.collision, "held_obstacle_margin", False)
+                or getattr(self.to_config.horizon, "lookahead", "off") != "off"):
             return None
         return getattr(self.ag3s, "held_capture_spheres", None)
 
@@ -1337,6 +1403,9 @@ class SafePolicy:
             "policy_seed": {"applied": self._seed_applied, "episode": self._episode_seed},
             # T41 b — `limits.rest_start` 가 켜졌을 때만 (적용 여부 · 이유). 꺼져 있으면 키가 없다.
             **({"rest_start": _jsonable(self._last_rest_start)} if self._last_rest_start else {}),
+            # T43 TA — the B / C history this chunk used. Only with those flags on.
+            **({"ta_history": _jsonable(self._last_ta_history)}
+               if getattr(self, "_last_ta_history", None) else {}),
             # T23 — 판정 사유와 위반 행 분류. `reasons` 가 `None` 이면 판정 전(기록 순서상 없음).
             "verdict": _jsonable({
                 "policy": self.verdict_policy,
@@ -1574,8 +1643,12 @@ class SafePolicy:
                 "collision", f"{float(result.max_violation) * 1000:.1f} mm of penetration and the "
                 "rows could not be classified (no scene snapshot on the server)",
                 max_violation_pair=_jsonable(pair))]
+        window = getattr(optimizer, "lookahead_from", None)
+        window = window if isinstance(window, int) and not isinstance(window, bool) else None
         cls = classify_violations(
             linearizer, np.asarray(trajectory, np.float64), q_now, scene,
+            # T43 TA (A): only the executed window is certified — and classified.
+            **({"steps": int(window)} if window is not None else {}),
             authorized_links=self._authorized_links(cs), tolerance=tolerance,
             manipulated=self._manipulated_record(cs),
             candidate_sources={int(getattr(c, "id", -1)): getattr(
@@ -1833,7 +1906,8 @@ def classify_violations(linearizer, trajectory: np.ndarray, q_now: np.ndarray, s
                         candidate_sources: Optional[dict] = None,
                         pad_m: float = 0.01,
                         allow_unresolved_tier: bool = False,
-                        keep_rows: bool = False) -> dict[str, Any]:
+                        keep_rows: bool = False,
+                        steps: Optional[int] = None) -> dict[str, Any]:
     """위반 행(`clearance < −tolerance`) 을 하나씩 **허용 접촉 · 미해결 · 충돌** 로 가른다 (T23).
 
     값은 다시 계산하지 않는다 — `linearizer.clearances` / `esdf_clearance` 가 최적화기가 본 것과
@@ -1866,6 +1940,10 @@ def classify_violations(linearizer, trajectory: np.ndarray, q_now: np.ndarray, s
     centres = states[0]
     candidate, plane, _ = linearizer.clearances(trajectory, q_now, scene, states)
     esdf = linearizer.esdf_clearance(trajectory, q_now, scene, states)
+    if steps is not None:
+        # T43 TA (A): the executed window only (`steps` = `execution_length`).
+        candidate, plane, esdf, centres = (candidate[:steps], plane[:steps], esdf[:steps],
+                                           centres[:steps])
     radii = np.asarray(linearizer.query_radii, np.float64).reshape(-1)
 
     def name(query: int) -> str:

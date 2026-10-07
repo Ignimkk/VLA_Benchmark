@@ -242,7 +242,9 @@ def parse_link_extents(pairs: Sequence[str]) -> dict[str, tuple[float, float]]:
 
 #: `--w-*` flag 이름 → `CostConfig` 필드 이름. 목록이 한 곳이어야 flag 를 더할 때 announce 와
 #: config 가 갈라지지 않는다.
-COST_WEIGHTS: tuple[str, ...] = ("w_track", "w_smooth", "w_continuity", "w_slack")
+COST_WEIGHTS: tuple[str, ...] = ("w_track", "w_smooth", "w_continuity", "w_slack",
+                                 # T43 TA (B) — `--w-deflection-rate`
+                                 "w_deflection_rate")
 
 
 def cost_overrides(args) -> dict[str, float]:
@@ -1165,6 +1167,35 @@ def build_parser() -> argparse.ArgumentParser:
                          "몰고 접근을 버려지는 뒷부분으로 미뤘다 (실행 창 +89.86 mm, 50 스텝 "
                          "−17.61 mm, 사과 이동 0.0 mm). `full` 이나 숫자를 주면 그 동작으로 "
                          "되돌아간다 — 계획 지평이 길면 예지력이 생기지만 **미룰 자리도 생긴다**")
+    # --- T43 TA: path shape (A · B · C), all default off --------------------------------
+    ap.add_argument("--lookahead", default=None, choices=("off", "obstacles"),
+                    help="T43 TA (A). `obstacles` = steps past execution_length are look-ahead only: "
+                         "only obstacle rows (target · support plane · held remnant rows dropped), "
+                         "same slack, never certified. Needs --plan-horizon N > execution_length "
+                         "(e.g. 16). Default off")
+    ap.add_argument("--lookahead-gate-mm", default=None, metavar="MM|always",
+                    help="T43 TA (A) gate: use the tail only for a chunk whose reference comes within "
+                         "MM (TO clearance d − r − margin) of an obstacle in the tail; otherwise the "
+                         "chunk is solved exactly as without look-ahead. `always` = no gate. "
+                         "Default 20. --lookahead obstacles only")
+    ap.add_argument("--qp-eps", type=float, default=None, metavar="EPS",
+                    help="T43 TA: OSQP eps_abs = eps_rel of every SQP subproblem (default "
+                         "`QpConfig` 1e-3). With --lookahead the 16-step subproblem at 1e-3 can "
+                         "return a step far from the subproblem's optimum that the merit still "
+                         "accepts (offline V8: a 0.10 rad first step, palm 88 mm off the policy at "
+                         "a grasp); 1e-4 removes it")
+    ap.add_argument("--w-deflection-rate", type=float, default=None, metavar="W",
+                    help="T43 TA (B). Weight on ‖ΔD‖², D = Q − Q_ref, inside the chunk and against "
+                         "the last executed deflection. Default 0 (off)")
+    ap.add_argument("--servo-accel", default=None, choices=("off", "strict", "relaxed"),
+                    help="T43 TA (C). Bound on the command second difference incl. the chunk "
+                         "boundary, a_C = ε·ωn²·Δt²/(2ζ²−1) from the MJCF servo constants. `relaxed` "
+                         "= never sharper than max(a_C, the policy's own). Default off")
+    ap.add_argument("--servo-accel-tolerance-deg", type=float, default=None, metavar="DEG",
+                    help="T43 TA (C) ε, the shape error allowed per joint (default 1°). "
+                         "--servo-accel only")
+    ap.add_argument("--servo-accel-weight", type=float, default=None, metavar="W",
+                    help="T43 TA (C) slack weight relative to w_slack (default 0.01). --servo-accel only")
     ap.add_argument("--sphere-spacing", type=float, default=None, metavar="S",
                     help="제약 모델의 구 간격 (capsule 반지름 단위, 기본 1.0). 낮추면 구가 "
                          "촘촘해지고 팽창이 줄어 반지름이 **내려간다** — 덮개를 잃지 않는 쪽의 "
@@ -1821,6 +1852,75 @@ def path_overrides(args) -> tuple[dict, dict]:
     return limits, reduction
 
 
+def qp_overrides(args) -> dict:
+    """T43 TA — `--qp-eps` → the `qp` section (`{}` when not given = as before)."""
+    eps = getattr(args, "qp_eps", None)
+    if eps is None:
+        return {}
+    if not (math.isfinite(float(eps)) and float(eps) > 0.0):
+        raise SystemExit(f"--qp-eps must be a finite value > 0, got {eps}")
+    return {"eps_abs": float(eps), "eps_rel": float(eps)}
+
+
+def ta_overrides(args) -> tuple[dict, dict, dict]:
+    """T43 TA — `(horizon, cost, limits)` keys for the flags actually given (all `{}` = as before)."""
+    horizon: dict = {}
+    cost: dict = {}
+    limits: dict = {}
+    if getattr(args, "lookahead", None) is not None:
+        horizon["lookahead"] = str(args.lookahead)
+    gate = getattr(args, "lookahead_gate_mm", None)
+    if gate is not None:
+        if getattr(args, "lookahead", None) in (None, "off"):
+            raise SystemExit("--lookahead-gate-mm 는 --lookahead obstacles 와 함께만 씁니다")
+        if str(gate).strip().lower() == "always":
+            horizon["lookahead_gate"] = None
+        else:
+            try:
+                horizon["lookahead_gate"] = float(gate) / 1000.0
+            except ValueError:
+                raise SystemExit(f"--lookahead-gate-mm: a number (mm) or 'always', got {gate!r}")
+    # (B) `--w-deflection-rate` is one of `COST_WEIGHTS` and reaches the config via `cost_overrides`.
+    mode = getattr(args, "servo_accel", None)
+    tol = getattr(args, "servo_accel_tolerance_deg", None)
+    weight = getattr(args, "servo_accel_weight", None)
+    if (tol is not None or weight is not None) and mode in (None, "off"):
+        raise SystemExit("--servo-accel-tolerance-deg / --servo-accel-weight 는 "
+                         "--servo-accel strict|relaxed 와 함께만 씁니다")
+    if mode is not None:
+        limits["servo_accel"] = str(mode)
+    if tol is not None:
+        limits["servo_accel_tolerance"] = math.radians(float(tol))
+    if weight is not None:
+        limits["servo_accel_weight"] = float(weight)
+    return horizon, cost, limits
+
+
+def announce_ta(to_config) -> None:
+    """T43 TA — say which of A / B / C is on (nothing when all are off)."""
+    log = logging.getLogger(__name__)
+    h, c, lim = to_config.horizon, to_config.cost, to_config.limits
+    if h.lookahead != "off":
+        log.warning("TO lookahead (T43 TA A): %s — plan %d steps, certify the first %d; the tail "
+                    "sees obstacle rows only and is never certified; gate %s", h.lookahead,
+                    h.planned, h.execution_length,
+                    "none (always)" if h.lookahead_gate is None
+                    else f"{h.lookahead_gate * 1000:.0f} mm (tail used only when the reference "
+                         "comes that close to an obstacle in it)")
+    if float(c.w_deflection_rate) > 0.0:
+        log.warning("TO deflection rate (T43 TA B): w_deflection_rate=%g (‖ΔD‖², incl. the "
+                    "executed boundary)", c.w_deflection_rate)
+    from benchmark.trajopt.config import QpConfig
+
+    if (to_config.qp.eps_abs, to_config.qp.eps_rel) != (QpConfig.eps_abs, QpConfig.eps_rel):
+        log.warning("TO QP accuracy (T43 TA): OSQP eps_abs=%g eps_rel=%g", to_config.qp.eps_abs,
+                    to_config.qp.eps_rel)
+    if lim.servo_accel != "off":
+        log.warning("TO servo accel (T43 TA C): %s, ε=%.3f° (a_C = ε·Δt²/κ per joint, "
+                    "slack ×%g of w_slack; recorded in to.metrics.servo_accel)", lim.servo_accel,
+                    math.degrees(lim.servo_accel_tolerance), lim.servo_accel_weight)
+
+
 def trajopt_config_from_args(args):
     """CLI → `TrajOptConfig`. `SafePolicy` 경로와 `--no-perception` 경로가 **같은 함수**를 쓴다.
 
@@ -1830,6 +1930,8 @@ def trajopt_config_from_args(args):
     from benchmark.trajopt.config import NO_LIMITS, TrajOptConfig
 
     weights = cost_overrides(args)
+    ta_horizon, ta_cost, ta_limits = ta_overrides(args)
+    weights = {**weights, **ta_cost}
     no_collision = bool(getattr(args, "no_collision", False)) or bool(
         getattr(args, "no_perception", False))
     limits = limits_overrides(args)
@@ -1850,15 +1952,19 @@ def trajopt_config_from_args(args):
                    # T41 b — 준 것만 (기본 off 면 키가 없다).
                    **rest_start_overrides(args),
                    # T43 Q — 준 것만.
-                   **path_limits},
+                   **path_limits,
+                   # T43 TA (C) — 준 것만.
+                   **ta_limits},
         **({"reduction": path_reduction} if path_reduction else {}),
         **({"sqp": sqp} if sqp else {}),
+        # T43 TA — `--qp-eps`, only when given.
+        **({"qp": qp_overrides(args)} if qp_overrides(args) else {}),
         # 기하 인증 요구는 여기 **한 곳**에서만 켜고 끈다 (`--no-perception` 은 `ToOnlyPolicy` 가
         # 끈다 — 인증할 기하가 애초에 없다).
         "safety": {"require_certified_geometry": not args.allow_uncertified},
         # 다듬는 창. `execution` 이면 `horizon.execution_length` 를 따라가므로 실행 길이가
         # 두 번 적히지 않는다 (`config.PLAN_EXECUTION_WINDOW` 머리말).
-        "horizon": {"plan_horizon": resolve_plan_horizon(args.plan_horizon)},
+        "horizon": {"plan_horizon": resolve_plan_horizon(args.plan_horizon), **ta_horizon},
     })
 
 
@@ -2094,6 +2200,7 @@ def main() -> None:
                 "|Q0 − q_now| ≤ %s, 이후 a_max·dt² 씩 늘어난다 (T41 b)",
                 "a_max·dt² (관절마다)" if tol is None else f"{tol:.4f} rad ({math.degrees(tol):.2f}°)")
         announce_path_check(to_config)
+        announce_ta(to_config)
         announce_collision_switch(to_config.collision.enabled)
         announce_limits_switch(to_config.limits)
         announce_cost_weights(weights)

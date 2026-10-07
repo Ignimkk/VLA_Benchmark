@@ -38,6 +38,7 @@ to whoever owns the task — the same division of labour AG3S keeps with `Constr
 
 from __future__ import annotations
 
+import dataclasses
 import time
 from typing import Any, Optional
 
@@ -50,7 +51,12 @@ from benchmark.trajopt.linearize import (
     SceneSnapshot,
     append_collision_rows,
 )
-from benchmark.trajopt.limits import limit_report, project_to_limits, rest_start_envelope
+from benchmark.trajopt.limits import (
+    limit_report,
+    project_to_limits,
+    rest_start_envelope,
+    velocity_rows,
+)
 from benchmark.trajopt.problem import build_problem, objective
 from benchmark.trajopt.qp import QpSolver
 from benchmark.trajopt.types import ChunkLayout, JointLimits, TrajOptResult, TrajOptStatus
@@ -95,6 +101,27 @@ class TrajectoryOptimizer:
         if (getattr(self.config.limits, "servo_model", False)
                 or getattr(self.config.reduction, "sweep_check", False)):
             self._build_path(robot_model)
+        #: T43 TA (A) — first look-ahead step, or None (every planned step certified, as before).
+        self.lookahead_from = self.config.horizon.lookahead_from
+        self.linearizer.lookahead_from = self.lookahead_from
+        #: T43 TA (A) — the gate's own optimizer: the executed window alone, every other setting
+        #: as this one (`horizon.lookahead_gate`). `None` without look-ahead or without a gate.
+        self.window_optimizer: Optional["TrajectoryOptimizer"] = None
+        self.lookahead_gate = (None if self.lookahead_from is None
+                               else self.config.horizon.lookahead_gate)
+        if self.lookahead_gate is not None:
+            k = int(self.lookahead_from)
+            window_cfg = self.config.with_overrides(
+                {"horizon": {"horizon": k, "execution_length": k, "plan_horizon": None,
+                             "lookahead": "off"}})
+            self.window_optimizer = TrajectoryOptimizer(robot_model, layout, limits, window_cfg)
+        #: T43 TA (C) — `a_C` per optimized joint (rad/row²), or None when `limits.servo_accel` is off.
+        self.servo_accel_bound = None
+        self.servo_accel_record = None
+        if getattr(self.config.limits, "servo_accel", "off") != "off":
+            self._build_servo_accel(robot_model)
+        #: T43 TA (B, C) — this solve's history (`solve(deflection_history=, command_history=)`).
+        self._history: dict[str, Any] = {}
 
     def _build_path(self, robot_model) -> None:
         """T43 Q — the servo (from the controlled MJCF) and the path checker. Only when on."""
@@ -113,6 +140,42 @@ class TrajectoryOptimizer:
         self.path = PathChecker(self.linearizer, self.layout, cfg, self.servo)
         self.path.warm_seconds = self.path.warm()
 
+    def _build_servo_accel(self, robot_model) -> None:
+        """T43 TA (C) — `a_C = ε Δt² / κ` from the controlled MJCF (`servo.ServoParams.accel_bound`)."""
+        from benchmark.trajopt.limits import limits_model_xml
+        from benchmark.trajopt.servo import servo_params_from_xml
+
+        cfg = self.config
+        names = [str(robot_model.joint_names[int(i)]) for i in self.layout.q_indices]
+        params = servo_params_from_xml(limits_model_xml(cfg.limits), names,
+                                       control_hz=cfg.horizon.control_hz)
+        tol = float(cfg.limits.servo_accel_tolerance)
+        bound = params.accel_bound(tol, row_seconds=cfg.horizon.dt)
+        self.servo_accel_bound = np.asarray(bound, np.float64)
+        self.servo_accel_record = {
+            "mode": str(cfg.limits.servo_accel), "tolerance_rad": tol,
+            "row_seconds": float(cfg.horizon.dt),
+            "shape_coefficient_s2": [round(float(v), 6) for v in params.shape_coefficient()],
+            "a_c_rad_per_row2": [round(float(v), 6) for v in bound],
+            "joint_names": names, "weight": float(cfg.limits.servo_accel_weight)}
+
+    def _max_step_change(self) -> Optional[np.ndarray]:
+        step = np.asarray(self.limits.max_step_change, np.float64)
+        return step if np.all(np.isfinite(step)) else None
+
+    def _objective(self, trajectory, reference, previous_chunk) -> float:
+        """`problem.objective` with this solve's T43 TA history (identical call when TA is off)."""
+        extra: dict[str, Any] = {}
+        if self._history.get("deflection") is not None:
+            extra["deflection_history"] = self._history["deflection"]
+        if self.servo_accel_bound is not None:
+            step = np.asarray(self.limits.max_step, np.float64)
+            extra.update(servo_accel_bound=self.servo_accel_bound,
+                         command_history=self._history.get("command"),
+                         max_step_change=self._max_step_change(),
+                         max_step=step if velocity_rows(self.limits) else None)
+        return objective(trajectory, reference, self.config, previous_chunk=previous_chunk, **extra)
+
     def reset(self) -> None:
         """Clear cross-chunk state. Between episodes, never mid-episode."""
         self.solver.reset()
@@ -120,6 +183,8 @@ class TrajectoryOptimizer:
         self.frame_index = 0
         if self.observer is not None:
             self.observer.reset()
+        if self.window_optimizer is not None:
+            self.window_optimizer.reset()
 
     # ------------------------------------------------------------------------------------
     def solve(
@@ -133,6 +198,8 @@ class TrajectoryOptimizer:
         geometry_certified: bool = True,
         start_at_rest: bool = False,
         servo_feedback: Optional[dict[str, Any]] = None,
+        deflection_history: Optional[np.ndarray] = None,
+        command_history: Optional[np.ndarray] = None,
     ) -> TrajOptResult:
         """Make `reference` safe against `scene`, or report how far short it fell.
 
@@ -156,12 +223,28 @@ class TrajectoryOptimizer:
                 servo observer propagates to estimate the arm's velocity at `q_now`
                 (`servo.ServoObserver`). Read only when `limits.servo_model` is on; without it the
                 arm is taken to be at rest and the record says so.
+            deflection_history: T43 TA (B). ``(nq_opt,)`` deflection of the last executed command
+                (`cost.w_deflection_rate`); `None` = no boundary term.
+            command_history: T43 TA (C). ``(nq_opt, 2)`` the two last executed commands, oldest
+                first (`limits.servo_accel`); `None` = the C rows stay inside the chunk.
         """
         started = time.perf_counter()
         cfg = self.config
         reference = np.asarray(reference, np.float64)
         q_now = np.asarray(q_now, np.float64).reshape(-1)
         notes: list[str] = []
+        if self.lookahead_from is not None and previous_chunk is not None:
+            # T43 TA (A): continuity only over the executed window, as without look-ahead. Pulling
+            # the tail toward the previous chunk's stale prediction moved chunks that collide with
+            # nothing (offline V8: 8 of 35 closing-set chunks the base left untouched).
+            previous_chunk = np.asarray(previous_chunk, np.float64)[:, :self.lookahead_from]
+        # T43 TA — only what is switched on is kept; with B and C off this stays empty.
+        self._history = {}
+        if deflection_history is not None and float(cfg.cost.w_deflection_rate) > 0.0:
+            self._history["deflection"] = np.asarray(deflection_history, np.float64).reshape(-1)
+        if command_history is not None and self.servo_accel_bound is not None:
+            self._history["command"] = np.asarray(command_history, np.float64).reshape(
+                reference.shape[0], -1)
         #: T41 b — `None` 이면 예전 anchor (첫 스텝 `max_step`) 그대로.
         envelope = (rest_start_envelope(self.limits, self.horizon,
                                         getattr(cfg.limits, "rest_start_tolerance", None))
@@ -180,11 +263,23 @@ class TrajectoryOptimizer:
                 started,
             )
 
+        self._gate_record = None
+        if self.window_optimizer is not None:
+            gate = self._lookahead_gate(reference, q_now, scene)
+            self._gate_record = {x: v for x, v in gate.items() if x != "open"}
+            if not gate["open"]:
+                return self._solve_window(
+                    gate, reference, q_now, scene, previous_chunk=previous_chunk,
+                    template=template, geometry_certified=geometry_certified,
+                    start_at_rest=start_at_rest, servo_feedback=servo_feedback,
+                    deflection_history=deflection_history, command_history=command_history)
+
         n_path = self.path.n_slack if self.path is not None else 0
         n_slack = self.block.n_rows + n_path
         iterate = reference.copy()
         if (cfg.sqp.warm_start and self._previous is not None
-                and cfg.horizon.execution_length < self.horizon):
+                and cfg.horizon.execution_length < self.horizon
+                and self.lookahead_from is None):
             # Seed from the previous chunk shifted by the steps that have executed since. The tail is
             # held rather than extrapolated: extrapolating a trajectory past its horizon invents
             # motion the policy never proposed.
@@ -205,7 +300,12 @@ class TrajectoryOptimizer:
         self.linearizer.set_attached(
             getattr(scene, "attached_points", None), getattr(scene, "attached_parent_link", None)
         )
-        reference_violation = -self.linearizer.full_violation(reference, q_now, scene)
+        if self.lookahead_from is not None:
+            # T43 TA (A): what the reference does in the executed window — the certified span.
+            reference_violation = -float(self.linearizer.step_clearances(
+                reference, q_now, scene)[:self.lookahead_from].min(initial=np.inf))
+        else:
+            reference_violation = -self.linearizer.full_violation(reference, q_now, scene)
         if self.path is not None:
             # T43 Q — floors at `q_now` and the servo state, once per chunk (before any merit).
             self.path.begin(q_now, scene, servo_state)
@@ -306,6 +406,7 @@ class TrajectoryOptimizer:
                 q_now=q_now[self.layout.q_indices], previous_chunk=previous_chunk,
                 n_slack=n_slack, trust_radius=radius,
                 **({"anchor_envelope": envelope} if envelope is not None else {}),
+                **self._problem_history(),
             )
             problem = append_collision_rows(
                 problem, rows, iterate, self.block, cfg.reduction.linearization_backoff,
@@ -418,6 +519,58 @@ class TrajectoryOptimizer:
                 best, reference, q_now, envelope)
         return result
 
+    def _lookahead_gate(self, reference, q_now, scene) -> dict[str, Any]:
+        """T43 TA (A) — does the reference come within `lookahead_gate` of an obstacle in the tail?
+
+        The tail's rows are the look-ahead ones (obstacle class only, `_lookahead_keep`); the value is
+        their worst TO clearance (`d − r − margin`) over the reference's tail steps.
+        """
+        self.linearizer.set_attached(
+            getattr(scene, "attached_points", None), getattr(scene, "attached_parent_link", None))
+        k = int(self.lookahead_from)
+        per_step = self.linearizer.step_clearances(reference, q_now, scene)
+        tail = per_step[k:]
+        tail_min = float(tail.min(initial=np.inf))
+        gate = float(self.lookahead_gate)
+        return {"open": bool(tail_min < gate), "gate_m": gate,
+                "tail_reference_clearance_m": tail_min if np.isfinite(tail_min) else None,
+                "tail_reference_worst_step": (int(k + int(np.argmin(tail)))
+                                              if tail.size and np.isfinite(tail_min) else None)}
+
+    def _solve_window(self, gate, reference, q_now, scene, *, previous_chunk, template,
+                      geometry_certified, start_at_rest, servo_feedback, deflection_history,
+                      command_history) -> TrajOptResult:
+        """T43 TA (A) — gate closed: solve exactly as without look-ahead (`execution_length` steps,
+        `self.window_optimizer`), and hand back the reference's tail untouched."""
+        k = int(self.lookahead_from)
+        inner = self.window_optimizer
+        path = getattr(self.linearizer, "_param_path", None)
+        inner.linearizer.set_joint_parameter_path(None if path is None else path[:, :k])
+        result = inner.solve(
+            reference[:, :k], q_now, scene,
+            previous_chunk=None if previous_chunk is None else previous_chunk[:, :k],
+            template=template, geometry_certified=geometry_certified,
+            start_at_rest=start_at_rest, servo_feedback=servo_feedback,
+            deflection_history=deflection_history, command_history=command_history)
+        trajectory = np.concatenate([np.asarray(result.trajectory, np.float64),
+                                     np.asarray(reference, np.float64)[:, k:]], axis=1)
+        result = dataclasses.replace(result, trajectory=trajectory)
+        result.metrics["lookahead"] = {"from": k, "planned": int(reference.shape[1]),
+                                       "gate": "closed", **{x: v for x, v in gate.items()
+                                                            if x != "open"}}
+        return result
+
+    def _problem_history(self) -> dict[str, Any]:
+        """T43 TA — the `build_problem` keywords for B and C. `{}` when both are off."""
+        out: dict[str, Any] = {}
+        if self._history.get("deflection") is not None:
+            out["deflection_history"] = self._history["deflection"]
+        if self.servo_accel_bound is not None:
+            out["servo_accel_bound"] = self.servo_accel_bound
+            if self._history.get("command") is not None:
+                out["command_history"] = self._history["command"]
+        return out
+
     def _append_path(self, problem, iterate, scene):
         """T43 Q — the rows between waypoints, below the collision block (their own slacks)."""
         from benchmark.trajopt.sweep import append_path_rows
@@ -507,12 +660,20 @@ class TrajectoryOptimizer:
         (T15), 여기서 재면 역시 루프 비용이 는다. "0" 이 아니라 "재지 않음" 이다. 반환된 궤적의
         위반은 `_finish` 가 스위치와 무관하게 잰다.
         """
-        cost = objective(trajectory, reference, self.config, previous_chunk=previous_chunk)
+        cost = self._objective(trajectory, reference, previous_chunk)
         if not self.config.collision.enabled:
             # **꺼진 판에서는 벌점도 없어야 한다** (T15). 행만 비우고 merit 에 위반을 남기면
             # 충돌이 여전히 해를 밀고, 그러면 "충돌을 껐다" 가 거짓이 된다 — QP 가 아니라 step
             # 수락 기준을 통해 미는 것뿐이다. 측정(`worst_row`)은 이것과 무관하게 계속 돈다.
             return cost, None
+        if self.lookahead_from is not None:
+            # T43 TA (A): the window's and the tail's worst violations, summed — neither masks
+            # the other in step acceptance (a max would let a stuck tail veto a window fix).
+            per_step = self.linearizer.step_clearances(trajectory, q_now, scene, states)
+            k = self.lookahead_from
+            violation = (max(0.0, -float(per_step[:k].min(initial=np.inf)))
+                         + max(0.0, -float(per_step[k:].min(initial=np.inf))))
+            return cost + self.config.cost.w_slack * violation, violation
         violation = max(0.0, -self.linearizer.full_violation(trajectory, q_now, scene, states))
         if self.path is not None:
             violation = max(violation, self._path_violation(trajectory, scene))
@@ -637,7 +798,28 @@ class TrajectoryOptimizer:
         # `full_violation` 이 아니라 `worst_row` 다. **같은 값을 내면서 그 값을 만든 행의 신원까지
         # 돌려준다** — clearance sweep 도 forward kinematics 도 늘지 않고 argmin 만 더 돈다.
         # `T5f` 가 *"violated 가 어느 제약인가"* 에서 막힌 것이 이 숫자에 이름이 없었기 때문이다.
-        clearance, worst_pair = self.linearizer.worst_row(trajectory, q_now, scene, states)
+        lookahead_record = None
+        if self.lookahead_from is not None:
+            # T43 TA (A): certify the executed window; the tail is recorded, never certified.
+            k = self.lookahead_from
+            clearance, worst_pair = self.linearizer.worst_row(trajectory, q_now, scene, states,
+                                                              steps=k)
+            per_step = self.linearizer.step_clearances(trajectory, q_now, scene, states)
+            tail = per_step[k:]
+            tail_min = float(tail.min(initial=np.inf))
+            lookahead_record = {
+                "from": int(k), "planned": int(trajectory.shape[1]),
+                **({"gate": "open", **(getattr(self, "_gate_record", None) or {})}
+                   if self.lookahead_gate is not None else {"gate": None}),
+                "window_clearance_m": float(clearance),
+                "tail_clearance_m": tail_min if np.isfinite(tail_min) else None,
+                "tail_violation_m": max(0.0, -tail_min) if np.isfinite(tail_min) else 0.0,
+                "tail_worst_step": (int(k + int(np.argmin(tail))) if tail.size
+                                    and np.isfinite(tail_min) else None),
+                **{key: v for key, v in (getattr(self.linearizer, "_last_lookahead", None)
+                                         or {}).items() if key != "from"}}
+        else:
+            clearance, worst_pair = self.linearizer.worst_row(trajectory, q_now, scene, states)
         # T43 HM — the held rows' classes on what is returned (read before the path check
         # re-evaluates the field). `None` unless `held_obstacle_margin` is on and something is held.
         held_rows = (self.linearizer.held_rows_record()
@@ -708,7 +890,7 @@ class TrajectoryOptimizer:
             max_violation=violation,
             reference_violation=max(0.0, reference_violation),
             slack_norm=float(slack_norm),
-            cost=objective(trajectory, reference, cfg, previous_chunk=previous_chunk),
+            cost=self._objective(trajectory, reference, previous_chunk),
             reference_deviation=float(np.linalg.norm(trajectory - reference)),
             notes=notes,
             metrics={
@@ -739,8 +921,48 @@ class TrajectoryOptimizer:
                 **(selection if selection is not None else _no_selection()),
                 **({"path_check": path_record} if path_record is not None else {}),
                 **({"held_rows": held_rows} if held_rows is not None else {}),
+                **({"lookahead": lookahead_record} if lookahead_record is not None else {}),
+                **self._ta_record(trajectory, reference),
             },
         )
+
+    def _ta_record(self, trajectory, reference) -> dict[str, Any]:
+        """T43 TA (B, C) — what the returned trajectory does to the new terms. `{}` when off."""
+        out: dict[str, Any] = {}
+        w = float(getattr(self.config.cost, "w_deflection_rate", 0.0) or 0.0)
+        if w > 0.0:
+            from benchmark.trajopt.problem import deflection_rate_cost
+
+            D = np.asarray(trajectory) - np.asarray(reference)
+            out["deflection_rate"] = {
+                "weight": w, "boundary": self._history.get("deflection") is not None,
+                "cost": deflection_rate_cost(trajectory, reference, w,
+                                             self._history.get("deflection")),
+                "max_step_change_rad": (float(np.abs(np.diff(D, axis=1)).max())
+                                        if D.shape[1] > 1 else 0.0)}
+        if self.servo_accel_bound is not None:
+            from benchmark.trajopt.problem import servo_accel_overshoot
+
+            over = servo_accel_overshoot(trajectory, reference, self.servo_accel_bound,
+                                         str(self.config.limits.servo_accel),
+                                         self._max_step_change(), self._history.get("command"))
+            from benchmark.trajopt.problem import boundary_velocity_overshoot
+
+            hist = self._history.get("command")
+            step = np.asarray(self.limits.max_step, np.float64)
+            bvel = (boundary_velocity_overshoot(trajectory, hist, step)
+                    if velocity_rows(self.limits) else np.zeros(0))
+            out["servo_accel"] = {**(self.servo_accel_record or {}),
+                                  "boundary": hist is not None,
+                                  "overshoot_max_rad": float(over.max(initial=0.0)),
+                                  "n_over": int((over > 1e-9).sum()),
+                                  "boundary_velocity_ratio": (
+                                      None if hist is None else float(np.max(
+                                          np.abs(np.asarray(trajectory)[:, 0] - hist[:, -1])
+                                          / step))),
+                                  "boundary_velocity_overshoot_rad": float(
+                                      bvel.max(initial=0.0))}
+        return out
 
 
 #: `best_index` 의 표시 — reference 의 최소 투영이 반환됐다 (T31 G2-ii). `-1` 은 초기 iterate.

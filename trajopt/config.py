@@ -14,7 +14,7 @@ from __future__ import annotations
 import dataclasses
 import math
 import pathlib
-from typing import Any, Mapping
+from typing import Any, Mapping, Optional
 
 
 class TrajOptConfigError(ValueError):
@@ -64,6 +64,46 @@ class HorizonConfig:
     # behaviour (`None` plans the whole chunk); nothing else in the package reads this field, so the
     # revert is this one value.
     plan_horizon: int | str | None = PLAN_EXECUTION_WINDOW
+    #: **T43 TA (A) — receding-horizon look-ahead.** `"off"` (default) = every planned step is
+    #: certified and constrained alike (the pre-T6f behaviour when `plan_horizon > execution_length`,
+    #: and nothing at all changes with the default `PLAN_EXECUTION_WINDOW`). `"obstacles"` = the
+    #: steps past `execution_length` are **look-ahead only**:
+    #:
+    #: | | executed window `0..K-1` | tail `K..P-1` |
+    #: |---|---|---|
+    #: | collision rows in the QP | all (as now) | only ESDF rows whose nearest surface is an **obstacle** — target · support · the held object's own remnant rows are dropped, and so are the support-plane rows |
+    #: | slack weight | `w_slack` | `w_slack` (the same — no cheaper place to put a violation) |
+    #: | step acceptance (merit) | its own worst violation | **plus** the tail's own worst violation (one cannot mask the other) |
+    #: | certification (`max_violation`, status, HOLD, verdict rows) | yes | no — recorded in `metrics["lookahead"]` |
+    #: | continuity (`w_continuity`) | yes (as now) | no |
+    #:
+    #: **Gate** (`lookahead_gate`): the tail is used only for a chunk whose *reference* comes within
+    #: `lookahead_gate` (m, TO clearance `d − r − margin`) of an obstacle in the tail. Otherwise the
+    #: chunk is solved exactly as without look-ahead (`execution_length` steps, same rows, same
+    #: terms — the reference's tail is returned untouched), so a chunk with nothing coming is not
+    #: moved by A at all: no coupling of the window to a tail with nothing in it (offline V8 without
+    #: the gate: 37 of 106 grasp-set chunks moved > 0.5°, 5 of them chunks the base left as the
+    #: policy's). `None` = always use the tail.
+    #:
+    #: Why this cannot defer avoidance into the never-executed tail (T6d): the tail sees only
+    #: obstacles, so the target approach and table contact are judged only where they execute
+    #: (exactly as with `PLAN_EXECUTION_WINDOW`); an obstacle in the tail costs the same slack per
+    #: row as in the window, so moving a violation from the window into the tail buys nothing; only
+    #: the window is certified, so a tail violation can never make a chunk pass; and what the tail
+    #: does not avoid is the next chunk's window, solved and certified as without look-ahead. Needs
+    #: `planned > K` and `collision.backend == "esdf"` (the tail classification is defined on the
+    #: field's rows).
+    #:
+    #: **Solve the subproblem tighter with it** (`qp.eps_abs = eps_rel = 1e-4`, `--qp-eps 1e-4`):
+    #: at the default 1e-3 the doubled subproblem can come back far from its own optimum and the
+    #: merit still accepts it when the reference violates (offline V8, H ep1967 s19672 chunk 17, one
+    #: chunk before closing: first step 0.10 rad, palm 88 mm off the policy; 1e-4 and 1e-5 both give
+    #: 0.019 rad, palm 9 mm).
+    lookahead: str = "off"
+    #: See `lookahead` (m). Read only with `lookahead != "off"`.
+    lookahead_gate: Optional[float] = 0.02
+
+    LOOKAHEAD_MODES = ("off", "obstacles")
 
     @property
     def dt(self) -> float:
@@ -103,6 +143,28 @@ class HorizonConfig:
                     f"execution_length ({self.execution_length}): the optimizer would leave part of "
                     "what actually executes unplanned"
                 )
+        if self.lookahead not in self.LOOKAHEAD_MODES:
+            raise TrajOptConfigError(
+                f"horizon.lookahead must be one of {self.LOOKAHEAD_MODES}, got {self.lookahead!r}")
+        if self.lookahead_gate is not None and not (
+                isinstance(self.lookahead_gate, (int, float))
+                and not isinstance(self.lookahead_gate, bool)
+                and math.isfinite(float(self.lookahead_gate))):
+            raise TrajOptConfigError(
+                f"horizon.lookahead_gate must be a finite number (m) or None, got "
+                f"{self.lookahead_gate!r}")
+        if self.lookahead != "off" and self.planned <= self.execution_length:
+            raise TrajOptConfigError(
+                f"horizon.lookahead={self.lookahead!r} needs a tail: plan_horizon "
+                f"({self.plan_horizon!r} -> {self.planned} steps) must exceed execution_length "
+                f"({self.execution_length}) — e.g. --plan-horizon 16")
+
+    @property
+    def lookahead_from(self) -> int | None:
+        """First look-ahead step (= `execution_length`) when `lookahead` is on, else None."""
+        if self.lookahead == "off" or self.planned <= self.execution_length:
+            return None
+        return int(self.execution_length)
 
     @property
     def planned(self) -> int:
@@ -170,8 +232,24 @@ class CostConfig:
     # 1.44 → 2.47 /s (`numbers.D1_oscillation.group_median`) 로 요동이 늘었다.
     # 켜려면 `{"cost": {"grasp_continuity_off": true}}`.
     grasp_continuity_off: bool = False
+    #: **T43 TA (B) — deflection-rate cost.** `0.0` (default) = off, the objective is unchanged.
+    #: With `D = Q − Q_ref` (the TO's deflection from the policy, rad) the objective gains
+    #:
+    #:     w_deflection_rate · ( Σ_k ‖D[:, k+1] − D[:, k]‖²  +  ‖D[:, 0] − D_prev‖² )
+    #:
+    #: where `D_prev` is the deflection of the last command the robot actually executed (the
+    #: previous chunk's executed row minus that chunk's reference row, `SafePolicy` from the
+    #: execution feedback; omitted when unknown — first chunk, or the last row was a HOLD). A
+    #: deflection, once taken, then changes slowly within the chunk *and across the chunk boundary*
+    #: instead of snapping back to the policy at every row 0 (T43 XM: carry deflection median rises
+    #: 10.5 → 21.0 mm from k = 0 to k = 7 in every chunk). With `w_track` the optimum ramps a
+    #: needed deflection over ≈ √(w_deflection_rate / w_track) rows.
+    w_deflection_rate: float = 0.0
 
     def validate(self) -> None:
+        if not (math.isfinite(self.w_deflection_rate) and self.w_deflection_rate >= 0.0):
+            raise TrajOptConfigError(
+                f"cost.w_deflection_rate must be a finite value >= 0, got {self.w_deflection_rate}")
         if not isinstance(self.grasp_continuity_off, bool):
             raise TrajOptConfigError(
                 f"cost.grasp_continuity_off must be a bool, got {self.grasp_continuity_off!r}")
@@ -273,6 +351,49 @@ class LimitsConfig:
     #: 명령 waypoint 의 행 · 한계 · anchor 는 그대로다 — 막는 것은 "검사하지 않은 자세를 지난다" 뿐이고
     #: 범위를 자르지 않는다 (`rest_start` 와 다르다: 21.6° 명령 탈출은 servo 가 실제로 그만큼 빨리 움직이므로 남는다).
     servo_model: bool = False
+    #: **T43 TA (C) — command acceleration the servo can follow.** `"off"` (default) = nothing
+    #: changes. Otherwise the QP gets rows on the second difference of the commands — inside the
+    #: chunk *and across its start*, using the two commands the robot last executed
+    #: (`exec_feedback.applied_arm[-2:]`, `SafePolicy`), so the chunk boundary is included:
+    #:
+    #:     | u[k] − 2 u[k−1] + u[k−2] | ≤ b[j, k]     (u[−2], u[−1] = executed; u[k≥0] = Q[:, k])
+    #:
+    #: `a_C[j] = servo_accel_tolerance · ωn² · Δt² / (2ζ² − 1)` per joint, from the same compiled
+    #: MJCF constants as `servo.py` (kp, kv + damping, armature + inertia diagonal; Δt = one control
+    #: row) — `ServoParams.accel_bound`, derivation there. `"strict"`: `b = min(a_C, max_step_change)`.
+    #: `"relaxed"`: `b = min(max(a_C, |Δ²Q_ref|), max_step_change)` — the TO may not make the
+    #: commands sharper than the servo bound **or** the policy's own chunk, whichever is larger (so
+    #: C's acceleration rows never move a chunk the TO does not otherwise touch; the boundary
+    #: velocity row below can). Rows are soft: one slack per row, L1 weight
+    #: `w_slack · servo_accel_weight` per rad/row², also in the merit — collision avoidance can
+    #: still buy acceleration when it must.
+    #:
+    #: RB-Y1 (V8 MJCF): kp 1500–2000, kv + b 275–334, I (armature + inertia) 10.0–11.6 kg·m² →
+    #: ωn 12.2–13.9 rad/s, ζ 1.10–1.12, κ 7.5–10.2 ms² → `a_C` (ε = 1°) 0.0077–0.0104 rad/row²
+    #: (1.7–2.3 rad/s²). The existing acceleration rows (`max_step_change` = a_URDF ·
+    #: acceleration_scale · Δt² = 0.04 rad/row², inside the chunk only) are 4–5× looser.
+    #:
+    #: **Velocity too** (lead, 2026-10-07). Measured on the recorded refined chunks (V8 19 runs,
+    #: 1037 chunks; per joint, against that joint's `max_step = v_URDF · velocity_scale · Δt` —
+    #: 0.126 · 0.189 · 0.377 rad/row, not one 10.8° value): the in-chunk velocity rows bind on every
+    #: executed row (max ratio 1.000, 1 of 7084 rows at 1.0000x — solver tolerance) and the row-0
+    #: anchor ``|Q0 − q_now| <= max_step`` (hard box) never exceeds 1.000. What is **not** bounded is
+    #: the commanded step from the last executed command into the new chunk, ``|Q0 − u[−1]|``: the
+    #: anchor is against the *measured* `q_now`, which lags the command by τ = (kv + b)/kp ≈ 2.4–2.8
+    #: rows (`|u[−1] − q_now|` up to 1.66 × max_step on V8). V8: 1 of 999 executed chunk starts above
+    #: max_step (1.20×); V1–V5 (T43 W index): 11 of 4204 (up to 2.60×). With C on and the history
+    #: known, ``|Q[:, 0] − u[−1]| ≤ max_step`` is added, weighted like the other velocity rows
+    #: (10 · w_slack). C = velocity + acceleration.
+    servo_accel: str = "off"
+    #: `ε` (rad): the per-joint shape error the servo may add to the commanded path (default 1°).
+    servo_accel_tolerance: float = 0.0175
+    #: Slack weight of the C rows relative to `cost.w_slack` (per rad/row² vs per metre). 0.01: an
+    #: overshoot of 0.01 rad/row² costs as much as 0.1 mm of collision and 1000× a 0.01-rad tracking
+    #: error — C beats tracking, collision beats C. Offline V8 (T43TA): 0.1 already bought smoothness
+    #: with collision (9 new collision chunks vs 3 at 0.01; the first TA pass at 1.0: 19).
+    servo_accel_weight: float = 0.01
+
+    SERVO_ACCEL_MODES = ("off", "strict", "relaxed")
 
     @property
     def enforces_nothing(self) -> bool:
@@ -280,6 +401,14 @@ class LimitsConfig:
         return not (self.enforce_position or self.enforce_velocity or self.enforce_acceleration)
 
     def validate(self) -> None:
+        if self.servo_accel not in self.SERVO_ACCEL_MODES:
+            raise TrajOptConfigError(
+                f"limits.servo_accel must be one of {self.SERVO_ACCEL_MODES}, "
+                f"got {self.servo_accel!r}")
+        for name in ("servo_accel_tolerance", "servo_accel_weight"):
+            value = float(getattr(self, name))
+            if not (math.isfinite(value) and value > 0.0):
+                raise TrajOptConfigError(f"limits.{name} must be a finite value > 0, got {value}")
         for name in ("velocity_scale", "acceleration_scale"):
             value = getattr(self, name)
             if not 0.0 < value <= 1.0:
@@ -734,6 +863,21 @@ class TrajOptConfig:
                 f"sqp.trust_radius ({self.sqp.trust_radius}): a row pruned as inactive must not be "
                 "able to become violated inside one step"
             )
+        if self.horizon.lookahead != "off" and (
+                self.limits.servo_model or self.reduction.sweep_check):
+            # The path rows (T43 Q) certify every planned step on their own; splitting them into
+            # window and tail is not implemented, and silently certifying the tail would turn A
+            # back into the pre-T6f behaviour.
+            raise TrajOptConfigError(
+                "horizon.lookahead is not combined with limits.servo_model / "
+                "reduction.sweep_check (their path rows are certified over every planned step)")
+        if self.horizon.lookahead != "off" and self.collision.backend != "esdf":
+            # The tail keeps rows by the class of their nearest field surface (`linearize.
+            # _lookahead_keep`); primitive candidate rows carry no such class, so a target candidate
+            # would stay in the tail — the T6d deferral again. Fail at configuration time.
+            raise TrajOptConfigError(
+                f"horizon.lookahead needs collision.backend 'esdf', got "
+                f"{self.collision.backend!r} (the tail classification is defined on field rows)")
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any] | None) -> "TrajOptConfig":

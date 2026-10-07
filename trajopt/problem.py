@@ -113,6 +113,83 @@ def difference_operator(nq: int, horizon: int, order: int) -> sp.csr_matrix:
     return sp.diags(diagonals, offsets, shape=(n_row, nq * horizon), format="csr")
 
 
+def deflection_rate_operator(nq: int, horizon: int, boundary: bool) -> sp.csr_matrix:
+    """T43 TA (B) — ``M`` with ``M vec(D)`` = ``[D[:, 0] (if boundary); D[:, k+1] − D[:, k]]``."""
+    D1 = difference_operator(nq, horizon, 1)
+    if not boundary:
+        return D1
+    first = sp.csr_matrix((np.ones(nq), (np.arange(nq), np.arange(nq))), shape=(nq, nq * horizon))
+    return sp.vstack([first, D1], format="csr")
+
+
+def deflection_rate_cost(trajectory: np.ndarray, reference: np.ndarray, weight: float,
+                         deflection_history: Optional[np.ndarray] = None) -> float:
+    """T43 TA (B) — ``w (Σ_k ‖ΔD_k‖² + ‖D_0 − D_prev‖²)`` evaluated directly (``D = Q − Q_ref``)."""
+    D = np.asarray(trajectory, np.float64) - np.asarray(reference, np.float64)
+    value = float(np.sum(np.diff(D, axis=1) ** 2)) if D.shape[1] > 1 else 0.0
+    if deflection_history is not None:
+        value += float(np.sum((D[:, 0] - np.asarray(deflection_history, np.float64)) ** 2))
+    return float(weight) * value
+
+
+def servo_accel_rows(reference: np.ndarray, accel_bound: np.ndarray, mode: str,
+                     max_step_change: Optional[np.ndarray] = None,
+                     command_history: Optional[np.ndarray] = None):
+    """T43 TA (C) — the second-difference rows of ``[u[-2], u[-1], Q[:, 0], …]`` and their bounds.
+
+    Returns ``(A_q, const, bound)``: the row values are ``A_q @ vec(Q) + const`` (step-major
+    ``vec``), ``const`` carrying the executed commands `command_history` ``(nq, 2)`` (oldest first;
+    `None` = inside the chunk only). ``bound`` per row: ``"strict"`` = ``a_C``, ``"relaxed"`` =
+    ``max(a_C, |rows of the reference|)``; both capped by the robot's own `max_step_change`.
+    """
+    reference = np.asarray(reference, np.float64)
+    nq, horizon = reference.shape
+    hist = None if command_history is None else np.asarray(command_history, np.float64)
+    n_hist = 0 if hist is None else int(hist.shape[1])
+    full = difference_operator(nq, horizon + n_hist, 2).tocsc()
+    split = n_hist * nq
+    A_q = full[:, split:].tocsr()
+    const = (full[:, :split] @ hist.T.reshape(-1)) if n_hist else np.zeros(A_q.shape[0])
+    rows = A_q.shape[0] // nq if nq else 0
+    a_c = np.tile(np.asarray(accel_bound, np.float64).reshape(-1), rows)
+    if mode == "relaxed":
+        own = np.abs(A_q @ reference.T.reshape(-1) + const)
+        bound = np.maximum(a_c, own)
+    elif mode == "strict":
+        bound = a_c
+    else:
+        raise ValueError(f"servo_accel mode must be 'strict' or 'relaxed', got {mode!r}")
+    if max_step_change is not None and np.all(np.isfinite(max_step_change)):
+        bound = np.minimum(bound, np.tile(np.asarray(max_step_change, np.float64), rows))
+    return A_q, np.asarray(const, np.float64), bound
+
+
+def boundary_velocity_overshoot(trajectory: np.ndarray, command_history: Optional[np.ndarray],
+                                max_step: Optional[np.ndarray]) -> np.ndarray:
+    """T43 TA (C) — ``max(0, |Q[:, 0] − u[−1]| − max_step)`` per joint (rad/row).
+
+    The velocity rows of `build_problem` bound ``Q[:, k+1] − Q[:, k]`` inside the chunk, and row 0 is
+    bounded only against the *measured* ``q_now`` (the anchor, `problem.py` box block). The servo
+    lags the command by ≈ 2.5 rows (`servo.ServoParams.shape_coefficient`: τ = (kv + b)/kp), so
+    ``|Q0 − u[−1]|`` was unbounded: V8 executed 3 boundary steps at 1.20–1.74 × ``v_max·0.9·Δt``.
+    With C on and the executed history known, this row closes that gap.
+    """
+    if command_history is None or max_step is None or not np.all(np.isfinite(max_step)):
+        return np.zeros(0)
+    u_last = np.asarray(command_history, np.float64)[:, -1]
+    return np.maximum(0.0, np.abs(np.asarray(trajectory, np.float64)[:, 0] - u_last)
+                      - np.asarray(max_step, np.float64))
+
+
+def servo_accel_overshoot(trajectory: np.ndarray, reference: np.ndarray, accel_bound, mode: str,
+                          max_step_change=None, command_history=None) -> np.ndarray:
+    """``max(0, |row| − bound)`` per C row (rad/row²) — what the L1 slack pays for."""
+    A_q, const, bound = servo_accel_rows(reference, accel_bound, mode, max_step_change,
+                                         command_history)
+    value = A_q @ np.asarray(trajectory, np.float64).T.reshape(-1) + const
+    return np.maximum(0.0, np.abs(value) - bound)
+
+
 def build_problem(
     reference: np.ndarray,
     iterate: np.ndarray,
@@ -124,6 +201,9 @@ def build_problem(
     n_slack: int = 0,
     trust_radius: Optional[float] = None,
     anchor_envelope: Optional[np.ndarray] = None,
+    deflection_history: Optional[np.ndarray] = None,
+    command_history: Optional[np.ndarray] = None,
+    servo_accel_bound: Optional[np.ndarray] = None,
 ) -> QpProblem:
     """The QP around `iterate`, tracking `reference`, with room for `n_slack` collision rows.
 
@@ -144,6 +224,12 @@ def build_problem(
             box block, so the QP keeps its rows and sparsity; where the trust region and the envelope
             do not overlap, **the envelope wins** (the trust region is a numerical device, the
             envelope is what the robot can physically do from rest). Needs `q_now`.
+        deflection_history: ``(nq,)`` or `None` — T43 TA (B): the deflection of the last executed
+            command (`cost.w_deflection_rate`); `None` = no boundary term. Ignored when the weight is 0.
+        command_history: ``(nq, 2)`` or `None` — T43 TA (C): the two last executed commands, oldest
+            first; `None` = the C rows stay inside the chunk.
+        servo_accel_bound: ``(nq,)`` `a_C` (rad/row²) or `None` (default — no C rows). The mode is
+            `config.limits.servo_accel`.
 
     Collision rows are **not** added here — `linearize.append_collision_rows` does that. Keeping the
     split means this function can be tested against a problem with no geometry at all, where the
@@ -188,6 +274,19 @@ def build_problem(
         D2 = difference_operator(nq, horizon, 2)
         P_q = (P_q + 2.0 * cost.w_smooth * (D2.T @ D2)).tocsc()
     q_q = 2.0 * linear
+    w_rate = float(getattr(cost, "w_deflection_rate", 0.0) or 0.0)
+    if w_rate > 0.0:
+        # T43 TA (B): w ‖M vec(Q − R) − c‖², c = [D_prev; 0] — expanded into P and q.
+        boundary = deflection_history is not None
+        M = deflection_rate_operator(nq, horizon, boundary)
+        if M.shape[0]:
+            MtM = (M.T @ M).tocsc()
+            P_q = (P_q + 2.0 * w_rate * MtM).tocsc()
+            q_q = q_q - 2.0 * w_rate * (MtM @ reference.T.reshape(-1))
+            if boundary:
+                c = np.zeros(M.shape[0])
+                c[:nq] = np.asarray(deflection_history, np.float64).reshape(-1)
+                q_q = q_q - 2.0 * w_rate * (M.T @ c)
 
     # Velocity and acceleration get slack of their own. A chunk that already violates the robot's
     # limits — which a policy trained on demonstrations can easily produce — would otherwise make the
@@ -203,7 +302,17 @@ def build_problem(
     n_acceleration = (
         nq * max(horizon - 2, 0) if np.all(np.isfinite(limits.max_step_change)) else 0
     )
-    n_kinematic = n_velocity + n_acceleration
+    servo = None
+    if servo_accel_bound is not None:
+        servo = servo_accel_rows(
+            reference, servo_accel_bound, str(config.limits.servo_accel),
+            limits.max_step_change if np.all(np.isfinite(limits.max_step_change)) else None,
+            command_history)
+    n_servo = 0 if servo is None else int(servo[0].shape[0])
+    # T43 TA (C): the velocity row across the chunk start, |Q0 − u[−1]| <= max_step (with C and the
+    # executed history only; the in-chunk velocity rows above are unchanged).
+    n_bvel = (nq if servo is not None and command_history is not None and n_velocity else 0)
+    n_kinematic = n_velocity + n_acceleration + n_servo + n_bvel
     n_extra = n_slack + n_kinematic
 
     P = sp.block_diag(
@@ -217,7 +326,12 @@ def build_problem(
         np.full(n_slack, cost.w_slack),
         # Weighted above the collision slack: breaking the robot is worse than grazing an obstacle,
         # and unlike a collision it is certain rather than predicted.
-        np.full(n_kinematic, cost.w_slack * 10.0),
+        np.full(n_velocity + n_acceleration, cost.w_slack * 10.0),
+        # T43 TA (C): per rad/row², weighted like a collision metre (× servo_accel_weight) so that
+        # avoidance can still buy acceleration when it must.
+        np.full(n_servo, cost.w_slack * float(getattr(config.limits, "servo_accel_weight", 1.0))),
+        # a robot velocity limit, weighted like the in-chunk velocity rows
+        np.full(n_bvel, cost.w_slack * 10.0),
     ])
 
     # ---- constraints ------------------------------------------------------------------
@@ -292,6 +406,24 @@ def build_problem(
         )
         _add(name, operator, -picker, np.full(count, -np.inf), limit)
         _add(f"{name}_lower", operator, picker, -limit, np.full(count, np.inf))
+    if n_servo:
+        # T43 TA (C): |A_q z + c| <= b + s, one slack per row (after the velocity/acceleration ones).
+        A_s, c_s, b_s = servo
+        offset = n_slack + n_velocity + n_acceleration
+        picker = sp.csr_matrix(
+            (np.ones(n_servo), (np.arange(n_servo), offset + np.arange(n_servo))),
+            shape=(n_servo, n_extra))
+        _add("servo_accel", A_s, -picker, np.full(n_servo, -np.inf), b_s - c_s)
+        _add("servo_accel_lower", A_s, picker, -b_s - c_s, np.full(n_servo, np.inf))
+    if n_bvel:
+        first = sp.csr_matrix((np.ones(nq), (np.arange(nq), np.arange(nq))), shape=(nq, n_q))
+        u_last = np.asarray(command_history, np.float64)[:, -1]
+        offset = n_slack + n_velocity + n_acceleration + n_servo
+        picker = sp.csr_matrix((np.ones(nq), (np.arange(nq), offset + np.arange(nq))),
+                               shape=(nq, n_extra))
+        vmax = np.asarray(limits.max_step, np.float64)
+        _add("boundary_velocity", first, -picker, np.full(nq, -np.inf), u_last + vmax)
+        _add("boundary_velocity_lower", first, picker, u_last - vmax, np.full(nq, np.inf))
 
     A = sp.vstack(blocks, format="csr") if blocks else sp.csr_matrix((0, n_q + n_extra))
     l = np.concatenate(lower) if lower else np.zeros(0)
@@ -328,12 +460,21 @@ def objective(
     *,
     previous_chunk: Optional[np.ndarray] = None,
     slack: Optional[np.ndarray] = None,
+    deflection_history: Optional[np.ndarray] = None,
+    command_history: Optional[np.ndarray] = None,
+    servo_accel_bound: Optional[np.ndarray] = None,
+    max_step_change: Optional[np.ndarray] = None,
+    max_step: Optional[np.ndarray] = None,
 ) -> float:
     """The cost `build_problem` encodes, evaluated directly.
 
     Exists so the SQP loop can compare *actual* against *predicted* reduction without trusting the
     matrix assembly to be its own witness. A merit function computed from the same code that builds
     the QP would agree with it even when both are wrong.
+
+    T43 TA: the deflection-rate term (B, `cost.w_deflection_rate`) and the L1 price of the C rows'
+    overshoot (`servo_accel_bound` given) are part of it — otherwise a reference that breaks the C
+    bound would always win step acceptance against the candidate that respects it.
     """
     Q = np.asarray(trajectory, np.float64)
     reference = np.asarray(reference, np.float64)
@@ -348,9 +489,22 @@ def objective(
         value += float(
             cost.w_continuity * np.sum((Q[:, :overlap] - previous_chunk[:, :overlap]) ** 2)
         )
+    w_rate = float(getattr(cost, "w_deflection_rate", 0.0) or 0.0)
+    if w_rate > 0.0:
+        value += deflection_rate_cost(Q, reference, w_rate, deflection_history)
+    if servo_accel_bound is not None:
+        over = servo_accel_overshoot(Q, reference, servo_accel_bound,
+                                     str(config.limits.servo_accel), max_step_change,
+                                     command_history)
+        value += float(cost.w_slack * float(getattr(config.limits, "servo_accel_weight", 1.0))
+                       * np.sum(over))
+        value += float(cost.w_slack * 10.0 * np.sum(
+            boundary_velocity_overshoot(Q, command_history, max_step)))
     if slack is not None:
         value += float(cost.w_slack * np.sum(np.abs(slack)))
     return value
 
 
-__all__ = ["QpProblem", "build_problem", "difference_operator", "objective"]
+__all__ = ["QpProblem", "build_problem", "boundary_velocity_overshoot", "deflection_rate_cost",
+           "deflection_rate_operator",
+           "difference_operator", "objective", "servo_accel_overshoot", "servo_accel_rows"]

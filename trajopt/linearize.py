@@ -380,6 +380,10 @@ class CollisionLinearizer:
     is where the measured cost went from ~19 s of graph construction to 66 ms.
     """
 
+    #: T43 TA (A) — first look-ahead step (`HorizonConfig.lookahead_from`), set by the optimizer.
+    #: `None` (default) = every step is treated alike, as before.
+    lookahead_from: Optional[int] = None
+
     def __init__(self, robot_model, layout: ChunkLayout, horizon: int):
         import casadi as ca
 
@@ -803,7 +807,64 @@ class CollisionLinearizer:
             if getattr(scene, "held_obstacle_margin", False):
                 # T43 HM — the held rows' classes and clearances for the record (`held_rows_record`).
                 self._last_held_rows = self._held_rows_record(cls, d - radii[None, :] - margin)
-        return (d - radii[None, :] - margin)[..., None]
+        clear = d - radii[None, :] - margin
+        start = getattr(self, "lookahead_from", None)
+        if start is not None and 0 < int(start) < clear.shape[0]:
+            # T43 TA (A): the look-ahead tail keeps only obstacle rows (`_lookahead_keep`).
+            start = int(start)
+            if d_object is None:
+                d_object = self._manipulated_distance(flat, scene)
+                if d_object is not None:
+                    d_object = d_object.reshape(centres.shape[:2])
+            keep = self._lookahead_keep(
+                d[start:], centres[start:], scene,
+                None if d_object is None else d_object[start:])
+            clear = clear.copy()
+            tail = clear[start:]
+            tail[~keep] = np.inf
+            self._last_lookahead = {"from": start, "n_tail_rows": int(keep.size),
+                                    "n_tail_dropped": int((~keep).sum())}
+        return clear[..., None]
+
+    def _lookahead_keep(self, d: np.ndarray, centres: np.ndarray, scene: SceneSnapshot,
+                        d_object: Optional[np.ndarray]) -> np.ndarray:
+        """T43 TA (A) — `(H_tail, n_query)` bool: which look-ahead rows stay in the problem.
+
+        The tail exists to see **obstacles** coming. A row stays unless its nearest surface is
+
+        | rows | dropped when the nearest surface is |
+        |---|---|
+        | robot | the manipulated object (`|d − d_object| ≤` the coarsest layer's voxel — tail rows are often answered by the coarse tier), inside `scene.target_volume`, or a support plane (`|d − s| ≤ 2` fine voxels, the window rule) |
+        | held object | a support plane, or its own remnant (`_held_rows_class`, needs `held_capture_spheres`) |
+
+        Dropping is the fail-safe direction: a dropped tail row is a row the default
+        (`PLAN_EXECUTION_WINDOW`) never had, and the executed window keeps every row.
+        """
+        shape = d.shape
+        flat = centres.reshape(-1, 3)
+        keep = np.ones(shape, bool)
+        grid = getattr(scene.esdf, "grid", None)
+        fine = float(grid.voxel_size) if grid is not None else 0.0
+        cover = getattr(scene.esdf, "coverage_grid", None)
+        coarse = max(fine, float(cover.voxel_size) if cover is not None else fine)
+        n = self.n_spheres
+        robot = np.zeros(shape, bool)
+        robot[:, :n] = True
+        if d_object is not None:
+            keep &= ~(robot & (np.abs(d - d_object) <= coarse))
+        if getattr(scene, "target_volume", None) is not None:
+            keep &= ~(robot & self.in_target_volume(d, flat, scene))
+        planes = getattr(scene, "support_planes", None)
+        if planes is not None:
+            planes = np.asarray(planes, np.float64).reshape(-1, 4)
+            if planes.shape[0]:
+                s = flat @ planes[:, :3].T - planes[None, :, 3]
+                on = (np.abs(s - d.reshape(-1, 1)) <= _SUPPORT_TOL_VOXELS * fine).any(axis=1)
+                keep &= ~(robot & on.reshape(shape))
+        if shape[1] > n:
+            pts = centres[:, n:].reshape(-1, 3)
+            keep[:, n:] = self._held_rows_class(d[:, n:], pts, scene) == _OBSTACLE
+        return keep
 
     @staticmethod
     def _manipulated_distance(flat: np.ndarray, scene: SceneSnapshot) -> Optional[np.ndarray]:
@@ -999,6 +1060,13 @@ class CollisionLinearizer:
             - scene.robot_radii[None, :, None]
         )
         plane = np.where(scene.plane_active[None, None, :], plane, np.inf)
+        start = self.lookahead_from
+        if start is not None and 0 < int(start) < plane.shape[0] and plane.size:
+            # T43 TA (A): a support plane is never an obstacle — the look-ahead tail drops its rows
+            # (`HorizonConfig.lookahead`). Candidate rows are inactive under the `esdf` backend, the
+            # only one look-ahead accepts (`TrajOptConfig.validate`).
+            plane = plane.copy()
+            plane[int(start):] = np.inf
         return candidate, plane, distance
 
     def full_violation(
@@ -1024,8 +1092,27 @@ class CollisionLinearizer:
             worst = min(worst, float(np.min(esdf)))
         return worst
 
-    def worst_row(
+    def step_clearances(
         self, trajectory: np.ndarray, q_now: np.ndarray, scene: SceneSnapshot, states=None
+    ) -> np.ndarray:
+        """`(H,)` worst clearance per step over every row (m) — `full_violation` before its min.
+
+        T43 TA (A): the merit and the certification read the executed window and the look-ahead
+        tail separately.
+        """
+        states = states or self.sphere_states(trajectory, q_now)
+        candidate, plane, _ = self._clearances_from(states[0], scene)
+        esdf = self._esdf_clearance(states[0], scene)
+        horizon = states[0].shape[0]
+        worst = np.full(horizon, np.inf)
+        for block in (candidate, plane, esdf):
+            if block.size:
+                worst = np.minimum(worst, block.reshape(horizon, -1).min(axis=1))
+        return worst
+
+    def worst_row(
+        self, trajectory: np.ndarray, q_now: np.ndarray, scene: SceneSnapshot, states=None,
+        steps: Optional[int] = None,
     ) -> tuple[float, Optional[dict]]:
         """`(full_violation 과 같은 값, 그 값을 만든 행의 신원)`.
 
@@ -1065,6 +1152,10 @@ class CollisionLinearizer:
         centres = states[0]
         candidate, plane, _ = self._clearances_from(centres, scene)
         esdf = self._esdf_clearance(centres, scene)
+        if steps is not None:
+            # T43 TA (A): only the first `steps` steps (the executed window) are certified.
+            candidate, plane, esdf = candidate[:steps], plane[:steps], esdf[:steps]
+            centres = centres[:steps]
 
         worst = np.inf
         best: Optional[dict] = None
@@ -1082,6 +1173,9 @@ class CollisionLinearizer:
             best = self._identify(name, idx, centres, scene, value, esdf_block=esdf)
         if best is None:
             # 신원이 없으면 값도 `full_violation` 과 같아야 한다 — 전부 `inf` 인 경우다.
+            if steps is not None:
+                return float(self.step_clearances(trajectory, q_now, scene, states)[:steps].min(
+                    initial=np.inf)), None
             return float(self.full_violation(trajectory, q_now, scene, states)), None
         return worst, best
 
@@ -1628,7 +1722,8 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
     복셀로 옮기면 수천 행이 되고 근사도 나빠지기 때문이며, ESDF 쪽은 그 표면을 필드에서 파낸다.
 
     `held_capture` (T43 HM): `(K, 4)` `[cx, cy, cz, r]` — `AG3S.held_capture_spheres`, read by the
-    caller that owns the pipeline (`SafePolicy`). Used only with `collision.held_obstacle_margin`.
+    caller that owns the pipeline (`SafePolicy`). Used only with `collision.held_obstacle_margin`
+    and (T43 TA) `horizon.lookahead`.
     """
     spec = constraint_set.constraints
     backend = getattr(getattr(config, "collision", None), "backend", "primitive")
@@ -1723,6 +1818,16 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
             if attached_points is not None and held_capture is not None:
                 cap = np.asarray(held_capture, np.float64).reshape(-1, 4)
                 obstacle["held_capture_spheres"] = cap if cap.shape[0] else None
+    if getattr(getattr(config, "horizon", None), "lookahead", "off") != "off":
+        # T43 TA (A): the look-ahead tail drops support and held-remnant rows (`_lookahead_keep`) —
+        # it needs the planes and the capture volume even without an obstacle margin / HM (neither
+        # is read anywhere else then: `_held_rows_class` runs only for HM and for the tail).
+        if "support_planes" not in obstacle:
+            obstacle["support_planes"] = support_planes_of(constraint_set)
+        if ("held_capture_spheres" not in obstacle and attached_points is not None
+                and held_capture is not None):
+            cap = np.asarray(held_capture, np.float64).reshape(-1, 4)
+            obstacle["held_capture_spheres"] = cap if cap.shape[0] else None
     if spec is None:
         # No `ConstraintSpec` at all. With the field that is a complete scene — an ESDF-only frame
         # never builds the primitive parameter vector — so return a field-only snapshot rather than
