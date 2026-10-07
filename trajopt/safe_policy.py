@@ -325,6 +325,8 @@ class SafePolicy:
         if obstacle_margin > 0.0:
             meta["obstacle_margin_m"] = obstacle_margin
             meta["obstacle_margin_support"] = bool(self.to_config.collision.obstacle_margin_support)
+            if getattr(self.to_config.collision, "held_obstacle_margin", False):
+                meta["held_obstacle_margin"] = True                     # T43 HM
         return meta
 
     def reset(self) -> None:
@@ -798,7 +800,8 @@ class SafePolicy:
         }
 
         snapshot = scene_from_constraint_set(
-            constraint_set, self.linearizer.robot_radii, self.to_config)
+            constraint_set, self.linearizer.robot_radii, self.to_config,
+            held_capture=self._held_capture_for_scene())
         # 판정이 위반 행을 **최적화기가 본 것과 같은 씬으로** 다시 분류한다 (T23, `_verdict`).
         self._last_snapshot = snapshot
         # 촬영 시점 중 **가장 최신** 자세가 TO 가 계획을 시작하는 곳이다. AG3S 도 같은 규칙을
@@ -810,6 +813,13 @@ class SafePolicy:
         # 판정이 인증됐다고 읽는다 (또는 그 반대) — HOLD 를 만드는 두 곳이 같은 술어를 쓴다.
         certified = geometry_certified(constraint_set)
         return snapshot, q_now, certified
+
+    def _held_capture_for_scene(self):
+        """T43 HM — `AG3S.held_capture_spheres` (where the held object was when the grasp closed)
+        for `scene_from_constraint_set`, only with `collision.held_obstacle_margin` on; else None."""
+        if not getattr(self.to_config.collision, "held_obstacle_margin", False):
+            return None
+        return getattr(self.ag3s, "held_capture_spheres", None)
 
     # --- T29: finger joints ---------------------------------------------------------------
     @staticmethod

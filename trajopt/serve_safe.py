@@ -1121,6 +1121,12 @@ def build_parser() -> argparse.ArgumentParser:
                     help="T43 T step 2 — 최근접 표면점이 조작 대상의 carve-out 공 (target-free 계층이 "
                          "물체로 보는 부피) 안인 손 구 행은 target 행이다: --obstacle-margin 을 안 받고 "
                          "sweep 경로 행에서도 빠진다. 기본 off")
+    ap.add_argument("--held-obstacle-margin", action="store_true",
+                    help="T43 HM — 쥔 물체(사과) 행도 손 구 행과 같은 분류 · 여유를 받는다: 최근접 "
+                         "표면이 장애물이면 max(그 행의 여유, --obstacle-margin). 지지면(테이블)은 늘 "
+                         "제외 (T34 J1), 쥔 물체 자신의 잔상 (attach 때 비운 부피 + 2 voxel 안의 "
+                         "표면) 도 제외, 목적지 규칙은 그대로 (겹치면 큰 값). --obstacle-margin M (> 0) "
+                         "과 함께. 기본 off")
     ap.add_argument("--obstacle-margin-support", action="store_true",
                     help="T41 a — 지지면(테이블·바닥)에도 --obstacle-margin 을 건다. 기본은 "
                          "제외 (파지하려면 손가락이 테이블 가까이 가야 한다). ablation 용")
@@ -1745,7 +1751,8 @@ def announce_sqp_budget(sqp_config) -> None:
 
 
 def obstacle_overrides(args) -> dict:
-    """`--obstacle-margin` · `--obstacle-margin-support` → `collision` 의 키 (T41 a). 안 줬으면 `{}`."""
+    """`--obstacle-margin` · `--obstacle-margin-support` · `--target-volume-exempt` ·
+    `--held-obstacle-margin` → `collision` 의 키 (T41 a · T43 T · T43 HM). 안 줬으면 `{}`."""
     out: dict = {}
     margin = float(getattr(args, "obstacle_margin", 0.0) or 0.0)
     if not margin >= 0.0:
@@ -1760,6 +1767,12 @@ def obstacle_overrides(args) -> dict:
     if getattr(args, "target_volume_exempt", False):
         # T43 T step 2 — rows nearest the target's carve-out volume are target rows.
         out["target_volume_exempt"] = True
+    if getattr(args, "held_obstacle_margin", False):
+        # T43 HM — the held rows are classified and margined like the robot rows.
+        if margin <= 0.0:
+            raise SystemExit("--held-obstacle-margin 은 --obstacle-margin M (> 0) 과 함께 줘야 "
+                             "합니다 — 쥔 물체 행에 그 여유를 주는 스위치입니다")
+        out["held_obstacle_margin"] = True
     return out
 
 
@@ -2069,6 +2082,11 @@ def main() -> None:
                 "지지면 %s · target · 쥔 물체 행은 제외 (T41 a)",
                 to_config.collision.obstacle_margin * 1000,
                 "포함" if to_config.collision.obstacle_margin_support else "제외")
+        if getattr(to_config.collision, "held_obstacle_margin", False):
+            logging.warning(
+                "TO held_obstacle_margin: ON — 쥔 물체 행도 같은 분류: 장애물이 최근접이면 %.1f mm "
+                "(목적지 규칙과 겹치면 큰 값). 지지면 · 쥔 물체 자신의 잔상 (attach 부피 + 2 voxel) "
+                "은 제외 (T43 HM)", to_config.collision.obstacle_margin * 1000)
         if getattr(to_config.limits, "rest_start", False):
             tol = to_config.limits.rest_start_tolerance
             logging.warning(

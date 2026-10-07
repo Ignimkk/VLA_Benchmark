@@ -594,6 +594,20 @@ class CollisionBackendConfig:
     #: 지지면(테이블·바닥)도 위 여유를 받는가. 기본 `False` — 파지하려면 손가락이 테이블 가까이
     #: 가야 한다 (T40 B E3b 기록: 테이블이 최근접인 손 행 최소 3.9–5.0 mm, 6 run 중 4).
     obstacle_margin_support: bool = False
+    #: **T43 HM — the held object's rows get the same classification and margin as the robot's.**
+    #: Once grasped the object is part of the robot (user, 2026-10-07): a held query row whose
+    #: nearest field surface is an obstacle gets `max(its margin, obstacle_margin)`, exactly like a
+    #: finger row. Two kinds of surface stay without it (`linearize._held_rows_class`):
+    #: (1) a **support plane** (table) — always, whatever `obstacle_margin_support` says: the held
+    #: spheres are lifted only by the 8.7–9.1 mm table band at attach (T34 J1), so a 10 mm margin
+    #: would bring back the held-sphere ↔ table deadlock (56/56 chunks); (2) **the held object's
+    #: own remnant** — the nearest surface point lies inside the volume AG3S frees in the TSDF at
+    #: attach (capture-pose fit spheres + the pre-grasp place, `AG3S.held_capture_spheres`) widened
+    #: by 2 fine voxels (O7: offline V7g · V8, the 6 lift rows nearest the apple's own image are
+    #: within 7.3 mm of it; every other near row is ≥ 199 mm away). The destination rule (held rows
+    #: whose nearest label is the destination) is kept — where both apply the larger margin wins.
+    #: Needs `obstacle_margin > 0`. False (default) = bit-identical.
+    held_obstacle_margin: bool = False
     #: **T43 T step 2 — the target's carve-out volume counts as target.** True = a robot-sphere
     #: ESDF row whose nearest field surface point (`p − d·∇d`) lies inside the manipulated object's
     #: carve-out ball (AG3S `field.stats["target_free"]["ball"]`: centre, radius, z_min — the volume
@@ -637,6 +651,10 @@ class CollisionBackendConfig:
         if not self.obstacle_margin >= 0.0:
             raise ValueError(
                 f"collision.obstacle_margin must be >= 0, got {self.obstacle_margin}")
+        if self.held_obstacle_margin and not self.obstacle_margin > 0.0:
+            raise ValueError(
+                "collision.held_obstacle_margin needs collision.obstacle_margin > 0 — it gives the "
+                "held rows that margin and does nothing on its own")
 
     @property
     def wants_esdf(self) -> bool:

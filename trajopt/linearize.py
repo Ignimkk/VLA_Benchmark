@@ -73,6 +73,10 @@ _OBSTACLE, _TARGET, _SUPPORT, _HELD = 0, 1, 2, 3
 OBSTACLE_CLASSES = ("obstacle", "target", "support", "held")
 #: 지지면 판정 허용오차 = 이 수 × 가장 미세한 계층의 복셀. 근거는 `_obstacle_rows` docstring.
 _SUPPORT_TOL_VOXELS = 2.0
+#: T43 HM — 쥔 물체 자신의 잔상 판정 허용오차 = 이 수 × 가장 미세한 계층의 복셀 (10 mm).
+#: 근거: V7g · V8 기록에서 잔상 행 (사과 자신의 상, lift 6 행) 은 attach 부피에서 ≤ 7.3 mm,
+#: 나머지 행은 ≥ 199 mm (허들 199.1 · crate 307.7, `T43HM.impl.md`, `outputs/impl/T43HM/`).
+_HELD_SELF_TOL_VOXELS = 2.0
 
 
 @dataclasses.dataclass(frozen=True)
@@ -193,6 +197,15 @@ class SceneSnapshot:
     #: target row for the obstacle margin and the sweep rows. `None` (default) = this axis does not
     #: exist.
     target_volume: Optional[np.ndarray] = None
+    #: **T43 HM** — the held object's query rows are classified like the robot's (obstacle /
+    #: support / its own remnant) and an obstacle row gets `obstacle_margin` (`_held_rows_class`).
+    #: `False` (default) = every held row is class `held`, no obstacle margin (T41 a).
+    held_obstacle_margin: bool = False
+    #: `(K, 4)` `[cx, cy, cz, r]` (base frame) — the volume AG3S freed in the TSDF when the grasp
+    #: closed (`AG3S.held_capture_spheres`: the fit spheres at the capture pose and the object's
+    #: pre-grasp place). A held row whose nearest surface point lies inside it (+ 2 fine voxels)
+    #: is the object's own remnant. `None` = not known; every non-support held row is an obstacle.
+    held_capture_spheres: Optional[np.ndarray] = None
 
     @property
     def has_esdf(self) -> bool:
@@ -685,6 +698,11 @@ class CollisionLinearizer:
         row whose nearest surface is neither the manipulated object nor a support plane gets
         `max(margin, obstacle_margin)`; target, support and held rows keep what the rules above gave
         them. `_obstacle_rows` says which. At 0 (default) nothing here runs.
+
+        **The held object's rows too, when asked (T43 HM).** With `scene.held_obstacle_margin` the
+        held rows are classified like the robot's (`_held_rows_class`: support / own remnant /
+        obstacle) and an obstacle held row gets `max(margin, obstacle_margin)` — so a held row whose
+        nearest label is the destination keeps the larger of the two.
         """
         if scene.esdf is None:
             return np.zeros((centres.shape[0], centres.shape[1], 0))
@@ -782,6 +800,9 @@ class CollisionLinearizer:
             cls = self._obstacle_rows(d, flat, scene, d_object)
             self._last_obstacle_class = cls
             margin = np.where(cls == _OBSTACLE, np.maximum(margin, obstacle_margin), margin)
+            if getattr(scene, "held_obstacle_margin", False):
+                # T43 HM — the held rows' classes and clearances for the record (`held_rows_record`).
+                self._last_held_rows = self._held_rows_record(cls, d - radii[None, :] - margin)
         return (d - radii[None, :] - margin)[..., None]
 
     @staticmethod
@@ -813,7 +834,7 @@ class CollisionLinearizer:
 
         | 순서 | 분류 | 조건 |
         |---|---|---|
-        | 1 | `held` | 쥔 물체의 질의점 (`n_spheres` 뒤) — 그 점들이 곧 target |
+        | 1 | `held` | 쥔 물체의 질의점 (`n_spheres` 뒤) — 그 점들이 곧 target. **T43 HM** `held_obstacle_margin` 이면 `_held_rows_class` 가 따로 가른다 |
         | 2 | `target` | `|d − d_object| ≤ voxel` — E1 과 같은 검사. 대상이 없으면 거짓 |
         | 3 | `support` | 어느 지지면 `k` 에서 `|d − (n_k·p − o_k)| ≤ 2 voxel` (`obstacle_margin_support` 면 건너뜀) |
         | 4 | `obstacle` | 나머지 |
@@ -845,8 +866,82 @@ class CollisionLinearizer:
                 near = np.abs(s - d.reshape(-1, 1)) <= _SUPPORT_TOL_VOXELS * tol
                 on_plane = near.any(axis=1).reshape(d.shape)
                 cls[on_plane & (cls == _OBSTACLE)] = _SUPPORT
-        cls[:, self.n_spheres:] = _HELD
+        n = self.n_spheres
+        if getattr(scene, "held_obstacle_margin", False) and d.shape[1] > n:
+            # T43 HM — the held rows are classified on their own (no target test: the object
+            # they would be compared with is themselves).
+            pts = flat.reshape(*d.shape, 3)[:, n:].reshape(-1, 3)
+            cls[:, n:] = self._held_rows_class(d[:, n:], pts, scene)
+        else:
+            cls[:, n:] = _HELD
         return cls
+
+    def _held_rows_class(self, d_held: np.ndarray, pts: np.ndarray,
+                         scene: SceneSnapshot) -> np.ndarray:
+        """T43 HM — `(H, N_held)` int8: what each held query row's nearest surface is.
+
+        The held object is part of the robot once grasped, so its rows ask the robot rows' question
+        (user, 2026-10-07) — with two surfaces kept out of the obstacle margin:
+
+        | order | class | condition |
+        |---|---|---|
+        | 1 | `support` | some support plane `k`: `|d − (n_k·p − o_k)| ≤ 2 voxel` — **always**, whatever `obstacle_margin_support` says |
+        | 2 | `held` (own remnant) | nearest surface point `p − d·∇d/|∇d|` within 2 voxel of `scene.held_capture_spheres` |
+        | 3 | `obstacle` | the rest |
+
+        (1) The held spheres clear the table only by its 8.7–9.1 mm field band at attach (T34 J1:
+        lifted to plane + band); a 10 mm margin on them would bring back the held ↔ table
+        deadlock (E3b ep1800 r2: 56/56 chunks). (2) What AG3S could not free of the object's own
+        image (O7: held rows −0.7 … −1.8 mm against the apple's top surface) sits where the object
+        was when the grasp closed — the volume AG3S frees at attach (`AG3S.held_capture_spheres`).
+        Measured on V7g · V8 (35 grasping runs, rows with `d − r < 10 mm`, planned + servo poses,
+        `outputs/impl/T43HM/`): the 6 lift rows nearest the apple's own image are within 7.3 mm of
+        that volume; every other row ≥ 199 mm (hurdle 199.1, crate 307.7). Not "near the held spheres
+        now": the bar is near them exactly when it matters (22–24 of the 254 planned hurdle rows lie
+        within 3–5 mm of the held query spheres at q_now).
+        A row with no gradient (flat field) is not called a remnant — fail closed.
+        """
+        tol = float(scene.esdf.grid.voxel_size)
+        shape = d_held.shape
+        dh = np.asarray(d_held, np.float64).reshape(-1)
+        cls = np.full(dh.shape, _OBSTACLE, np.int8)
+        planes = getattr(scene, "support_planes", None)
+        if planes is not None:
+            planes = np.asarray(planes, np.float64).reshape(-1, 4)
+            if planes.shape[0]:
+                s = pts @ planes[:, :3].T - planes[None, :, 3]
+                cls[(np.abs(s - dh[:, None]) <= _SUPPORT_TOL_VOXELS * tol).any(axis=1)] = _SUPPORT
+        cap = getattr(scene, "held_capture_spheres", None)
+        if cap is not None:
+            cap = np.asarray(cap, np.float64).reshape(-1, 4)
+            if cap.shape[0] and (cls == _OBSTACLE).any():
+                g = np.asarray(scene.esdf.gradient(pts), np.float64).reshape(-1, 3)
+                norm = np.linalg.norm(g, axis=1, keepdims=True)
+                ok = norm[:, 0] > _EPS
+                surf = pts - dh[:, None] * np.where(ok[:, None], g / np.maximum(norm, _EPS), 0.0)
+                sd = (np.linalg.norm(surf[:, None, :] - cap[None, :, :3], axis=2)
+                      - cap[None, :, 3]).min(axis=1)
+                own = ok & (sd <= _HELD_SELF_TOL_VOXELS * tol)
+                cls[own & (cls == _OBSTACLE)] = _HELD
+        return cls.reshape(shape)
+
+    def _held_rows_record(self, cls: np.ndarray, clear: np.ndarray) -> Optional[dict]:
+        """T43 HM — per class of the held rows: count and min clearance (m). `None` = no held rows."""
+        n = self.n_spheres
+        if cls.shape[1] <= n:
+            return None
+        c, v = cls[:, n:].reshape(-1), np.asarray(clear, np.float64)[:, n:].reshape(-1)
+        out: dict[str, Any] = {}
+        for k in (_OBSTACLE, _SUPPORT, _HELD):
+            sel = c == k
+            out[OBSTACLE_CLASSES[k]] = {"n": int(sel.sum()),
+                                        "min_clearance_m": float(v[sel].min()) if sel.any() else None}
+        return out
+
+    def held_rows_record(self) -> Optional[dict]:
+        """T43 HM — the held rows of the last `_esdf_clearance` with `held_obstacle_margin` on:
+        `{class: {"n", "min_clearance_m"}}`. `None` when off or nothing is held."""
+        return getattr(self, "_last_held_rows", None)
 
     def in_target_volume(self, d: np.ndarray, flat: np.ndarray, scene: SceneSnapshot) -> np.ndarray:
         """T43 T step 2 — `(H, n_query)` bool: the row's nearest field surface point ``p − d·∇d``
@@ -1024,6 +1119,9 @@ class CollisionLinearizer:
             if (float(getattr(scene, "obstacle_margin", 0.0) or 0.0) > 0.0 and cls is not None
                     and esdf_block is not None and cls.shape == esdf_block.shape[:2]):
                 out["obstacle_margin_class"] = OBSTACLE_CLASSES[int(cls[step, query])]
+                if getattr(scene, "held_obstacle_margin", False):
+                    # T43 HM — the class of a held row was made by `_held_rows_class`.
+                    out["held_obstacle_margin"] = True
         return out
 
     @staticmethod
@@ -1513,7 +1611,7 @@ def support_planes_of(constraint_set) -> np.ndarray:
 
 
 def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
-                             config) -> Optional[SceneSnapshot]:
+                             config, held_capture=None) -> Optional[SceneSnapshot]:
     """AG3S 의 `CollisionConstraintSet` -> 이 optimizer 가 실제로 쓸 `SceneSnapshot`.
 
     이 함수가 있는 이유는 **AG3S 가 backend 와 무관하게 candidate 를 항상 내놓기** 때문이다.
@@ -1528,6 +1626,9 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
 
     평면(지지면)은 어느 backend 에서도 남는다. 평면 하나는 선형 행 하나로 정확한데 같은 표면을
     복셀로 옮기면 수천 행이 되고 근사도 나빠지기 때문이며, ESDF 쪽은 그 표면을 필드에서 파낸다.
+
+    `held_capture` (T43 HM): `(K, 4)` `[cx, cy, cz, r]` — `AG3S.held_capture_spheres`, read by the
+    caller that owns the pipeline (`SafePolicy`). Used only with `collision.held_obstacle_margin`.
     """
     spec = constraint_set.constraints
     backend = getattr(getattr(config, "collision", None), "backend", "primitive")
@@ -1616,6 +1717,12 @@ def scene_from_constraint_set(constraint_set, robot_radii: np.ndarray,
             obstacle_margin=obstacle_margin,
             obstacle_margin_support=bool(getattr(collision_cfg, "obstacle_margin_support", False)),
             support_planes=support_planes_of(constraint_set))
+        if bool(getattr(collision_cfg, "held_obstacle_margin", False)):
+            # T43 HM — the held rows are classified too; the capture volume only while holding.
+            obstacle["held_obstacle_margin"] = True
+            if attached_points is not None and held_capture is not None:
+                cap = np.asarray(held_capture, np.float64).reshape(-1, 4)
+                obstacle["held_capture_spheres"] = cap if cap.shape[0] else None
     if spec is None:
         # No `ConstraintSpec` at all. With the field that is a complete scene — an ESDF-only frame
         # never builds the primitive parameter vector — so return a field-only snapshot rather than

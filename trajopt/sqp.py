@@ -638,6 +638,12 @@ class TrajectoryOptimizer:
         # 돌려준다** — clearance sweep 도 forward kinematics 도 늘지 않고 argmin 만 더 돈다.
         # `T5f` 가 *"violated 가 어느 제약인가"* 에서 막힌 것이 이 숫자에 이름이 없었기 때문이다.
         clearance, worst_pair = self.linearizer.worst_row(trajectory, q_now, scene, states)
+        # T43 HM — the held rows' classes on what is returned (read before the path check
+        # re-evaluates the field). `None` unless `held_obstacle_margin` is on and something is held.
+        held_rows = (self.linearizer.held_rows_record()
+                     if getattr(scene, "held_obstacle_margin", False)
+                     and getattr(scene, "esdf", None) is not None
+                     and hasattr(self.linearizer, "held_rows_record") else None)
         violation = max(0.0, -clearance)
         tolerance = cfg.safety.violation_tolerance
         path_record = None
@@ -732,6 +738,7 @@ class TrajectoryOptimizer:
                 # 실제 한계로 다시 잰 값이다 — 후보의 `violation_m` 은 루프 안의 merit 가 본 값이다.
                 **(selection if selection is not None else _no_selection()),
                 **({"path_check": path_record} if path_record is not None else {}),
+                **({"held_rows": held_rows} if held_rows is not None else {}),
             },
         )
 

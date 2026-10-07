@@ -1222,6 +1222,18 @@ class AG3S:
         return None if self._attached is None or self._held_record is None \
             else dict(self._held_record)
 
+    @property
+    def held_capture_spheres(self) -> Optional[np.ndarray]:
+        """`(K, 4)` `[cx, cy, cz, r]` (base frame) — where the held object was when the grasp
+        closed: the volume freed in the TSDF on the first held frames (`_arm_first_free`: the fit
+        spheres at the capture pose, the pre-grasp place + one guard pad). Read-only; `None` when
+        nothing is held or the attach did not arm it (prebuilt geometry). T43 HM: the TO reads it
+        to tell the held object's own remnant from an obstacle (`linearize._held_rows_class`)."""
+        if self._attached is None or not self._held_first_free:
+            return None
+        return np.asarray([[*np.asarray(c, np.float64).reshape(3), float(r)]
+                           for c, r in self._held_first_free], np.float64).reshape(-1, 4)
+
     @staticmethod
     def _primitive_surface_points(geometry) -> Optional[np.ndarray]:
         """Six extreme points per bounding sphere of a points-less attachment (object frame →
