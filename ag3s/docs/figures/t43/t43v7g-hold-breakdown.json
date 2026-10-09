@@ -1,0 +1,117 @@
+{
+ "figure": "/mnt/dev/work/benchmark/ag3s/docs/figures/t43/t43v7g-hold-breakdown.png",
+ "script": "/mnt/dev/work/outputs/verify/T43/V7g/p/fig_v7g.py",
+ "source": "/mnt/dev/work/outputs/verify/T43/V7g/agg.json",
+ "hold": {
+  "V5": {
+   "total": 217,
+   "trailing": 146,
+   "runs_with_hold": 8,
+   "runs_with_trailing": 3,
+   "by_category": {
+    "base": 51,
+    "held": 166
+   },
+   "by_target": {
+    "None": 78,
+    "destination": 139
+   },
+   "by_phase": {
+    "carry": 1,
+    "crate_above": 215,
+    "pre_pick": 1
+   },
+   "cells": {
+    "base|None|carry": 1,
+    "base|None|crate_above": 49,
+    "base|None|pre_pick": 1,
+    "held|None|crate_above": 27,
+    "held|destination|crate_above": 139
+   },
+   "by_stage_total": {
+    "B": 54,
+    "H": 163
+   },
+   "hold_kinds": {
+    "collision": 216,
+    "unverified": 9
+   },
+   "n_none_hurdle_le_50mm": 14
+  },
+  "V5D": {
+   "total": 58,
+   "trailing": 0,
+   "runs_with_hold": 7,
+   "runs_with_trailing": 0,
+   "by_category": {
+    "base": 24,
+    "held": 34
+   },
+   "by_target": {
+    "None": 24,
+    "destination": 34
+   },
+   "by_phase": {
+    "carry": 1,
+    "crate_above": 54,
+    "pre_pick": 1,
+    "release_after": 2
+   },
+   "cells": {
+    "base|None|carry": 1,
+    "base|None|crate_above": 20,
+    "base|None|pre_pick": 1,
+    "base|None|release_after": 1,
+    "base|destination|release_after": 1,
+    "held|None|crate_above": 1,
+    "held|destination|crate_above": 33
+   },
+   "by_stage_total": {
+    "B": 20,
+    "H": 38
+   },
+   "hold_kinds": {
+    "collision": 57,
+    "unverified": 7
+   },
+   "n_none_hurdle_le_50mm": 11
+  },
+  "V7g": {
+   "total": 16,
+   "trailing": 0,
+   "runs_with_hold": 6,
+   "runs_with_trailing": 0,
+   "by_category": {
+    "base": 15,
+    "held": 1
+   },
+   "by_target": {
+    "None": 15,
+    "destination": 1
+   },
+   "by_phase": {
+    "carry": 2,
+    "crate_above": 12,
+    "pre_pick": 1,
+    "release_after": 1
+   },
+   "cells": {
+    "base|None|carry": 1,
+    "base|None|crate_above": 11,
+    "base|None|pre_pick": 1,
+    "base|None|release_after": 1,
+    "base|destination|crate_above": 1,
+    "held|None|carry": 1
+   },
+   "by_stage_total": {
+    "B": 0,
+    "H": 16
+   },
+   "hold_kinds": {
+    "collision": 15,
+    "unverified": 11
+   },
+   "n_none_hurdle_le_50mm": 11
+  }
+ }
+}

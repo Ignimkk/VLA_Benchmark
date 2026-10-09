@@ -1,0 +1,287 @@
+{
+ "figure": "/mnt/dev/work/benchmark/ag3s/docs/figures/t43/t43z3v-table.png",
+ "script": "/mnt/dev/work/outputs/verify/T43/Z3V/p/fig_z3v.py",
+ "source": "/mnt/dev/work/outputs/verify/T43/Z3V/aggregate.json",
+ "paired_2x2_rows": [
+  [
+   "H",
+   "S old",
+   "12/14",
+   "12/14",
+   12,
+   0,
+   0,
+   2,
+   "1.000"
+  ],
+  [
+   "H",
+   "G old",
+   "12/14",
+   "12/14",
+   12,
+   0,
+   0,
+   2,
+   "1.000"
+  ],
+  [
+   "H",
+   "P old",
+   "12/14",
+   "12/14",
+   12,
+   0,
+   0,
+   2,
+   "1.000"
+  ],
+  [
+   "H",
+   "S Z4",
+   "12/14",
+   "12/14",
+   12,
+   0,
+   0,
+   2,
+   "1.000"
+  ],
+  [
+   "H",
+   "P Z4",
+   "12/14",
+   "12/14",
+   12,
+   0,
+   0,
+   2,
+   "1.000"
+  ],
+  [
+   "H",
+   "released Z4",
+   "12/14",
+   "12/14",
+   12,
+   0,
+   0,
+   2,
+   "1.000"
+  ],
+  [
+   "B",
+   "S old",
+   "4/5",
+   "4/5",
+   4,
+   0,
+   0,
+   1,
+   "1.000"
+  ],
+  [
+   "B",
+   "G old",
+   "4/5",
+   "4/5",
+   4,
+   0,
+   0,
+   1,
+   "1.000"
+  ],
+  [
+   "B",
+   "P old",
+   "4/5",
+   "4/5",
+   4,
+   0,
+   0,
+   1,
+   "1.000"
+  ],
+  [
+   "B",
+   "S Z4",
+   "4/5",
+   "4/5",
+   4,
+   0,
+   0,
+   1,
+   "1.000"
+  ],
+  [
+   "B",
+   "P Z4",
+   "4/5",
+   "4/5",
+   4,
+   0,
+   0,
+   1,
+   "1.000"
+  ],
+  [
+   "B",
+   "released Z4",
+   "4/5",
+   "4/5",
+   4,
+   0,
+   0,
+   1,
+   "1.000"
+  ],
+  [
+   "ALL",
+   "S old",
+   "16/19",
+   "16/19",
+   16,
+   0,
+   0,
+   3,
+   "1.000"
+  ],
+  [
+   "ALL",
+   "G old",
+   "16/19",
+   "16/19",
+   16,
+   0,
+   0,
+   3,
+   "1.000"
+  ],
+  [
+   "ALL",
+   "P old",
+   "16/19",
+   "16/19",
+   16,
+   0,
+   0,
+   3,
+   "1.000"
+  ],
+  [
+   "ALL",
+   "S Z4",
+   "16/19",
+   "16/19",
+   16,
+   0,
+   0,
+   3,
+   "1.000"
+  ],
+  [
+   "ALL",
+   "P Z4",
+   "16/19",
+   "16/19",
+   16,
+   0,
+   0,
+   3,
+   "1.000"
+  ],
+  [
+   "ALL",
+   "released Z4",
+   "16/19",
+   "16/19",
+   16,
+   0,
+   0,
+   3,
+   "1.000"
+  ]
+ ],
+ "totals_rows": [
+  [
+   "HOLD chunks (19 runs)",
+   217,
+   58
+  ],
+  [
+   "runs with HOLD",
+   8,
+   7
+  ],
+  [
+   "trailing HOLD chunks (sum)",
+   146,
+   0
+  ],
+  [
+   "runs with trailing HOLD",
+   3,
+   0
+  ],
+  [
+   "held-row violation chunks (all)",
+   166,
+   34
+  ],
+  [
+   "held-row violation chunks, t >= detach_t",
+   0,
+   0
+  ],
+  [
+   "runs with detach",
+   12,
+   16
+  ],
+  [
+   "runs with slip detach",
+   0,
+   10
+  ],
+  [
+   "chunks after detach",
+   322,
+   346
+  ],
+  [
+   "  binding row = finger link",
+   320,
+   342
+  ],
+  [
+   "  finger row <= 20 mm from apple surface",
+   0,
+   0
+  ],
+  [
+   "  finger row <= 50 mm from apple surface",
+   2,
+   4
+  ],
+  [
+   "runs ended by obstacle stop",
+   6,
+   11
+  ],
+  [
+   "planning rows (sum)",
+   1234,
+   1046
+  ],
+  [
+   "place_t, 16 runs both placed: mean",
+   "231.5",
+   "231.5"
+  ],
+  [
+   "place_t median diff V5D - V5",
+   "",
+   0.0
+  ]
+ ]
+}

@@ -1,0 +1,447 @@
+{
+ "definitions": "T43 Z4 \u2014 re-score every T43 W run with a release requirement, next to the old rule (verifier, CPU only, no new runs).\n\nusage: z4_release.py OUT_JSON\n\nInputs: physics replays (Y/p/replay_y.py, qpos_mismatch_rows 0) \u2014 V4 / V5 from T43/Y/replay, E0 / V1 / V3 / V5S / V5B from T43/Z/replay;\n  old outcome from T43/W/analysis/analysis.json (E0 V1 V3 V4 V5) and T43/W/analysis_blind/analysis.json (V5S V5B).\nOld rule (unchanged, analyze_e0): grasp = planning-row apple z >= z0 + 50 mm; place = apple centre inside the crate place box at the\n  LAST planning row (crate-local |x| < 0.077, |y| < 0.137, -0.052 < z < 0.075); success = grasp and place.\nRow convention as y_metrics.py: control row i, post-state = replay state index i + 1; d(i) = |apple centre - finger midpoint| (post-state).\n  attach_t   = first analysis server chunk with attach_now (none for E0 / runs without attach); at = attach_t, else grasp_t.\n  release_t  = (Y) last row with >= 1 apple-hand MuJoCo contact sub-step + 1, if that row exists before the run's end and grasp is true\n               -> by construction no apple-hand contact on any row >= release_t.\n  release_mode (Y) = 'open_cmd' if the first row t >= at with applied gripper command >= 0.9 is <= release_t, else 'closed_cmd'.\n  release_with_cmd = applied gripper command at release_t (1 = open, 0 = close).\n  sep_threshold_mm = d(grasp_t row) + 30 mm (analysis hurdle 'apple_left_hand' threshold, recomputed on the replay).\n  sep_t      = first row >= release_t with d > threshold.  sep_kept = sep_t exists and d > threshold on every row from sep_t to the end.\n  in_crate_end = apple centre inside the place box (old box) at the post-state of the LAST control row.\n  in_crate_at_release = same box at the post-state of row release_t (apple centre z may be above the box -> also xy-only flag).\nNew rule: released = release_t exists and sep_kept;  place_rel = released and in_crate_end;  success_rel = grasp (old) and place_rel.\nFlip lists: runs with success != success_rel. McNemar exact two-sided on discordant pairs (min(b,c) binomial, p = min(1, 2 P)),\n  pairs by (episode, seed) of stage H: V5 vs V4, V5B vs V5S, V5 vs V1 (same pairings as W final_agg).",
+ "figure": "/mnt/dev/work/benchmark/ag3s/docs/figures/t43/t43z-release-rescore.png",
+ "arms": {
+  "E0": {
+   "H": {
+    "n": 14,
+    "success": 0,
+    "grasp": 11,
+    "place": 0,
+    "released": 0,
+    "place_rel": 0,
+    "success_rel": 0,
+    "release_open_cmd": 0,
+    "release_closed_cmd": 0,
+    "no_release": 14,
+    "success_rel_open_cmd": 0,
+    "success_rel_closed_cmd": 0,
+    "flip_S_to_F": 0,
+    "flip_F_to_S": 0,
+    "release_t_but_sep_not_kept": 0,
+    "released_not_in_crate_end": 0
+   }
+  },
+  "V1": {
+   "H": {
+    "n": 14,
+    "success": 6,
+    "grasp": 12,
+    "place": 6,
+    "released": 7,
+    "place_rel": 6,
+    "success_rel": 6,
+    "release_open_cmd": 1,
+    "release_closed_cmd": 6,
+    "no_release": 7,
+    "success_rel_open_cmd": 1,
+    "success_rel_closed_cmd": 5,
+    "flip_S_to_F": 0,
+    "flip_F_to_S": 0,
+    "release_t_but_sep_not_kept": 0,
+    "released_not_in_crate_end": 1
+   }
+  },
+  "V3": {
+   "B": {
+    "n": 5,
+    "success": 1,
+    "grasp": 2,
+    "place": 1,
+    "released": 2,
+    "place_rel": 1,
+    "success_rel": 1,
+    "release_open_cmd": 0,
+    "release_closed_cmd": 2,
+    "no_release": 3,
+    "success_rel_open_cmd": 0,
+    "success_rel_closed_cmd": 1,
+    "flip_S_to_F": 0,
+    "flip_F_to_S": 0,
+    "release_t_but_sep_not_kept": 0,
+    "released_not_in_crate_end": 1
+   },
+   "H": {
+    "n": 14,
+    "success": 3,
+    "grasp": 4,
+    "place": 3,
+    "released": 4,
+    "place_rel": 3,
+    "success_rel": 3,
+    "release_open_cmd": 1,
+    "release_closed_cmd": 3,
+    "no_release": 10,
+    "success_rel_open_cmd": 1,
+    "success_rel_closed_cmd": 2,
+    "flip_S_to_F": 0,
+    "flip_F_to_S": 0,
+    "release_t_but_sep_not_kept": 0,
+    "released_not_in_crate_end": 1
+   }
+  },
+  "V4": {
+   "B": {
+    "n": 5,
+    "success": 4,
+    "grasp": 4,
+    "place": 4,
+    "released": 4,
+    "place_rel": 4,
+    "success_rel": 4,
+    "release_open_cmd": 3,
+    "release_closed_cmd": 1,
+    "no_release": 1,
+    "success_rel_open_cmd": 3,
+    "success_rel_closed_cmd": 1,
+    "flip_S_to_F": 0,
+    "flip_F_to_S": 0,
+    "release_t_but_sep_not_kept": 0,
+    "released_not_in_crate_end": 0
+   },
+   "H": {
+    "n": 14,
+    "success": 10,
+    "grasp": 12,
+    "place": 10,
+    "released": 12,
+    "place_rel": 10,
+    "success_rel": 10,
+    "release_open_cmd": 3,
+    "release_closed_cmd": 9,
+    "no_release": 2,
+    "success_rel_open_cmd": 3,
+    "success_rel_closed_cmd": 7,
+    "flip_S_to_F": 0,
+    "flip_F_to_S": 0,
+    "release_t_but_sep_not_kept": 0,
+    "released_not_in_crate_end": 2
+   }
+  },
+  "V5": {
+   "B": {
+    "n": 5,
+    "success": 4,
+    "grasp": 4,
+    "place": 4,
+    "released": 4,
+    "place_rel": 4,
+    "success_rel": 4,
+    "release_open_cmd": 2,
+    "release_closed_cmd": 2,
+    "no_release": 1,
+    "success_rel_open_cmd": 2,
+    "success_rel_closed_cmd": 2,
+    "flip_S_to_F": 0,
+    "flip_F_to_S": 0,
+    "release_t_but_sep_not_kept": 0,
+    "released_not_in_crate_end": 0
+   },
+   "H": {
+    "n": 14,
+    "success": 12,
+    "grasp": 12,
+    "place": 12,
+    "released": 12,
+    "place_rel": 12,
+    "success_rel": 12,
+    "release_open_cmd": 4,
+    "release_closed_cmd": 8,
+    "no_release": 2,
+    "success_rel_open_cmd": 4,
+    "success_rel_closed_cmd": 8,
+    "flip_S_to_F": 0,
+    "flip_F_to_S": 0,
+    "release_t_but_sep_not_kept": 0,
+    "released_not_in_crate_end": 0
+   }
+  },
+  "V5B": {
+   "H": {
+    "n": 14,
+    "success": 12,
+    "grasp": 12,
+    "place": 12,
+    "released": 12,
+    "place_rel": 12,
+    "success_rel": 12,
+    "release_open_cmd": 4,
+    "release_closed_cmd": 8,
+    "no_release": 2,
+    "success_rel_open_cmd": 4,
+    "success_rel_closed_cmd": 8,
+    "flip_S_to_F": 0,
+    "flip_F_to_S": 0,
+    "release_t_but_sep_not_kept": 0,
+    "released_not_in_crate_end": 0
+   }
+  },
+  "V5S": {
+   "H": {
+    "n": 14,
+    "success": 10,
+    "grasp": 11,
+    "place": 10,
+    "released": 11,
+    "place_rel": 10,
+    "success_rel": 10,
+    "release_open_cmd": 4,
+    "release_closed_cmd": 7,
+    "no_release": 3,
+    "success_rel_open_cmd": 4,
+    "success_rel_closed_cmd": 6,
+    "flip_S_to_F": 0,
+    "flip_F_to_S": 0,
+    "release_t_but_sep_not_kept": 0,
+    "released_not_in_crate_end": 1
+   }
+  }
+ },
+ "pairs": {
+  "V5_vs_V4": {
+   "success": {
+    "n_pairs": 14,
+    "both": 10,
+    "V5_only": 2,
+    "V4_only": 0,
+    "neither": 2,
+    "mcnemar_exact_p": 0.5,
+    "V5_only_keys": [
+     "1807_s18071",
+     "1834_s18343"
+    ],
+    "V4_only_keys": []
+   },
+   "success_rel": {
+    "n_pairs": 14,
+    "both": 10,
+    "V5_only": 2,
+    "V4_only": 0,
+    "neither": 2,
+    "mcnemar_exact_p": 0.5,
+    "V5_only_keys": [
+     "1807_s18071",
+     "1834_s18343"
+    ],
+    "V4_only_keys": []
+   },
+   "place_rel": {
+    "n_pairs": 14,
+    "both": 10,
+    "V5_only": 2,
+    "V4_only": 0,
+    "neither": 2,
+    "mcnemar_exact_p": 0.5,
+    "V5_only_keys": [
+     "1807_s18071",
+     "1834_s18343"
+    ],
+    "V4_only_keys": []
+   },
+   "released": {
+    "n_pairs": 14,
+    "both": 12,
+    "V5_only": 0,
+    "V4_only": 0,
+    "neither": 2,
+    "mcnemar_exact_p": 1.0,
+    "V5_only_keys": [],
+    "V4_only_keys": []
+   }
+  },
+  "V5B_vs_V5S": {
+   "success": {
+    "n_pairs": 14,
+    "both": 9,
+    "V5B_only": 3,
+    "V5S_only": 1,
+    "neither": 1,
+    "mcnemar_exact_p": 0.625,
+    "V5B_only_keys": [
+     "1834_s18343",
+     "1967_s19673",
+     "1982_s19823"
+    ],
+    "V5S_only_keys": [
+     "1995_s19953"
+    ]
+   },
+   "success_rel": {
+    "n_pairs": 14,
+    "both": 9,
+    "V5B_only": 3,
+    "V5S_only": 1,
+    "neither": 1,
+    "mcnemar_exact_p": 0.625,
+    "V5B_only_keys": [
+     "1834_s18343",
+     "1967_s19673",
+     "1982_s19823"
+    ],
+    "V5S_only_keys": [
+     "1995_s19953"
+    ]
+   },
+   "place_rel": {
+    "n_pairs": 14,
+    "both": 9,
+    "V5B_only": 3,
+    "V5S_only": 1,
+    "neither": 1,
+    "mcnemar_exact_p": 0.625,
+    "V5B_only_keys": [
+     "1834_s18343",
+     "1967_s19673",
+     "1982_s19823"
+    ],
+    "V5S_only_keys": [
+     "1995_s19953"
+    ]
+   },
+   "released": {
+    "n_pairs": 14,
+    "both": 10,
+    "V5B_only": 2,
+    "V5S_only": 1,
+    "neither": 1,
+    "mcnemar_exact_p": 1.0,
+    "V5B_only_keys": [
+     "1967_s19673",
+     "1982_s19823"
+    ],
+    "V5S_only_keys": [
+     "1995_s19953"
+    ]
+   }
+  },
+  "V5_vs_V1": {
+   "success": {
+    "n_pairs": 14,
+    "both": 6,
+    "V5_only": 6,
+    "V1_only": 0,
+    "neither": 2,
+    "mcnemar_exact_p": 0.03125,
+    "V5_only_keys": [
+     "1807_s18071",
+     "1807_s18073",
+     "1834_s18343",
+     "1925_s19253",
+     "1968_s19683",
+     "1995_s19952"
+    ],
+    "V1_only_keys": []
+   },
+   "success_rel": {
+    "n_pairs": 14,
+    "both": 6,
+    "V5_only": 6,
+    "V1_only": 0,
+    "neither": 2,
+    "mcnemar_exact_p": 0.03125,
+    "V5_only_keys": [
+     "1807_s18071",
+     "1807_s18073",
+     "1834_s18343",
+     "1925_s19253",
+     "1968_s19683",
+     "1995_s19952"
+    ],
+    "V1_only_keys": []
+   },
+   "place_rel": {
+    "n_pairs": 14,
+    "both": 6,
+    "V5_only": 6,
+    "V1_only": 0,
+    "neither": 2,
+    "mcnemar_exact_p": 0.03125,
+    "V5_only_keys": [
+     "1807_s18071",
+     "1807_s18073",
+     "1834_s18343",
+     "1925_s19253",
+     "1968_s19683",
+     "1995_s19952"
+    ],
+    "V1_only_keys": []
+   },
+   "released": {
+    "n_pairs": 14,
+    "both": 7,
+    "V5_only": 5,
+    "V1_only": 0,
+    "neither": 2,
+    "mcnemar_exact_p": 0.0625,
+    "V5_only_keys": [
+     "1807_s18071",
+     "1807_s18073",
+     "1925_s19253",
+     "1968_s19683",
+     "1995_s19952"
+    ],
+    "V1_only_keys": []
+   }
+  }
+ },
+ "flips": [],
+ "table_rows": [
+  [
+   "V5 (A) vs V4 (B)",
+   "old success",
+   10,
+   2,
+   0,
+   2,
+   "0.5"
+  ],
+  [
+   "V5 (A) vs V4 (B)",
+   "new success (release)",
+   10,
+   2,
+   0,
+   2,
+   "0.5"
+  ],
+  [
+   "V5B (A) vs V5S (B)",
+   "old success",
+   9,
+   3,
+   1,
+   1,
+   "0.625"
+  ],
+  [
+   "V5B (A) vs V5S (B)",
+   "new success (release)",
+   9,
+   3,
+   1,
+   1,
+   "0.625"
+  ],
+  [
+   "V5 (A) vs V1 (B)",
+   "old success",
+   6,
+   6,
+   0,
+   2,
+   "0.03125"
+  ],
+  [
+   "V5 (A) vs V1 (B)",
+   "new success (release)",
+   6,
+   6,
+   0,
+   2,
+   "0.03125"
+  ]
+ ],
+ "sources": [
+  "outputs/verify/T43/Z/raw/z4_release.json"
+ ]
+}

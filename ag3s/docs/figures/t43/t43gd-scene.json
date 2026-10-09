@@ -1,0 +1,39 @@
+{
+ "figure": "t43gd-scene.png",
+ "source": "outputs/verify/T43/gate_demo/gd_1995_s19953.mp4 (frame index 300 = control step 300), left V7 gate OFF, right V7g gate ON; time lines from outputs/verify/T43/GD/agg.json",
+ "pair": "H:1995_s19953",
+ "step": 300,
+ "rows_at_step": {
+  "V7": {
+   "chunk_t_step": 296,
+   "label": "place",
+   "latch": "placed",
+   "verdict": "execute",
+   "follow_to": "not_needed",
+   "grounding_status": "ok",
+   "subtask_no_target": false,
+   "mode": "occluded",
+   "exclusion_active": true,
+   "t_placed": 224,
+   "n_hold": 2,
+   "hold_t": [
+    448,
+    456
+   ]
+  },
+  "V7g": {
+   "chunk_t_step": 296,
+   "label": "home",
+   "latch": "placed",
+   "verdict": "execute",
+   "follow_to": "not_needed",
+   "grounding_status": "subtask_gated",
+   "subtask_no_target": true,
+   "mode": "subtask_gated",
+   "exclusion_active": false,
+   "t_placed": 224,
+   "n_hold": 0,
+   "hold_t": []
+  }
+ }
+}

@@ -1,0 +1,62 @@
+{
+ "figure": "benchmark/ag3s/docs/figures/t43/t43v9-hurdle-crossing-scene.png",
+ "script": "/mnt/dev/work/outputs/verify/T43/V9/p/fig_v9_scene.py",
+ "panels": {
+  "V8": {
+   "run": "V8/H/V8_ep1807_s18071",
+   "run_dir": "/mnt/dev/work/outputs/verify/T43/V8/runs/V8/H/V8_ep1807_s18071",
+   "t": 207,
+   "rule": "row of min apple-to-bar distance (series B)",
+   "apple_world": [
+    0.5598220264052752,
+    0.11852983362882148,
+    1.1126239738359238
+   ],
+   "dist_mm_at_row": {
+    "Af": 28.167690737596224,
+    "Ae": 56.05046965454451,
+    "B": 0.06230384216317393,
+    "C": 111.1170154186804
+   },
+   "run_min_mm": {
+    "Af": 4.376384077528779,
+    "Ae": 20.645874901869952,
+    "B": 0.06230384216317393,
+    "C": 72.10440572852696
+   },
+   "success_old": true,
+   "grasp_t": 160,
+   "place_t": 248
+  },
+  "V9": {
+   "run": "V9/H/V9_ep1807_s18071",
+   "run_dir": "/mnt/dev/work/outputs/verify/T43/V9/runs/V9/H/V9_ep1807_s18071",
+   "t": 200,
+   "rule": "row of min apple-to-bar distance (series B)",
+   "apple_world": [
+    0.5654499843291889,
+    0.16507489264393366,
+    1.0656487035243192
+   ],
+   "dist_mm_at_row": {
+    "Af": 23.88804060170583,
+    "Ae": 52.39915815637028,
+    "B": 6.4331135165945454,
+    "C": 113.7088466660477
+   },
+   "run_min_mm": {
+    "Af": 16.80001000237724,
+    "Ae": 21.45158868480881,
+    "B": 6.4331135165945454,
+    "C": 89.63953473725074
+   },
+   "success_old": true,
+   "grasp_t": 128,
+   "place_t": 208
+  }
+ },
+ "cams": [
+  "{'lookat': (0.5654499843291889, 0.16507489264393366, 1.0656487035243192), 'distance': 0.65, 'azimuth': 150.0, 'elevation': -18.0}",
+  "{'lookat': (0.45, 0.0, 0.85), 'distance': 1.7, 'azimuth': 180.0, 'elevation': -18.0}"
+ ]
+}

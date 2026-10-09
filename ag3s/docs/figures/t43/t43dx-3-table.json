@@ -1,0 +1,141 @@
+{
+ "problem1": [
+  [
+   "apple contact point outside held-sphere union (actual pose)",
+   "8/25"
+  ],
+  [
+   "apple slip in hand since attach > 5 mm pad",
+   "18/25"
+  ],
+  [
+   "held rows get obstacle_margin 10 mm (rule: class 'held')",
+   "0/25"
+  ],
+  [
+   "  recorded worst row held -> class 'held'",
+   "16/16"
+  ],
+  [
+   "bar absent in recorded ESDF at contact (d > voxel)",
+   "0/25"
+  ],
+  [
+   "field sees held-sphere overlap at actual pose (d - r < 0)",
+   "20/25"
+  ],
+  [
+   "TO held-row clearance at row k >= 0",
+   "25/25"
+  ],
+  [
+   "held spheres at TO-planned pose clear true bar",
+   "25/25"
+  ],
+  [
+   "apple at TO-planned pose clear true bar",
+   "22/25"
+  ],
+  [
+   "chunk feasible / certified / executed",
+   "25 / 25 / 25"
+  ],
+  [
+   "EE actual vs planned at t* (min / median / max mm)",
+   "23.5 / 43.8 / 67.1"
+  ],
+  [
+   "  all carry rows (median / p90 mm)",
+   "15.0 / 31.0"
+  ]
+ ],
+ "problem2": [
+  [
+   "bar points absent in raw cloud near contact",
+   "0/8"
+  ],
+  [
+   "removed by self-filter (raw vs filtered cloud)",
+   "0/8"
+  ],
+  [
+   "bar pixels near contact self-filtered (any camera, partial)",
+   "2/8"
+  ],
+  [
+   "bar not visible in any camera",
+   "0/8"
+  ],
+  [
+   "head pixel of contact point occluded (hand / arm)",
+   "6/8"
+  ],
+  [
+   "left wrist camera sees bar near contact",
+   "8/8"
+  ],
+  [
+   "contact point outside fine / coarse grid",
+   "0 / 0"
+  ],
+  [
+   "bar present in full layer (d <= 5 mm)",
+   "8/8"
+  ],
+  [
+   "finger rows ask target-free layer",
+   "8/8"
+  ],
+  [
+   "bar absent in target-free layer (d > 5 mm)",
+   "8/8"
+  ],
+  [
+   "contact point inside target-free carve-out ball",
+   "8/8"
+  ],
+  [
+   "AG3S target = bar (>= 90 % target points within 20 mm)",
+   "8/8"
+  ]
+ ],
+ "counts1": {
+  "not_covering": 8,
+  "slip_gt_pad_5mm": 18,
+  "held_obstacle_margin_rule": 0,
+  "worst_row_held_class_held": 16,
+  "worst_row_is_held": 16,
+  "bar_absent_esdf": 0,
+  "field_sees_overlap_actual": 20,
+  "to_held_row_k_ge0": 25,
+  "to_held_min_ge0": 25,
+  "held_planned_true_gt0": 25,
+  "apple_planned_true_gt0": 22,
+  "held_actual_true_lt0": 19,
+  "to_feasible": 25,
+  "certified": 25,
+  "verdict_execute_only": 25,
+  "chunk_all_rows_executed": 25,
+  "row_executed": 25,
+  "held_set_lifted": 0,
+  "near_support_true": 0
+ },
+ "counts2": {
+  "points_absent_raw": 0,
+  "removed_by_selffilter_cloud": 0,
+  "bar_px_selffiltered": 2,
+  "not_visible_any_cam": 0,
+  "head_pb_in_image": 8,
+  "head_pb_occluded": 6,
+  "wrist_l_bar_px_near_gt0": 8,
+  "outside_fine_grid": 0,
+  "outside_coarse_grid": 0,
+  "bar_in_full_layer": 8,
+  "bar_absent_target_free": 8,
+  "query_target_free_layer_fc": 8,
+  "pb_inside_ball": 8,
+  "target_is_bar": 8,
+  "exec_eq_fc_chunk": 8,
+  "replay_exact": 8
+ }
+}

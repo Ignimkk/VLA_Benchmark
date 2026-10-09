@@ -1,0 +1,192 @@
+{
+ "definitions": "T43 Z1 figure t43z-held-sphere-scene \u2014 MuJoCo re-render (recorded qpos of the control row at the chunk start) of ep1925 s19253,\nV4 at t 216 (V4 policy open chunk, executed) and V5 at t 304 (HOLD chunk, apple centre 80 mm above the crate origin), oblique front (azimuth 180, elevation -32) + top close-ups,\nwith the server's held query spheres (raw/server_chunks.json of T43 Y: held_query.centre_world_now, radii) drawn solid and their\nr + 20 mm destination-margin shells drawn faint. True crate signed distance per sphere (Y server_y.py, MuJoCo boxes) in the titles.",
+ "margin_mm": 20.0,
+ "panels": {
+  "V4/H/V4_ep1925_s19253@216_oblique": {
+   "camera": {
+    "lookat": [
+     0.5014331060310973,
+     -0.02218491669707659,
+     0.9258390953259938
+    ],
+    "distance": 0.55,
+    "azimuth": 180.0,
+    "elevation": -32.0
+   }
+  },
+  "V4/H/V4_ep1925_s19253@216_top": {
+   "camera": {
+    "lookat": [
+     0.5014331060310973,
+     -0.02218491669707659,
+     0.9258390953259938
+    ],
+    "distance": 0.62,
+    "azimuth": 90.0,
+    "elevation": -89.0
+   }
+  },
+  "V4/H/V4_ep1925_s19253@216": {
+   "hold": false,
+   "held_query": {
+    "set": "body",
+    "radii_mm": [
+     39.19,
+     39.19,
+     8.886
+    ],
+    "crate_sd_mm_now": [
+     25.324245989630754,
+     24.383372465323927,
+     91.63445362881211
+    ],
+    "centre_world_now": [
+     [
+      0.47695687834103845,
+      -0.04561806054522783,
+      0.9589594893094677
+     ],
+     [
+      0.4773104903262407,
+      -0.04545889042264484,
+      0.9539750153717288
+     ],
+     [
+      0.49433126751930434,
+      -0.04203254921458689,
+      1.0021000672747662
+     ]
+    ],
+    "bottom_z_now": [
+     0.9197694893094678,
+     0.9147850153717288,
+     0.9932140672747662
+    ],
+    "crate_sd_mm_worst_step": [
+     31.5499701615734,
+     31.11949592856384,
+     90.03190394383284
+    ],
+    "centre_world_worst_step": [
+     [
+      0.4842451777785164,
+      -0.04625567750365173,
+      0.9557993225553236
+     ],
+     [
+      0.48476360756321557,
+      -0.04619572655153392,
+      0.9508271003718651
+     ],
+     [
+      0.5002134128846365,
+      -0.04193042596603127,
+      0.9994128803640141
+     ]
+    ]
+   },
+   "apple_in_crate_mm": [
+    -16.99273195113285,
+    -64.40138148384581,
+    69.8621792558184
+   ],
+   "worst": {
+    "query": 0,
+    "link": "ee_left",
+    "obstacle": null,
+    "step": 2,
+    "tier": "fine",
+    "clearance_mm": 5.160723948360157
+   }
+  },
+  "V5/H/V5_ep1925_s19253@304_oblique": {
+   "camera": {
+    "lookat": [
+     0.49946228216755895,
+     -0.021724534663968877,
+     0.9284937269783224
+    ],
+    "distance": 0.55,
+    "azimuth": 180.0,
+    "elevation": -32.0
+   }
+  },
+  "V5/H/V5_ep1925_s19253@304_top": {
+   "camera": {
+    "lookat": [
+     0.49946228216755895,
+     -0.021724534663968877,
+     0.9284937269783224
+    ],
+    "distance": 0.62,
+    "azimuth": 90.0,
+    "elevation": -89.0
+   }
+  },
+  "V5/H/V5_ep1925_s19253@304": {
+   "hold": true,
+   "held_query": {
+    "set": "body",
+    "radii_mm": [
+     58.332,
+     55.795
+    ],
+    "crate_sd_mm_now": [
+     30.823035495714905,
+     2.023895042268235
+    ],
+    "centre_world_now": [
+     [
+      0.49538553184767564,
+      -0.04301374494978797,
+      0.9805481114080583
+     ],
+     [
+      0.46246359682256005,
+      -0.04388439370608754,
+      0.9734267965052316
+     ]
+    ],
+    "bottom_z_now": [
+     0.9222161114080583,
+     0.9176317965052315
+    ],
+    "crate_sd_mm_worst_step": [
+     18.898417224240912,
+     10.871610815899082
+    ],
+    "centre_world_worst_step": [
+     [
+      0.5003208683427849,
+      -0.06367317730791587,
+      0.99013558113373
+     ],
+     [
+      0.4679084500752772,
+      -0.06375774975002882,
+      0.9809294445632588
+     ]
+    ]
+   },
+   "apple_in_crate_mm": [
+    -14.66162025000386,
+    -58.28563146937054,
+    79.81596488252488
+   ],
+   "worst": {
+    "query": 122,
+    "link": "attached:ee_left[0]",
+    "obstacle": "destination",
+    "step": 5,
+    "tier": "fine",
+    "clearance_mm": -7.725356767582795
+   }
+  }
+ },
+ "figure": "/mnt/dev/work/benchmark/ag3s/docs/figures/t43/t43z-held-sphere-scene.png",
+ "script": "/mnt/dev/work/outputs/verify/T43/Z/p/fig_z1_scene.py",
+ "sources": [
+  "outputs/verify/T43/Y/raw/server_chunks.json",
+  "outputs/verify/T43/W/analysis/analysis.json"
+ ]
+}

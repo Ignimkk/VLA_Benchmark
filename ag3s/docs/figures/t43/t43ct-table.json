@@ -1,0 +1,635 @@
+{
+ "figure": "t43ct-table.png",
+ "source": "outputs/verify/T43/CT/raw/ct.json",
+ "per_arm": {
+  "E0": {
+   "n": 14,
+   "S_old": 0,
+   "S_release": 0,
+   "S_contact": 0,
+   "pre_release_contact_runs": 13,
+   "post_release_contact_runs": 0,
+   "obstacle_stop_runs": 13,
+   "any_contact_runs": 13,
+   "pre_release_contact_by_kind": {
+    "hand": 13
+   },
+   "success_rel_with_post_release_contact": 0
+  },
+  "V1": {
+   "n": 14,
+   "S_old": 6,
+   "S_release": 6,
+   "S_contact": 2,
+   "pre_release_contact_runs": 12,
+   "post_release_contact_runs": 4,
+   "obstacle_stop_runs": 11,
+   "any_contact_runs": 13,
+   "pre_release_contact_by_kind": {
+    "hand": 7,
+    "apple": 5
+   },
+   "success_rel_with_post_release_contact": 3
+  },
+  "V3": {
+   "n": 14,
+   "S_old": 3,
+   "S_release": 3,
+   "S_contact": 3,
+   "pre_release_contact_runs": 2,
+   "post_release_contact_runs": 0,
+   "obstacle_stop_runs": 2,
+   "any_contact_runs": 2,
+   "pre_release_contact_by_kind": {
+    "hand": 2
+   },
+   "success_rel_with_post_release_contact": 0
+  },
+  "V4": {
+   "n": 14,
+   "S_old": 10,
+   "S_release": 10,
+   "S_contact": 6,
+   "pre_release_contact_runs": 6,
+   "post_release_contact_runs": 7,
+   "obstacle_stop_runs": 9,
+   "any_contact_runs": 10,
+   "pre_release_contact_by_kind": {
+    "apple": 4,
+    "hand": 2
+   },
+   "success_rel_with_post_release_contact": 6
+  },
+  "V5": {
+   "n": 14,
+   "S_old": 12,
+   "S_release": 12,
+   "S_contact": 9,
+   "pre_release_contact_runs": 5,
+   "post_release_contact_runs": 4,
+   "obstacle_stop_runs": 6,
+   "any_contact_runs": 8,
+   "pre_release_contact_by_kind": {
+    "hand": 2,
+    "apple": 3
+   },
+   "success_rel_with_post_release_contact": 4
+  },
+  "V5D": {
+   "n": 14,
+   "S_old": 12,
+   "S_release": 12,
+   "S_contact": 9,
+   "pre_release_contact_runs": 5,
+   "post_release_contact_runs": 9,
+   "obstacle_stop_runs": 11,
+   "any_contact_runs": 11,
+   "pre_release_contact_by_kind": {
+    "hand": 2,
+    "apple": 3
+   },
+   "success_rel_with_post_release_contact": 9
+  },
+  "V7g": {
+   "n": 14,
+   "S_old": 12,
+   "S_release": 12,
+   "S_contact": 9,
+   "pre_release_contact_runs": 5,
+   "post_release_contact_runs": 6,
+   "obstacle_stop_runs": 8,
+   "any_contact_runs": 10,
+   "pre_release_contact_by_kind": {
+    "apple": 3,
+    "hand": 2
+   },
+   "success_rel_with_post_release_contact": 6
+  },
+  "V5S": {
+   "n": 14,
+   "S_old": 10,
+   "S_release": 10,
+   "S_contact": 6,
+   "pre_release_contact_runs": 7,
+   "post_release_contact_runs": 5,
+   "obstacle_stop_runs": 7,
+   "any_contact_runs": 10,
+   "pre_release_contact_by_kind": {
+    "apple": 5,
+    "hand": 2
+   },
+   "success_rel_with_post_release_contact": 4
+  },
+  "V5B": {
+   "n": 14,
+   "S_old": 12,
+   "S_release": 12,
+   "S_contact": 10,
+   "pre_release_contact_runs": 3,
+   "post_release_contact_runs": 7,
+   "obstacle_stop_runs": 8,
+   "any_contact_runs": 8,
+   "pre_release_contact_by_kind": {
+    "apple": 2,
+    "hand": 1
+   },
+   "success_rel_with_post_release_contact": 7
+  }
+ },
+ "contact_table": [
+  {
+   "body": "EE_BODY_L",
+   "kind": "hand",
+   "phase": "before_grasp",
+   "n_runs": 12,
+   "runs_by_arm": {
+    "V1": 2,
+    "V3": 2,
+    "V4": 2,
+    "V5": 2,
+    "V5D": 2,
+    "V7g": 2
+   },
+   "first_t_min": 455,
+   "first_t_values": [
+    455,
+    466,
+    466,
+    466,
+    471,
+    471,
+    471,
+    479,
+    479,
+    502,
+    508,
+    508
+   ],
+   "max_pen_mm": 0.4634776567687855,
+   "max_force_N": 136.82108589081358
+  },
+  {
+   "body": "ee_finger_l2",
+   "kind": "hand",
+   "phase": "before_grasp",
+   "n_runs": 5,
+   "runs_by_arm": {
+    "E0": 2,
+    "V5S": 2,
+    "V5B": 1
+   },
+   "first_t_min": 160,
+   "first_t_values": [
+    160,
+    197,
+    197,
+    233,
+    311
+   ],
+   "max_pen_mm": 1.400325626388383,
+   "max_force_N": 206.74733911970642
+  },
+  {
+   "body": "apple",
+   "kind": "apple",
+   "phase": "carry",
+   "n_runs": 25,
+   "runs_by_arm": {
+    "V1": 5,
+    "V4": 4,
+    "V5": 3,
+    "V5D": 3,
+    "V7g": 3,
+    "V5S": 5,
+    "V5B": 2
+   },
+   "first_t_min": 150,
+   "first_t_values": [
+    150,
+    159,
+    159,
+    164,
+    164,
+    164,
+    166,
+    166,
+    168,
+    174,
+    175,
+    182,
+    182,
+    183,
+    183,
+    184,
+    186,
+    190,
+    193,
+    197,
+    205,
+    205,
+    206,
+    206,
+    206
+   ],
+   "max_pen_mm": 2.453901064296337,
+   "max_force_N": 151.76536274725368
+  },
+  {
+   "body": "ee_finger_l2",
+   "kind": "hand",
+   "phase": "carry",
+   "n_runs": 15,
+   "runs_by_arm": {
+    "E0": 10,
+    "V1": 5
+   },
+   "first_t_min": 147,
+   "first_t_values": [
+    147,
+    157,
+    162,
+    171,
+    174,
+    178,
+    179,
+    183,
+    195,
+    197,
+    207,
+    209,
+    233,
+    234,
+    245
+   ],
+   "max_pen_mm": 1.6574618465808548,
+   "max_force_N": 320.70233787907034
+  },
+  {
+   "body": "ee_finger_r2",
+   "kind": "hand",
+   "phase": "carry",
+   "n_runs": 1,
+   "runs_by_arm": {
+    "E0": 1
+   },
+   "first_t_min": 224,
+   "first_t_values": [
+    224
+   ],
+   "max_pen_mm": 0.7753212284053457,
+   "max_force_N": 186.9347934994254
+  },
+  {
+   "body": "ee_finger_l2",
+   "kind": "hand",
+   "phase": "after_release",
+   "n_runs": 28,
+   "runs_by_arm": {
+    "V1": 2,
+    "V4": 5,
+    "V5": 4,
+    "V5D": 6,
+    "V7g": 3,
+    "V5S": 3,
+    "V5B": 5
+   },
+   "first_t_min": 239,
+   "first_t_values": [
+    239,
+    255,
+    264,
+    266,
+    270,
+    270,
+    270,
+    270,
+    271,
+    271,
+    271,
+    272,
+    272,
+    275,
+    279,
+    279,
+    288,
+    288,
+    294,
+    295,
+    300,
+    300,
+    307,
+    308,
+    313,
+    321,
+    338,
+    362
+   ],
+   "max_pen_mm": 2.99853277092383,
+   "max_force_N": 388.71973115448986
+  },
+  {
+   "body": "ee_finger_l1",
+   "kind": "hand",
+   "phase": "after_release",
+   "n_runs": 8,
+   "runs_by_arm": {
+    "V4": 2,
+    "V5D": 1,
+    "V7g": 2,
+    "V5S": 1,
+    "V5B": 2
+   },
+   "first_t_min": 251,
+   "first_t_values": [
+    251,
+    252,
+    261,
+    265,
+    271,
+    297,
+    324,
+    489
+   ],
+   "max_pen_mm": 2.773128155976008,
+   "max_force_N": 407.2311390722075
+  },
+  {
+   "body": "link_right_arm_5",
+   "kind": "robot_other",
+   "phase": "after_release",
+   "n_runs": 3,
+   "runs_by_arm": {
+    "V1": 1,
+    "V5D": 1,
+    "V5S": 1
+   },
+   "first_t_min": 239,
+   "first_t_values": [
+    239,
+    241,
+    258
+   ],
+   "max_pen_mm": 0.3538150445669755,
+   "max_force_N": 250.63495717132156
+  },
+  {
+   "body": "apple",
+   "kind": "apple",
+   "phase": "after_release",
+   "n_runs": 2,
+   "runs_by_arm": {
+    "V1": 1,
+    "V5S": 1
+   },
+   "first_t_min": 189,
+   "first_t_values": [
+    189,
+    198
+   ],
+   "max_pen_mm": 0.20601326808973064,
+   "max_force_N": 1.1831627478269084
+  },
+  {
+   "body": "link_right_arm_4",
+   "kind": "robot_other",
+   "phase": "after_release",
+   "n_runs": 2,
+   "runs_by_arm": {
+    "V1": 1,
+    "V7g": 1
+   },
+   "first_t_min": 237,
+   "first_t_values": [
+    237,
+    284
+   ],
+   "max_pen_mm": 1.4270473748641908,
+   "max_force_N": 839.9824892094878
+  },
+  {
+   "body": "FT_SENSOR_R",
+   "kind": "robot_other",
+   "phase": "after_release",
+   "n_runs": 1,
+   "runs_by_arm": {
+    "V5D": 1
+   },
+   "first_t_min": 341,
+   "first_t_values": [
+    341
+   ],
+   "max_pen_mm": 0.22668341595993152,
+   "max_force_N": 0.0
+  },
+  {
+   "body": "link_right_arm_6",
+   "kind": "robot_other",
+   "phase": "after_release",
+   "n_runs": 1,
+   "runs_by_arm": {
+    "V5D": 1
+   },
+   "first_t_min": 341,
+   "first_t_values": [
+    341
+   ],
+   "max_pen_mm": 0.4004421475163854,
+   "max_force_N": 289.0500194605771
+  }
+ ],
+ "pairs": {
+  "V5_vs_V4": {
+   "success": {
+    "n_pairs": 14,
+    "both": 10,
+    "A_only": 2,
+    "B_only": 0,
+    "neither": 2,
+    "A_total": 12,
+    "B_total": 10,
+    "mcnemar_exact_p": 0.5,
+    "A_only_keys": [
+     "1807_s18071",
+     "1834_s18343"
+    ],
+    "B_only_keys": []
+   },
+   "success_rel": {
+    "n_pairs": 14,
+    "both": 10,
+    "A_only": 2,
+    "B_only": 0,
+    "neither": 2,
+    "A_total": 12,
+    "B_total": 10,
+    "mcnemar_exact_p": 0.5,
+    "A_only_keys": [
+     "1807_s18071",
+     "1834_s18343"
+    ],
+    "B_only_keys": []
+   },
+   "success_ct": {
+    "n_pairs": 14,
+    "both": 5,
+    "A_only": 4,
+    "B_only": 1,
+    "neither": 4,
+    "A_total": 9,
+    "B_total": 6,
+    "mcnemar_exact_p": 0.375,
+    "A_only_keys": [
+     "1807_s18071",
+     "1807_s18073",
+     "1834_s18343",
+     "1995_s19953"
+    ],
+    "B_only_keys": [
+     "1968_s19681"
+    ]
+   }
+  },
+  "V5D_vs_V5": {
+   "success": {
+    "n_pairs": 14,
+    "both": 12,
+    "A_only": 0,
+    "B_only": 0,
+    "neither": 2,
+    "A_total": 12,
+    "B_total": 12,
+    "mcnemar_exact_p": 1.0,
+    "A_only_keys": [],
+    "B_only_keys": []
+   },
+   "success_rel": {
+    "n_pairs": 14,
+    "both": 12,
+    "A_only": 0,
+    "B_only": 0,
+    "neither": 2,
+    "A_total": 12,
+    "B_total": 12,
+    "mcnemar_exact_p": 1.0,
+    "A_only_keys": [],
+    "B_only_keys": []
+   },
+   "success_ct": {
+    "n_pairs": 14,
+    "both": 9,
+    "A_only": 0,
+    "B_only": 0,
+    "neither": 5,
+    "A_total": 9,
+    "B_total": 9,
+    "mcnemar_exact_p": 1.0,
+    "A_only_keys": [],
+    "B_only_keys": []
+   }
+  },
+  "V7g_vs_V5D": {
+   "success": {
+    "n_pairs": 14,
+    "both": 12,
+    "A_only": 0,
+    "B_only": 0,
+    "neither": 2,
+    "A_total": 12,
+    "B_total": 12,
+    "mcnemar_exact_p": 1.0,
+    "A_only_keys": [],
+    "B_only_keys": []
+   },
+   "success_rel": {
+    "n_pairs": 14,
+    "both": 12,
+    "A_only": 0,
+    "B_only": 0,
+    "neither": 2,
+    "A_total": 12,
+    "B_total": 12,
+    "mcnemar_exact_p": 1.0,
+    "A_only_keys": [],
+    "B_only_keys": []
+   },
+   "success_ct": {
+    "n_pairs": 14,
+    "both": 7,
+    "A_only": 2,
+    "B_only": 2,
+    "neither": 3,
+    "A_total": 9,
+    "B_total": 9,
+    "mcnemar_exact_p": 1.0,
+    "A_only_keys": [
+     "1968_s19683",
+     "1995_s19952"
+    ],
+    "B_only_keys": [
+     "1925_s19253",
+     "1982_s19822"
+    ]
+   }
+  },
+  "V5B_vs_V5S": {
+   "success": {
+    "n_pairs": 14,
+    "both": 9,
+    "A_only": 3,
+    "B_only": 1,
+    "neither": 1,
+    "A_total": 12,
+    "B_total": 10,
+    "mcnemar_exact_p": 0.625,
+    "A_only_keys": [
+     "1834_s18343",
+     "1967_s19673",
+     "1982_s19823"
+    ],
+    "B_only_keys": [
+     "1995_s19953"
+    ]
+   },
+   "success_rel": {
+    "n_pairs": 14,
+    "both": 9,
+    "A_only": 3,
+    "B_only": 1,
+    "neither": 1,
+    "A_total": 12,
+    "B_total": 10,
+    "mcnemar_exact_p": 0.625,
+    "A_only_keys": [
+     "1834_s18343",
+     "1967_s19673",
+     "1982_s19823"
+    ],
+    "B_only_keys": [
+     "1995_s19953"
+    ]
+   },
+   "success_ct": {
+    "n_pairs": 14,
+    "both": 4,
+    "A_only": 6,
+    "B_only": 2,
+    "neither": 2,
+    "A_total": 10,
+    "B_total": 6,
+    "mcnemar_exact_p": 0.2890625,
+    "A_only_keys": [
+     "1834_s18343",
+     "1967_s19673",
+     "1968_s19683",
+     "1982_s19822",
+     "1982_s19823",
+     "1995_s19952"
+    ],
+    "B_only_keys": [
+     "1807_s18071",
+     "1995_s19953"
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,536 @@
+{
+ "script": "/mnt/dev/work/outputs/verify/T43/OC/p/fig_graph_table_oc.py",
+ "columns": [
+  "run",
+  "t",
+  "body (MJCF)",
+  "kept px near pb\nhead / wristL / wristR",
+  "chunks\nsince seen",
+  "raw / filt\npts near pb",
+  "fine d(pb)\nmm",
+  "field at pf\nvs mesh mm",
+  "target-free\nlayer",
+  "ball R / pb-R\nmm",
+  "robot-filt px\nnear pb",
+  "held-free over bar\n(held chunks)",
+  "post-place\ntarget switch"
+ ],
+ "rows": [
+  [
+   "V7g_ep1807_s18071",
+   261,
+   "ee_finger_l1",
+   "0 / 6187 / 0",
+   0,
+   "14 / 14",
+   "0.0",
+   "-2.2 / -2.7",
+   "none",
+   "-",
+   0,
+   "1 (9)",
+   0
+  ],
+  [
+   "V7g_ep1807_s18073",
+   265,
+   "ee_finger_l1",
+   "123 / 4838 / 0",
+   0,
+   "29 / 29",
+   "0.0",
+   "0.0 / -0.2",
+   "none",
+   "-",
+   0,
+   "1 (14)",
+   0
+  ],
+  [
+   "V7g_ep1834_s18341",
+   237,
+   "link_right_arm_4",
+   "7 / 0 / 0",
+   0,
+   "3 / 3",
+   "0.0",
+   "0.0 / -1.4",
+   "ball",
+   "53 / 275",
+   0,
+   "0 (12)",
+   0
+  ],
+  [
+   "V7g_ep1925_s19251",
+   270,
+   "ee_finger_l2",
+   "46 / 1833 / 0",
+   0,
+   "14 / 14",
+   "0.0",
+   "0.0 / -2.4",
+   "none",
+   "-",
+   0,
+   "1 (14)",
+   0
+  ],
+  [
+   "V7g_ep1982_s19822",
+   275,
+   "ee_finger_l2",
+   "60 / 4497 / 0",
+   0,
+   "36 / 36",
+   "0.0",
+   "0.0 / -0.4",
+   "none",
+   "-",
+   0,
+   "1 (7)",
+   0
+  ],
+  [
+   "V7g_ep1982_s19823",
+   288,
+   "ee_finger_l2",
+   "39 / 2681 / 0",
+   0,
+   "26 / 26",
+   "0.0",
+   "0.0 / -0.2",
+   "none",
+   "-",
+   2295,
+   "1 (16)",
+   0
+  ],
+  [
+   "V8_ep1807_s18071",
+   314,
+   "ee_finger_l2",
+   "0 / 5873 / 0",
+   0,
+   "30 / 30",
+   "0.0",
+   "0.2 / -2.4",
+   "none",
+   "-",
+   0,
+   "1 (14)",
+   0
+  ],
+  [
+   "V8_ep1807_s18073",
+   270,
+   "ee_finger_l2",
+   "27 / 2657 / 0",
+   0,
+   "8 / 8",
+   "0.5",
+   "-4.9 / -5.8",
+   "none",
+   "-",
+   0,
+   "1 (9)",
+   0
+  ],
+  [
+   "V8_ep1834_s18341",
+   249,
+   "link_right_arm_4",
+   "0 / 0 / 0",
+   1,
+   "0 / 0",
+   "0.0",
+   "0.0 / -0.4",
+   "ball",
+   "53 / 271",
+   0,
+   "0 (16)",
+   0
+  ],
+  [
+   "V8_ep1925_s19251",
+   279,
+   "ee_finger_l2",
+   "18 / 2515 / 0",
+   0,
+   "19 / 19",
+   "0.0",
+   "0.0 / -2.3",
+   "none",
+   "-",
+   0,
+   "0 (12)",
+   0
+  ],
+  [
+   "V8_ep1925_s19253",
+   279,
+   "ee_finger_l2",
+   "0 / 3593 / 0",
+   0,
+   "28 / 28",
+   "0.0",
+   "0.0 / -1.7",
+   "none",
+   "-",
+   0,
+   "1 (13)",
+   0
+  ],
+  [
+   "V8_ep1967_s19672",
+   309,
+   "ee_finger_l2",
+   "39 / 921 / 0",
+   0,
+   "18 / 18",
+   "0.7",
+   "0.1 / -1.9",
+   "none",
+   "-",
+   0,
+   "1 (14)",
+   0
+  ],
+  [
+   "V8_ep1968_s19681",
+   288,
+   "ee_finger_l2",
+   "40 / 3432 / 0",
+   0,
+   "22 / 22",
+   "0.8",
+   "0.2 / -1.0",
+   "none",
+   "-",
+   1599,
+   "0 (14)",
+   0
+  ],
+  [
+   "V8_ep1982_s19823",
+   290,
+   "ee_finger_l2",
+   "45 / 4795 / 0",
+   0,
+   "33 / 33",
+   "0.0",
+   "0.0 / -0.5",
+   "none",
+   "-",
+   0,
+   "1 (8)",
+   0
+  ],
+  [
+   "V8_ep1995_s19952",
+   291,
+   "ee_finger_l2",
+   "7 / 5694 / 0",
+   0,
+   "29 / 29",
+   "0.4",
+   "0.0 / -2.4",
+   "none",
+   "-",
+   0,
+   "0 (14)",
+   0
+  ],
+  [
+   "V8_ep1995_s19953",
+   286,
+   "ee_finger_l2",
+   "147 / 981 / 0",
+   0,
+   "29 / 29",
+   "0.0",
+   "0.0 / -1.4",
+   "none",
+   "-",
+   0,
+   "0 (14)",
+   0
+  ]
+ ],
+ "m09_rows": [
+  [
+   "TO clearance (to.metrics)",
+   "-0.87 mm"
+  ],
+  [
+   "worst row",
+   "step 0, query 166, URDF ee_finger_l1 (= MJCF ee_finger_l2), r 7.19 mm"
+  ],
+  [
+   "d full fine at sphere centre",
+   "26.32 mm (record clearance d-r 19.13 mm)"
+  ],
+  [
+   "implied margin d - r - clearance",
+   "20.00 mm (obstacle_margin_class 'target')"
+  ],
+  [
+   "d_obj (held spheres, record)",
+   "22.70 mm; |d - d_obj| = 3.62 mm <= voxel 5 mm"
+  ],
+  [
+   "geometry at obs state",
+   "sphere surface to bar 21.7 mm; MJCF finger to apple -0.13 mm; apple to bar 45.6 mm"
+  ],
+  [
+   "classification / gate",
+   "allowed_contact (tier fine, evidence distance) + budget_only -> execute; tolerance 1e-4 m"
+  ]
+ ],
+ "counts": {
+  "V7g|hand": {
+   "n": 5,
+   "bar_vis_near_any_cam_exec": 5,
+   "bar_vis_near_head_exec": 4,
+   "bar_vis_near_wrist_exec": 5,
+   "pb_occluded_head": 4,
+   "chunks_since_seen_0": 5,
+   "in_raw": 5,
+   "in_filtered": 5,
+   "raw_eq_filtered": 5,
+   "in_full_layer": 5,
+   "target_free_layer_present": 0,
+   "pb_in_ball_exec": 0,
+   "fine_pb_inside": 5,
+   "coarse_pb_inside": 5,
+   "robot_filtered_near_px_gt0": 1,
+   "post_place_target_switch": 0,
+   "post_place_pb_in_ball_any": 0,
+   "held_free_overlapped_bar_any_chunk": 5,
+   "fine_pb_max_after_place_gt5mm": 0,
+   "fine_pb_mm": {
+    "n": 5,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "composed_full_pf_mm": {
+    "n": 5,
+    "median": 0.0,
+    "min": -2.1699582238265878,
+    "max": 0.0
+   },
+   "mesh_pen_mm": {
+    "n": 5,
+    "median": -0.443277433550205,
+    "min": -2.6710373887204963,
+    "max": -0.22338989690110986
+   },
+   "field_minus_mesh_at_contact_mm": {
+    "n": 5,
+    "median": 0.443277433550205,
+    "min": 0.22338989690110986,
+    "max": 2.3594585354623514
+   },
+   "fine_pb_max_after_place_mm": {
+    "n": 5,
+    "median": 0.33562391763553023,
+    "min": 0.018473470845492557,
+    "max": 4.710542969405651
+   },
+   "tk_esdf_minus_geomP_mm": {
+    "n": 5,
+    "median": 56.76628927411173,
+    "min": 20.52946199455156,
+    "max": 80.84086217848417
+   },
+   "esdf_minus_geomP_urdf_mm": {
+    "n": 5,
+    "median": -1.2819183379148953,
+    "min": -18.11578777907755,
+    "max": 2.5933751771793467
+   },
+   "tk_clear_link_equals_rec_mjcfname": 5
+  },
+  "V7g|arm": {
+   "n": 1,
+   "bar_vis_near_any_cam_exec": 1,
+   "bar_vis_near_head_exec": 1,
+   "bar_vis_near_wrist_exec": 0,
+   "pb_occluded_head": 1,
+   "chunks_since_seen_0": 1,
+   "in_raw": 1,
+   "in_filtered": 1,
+   "raw_eq_filtered": 1,
+   "in_full_layer": 1,
+   "target_free_layer_present": 1,
+   "pb_in_ball_exec": 0,
+   "fine_pb_inside": 1,
+   "coarse_pb_inside": 1,
+   "robot_filtered_near_px_gt0": 0,
+   "post_place_target_switch": 0,
+   "post_place_pb_in_ball_any": 0,
+   "held_free_overlapped_bar_any_chunk": 0,
+   "fine_pb_max_after_place_gt5mm": 0,
+   "fine_pb_mm": {
+    "n": 1,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "composed_full_pf_mm": {
+    "n": 1,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "mesh_pen_mm": {
+    "n": 1,
+    "median": -1.4270473748641908,
+    "min": -1.4270473748641908,
+    "max": -1.4270473748641908
+   },
+   "field_minus_mesh_at_contact_mm": {
+    "n": 1,
+    "median": 1.4270473748641908,
+    "min": 1.4270473748641908,
+    "max": 1.4270473748641908
+   },
+   "fine_pb_max_after_place_mm": {
+    "n": 1,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "tk_esdf_minus_geomP_mm": {
+    "n": 0
+   },
+   "esdf_minus_geomP_urdf_mm": {
+    "n": 0
+   },
+   "tk_clear_link_equals_rec_mjcfname": 0
+  },
+  "V8|hand": {
+   "n": 9,
+   "bar_vis_near_any_cam_exec": 9,
+   "bar_vis_near_head_exec": 7,
+   "bar_vis_near_wrist_exec": 9,
+   "pb_occluded_head": 8,
+   "chunks_since_seen_0": 9,
+   "in_raw": 9,
+   "in_filtered": 9,
+   "raw_eq_filtered": 9,
+   "in_full_layer": 9,
+   "target_free_layer_present": 0,
+   "pb_in_ball_exec": 0,
+   "fine_pb_inside": 9,
+   "coarse_pb_inside": 9,
+   "robot_filtered_near_px_gt0": 1,
+   "post_place_target_switch": 0,
+   "post_place_pb_in_ball_any": 0,
+   "held_free_overlapped_bar_any_chunk": 5,
+   "fine_pb_max_after_place_gt5mm": 0,
+   "fine_pb_mm": {
+    "n": 9,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 0.8341018110513687
+   },
+   "composed_full_pf_mm": {
+    "n": 9,
+    "median": 0.0,
+    "min": -4.912746282777202,
+    "max": 0.21583890835033115
+   },
+   "mesh_pen_mm": {
+    "n": 9,
+    "median": -1.939808271837663,
+    "min": -5.795300221963346,
+    "max": -0.5177913277357223
+   },
+   "field_minus_mesh_at_contact_mm": {
+    "n": 9,
+    "median": 1.6901076285253254,
+    "min": 0.5177913277357223,
+    "max": 2.609743169156486
+   },
+   "fine_pb_max_after_place_mm": {
+    "n": 9,
+    "median": 0.8341018110513687,
+    "min": 0.0,
+    "max": 3.1378609128296375
+   },
+   "tk_esdf_minus_geomP_mm": {
+    "n": 9,
+    "median": 66.9370145768164,
+    "min": 36.81614480812392,
+    "max": 81.56129353967805
+   },
+   "esdf_minus_geomP_urdf_mm": {
+    "n": 9,
+    "median": -12.760817312787502,
+    "min": -46.46277941863694,
+    "max": -3.0921994772801895
+   },
+   "tk_clear_link_equals_rec_mjcfname": 9
+  },
+  "V8|arm": {
+   "n": 1,
+   "bar_vis_near_any_cam_exec": 0,
+   "bar_vis_near_head_exec": 0,
+   "bar_vis_near_wrist_exec": 0,
+   "pb_occluded_head": 1,
+   "chunks_since_seen_0": 0,
+   "in_raw": 0,
+   "in_filtered": 0,
+   "raw_eq_filtered": 1,
+   "in_full_layer": 1,
+   "target_free_layer_present": 1,
+   "pb_in_ball_exec": 0,
+   "fine_pb_inside": 1,
+   "coarse_pb_inside": 1,
+   "robot_filtered_near_px_gt0": 0,
+   "post_place_target_switch": 0,
+   "post_place_pb_in_ball_any": 0,
+   "held_free_overlapped_bar_any_chunk": 0,
+   "fine_pb_max_after_place_gt5mm": 0,
+   "fine_pb_mm": {
+    "n": 1,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "composed_full_pf_mm": {
+    "n": 1,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "mesh_pen_mm": {
+    "n": 1,
+    "median": -0.42863058683378574,
+    "min": -0.42863058683378574,
+    "max": -0.42863058683378574
+   },
+   "field_minus_mesh_at_contact_mm": {
+    "n": 1,
+    "median": 0.42863058683378574,
+    "min": 0.42863058683378574,
+    "max": 0.42863058683378574
+   },
+   "fine_pb_max_after_place_mm": {
+    "n": 1,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "tk_esdf_minus_geomP_mm": {
+    "n": 0
+   },
+   "esdf_minus_geomP_urdf_mm": {
+    "n": 0
+   },
+   "tk_clear_link_equals_rec_mjcfname": 0
+  }
+ }
+}

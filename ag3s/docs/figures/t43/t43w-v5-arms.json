@@ -1,0 +1,79 @@
+{
+ "arms": {
+  "E0": {
+   "H": {
+    "n": 14,
+    "success": 0,
+    "grasp": 11,
+    "place": 0
+   }
+  },
+  "V1": {
+   "H": {
+    "n": 14,
+    "success": 6,
+    "grasp": 12,
+    "place": 6
+   }
+  },
+  "V3": {
+   "H": {
+    "n": 14,
+    "success": 3,
+    "grasp": 4,
+    "place": 3
+   },
+   "B_no_obstacle": {
+    "n": 5,
+    "success": 1,
+    "grasp": 2,
+    "place": 1
+   }
+  },
+  "V4": {
+   "H": {
+    "n": 14,
+    "success": 10,
+    "grasp": 12,
+    "place": 10
+   },
+   "B_no_obstacle": {
+    "n": 5,
+    "success": 4,
+    "grasp": 4,
+    "place": 4
+   }
+  },
+  "V5": {
+   "H": {
+    "n": 14,
+    "success": 12,
+    "grasp": 12,
+    "place": 12
+   },
+   "B_no_obstacle": {
+    "n": 5,
+    "success": 4,
+    "grasp": 4,
+    "place": 4
+   }
+  },
+  "V5S": {
+   "H": {
+    "n": 14,
+    "success": 10,
+    "grasp": 11,
+    "place": 10
+   }
+  },
+  "V5B": {
+   "H": {
+    "n": 14,
+    "success": 12,
+    "grasp": 12,
+    "place": 12
+   }
+  }
+ },
+ "definitions": "T43W final figures (verifier): V5 rerun (snapshot 3) + blind round (snapshot /mnt/dev/work-t43b).\ninputs : final/numbers_main.json, final/numbers_blind.json, final/agg.json (final_agg.py), analysis/analysis.json, analysis_blind/analysis.json\noutputs: benchmark/ag3s/docs/figures/t43/{t43w-v5-arms, t43w-v5b-v5s-pairs, t43w-v5-fail-scene}.{png,json}\narms       : hurdle 14 success / grasp / place per arm E0 V1 V3 V4 V5 V5S V5B (left, bars of count of 14) and the no-obstacle 5 (V3 V4 V5, right).\npairs      : V5B vs V5S, 14 (episode, seed) pairs: outcome S / G / - and failure stage per arm (definitions in final_agg.py), 2x2 + exact McNemar p.\nfail-scene : V5 failed hurdle runs (ep1967 s19672, s19673), third-person front frame (recorded third_person_front.mp4, avoidance arrow overlay by the client)\n             at the control row of the minimum hurdle distance over fingers, palm, other robot geoms and the apple (client pair_distance, GJK)."
+}

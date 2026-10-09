@@ -1,0 +1,109 @@
+{
+ "script": "/mnt/dev/work/outputs/verify/T43/CX/p/fig_cx_table.py",
+ "header": [
+  "case",
+  "AB / ABC stage",
+  "1st divergent\nchunk (seq,t) state",
+  "ABC sep. row\nrows in hand\nHOLD rows",
+  "ABC C rows on chunks\ngrasp-8..sep:\nn_over>0 / max slack rad\nmax bvel ratio",
+  "ABC slip mm\nsep-8 / sep-1",
+  "ABC grip cmd\nsep-8..sep-1",
+  "meas. TCP max|a|\nlift AB / ABC m/s^2",
+  "1st closing outward mm\nAB / ABC",
+  "tip-apple at closing mm\nAB / ABC"
+ ],
+ "rows": [
+  [
+   "H:1807_s18071",
+   "success / dropped",
+   "(2, 8) searching",
+   "226 / 90 / 66",
+   "10/13 / 0.0439\n0.66",
+   "6.5 / 7.8",
+   "0.574",
+   "0.63 / 0.65",
+   "0.11 / 0.26",
+   "42.1 / 41.9"
+  ],
+  [
+   "H:1807_s18073",
+   "success / dropped",
+   "(2, 8) searching",
+   "218 / 90 / 66",
+   "10/13 / 0.0391\n0.62",
+   "7.2 / 8.1",
+   "0.573",
+   "0.54 / 1.56",
+   "0.38 / 0.00",
+   "39.0 / 39.8"
+  ],
+  [
+   "H:1967_s19672",
+   "dropped / dropped",
+   "(2, 8) searching",
+   "167 / 7 / 0",
+   "1/2 / 0.0000\n0.15",
+   "- / 13.7",
+   "0.591",
+   "1.48 / 0.17",
+   "-9.72 / -0.89",
+   "37.8 / 36.8"
+  ],
+  [
+   "H:1995_s19953",
+   "success / dropped",
+   "(2, 8) searching",
+   "169 / 17 / 0",
+   "2/4 / 0.0324\n0.17",
+   "0.3 / 23.2",
+   "0.587",
+   "0.68 / 0.42",
+   "-0.04 / -4.13",
+   "36.8 / 36.7"
+  ],
+  [
+   "B:1967_s19672",
+   "success / dropped",
+   "(2, 8) searching",
+   "188 / 20 / 0",
+   "1/4 / 0.0000\n0.18",
+   "0.8 / 20.0",
+   "0.577",
+   "0.61 / 0.73",
+   "0.31 / 0.00",
+   "35.6 / 38.3"
+  ],
+  [
+   "H:1982_s19822",
+   "success / no_grasp",
+   "(2, 8) searching",
+   "134 / 6 / 0",
+   "1/2 / 0.0000\n0.15",
+   "- / 46.6",
+   "0.581",
+   "0.58 / 0.17",
+   "-9.60 / -9.63",
+   "36.3 / 36.3"
+  ],
+  [
+   "B:1982_s19822",
+   "success / no_grasp",
+   "(3, 16) latched",
+   "126 / 6 / 0",
+   "1/2 / 0.0032\n0.07",
+   "- / 16.8",
+   "0.553",
+   "0.76 / 0.54",
+   "-4.46 / 0.31",
+   "37.4 / 36.9"
+  ]
+ ],
+ "notes": [
+  "V11ABC HOLD: 19 (held 17: 1807_s18071 9, 1807_s18073 7, 1967_s19673 1); held binding row = attached:ee_left[0] 11 / [1] 6, refined step 7 in 15/17; TO clearance -40.7 .. -0.2 mm; cloud points inside the sphere 517, nearest true surface = bar for 517; SQP returned initial (reference) 16/17.",
+  "V11AB HOLD: 4 (held 2, 1807 s18071 t160/168, bar, SQP accepted 2/2).",
+  "offline C toggle (ta_offline, recorded inputs, open loop): V11ABC_1807_s18071: HOLD-candidate chunks base 9, collision-row status flips [], identical result 7; V11ABC_1807_s18073: HOLD-candidate chunks base 9, collision-row status flips [19], identical result 7; V11AB_1807_s18071: HOLD-candidate chunks base 3, collision-row status flips [], identical result 0; V11AB_1807_s18073: HOLD-candidate chunks base 0, collision-row status flips [20], identical result 0",
+  "reversal share (n rev / n boundaries): V11AB: other_before 71/320, other_after 65/520, cx_case_before 46/193, cx_case_after 46/322; V11ABC: other_before 61/317, other_after 47/484, cx_case_before 18/131, cx_case_after 141/366",
+  "C rows (problem.py:135-164, :416-426): |X[j+2]-2X[j+1]+X[j]| <= min(max(a_C, |same on reference|), 0.04) + s, X = [u-2, u-1, Q0..Q15], a_C = eps dt^2 / kappa (servo.py:125) = 0.0076-0.0104 rad/row^2; slack weight w_slack*0.01; |Q0 - u-1| <= max_step (weight 10 w_slack)."
+ ],
+ "source": "/mnt/dev/work/outputs/verify/T43/CX/raw/cx_summary.json"
+}

@@ -1,0 +1,200 @@
+{
+ "figure": "/mnt/dev/work/benchmark/ag3s/docs/figures/t43/t43y-y1-scene.png",
+ "script": "/mnt/dev/work/outputs/verify/T43/Y/p/fig_y1_scene.py",
+ "panels": {
+  "V5/H/V5_ep1925_s19253@208": {
+   "mode": "now",
+   "worst": {
+    "query": 122,
+    "link": "attached:ee_left[0]",
+    "obstacle": "destination",
+    "step": 7,
+    "tier": "fine",
+    "clearance_mm": -3.4297966760928507
+   },
+   "hold": true,
+   "held_query": {
+    "set": "body",
+    "radii_mm": [
+     58.332,
+     55.795
+    ]
+   },
+   "crate_sd_mm": [
+    54.31642813417344,
+    43.624698501838445
+   ],
+   "esdf": {
+    "t": 208,
+    "seq": 27,
+    "hold": true,
+    "sphere": 0,
+    "radius_mm": 58.332,
+    "tier": "fine",
+    "obstacle": "destination",
+    "to_clearance_mm": -3.4297966760928507,
+    "d_fine_mm": 74.90253448486328,
+    "d_coarse_mm": 76.20670646429062,
+    "esdf_gap_mm": 16.57053448486328,
+    "implied_margin_mm": 20.00033116095613,
+    "true_sd_mm": 20.422512794737077,
+    "true_sd_min_all_spheres_mm": 7.701529909127112
+   },
+   "apple_in_crate_mm": [
+    -16.46121202254861,
+    -77.90596958191253,
+    140.7683728459119
+   ],
+   "spheres_world": [
+    [
+     0.49443548456350583,
+     -0.061142786568717085,
+     1.034521171083341
+    ],
+    [
+     0.4613684007879407,
+     -0.06185963345531908,
+     1.0280885151683297
+    ]
+   ]
+  },
+  "V5/H/V5_ep1925_s19253@528": {
+   "mode": "worst",
+   "worst": {
+    "query": 122,
+    "link": "attached:ee_left[0]",
+    "obstacle": "destination",
+    "step": 2,
+    "tier": "fine",
+    "clearance_mm": -11.390817189469178
+   },
+   "hold": true,
+   "held_query": {
+    "set": "body",
+    "radii_mm": [
+     58.332,
+     55.795
+    ]
+   },
+   "crate_sd_mm": [
+    15.205403782500355,
+    18.439063902827105
+   ],
+   "esdf": {
+    "t": 528,
+    "seq": 67,
+    "hold": true,
+    "sphere": 0,
+    "radius_mm": 58.332,
+    "tier": "fine",
+    "obstacle": "destination",
+    "to_clearance_mm": -11.390817189469178,
+    "d_fine_mm": 66.9415146112442,
+    "d_coarse_mm": 70.43321430683136,
+    "esdf_gap_mm": 8.609514611244201,
+    "implied_margin_mm": 20.00033180071338,
+    "true_sd_mm": 15.205403782500355,
+    "true_sd_min_all_spheres_mm": 15.205403782500355
+   },
+   "apple_in_crate_mm": [
+    -3.2171776484555124,
+    -55.292114657702356,
+    -22.002758186299616
+   ],
+   "spheres_world": [
+    [
+     0.5162148525675267,
+     -0.026086889123442564,
+     0.977741194520538
+    ],
+    [
+     0.48377447541554375,
+     -0.02720420831253444,
+     0.9687024728705041
+    ]
+   ]
+  },
+  "V4/H/V4_ep1925_s19253@216": {
+   "mode": "now",
+   "worst": {
+    "query": 0,
+    "link": "ee_left",
+    "obstacle": null,
+    "step": 2,
+    "tier": "fine",
+    "clearance_mm": 5.160723948360157
+   },
+   "hold": false,
+   "held_query": {
+    "set": "body",
+    "radii_mm": [
+     39.19,
+     39.19,
+     8.886
+    ]
+   },
+   "crate_sd_mm": [
+    25.324245989630754,
+    24.383372465323927,
+    91.63445362881211
+   ],
+   "esdf": null,
+   "apple_in_crate_mm": [
+    -16.99273195113285,
+    -64.40138148384581,
+    69.8621792558184
+   ],
+   "spheres_world": [
+    [
+     0.47695687834103845,
+     -0.04561806054522783,
+     0.9589594893094677
+    ],
+    [
+     0.4773104903262407,
+     -0.04545889042264484,
+     0.9539750153717288
+    ],
+    [
+     0.49433126751930434,
+     -0.04203254921458689,
+     1.0021000672747662
+    ]
+   ]
+  }
+ },
+ "close_camera": {
+  "lookat": [
+   0.5,
+   -0.02,
+   0.93
+  ],
+  "distance": 0.75,
+  "azimuth": 90.0,
+  "elevation": -6.0
+ },
+ "video_camera": {
+  "lookat": [
+   0.45,
+   0.0,
+   0.85
+  ],
+  "distance": 1.7,
+  "azimuth": 180.0,
+  "elevation": -18.0
+ },
+ "crop_rows_cols": [
+  [
+   60,
+   330
+  ],
+  [
+   150,
+   520
+  ]
+ ],
+ "sources": [
+  "outputs/verify/T43/Y/raw/server_chunks.json",
+  "outputs/verify/T43/Y/raw/esdf_held.json"
+ ]
+}

@@ -1,0 +1,3918 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only.",
+ "step": "T43CX",
+ "date": "2026-10-09",
+ "runs": [
+  {
+   "id": "replay_B",
+   "command": "outputs/verify/T43/CX/p/run_replays_cx.sh (CT/p/replay_ct.py unchanged, CPU, 2 workers)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/CX/replay/",
+   "stdout_log": "outputs/verify/T43/CX/raw/replay_job*.log",
+   "qpos_mismatch_rows": 0
+  },
+  {
+   "id": "extract",
+   "command": "outputs/verify/T43/CX/p/cx_extract.py raw/cx_cases.json raw/tl",
+   "raw_output": "outputs/verify/T43/CX/raw/cx_cases.json",
+   "stdout_log": "outputs/verify/T43/CX/raw/cx_extract.log"
+  },
+  {
+   "id": "hold",
+   "command": "outputs/verify/T43/CX/p/cx_hold.py raw/cx_hold.json",
+   "raw_output": "outputs/verify/T43/CX/raw/cx_hold.json",
+   "stdout_log": "outputs/verify/T43/CX/raw/cx_hold.log"
+  },
+  {
+   "id": "inhand",
+   "command": "outputs/verify/T43/CX/p/cx_inhand.py raw/cx_inhand.json raw/tl",
+   "raw_output": "outputs/verify/T43/CX/raw/cx_inhand.json",
+   "stdout_log": "outputs/verify/T43/CX/raw/cx_inhand.log"
+  },
+  {
+   "id": "offline_c_toggle",
+   "command": "outputs/verify/T43/CX/p/run_offline_cx.sh (cx_offline.py wraps benchmark.trajopt.experiments.ta_offline; variants base/noC on V11ABC, base/addC on V11AB; 1807 s18071 / s18073 chunks 16-31)",
+   "raw_output": "outputs/verify/T43/CX/offline/",
+   "stdout_log": "outputs/verify/T43/CX/offline/*.log"
+  },
+  {
+   "id": "reversal",
+   "command": "outputs/verify/T43/CX/p/cx_reversal.py, cx_reversal_split.py",
+   "raw_output": "outputs/verify/T43/CX/raw/cx_reversal.json, raw/cx_reversal_split.json",
+   "stdout_log": "outputs/verify/T43/CX/raw/cx_reversal.log"
+  },
+  {
+   "id": "grip_population",
+   "command": "outputs/verify/T43/CX/p/cx_grip_pop.py",
+   "raw_output": "outputs/verify/T43/CX/raw/cx_grip_pop.json"
+  },
+  {
+   "id": "summary",
+   "command": "outputs/verify/T43/CX/p/cx_summary.py",
+   "raw_output": "outputs/verify/T43/CX/raw/cx_summary.json"
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "3ca1b21 (snapshot /mnt/dev/work-t43v11)",
+  "dirty_files": [],
+  "code_md5": "outputs/verify/T43/CX/raw/code_md5_cx.txt == outputs/verify/T43/V11/p/code_md5_v11.txt"
+ },
+ "numbers": {
+  "cases": {
+   "H:1807_s18071": {
+    "divergence": {
+     "first_refined_seq_t": [
+      2,
+      8
+     ],
+     "first_reference_seq_t": [
+      3,
+      16
+     ],
+     "first_qpos_seq_t": [
+      3,
+      16
+     ],
+     "grasp_state_at_first": {
+      "V11AB": "searching",
+      "V11ABC": "searching"
+     }
+    },
+    "V11AB": {
+     "stage": "success",
+     "grasp_t_used": 136,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 244,
+     "rows_in_hand": 108,
+     "hold_rows_in_hand": 16,
+     "c_rows_server": null,
+     "c_rows_recomputed_window": {
+      "n_chunks": 15,
+      "n_bind": 151,
+      "n_over": 131,
+      "n_rows": 1680,
+      "slack_max_rad": 0.0986795938014984,
+      "boundary_n_over": 76
+     },
+     "refine_dev_rad_max": 0.22500109672546387,
+     "tcp_dev_mm_max": 99.57122329171506,
+     "n_hold_chunks": 2,
+     "lift_window": {
+      "rows": [
+       136,
+       156
+      ],
+      "acc_cmd_max": 4.019679362386278,
+      "acc_meas_max": 0.6330150538741904,
+      "jerk_cmd_max": 58.34977684557843,
+      "jerk_meas_max": 9.962618119149893
+     },
+     "drop_window": {
+      "rows": [
+       220,
+       248
+      ],
+      "acc_cmd_max": 3.083501395050465,
+      "acc_meas_max": 0.5077846264643677,
+      "jerk_cmd_max": 91.76172913229576,
+      "jerk_meas_max": 8.49008858691962,
+      "acc_rel_max": 11.446424769161212
+     },
+     "slip_mm_tsep_m8": 9.361092453140236,
+     "slip_mm_tsep_m1": 26.114870850769236,
+     "grip_cmd_mean_tsep_m8": 0.6177315711975098,
+     "finger_open_tsep_m1": 0.7457826586485328,
+     "finger_open_at_grasp": 0.720312981970703,
+     "apple_hand_contact_substeps_tsep_m1": 7,
+     "apple_hand_force_N_tsep_m1": 0.9249228843729547,
+     "apple_hand_force_N_at_grasp": 4.922927829987561,
+     "inhand_at_grasp": {
+      "gap_mm": 70.8871739497228,
+      "off_axis_mm": -0.23061657511130423,
+      "off_app_mm": -39.91027381846456,
+      "off_perp_mm": 13.727279906789823
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -48.874813873452126,
+      "off_perp_mm": 20.369345409924225,
+      "rot_deg": 19.000057473573378,
+      "tcp_vz": 0.010962735444077776,
+      "tcp_az": 0.02466023083568525
+     },
+     "first_closing": {
+      "seq": 16,
+      "t": 120,
+      "outward_mm": 0.11139185373501448,
+      "measured_tip_apple_mm": 42.129860018753256,
+      "n_closing_chunks_pre_release": 1,
+      "outward_mm_max_pre_release": 0.11139185373501448
+     }
+    },
+    "V11ABC": {
+     "stage": "dropped",
+     "grasp_t_used": 136,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 226,
+     "rows_in_hand": 90,
+     "hold_rows_in_hand": 66,
+     "c_rows_server": {
+      "n_chunks": 13,
+      "n_chunks_n_over_gt0": 10,
+      "overshoot_max_rad": 0.043889692324904285,
+      "boundary_velocity_ratio_max": 0.662471138725832,
+      "boundary_velocity_overshoot_max_rad": 0
+     },
+     "c_rows_recomputed_window": {
+      "n_chunks": 13,
+      "n_bind": 145,
+      "n_over": 92,
+      "n_rows": 1456,
+      "slack_max_rad": 0.04388969302177429,
+      "boundary_n_over": 64
+     },
+     "refine_dev_rad_max": 0.07500088214874268,
+     "tcp_dev_mm_max": 74.3787166383662,
+     "n_hold_chunks": 9,
+     "lift_window": {
+      "rows": [
+       136,
+       156
+      ],
+      "acc_cmd_max": 1.7732631192024584,
+      "acc_meas_max": 0.650854954035883,
+      "jerk_cmd_max": 47.670026037157314,
+      "jerk_meas_max": 6.422397683698751
+     },
+     "drop_window": {
+      "rows": [
+       202,
+       230
+      ],
+      "acc_cmd_max": 0.013656392177299572,
+      "acc_meas_max": 0.02730862192546963,
+      "jerk_cmd_max": 0.19585524974703217,
+      "jerk_meas_max": 0.3933703610998892,
+      "acc_rel_max": 25.954177394726933
+     },
+     "slip_mm_tsep_m8": 6.467246230607491,
+     "slip_mm_tsep_m1": 7.839314004481937,
+     "grip_cmd_mean_tsep_m8": 0.5744279623031616,
+     "finger_open_tsep_m1": 0.7064890929122918,
+     "finger_open_at_grasp": 0.7177680718304243,
+     "apple_hand_contact_substeps_tsep_m1": 29,
+     "apple_hand_force_N_tsep_m1": 4.380743899528852,
+     "apple_hand_force_N_at_grasp": 5.44975815530519,
+     "inhand_at_grasp": {
+      "gap_mm": 70.66700767182695,
+      "off_axis_mm": -0.3648070590094597,
+      "off_app_mm": -39.70931026340424,
+      "off_perp_mm": 15.948313615150582
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -46.619631943362364,
+      "off_perp_mm": 21.02056361934334,
+      "rot_deg": 19.072083347907785,
+      "tcp_vz": -1.0908155145816778e-06,
+      "tcp_az": -0.00014248134402317092
+     },
+     "first_closing": {
+      "seq": 16,
+      "t": 120,
+      "outward_mm": 0.26075206400867756,
+      "measured_tip_apple_mm": 41.88701736839342,
+      "n_closing_chunks_pre_release": 1,
+      "outward_mm_max_pre_release": 0.26075206400867756
+     }
+    }
+   },
+   "H:1807_s18073": {
+    "divergence": {
+     "first_refined_seq_t": [
+      2,
+      8
+     ],
+     "first_reference_seq_t": [
+      3,
+      16
+     ],
+     "first_qpos_seq_t": [
+      3,
+      16
+     ],
+     "grasp_state_at_first": {
+      "V11AB": "searching",
+      "V11ABC": "searching"
+     }
+    },
+    "V11AB": {
+     "stage": "success",
+     "grasp_t_used": 128,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 230,
+     "rows_in_hand": 102,
+     "hold_rows_in_hand": 0,
+     "c_rows_server": null,
+     "c_rows_recomputed_window": {
+      "n_chunks": 14,
+      "n_bind": 68,
+      "n_over": 58,
+      "n_rows": 1568,
+      "slack_max_rad": 0.12194699704647063,
+      "boundary_n_over": 43
+     },
+     "refine_dev_rad_max": 0.22043827921152115,
+     "tcp_dev_mm_max": 113.58276959005174,
+     "n_hold_chunks": 0,
+     "lift_window": {
+      "rows": [
+       128,
+       148
+      ],
+      "acc_cmd_max": 2.3639273757660555,
+      "acc_meas_max": 0.5449941807945777,
+      "jerk_cmd_max": 60.8134125008191,
+      "jerk_meas_max": 7.351179602515674
+     },
+     "drop_window": {
+      "rows": [
+       206,
+       234
+      ],
+      "acc_cmd_max": 5.844398538117518,
+      "acc_meas_max": 0.7811649316335627,
+      "jerk_cmd_max": 150.47271433295737,
+      "jerk_meas_max": 10.847897627933028,
+      "acc_rel_max": 11.37012293760449
+     },
+     "slip_mm_tsep_m8": 10.216747890270986,
+     "slip_mm_tsep_m1": 26.394048763656066,
+     "grip_cmd_mean_tsep_m8": 0.6208157762885094,
+     "finger_open_tsep_m1": 0.7527008090084722,
+     "finger_open_at_grasp": 0.7201099672698974,
+     "apple_hand_contact_substeps_tsep_m1": 7,
+     "apple_hand_force_N_tsep_m1": 1.0642859851404003,
+     "apple_hand_force_N_at_grasp": 4.985058424937268,
+     "inhand_at_grasp": {
+      "gap_mm": 70.84931016083907,
+      "off_axis_mm": 0.18736639274064604,
+      "off_app_mm": -37.78832744467005,
+      "off_perp_mm": 11.133491689595736
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -47.919177775250795,
+      "off_perp_mm": 17.486960473768917,
+      "rot_deg": 19.51943507419957,
+      "tcp_vz": -0.01290759799067287,
+      "tcp_az": 0.27823594629055315
+     },
+     "first_closing": {
+      "seq": 15,
+      "t": 112,
+      "outward_mm": 0.38275028311967674,
+      "measured_tip_apple_mm": 38.99791514236149,
+      "n_closing_chunks_pre_release": 1,
+      "outward_mm_max_pre_release": 0.38275028311967674
+     }
+    },
+    "V11ABC": {
+     "stage": "dropped",
+     "grasp_t_used": 128,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 218,
+     "rows_in_hand": 90,
+     "hold_rows_in_hand": 66,
+     "c_rows_server": {
+      "n_chunks": 13,
+      "n_chunks_n_over_gt0": 10,
+      "overshoot_max_rad": 0.0391454036721857,
+      "boundary_velocity_ratio_max": 0.6226088680106485,
+      "boundary_velocity_overshoot_max_rad": 0
+     },
+     "c_rows_recomputed_window": {
+      "n_chunks": 13,
+      "n_bind": 147,
+      "n_over": 55,
+      "n_rows": 1456,
+      "slack_max_rad": 0.03914540357887745,
+      "boundary_n_over": 54
+     },
+     "refine_dev_rad_max": 0.030540168285369873,
+     "tcp_dev_mm_max": 29.470761124948375,
+     "n_hold_chunks": 9,
+     "lift_window": {
+      "rows": [
+       128,
+       148
+      ],
+      "acc_cmd_max": 6.716464520158836,
+      "acc_meas_max": 1.5627260833904204,
+      "jerk_cmd_max": 179.80652676460986,
+      "jerk_meas_max": 21.008227924283133
+     },
+     "drop_window": {
+      "rows": [
+       194,
+       222
+      ],
+      "acc_cmd_max": 0.012962599201038693,
+      "acc_meas_max": 0.02596695235376719,
+      "jerk_cmd_max": 0.19180247194238537,
+      "jerk_meas_max": 0.38646310159798497,
+      "acc_rel_max": 20.28619553717623
+     },
+     "slip_mm_tsep_m8": 7.15090540597043,
+     "slip_mm_tsep_m1": 8.144877514343104,
+     "grip_cmd_mean_tsep_m8": 0.5725309252738953,
+     "finger_open_tsep_m1": 0.7044348583625134,
+     "finger_open_at_grasp": 0.7186198828715235,
+     "apple_hand_contact_substeps_tsep_m1": 33,
+     "apple_hand_force_N_tsep_m1": 4.290560996475399,
+     "apple_hand_force_N_at_grasp": 5.036778550238026,
+     "inhand_at_grasp": {
+      "gap_mm": 70.71607390308829,
+      "off_axis_mm": -0.30681011474655107,
+      "off_app_mm": -38.49645464351343,
+      "off_perp_mm": 15.3514442846854
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -45.25153573849058,
+      "off_perp_mm": 21.023315750253552,
+      "rot_deg": 18.45100952790205,
+      "tcp_vz": 7.002770673336656e-06,
+      "tcp_az": 0.00014729283757675127
+     },
+     "first_closing": {
+      "seq": 15,
+      "t": 112,
+      "outward_mm": 0.0,
+      "measured_tip_apple_mm": 39.75547088509595,
+      "n_closing_chunks_pre_release": 1,
+      "outward_mm_max_pre_release": 0.0
+     }
+    }
+   },
+   "H:1967_s19672": {
+    "divergence": {
+     "first_refined_seq_t": [
+      2,
+      8
+     ],
+     "first_reference_seq_t": [
+      3,
+      16
+     ],
+     "first_qpos_seq_t": [
+      3,
+      16
+     ],
+     "grasp_state_at_first": {
+      "V11AB": "searching",
+      "V11ABC": "searching"
+     }
+    },
+    "V11AB": {
+     "stage": "dropped",
+     "grasp_t_used": 160,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 227,
+     "rows_in_hand": 67,
+     "hold_rows_in_hand": 0,
+     "c_rows_server": null,
+     "c_rows_recomputed_window": {
+      "n_chunks": 10,
+      "n_bind": 207,
+      "n_over": 207,
+      "n_rows": 1120,
+      "slack_max_rad": 0.2676741062104702,
+      "boundary_n_over": 102
+     },
+     "refine_dev_rad_max": 0.3699255157262087,
+     "tcp_dev_mm_max": 276.46903537382167,
+     "n_hold_chunks": 0,
+     "lift_window": {
+      "rows": [
+       160,
+       180
+      ],
+      "acc_cmd_max": 7.79607512325949,
+      "acc_meas_max": 1.4831289920971074,
+      "jerk_cmd_max": 232.30344562830822,
+      "jerk_meas_max": 22.969985035105104
+     },
+     "drop_window": {
+      "rows": [
+       203,
+       231
+      ],
+      "acc_cmd_max": 53.80880236298611,
+      "acc_meas_max": 10.331645520605198,
+      "jerk_cmd_max": 1530.5970531471244,
+      "jerk_meas_max": 143.99914244354463,
+      "acc_rel_max": 29.76855338373985
+     },
+     "slip_mm_tsep_m8": 8.827509928057482,
+     "slip_mm_tsep_m1": 13.767330830242859,
+     "grip_cmd_mean_tsep_m8": 0.5609706789255142,
+     "finger_open_tsep_m1": 0.7069536033936641,
+     "finger_open_at_grasp": 0.7148707685063052,
+     "apple_hand_contact_substeps_tsep_m1": 26,
+     "apple_hand_force_N_tsep_m1": 5.9450586483476595,
+     "apple_hand_force_N_at_grasp": 5.238833261334093,
+     "inhand_at_grasp": {
+      "gap_mm": 70.38336421919084,
+      "off_axis_mm": -0.7023686629333914,
+      "off_app_mm": -34.102901595919825,
+      "off_perp_mm": 18.281996840736817
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -45.1338477162068,
+      "off_perp_mm": 21.42046618310444,
+      "rot_deg": 11.617228743942633,
+      "tcp_vz": -0.1435909981201,
+      "tcp_az": 1.2364015513983362
+     },
+     "first_closing": {
+      "seq": 19,
+      "t": 144,
+      "outward_mm": -9.7184615128306,
+      "measured_tip_apple_mm": 37.80097357873319,
+      "n_closing_chunks_pre_release": 11,
+      "outward_mm_max_pre_release": 219.60492498219048
+     }
+    },
+    "V11ABC": {
+     "stage": "dropped",
+     "grasp_t_used": 160,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 167,
+     "rows_in_hand": 7,
+     "hold_rows_in_hand": 0,
+     "c_rows_server": {
+      "n_chunks": 2,
+      "n_chunks_n_over_gt0": 1,
+      "overshoot_max_rad": 3.1560763850135842e-06,
+      "boundary_velocity_ratio_max": 0.1529492793654635,
+      "boundary_velocity_overshoot_max_rad": 0
+     },
+     "c_rows_recomputed_window": {
+      "n_chunks": 2,
+      "n_bind": 11,
+      "n_over": 2,
+      "n_rows": 224,
+      "slack_max_rad": 3.159046173095703e-06,
+      "boundary_n_over": 2
+     },
+     "refine_dev_rad_max": 0.006578564643859863,
+     "tcp_dev_mm_max": 2.9946092099064234,
+     "n_hold_chunks": 0,
+     "lift_window": {
+      "rows": [
+       160,
+       167
+      ],
+      "acc_cmd_max": 1.6821098090427817,
+      "acc_meas_max": 0.17358724132884815,
+      "jerk_cmd_max": 30.13601585584648,
+      "jerk_meas_max": 3.063676368314414
+     },
+     "drop_window": {
+      "rows": [
+       143,
+       171
+      ],
+      "acc_cmd_max": 3.031110218365109,
+      "acc_meas_max": 0.6781998551962665,
+      "jerk_cmd_max": 84.36667340002465,
+      "jerk_meas_max": 9.804876006894839,
+      "acc_rel_max": 15.820462525589003
+     },
+     "slip_mm_tsep_m8": null,
+     "slip_mm_tsep_m1": 13.68858136241601,
+     "grip_cmd_mean_tsep_m8": 0.59115184204919,
+     "finger_open_tsep_m1": 0.7249274086181907,
+     "finger_open_at_grasp": 0.7396861437636184,
+     "apple_hand_contact_substeps_tsep_m1": 15,
+     "apple_hand_force_N_tsep_m1": 5.664130083853957,
+     "apple_hand_force_N_at_grasp": 5.255093624670042,
+     "inhand_at_grasp": {
+      "gap_mm": 72.72036315243284,
+      "off_axis_mm": -0.4779310050271412,
+      "off_app_mm": -35.90764530538267,
+      "off_perp_mm": 10.589985055590303
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -36.371095082959016,
+      "off_perp_mm": 10.839185134634501,
+      "rot_deg": 0.6756422220073873,
+      "tcp_vz": 0.17454872322771153,
+      "tcp_az": 0.012450639994873725
+     },
+     "first_closing": {
+      "seq": 19,
+      "t": 144,
+      "outward_mm": -0.8870791305646151,
+      "measured_tip_apple_mm": 36.80757268687225,
+      "n_closing_chunks_pre_release": 1,
+      "outward_mm_max_pre_release": -0.8870791305646151
+     }
+    }
+   },
+   "H:1995_s19953": {
+    "divergence": {
+     "first_refined_seq_t": [
+      2,
+      8
+     ],
+     "first_reference_seq_t": [
+      3,
+      16
+     ],
+     "first_qpos_seq_t": [
+      3,
+      16
+     ],
+     "grasp_state_at_first": {
+      "V11AB": "searching",
+      "V11ABC": "searching"
+     }
+    },
+    "V11AB": {
+     "stage": "success",
+     "grasp_t_used": 152,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 260,
+     "rows_in_hand": 108,
+     "hold_rows_in_hand": 0,
+     "c_rows_server": null,
+     "c_rows_recomputed_window": {
+      "n_chunks": 15,
+      "n_bind": 90,
+      "n_over": 90,
+      "n_rows": 1680,
+      "slack_max_rad": 0.11277658402919769,
+      "boundary_n_over": 65
+     },
+     "refine_dev_rad_max": 0.14999985694885254,
+     "tcp_dev_mm_max": 116.53396599048574,
+     "n_hold_chunks": 0,
+     "lift_window": {
+      "rows": [
+       152,
+       172
+      ],
+      "acc_cmd_max": 2.0730194557934083,
+      "acc_meas_max": 0.6790970543267605,
+      "jerk_cmd_max": 36.55746557620478,
+      "jerk_meas_max": 4.427734042103744
+     },
+     "drop_window": {
+      "rows": [
+       236,
+       264
+      ],
+      "acc_cmd_max": 3.742436463689734,
+      "acc_meas_max": 0.8402048489084581,
+      "jerk_cmd_max": 110.22387131409484,
+      "jerk_meas_max": 9.834271532334332,
+      "acc_rel_max": 9.96546344944287
+     },
+     "slip_mm_tsep_m8": 9.632841380686546,
+     "slip_mm_tsep_m1": 24.721106213984804,
+     "grip_cmd_mean_tsep_m8": 0.6235421746969223,
+     "finger_open_tsep_m1": 0.7489394509774795,
+     "finger_open_at_grasp": 0.7244472781070854,
+     "apple_hand_contact_substeps_tsep_m1": 7,
+     "apple_hand_force_N_tsep_m1": 0.7139706543811652,
+     "apple_hand_force_N_at_grasp": 5.046375206730565,
+     "inhand_at_grasp": {
+      "gap_mm": 71.32848077708431,
+      "off_axis_mm": -0.22114807591832053,
+      "off_app_mm": -35.810685264398735,
+      "off_perp_mm": 12.453900890415277
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -44.46527100671208,
+      "off_perp_mm": 18.370370194517097,
+      "rot_deg": 18.48405818565906,
+      "tcp_vz": 0.005967814296203855,
+      "tcp_az": 0.3700220421506306
+     },
+     "first_closing": {
+      "seq": 17,
+      "t": 128,
+      "outward_mm": -0.03852095347125584,
+      "measured_tip_apple_mm": 36.767644115016225,
+      "n_closing_chunks_pre_release": 2,
+      "outward_mm_max_pre_release": -0.03852095347125584
+     }
+    },
+    "V11ABC": {
+     "stage": "dropped",
+     "grasp_t_used": 152,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 169,
+     "rows_in_hand": 17,
+     "hold_rows_in_hand": 0,
+     "c_rows_server": {
+      "n_chunks": 4,
+      "n_chunks_n_over_gt0": 2,
+      "overshoot_max_rad": 0.03236813946132474,
+      "boundary_velocity_ratio_max": 0.1666214789632364,
+      "boundary_velocity_overshoot_max_rad": 0
+     },
+     "c_rows_recomputed_window": {
+      "n_chunks": 4,
+      "n_bind": 6,
+      "n_over": 4,
+      "n_rows": 448,
+      "slack_max_rad": 6.150527954101349e-06,
+      "boundary_n_over": 2
+     },
+     "refine_dev_rad_max": 0.08434247970581055,
+     "tcp_dev_mm_max": 74.4587964056922,
+     "n_hold_chunks": 0,
+     "lift_window": {
+      "rows": [
+       152,
+       169
+      ],
+      "acc_cmd_max": 2.03982510770084,
+      "acc_meas_max": 0.4191893993770389,
+      "jerk_cmd_max": 31.430123668475872,
+      "jerk_meas_max": 5.0162577129569135
+     },
+     "drop_window": {
+      "rows": [
+       145,
+       173
+      ],
+      "acc_cmd_max": 2.03982510770084,
+      "acc_meas_max": 0.5677298587594555,
+      "jerk_cmd_max": 60.28677319381788,
+      "jerk_meas_max": 7.439015208243595,
+      "acc_rel_max": 14.578742228673336
+     },
+     "slip_mm_tsep_m8": 0.2503543749045376,
+     "slip_mm_tsep_m1": 23.169427067412308,
+     "grip_cmd_mean_tsep_m8": 0.5868713408708572,
+     "finger_open_tsep_m1": 0.7069786379017399,
+     "finger_open_at_grasp": 0.727762234051827,
+     "apple_hand_contact_substeps_tsep_m1": 6,
+     "apple_hand_force_N_tsep_m1": 0.9568113653123841,
+     "apple_hand_force_N_at_grasp": 4.942518796642133,
+     "inhand_at_grasp": {
+      "gap_mm": 71.5692127629728,
+      "off_axis_mm": -0.2474394514150069,
+      "off_app_mm": -35.78892385237782,
+      "off_perp_mm": 14.256131669502478
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -36.98760683107455,
+      "off_perp_mm": 14.6981051424695,
+      "rot_deg": 3.619628539380003,
+      "tcp_vz": 0.037420895747677374,
+      "tcp_az": -0.2762743481410146
+     },
+     "first_closing": {
+      "seq": 18,
+      "t": 136,
+      "outward_mm": -4.131435973809047,
+      "measured_tip_apple_mm": 36.699797757466705,
+      "n_closing_chunks_pre_release": 1,
+      "outward_mm_max_pre_release": -4.131435973809047
+     }
+    }
+   },
+   "B:1967_s19672": {
+    "divergence": {
+     "first_refined_seq_t": [
+      2,
+      8
+     ],
+     "first_reference_seq_t": [
+      3,
+      16
+     ],
+     "first_qpos_seq_t": [
+      3,
+      16
+     ],
+     "grasp_state_at_first": {
+      "V11AB": "searching",
+      "V11ABC": "searching"
+     }
+    },
+    "V11AB": {
+     "stage": "success",
+     "grasp_t_used": 168,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 247,
+     "rows_in_hand": 79,
+     "hold_rows_in_hand": 0,
+     "c_rows_server": null,
+     "c_rows_recomputed_window": {
+      "n_chunks": 11,
+      "n_bind": 35,
+      "n_over": 28,
+      "n_rows": 1232,
+      "slack_max_rad": 0.012293267614364623,
+      "boundary_n_over": 23
+     },
+     "refine_dev_rad_max": 0.03302857279777527,
+     "tcp_dev_mm_max": 32.79480254986306,
+     "n_hold_chunks": 0,
+     "lift_window": {
+      "rows": [
+       168,
+       188
+      ],
+      "acc_cmd_max": 1.4217282609981867,
+      "acc_meas_max": 0.6129616927158758,
+      "jerk_cmd_max": 27.313620332857514,
+      "jerk_meas_max": 3.8387442888879657
+     },
+     "drop_window": {
+      "rows": [
+       223,
+       251
+      ],
+      "acc_cmd_max": 5.96024051990523,
+      "acc_meas_max": 0.7013994435471679,
+      "jerk_cmd_max": 175.29175544824545,
+      "jerk_meas_max": 13.965887903438439,
+      "acc_rel_max": 10.03973395381537
+     },
+     "slip_mm_tsep_m8": 6.849211143232398,
+     "slip_mm_tsep_m1": 22.384174902944594,
+     "grip_cmd_mean_tsep_m8": 0.6177669614553452,
+     "finger_open_tsep_m1": 0.7460923576667139,
+     "finger_open_at_grasp": 0.717105158350216,
+     "apple_hand_contact_substeps_tsep_m1": 10,
+     "apple_hand_force_N_tsep_m1": 1.180582096065789,
+     "apple_hand_force_N_at_grasp": 5.130003046394264,
+     "inhand_at_grasp": {
+      "gap_mm": 70.57188736121047,
+      "off_axis_mm": -0.2848444825530368,
+      "off_app_mm": -34.182722405790315,
+      "off_perp_mm": 13.713962704050354
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -40.73080114556645,
+      "off_perp_mm": 18.716737794939263,
+      "rot_deg": 18.200719275004623,
+      "tcp_vz": -0.05424265704378595,
+      "tcp_az": 0.047562064024631034
+     },
+     "first_closing": {
+      "seq": 19,
+      "t": 144,
+      "outward_mm": 0.31144462775706216,
+      "measured_tip_apple_mm": 35.552089410833695,
+      "n_closing_chunks_pre_release": 1,
+      "outward_mm_max_pre_release": 0.31144462775706216
+     }
+    },
+    "V11ABC": {
+     "stage": "dropped",
+     "grasp_t_used": 168,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 188,
+     "rows_in_hand": 20,
+     "hold_rows_in_hand": 0,
+     "c_rows_server": {
+      "n_chunks": 4,
+      "n_chunks_n_over_gt0": 1,
+      "overshoot_max_rad": 1.3864759473847243e-07,
+      "boundary_velocity_ratio_max": 0.17870836823899405,
+      "boundary_velocity_overshoot_max_rad": 0
+     },
+     "c_rows_recomputed_window": {
+      "n_chunks": 4,
+      "n_bind": 22,
+      "n_over": 1,
+      "n_rows": 448,
+      "slack_max_rad": 2.384185791015625e-07,
+      "boundary_n_over": 0
+     },
+     "refine_dev_rad_max": 0.002626180648803711,
+     "tcp_dev_mm_max": 1.2755786946902703,
+     "n_hold_chunks": 0,
+     "lift_window": {
+      "rows": [
+       168,
+       188
+      ],
+      "acc_cmd_max": 2.028711446249322,
+      "acc_meas_max": 0.734518310948833,
+      "jerk_cmd_max": 59.68460979542561,
+      "jerk_meas_max": 6.053161997184144
+     },
+     "drop_window": {
+      "rows": [
+       164,
+       192
+      ],
+      "acc_cmd_max": 2.028711446249322,
+      "acc_meas_max": 0.734518310948833,
+      "jerk_cmd_max": 59.68460979542561,
+      "jerk_meas_max": 6.053161997184144,
+      "acc_rel_max": 22.638983120298125
+     },
+     "slip_mm_tsep_m8": 0.8419266393004032,
+     "slip_mm_tsep_m1": 20.02868578399742,
+     "grip_cmd_mean_tsep_m8": 0.5768891423940659,
+     "finger_open_tsep_m1": 0.695861523237564,
+     "finger_open_at_grasp": 0.7223798607526117,
+     "apple_hand_contact_substeps_tsep_m1": 11,
+     "apple_hand_force_N_tsep_m1": 4.264205698357183,
+     "apple_hand_force_N_at_grasp": 5.220846813640968,
+     "inhand_at_grasp": {
+      "gap_mm": 71.03843454377117,
+      "off_axis_mm": -0.23748350847607055,
+      "off_app_mm": -35.94524373287366,
+      "off_perp_mm": 15.260309185878047
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -43.552887515532746,
+      "off_perp_mm": 20.96037572804257,
+      "rot_deg": 7.380190993757214,
+      "tcp_vz": -0.05607329627616231,
+      "tcp_az": -0.06377911530308644
+     },
+     "first_closing": {
+      "seq": 19,
+      "t": 144,
+      "outward_mm": 0.0,
+      "measured_tip_apple_mm": 38.31704563270902,
+      "n_closing_chunks_pre_release": 1,
+      "outward_mm_max_pre_release": 0.0
+     }
+    }
+   },
+   "H:1982_s19822": {
+    "divergence": {
+     "first_refined_seq_t": [
+      2,
+      8
+     ],
+     "first_reference_seq_t": [
+      3,
+      16
+     ],
+     "first_qpos_seq_t": [
+      3,
+      16
+     ],
+     "grasp_state_at_first": {
+      "V11AB": "searching",
+      "V11ABC": "searching"
+     }
+    },
+    "V11AB": {
+     "stage": "success",
+     "grasp_t_used": 136,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 223,
+     "rows_in_hand": 87,
+     "hold_rows_in_hand": 0,
+     "c_rows_server": null,
+     "c_rows_recomputed_window": {
+      "n_chunks": 12,
+      "n_bind": 39,
+      "n_over": 39,
+      "n_rows": 1344,
+      "slack_max_rad": 0.030698142051696777,
+      "boundary_n_over": 35
+     },
+     "refine_dev_rad_max": 0.042786240577697754,
+     "tcp_dev_mm_max": 40.44249207853031,
+     "n_hold_chunks": 0,
+     "lift_window": {
+      "rows": [
+       136,
+       156
+      ],
+      "acc_cmd_max": 1.6089119341881437,
+      "acc_meas_max": 0.5771307243323205,
+      "jerk_cmd_max": 29.63407823251624,
+      "jerk_meas_max": 4.689710391293901
+     },
+     "drop_window": {
+      "rows": [
+       199,
+       227
+      ],
+      "acc_cmd_max": 5.071334936061993,
+      "acc_meas_max": 0.7696053627878374,
+      "jerk_cmd_max": 113.36390466171854,
+      "jerk_meas_max": 11.932171352821536,
+      "acc_rel_max": 10.358790353910681
+     },
+     "slip_mm_tsep_m8": 7.890644889205002,
+     "slip_mm_tsep_m1": 23.46519949525576,
+     "grip_cmd_mean_tsep_m8": 0.6219862923026085,
+     "finger_open_tsep_m1": 0.7470674044259442,
+     "finger_open_at_grasp": 0.7227659510209417,
+     "apple_hand_contact_substeps_tsep_m1": 7,
+     "apple_hand_force_N_tsep_m1": 0.918815534899017,
+     "apple_hand_force_N_at_grasp": 5.597084523313125,
+     "inhand_at_grasp": {
+      "gap_mm": 71.1864075116626,
+      "off_axis_mm": -0.4494791519898912,
+      "off_app_mm": -34.60509294677203,
+      "off_perp_mm": 15.280318380022397
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -42.53720920664276,
+      "off_perp_mm": 20.67288316854855,
+      "rot_deg": 17.011075204170083,
+      "tcp_vz": -0.014458066675310799,
+      "tcp_az": 0.16493140906682358
+     },
+     "first_closing": {
+      "seq": 16,
+      "t": 120,
+      "outward_mm": -9.603098136719154,
+      "measured_tip_apple_mm": 36.26290568499861,
+      "n_closing_chunks_pre_release": 1,
+      "outward_mm_max_pre_release": -9.603098136719154
+     }
+    },
+    "V11ABC": {
+     "stage": "no_grasp",
+     "grasp_t_used": 128,
+     "grasp_t_source": "first_attach_chunk_t",
+     "t_sep": 134,
+     "rows_in_hand": 6,
+     "hold_rows_in_hand": 0,
+     "c_rows_server": {
+      "n_chunks": 2,
+      "n_chunks_n_over_gt0": 1,
+      "overshoot_max_rad": 2.908621654640342e-08,
+      "boundary_velocity_ratio_max": 0.14530692432720899,
+      "boundary_velocity_overshoot_max_rad": 0
+     },
+     "c_rows_recomputed_window": {
+      "n_chunks": 2,
+      "n_bind": 6,
+      "n_over": 0,
+      "n_rows": 224,
+      "slack_max_rad": 0.0,
+      "boundary_n_over": 0
+     },
+     "refine_dev_rad_max": 0.02976924180984497,
+     "tcp_dev_mm_max": 9.69230126801246,
+     "n_hold_chunks": 0,
+     "lift_window": {
+      "rows": [
+       128,
+       134
+      ],
+      "acc_cmd_max": 0.9903698135503826,
+      "acc_meas_max": 0.17477020741540802,
+      "jerk_cmd_max": 22.24230181234938,
+      "jerk_meas_max": 1.502381425972387
+     },
+     "drop_window": {
+      "rows": [
+       110,
+       138
+      ],
+      "acc_cmd_max": 6.136851984795947,
+      "acc_meas_max": 1.4300769781930724,
+      "jerk_cmd_max": 163.99974193805724,
+      "jerk_meas_max": 19.404445748093362,
+      "acc_rel_max": 14.828728587352877
+     },
+     "slip_mm_tsep_m8": null,
+     "slip_mm_tsep_m1": 46.60436270955176,
+     "grip_cmd_mean_tsep_m8": 0.5809942185878754,
+     "finger_open_tsep_m1": 0.6908438078280233,
+     "finger_open_at_grasp": 0.7285237324654223,
+     "apple_hand_contact_substeps_tsep_m1": 1,
+     "apple_hand_force_N_tsep_m1": 1.47217565681387,
+     "apple_hand_force_N_at_grasp": 5.422851107684001,
+     "inhand_at_grasp": {
+      "gap_mm": 71.64289061872371,
+      "off_axis_mm": -0.27065532707497414,
+      "off_app_mm": -33.83920853406201,
+      "off_perp_mm": 12.887321696630815
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -34.134060403591,
+      "off_perp_mm": 12.83500814970553,
+      "rot_deg": 0.5860830239007808,
+      "tcp_vz": 0.17036001268854017,
+      "tcp_az": 0.07989874402439534
+     },
+     "first_closing": {
+      "seq": 16,
+      "t": 120,
+      "outward_mm": -9.633903698573206,
+      "measured_tip_apple_mm": 36.347194058559964,
+      "n_closing_chunks_pre_release": 18,
+      "outward_mm_max_pre_release": 48.26296209603436
+     }
+    }
+   },
+   "B:1982_s19822": {
+    "divergence": {
+     "first_refined_seq_t": [
+      3,
+      16
+     ],
+     "first_reference_seq_t": [
+      3,
+      16
+     ],
+     "first_qpos_seq_t": [
+      3,
+      16
+     ],
+     "grasp_state_at_first": {
+      "V11AB": "latched",
+      "V11ABC": "latched"
+     }
+    },
+    "V11AB": {
+     "stage": "success",
+     "grasp_t_used": 128,
+     "grasp_t_source": "fail_stage.grasp_t",
+     "t_sep": 205,
+     "rows_in_hand": 77,
+     "hold_rows_in_hand": 0,
+     "c_rows_server": null,
+     "c_rows_recomputed_window": {
+      "n_chunks": 11,
+      "n_bind": 36,
+      "n_over": 24,
+      "n_rows": 1232,
+      "slack_max_rad": 0.015235398593783379,
+      "boundary_n_over": 19
+     },
+     "refine_dev_rad_max": 0.045447707176208496,
+     "tcp_dev_mm_max": 26.16981514186878,
+     "n_hold_chunks": 0,
+     "lift_window": {
+      "rows": [
+       128,
+       148
+      ],
+      "acc_cmd_max": 1.6221770986521136,
+      "acc_meas_max": 0.7641577343515172,
+      "jerk_cmd_max": 20.145551502415202,
+      "jerk_meas_max": 4.452484221275904
+     },
+     "drop_window": {
+      "rows": [
+       181,
+       209
+      ],
+      "acc_cmd_max": 4.239681309851465,
+      "acc_meas_max": 0.8375583936949924,
+      "jerk_cmd_max": 116.04920346688752,
+      "jerk_meas_max": 11.57091796599386,
+      "acc_rel_max": 18.770128598908226
+     },
+     "slip_mm_tsep_m8": 8.34956975755193,
+     "slip_mm_tsep_m1": 22.642588442547353,
+     "grip_cmd_mean_tsep_m8": 0.5703460797667503,
+     "finger_open_tsep_m1": 0.6942047863215659,
+     "finger_open_at_grasp": 0.7225061304932587,
+     "apple_hand_contact_substeps_tsep_m1": 9,
+     "apple_hand_force_N_tsep_m1": 4.196550104143678,
+     "apple_hand_force_N_at_grasp": 4.994681790716491,
+     "inhand_at_grasp": {
+      "gap_mm": 71.16384220081213,
+      "off_axis_mm": -0.46918515395970967,
+      "off_app_mm": -34.9583918235572,
+      "off_perp_mm": 15.467545044114077
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -43.61634266700127,
+      "off_perp_mm": 20.66136042799535,
+      "rot_deg": 10.78694736276688,
+      "tcp_vz": -0.12064656949072772,
+      "tcp_az": 0.15339470307682568
+     },
+     "first_closing": {
+      "seq": 15,
+      "t": 112,
+      "outward_mm": -4.462391238264871,
+      "measured_tip_apple_mm": 37.38083690004902,
+      "n_closing_chunks_pre_release": 1,
+      "outward_mm_max_pre_release": -4.462391238264871
+     }
+    },
+    "V11ABC": {
+     "stage": "no_grasp",
+     "grasp_t_used": 120,
+     "grasp_t_source": "first_attach_chunk_t",
+     "t_sep": 126,
+     "rows_in_hand": 6,
+     "hold_rows_in_hand": 0,
+     "c_rows_server": {
+      "n_chunks": 2,
+      "n_chunks_n_over_gt0": 1,
+      "overshoot_max_rad": 0.0031598617240150215,
+      "boundary_velocity_ratio_max": 0.07127786925606908,
+      "boundary_velocity_overshoot_max_rad": 0
+     },
+     "c_rows_recomputed_window": {
+      "n_chunks": 2,
+      "n_bind": 7,
+      "n_over": 7,
+      "n_rows": 224,
+      "slack_max_rad": 0.0031597796745300288,
+      "boundary_n_over": 2
+     },
+     "refine_dev_rad_max": 0.0246695876121521,
+     "tcp_dev_mm_max": 25.079286374245232,
+     "n_hold_chunks": 0,
+     "lift_window": {
+      "rows": [
+       120,
+       126
+      ],
+      "acc_cmd_max": 3.8358703005090766,
+      "acc_meas_max": 0.54018719915478,
+      "jerk_cmd_max": 41.203470680308946,
+      "jerk_meas_max": 11.895770687694972
+     },
+     "drop_window": {
+      "rows": [
+       102,
+       130
+      ],
+      "acc_cmd_max": 4.360723264787536,
+      "acc_meas_max": 0.7903643579739913,
+      "jerk_cmd_max": 122.63413034435798,
+      "jerk_meas_max": 11.895770687694972,
+      "acc_rel_max": 2.8454168292586672
+     },
+     "slip_mm_tsep_m8": null,
+     "slip_mm_tsep_m1": 16.79915555138728,
+     "grip_cmd_mean_tsep_m8": 0.5529790719350179,
+     "finger_open_tsep_m1": 0.6365529212025746,
+     "finger_open_at_grasp": 0.6915745237259816,
+     "apple_hand_contact_substeps_tsep_m1": 19,
+     "apple_hand_force_N_tsep_m1": 9.426032825438998,
+     "apple_hand_force_N_at_grasp": 4.747334587775857,
+     "inhand_at_grasp": {
+      "gap_mm": 68.62741959922671,
+      "off_axis_mm": -0.11365096992203462,
+      "off_app_mm": -31.245325025688274,
+      "off_perp_mm": 21.339138447441194
+     },
+     "inhand_at_tsep_m2": {
+      "off_app_mm": -33.62853073914311,
+      "off_perp_mm": 23.606697587917246,
+      "rot_deg": 0.7039774913380551,
+      "tcp_vz": 0.03334897098840606,
+      "tcp_az": -0.16634005692098552
+     },
+     "first_closing": {
+      "seq": 15,
+      "t": 112,
+      "outward_mm": 0.30991289811001366,
+      "measured_tip_apple_mm": 36.90497392305163,
+      "n_closing_chunks_pre_release": 26,
+      "outward_mm_max_pre_release": 14.229091574410774
+     }
+    }
+   }
+  },
+  "counts": {
+   "n_cases": 7,
+   "first_divergent_refined_seq2_t8": 6,
+   "first_divergent_refined_seq3_t16": 1,
+   "first_divergent_grasp_state": {
+    "searching": 6,
+    "latched": 1
+   },
+   "abc_separation_within_20_rows_of_grasp_row": 5,
+   "abc_separation_after_hold_stretch": 2,
+   "abc_hold_rows_in_hand_nonzero": {
+    "H:1807_s18071": 66,
+    "H:1807_s18073": 66
+   },
+   "abc_chunks_with_server_n_over_gt0_grasp-8_to_sep": {
+    "H:1807_s18071": [
+     10,
+     13
+    ],
+    "H:1807_s18073": [
+     10,
+     13
+    ],
+    "H:1967_s19672": [
+     1,
+     2
+    ],
+    "H:1995_s19953": [
+     2,
+     4
+    ],
+    "B:1967_s19672": [
+     1,
+     4
+    ],
+    "H:1982_s19822": [
+     1,
+     2
+    ],
+    "B:1982_s19822": [
+     1,
+     2
+    ]
+   },
+   "abc_boundary_velocity_ratio_max_grasp-8_to_sep": {
+    "H:1807_s18071": 0.662471138725832,
+    "H:1807_s18073": 0.6226088680106485,
+    "H:1967_s19672": 0.1529492793654635,
+    "H:1995_s19953": 0.1666214789632364,
+    "B:1967_s19672": 0.17870836823899405,
+    "H:1982_s19822": 0.14530692432720899,
+    "B:1982_s19822": 0.07127786925606908
+   },
+   "abc_lift_meas_acc_gt_ab": 3,
+   "abc_first_closing_outward_gt_2mm": 0,
+   "ab_first_closing_outward_gt_2mm": 0,
+   "external_contacts_apple_or_hand_vs_obstacle_before_sep_abc": "0 rows in all 7 cases (cx_cases window apple_obstacle / hand_obstacle_contact_rows_before_tsep)"
+  },
+  "grasp_phase_pooled_from_V11ABC_verify": {
+   "V11AB": {
+    "first_closing_measured_tip_apple_mm_at_chunk_start": {
+     "n": 19,
+     "median": 38.48649122909258,
+     "p90": 42.981881092279366,
+     "min": 35.33597834323501,
+     "max": 44.997045768137994,
+     "mean": 39.0688060830969
+    },
+    "closing_chunks_pooled_pre_release_n": 34,
+    "closing_chunks_pooled_pre_release_n_outward_gt_2mm": 9
+   },
+   "V11ABC": {
+    "first_closing_measured_tip_apple_mm_at_chunk_start": {
+     "n": 19,
+     "median": 38.828600036950085,
+     "p90": 43.15074651196775,
+     "min": 36.347194058559964,
+     "max": 45.27130744034613,
+     "mean": 39.664332730300664
+    },
+    "closing_chunks_pooled_pre_release_n": 64,
+    "closing_chunks_pooled_pre_release_n_outward_gt_2mm": 12
+   }
+  },
+  "hold": {
+   "V11AB": {
+    "n_hold": 4,
+    "n_held": 2,
+    "held_by_run": {
+     "V11AB/H/V11AB_ep1807_s18071": 2
+    },
+    "held_links": {
+     "attached:ee_left[0]": 1,
+     "attached:ee_left[1]": 1
+    },
+    "held_step_counts": {
+     "6": 1,
+     "7": 1
+    },
+    "held_clearance_mm_range": [
+     -38.33248933838711,
+     -32.7958867072714
+    ],
+    "held_bar_gap_mm_range": [
+     -42.0422552809928,
+     -30.32866639030335
+    ],
+    "held_cloud_inside_n_range": [
+     33,
+     39
+    ],
+    "held_cloud_nearest_bar_total": 72,
+    "held_cloud_inside_total": 72,
+    "held_sqp_returned": {
+     "accepted": 2
+    },
+    "held_servo_n_over_range": null,
+    "held_servo_overshoot_max_rad_range": null
+   },
+   "V11ABC": {
+    "n_hold": 19,
+    "n_held": 17,
+    "held_by_run": {
+     "V11ABC/H/V11ABC_ep1807_s18071": 9,
+     "V11ABC/H/V11ABC_ep1807_s18073": 7,
+     "V11ABC/H/V11ABC_ep1967_s19673": 1
+    },
+    "held_links": {
+     "attached:ee_left[0]": 11,
+     "attached:ee_left[1]": 6
+    },
+    "held_step_counts": {
+     "5": 1,
+     "6": 1,
+     "7": 15
+    },
+    "held_clearance_mm_range": [
+     -40.694463431212824,
+     -0.20165064623451148
+    ],
+    "held_bar_gap_mm_range": [
+     -47.56290908534352,
+     175.43171399909477
+    ],
+    "held_cloud_inside_n_range": [
+     0,
+     42
+    ],
+    "held_cloud_nearest_bar_total": 517,
+    "held_cloud_inside_total": 517,
+    "held_sqp_returned": {
+     "accepted": 1,
+     "initial": 16
+    },
+    "held_servo_n_over_range": [
+     0,
+     65
+    ],
+    "held_servo_overshoot_max_rad_range": [
+     0.0,
+     0.043889692324904285
+    ]
+   }
+  },
+  "offline_c_toggle": {
+   "V11ABC_1807_s18071": {
+    "variant": "noC",
+    "chunks": [
+     {
+      "seq": 17,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       3.2
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "initial"
+      ]
+     },
+     {
+      "seq": 18,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.13
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 19,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.01
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 20,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "initial"
+      ]
+     },
+     {
+      "seq": 21,
+      "base": [
+       "violated",
+       40.49,
+       152,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       40.49,
+       152,
+       "initial"
+      ]
+     },
+     {
+      "seq": 22,
+      "base": [
+       "violated",
+       38.46,
+       181,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       38.46,
+       181,
+       "initial"
+      ]
+     },
+     {
+      "seq": 23,
+      "base": [
+       "violated",
+       40.01,
+       313,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       40.01,
+       313,
+       "initial"
+      ]
+     },
+     {
+      "seq": 24,
+      "base": [
+       "violated",
+       40.16,
+       298,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       40.62,
+       76,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 25,
+      "base": [
+       "violated",
+       39.69,
+       95,
+       "accepted",
+       1.08
+      ],
+      "noC": [
+       "violated",
+       32.93,
+       28,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 26,
+      "base": [
+       "violated",
+       40.69,
+       300,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       40.69,
+       300,
+       "initial"
+      ]
+     },
+     {
+      "seq": 27,
+      "base": [
+       "violated",
+       38.46,
+       310,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       38.46,
+       310,
+       "initial"
+      ]
+     },
+     {
+      "seq": 28,
+      "base": [
+       "violated",
+       38.91,
+       309,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       38.91,
+       309,
+       "initial"
+      ]
+     },
+     {
+      "seq": 29,
+      "base": [
+       "violated",
+       38.46,
+       308,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       38.46,
+       308,
+       "initial"
+      ]
+     },
+     {
+      "seq": 30,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.34
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 31,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.03
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     }
+    ]
+   },
+   "V11ABC_1807_s18073": {
+    "variant": "noC",
+    "chunks": [
+     {
+      "seq": 16,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       3.31
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 17,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.19
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 18,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.06
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "initial"
+      ]
+     },
+     {
+      "seq": 19,
+      "base": [
+       "violated",
+       6.49,
+       13,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 20,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "initial"
+      ]
+     },
+     {
+      "seq": 21,
+      "base": [
+       "violated",
+       22.53,
+       112,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       22.53,
+       112,
+       "initial"
+      ]
+     },
+     {
+      "seq": 22,
+      "base": [
+       "violated",
+       33.47,
+       156,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       33.47,
+       156,
+       "initial"
+      ]
+     },
+     {
+      "seq": 23,
+      "base": [
+       "violated",
+       28.54,
+       158,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       28.54,
+       158,
+       "initial"
+      ]
+     },
+     {
+      "seq": 24,
+      "base": [
+       "violated",
+       28.45,
+       154,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       28.45,
+       154,
+       "initial"
+      ]
+     },
+     {
+      "seq": 25,
+      "base": [
+       "violated",
+       25.72,
+       163,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       25.72,
+       163,
+       "initial"
+      ]
+     },
+     {
+      "seq": 26,
+      "base": [
+       "violated",
+       28.54,
+       166,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       28.54,
+       166,
+       "initial"
+      ]
+     },
+     {
+      "seq": 27,
+      "base": [
+       "violated",
+       24.66,
+       161,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       24.66,
+       161,
+       "initial"
+      ]
+     },
+     {
+      "seq": 28,
+      "base": [
+       "violated",
+       25.72,
+       151,
+       "initial",
+       0.0
+      ],
+      "noC": [
+       "violated",
+       39.47,
+       45,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 29,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.12
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 30,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.03
+      ],
+      "noC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     }
+    ]
+   },
+   "V11AB_1807_s18071": {
+    "variant": "addC",
+    "chunks": [
+     {
+      "seq": 17,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "initial",
+       3.11
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 18,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.15
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 19,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.48
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 20,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "initial",
+       0.0
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "initial"
+      ]
+     },
+     {
+      "seq": 21,
+      "base": [
+       "violated",
+       38.5,
+       25,
+       "accepted",
+       5.31
+      ],
+      "addC": [
+       "violated",
+       40.61,
+       143,
+       "initial"
+      ]
+     },
+     {
+      "seq": 22,
+      "base": [
+       "violated",
+       33.0,
+       20,
+       "accepted",
+       2.08
+      ],
+      "addC": [
+       "violated",
+       40.43,
+       156,
+       "initial"
+      ]
+     },
+     {
+      "seq": 23,
+      "base": [
+       "violated",
+       41.68,
+       170,
+       "initial",
+       4.37
+      ],
+      "addC": [
+       "violated",
+       39.55,
+       74,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 24,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.03
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 25,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "projection",
+       0.0
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "projection"
+      ]
+     },
+     {
+      "seq": 26,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "projection",
+       0.0
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "projection"
+      ]
+     }
+    ]
+   },
+   "V11AB_1807_s18073": {
+    "variant": "addC",
+    "chunks": [
+     {
+      "seq": 16,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.19
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 17,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.1
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 18,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.17
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 19,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.01
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 20,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       6.23
+      ],
+      "addC": [
+       "violated",
+       0.85,
+       1,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 21,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.08
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 22,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.06
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 23,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "projection",
+       0.0
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "projection"
+      ]
+     },
+     {
+      "seq": 24,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.36
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     },
+     {
+      "seq": 25,
+      "base": [
+       "feasible",
+       0.0,
+       0,
+       "accepted",
+       0.51
+      ],
+      "addC": [
+       "feasible",
+       0.0,
+       0,
+       "accepted"
+      ]
+     }
+    ]
+   }
+  },
+  "reversal": {
+   "share_ALL": {
+    "V11AB": [
+     228,
+     1355,
+     0.16826568265682657
+    ],
+    "V11ABC": [
+     267,
+     1298,
+     0.20570107858243453
+    ]
+   },
+   "split_at_end_of_task_row": {
+    "V11AB": {
+     "other_before": [
+      320,
+      71
+     ],
+     "other_before_state:searching": [
+      12,
+      8
+     ],
+     "other_before_rev_vmin_mm": [
+      1.56,
+      2.45,
+      3.72,
+      2.61,
+      0.84,
+      2.13,
+      3.06,
+      0.95,
+      4.22,
+      0.96,
+      0.74,
+      0.14,
+      2.03,
+      5.86,
+      1.95,
+      3.4,
+      4.37,
+      2.94,
+      3.3,
+      3.61,
+      11.63,
+      1.2,
+      1.56,
+      2.41,
+      5.63,
+      12.84,
+      3.33,
+      1.73,
+      0.98,
+      3.76,
+      1.13,
+      1.32,
+      17.38,
+      14.95,
+      5.05,
+      5.54,
+      1.56,
+      4.4,
+      2.94,
+      3.1,
+      15.53,
+      2.98,
+      4.7,
+      1.56,
+      0.86,
+      13.39,
+      3.43,
+      16.27,
+      2.49,
+      2.19,
+      1.19,
+      1.63,
+      3.02,
+      2.03,
+      22.7,
+      15.34,
+      1.42,
+      4.43,
+      3.63,
+      0.92,
+      1.71,
+      1.8,
+      8.7,
+      17.69,
+      5.69,
+      2.93,
+      1.27,
+      0.99,
+      2.47,
+      1.79,
+      16.9
+     ],
+     "other_before_state:latched": [
+      158,
+      17
+     ],
+     "other_before_state:closing": [
+      16,
+      2
+     ],
+     "other_before_state:held": [
+      134,
+      44
+     ],
+     "other_after": [
+      520,
+      65
+     ],
+     "other_after_state:held": [
+      36,
+      26
+     ],
+     "other_after_rev_vmin_mm": [
+      1.07,
+      7.18,
+      0.15,
+      0.54,
+      11.64,
+      0.73,
+      2.87,
+      16.72,
+      3.52,
+      3.39,
+      0.87,
+      6.88,
+      1.38,
+      4.99,
+      0.95,
+      10.89,
+      8.75,
+      2.07,
+      0.63,
+      1.36,
+      2.12,
+      6.78,
+      20.78,
+      7.42,
+      3.37,
+      1.05,
+      5.43,
+      3.75,
+      0.69,
+      1.16,
+      0.21,
+      2.24,
+      17.24,
+      15.2,
+      3.62,
+      0.65,
+      2.02,
+      1.07,
+      2.39,
+      4.55,
+      3.52,
+      3.91,
+      0.71,
+      2.38,
+      14.29,
+      10.58,
+      0.51,
+      11.56,
+      9.83,
+      0.19,
+      2.38,
+      1.15,
+      12.41,
+      7.57,
+      1.51,
+      0.77,
+      0.33,
+      3.38,
+      12.71,
+      5.69,
+      3.52,
+      1.12,
+      16.47,
+      14.01,
+      0.85
+     ],
+     "other_after_state:placed": [
+      484,
+      39
+     ],
+     "cx_case_before": [
+      193,
+      46
+     ],
+     "cx_case_before_state:searching": [
+      7,
+      2
+     ],
+     "cx_case_before_state:latched": [
+      96,
+      14
+     ],
+     "cx_case_before_rev_vmin_mm": [
+      2.45,
+      8.17,
+      0.65,
+      4.12,
+      3.82,
+      0.8,
+      2.18,
+      1.54,
+      2.76,
+      2.13,
+      3.33,
+      1.6,
+      16.89,
+      1.94,
+      6.01,
+      1.61,
+      5.01,
+      1.13,
+      1.09,
+      8.46,
+      18.68,
+      15.69,
+      4.57,
+      1.2,
+      1.15,
+      1.83,
+      2.49,
+      2.94,
+      13.92,
+      10.64,
+      10.96,
+      9.44,
+      33.7,
+      10.74,
+      0.39,
+      4.36,
+      0.79,
+      16.49,
+      2.18,
+      3.72,
+      0.98,
+      1.7,
+      18.74,
+      3.94,
+      1.9,
+      1.71
+     ],
+     "cx_case_before_state:closing": [
+      18,
+      7
+     ],
+     "cx_case_before_state:held": [
+      72,
+      23
+     ],
+     "cx_case_after": [
+      322,
+      46
+     ],
+     "cx_case_after_state:held": [
+      12,
+      6
+     ],
+     "cx_case_after_rev_vmin_mm": [
+      0.9,
+      0.84,
+      6.21,
+      3.8,
+      15.89,
+      0.65,
+      19.62,
+      17.93,
+      1.3,
+      1.26,
+      32.29,
+      15.92,
+      16.33,
+      2.59,
+      5.14,
+      1.77,
+      0.9,
+      2.6,
+      1.45,
+      0.6,
+      2.51,
+      3.34,
+      1.9,
+      1.58,
+      0.78,
+      1.15,
+      1.94,
+      1.21,
+      3.21,
+      4.95,
+      3.13,
+      2.58,
+      1.49,
+      3.54,
+      1.45,
+      1.39,
+      1.94,
+      1.81,
+      1.32,
+      0.94,
+      3.18,
+      4.19,
+      11.59,
+      7.02,
+      0.86,
+      15.17
+     ],
+     "cx_case_after_state:placed": [
+      264,
+      12
+     ],
+     "cx_case_after_state:closing": [
+      46,
+      28
+     ]
+    },
+    "V11ABC": {
+     "other_before": [
+      317,
+      61
+     ],
+     "other_before_state:searching": [
+      12,
+      8
+     ],
+     "other_before_rev_vmin_mm": [
+      1.58,
+      3.45,
+      3.41,
+      4.06,
+      1.09,
+      8.26,
+      0.34,
+      2.06,
+      2.01,
+      1.19,
+      1.23,
+      4.39,
+      2.24,
+      2.07,
+      1.35,
+      1.47,
+      0.73,
+      0.6,
+      1.58,
+      5.41,
+      2.38,
+      0.87,
+      1.7,
+      2.15,
+      1.14,
+      9.11,
+      0.88,
+      4.02,
+      1.59,
+      2.03,
+      9.03,
+      4.76,
+      5.16,
+      1.13,
+      4.13,
+      2.23,
+      3.32,
+      1.46,
+      2.08,
+      7.01,
+      3.7,
+      2.12,
+      0.5,
+      2.06,
+      1.63,
+      2.81,
+      1.37,
+      2.08,
+      1.59,
+      3.17,
+      0.93,
+      1.02,
+      1.3,
+      1.73,
+      0.72,
+      4.23,
+      6.46,
+      0.78,
+      3.56,
+      1.39,
+      2.36
+     ],
+     "other_before_state:latched": [
+      160,
+      16
+     ],
+     "other_before_state:closing": [
+      15,
+      3
+     ],
+     "other_before_state:held": [
+      130,
+      34
+     ],
+     "other_after": [
+      484,
+      47
+     ],
+     "other_after_state:held": [
+      33,
+      12
+     ],
+     "other_after_rev_vmin_mm": [
+      1.63,
+      0.53,
+      1.1,
+      1.06,
+      2.02,
+      0.8,
+      8.05,
+      3.26,
+      0.36,
+      1.55,
+      1.86,
+      10.72,
+      1.72,
+      0.71,
+      5.33,
+      3.79,
+      1.34,
+      2.27,
+      3.19,
+      0.95,
+      0.49,
+      0.49,
+      7.5,
+      0.6,
+      1.18,
+      0.16,
+      2.25,
+      2.17,
+      0.55,
+      2.19,
+      1.54,
+      3.24,
+      2.31,
+      1.42,
+      0.98,
+      1.14,
+      1.02,
+      1.12,
+      2.23,
+      0.74,
+      1.26,
+      1.0,
+      2.57,
+      2.06,
+      2.18,
+      7.52,
+      1.84
+     ],
+     "other_after_state:placed": [
+      451,
+      35
+     ],
+     "cx_case_before": [
+      131,
+      18
+     ],
+     "cx_case_before_state:searching": [
+      7,
+      2
+     ],
+     "cx_case_before_state:latched": [
+      97,
+      14
+     ],
+     "cx_case_before_rev_vmin_mm": [
+      0.27,
+      0.32,
+      0.57,
+      3.34,
+      1.56,
+      3.43,
+      1.22,
+      1.62,
+      3.55,
+      1.43,
+      0.26,
+      0.87,
+      2.23,
+      0.36,
+      3.73,
+      0.28,
+      1.02,
+      1.29
+     ],
+     "cx_case_before_state:closing": [
+      7,
+      1
+     ],
+     "cx_case_before_state:held": [
+      20,
+      1
+     ],
+     "cx_case_after": [
+      366,
+      141
+     ],
+     "cx_case_after_state:held": [
+      2,
+      1
+     ],
+     "cx_case_after_state:placed": [
+      50,
+      9
+     ],
+     "cx_case_after_rev_vmin_mm": [
+      1.98,
+      0.97,
+      3.64,
+      10.33,
+      0.58,
+      2.38,
+      2.18,
+      1.73,
+      1.42,
+      3.23,
+      1.99,
+      0.79,
+      1.82,
+      0.46,
+      2.63,
+      0.76,
+      2.72,
+      3.81,
+      0.77,
+      0.42,
+      1.74,
+      3.61,
+      6.34,
+      2.15,
+      2.5,
+      0.78,
+      3.21,
+      5.37,
+      2.23,
+      1.99,
+      7.39,
+      0.8,
+      1.3,
+      2.63,
+      3.16,
+      1.69,
+      4.57,
+      6.02,
+      2.34,
+      1.76,
+      2.0,
+      2.09,
+      1.47,
+      0.64,
+      1.05,
+      1.44,
+      2.17,
+      1.48,
+      2.06,
+      1.77,
+      4.71,
+      12.9,
+      3.67,
+      1.07,
+      1.88,
+      4.23,
+      1.06,
+      2.35,
+      3.85,
+      1.24,
+      2.71,
+      0.6,
+      1.4,
+      2.23,
+      2.18,
+      4.16,
+      4.47,
+      2.47,
+      2.76,
+      3.81,
+      1.7,
+      2.64,
+      4.4,
+      3.45,
+      1.33,
+      3.13,
+      2.09,
+      1.05,
+      3.39,
+      2.02,
+      4.08,
+      2.42,
+      2.52,
+      3.39,
+      5.03,
+      3.95,
+      1.44,
+      0.7,
+      1.31,
+      2.42,
+      0.33,
+      1.07,
+      1.06,
+      2.19,
+      0.65,
+      0.91,
+      2.32,
+      3.32,
+      0.87,
+      1.79,
+      4.76,
+      6.55,
+      3.28,
+      6.32,
+      1.13,
+      6.61,
+      2.35,
+      2.3,
+      2.78,
+      1.7,
+      1.0,
+      2.35,
+      0.69,
+      1.0,
+      1.16,
+      2.16,
+      1.12,
+      0.89,
+      0.63,
+      2.46,
+      1.7,
+      5.17,
+      5.66,
+      7.14,
+      4.81,
+      5.85,
+      8.41,
+      6.49,
+      6.03,
+      2.95,
+      3.71,
+      4.97,
+      7.63,
+      4.66,
+      4.6,
+      3.85,
+      4.43,
+      0.42,
+      1.21,
+      0.57,
+      1.42
+     ],
+     "cx_case_after_state:latched": [
+      133,
+      45
+     ],
+     "cx_case_after_state:closing": [
+      181,
+      86
+     ]
+    }
+   },
+   "by_phase": {
+    "V11AB": {
+     "approach": {
+      "n": 273,
+      "n_reversal": 41,
+      "share": 0.15018315018315018,
+      "rev_vmin_mm": {
+       "n": 41,
+       "median": 1.8275698098045947,
+       "p10": 0.921934175912075,
+       "p90": 4.217956252184958,
+       "max": 5.859691945471706
+      },
+      "rev_vmax_mm": {
+       "n": 41,
+       "median": 6.277980512476721,
+       "p10": 2.7113699987978976,
+       "p90": 11.174578708357192,
+       "max": 13.772407981252371
+      },
+      "rev_turn_deg": {
+       "n": 41,
+       "median": 167.54806559354208,
+       "p10": 142.55449826117257,
+       "p90": 172.07904938748047,
+       "max": 176.99639866195744
+      }
+     },
+     "grasp": {
+      "n": 122,
+      "n_reversal": 45,
+      "share": 0.36885245901639346,
+      "rev_vmin_mm": {
+       "n": 45,
+       "median": 2.0269783044764607,
+       "p10": 0.9494225003812162,
+       "p90": 10.697216935052719,
+       "max": 33.695453585058225
+      },
+      "rev_vmax_mm": {
+       "n": 45,
+       "median": 12.322959464510484,
+       "p10": 3.1453696008613763,
+       "p90": 56.231601689816564,
+       "max": 187.75260494073808
+      },
+      "rev_turn_deg": {
+       "n": 45,
+       "median": 154.98281611550757,
+       "p10": 117.86343474540722,
+       "p90": 169.82399524545903,
+       "max": 178.0622710923242
+      }
+     },
+     "carry": {
+      "n": 212,
+      "n_reversal": 91,
+      "share": 0.42924528301886794,
+      "rev_vmin_mm": {
+       "n": 91,
+       "median": 3.100215728517404,
+       "p10": 0.7344995581369397,
+       "p90": 16.268776496153343,
+       "max": 22.701528217257806
+      },
+      "rev_vmax_mm": {
+       "n": 91,
+       "median": 11.713986260498157,
+       "p10": 5.941923728383991,
+       "p90": 24.626963569967252,
+       "max": 60.22419210544888
+      },
+      "rev_turn_deg": {
+       "n": 91,
+       "median": 149.0873092311044,
+       "p10": 105.61224923306791,
+       "p90": 174.14649641104248,
+       "max": 177.76068074618206
+      }
+     },
+     "after": {
+      "n": 748,
+      "n_reversal": 51,
+      "share": 0.06818181818181818,
+      "rev_vmin_mm": {
+       "n": 51,
+       "median": 5.426281698898868,
+       "p10": 0.8703450038076948,
+       "p90": 16.465752153695735,
+       "max": 32.28870661987566
+      },
+      "rev_vmax_mm": {
+       "n": 51,
+       "median": 18.49364027850797,
+       "p10": 5.177989064885707,
+       "p90": 26.78194858787238,
+       "max": 43.19568972500078
+      },
+      "rev_turn_deg": {
+       "n": 51,
+       "median": 157.58636339146756,
+       "p10": 131.37638239220533,
+       "p90": 175.3733998205221,
+       "max": 178.2591612803665
+      }
+     }
+    },
+    "V11ABC": {
+     "approach": {
+      "n": 276,
+      "n_reversal": 40,
+      "share": 0.14492753623188406,
+      "rev_vmin_mm": {
+       "n": 40,
+       "median": 1.5705644199172697,
+       "p10": 0.3599640887807411,
+       "p90": 3.456181913467548,
+       "max": 3.725797137650263
+      },
+      "rev_vmax_mm": {
+       "n": 40,
+       "median": 5.902837136517441,
+       "p10": 3.0156509529230053,
+       "p90": 11.625523895667135,
+       "max": 15.842089940606721
+      },
+      "rev_turn_deg": {
+       "n": 40,
+       "median": 162.70367731223152,
+       "p10": 146.25345728884304,
+       "p90": 175.56667894111413,
+       "max": 177.20131321512724
+      }
+     },
+     "grasp": {
+      "n": 243,
+      "n_reversal": 94,
+      "share": 0.3868312757201646,
+      "rev_vmin_mm": {
+       "n": 94,
+       "median": 2.4692336058644306,
+       "p10": 1.051399710736373,
+       "p90": 6.23665075571189,
+       "max": 12.900216520011332
+      },
+      "rev_vmax_mm": {
+       "n": 94,
+       "median": 9.443075041321737,
+       "p10": 4.91956719719588,
+       "p90": 16.674227861520272,
+       "max": 26.656335991465518
+      },
+      "rev_turn_deg": {
+       "n": 94,
+       "median": 147.18360289579806,
+       "p10": 114.60548448245615,
+       "p90": 167.58032261596261,
+       "max": 178.663352145363
+      }
+     },
+     "carry": {
+      "n": 145,
+      "n_reversal": 44,
+      "share": 0.30344827586206896,
+      "rev_vmin_mm": {
+       "n": 44,
+       "median": 2.042853293185054,
+       "p10": 0.5479035853525908,
+       "p90": 6.84579381117013,
+       "max": 10.720425666037876
+      },
+      "rev_vmax_mm": {
+       "n": 44,
+       "median": 8.851665602393052,
+       "p10": 4.6949200227693595,
+       "p90": 16.48094978391285,
+       "max": 30.61008730972196
+      },
+      "rev_turn_deg": {
+       "n": 44,
+       "median": 131.4869302896899,
+       "p10": 104.17613427798607,
+       "p90": 168.74740791707694,
+       "max": 179.23526308115459
+      }
+     },
+     "after": {
+      "n": 634,
+      "n_reversal": 89,
+      "share": 0.14037854889589904,
+      "rev_vmin_mm": {
+       "n": 89,
+       "median": 1.8213627165685669,
+       "p10": 0.6367695236145535,
+       "p90": 3.8201867667438822,
+       "max": 10.333304555010029
+      },
+      "rev_vmax_mm": {
+       "n": 89,
+       "median": 6.336270051511938,
+       "p10": 3.2904146597846653,
+       "p90": 16.10860130822451,
+       "max": 25.10918714089509
+      },
+      "rev_turn_deg": {
+       "n": 89,
+       "median": 150.9417480124545,
+       "p10": 117.50087851808783,
+       "p90": 171.0526394680343,
+       "max": 178.1174184293043
+      }
+     }
+    }
+   },
+   "rev_vmin_lt5mm": {
+    "V11AB": [
+     163,
+     228
+    ],
+    "V11ABC": [
+     237,
+     267
+    ]
+   },
+   "per_run_V11AB_vs_V11ABC": {
+    "ep1807_s18071": [
+     12,
+     71,
+     23,
+     64
+    ],
+    "ep1967_s19672": [
+     37,
+     74,
+     37,
+     74
+    ],
+    "ep1968_s19681": [
+     7,
+     74,
+     5,
+     74
+    ],
+    "ep1982_s19822": [
+     10,
+     74,
+     25,
+     74
+    ],
+    "ep1995_s19952": [
+     9,
+     74,
+     9,
+     74
+    ],
+    "ep1807_s18073": [
+     13,
+     74,
+     18,
+     63
+    ],
+    "ep1834_s18341": [
+     17,
+     72,
+     8,
+     32
+    ],
+    "ep1834_s18343": [
+     12,
+     30,
+     11,
+     31
+    ],
+    "ep1925_s19251": [
+     12,
+     72,
+     7,
+     74
+    ],
+    "ep1925_s19253": [
+     18,
+     74,
+     14,
+     74
+    ],
+    "ep1967_s19673": [
+     9,
+     74,
+     5,
+     72
+    ],
+    "ep1968_s19683": [
+     14,
+     74,
+     8,
+     74
+    ],
+    "ep1982_s19823": [
+     13,
+     74,
+     23,
+     74
+    ],
+    "ep1995_s19953": [
+     8,
+     74,
+     24,
+     74
+    ]
+   }
+  },
+  "a_c_rad_per_row2": [
+   0.009643,
+   0.009531,
+   0.00765,
+   0.010384,
+   0.007653,
+   0.00763,
+   0.007654,
+   0.009595,
+   0.009474,
+   0.007649,
+   0.010371,
+   0.007653,
+   0.007629,
+   0.007654
+  ],
+  "max_step_change_rad_per_row2": 0.04,
+  "grip_population": [
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1807_s18071",
+    "stage": "success",
+    "grasp_t": 120,
+    "t_end": 155,
+    "rows_held": 35,
+    "grip_mean": 0.6039272035871234,
+    "grip_min": 0.5749772787094116,
+    "grip_max": 0.8507518172264099,
+    "grip_first16_mean": 0.5839348770678043,
+    "open_mean": 0.7726628854488948,
+    "force_mean_N": 24.33279715468982,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1807_s18073",
+    "stage": "success",
+    "grasp_t": 136,
+    "t_end": 221,
+    "rows_held": 85,
+    "grip_mean": 0.5784538037636701,
+    "grip_min": 0.5640048384666443,
+    "grip_max": 0.996897518634796,
+    "grip_first16_mean": 0.5754412114620209,
+    "open_mean": 0.714067010652353,
+    "force_mean_N": 5.034965563096376,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1834_s18341",
+    "stage": "success",
+    "grasp_t": 136,
+    "t_end": 272,
+    "rows_held": 136,
+    "grip_mean": 0.5874845245305229,
+    "grip_min": 0.5701818466186523,
+    "grip_max": 0.9981874823570251,
+    "grip_first16_mean": 0.5791968107223511,
+    "open_mean": 0.72141256163692,
+    "force_mean_N": 5.094717109846701,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1834_s18343",
+    "stage": "success",
+    "grasp_t": 136,
+    "t_end": 239,
+    "rows_held": 103,
+    "grip_mean": 0.5878920792375953,
+    "grip_min": 0.5528134107589722,
+    "grip_max": 1.0,
+    "grip_first16_mean": 0.5852022282779217,
+    "open_mean": 0.7228688548544295,
+    "force_mean_N": 4.906559342674899,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1925_s19251",
+    "stage": "success",
+    "grasp_t": 144,
+    "t_end": 217,
+    "rows_held": 73,
+    "grip_mean": 0.5876428599226965,
+    "grip_min": 0.5714630484580994,
+    "grip_max": 1.0,
+    "grip_first16_mean": 0.5833372175693512,
+    "open_mean": 0.7255246511174985,
+    "force_mean_N": 5.142167554662344,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1925_s19253",
+    "stage": "success",
+    "grasp_t": 160,
+    "t_end": 235,
+    "rows_held": 75,
+    "grip_mean": 0.5937959925333659,
+    "grip_min": 0.5793959498405457,
+    "grip_max": 1.0,
+    "grip_first16_mean": 0.5897152274847031,
+    "open_mean": 0.7311221863823243,
+    "force_mean_N": 5.278335639202112,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1967_s19672",
+    "stage": "success",
+    "grasp_t": 168,
+    "t_end": 253,
+    "rows_held": 85,
+    "grip_mean": 0.5820957807933583,
+    "grip_min": 0.5704464316368103,
+    "grip_max": 0.9925033450126648,
+    "grip_first16_mean": 0.5743638798594475,
+    "open_mean": 0.71701892893425,
+    "force_mean_N": 5.541261231758271,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1967_s19673",
+    "stage": "dropped",
+    "grasp_t": 128,
+    "t_end": 148,
+    "rows_held": 20,
+    "grip_mean": 0.5772439926862717,
+    "grip_min": 0.573133111000061,
+    "grip_max": 0.5844217538833618,
+    "grip_first16_mean": 0.5779084116220474,
+    "open_mean": 0.7102465166500321,
+    "force_mean_N": 4.290771336504742,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1968_s19681",
+    "stage": "success",
+    "grasp_t": 152,
+    "t_end": 232,
+    "rows_held": 80,
+    "grip_mean": 0.5794903330504895,
+    "grip_min": 0.5598181486129761,
+    "grip_max": 0.9873311519622803,
+    "grip_first16_mean": 0.5783913731575012,
+    "open_mean": 0.7193095934044853,
+    "force_mean_N": 5.07752168652773,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1968_s19683",
+    "stage": "success",
+    "grasp_t": 136,
+    "t_end": 216,
+    "rows_held": 80,
+    "grip_mean": 0.5845556795597077,
+    "grip_min": 0.5638716220855713,
+    "grip_max": 0.9968038201332092,
+    "grip_first16_mean": 0.5807621628046036,
+    "open_mean": 0.7213218317083943,
+    "force_mean_N": 5.291996415276829,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1982_s19822",
+    "stage": "dropped",
+    "grasp_t": 136,
+    "t_end": 162,
+    "rows_held": 26,
+    "grip_mean": 0.5701525325958545,
+    "grip_min": 0.5648564696311951,
+    "grip_max": 0.5744156241416931,
+    "grip_first16_mean": 0.5690454803407192,
+    "open_mean": 0.7161230023415879,
+    "force_mean_N": 5.183728876389177,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1982_s19823",
+    "stage": "dropped",
+    "grasp_t": 160,
+    "t_end": 182,
+    "rows_held": 22,
+    "grip_mean": 0.5671989132057537,
+    "grip_min": 0.564260721206665,
+    "grip_max": 0.5714131593704224,
+    "grip_first16_mean": 0.5672564804553986,
+    "open_mean": 0.7109566729283651,
+    "force_mean_N": 5.139655509857071,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1995_s19952",
+    "stage": "success",
+    "grasp_t": 152,
+    "t_end": 238,
+    "rows_held": 86,
+    "grip_mean": 0.5857334150824436,
+    "grip_min": 0.5713443756103516,
+    "grip_max": 0.9938544631004333,
+    "grip_first16_mean": 0.579905841499567,
+    "open_mean": 0.7171635956608206,
+    "force_mean_N": 4.878072298918866,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11A",
+    "key": "V11A/H/V11A_ep1995_s19953",
+    "stage": "dropped",
+    "grasp_t": 152,
+    "t_end": 164,
+    "rows_held": 12,
+    "grip_mean": 0.5869334091742834,
+    "grip_min": 0.5842872262001038,
+    "grip_max": 0.5893527269363403,
+    "grip_first16_mean": 0.5869334091742834,
+    "open_mean": 0.724849084192959,
+    "force_mean_N": 4.819685793143498,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/B/V11AB_ep1967_s19672",
+    "stage": "success",
+    "grasp_t": 168,
+    "t_end": 247,
+    "rows_held": 79,
+    "grip_mean": 0.5785818424405931,
+    "grip_min": 0.562107264995575,
+    "grip_max": 0.9674391746520996,
+    "grip_first16_mean": 0.5733131356537342,
+    "open_mean": 0.7169611382215242,
+    "force_mean_N": 5.021120837233455,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/B/V11AB_ep1982_s19822",
+    "stage": "success",
+    "grasp_t": 128,
+    "t_end": 205,
+    "rows_held": 77,
+    "grip_mean": 0.5730304106489404,
+    "grip_min": 0.566126823425293,
+    "grip_max": 0.5834319591522217,
+    "grip_first16_mean": 0.5738488510251045,
+    "open_mean": 0.716708215735558,
+    "force_mean_N": 5.176558656695387,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1807_s18071",
+    "stage": "success",
+    "grasp_t": 136,
+    "t_end": 244,
+    "rows_held": 108,
+    "grip_mean": 0.5782548630679095,
+    "grip_min": 0.5489848256111145,
+    "grip_max": 1.0,
+    "grip_first16_mean": 0.5764831341803074,
+    "open_mean": 0.7169080509366053,
+    "force_mean_N": 4.989985013419203,
+    "hold_frac": 0.14814814814814814
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1807_s18073",
+    "stage": "success",
+    "grasp_t": 128,
+    "t_end": 230,
+    "rows_held": 102,
+    "grip_mean": 0.5813451911888871,
+    "grip_min": 0.5618360042572021,
+    "grip_max": 0.997231662273407,
+    "grip_first16_mean": 0.5804845094680786,
+    "open_mean": 0.7205900924803393,
+    "force_mean_N": 5.131425536731665,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1834_s18341",
+    "stage": "success",
+    "grasp_t": 136,
+    "t_end": 265,
+    "rows_held": 129,
+    "grip_mean": 0.5795292193575423,
+    "grip_min": 0.5578371286392212,
+    "grip_max": 0.5983322262763977,
+    "grip_first16_mean": 0.5820420123636723,
+    "open_mean": 0.719635771114294,
+    "force_mean_N": 5.1422813751292376,
+    "hold_frac": 0.06201550387596899
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1834_s18343",
+    "stage": "contact",
+    "grasp_t": 136,
+    "t_end": 243,
+    "rows_held": 107,
+    "grip_mean": 0.5916543140589634,
+    "grip_min": 0.5769680738449097,
+    "grip_max": 0.6051021218299866,
+    "grip_first16_mean": 0.5843986831605434,
+    "open_mean": 0.7218961040550275,
+    "force_mean_N": 4.8485356813971565,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1925_s19251",
+    "stage": "success",
+    "grasp_t": 144,
+    "t_end": 237,
+    "rows_held": 93,
+    "grip_mean": 0.5915809888993541,
+    "grip_min": 0.5800855755805969,
+    "grip_max": 0.7769986987113953,
+    "grip_first16_mean": 0.5908010974526405,
+    "open_mean": 0.7307189659918322,
+    "force_mean_N": 5.075165993228863,
+    "hold_frac": 0.08602150537634409
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1925_s19253",
+    "stage": "success",
+    "grasp_t": 152,
+    "t_end": 224,
+    "rows_held": 72,
+    "grip_mean": 0.5860032290220261,
+    "grip_min": 0.577627420425415,
+    "grip_max": 0.5980530977249146,
+    "grip_first16_mean": 0.5893548056483269,
+    "open_mean": 0.7297049633362787,
+    "force_mean_N": 5.274552207161914,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1967_s19672",
+    "stage": "dropped",
+    "grasp_t": 160,
+    "t_end": 227,
+    "rows_held": 67,
+    "grip_mean": 0.5721929633795325,
+    "grip_min": 0.5541539192199707,
+    "grip_max": 0.5902772545814514,
+    "grip_first16_mean": 0.5693806931376457,
+    "open_mean": 0.7130928901754178,
+    "force_mean_N": 5.346033504447736,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1967_s19673",
+    "stage": "success",
+    "grasp_t": 144,
+    "t_end": 230,
+    "rows_held": 86,
+    "grip_mean": 0.5948435885961666,
+    "grip_min": 0.5786452889442444,
+    "grip_max": 0.9951633810997009,
+    "grip_first16_mean": 0.5891546085476875,
+    "open_mean": 0.727634888391499,
+    "force_mean_N": 4.868204404744186,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1968_s19681",
+    "stage": "success",
+    "grasp_t": 152,
+    "t_end": 245,
+    "rows_held": 93,
+    "grip_mean": 0.5817966627818282,
+    "grip_min": 0.5664898157119751,
+    "grip_max": 0.9975137114524841,
+    "grip_first16_mean": 0.5796185024082661,
+    "open_mean": 0.72078715467441,
+    "force_mean_N": 5.193122628823233,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1968_s19683",
+    "stage": "success",
+    "grasp_t": 128,
+    "t_end": 223,
+    "rows_held": 95,
+    "grip_mean": 0.5805132539648759,
+    "grip_min": 0.5602102279663086,
+    "grip_max": 0.9950290322303772,
+    "grip_first16_mean": 0.5798855684697628,
+    "open_mean": 0.7194293420748926,
+    "force_mean_N": 5.195670180354211,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1982_s19822",
+    "stage": "success",
+    "grasp_t": 136,
+    "t_end": 223,
+    "rows_held": 87,
+    "grip_mean": 0.5780909725989418,
+    "grip_min": 0.5555519461631775,
+    "grip_max": 0.9970234632492065,
+    "grip_first16_mean": 0.5750924795866013,
+    "open_mean": 0.7165074846289187,
+    "force_mean_N": 5.047010183975062,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1982_s19823",
+    "stage": "success",
+    "grasp_t": 144,
+    "t_end": 233,
+    "rows_held": 89,
+    "grip_mean": 0.5745782912447212,
+    "grip_min": 0.5566072463989258,
+    "grip_max": 0.9959286451339722,
+    "grip_first16_mean": 0.5702077895402908,
+    "open_mean": 0.7146758046893082,
+    "force_mean_N": 5.11987162454135,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1995_s19952",
+    "stage": "success",
+    "grasp_t": 152,
+    "t_end": 238,
+    "rows_held": 86,
+    "grip_mean": 0.5856288927932118,
+    "grip_min": 0.5702524781227112,
+    "grip_max": 0.9955630898475647,
+    "grip_first16_mean": 0.5807992592453957,
+    "open_mean": 0.7168376985820507,
+    "force_mean_N": 4.831378768244541,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11AB",
+    "key": "V11AB/H/V11AB_ep1995_s19953",
+    "stage": "success",
+    "grasp_t": 152,
+    "t_end": 260,
+    "rows_held": 108,
+    "grip_mean": 0.5871633986632029,
+    "grip_min": 0.560935914516449,
+    "grip_max": 1.0,
+    "grip_first16_mean": 0.5847017504274845,
+    "open_mean": 0.7172279038923852,
+    "force_mean_N": 4.768153527292745,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/B/V11ABC_ep1967_s19672",
+    "stage": "dropped",
+    "grasp_t": 168,
+    "t_end": 188,
+    "rows_held": 20,
+    "grip_mean": 0.5767074406147004,
+    "grip_min": 0.571245551109314,
+    "grip_max": 0.5799329280853271,
+    "grip_first16_mean": 0.5772186107933521,
+    "open_mean": 0.7184561380643649,
+    "force_mean_N": 5.680570370529468,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1807_s18071",
+    "stage": "dropped",
+    "grasp_t": 136,
+    "t_end": 226,
+    "rows_held": 90,
+    "grip_mean": 0.5738725781440734,
+    "grip_min": 0.5669966340065002,
+    "grip_max": 0.5777172446250916,
+    "grip_first16_mean": 0.5726410634815693,
+    "open_mean": 0.7139257667770544,
+    "force_mean_N": 4.915818603501187,
+    "hold_frac": 0.7333333333333333
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1807_s18073",
+    "stage": "dropped",
+    "grasp_t": 128,
+    "t_end": 218,
+    "rows_held": 90,
+    "grip_mean": 0.5738180471791161,
+    "grip_min": 0.570588231086731,
+    "grip_max": 0.5820449590682983,
+    "grip_first16_mean": 0.5767808146774769,
+    "open_mean": 0.7148886021176377,
+    "force_mean_N": 4.940486880579944,
+    "hold_frac": 0.7333333333333333
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1834_s18341",
+    "stage": "success",
+    "grasp_t": 144,
+    "t_end": 265,
+    "rows_held": 121,
+    "grip_mean": 0.5842428936446009,
+    "grip_min": 0.5631821751594543,
+    "grip_max": 0.5998345017433167,
+    "grip_first16_mean": 0.5824031718075275,
+    "open_mean": 0.7292678706361915,
+    "force_mean_N": 5.289184314023581,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1834_s18343",
+    "stage": "contact",
+    "grasp_t": 136,
+    "t_end": 252,
+    "rows_held": 116,
+    "grip_mean": 0.5856700493343945,
+    "grip_min": 0.5595445036888123,
+    "grip_max": 0.6013817191123962,
+    "grip_first16_mean": 0.5861943401396275,
+    "open_mean": 0.7165680209856118,
+    "force_mean_N": 4.879874653930833,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1925_s19251",
+    "stage": "success",
+    "grasp_t": 160,
+    "t_end": 240,
+    "rows_held": 80,
+    "grip_mean": 0.5820536151528358,
+    "grip_min": 0.5626615881919861,
+    "grip_max": 1.0,
+    "grip_first16_mean": 0.5805917046964169,
+    "open_mean": 0.720506510846585,
+    "force_mean_N": 5.1950565720864414,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1925_s19253",
+    "stage": "success",
+    "grasp_t": 160,
+    "t_end": 278,
+    "rows_held": 118,
+    "grip_mean": 0.58157239020881,
+    "grip_min": 0.5603640675544739,
+    "grip_max": 0.6079510450363159,
+    "grip_first16_mean": 0.5900861248373985,
+    "open_mean": 0.7181357619949514,
+    "force_mean_N": 4.866914100917841,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1967_s19672",
+    "stage": "dropped",
+    "grasp_t": 160,
+    "t_end": 167,
+    "rows_held": 7,
+    "grip_mean": 0.59115184204919,
+    "grip_min": 0.5906461477279663,
+    "grip_max": 0.5922049880027771,
+    "grip_first16_mean": 0.59115184204919,
+    "open_mean": 0.7372128348843499,
+    "force_mean_N": 5.352376007733647,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1967_s19673",
+    "stage": "success",
+    "grasp_t": 144,
+    "t_end": 231,
+    "rows_held": 87,
+    "grip_mean": 0.5820377955491516,
+    "grip_min": 0.5669288635253906,
+    "grip_max": 1.0,
+    "grip_first16_mean": 0.5835528858006,
+    "open_mean": 0.7162216048175924,
+    "force_mean_N": 4.988975552624365,
+    "hold_frac": 0.09195402298850575
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1968_s19681",
+    "stage": "success",
+    "grasp_t": 152,
+    "t_end": 238,
+    "rows_held": 86,
+    "grip_mean": 0.5801439867463223,
+    "grip_min": 0.5584645867347717,
+    "grip_max": 0.9985692501068114,
+    "grip_first16_mean": 0.5789834894239902,
+    "open_mean": 0.7200285364132603,
+    "force_mean_N": 5.1154966153254655,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1968_s19683",
+    "stage": "success",
+    "grasp_t": 128,
+    "t_end": 230,
+    "rows_held": 102,
+    "grip_mean": 0.5814919582768983,
+    "grip_min": 0.5616051554679871,
+    "grip_max": 1.0,
+    "grip_first16_mean": 0.579806312918663,
+    "open_mean": 0.7191580618300785,
+    "force_mean_N": 5.231048747667519,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1982_s19823",
+    "stage": "success",
+    "grasp_t": 144,
+    "t_end": 191,
+    "rows_held": 47,
+    "grip_mean": 0.5660011146930938,
+    "grip_min": 0.5610897541046143,
+    "grip_max": 0.5695865750312805,
+    "grip_first16_mean": 0.5655708536505699,
+    "open_mean": 0.7124600391235123,
+    "force_mean_N": 5.180517391502154,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1995_s19952",
+    "stage": "success",
+    "grasp_t": 128,
+    "t_end": 167,
+    "rows_held": 39,
+    "grip_mean": 0.5747227301964393,
+    "grip_min": 0.5680243968963623,
+    "grip_max": 0.5815231800079346,
+    "grip_first16_mean": 0.5774670876562595,
+    "open_mean": 0.7152475002230024,
+    "force_mean_N": 7.445506382692338,
+    "hold_frac": 0.0
+   },
+   {
+    "arm": "V11ABC",
+    "key": "V11ABC/H/V11ABC_ep1995_s19953",
+    "stage": "dropped",
+    "grasp_t": 152,
+    "t_end": 169,
+    "rows_held": 17,
+    "grip_mean": 0.5875268543467802,
+    "grip_min": 0.5830057263374329,
+    "grip_max": 0.590160071849823,
+    "grip_first16_mean": 0.5874449163675308,
+    "open_mean": 0.7258794034112821,
+    "force_mean_N": 4.773176867258569,
+    "hold_frac": 0.0
+   }
+  ]
+ },
+ "code_facts": {
+  "C_rows": "benchmark/trajopt/problem.py:135-164 servo_accel_rows: X = [u-2, u-1, Q0..], relaxed bound = max(a_C, |row on reference incl. history|) (:156), capped by max_step_change (:163)",
+  "C_slack_weight": "problem.py:330-332 w_slack * servo_accel_weight (0.01) per rad/row^2; merit term problem.py:499",
+  "C_constraint_rows": "problem.py:416-417 servo_accel / servo_accel_lower; boundary velocity |Q0 - u-1| <= max_step problem.py:425-426, weight 10 w_slack",
+  "a_C": "benchmark/trajopt/servo.py:125 accel_bound = eps dt^2 / kappa",
+  "history": "benchmark/trajopt/safe_policy.py:543 command_history = exec_feedback.applied_arm[-2:] (HOLD rows included)",
+  "record": "benchmark/trajopt/sqp.py:943-965 to.metrics.servo_accel (n_over, overshoot_max_rad, boundary_velocity_ratio)",
+  "returned": "benchmark/trajopt/sqp.py:495 / :973-982 returned = initial when no candidate is accepted",
+  "snapshot": "/mnt/dev/work-t43v11 (benchmark 3ca1b21); code md5 of 407 files == V11 p/code_md5_v11.txt (raw/code_md5_cx.txt)"
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43cx-1-drop-scene.png",
+   "kind": "scene",
+   "sidecar": "benchmark/ag3s/docs/figures/t43/t43cx-1-drop-scene.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43cx-2-timeline.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t43/t43cx-2-timeline.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43cx-3-cause-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t43/t43cx-3-cause-table.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": null,
+  "note": "not run in CX (lead: CPU replays and recorded data only, no .venv-ag3s, no GPU). Snapshot code md5 (407 files) identical to the V11 round, whose baseline matched (T43V11ABC.verify.json baseline_check: 10/15, -9.171877401271193 mm)."
+ },
+ "verdict": "facts only: snapshot code identical to V11 round; replays qpos_mismatch_rows 0 (4 new B replays); offline base re-solve of HOLD chunks equals record (vs_recorded 0.00 deg).",
+ "left_finger_name_note": "finger bodies in cx_inhand / replays are MJCF names (ee_finger_l1 = geom 1079 side, l2 = geom 1086 side); server link names (URDF) are not paired by name here.",
+ "anomalies": [
+  "lead text: 17 held HOLDs in 1807 s18071/s18073; measured: 16 there (9 + 7) + 1 in H 1967 s19673 (t208, -0.2 mm, destination crate_above); s18073 also has 2 finger HOLDs (t144, t160)",
+  "H 1967 s19672 is dropped in V11AB too (t_sep 227); V11ABC separation at 167",
+  "the two 'grasp failures' (1982 H/B) are attach -> separation 6 rows later (H: apple lifted 77 mm, t 128 -> 134; B: t 120 -> 126); fail_stage rule labels them no_grasp",
+  "offline ta_offline base re-solve of V11AB s18071 seq23 is violated (41.7 mm) while the record executed (vs_recorded 4.37 deg): open-loop fidelity limit",
+  "V11A (no B, no C) H also has 4 drops (1967 s19673, 1982 s19822/3, 1995 s19953; cx_grip_pop)"
+ ],
+ "not_measured": [
+  "new closed-loop runs (none launched)",
+  "per-finger contact forces (replays store aggregates only)",
+  "regression baseline (not run, see baseline_check)"
+ ]
+}

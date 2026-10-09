@@ -1,0 +1,1917 @@
+{
+ "_comment": "ag3s-verifier T43 OC. numbers and paths only. CPU, recorded data only, no new closed-loop runs.",
+ "step": "T43OC",
+ "date": "2026-10-07",
+ "runs": [
+  {
+   "id": "oc_contact",
+   "command": "bash outputs/verify/T43/OC/p/run_oc.sh (3 processes: PYTHONPATH=T43W_SNAP=/mnt/dev/work-t43v7 V7g 6 contacts | /mnt/dev/work-t43v8 V8 5+5; JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= XLA_PYTHON_CLIENT_PREALLOCATE=false MUJOCO_GL=osmesa)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/OC/raw/oc_{V7g,V8a,V8b}.json",
+   "stdout_log": "outputs/verify/T43/OC/raw/oc_{V7g,V8a,V8b}.log"
+  },
+  {
+   "id": "oc_agg",
+   "command": "python3 outputs/verify/T43/OC/p/oc_agg.py",
+   "venv": "system python3",
+   "raw_output": "outputs/verify/T43/OC/raw/oc_summary.json",
+   "stdout_log": "outputs/verify/T43/OC/raw/oc_agg.log"
+  },
+  {
+   "id": "namemap",
+   "command": "T43W_SNAP=PYTHONPATH=/mnt/dev/work-t43v8 .venv-openpi-live/bin/python outputs/verify/T43/OC/p/oc_namemap.py raw/namemap_V8.json V8/H/V8_ep1807_s18073 V8/H/V8_ep1834_s18341",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/OC/raw/namemap_V8.json",
+   "stdout_log": null
+  },
+  {
+   "id": "m09",
+   "command": "T43W_SNAP=PYTHONPATH=/mnt/dev/work-t43v8 .venv-openpi-live/bin/python outputs/verify/T43/OC/p/oc_m09.py raw/m09_V8_18073_seq22.json",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/OC/raw/m09_V8_18073_seq22.json",
+   "stdout_log": "outputs/verify/T43/OC/raw/peek_v8_18073_seq22.txt (summary_json dump)"
+  },
+  {
+   "id": "eikonal",
+   "command": "inline numpy |grad d| on V8 18073 chunk_00073 fine/coarse grids",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/OC/raw/eikonal.txt",
+   "stdout_log": null
+  },
+  {
+   "id": "figures",
+   "command": "outputs/verify/T43/OC/p/fig_scene_oc.py raw/oc_V8a.json V8/H/V8_ep1807_s18073:270 V8/H/V8_ep1834_s18341:249 ; fig_graph_table_oc.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "benchmark/ag3s/docs/figures/t43/t43oc-*.json",
+   "stdout_log": null
+  }
+ ],
+ "scripts": [
+  "outputs/verify/T43/OC/p/oc_contact.py",
+  "outputs/verify/T43/OC/p/run_oc.sh",
+  "outputs/verify/T43/OC/p/oc_agg.py",
+  "outputs/verify/T43/OC/p/oc_namemap.py",
+  "outputs/verify/T43/OC/p/oc_m09.py",
+  "outputs/verify/T43/OC/p/fig_scene_oc.py",
+  "outputs/verify/T43/OC/p/fig_graph_table_oc.py"
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "not used; server code read from snapshots work-t43v7 / work-t43v8 (cited files md5-identical in both: raw/code_md5_v7_v8_same.txt); cuRobo /mnt/dev/work/curobo_src @78fd485",
+  "dirty_files": []
+ },
+ "code_refs": {
+  "field_builder_lifetime": "ag3s/runtime/pipeline.py:2464-2477 builder created once and kept (docstring :2457); dropped only at episode reset :424-425 (AG3S.reset); SafePolicy.reset safe_policy.py:337 on scene.reset :379",
+  "tsdf_integration_per_frame": "ag3s/fields/curobo_builder.py:706 _integrate -> :951 mapper.integrate(obs) per camera, coarse and fine mappers (:711)",
+  "tsdf_update_rule": "curobo_src/curobo/_src/perception/mapper/kernel/builder/builder_camera_integrate.py:528 skip voxel behind camera; :541 skip outside image; :542 skip invalid depth (masked px = 0); :544 skip voxel more than truncation behind the observed depth (occluded); :545-551 sdf*w sum; :556-559 block_data += (sum sdf*w, sum w) running weighted sum, no reset",
+  "tsdf_value_and_unobserved": "curobo_src/.../kernel/wp_tsdf_sample.py:46-52 sdf = sum/weight when weight > min_weight else +inf; builder_esdf.py:232-234 +inf voxels are not seeds; :258-261 seed = |sdf| <= 0.9 voxel or deep negative",
+  "decay": "curobo_builder.py:625-626 MapperCfg decay_factor/frustum_decay_factor from config; config.py:939 time_decay 1.0, :943 frustum_decay 1.0 (off); records esdf_stats.decay {'decayed': False}",
+  "robot_mask": "curobo_builder.py:917 robot-mask pixels -> depth 0 (unobserved ray)",
+  "unknown_policy": "config.py:862 unknown_policy 'free'; curobo_builder.py:804 outside grid = +max_distance",
+  "held_free": "pipeline.py:2576-2577 held frames -> _held_free_points :2659-2700 (held spheres at robot_state + first-free spheres); curobo_builder.py:1127-1189 TSDF voxels set to +truncation*weight, weight kept",
+  "target_free_layer": "pipeline.py:2537-2562 target_free_points only when nothing held and target points exist; curobo_builder.py:1277-1311 ball seeds cleared (z >= z_min)",
+  "m09_rule": "safe_policy.py:1432 tolerance = safety.violation_tolerance (config.py:664 1e-4 m); :1443 violation > tolerance -> _violation_reasons :1551-1615; classify_violations :1820; _classify_esdf_rows :2022 on_object = |d_row - d_obj| <= voxel (evidence 'distance'), :2036-2037 tier in _CONTACT_TIERS (:1761 fine) -> 'allowed'; wire.py:357 allowed_contact -> execute, :896 gate_decision",
+  "m09_margin": "linearize.py:767 is_object = |d - d_object| <= voxel -> manipulated_link_margin per link (:765-778); :779-784 obstacle_margin only for class obstacle; ag3s/constraints/clearance.py:287-298 authorized target column = base * phase margin_scale; config.py:814-820 phase rules",
+  "record_clearance": "safe_policy.py:1266-1275 record 'clearance' = full field d - r - esdf_margin over the refined trajectory"
+ },
+ "numbers": {
+  "n_contacts": 16,
+  "contact_set": "TK after_release contacts: V7g hand 5 + arm 1, V8 hand 9 + arm 1",
+  "counts": {
+   "V7g|hand": {
+    "n": 5,
+    "bar_vis_near_any_cam_exec": 5,
+    "bar_vis_near_head_exec": 4,
+    "bar_vis_near_wrist_exec": 5,
+    "pb_occluded_head": 4,
+    "chunks_since_seen_0": 5,
+    "in_raw": 5,
+    "in_filtered": 5,
+    "raw_eq_filtered": 5,
+    "in_full_layer": 5,
+    "target_free_layer_present": 0,
+    "pb_in_ball_exec": 0,
+    "fine_pb_inside": 5,
+    "coarse_pb_inside": 5,
+    "robot_filtered_near_px_gt0": 1,
+    "post_place_target_switch": 0,
+    "post_place_pb_in_ball_any": 0,
+    "held_free_overlapped_bar_any_chunk": 5,
+    "fine_pb_max_after_place_gt5mm": 0,
+    "fine_pb_mm": {
+     "n": 5,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "composed_full_pf_mm": {
+     "n": 5,
+     "median": 0.0,
+     "min": -2.1699582238265878,
+     "max": 0.0
+    },
+    "mesh_pen_mm": {
+     "n": 5,
+     "median": -0.443277433550205,
+     "min": -2.6710373887204963,
+     "max": -0.22338989690110986
+    },
+    "field_minus_mesh_at_contact_mm": {
+     "n": 5,
+     "median": 0.443277433550205,
+     "min": 0.22338989690110986,
+     "max": 2.3594585354623514
+    },
+    "fine_pb_max_after_place_mm": {
+     "n": 5,
+     "median": 0.33562391763553023,
+     "min": 0.018473470845492557,
+     "max": 4.710542969405651
+    },
+    "tk_esdf_minus_geomP_mm": {
+     "n": 5,
+     "median": 56.76628927411173,
+     "min": 20.52946199455156,
+     "max": 80.84086217848417
+    },
+    "esdf_minus_geomP_urdf_mm": {
+     "n": 5,
+     "median": -1.2819183379148953,
+     "min": -18.11578777907755,
+     "max": 2.5933751771793467
+    },
+    "tk_clear_link_equals_rec_mjcfname": 5
+   },
+   "V7g|arm": {
+    "n": 1,
+    "bar_vis_near_any_cam_exec": 1,
+    "bar_vis_near_head_exec": 1,
+    "bar_vis_near_wrist_exec": 0,
+    "pb_occluded_head": 1,
+    "chunks_since_seen_0": 1,
+    "in_raw": 1,
+    "in_filtered": 1,
+    "raw_eq_filtered": 1,
+    "in_full_layer": 1,
+    "target_free_layer_present": 1,
+    "pb_in_ball_exec": 0,
+    "fine_pb_inside": 1,
+    "coarse_pb_inside": 1,
+    "robot_filtered_near_px_gt0": 0,
+    "post_place_target_switch": 0,
+    "post_place_pb_in_ball_any": 0,
+    "held_free_overlapped_bar_any_chunk": 0,
+    "fine_pb_max_after_place_gt5mm": 0,
+    "fine_pb_mm": {
+     "n": 1,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "composed_full_pf_mm": {
+     "n": 1,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "mesh_pen_mm": {
+     "n": 1,
+     "median": -1.4270473748641908,
+     "min": -1.4270473748641908,
+     "max": -1.4270473748641908
+    },
+    "field_minus_mesh_at_contact_mm": {
+     "n": 1,
+     "median": 1.4270473748641908,
+     "min": 1.4270473748641908,
+     "max": 1.4270473748641908
+    },
+    "fine_pb_max_after_place_mm": {
+     "n": 1,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "tk_esdf_minus_geomP_mm": {
+     "n": 0
+    },
+    "esdf_minus_geomP_urdf_mm": {
+     "n": 0
+    },
+    "tk_clear_link_equals_rec_mjcfname": 0
+   },
+   "V8|hand": {
+    "n": 9,
+    "bar_vis_near_any_cam_exec": 9,
+    "bar_vis_near_head_exec": 7,
+    "bar_vis_near_wrist_exec": 9,
+    "pb_occluded_head": 8,
+    "chunks_since_seen_0": 9,
+    "in_raw": 9,
+    "in_filtered": 9,
+    "raw_eq_filtered": 9,
+    "in_full_layer": 9,
+    "target_free_layer_present": 0,
+    "pb_in_ball_exec": 0,
+    "fine_pb_inside": 9,
+    "coarse_pb_inside": 9,
+    "robot_filtered_near_px_gt0": 1,
+    "post_place_target_switch": 0,
+    "post_place_pb_in_ball_any": 0,
+    "held_free_overlapped_bar_any_chunk": 5,
+    "fine_pb_max_after_place_gt5mm": 0,
+    "fine_pb_mm": {
+     "n": 9,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 0.8341018110513687
+    },
+    "composed_full_pf_mm": {
+     "n": 9,
+     "median": 0.0,
+     "min": -4.912746282777202,
+     "max": 0.21583890835033115
+    },
+    "mesh_pen_mm": {
+     "n": 9,
+     "median": -1.939808271837663,
+     "min": -5.795300221963346,
+     "max": -0.5177913277357223
+    },
+    "field_minus_mesh_at_contact_mm": {
+     "n": 9,
+     "median": 1.6901076285253254,
+     "min": 0.5177913277357223,
+     "max": 2.609743169156486
+    },
+    "fine_pb_max_after_place_mm": {
+     "n": 9,
+     "median": 0.8341018110513687,
+     "min": 0.0,
+     "max": 3.1378609128296375
+    },
+    "tk_esdf_minus_geomP_mm": {
+     "n": 9,
+     "median": 66.9370145768164,
+     "min": 36.81614480812392,
+     "max": 81.56129353967805
+    },
+    "esdf_minus_geomP_urdf_mm": {
+     "n": 9,
+     "median": -12.760817312787502,
+     "min": -46.46277941863694,
+     "max": -3.0921994772801895
+    },
+    "tk_clear_link_equals_rec_mjcfname": 9
+   },
+   "V8|arm": {
+    "n": 1,
+    "bar_vis_near_any_cam_exec": 0,
+    "bar_vis_near_head_exec": 0,
+    "bar_vis_near_wrist_exec": 0,
+    "pb_occluded_head": 1,
+    "chunks_since_seen_0": 0,
+    "in_raw": 0,
+    "in_filtered": 0,
+    "raw_eq_filtered": 1,
+    "in_full_layer": 1,
+    "target_free_layer_present": 1,
+    "pb_in_ball_exec": 0,
+    "fine_pb_inside": 1,
+    "coarse_pb_inside": 1,
+    "robot_filtered_near_px_gt0": 0,
+    "post_place_target_switch": 0,
+    "post_place_pb_in_ball_any": 0,
+    "held_free_overlapped_bar_any_chunk": 0,
+    "fine_pb_max_after_place_gt5mm": 0,
+    "fine_pb_mm": {
+     "n": 1,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "composed_full_pf_mm": {
+     "n": 1,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "mesh_pen_mm": {
+     "n": 1,
+     "median": -0.42863058683378574,
+     "min": -0.42863058683378574,
+     "max": -0.42863058683378574
+    },
+    "field_minus_mesh_at_contact_mm": {
+     "n": 1,
+     "median": 0.42863058683378574,
+     "min": 0.42863058683378574,
+     "max": 0.42863058683378574
+    },
+    "fine_pb_max_after_place_mm": {
+     "n": 1,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "tk_esdf_minus_geomP_mm": {
+     "n": 0
+    },
+    "esdf_minus_geomP_urdf_mm": {
+     "n": 0
+    },
+    "tk_clear_link_equals_rec_mjcfname": 0
+   }
+  },
+  "contacts": [
+   {
+    "key": "V7g/H/V7g_ep1807_s18071",
+    "t": 261,
+    "body_mjcf": "ee_finger_l1",
+    "link_urdf": "ee_finger_l2",
+    "exec_seq": 33,
+    "step_in_chunk": 5,
+    "mesh_pen_mm": -2.6710373887204963,
+    "near_px": {
+     "zed_left": 0,
+     "wrist_cam_l": 6187,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 0,
+     "wrist_cam_l": 6187,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 0,
+     "wrist_cam_l": 6447,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": false,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "link_left_arm_4",
+     "wrist_cam_l": "pick_obstacle_overbar_0",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 33,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 14,
+    "n_filtered_near": 14,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -6.349062081426382,
+    "coarse_pb_mm": 4.167655482888222,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": -2.1699582238265878,
+    "field_minus_mesh_at_contact_mm": 0.5010791648939086,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 9,
+    "held_chunks_bar_in_heldfree": 1,
+    "heldfree_S_sd_min_mm": -0.15840995505579658,
+    "fine_pb_max_after_place_mm": 4.710542969405651,
+    "fine_pb_max_all_mm": 6.6676065325737,
+    "to_status": "feasible",
+    "to_clearance_mm": 3.6414990328996844,
+    "rec_clear_k_mjcfname_mm": 39.48795422911644,
+    "rec_clear_k_urdf_mm": 15.431640669703484,
+    "tk_clear_row_k_link_mm": 39.48795422911644,
+    "tk_bar_P_mm": 12.838265492524137,
+    "tk_esdf_minus_geomP_mm": 26.649688736592303,
+    "esdf_minus_geomP_urdf_mm": 2.5933751771793467
+   },
+   {
+    "key": "V7g/H/V7g_ep1807_s18073",
+    "t": 265,
+    "body_mjcf": "ee_finger_l1",
+    "link_urdf": "ee_finger_l2",
+    "exec_seq": 34,
+    "step_in_chunk": 1,
+    "mesh_pen_mm": -0.24063986493759632,
+    "near_px": {
+     "zed_left": 123,
+     "wrist_cam_l": 4838,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 123,
+     "wrist_cam_l": 4838,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 124,
+     "wrist_cam_l": 4958,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": false,
+     "wrist_cam_l": false,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "pick_obstacle_overbar_0",
+     "wrist_cam_l": "pick_obstacle_overbar_0",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 34,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 29,
+    "n_filtered_near": 29,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -8.332525379955769,
+    "coarse_pb_mm": 2.031225711107254,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.0,
+    "field_minus_mesh_at_contact_mm": 0.24063986493759632,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 14,
+    "held_chunks_bar_in_heldfree": 1,
+    "heldfree_S_sd_min_mm": -11.145903384083507,
+    "fine_pb_max_after_place_mm": 0.04328439536038786,
+    "fine_pb_max_all_mm": 0.6336459773592651,
+    "to_status": "feasible",
+    "to_clearance_mm": 5.451594675615017,
+    "rec_clear_k_mjcfname_mm": 41.76686704158783,
+    "rec_clear_k_urdf_mm": 21.667761728167534,
+    "tk_clear_row_k_link_mm": 41.76686704158783,
+    "tk_bar_P_mm": 21.23740504703627,
+    "tk_esdf_minus_geomP_mm": 20.52946199455156,
+    "esdf_minus_geomP_urdf_mm": 0.4303566811312649
+   },
+   {
+    "key": "V7g/H/V7g_ep1834_s18341",
+    "t": 237,
+    "body_mjcf": "link_right_arm_4",
+    "link_urdf": "link_right_arm_4",
+    "exec_seq": 30,
+    "step_in_chunk": 5,
+    "mesh_pen_mm": -1.4270473748641908,
+    "near_px": {
+     "zed_left": 7,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 7,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 13,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": null,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "link_right_arm_5",
+     "wrist_cam_l": null,
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 30,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 3,
+    "n_filtered_near": 3,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -8.103630505502224,
+    "coarse_pb_mm": 2.0365219097584486,
+    "in_full_layer": true,
+    "n_target_free_layers": 1,
+    "in_target_free_layer": true,
+    "tf_mode": "ball",
+    "ball_radius_mm": 53.234,
+    "pb_minus_ball_mm": 275.2936072162969,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.0,
+    "field_minus_mesh_at_contact_mm": 1.4270473748641908,
+    "manip_id": 0,
+    "manip_state": "occluded",
+    "subtask": "place",
+    "post_subtask": [
+     "place"
+    ],
+    "post_manip_ids": [
+     "0"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 12,
+    "held_chunks_bar_in_heldfree": 0,
+    "heldfree_S_sd_min_mm": 91.3342632950579,
+    "fine_pb_max_after_place_mm": 0.0,
+    "fine_pb_max_all_mm": 0.0,
+    "to_status": "feasible",
+    "to_clearance_mm": 7.0597759077424636,
+    "rec_clear_k_mjcfname_mm": null,
+    "rec_clear_k_urdf_mm": null,
+    "tk_clear_row_k_link_mm": null,
+    "tk_bar_P_mm": -16.511137582854474,
+    "tk_esdf_minus_geomP_mm": null,
+    "esdf_minus_geomP_urdf_mm": null
+   },
+   {
+    "key": "V7g/H/V7g_ep1925_s19251",
+    "t": 270,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 34,
+    "step_in_chunk": 6,
+    "mesh_pen_mm": -2.3594585354623514,
+    "near_px": {
+     "zed_left": 46,
+     "wrist_cam_l": 1833,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 46,
+     "wrist_cam_l": 1833,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 54,
+     "wrist_cam_l": 1974,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": true,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "link_left_arm_4",
+     "wrist_cam_l": "ee_finger_l1",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 34,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 14,
+    "n_filtered_near": 14,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -1.931237056851387,
+    "coarse_pb_mm": 3.456047037616372,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.0,
+    "field_minus_mesh_at_contact_mm": 2.3594585354623514,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 14,
+    "held_chunks_bar_in_heldfree": 1,
+    "heldfree_S_sd_min_mm": -5.954345626628776,
+    "fine_pb_max_after_place_mm": 0.018473470845492557,
+    "fine_pb_max_all_mm": 3.9354702457785606,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.8746007618154525,
+    "rec_clear_k_mjcfname_mm": 89.79189395904541,
+    "rec_clear_k_urdf_mm": 14.909816905856133,
+    "tk_clear_row_k_link_mm": 89.79189395904541,
+    "tk_bar_P_mm": 33.02560468493368,
+    "tk_esdf_minus_geomP_mm": 56.76628927411173,
+    "esdf_minus_geomP_urdf_mm": -18.11578777907755
+   },
+   {
+    "key": "V7g/H/V7g_ep1982_s19822",
+    "t": 275,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 35,
+    "step_in_chunk": 3,
+    "mesh_pen_mm": -0.443277433550205,
+    "near_px": {
+     "zed_left": 60,
+     "wrist_cam_l": 4497,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 60,
+     "wrist_cam_l": 4497,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 63,
+     "wrist_cam_l": 4586,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": false,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "EE_BODY_L",
+     "wrist_cam_l": "pick_obstacle_overbar_0",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 35,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 36,
+    "n_filtered_near": 36,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -12.743509374558926,
+    "coarse_pb_mm": 2.0510624162852764,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.0,
+    "field_minus_mesh_at_contact_mm": 0.443277433550205,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 7,
+    "held_chunks_bar_in_heldfree": 1,
+    "heldfree_S_sd_min_mm": -7.319898576097713,
+    "fine_pb_max_after_place_mm": 0.46182412188500166,
+    "fine_pb_max_all_mm": 0.46182412188500166,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.8077441755088755,
+    "rec_clear_k_mjcfname_mm": 104.22834753990173,
+    "rec_clear_k_urdf_mm": 31.89975768327713,
+    "tk_clear_row_k_link_mm": 104.22834753990173,
+    "tk_bar_P_mm": 33.181676021192025,
+    "tk_esdf_minus_geomP_mm": 71.0466715187097,
+    "esdf_minus_geomP_urdf_mm": -1.2819183379148953
+   },
+   {
+    "key": "V7g/H/V7g_ep1982_s19823",
+    "t": 288,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 37,
+    "step_in_chunk": 0,
+    "mesh_pen_mm": -0.22338989690110986,
+    "near_px": {
+     "zed_left": 74,
+     "wrist_cam_l": 4941,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 39,
+     "wrist_cam_l": 2681,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 35,
+     "wrist_cam_l": 2260,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 42,
+     "wrist_cam_l": 2777,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": false,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "EE_BODY_L",
+     "wrist_cam_l": "pick_obstacle_overbar_0",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 37,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 26,
+    "n_filtered_near": 26,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -7.579510565847158,
+    "coarse_pb_mm": 2.449098275974393,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.0,
+    "field_minus_mesh_at_contact_mm": 0.22338989690110986,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 16,
+    "held_chunks_bar_in_heldfree": 1,
+    "heldfree_S_sd_min_mm": -5.925576557923861,
+    "fine_pb_max_after_place_mm": 0.33562391763553023,
+    "fine_pb_max_all_mm": 0.5263733328320086,
+    "to_status": "feasible",
+    "to_clearance_mm": 5.431037094608281,
+    "rec_clear_k_mjcfname_mm": 98.67348521947861,
+    "rec_clear_k_urdf_mm": 15.431037172675133,
+    "tk_clear_row_k_link_mm": 98.67348521947861,
+    "tk_bar_P_mm": 17.832623040994438,
+    "tk_esdf_minus_geomP_mm": 80.84086217848417,
+    "esdf_minus_geomP_urdf_mm": -2.401585868319305
+   },
+   {
+    "key": "V8/H/V8_ep1807_s18071",
+    "t": 314,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 40,
+    "step_in_chunk": 2,
+    "mesh_pen_mm": -2.4020571907945114,
+    "near_px": {
+     "zed_left": 0,
+     "wrist_cam_l": 5873,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 0,
+     "wrist_cam_l": 5873,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 0,
+     "wrist_cam_l": 6211,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": false,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "link_left_arm_5",
+     "wrist_cam_l": "pick_obstacle_overbar_0",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 40,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 30,
+    "n_filtered_near": 30,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -8.741301484405994,
+    "coarse_pb_mm": 2.9919096268713474,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.20768597836197475,
+    "field_minus_mesh_at_contact_mm": 2.609743169156486,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 14,
+    "held_chunks_bar_in_heldfree": 1,
+    "heldfree_S_sd_min_mm": -10.123834839911192,
+    "fine_pb_max_after_place_mm": 1.0301345027983189,
+    "fine_pb_max_all_mm": 1.0625241557136178,
+    "to_status": "feasible",
+    "to_clearance_mm": 7.785984232312194,
+    "rec_clear_k_mjcfname_mm": 149.7650295495987,
+    "rec_clear_k_urdf_mm": 61.408258974552155,
+    "tk_clear_row_k_link_mm": 149.7650295495987,
+    "tk_bar_P_mm": 75.26180174315672,
+    "tk_esdf_minus_geomP_mm": 74.50322780644197,
+    "esdf_minus_geomP_urdf_mm": -13.85354276860457
+   },
+   {
+    "key": "V8/H/V8_ep1807_s18073",
+    "t": 270,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 34,
+    "step_in_chunk": 6,
+    "mesh_pen_mm": -5.795300221963346,
+    "near_px": {
+     "zed_left": 27,
+     "wrist_cam_l": 2657,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 27,
+     "wrist_cam_l": 2657,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 35,
+     "wrist_cam_l": 3101,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": null,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "link_left_arm_4",
+     "wrist_cam_l": null,
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 34,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 8,
+    "n_filtered_near": 8,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.46325684525072575,
+    "fine_S_min_mm": -10.40195394307375,
+    "coarse_pb_mm": 3.570057451725006,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": -4.912746282777202,
+    "field_minus_mesh_at_contact_mm": 0.8825539391861437,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 9,
+    "held_chunks_bar_in_heldfree": 1,
+    "heldfree_S_sd_min_mm": -3.2304562831366734,
+    "fine_pb_max_after_place_mm": 0.46325684525072575,
+    "fine_pb_max_all_mm": 7.554191164672375,
+    "to_status": "feasible",
+    "to_clearance_mm": 7.083951675155307,
+    "rec_clear_k_mjcfname_mm": 136.92781329154968,
+    "rec_clear_k_urdf_mm": 53.64888906478882,
+    "tk_clear_row_k_link_mm": 136.92781329154968,
+    "tk_bar_P_mm": 100.11166848342576,
+    "tk_esdf_minus_geomP_mm": 36.81614480812392,
+    "esdf_minus_geomP_urdf_mm": -46.46277941863694
+   },
+   {
+    "key": "V8/H/V8_ep1834_s18341",
+    "t": 249,
+    "body_mjcf": "link_right_arm_4",
+    "link_urdf": "link_right_arm_4",
+    "exec_seq": 32,
+    "step_in_chunk": 1,
+    "mesh_pen_mm": -0.42863058683378574,
+    "near_px": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": null,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "link_right_arm_5",
+     "wrist_cam_l": null,
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 31,
+    "chunks_since_seen": 1,
+    "unseen_streak": 1,
+    "n_raw_near": 0,
+    "n_filtered_near": 0,
+    "raw_eq_filtered": true,
+    "in_raw": false,
+    "in_filtered": false,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -7.313827518373728,
+    "coarse_pb_mm": 1.7164776800200343,
+    "in_full_layer": true,
+    "n_target_free_layers": 1,
+    "in_target_free_layer": true,
+    "tf_mode": "ball",
+    "ball_radius_mm": 53.287,
+    "pb_minus_ball_mm": 271.2840489361872,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.0,
+    "field_minus_mesh_at_contact_mm": 0.42863058683378574,
+    "manip_id": 0,
+    "manip_state": "occluded",
+    "subtask": "place",
+    "post_subtask": [
+     "place"
+    ],
+    "post_manip_ids": [
+     "0"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 16,
+    "held_chunks_bar_in_heldfree": 0,
+    "heldfree_S_sd_min_mm": 86.23948933054382,
+    "fine_pb_max_after_place_mm": 0.0,
+    "fine_pb_max_all_mm": 0.5203738110139966,
+    "to_status": "feasible",
+    "to_clearance_mm": 15.781221677876905,
+    "rec_clear_k_mjcfname_mm": null,
+    "rec_clear_k_urdf_mm": null,
+    "tk_clear_row_k_link_mm": null,
+    "tk_bar_P_mm": -7.271303885404973,
+    "tk_esdf_minus_geomP_mm": null,
+    "esdf_minus_geomP_urdf_mm": null
+   },
+   {
+    "key": "V8/H/V8_ep1925_s19251",
+    "t": 279,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 35,
+    "step_in_chunk": 7,
+    "mesh_pen_mm": -2.2502140495507876,
+    "near_px": {
+     "zed_left": 18,
+     "wrist_cam_l": 2515,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 18,
+     "wrist_cam_l": 2515,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 18,
+     "wrist_cam_l": 2588,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": true,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "link_left_arm_4",
+     "wrist_cam_l": "ee_finger_l1",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 35,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 19,
+    "n_filtered_near": 19,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -6.671771872788668,
+    "coarse_pb_mm": 0.9439178975299001,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.0,
+    "field_minus_mesh_at_contact_mm": 2.2502140495507876,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 12,
+    "held_chunks_bar_in_heldfree": 0,
+    "heldfree_S_sd_min_mm": 12.380325007380712,
+    "fine_pb_max_after_place_mm": 0.0,
+    "fine_pb_max_all_mm": 0.6622753571718931,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.838460350884052,
+    "rec_clear_k_mjcfname_mm": 98.78464788198471,
+    "rec_clear_k_urdf_mm": 19.949525594711304,
+    "tk_clear_row_k_link_mm": 98.78464788198471,
+    "tk_bar_P_mm": 36.75487068911422,
+    "tk_esdf_minus_geomP_mm": 62.02977719287049,
+    "esdf_minus_geomP_urdf_mm": -16.805345094402917
+   },
+   {
+    "key": "V8/H/V8_ep1925_s19253",
+    "t": 279,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 35,
+    "step_in_chunk": 7,
+    "mesh_pen_mm": -1.6901076285253254,
+    "near_px": {
+     "zed_left": 0,
+     "wrist_cam_l": 3593,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 0,
+     "wrist_cam_l": 3593,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 0,
+     "wrist_cam_l": 3701,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": false,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "link_left_arm_4",
+     "wrist_cam_l": "pick_obstacle_overbar_0",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 35,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 28,
+    "n_filtered_near": 28,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -8.334473706781864,
+    "coarse_pb_mm": 1.0210563195869327,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.0,
+    "field_minus_mesh_at_contact_mm": 1.6901076285253254,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 13,
+    "held_chunks_bar_in_heldfree": 1,
+    "heldfree_S_sd_min_mm": -3.66213865286643,
+    "fine_pb_max_after_place_mm": 2.759037772193551,
+    "fine_pb_max_all_mm": 5.067090969532728,
+    "to_status": "feasible",
+    "to_clearance_mm": 3.9844070526454183,
+    "rec_clear_k_mjcfname_mm": 94.53990310430527,
+    "rec_clear_k_urdf_mm": 15.852408483624458,
+    "tk_clear_row_k_link_mm": 94.53990310430527,
+    "tk_bar_P_mm": 28.61322579641196,
+    "tk_esdf_minus_geomP_mm": 65.9266773078933,
+    "esdf_minus_geomP_urdf_mm": -12.760817312787502
+   },
+   {
+    "key": "V8/H/V8_ep1967_s19672",
+    "t": 309,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 39,
+    "step_in_chunk": 5,
+    "mesh_pen_mm": -1.939808271837663,
+    "near_px": {
+     "zed_left": 39,
+     "wrist_cam_l": 921,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 39,
+     "wrist_cam_l": 921,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 46,
+     "wrist_cam_l": 936,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": null,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "link_left_arm_5",
+     "wrist_cam_l": null,
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 39,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 18,
+    "n_filtered_near": 18,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.6730956374667585,
+    "fine_S_min_mm": -9.159805253148079,
+    "coarse_pb_mm": 6.7717586643993855,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.1444050216271708,
+    "field_minus_mesh_at_contact_mm": 2.084213293464834,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 14,
+    "held_chunks_bar_in_heldfree": 1,
+    "heldfree_S_sd_min_mm": -0.5221757528782387,
+    "fine_pb_max_after_place_mm": 3.1378609128296375,
+    "fine_pb_max_all_mm": 3.5566817969083786,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.33417526047433,
+    "rec_clear_k_mjcfname_mm": 106.13177716732025,
+    "rec_clear_k_urdf_mm": 21.259469911456108,
+    "tk_clear_row_k_link_mm": 106.13177716732025,
+    "tk_bar_P_mm": 26.59770856369333,
+    "tk_esdf_minus_geomP_mm": 79.53406860362692,
+    "esdf_minus_geomP_urdf_mm": -5.338238652237223
+   },
+   {
+    "key": "V8/H/V8_ep1968_s19681",
+    "t": 288,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 37,
+    "step_in_chunk": 0,
+    "mesh_pen_mm": -1.0241256649159685,
+    "near_px": {
+     "zed_left": 62,
+     "wrist_cam_l": 5009,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 40,
+     "wrist_cam_l": 3432,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 22,
+     "wrist_cam_l": 1577,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 42,
+     "wrist_cam_l": 3549,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": false,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "EE_BODY_L",
+     "wrist_cam_l": "pick_obstacle_overbar_0",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 37,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 22,
+    "n_filtered_near": 22,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.8341018110513687,
+    "fine_S_min_mm": -8.555693551898003,
+    "coarse_pb_mm": 7.447979412972927,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.21583890835033115,
+    "field_minus_mesh_at_contact_mm": 1.2399645732662996,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 14,
+    "held_chunks_bar_in_heldfree": 0,
+    "heldfree_S_sd_min_mm": 8.072534744875188,
+    "fine_pb_max_after_place_mm": 0.8341018110513687,
+    "fine_pb_max_all_mm": 0.8341018110513687,
+    "to_status": "feasible",
+    "to_clearance_mm": 5.034664052544543,
+    "rec_clear_k_mjcfname_mm": 99.68815743923187,
+    "rec_clear_k_urdf_mm": 15.034664422273636,
+    "tk_clear_row_k_link_mm": 99.68815743923187,
+    "tk_bar_P_mm": 18.126863899553825,
+    "tk_esdf_minus_geomP_mm": 81.56129353967805,
+    "esdf_minus_geomP_urdf_mm": -3.0921994772801895
+   },
+   {
+    "key": "V8/H/V8_ep1982_s19823",
+    "t": 290,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 37,
+    "step_in_chunk": 2,
+    "mesh_pen_mm": -0.5177913277357223,
+    "near_px": {
+     "zed_left": 45,
+     "wrist_cam_l": 4795,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 45,
+     "wrist_cam_l": 4795,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 49,
+     "wrist_cam_l": 4886,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": false,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "EE_BODY_L",
+     "wrist_cam_l": "pick_obstacle_overbar_0",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 37,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 33,
+    "n_filtered_near": 33,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -9.463169611990452,
+    "coarse_pb_mm": 1.6638304805383086,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.0,
+    "field_minus_mesh_at_contact_mm": 0.5177913277357223,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 8,
+    "held_chunks_bar_in_heldfree": 1,
+    "heldfree_S_sd_min_mm": -7.148740598016678,
+    "fine_pb_max_after_place_mm": 0.742981443181634,
+    "fine_pb_max_all_mm": 0.742981443181634,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.527577615290591,
+    "rec_clear_k_mjcfname_mm": 101.34086012840271,
+    "rec_clear_k_urdf_mm": 18.427515402436256,
+    "tk_clear_row_k_link_mm": 101.34086012840271,
+    "tk_bar_P_mm": 23.18300463745413,
+    "tk_esdf_minus_geomP_mm": 78.15785549094858,
+    "esdf_minus_geomP_urdf_mm": -4.755489235017873
+   },
+   {
+    "key": "V8/H/V8_ep1995_s19952",
+    "t": 291,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 37,
+    "step_in_chunk": 3,
+    "mesh_pen_mm": -2.3751648151539313,
+    "near_px": {
+     "zed_left": 7,
+     "wrist_cam_l": 5694,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 7,
+     "wrist_cam_l": 5694,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 11,
+     "wrist_cam_l": 5973,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": true,
+     "wrist_cam_l": false,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "link_left_arm_5",
+     "wrist_cam_l": "pick_obstacle_overbar_0",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 37,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 29,
+    "n_filtered_near": 29,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.37591118598356843,
+    "fine_S_min_mm": -6.881261710077524,
+    "coarse_pb_mm": 7.370703388005495,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.0,
+    "field_minus_mesh_at_contact_mm": 2.3751648151539313,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 14,
+    "held_chunks_bar_in_heldfree": 0,
+    "heldfree_S_sd_min_mm": 23.535501368641505,
+    "fine_pb_max_after_place_mm": 2.8901544865220785,
+    "fine_pb_max_all_mm": 3.6935110110789537,
+    "to_status": "feasible",
+    "to_clearance_mm": 5.013610421316091,
+    "rec_clear_k_mjcfname_mm": 89.5964726805687,
+    "rec_clear_k_urdf_mm": 17.041189596056938,
+    "tk_clear_row_k_link_mm": 89.5964726805687,
+    "tk_bar_P_mm": 36.62834420883176,
+    "tk_esdf_minus_geomP_mm": 52.96812847173693,
+    "esdf_minus_geomP_urdf_mm": -19.587154612774825
+   },
+   {
+    "key": "V8/H/V8_ep1995_s19953",
+    "t": 286,
+    "body_mjcf": "ee_finger_l2",
+    "link_urdf": "ee_finger_l1",
+    "exec_seq": 36,
+    "step_in_chunk": 6,
+    "mesh_pen_mm": -1.3992055942533936,
+    "near_px": {
+     "zed_left": 147,
+     "wrist_cam_l": 981,
+     "wrist_cam_r": 0
+    },
+    "near_vis_px": {
+     "zed_left": 147,
+     "wrist_cam_l": 981,
+     "wrist_cam_r": 0
+    },
+    "near_robot_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "near_held_filtered": {
+     "zed_left": 0,
+     "wrist_cam_l": 0,
+     "wrist_cam_r": 0
+    },
+    "centre_bin_vis": {
+     "zed_left": 152,
+     "wrist_cam_l": 1057,
+     "wrist_cam_r": 0
+    },
+    "pb_occluded": {
+     "zed_left": false,
+     "wrist_cam_l": true,
+     "wrist_cam_r": null
+    },
+    "pb_body_at_px": {
+     "zed_left": "pick_obstacle_overbar_0",
+     "wrist_cam_l": "ee_finger_l1",
+     "wrist_cam_r": null
+    },
+    "last_seen_seq": 36,
+    "chunks_since_seen": 0,
+    "unseen_streak": 0,
+    "n_raw_near": 29,
+    "n_filtered_near": 29,
+    "raw_eq_filtered": true,
+    "in_raw": true,
+    "in_filtered": true,
+    "fine_pb_mm": 0.0,
+    "fine_S_min_mm": -5.890390370041132,
+    "coarse_pb_mm": 8.90185497701168,
+    "in_full_layer": true,
+    "n_target_free_layers": 0,
+    "in_target_free_layer": null,
+    "tf_mode": "none",
+    "ball_radius_mm": null,
+    "pb_minus_ball_mm": null,
+    "fine_pb_inside": true,
+    "coarse_pb_inside": true,
+    "composed_full_pf_mm": 0.0,
+    "field_minus_mesh_at_contact_mm": 1.3992055942533936,
+    "manip_id": null,
+    "manip_state": null,
+    "subtask": "home",
+    "post_subtask": [
+     "home",
+     "place"
+    ],
+    "post_manip_ids": [
+     "0",
+     "None"
+    ],
+    "post_switched": 0,
+    "post_n_pb_in_ball": 0,
+    "post_n_target_near_hurdle_chunks": 0,
+    "held_chunks": 14,
+    "held_chunks_bar_in_heldfree": 0,
+    "heldfree_S_sd_min_mm": 31.90548952857543,
+    "fine_pb_max_after_place_mm": 0.44245237950235605,
+    "fine_pb_max_all_mm": 0.8248207159340382,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.943920566239026,
+    "rec_clear_k_mjcfname_mm": 93.13540905714035,
+    "rec_clear_k_urdf_mm": 20.881861448287964,
+    "tk_clear_row_k_link_mm": 93.13540905714035,
+    "tk_bar_P_mm": 26.19839448032395,
+    "tk_esdf_minus_geomP_mm": 66.9370145768164,
+    "esdf_minus_geomP_urdf_mm": -5.316533032035988
+   }
+  ],
+  "finger_name_map_V8": {
+   "V8/H/V8_ep1807_s18073": {
+    "urdf:ee_finger_l1->mjcf:ee_finger_l1_mm": 98.15542662077786,
+    "urdf:ee_finger_l1->mjcf:ee_finger_l2_mm": 22.416368770540412,
+    "urdf:ee_finger_l2->mjcf:ee_finger_l1_mm": 21.1460017024093,
+    "urdf:ee_finger_l2->mjcf:ee_finger_l2_mm": 104.06813470281989
+   },
+   "V8/H/V8_ep1834_s18341": {
+    "urdf:ee_finger_r1->mjcf:ee_finger_r1_mm": 18.65396691914614,
+    "urdf:ee_finger_r1->mjcf:ee_finger_r2_mm": 96.83833719004826,
+    "urdf:ee_finger_r2->mjcf:ee_finger_r1_mm": 96.70450483870755,
+    "urdf:ee_finger_r2->mjcf:ee_finger_r2_mm": 19.638423450054866
+   }
+  },
+  "eikonal_V8_18073_chunk73": {
+   "fine_grad_median": 0.999,
+   "fine_grad_p10": 0.989,
+   "fine_grad_p90": 1.004,
+   "coarse_grad_median": 0.998
+  },
+  "m09_V8_ep1807_s18073_seq22": {
+   "t_rows": [
+    168,
+    175
+   ],
+   "to_status": "violated",
+   "to_clearance_mm": -0.8702126286635192,
+   "query": 166,
+   "link": "ee_finger_l1",
+   "radius_mm": 7.191792130470276,
+   "point_base": [
+    0.5635917940983237,
+    0.15475797023930304,
+    1.0771891272249337
+   ],
+   "composed_d_mm": 26.321579354237823,
+   "composed_tier": "fine",
+   "fine_d_mm": 26.32157877087593,
+   "coarse_d_mm": 33.067066222429276,
+   "rec_clearance_step0_mm": 19.129786640405655,
+   "implied_margin_mm": 19.999999852431067,
+   "d_obj_record_mm": 22.69968421261624,
+   "d_obj_spheres_parent_frame_mm": 22.70040484881036,
+   "abs_drow_minus_dobj_mm": 3.6218951416215823,
+   "voxel_mm": 5.0,
+   "tolerance_m": 0.0001,
+   "obstacle_margin_mm_log": 10.0,
+   "hurdle_sd_minus_r_mm": 21.660369025762122,
+   "mjcf_ee_finger_l2_to_hurdle_mm_obs": 29.591351612966523,
+   "mjcf_ee_finger_l2_to_apple_mm_obs": -0.13195513369303974,
+   "apple_to_hurdle_mm_obs": 45.592169558563974
+  },
+  "m09_verdict_reasons": [
+   {
+    "kind": "allowed_contact",
+    "action": "execute",
+    "detail": "1 row(s): authorized ee_finger_l1 \u2194 manipulated id=0, worst -0.9 mm (tier fine, by distance)"
+   },
+   {
+    "kind": "budget_only",
+    "action": "execute",
+    "detail": "the solve stopped on its iteration cap (3 iteration(s)); the final check passed"
+   }
+  ],
+  "m09_classification": {
+   "tolerance_m": 0.0001,
+   "n_violating": 1,
+   "n_allowed": 1,
+   "n_unresolved": 0,
+   "n_collision": 0,
+   "residual_violation_m": 0.0,
+   "manipulated_id": 0,
+   "manipulated_state": "occluded",
+   "authorized_links": [
+    "ee_finger_l1",
+    "ee_finger_l2",
+    "ee_left"
+   ]
+  },
+  "m09_clearance_if_obstacle_margin_10mm": 9.129787223767547,
+  "m09_to_notes": [
+   "reduction.rows_per_step=24 bound on at least one step; some near-active constraints were not shown to the QP (the final check still sees all of them)",
+   "best effort: 0.9 mm of penetration remains (was 46.8 mm). The caller decides whether to execute."
+  ]
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43oc-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43oc-depthmask.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43oc-esdf.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43oc-history.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43oc-table.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": null,
+  "note": "regression baseline not run: lead constraint (CPU only, never .venv-ag3s). Record consistency instead: physics replay qpos mismatch rows 0 in all 16 contacts; eikonal |grad d| median 0.999 (fine) / 0.998 (coarse)"
+ },
+ "verdict": "recorded-data measurement only; baseline not run",
+ "anomalies_facts": [
+  "TK esdf_link_minus_geom_P_mm / clear_row_k_link_mm select record spheres by sphere_link_names == MJCF body name; measured map: left hand URDF ee_finger_l1 <-> MJCF ee_finger_l2 (and l2 <-> l1), right hand identity (namemap_V8.json); TK value equals OC rec_clear_k of the MJCF-named URDF link in 14/14 hand contacts"
+ ],
+ "not_measured": [
+  "held-object self-filter slip allowance (filter spheres used without the 20 mm slip) \u2014 post-release exec chunks are not attached",
+  "TSDF weights / per-voxel TSDF values (not recorded; only ESDF grids)",
+  "first-free spheres frame (recorded list treated as base frame)",
+  "HX items (trajectory decomposition) \u2014 other verifier"
+ ]
+}

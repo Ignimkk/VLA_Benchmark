@@ -1,0 +1,156 @@
+{
+ "figure": "/mnt/dev/work/benchmark/ag3s/docs/figures/t43/t43v8-finger-spheres-scene.png",
+ "script": "/mnt/dev/work/outputs/verify/T43/V8/p/fig_v8_scene.py",
+ "panels": [
+  {
+   "moment": "closing, apple between the fingers",
+   "run": "V8/H/V8_ep1925_s19253",
+   "t": 128,
+   "server_chunk": "/mnt/dev/work/outputs/verify/T43/V8/runs/V8/server_8287_20261006T103339/server_constraints/run_0000/chunk_00201.npz",
+   "n_spheres_by_link": {
+    "ee_finger_l1": 56,
+    "ee_finger_l2": 56,
+    "ee_finger_r1": 56,
+    "ee_finger_r2": 56,
+    "ee_left": 23,
+    "ee_right": 23
+   },
+   "radius_mm_range_by_link": {
+    "ee_finger_l1": [
+     2.54,
+     8.44
+    ],
+    "ee_finger_l2": [
+     2.54,
+     8.44
+    ],
+    "ee_finger_r1": [
+     2.54,
+     8.44
+    ],
+    "ee_finger_r2": [
+     2.54,
+     8.44
+    ],
+    "ee_left": [
+     5.7,
+     6.22
+    ],
+    "ee_right": [
+     5.7,
+     6.22
+    ]
+   },
+   "spheres_drawn": 135,
+   "pose": "qpos of the planning row with left-arm joints (q index 20..26) = refined_chunk[0]",
+   "view_centre_world": [
+    0.5567497541264015,
+    0.30537899509384087,
+    0.8737705866140979
+   ],
+   "ct_finger_contacts": [
+    [
+     "ee_finger_l2",
+     "after_release",
+     279,
+     1.69
+    ]
+   ]
+  },
+  {
+   "moment": "after release, finger near the bar (CT contact 5.8 mm at t270, obstacle stop)",
+   "run": "V8/H/V8_ep1807_s18073",
+   "t": 264,
+   "server_chunk": "/mnt/dev/work/outputs/verify/T43/V8/runs/V8/server_8286_20261006T102939/server_constraints/run_0000/chunk_00073.npz",
+   "n_spheres_by_link": {
+    "ee_finger_l1": 56,
+    "ee_finger_l2": 56,
+    "ee_finger_r1": 56,
+    "ee_finger_r2": 56,
+    "ee_left": 23,
+    "ee_right": 23
+   },
+   "radius_mm_range_by_link": {
+    "ee_finger_l1": [
+     2.54,
+     8.44
+    ],
+    "ee_finger_l2": [
+     2.54,
+     8.44
+    ],
+    "ee_finger_r1": [
+     2.54,
+     8.44
+    ],
+    "ee_finger_r2": [
+     2.54,
+     8.44
+    ],
+    "ee_left": [
+     5.7,
+     6.22
+    ],
+    "ee_right": [
+     5.7,
+     6.22
+    ]
+   },
+   "spheres_drawn": 135,
+   "pose": "qpos of the planning row with left-arm joints (q index 20..26) = refined_chunk[0]",
+   "view_centre_world": [
+    0.5376364779614103,
+    0.06418320453813457,
+    1.1668943847928728
+   ],
+   "ct_finger_contacts": [
+    [
+     "ee_finger_l2",
+     "after_release",
+     270,
+     5.8
+    ]
+   ]
+  }
+ ],
+ "cams": [
+  [
+   {
+    "az": 200.0,
+    "el": -25.0,
+    "dist": 0.34
+   },
+   {
+    "az": 140.0,
+    "el": -20.0,
+    "dist": 0.34
+   },
+   {
+    "az": 180.0,
+    "el": -18.0,
+    "dist": 0.9
+   }
+  ],
+  [
+   {
+    "az": 90.0,
+    "el": -5.0,
+    "dist": 0.42
+   },
+   {
+    "az": 150.0,
+    "el": -15.0,
+    "dist": 0.4
+   },
+   {
+    "az": 180.0,
+    "el": -18.0,
+    "dist": 0.9
+   }
+  ]
+ ],
+ "sources": [
+  "/mnt/dev/work/outputs/verify/T43/V8/analysis/analysis.json",
+  "/mnt/dev/work/outputs/verify/T43/V8/ct.json"
+ ]
+}

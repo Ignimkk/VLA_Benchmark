@@ -1,0 +1,7483 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only; no interpretation.",
+ "step": "T43GD",
+ "date": "2026-10-06T09:50:00+00:00",
+ "runs": [
+  {
+   "id": "V7",
+   "command": "outputs/verify/T43/GD/p/launch_gd.sh (nohup setsid; chains run_chain.sh V7 8284 / 8285, EST_GB=28, snapshot /mnt/dev/work-t43v7); server flags = outputs/verify/T43/V7g/p/start_server.sh V7g flags + --no-subtask-gate",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/GD/runs/V7/",
+   "stdout_log": [
+    "outputs/verify/T43/GD/runs/launch.out",
+    "outputs/verify/T43/GD/runs/chainE.out",
+    "outputs/verify/T43/GD/runs/chainF.out",
+    "outputs/verify/T43/GD/runs/V7/chain_8284.log",
+    "outputs/verify/T43/GD/runs/V7/chain_8285.log"
+   ]
+  },
+  {
+   "id": "V7g_reference",
+   "command": "existing round outputs/verify/T43/V7g/runs/V7g (read only)",
+   "raw_output": "outputs/verify/T43/V7g/runs/V7g/"
+  },
+  {
+   "id": "analysis",
+   "command": "T43W_SNAP=/mnt/dev/work-t43v7 MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-openpi-live/bin/python outputs/verify/T43/GD/p/analyze_gd.py (arms V7, V7g) -> analysis/analysis_V7.json, analysis_V7g.json; p/merge_analysis.py -> analysis/analysis.json",
+   "raw_output": "outputs/verify/T43/GD/analysis/analysis.json"
+  },
+  {
+   "id": "replay_z4",
+   "command": "outputs/verify/T43/GD/p/replay_done.sh V7 | V7g (Y/p/replay_y.py), p/gd_z4.py z4.json",
+   "raw_output": [
+    "outputs/verify/T43/GD/replay/",
+    "outputs/verify/T43/GD/z4.json"
+   ]
+  },
+  {
+   "id": "replay_contact",
+   "command": "outputs/verify/T43/GD/p/replay_ct_gd.sh (CT/p/replay_ct.py unchanged), p/gd_ct.py ct_runs.json",
+   "raw_output": [
+    "outputs/verify/T43/GD/replay_ct/",
+    "outputs/verify/T43/GD/ct_runs.json"
+   ]
+  },
+  {
+   "id": "aggregate",
+   "command": "p/gd_agg.py agg.json; p/gd_pairs.py agg.json pairs.json",
+   "raw_output": [
+    "outputs/verify/T43/GD/agg.json",
+    "outputs/verify/T43/GD/pairs.json"
+   ]
+  },
+  {
+   "id": "videos",
+   "command": "p/gd_video.py agg.json outputs/verify/T43/gate_demo H:1968:19683 H:1995:19953 H:1925:19251",
+   "raw_output": "outputs/verify/T43/gate_demo/",
+   "stdout_log": "outputs/verify/T43/GD/raw/video.json"
+  },
+  {
+   "id": "figures",
+   "command": "p/gd_fig.py agg.json pairs.json"
+  }
+ ],
+ "scripts": "outputs/verify/T43/GD/p/ (copy of outputs/verify/T43/V7g/p machinery; diff in p/diff_vs_v7g.txt)",
+ "code_state": {
+  "repo": "benchmark",
+  "head": "f2f335b",
+  "snapshot": "/mnt/dev/work-t43v7 (benchmark f2f335b, same as V7g)",
+  "dirty_files": [],
+  "code_md5": "== outputs/verify/T43/V7g/p/code_md5_v7g.txt (chain log: 'code md5 == GD-0')"
+ },
+ "numbers": {
+  "run_execution": {
+   "V7_runs_done": 19,
+   "hurdle": 14,
+   "no_obstacle": 5,
+   "retries": 0,
+   "failed_dir_present": false,
+   "chain_rc": {
+    "E_8284": 0,
+    "F_8285": 0
+   },
+   "launch_start": "2026-10-06T08:59:05+00:00",
+   "launch_end": "2026-10-06T09:36:57+00:00",
+   "ports": [
+    8284,
+    8285
+   ],
+   "gate_off_check": {
+    "server_cmdline_has_--no-subtask-gate": true,
+    "server_log_line": "subtask label: probe kv_L4_v1 (shipped asset) · gate off (기록만)",
+    "count_gate_ON_lines": 0,
+    "server_log": "outputs/verify/T43/GD/runs/V7/server_8284_20261006T085905/serve_safe.log"
+   },
+   "other_guards": "GPU used + 28 GB <= 130 GB, working set + 8 GiB <= 64 GiB, code md5, import check, autotune off, esdf_stats check all passed (chain logs)",
+   "V7g_run_end": "2026-10-06T08:58:59+00:00"
+  },
+  "arms": {
+   "V7": {
+    "ALL": {
+     "n": 19,
+     "success": 16,
+     "grasp": 16,
+     "place": 16,
+     "success_rel": 16,
+     "place_rel": 16,
+     "released": 16,
+     "success_ct": 13,
+     "n_pre_release_contact": 5,
+     "n_post_release_contact": 7,
+     "mode_counts": {
+      "full": 10,
+      "obstacle_stop": 9
+     },
+     "n_hold_total": 18,
+     "n_runs_with_hold": 7,
+     "hold_kinds": {
+      "collision": 15,
+      "uncertified": 2,
+      "unverified": 11
+     },
+     "hold_by_region": {
+      "after_placed": 3,
+      "before_first_held": 1,
+      "held_before_placed": 14
+     },
+     "hold_by_latch": {
+      "closing": 1,
+      "held": 14,
+      "placed": 3
+     },
+     "hold_by_label": {
+      "home": 3,
+      "pick": 1,
+      "place": 14
+     },
+     "hold_by_grounding": {
+      "no_admissible": 2,
+      "ok": 16
+     },
+     "n_hold_after_placed": 3,
+     "n_runs_trailing_hold": 0,
+     "n_chunks": 1105,
+     "label_counts": {
+      "None": 38,
+      "home": 389,
+      "pick": 374,
+      "place": 304
+     },
+     "n_runs_label_place": 19,
+     "n_runs_label_home": 18,
+     "t_first_label_place": {
+      "n": 19,
+      "mean": 152.8421052631579,
+      "median": 152.0,
+      "min": 128.0,
+      "max": 208.0
+     },
+     "t_first_label_home": {
+      "n": 18,
+      "mean": 277.3333333333333,
+      "median": 272.0,
+      "min": 232.0,
+      "max": 336.0
+     },
+     "t_placed": {
+      "n": 16,
+      "mean": 235.0,
+      "median": 232.0,
+      "min": 184.0,
+      "max": 312.0
+     },
+     "home_after_placed_delay": {
+      "n": 15,
+      "mean": 35.2,
+      "median": 24.0,
+      "min": 16.0,
+      "max": 104.0
+     },
+     "grounding_status_counts": {
+      "no_admissible": 2,
+      "ok": 1103
+     },
+     "grounding_status_after_placed": {
+      "no_admissible": 2,
+      "ok": 440
+     },
+     "n_released_flag_chunks": 0,
+     "n_runs_released_flag": 0,
+     "n_blocked_first": 0,
+     "n_blocked_switch": 0,
+     "n_would_block_first": 0,
+     "n_would_block_switch": 123,
+     "reason_kind_counts": {
+      "allowed_contact": 12,
+      "budget_only": 1088,
+      "collision": 15,
+      "follow_to": 1,
+      "uncertified": 2,
+      "unverified": 11
+     },
+     "n_subtask_no_target": 0,
+     "n_runs_subtask_no_target": 0,
+     "subtask_no_target_gs": {},
+     "after_placed": {
+      "n_runs_placed": 16,
+      "n_chunks": 442,
+      "mode_counts": {
+       "hold": 15,
+       "keep": 252,
+       "occluded": 150,
+       "switch": 25
+      },
+      "n_switch": 25,
+      "n_first": 0,
+      "n_carve": 440,
+      "n_runs_carve": 16,
+      "n_has_target": 440,
+      "n_manip_id_not_none": 442
+     },
+     "n_switch_total": 26,
+     "n_first_total": 19,
+     "n_carve_total": 1103,
+     "pose": {
+      "dJ_rad_last": {
+       "n": 19,
+       "mean": 0.525988669299398,
+       "median": 0.34389331733758877,
+       "min": 0.07684223705746111,
+       "max": 1.5797256456307807
+      },
+      "dEE_mm_last": {
+       "n": 19,
+       "mean": 110.24652202260187,
+       "median": 105.21149651171059,
+       "min": 10.208920617473884,
+       "max": 222.07195654903708
+      },
+      "dJ_rad_at_placed": {
+       "n": 16,
+       "mean": 1.2678386987204493,
+       "median": 1.356339539277176,
+       "min": 0.6296363748782493,
+       "max": 1.6343743745389152
+      },
+      "dEE_mm_at_placed": {
+       "n": 16,
+       "mean": 306.5614571292247,
+       "median": 316.6976320254943,
+       "min": 152.9223564444029,
+       "max": 350.57784505973245
+      },
+      "dJ_rad_min_from_placed": {
+       "n": 16,
+       "mean": 0.42074401023697855,
+       "median": 0.316580593018434,
+       "min": 0.07122505426069146,
+       "max": 0.9989845770897335
+      },
+      "dEE_mm_min_from_placed": {
+       "n": 16,
+       "mean": 110.94250461957259,
+       "median": 95.21765460432525,
+       "min": 9.840878192644098,
+       "max": 259.700419033649
+      }
+     },
+     "pose_full_runs": {
+      "dJ_rad_last": {
+       "n": 10,
+       "mean": 0.38825054539716747,
+       "median": 0.12801271770538597,
+       "min": 0.07684223705746111,
+       "max": 1.5797256456307807
+      },
+      "dEE_mm_last": {
+       "n": 10,
+       "mean": 65.65176291469172,
+       "median": 26.69932539391123,
+       "min": 10.208920617473884,
+       "max": 216.94535211397442
+      }
+     },
+     "hurdle_contact_steps": {
+      "n": 14,
+      "mean": 8.285714285714286,
+      "median": 2.5,
+      "min": 0.0,
+      "max": 35.0
+     },
+     "n_runs_hurdle_contact": 11
+    },
+    "H": {
+     "n": 14,
+     "success": 12,
+     "grasp": 12,
+     "place": 12,
+     "success_rel": 12,
+     "place_rel": 12,
+     "released": 12,
+     "success_ct": 9,
+     "n_pre_release_contact": 5,
+     "n_post_release_contact": 7,
+     "mode_counts": {
+      "full": 5,
+      "obstacle_stop": 9
+     },
+     "n_hold_total": 18,
+     "n_runs_with_hold": 7,
+     "hold_kinds": {
+      "collision": 15,
+      "uncertified": 2,
+      "unverified": 11
+     },
+     "hold_by_region": {
+      "after_placed": 3,
+      "before_first_held": 1,
+      "held_before_placed": 14
+     },
+     "hold_by_latch": {
+      "closing": 1,
+      "held": 14,
+      "placed": 3
+     },
+     "hold_by_label": {
+      "home": 3,
+      "pick": 1,
+      "place": 14
+     },
+     "hold_by_grounding": {
+      "no_admissible": 2,
+      "ok": 16
+     },
+     "n_hold_after_placed": 3,
+     "n_runs_trailing_hold": 0,
+     "n_chunks": 730,
+     "label_counts": {
+      "None": 28,
+      "home": 216,
+      "pick": 265,
+      "place": 221
+     },
+     "n_runs_label_place": 14,
+     "n_runs_label_home": 13,
+     "t_first_label_place": {
+      "n": 14,
+      "mean": 152.57142857142858,
+      "median": 144.0,
+      "min": 128.0,
+      "max": 208.0
+     },
+     "t_first_label_home": {
+      "n": 13,
+      "mean": 281.84615384615387,
+      "median": 272.0,
+      "min": 240.0,
+      "max": 336.0
+     },
+     "t_placed": {
+      "n": 12,
+      "mean": 233.33333333333334,
+      "median": 232.0,
+      "min": 184.0,
+      "max": 312.0
+     },
+     "home_after_placed_delay": {
+      "n": 11,
+      "mean": 40.0,
+      "median": 24.0,
+      "min": 16.0,
+      "max": 104.0
+     },
+     "grounding_status_counts": {
+      "no_admissible": 2,
+      "ok": 728
+     },
+     "grounding_status_after_placed": {
+      "no_admissible": 2,
+      "ok": 260
+     },
+     "n_released_flag_chunks": 0,
+     "n_runs_released_flag": 0,
+     "n_blocked_first": 0,
+     "n_blocked_switch": 0,
+     "n_would_block_first": 0,
+     "n_would_block_switch": 98,
+     "reason_kind_counts": {
+      "allowed_contact": 12,
+      "budget_only": 713,
+      "collision": 15,
+      "follow_to": 1,
+      "uncertified": 2,
+      "unverified": 11
+     },
+     "n_subtask_no_target": 0,
+     "n_runs_subtask_no_target": 0,
+     "subtask_no_target_gs": {},
+     "after_placed": {
+      "n_runs_placed": 12,
+      "n_chunks": 262,
+      "mode_counts": {
+       "hold": 15,
+       "keep": 130,
+       "occluded": 96,
+       "switch": 21
+      },
+      "n_switch": 21,
+      "n_first": 0,
+      "n_carve": 260,
+      "n_runs_carve": 12,
+      "n_has_target": 260,
+      "n_manip_id_not_none": 262
+     },
+     "n_switch_total": 22,
+     "n_first_total": 14,
+     "n_carve_total": 728,
+     "pose": {
+      "dJ_rad_last": {
+       "n": 14,
+       "mean": 0.5673122452647276,
+       "median": 0.6665528418806468,
+       "min": 0.07684223705746111,
+       "max": 1.0645667396517027
+      },
+      "dEE_mm_last": {
+       "n": 14,
+       "mean": 128.96510360482662,
+       "median": 131.17603128688438,
+       "min": 14.404699570127207,
+       "max": 222.07195654903708
+      },
+      "dJ_rad_at_placed": {
+       "n": 12,
+       "mean": 1.1980684175373622,
+       "median": 1.2563390582540617,
+       "min": 0.6296363748782493,
+       "max": 1.5231121810211208
+      },
+      "dEE_mm_at_placed": {
+       "n": 12,
+       "mean": 298.8020157303854,
+       "median": 311.8572763761897,
+       "min": 152.9223564444029,
+       "max": 346.6465961391669
+      },
+      "dJ_rad_min_from_placed": {
+       "n": 12,
+       "mean": 0.5279400627452271,
+       "median": 0.5751655623985221,
+       "min": 0.07122505426069146,
+       "max": 0.9989845770897335
+      },
+      "dEE_mm_min_from_placed": {
+       "n": 12,
+       "mean": 142.7219320938361,
+       "median": 139.86410043879405,
+       "min": 14.514675750307964,
+       "max": 259.700419033649
+      }
+     },
+     "pose_full_runs": {
+      "dJ_rad_last": {
+       "n": 5,
+       "mean": 0.36621843419785943,
+       "median": 0.29745476431514417,
+       "min": 0.07684223705746111,
+       "max": 0.6858578561140656
+      },
+      "dEE_mm_last": {
+       "n": 5,
+       "mean": 73.46903223701092,
+       "median": 28.646374790628716,
+       "min": 14.404699570127207,
+       "max": 199.6349082671155
+      }
+     },
+     "hurdle_contact_steps": {
+      "n": 14,
+      "mean": 8.285714285714286,
+      "median": 2.5,
+      "min": 0.0,
+      "max": 35.0
+     },
+     "n_runs_hurdle_contact": 11
+    },
+    "B": {
+     "n": 5,
+     "success": 4,
+     "grasp": 4,
+     "place": 4,
+     "success_rel": 4,
+     "place_rel": 4,
+     "released": 4,
+     "success_ct": 4,
+     "n_pre_release_contact": 0,
+     "n_post_release_contact": 0,
+     "mode_counts": {
+      "full": 5
+     },
+     "n_hold_total": 0,
+     "n_runs_with_hold": 0,
+     "hold_kinds": {},
+     "hold_by_region": {},
+     "hold_by_latch": {},
+     "hold_by_label": {},
+     "hold_by_grounding": {},
+     "n_hold_after_placed": 0,
+     "n_runs_trailing_hold": 0,
+     "n_chunks": 375,
+     "label_counts": {
+      "None": 10,
+      "home": 173,
+      "pick": 109,
+      "place": 83
+     },
+     "n_runs_label_place": 5,
+     "n_runs_label_home": 5,
+     "t_first_label_place": {
+      "n": 5,
+      "mean": 153.6,
+      "median": 160.0,
+      "min": 128.0,
+      "max": 168.0
+     },
+     "t_first_label_home": {
+      "n": 5,
+      "mean": 265.6,
+      "median": 272.0,
+      "min": 232.0,
+      "max": 280.0
+     },
+     "t_placed": {
+      "n": 4,
+      "mean": 240.0,
+      "median": 244.0,
+      "min": 216.0,
+      "max": 256.0
+     },
+     "home_after_placed_delay": {
+      "n": 4,
+      "mean": 22.0,
+      "median": 20.0,
+      "min": 16.0,
+      "max": 32.0
+     },
+     "grounding_status_counts": {
+      "ok": 375
+     },
+     "grounding_status_after_placed": {
+      "ok": 180
+     },
+     "n_released_flag_chunks": 0,
+     "n_runs_released_flag": 0,
+     "n_blocked_first": 0,
+     "n_blocked_switch": 0,
+     "n_would_block_first": 0,
+     "n_would_block_switch": 25,
+     "reason_kind_counts": {
+      "budget_only": 375
+     },
+     "n_subtask_no_target": 0,
+     "n_runs_subtask_no_target": 0,
+     "subtask_no_target_gs": {},
+     "after_placed": {
+      "n_runs_placed": 4,
+      "n_chunks": 180,
+      "mode_counts": {
+       "keep": 122,
+       "occluded": 54,
+       "switch": 4
+      },
+      "n_switch": 4,
+      "n_first": 0,
+      "n_carve": 180,
+      "n_runs_carve": 4,
+      "n_has_target": 180,
+      "n_manip_id_not_none": 180
+     },
+     "n_switch_total": 4,
+     "n_first_total": 5,
+     "n_carve_total": 375,
+     "pose": {
+      "dJ_rad_last": {
+       "n": 5,
+       "mean": 0.41028265659647545,
+       "median": 0.12354267161565709,
+       "min": 0.10579535327433526,
+       "max": 1.5797256456307807
+      },
+      "dEE_mm_last": {
+       "n": 5,
+       "mean": 57.83449359237253,
+       "median": 23.870235515372855,
+       "min": 10.208920617473884,
+       "max": 216.94535211397442
+      },
+      "dJ_rad_at_placed": {
+       "n": 4,
+       "mean": 1.477149542269711,
+       "median": 1.4389800105880526,
+       "min": 1.3962637733638241,
+       "max": 1.6343743745389152
+      },
+      "dEE_mm_at_placed": {
+       "n": 4,
+       "mean": 329.8397813257427,
+       "median": 333.62914318327927,
+       "min": 301.5229938766799,
+       "max": 350.57784505973245
+      },
+      "dJ_rad_min_from_placed": {
+       "n": 4,
+       "mean": 0.09915585271223273,
+       "median": 0.09705944913933381,
+       "min": 0.09029474012744018,
+       "max": 0.11220977244282314
+      },
+      "dEE_mm_min_from_placed": {
+       "n": 4,
+       "mean": 15.60422219678209,
+       "median": 15.174370831227854,
+       "min": 9.840878192644098,
+       "max": 22.227268932028558
+      }
+     },
+     "pose_full_runs": {
+      "dJ_rad_last": {
+       "n": 5,
+       "mean": 0.41028265659647545,
+       "median": 0.12354267161565709,
+       "min": 0.10579535327433526,
+       "max": 1.5797256456307807
+      },
+      "dEE_mm_last": {
+       "n": 5,
+       "mean": 57.83449359237253,
+       "median": 23.870235515372855,
+       "min": 10.208920617473884,
+       "max": 216.94535211397442
+      }
+     },
+     "hurdle_contact_steps": null,
+     "n_runs_hurdle_contact": 0
+    }
+   },
+   "V7g": {
+    "ALL": {
+     "n": 19,
+     "success": 16,
+     "grasp": 16,
+     "place": 16,
+     "success_rel": 16,
+     "place_rel": 16,
+     "released": 16,
+     "success_ct": 13,
+     "n_pre_release_contact": 5,
+     "n_post_release_contact": 6,
+     "mode_counts": {
+      "full": 11,
+      "obstacle_stop": 8
+     },
+     "n_hold_total": 16,
+     "n_runs_with_hold": 6,
+     "hold_kinds": {
+      "collision": 15,
+      "unverified": 11
+     },
+     "hold_by_region": {
+      "after_placed": 1,
+      "before_first_held": 1,
+      "held_before_placed": 14
+     },
+     "hold_by_latch": {
+      "closing": 1,
+      "held": 14,
+      "placed": 1
+     },
+     "hold_by_label": {
+      "home": 1,
+      "pick": 1,
+      "place": 14
+     },
+     "hold_by_grounding": {
+      "ok": 15,
+      "subtask_gated": 1
+     },
+     "n_hold_after_placed": 1,
+     "n_runs_trailing_hold": 0,
+     "n_chunks": 1146,
+     "label_counts": {
+      "None": 38,
+      "home": 438,
+      "pick": 374,
+      "place": 296
+     },
+     "n_runs_label_place": 19,
+     "n_runs_label_home": 18,
+     "t_first_label_place": {
+      "n": 19,
+      "mean": 152.8421052631579,
+      "median": 152.0,
+      "min": 128.0,
+      "max": 208.0
+     },
+     "t_first_label_home": {
+      "n": 18,
+      "mean": 273.77777777777777,
+      "median": 268.0,
+      "min": 232.0,
+      "max": 336.0
+     },
+     "t_placed": {
+      "n": 16,
+      "mean": 235.0,
+      "median": 232.0,
+      "min": 184.0,
+      "max": 312.0
+     },
+     "home_after_placed_delay": {
+      "n": 15,
+      "mean": 30.933333333333334,
+      "median": 24.0,
+      "min": 16.0,
+      "max": 72.0
+     },
+     "grounding_status_counts": {
+      "no_admissible": 36,
+      "ok": 723,
+      "subtask_gated": 387
+     },
+     "grounding_status_after_placed": {
+      "no_admissible": 36,
+      "ok": 60,
+      "subtask_gated": 387
+     },
+     "n_released_flag_chunks": 15,
+     "n_runs_released_flag": 15,
+     "n_blocked_first": 387,
+     "n_blocked_switch": 54,
+     "n_would_block_first": 387,
+     "n_would_block_switch": 54,
+     "reason_kind_counts": {
+      "allowed_contact": 12,
+      "budget_only": 1130,
+      "collision": 15,
+      "subtask_no_target": 423,
+      "unverified": 11
+     },
+     "n_subtask_no_target": 423,
+     "n_runs_subtask_no_target": 15,
+     "subtask_no_target_gs": {
+      "no_admissible": 36,
+      "subtask_gated": 387
+     },
+     "after_placed": {
+      "n_runs_placed": 16,
+      "n_chunks": 483,
+      "mode_counts": {
+       "no_admissible": 36,
+       "occluded": 60,
+       "subtask_gated": 387
+      },
+      "n_switch": 0,
+      "n_first": 0,
+      "n_carve": 60,
+      "n_runs_carve": 16,
+      "n_has_target": 60,
+      "n_manip_id_not_none": 60
+     },
+     "n_switch_total": 0,
+     "n_first_total": 19,
+     "n_carve_total": 723,
+     "pose": {
+      "dJ_rad_last": {
+       "n": 19,
+       "mean": 0.48373071012334673,
+       "median": 0.2851531493712674,
+       "min": 0.07860201412444925,
+       "max": 1.5797256456307807
+      },
+      "dEE_mm_last": {
+       "n": 19,
+       "mean": 97.34032989285627,
+       "median": 90.66205755036987,
+       "min": 10.080334295816796,
+       "max": 222.07195654903708
+      },
+      "dJ_rad_at_placed": {
+       "n": 16,
+       "mean": 1.2678386987204493,
+       "median": 1.356339539277176,
+       "min": 0.6296363748782493,
+       "max": 1.6343743745389152
+      },
+      "dEE_mm_at_placed": {
+       "n": 16,
+       "mean": 306.5614571292247,
+       "median": 316.6976320254943,
+       "min": 152.9223564444029,
+       "max": 350.57784505973245
+      },
+      "dJ_rad_min_from_placed": {
+       "n": 16,
+       "mean": 0.35749818407034933,
+       "median": 0.22615158813956665,
+       "min": 0.07187043823585255,
+       "max": 1.0011456158218182
+      },
+      "dEE_mm_min_from_placed": {
+       "n": 16,
+       "mean": 91.54628052771824,
+       "median": 28.982334044276435,
+       "min": 10.024363384683044,
+       "max": 259.67861370613446
+      }
+     },
+     "pose_full_runs": {
+      "dJ_rad_last": {
+       "n": 11,
+       "mean": 0.33432678443498154,
+       "median": 0.12249518032183167,
+       "min": 0.07860201412444925,
+       "max": 1.5797256456307807
+      },
+      "dEE_mm_last": {
+       "n": 11,
+       "mean": 55.36717311175841,
+       "median": 27.10866997289473,
+       "min": 10.080334295816796,
+       "max": 216.94535211397442
+      }
+     },
+     "hurdle_contact_steps": {
+      "n": 14,
+      "mean": 8.357142857142858,
+      "median": 4.0,
+      "min": 0.0,
+      "max": 35.0
+     },
+     "n_runs_hurdle_contact": 10
+    },
+    "H": {
+     "n": 14,
+     "success": 12,
+     "grasp": 12,
+     "place": 12,
+     "success_rel": 12,
+     "place_rel": 12,
+     "released": 12,
+     "success_ct": 9,
+     "n_pre_release_contact": 5,
+     "n_post_release_contact": 6,
+     "mode_counts": {
+      "full": 6,
+      "obstacle_stop": 8
+     },
+     "n_hold_total": 16,
+     "n_runs_with_hold": 6,
+     "hold_kinds": {
+      "collision": 15,
+      "unverified": 11
+     },
+     "hold_by_region": {
+      "after_placed": 1,
+      "before_first_held": 1,
+      "held_before_placed": 14
+     },
+     "hold_by_latch": {
+      "closing": 1,
+      "held": 14,
+      "placed": 1
+     },
+     "hold_by_label": {
+      "home": 1,
+      "pick": 1,
+      "place": 14
+     },
+     "hold_by_grounding": {
+      "ok": 15,
+      "subtask_gated": 1
+     },
+     "n_hold_after_placed": 1,
+     "n_runs_trailing_hold": 0,
+     "n_chunks": 771,
+     "label_counts": {
+      "None": 28,
+      "home": 265,
+      "pick": 265,
+      "place": 213
+     },
+     "n_runs_label_place": 14,
+     "n_runs_label_home": 13,
+     "t_first_label_place": {
+      "n": 14,
+      "mean": 152.57142857142858,
+      "median": 144.0,
+      "min": 128.0,
+      "max": 208.0
+     },
+     "t_first_label_home": {
+      "n": 13,
+      "mean": 276.9230769230769,
+      "median": 264.0,
+      "min": 240.0,
+      "max": 336.0
+     },
+     "t_placed": {
+      "n": 12,
+      "mean": 233.33333333333334,
+      "median": 232.0,
+      "min": 184.0,
+      "max": 312.0
+     },
+     "home_after_placed_delay": {
+      "n": 11,
+      "mean": 34.18181818181818,
+      "median": 24.0,
+      "min": 16.0,
+      "max": 72.0
+     },
+     "grounding_status_counts": {
+      "no_admissible": 15,
+      "ok": 517,
+      "subtask_gated": 239
+     },
+     "grounding_status_after_placed": {
+      "no_admissible": 15,
+      "ok": 49,
+      "subtask_gated": 239
+     },
+     "n_released_flag_chunks": 11,
+     "n_runs_released_flag": 11,
+     "n_blocked_first": 239,
+     "n_blocked_switch": 43,
+     "n_would_block_first": 239,
+     "n_would_block_switch": 43,
+     "reason_kind_counts": {
+      "allowed_contact": 12,
+      "budget_only": 755,
+      "collision": 15,
+      "subtask_no_target": 254,
+      "unverified": 11
+     },
+     "n_subtask_no_target": 254,
+     "n_runs_subtask_no_target": 11,
+     "subtask_no_target_gs": {
+      "no_admissible": 15,
+      "subtask_gated": 239
+     },
+     "after_placed": {
+      "n_runs_placed": 12,
+      "n_chunks": 303,
+      "mode_counts": {
+       "no_admissible": 15,
+       "occluded": 49,
+       "subtask_gated": 239
+      },
+      "n_switch": 0,
+      "n_first": 0,
+      "n_carve": 49,
+      "n_runs_carve": 12,
+      "n_has_target": 49,
+      "n_manip_id_not_none": 49
+     },
+     "n_switch_total": 0,
+     "n_first_total": 14,
+     "n_carve_total": 517,
+     "pose": {
+      "dJ_rad_last": {
+       "n": 14,
+       "mean": 0.5096878084054433,
+       "median": 0.3959610228596834,
+       "min": 0.07860201412444925,
+       "max": 1.119492393461112
+      },
+      "dEE_mm_last": {
+       "n": 14,
+       "mean": 111.564051276545,
+       "median": 107.50728976669055,
+       "min": 12.516445696226244,
+       "max": 222.07195654903708
+      },
+      "dJ_rad_at_placed": {
+       "n": 12,
+       "mean": 1.1980684175373622,
+       "median": 1.2563390582540617,
+       "min": 0.6296363748782493,
+       "max": 1.5231121810211208
+      },
+      "dEE_mm_at_placed": {
+       "n": 12,
+       "mean": 298.8020157303854,
+       "median": 311.8572763761897,
+       "min": 152.9223564444029,
+       "max": 346.6465961391669
+      },
+      "dJ_rad_min_from_placed": {
+       "n": 12,
+       "mean": 0.44396567276835913,
+       "median": 0.31134021646827814,
+       "min": 0.07187043823585255,
+       "max": 1.0011456158218182
+      },
+      "dEE_mm_min_from_placed": {
+       "n": 12,
+       "mean": 117.04770999857578,
+       "median": 108.42678741212978,
+       "min": 12.585793629802057,
+       "max": 259.67861370613446
+      }
+     },
+     "pose_full_runs": {
+      "dJ_rad_last": {
+       "n": 6,
+       "mean": 0.27039007568623563,
+       "median": 0.20177336883331998,
+       "min": 0.07860201412444925,
+       "max": 0.664426851104316
+      },
+      "dEE_mm_last": {
+       "n": 6,
+       "mean": 53.57822568945062,
+       "median": 29.040955250328764,
+       "min": 12.516445696226244,
+       "max": 194.83184871489544
+      }
+     },
+     "hurdle_contact_steps": {
+      "n": 14,
+      "mean": 8.357142857142858,
+      "median": 4.0,
+      "min": 0.0,
+      "max": 35.0
+     },
+     "n_runs_hurdle_contact": 10
+    },
+    "B": {
+     "n": 5,
+     "success": 4,
+     "grasp": 4,
+     "place": 4,
+     "success_rel": 4,
+     "place_rel": 4,
+     "released": 4,
+     "success_ct": 4,
+     "n_pre_release_contact": 0,
+     "n_post_release_contact": 0,
+     "mode_counts": {
+      "full": 5
+     },
+     "n_hold_total": 0,
+     "n_runs_with_hold": 0,
+     "hold_kinds": {},
+     "hold_by_region": {},
+     "hold_by_latch": {},
+     "hold_by_label": {},
+     "hold_by_grounding": {},
+     "n_hold_after_placed": 0,
+     "n_runs_trailing_hold": 0,
+     "n_chunks": 375,
+     "label_counts": {
+      "None": 10,
+      "home": 173,
+      "pick": 109,
+      "place": 83
+     },
+     "n_runs_label_place": 5,
+     "n_runs_label_home": 5,
+     "t_first_label_place": {
+      "n": 5,
+      "mean": 153.6,
+      "median": 160.0,
+      "min": 128.0,
+      "max": 168.0
+     },
+     "t_first_label_home": {
+      "n": 5,
+      "mean": 265.6,
+      "median": 272.0,
+      "min": 232.0,
+      "max": 280.0
+     },
+     "t_placed": {
+      "n": 4,
+      "mean": 240.0,
+      "median": 244.0,
+      "min": 216.0,
+      "max": 256.0
+     },
+     "home_after_placed_delay": {
+      "n": 4,
+      "mean": 22.0,
+      "median": 20.0,
+      "min": 16.0,
+      "max": 32.0
+     },
+     "grounding_status_counts": {
+      "no_admissible": 21,
+      "ok": 206,
+      "subtask_gated": 148
+     },
+     "grounding_status_after_placed": {
+      "no_admissible": 21,
+      "ok": 11,
+      "subtask_gated": 148
+     },
+     "n_released_flag_chunks": 4,
+     "n_runs_released_flag": 4,
+     "n_blocked_first": 148,
+     "n_blocked_switch": 11,
+     "n_would_block_first": 148,
+     "n_would_block_switch": 11,
+     "reason_kind_counts": {
+      "budget_only": 375,
+      "subtask_no_target": 169
+     },
+     "n_subtask_no_target": 169,
+     "n_runs_subtask_no_target": 4,
+     "subtask_no_target_gs": {
+      "no_admissible": 21,
+      "subtask_gated": 148
+     },
+     "after_placed": {
+      "n_runs_placed": 4,
+      "n_chunks": 180,
+      "mode_counts": {
+       "no_admissible": 21,
+       "occluded": 11,
+       "subtask_gated": 148
+      },
+      "n_switch": 0,
+      "n_first": 0,
+      "n_carve": 11,
+      "n_runs_carve": 4,
+      "n_has_target": 11,
+      "n_manip_id_not_none": 11
+     },
+     "n_switch_total": 0,
+     "n_first_total": 5,
+     "n_carve_total": 206,
+     "pose": {
+      "dJ_rad_last": {
+       "n": 5,
+       "mean": 0.41105083493347666,
+       "median": 0.12249518032183167,
+       "min": 0.10982126504422192,
+       "max": 1.5797256456307807
+      },
+      "dEE_mm_last": {
+       "n": 5,
+       "mean": 57.51391001852778,
+       "median": 22.39323889949559,
+       "min": 10.080334295816796,
+       "max": 216.94535211397442
+      },
+      "dJ_rad_at_placed": {
+       "n": 4,
+       "mean": 1.477149542269711,
+       "median": 1.4389800105880526,
+       "min": 1.3962637733638241,
+       "max": 1.6343743745389152
+      },
+      "dEE_mm_at_placed": {
+       "n": 4,
+       "mean": 329.8397813257427,
+       "median": 333.62914318327927,
+       "min": 301.5229938766799,
+       "max": 350.57784505973245
+      },
+      "dJ_rad_min_from_placed": {
+       "n": 4,
+       "mean": 0.09809571797631995,
+       "median": 0.09582425772526365,
+       "min": 0.09061982115666392,
+       "max": 0.11011453529808864
+      },
+      "dEE_mm_min_from_placed": {
+       "n": 4,
+       "mean": 15.041992115145677,
+       "median": 14.266994131994679,
+       "min": 10.024363384683044,
+       "max": 21.609616811910307
+      }
+     },
+     "pose_full_runs": {
+      "dJ_rad_last": {
+       "n": 5,
+       "mean": 0.41105083493347666,
+       "median": 0.12249518032183167,
+       "min": 0.10982126504422192,
+       "max": 1.5797256456307807
+      },
+      "dEE_mm_last": {
+       "n": 5,
+       "mean": 57.51391001852778,
+       "median": 22.39323889949559,
+       "min": 10.080334295816796,
+       "max": 216.94535211397442
+      }
+     },
+     "hurdle_contact_steps": null,
+     "n_runs_hurdle_contact": 0
+    }
+   }
+  },
+  "pairs_outcome": {
+   "H": {
+    "success": {
+     "n_pairs": 14,
+     "V7_total": 12,
+     "V7g_total": 12,
+     "both": 12,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "grasp": {
+     "n_pairs": 14,
+     "V7_total": 12,
+     "V7g_total": 12,
+     "both": 12,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "place": {
+     "n_pairs": 14,
+     "V7_total": 12,
+     "V7g_total": 12,
+     "both": 12,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "success_rel": {
+     "n_pairs": 14,
+     "V7_total": 12,
+     "V7g_total": 12,
+     "both": 12,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "place_rel": {
+     "n_pairs": 14,
+     "V7_total": 12,
+     "V7g_total": 12,
+     "both": 12,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "released": {
+     "n_pairs": 14,
+     "V7_total": 12,
+     "V7g_total": 12,
+     "both": 12,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "success_ct": {
+     "n_pairs": 14,
+     "V7_total": 9,
+     "V7g_total": 9,
+     "both": 9,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 5,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    }
+   },
+   "B": {
+    "success": {
+     "n_pairs": 5,
+     "V7_total": 4,
+     "V7g_total": 4,
+     "both": 4,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "grasp": {
+     "n_pairs": 5,
+     "V7_total": 4,
+     "V7g_total": 4,
+     "both": 4,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "place": {
+     "n_pairs": 5,
+     "V7_total": 4,
+     "V7g_total": 4,
+     "both": 4,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "success_rel": {
+     "n_pairs": 5,
+     "V7_total": 4,
+     "V7g_total": 4,
+     "both": 4,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "place_rel": {
+     "n_pairs": 5,
+     "V7_total": 4,
+     "V7g_total": 4,
+     "both": 4,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "released": {
+     "n_pairs": 5,
+     "V7_total": 4,
+     "V7g_total": 4,
+     "both": 4,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "success_ct": {
+     "n_pairs": 5,
+     "V7_total": 4,
+     "V7g_total": 4,
+     "both": 4,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    }
+   },
+   "ALL": {
+    "success": {
+     "n_pairs": 19,
+     "V7_total": 16,
+     "V7g_total": 16,
+     "both": 16,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "grasp": {
+     "n_pairs": 19,
+     "V7_total": 16,
+     "V7g_total": 16,
+     "both": 16,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "place": {
+     "n_pairs": 19,
+     "V7_total": 16,
+     "V7g_total": 16,
+     "both": 16,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "success_rel": {
+     "n_pairs": 19,
+     "V7_total": 16,
+     "V7g_total": 16,
+     "both": 16,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "place_rel": {
+     "n_pairs": 19,
+     "V7_total": 16,
+     "V7g_total": 16,
+     "both": 16,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "released": {
+     "n_pairs": 19,
+     "V7_total": 16,
+     "V7g_total": 16,
+     "both": 16,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    },
+    "success_ct": {
+     "n_pairs": 19,
+     "V7_total": 13,
+     "V7g_total": 13,
+     "both": 13,
+     "V7_only": 0,
+     "V7g_only": 0,
+     "neither": 6,
+     "mcnemar_exact_p": 1.0,
+     "V7_only_keys": [],
+     "V7g_only_keys": []
+    }
+   }
+  },
+  "pair_table": {
+   "B:1807_s18071": {
+    "stage": "B",
+    "episode": 1807,
+    "seed": 18071,
+    "n_steps_common": 600,
+    "n_steps_V7": 600,
+    "n_steps_V7g": 600,
+    "first_exec_diff_step": 232,
+    "first_chunk_diff_t": 232,
+    "n_steps_exec_differ": 342,
+    "max_arm_dJ_between_rad": 0.0037047484808638395,
+    "mean_arm_dJ_between_rad": 0.0013469737852171404,
+    "argmax_step": 556,
+    "mode": [
+     "full",
+     "full"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     216,
+     216
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -1,
+    "d_n_carve_after_placed": -46,
+    "n_subtask_no_target": [
+     0,
+     46
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     1,
+     0
+    ],
+    "n_carve_after_placed": [
+     48,
+     2
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 48
+     },
+     {
+      "no_admissible": 13,
+      "ok": 2,
+      "subtask_gated": 33
+     }
+    ],
+    "d_dJ_rad_last": 0.0009824753031724975,
+    "d_dEE_mm_last": 0.29708345312383067,
+    "dJ_rad_last": [
+     0.11001366290623046,
+     0.11099613820940296
+    ],
+    "dEE_mm_last": [
+     10.744871357333546,
+     11.041954810457376
+    ],
+    "hurdle_contact_steps": [
+     null,
+     null
+    ]
+   },
+   "B:1967_s19672": {
+    "stage": "B",
+    "episode": 1967,
+    "seed": 19672,
+    "n_steps_common": 600,
+    "n_steps_V7": 600,
+    "n_steps_V7g": 600,
+    "first_exec_diff_step": null,
+    "first_chunk_diff_t": null,
+    "n_steps_exec_differ": 0,
+    "max_arm_dJ_between_rad": 0.0,
+    "mean_arm_dJ_between_rad": 0.0,
+    "argmax_step": 0,
+    "mode": [
+     "full",
+     "full"
+    ],
+    "success": [
+     false,
+     false
+    ],
+    "success_rel": [
+     false,
+     false
+    ],
+    "t_placed": [
+     null,
+     null
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": 0,
+    "d_n_carve_after_placed": 0,
+    "n_subtask_no_target": [
+     0,
+     0
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     0,
+     0
+    ],
+    "n_carve_after_placed": [
+     0,
+     0
+    ],
+    "grounding_status_after_placed": [
+     {},
+     {}
+    ],
+    "d_dJ_rad_last": 0.0,
+    "d_dEE_mm_last": 0.0,
+    "dJ_rad_last": [
+     1.5797256456307807,
+     1.5797256456307807
+    ],
+    "dEE_mm_last": [
+     216.94535211397442,
+     216.94535211397442
+    ],
+    "hurdle_contact_steps": [
+     null,
+     null
+    ]
+   },
+   "B:1968_s19681": {
+    "stage": "B",
+    "episode": 1968,
+    "seed": 19681,
+    "n_steps_common": 600,
+    "n_steps_V7": 600,
+    "n_steps_V7g": 600,
+    "first_exec_diff_step": 264,
+    "first_chunk_diff_t": 264,
+    "n_steps_exec_differ": 319,
+    "max_arm_dJ_between_rad": 0.01488659292615111,
+    "mean_arm_dJ_between_rad": 0.002720184820164822,
+    "argmax_step": 294,
+    "mode": [
+     "full",
+     "full"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     232,
+     232
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -1,
+    "d_n_carve_after_placed": -42,
+    "n_subtask_no_target": [
+     0,
+     42
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     1,
+     0
+    ],
+    "n_carve_after_placed": [
+     46,
+     4
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 46
+     },
+     {
+      "no_admissible": 8,
+      "ok": 4,
+      "subtask_gated": 34
+     }
+    ],
+    "d_dJ_rad_last": 0.0040259117698866614,
+    "d_dEE_mm_last": -0.29441838481322335,
+    "dJ_rad_last": [
+     0.10579535327433526,
+     0.10982126504422192
+    ],
+    "dEE_mm_last": [
+     27.403088357707954,
+     27.10866997289473
+    ],
+    "hurdle_contact_steps": [
+     null,
+     null
+    ]
+   },
+   "B:1982_s19822": {
+    "stage": "B",
+    "episode": 1982,
+    "seed": 19822,
+    "n_steps_common": 600,
+    "n_steps_V7": 600,
+    "n_steps_V7g": 600,
+    "first_exec_diff_step": 280,
+    "first_chunk_diff_t": 280,
+    "n_steps_exec_differ": 320,
+    "max_arm_dJ_between_rad": 0.00924867556351525,
+    "mean_arm_dJ_between_rad": 0.0031923991487813707,
+    "argmax_step": 285,
+    "mode": [
+     "full",
+     "full"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     256,
+     256
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -1,
+    "d_n_carve_after_placed": -40,
+    "n_subtask_no_target": [
+     0,
+     40
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     1,
+     0
+    ],
+    "n_carve_after_placed": [
+     43,
+     3
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 43
+     },
+     {
+      "ok": 3,
+      "subtask_gated": 40
+     }
+    ],
+    "d_dJ_rad_last": -0.00104749129382542,
+    "d_dEE_mm_last": -1.4769966158772654,
+    "dJ_rad_last": [
+     0.12354267161565709,
+     0.12249518032183167
+    ],
+    "dEE_mm_last": [
+     23.870235515372855,
+     22.39323889949559
+    ],
+    "hurdle_contact_steps": [
+     null,
+     null
+    ]
+   },
+   "B:1995_s19952": {
+    "stage": "B",
+    "episode": 1995,
+    "seed": 19952,
+    "n_steps_common": 600,
+    "n_steps_V7": 600,
+    "n_steps_V7g": 600,
+    "first_exec_diff_step": 272,
+    "first_chunk_diff_t": 272,
+    "n_steps_exec_differ": 312,
+    "max_arm_dJ_between_rad": 0.0069727218461419944,
+    "mean_arm_dJ_between_rad": 0.0024960533096681043,
+    "argmax_step": 304,
+    "mode": [
+     "full",
+     "full"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     256,
+     256
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -1,
+    "d_n_carve_after_placed": -41,
+    "n_subtask_no_target": [
+     0,
+     41
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     1,
+     0
+    ],
+    "n_carve_after_placed": [
+     43,
+     2
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 43
+     },
+     {
+      "ok": 2,
+      "subtask_gated": 41
+     }
+    ],
+    "d_dJ_rad_last": -0.00012000409422710523,
+    "d_dEE_mm_last": -0.12858632165708883,
+    "dJ_rad_last": [
+     0.13233594955537353,
+     0.13221594546114643
+    ],
+    "dEE_mm_last": [
+     10.208920617473884,
+     10.080334295816796
+    ],
+    "hurdle_contact_steps": [
+     null,
+     null
+    ]
+   },
+   "H:1807_s18071": {
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18071,
+    "n_steps_common": 261,
+    "n_steps_V7": 261,
+    "n_steps_V7g": 262,
+    "first_exec_diff_step": 240,
+    "first_chunk_diff_t": 240,
+    "n_steps_exec_differ": 5,
+    "max_arm_dJ_between_rad": 0.05326763553982422,
+    "mean_arm_dJ_between_rad": 0.0006254593852199477,
+    "argmax_step": 260,
+    "mode": [
+     "obstacle_stop",
+     "obstacle_stop"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     192,
+     192
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -1,
+    "d_n_carve_after_placed": -3,
+    "n_subtask_no_target": [
+     0,
+     3
+    ],
+    "n_hold": [
+     1,
+     1
+    ],
+    "n_switch_after_placed": [
+     1,
+     0
+    ],
+    "n_carve_after_placed": [
+     9,
+     6
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 9
+     },
+     {
+      "ok": 6,
+      "subtask_gated": 3
+     }
+    ],
+    "d_dJ_rad_last": -0.022211085546349985,
+    "d_dEE_mm_last": -10.884750655735871,
+    "dJ_rad_last": [
+     0.7241042587176365,
+     0.7018931731712865
+    ],
+    "dEE_mm_last": [
+     200.42993903320948,
+     189.5451883774736
+    ],
+    "hurdle_contact_steps": [
+     2,
+     5
+    ]
+   },
+   "H:1807_s18073": {
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18073,
+    "n_steps_common": 266,
+    "n_steps_V7": 266,
+    "n_steps_V7g": 266,
+    "first_exec_diff_step": 248,
+    "first_chunk_diff_t": 248,
+    "n_steps_exec_differ": 6,
+    "max_arm_dJ_between_rad": 0.022626045440302018,
+    "mean_arm_dJ_between_rad": 0.0001442863844275637,
+    "argmax_step": 265,
+    "mode": [
+     "obstacle_stop",
+     "obstacle_stop"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     232,
+     232
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -1,
+    "d_n_carve_after_placed": -2,
+    "n_subtask_no_target": [
+     0,
+     2
+    ],
+    "n_hold": [
+     1,
+     1
+    ],
+    "n_switch_after_placed": [
+     1,
+     0
+    ],
+    "n_carve_after_placed": [
+     5,
+     3
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 5
+     },
+     {
+      "ok": 3,
+      "subtask_gated": 2
+     }
+    ],
+    "d_dJ_rad_last": -0.02082413533420635,
+    "d_dEE_mm_last": 0.5344828085548841,
+    "dJ_rad_last": [
+     0.7850625811699918,
+     0.7642384458357855
+    ],
+    "dEE_mm_last": [
+     217.62494130649526,
+     218.15942411505014
+    ],
+    "hurdle_contact_steps": [
+     2,
+     2
+    ]
+   },
+   "H:1834_s18341": {
+    "stage": "H",
+    "episode": 1834,
+    "seed": 18341,
+    "n_steps_common": 238,
+    "n_steps_V7": 238,
+    "n_steps_V7g": 238,
+    "first_exec_diff_step": null,
+    "first_chunk_diff_t": null,
+    "n_steps_exec_differ": 0,
+    "max_arm_dJ_between_rad": 0.0,
+    "mean_arm_dJ_between_rad": 0.0,
+    "argmax_step": 0,
+    "mode": [
+     "obstacle_stop",
+     "obstacle_stop"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     224,
+     224
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": 0,
+    "d_n_carve_after_placed": 0,
+    "n_subtask_no_target": [
+     0,
+     0
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     0,
+     0
+    ],
+    "n_carve_after_placed": [
+     2,
+     2
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 2
+     },
+     {
+      "ok": 2
+     }
+    ],
+    "d_dJ_rad_last": 0.0,
+    "d_dEE_mm_last": 0.0,
+    "dJ_rad_last": [
+     1.0645667396517027,
+     1.0645667396517027
+    ],
+    "dEE_mm_last": [
+     222.07195654903708,
+     222.07195654903708
+    ],
+    "hurdle_contact_steps": [
+     4,
+     4
+    ]
+   },
+   "H:1834_s18343": {
+    "stage": "H",
+    "episode": 1834,
+    "seed": 18343,
+    "n_steps_common": 600,
+    "n_steps_V7": 600,
+    "n_steps_V7g": 600,
+    "first_exec_diff_step": 336,
+    "first_chunk_diff_t": 336,
+    "n_steps_exec_differ": 196,
+    "max_arm_dJ_between_rad": 0.021920303840389954,
+    "mean_arm_dJ_between_rad": 0.0007944755638450463,
+    "argmax_step": 599,
+    "mode": [
+     "full",
+     "full"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     312,
+     312
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -1,
+    "d_n_carve_after_placed": -33,
+    "n_subtask_no_target": [
+     0,
+     33
+    ],
+    "n_hold": [
+     11,
+     11
+    ],
+    "n_switch_after_placed": [
+     1,
+     0
+    ],
+    "n_carve_after_placed": [
+     36,
+     3
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 36
+     },
+     {
+      "no_admissible": 15,
+      "ok": 3,
+      "subtask_gated": 18
+     }
+    ],
+    "d_dJ_rad_last": -0.021431005009749593,
+    "d_dEE_mm_last": -4.8030595522200485,
+    "dJ_rad_last": [
+     0.6858578561140656,
+     0.664426851104316
+    ],
+    "dEE_mm_last": [
+     199.6349082671155,
+     194.83184871489544
+    ],
+    "hurdle_contact_steps": [
+     0,
+     0
+    ]
+   },
+   "H:1925_s19251": {
+    "stage": "H",
+    "episode": 1925,
+    "seed": 19251,
+    "n_steps_common": 268,
+    "n_steps_V7": 268,
+    "n_steps_V7g": 271,
+    "first_exec_diff_step": 256,
+    "first_chunk_diff_t": 256,
+    "n_steps_exec_differ": 12,
+    "max_arm_dJ_between_rad": 0.07297979165310789,
+    "mean_arm_dJ_between_rad": 0.0005796957068230028,
+    "argmax_step": 267,
+    "mode": [
+     "obstacle_stop",
+     "obstacle_stop"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     232,
+     232
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -1,
+    "d_n_carve_after_placed": -2,
+    "n_subtask_no_target": [
+     0,
+     2
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     1,
+     0
+    ],
+    "n_carve_after_placed": [
+     5,
+     3
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 5
+     },
+     {
+      "ok": 3,
+      "subtask_gated": 2
+     }
+    ],
+    "d_dJ_rad_last": -0.2601855442995421,
+    "d_dEE_mm_last": -56.21085268664086,
+    "dJ_rad_last": [
+     0.6889201374209155,
+     0.4287345931213734
+    ],
+    "dEE_mm_last": [
+     178.33084129856178,
+     122.11998861192092
+    ],
+    "hurdle_contact_steps": [
+     2,
+     4
+    ]
+   },
+   "H:1925_s19253": {
+    "stage": "H",
+    "episode": 1925,
+    "seed": 19253,
+    "n_steps_common": 600,
+    "n_steps_V7": 600,
+    "n_steps_V7g": 600,
+    "first_exec_diff_step": 256,
+    "first_chunk_diff_t": 256,
+    "n_steps_exec_differ": 341,
+    "max_arm_dJ_between_rad": 0.01927068735818705,
+    "mean_arm_dJ_between_rad": 0.007406364891609025,
+    "argmax_step": 343,
+    "mode": [
+     "full",
+     "full"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     240,
+     240
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -1,
+    "d_n_carve_after_placed": -43,
+    "n_subtask_no_target": [
+     0,
+     43
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     1,
+     0
+    ],
+    "n_carve_after_placed": [
+     45,
+     2
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 45
+     },
+     {
+      "ok": 2,
+      "subtask_gated": 43
+     }
+    ],
+    "d_dJ_rad_last": -0.01230161494387677,
+    "d_dEE_mm_last": -1.996607145169829,
+    "dJ_rad_last": [
+     0.29745476431514417,
+     0.2851531493712674
+    ],
+    "dEE_mm_last": [
+     25.99556243011451,
+     23.99895528494468
+    ],
+    "hurdle_contact_steps": [
+     23,
+     23
+    ]
+   },
+   "H:1967_s19672": {
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19672,
+    "n_steps_common": 467,
+    "n_steps_V7": 467,
+    "n_steps_V7g": 467,
+    "first_exec_diff_step": null,
+    "first_chunk_diff_t": null,
+    "n_steps_exec_differ": 0,
+    "max_arm_dJ_between_rad": 0.0,
+    "mean_arm_dJ_between_rad": 0.0,
+    "argmax_step": 0,
+    "mode": [
+     "obstacle_stop",
+     "obstacle_stop"
+    ],
+    "success": [
+     false,
+     false
+    ],
+    "success_rel": [
+     false,
+     false
+    ],
+    "t_placed": [
+     null,
+     null
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": 0,
+    "d_n_carve_after_placed": 0,
+    "n_subtask_no_target": [
+     0,
+     0
+    ],
+    "n_hold": [
+     1,
+     1
+    ],
+    "n_switch_after_placed": [
+     0,
+     0
+    ],
+    "n_carve_after_placed": [
+     0,
+     0
+    ],
+    "grounding_status_after_placed": [
+     {},
+     {}
+    ],
+    "d_dJ_rad_last": 0.0,
+    "d_dEE_mm_last": 0.0,
+    "dJ_rad_last": [
+     0.8975116344302645,
+     0.8975116344302645
+    ],
+    "dEE_mm_last": [
+     142.15797257257535,
+     142.15797257257535
+    ],
+    "hurdle_contact_steps": [
+     5,
+     5
+    ]
+   },
+   "H:1967_s19673": {
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19673,
+    "n_steps_common": 472,
+    "n_steps_V7": 472,
+    "n_steps_V7g": 472,
+    "first_exec_diff_step": 368,
+    "first_chunk_diff_t": 368,
+    "n_steps_exec_differ": 104,
+    "max_arm_dJ_between_rad": 0.08050008315135063,
+    "mean_arm_dJ_between_rad": 0.008937540605042807,
+    "argmax_step": 454,
+    "mode": [
+     "obstacle_stop",
+     "obstacle_stop"
+    ],
+    "success": [
+     false,
+     false
+    ],
+    "success_rel": [
+     false,
+     false
+    ],
+    "t_placed": [
+     null,
+     null
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": 0,
+    "d_n_carve_after_placed": 0,
+    "n_subtask_no_target": [
+     0,
+     0
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     0,
+     0
+    ],
+    "n_carve_after_placed": [
+     0,
+     0
+    ],
+    "grounding_status_after_placed": [
+     {},
+     {}
+    ],
+    "d_dJ_rad_last": 0.07111188757158415,
+    "d_dEE_mm_last": 4.65587734965689,
+    "dJ_rad_last": [
+     1.048380505889528,
+     1.119492393461112
+    ],
+    "dEE_mm_last": [
+     158.16030768738239,
+     162.81618503703928
+    ],
+    "hurdle_contact_steps": [
+     2,
+     4
+    ]
+   },
+   "H:1968_s19681": {
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19681,
+    "n_steps_common": 600,
+    "n_steps_V7": 600,
+    "n_steps_V7g": 600,
+    "first_exec_diff_step": 272,
+    "first_chunk_diff_t": 264,
+    "n_steps_exec_differ": 308,
+    "max_arm_dJ_between_rad": 0.073491116603785,
+    "mean_arm_dJ_between_rad": 0.012486916086097453,
+    "argmax_step": 311,
+    "mode": [
+     "full",
+     "full"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     224,
+     224
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -4,
+    "d_n_carve_after_placed": -39,
+    "n_subtask_no_target": [
+     0,
+     39
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     4,
+     0
+    ],
+    "n_carve_after_placed": [
+     47,
+     8
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 47
+     },
+     {
+      "ok": 8,
+      "subtask_gated": 39
+     }
+    ],
+    "d_dJ_rad_last": -0.01111208723138328,
+    "d_dEE_mm_last": 0.3789213534599156,
+    "dJ_rad_last": [
+     0.12368948585539838,
+     0.1125773986240151
+    ],
+    "dEE_mm_last": [
+     28.646374790628716,
+     29.02529614408863
+    ],
+    "hurdle_contact_steps": [
+     33,
+     33
+    ]
+   },
+   "H:1968_s19683": {
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19683,
+    "n_steps_common": 272,
+    "n_steps_V7": 272,
+    "n_steps_V7g": 600,
+    "first_exec_diff_step": 249,
+    "first_chunk_diff_t": 248,
+    "n_steps_exec_differ": 9,
+    "max_arm_dJ_between_rad": 0.011748792639262637,
+    "mean_arm_dJ_between_rad": 0.00021096834489309004,
+    "argmax_step": 271,
+    "mode": [
+     "obstacle_stop",
+     "full"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     232,
+     232
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -1,
+    "d_n_carve_after_placed": -2,
+    "n_subtask_no_target": [
+     0,
+     43
+    ],
+    "n_hold": [
+     1,
+     1
+    ],
+    "n_switch_after_placed": [
+     1,
+     0
+    ],
+    "n_carve_after_placed": [
+     5,
+     3
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 5
+     },
+     {
+      "ok": 3,
+      "subtask_gated": 43
+     }
+    ],
+    "d_dJ_rad_last": -0.2254997290422162,
+    "d_dEE_mm_last": -91.13747564462454,
+    "dJ_rad_last": [
+     0.34389331733758877,
+     0.11839358829537255
+    ],
+    "dEE_mm_last": [
+     120.19409000119343,
+     29.056614356568893
+    ],
+    "hurdle_contact_steps": [
+     3,
+     0
+    ]
+   },
+   "H:1982_s19822": {
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19822,
+    "n_steps_common": 275,
+    "n_steps_V7": 275,
+    "n_steps_V7g": 276,
+    "first_exec_diff_step": 200,
+    "first_chunk_diff_t": 200,
+    "n_steps_exec_differ": 68,
+    "max_arm_dJ_between_rad": 0.020736327010382215,
+    "mean_arm_dJ_between_rad": 0.0018347069520195753,
+    "argmax_step": 271,
+    "mode": [
+     "obstacle_stop",
+     "obstacle_stop"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     184,
+     184
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -1,
+    "d_n_carve_after_placed": -3,
+    "n_subtask_no_target": [
+     0,
+     3
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     1,
+     0
+    ],
+    "n_carve_after_placed": [
+     12,
+     9
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 12
+     },
+     {
+      "ok": 9,
+      "subtask_gated": 3
+     }
+    ],
+    "d_dJ_rad_last": -0.024640046619477607,
+    "d_dEE_mm_last": -14.549438961340726,
+    "dJ_rad_last": [
+     0.30270923681932155,
+     0.27806919019984394
+    ],
+    "dEE_mm_last": [
+     105.21149651171059,
+     90.66205755036987
+    ],
+    "hurdle_contact_steps": [
+     35,
+     35
+    ]
+   },
+   "H:1982_s19823": {
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19823,
+    "n_steps_common": 289,
+    "n_steps_V7": 289,
+    "n_steps_V7g": 289,
+    "first_exec_diff_step": 272,
+    "first_chunk_diff_t": 272,
+    "n_steps_exec_differ": 9,
+    "max_arm_dJ_between_rad": 0.004212631564215493,
+    "mean_arm_dJ_between_rad": 5.8296981656872244e-05,
+    "argmax_step": 287,
+    "mode": [
+     "obstacle_stop",
+     "obstacle_stop"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     256,
+     256
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": 0,
+    "d_n_carve_after_placed": -3,
+    "n_subtask_no_target": [
+     0,
+     3
+    ],
+    "n_hold": [
+     1,
+     1
+    ],
+    "n_switch_after_placed": [
+     0,
+     0
+    ],
+    "n_carve_after_placed": [
+     5,
+     2
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 5
+     },
+     {
+      "ok": 2,
+      "subtask_gated": 3
+     }
+    ],
+    "d_dJ_rad_last": 0.002651842407482785,
+    "d_dEE_mm_last": -1.090153400892774,
+    "dJ_rad_last": [
+     0.25613085127993934,
+     0.2587826936874221
+    ],
+    "dEE_mm_last": [
+     93.98474432235297,
+     92.89459092146019
+    ],
+    "hurdle_contact_steps": [
+     5,
+     2
+    ]
+   },
+   "H:1995_s19952": {
+    "stage": "H",
+    "episode": 1995,
+    "seed": 19952,
+    "n_steps_common": 600,
+    "n_steps_V7": 600,
+    "n_steps_V7g": 600,
+    "first_exec_diff_step": 264,
+    "first_chunk_diff_t": 264,
+    "n_steps_exec_differ": 336,
+    "max_arm_dJ_between_rad": 0.01249704705356856,
+    "mean_arm_dJ_between_rad": 0.004731396947294724,
+    "argmax_step": 296,
+    "mode": [
+     "full",
+     "full"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     248,
+     248
+    ],
+    "d_n_hold": 0,
+    "d_n_hold_after_placed": 0,
+    "d_n_switch_after_placed": -5,
+    "d_n_carve_after_placed": -41,
+    "n_subtask_no_target": [
+     0,
+     41
+    ],
+    "n_hold": [
+     0,
+     0
+    ],
+    "n_switch_after_placed": [
+     5,
+     0
+    ],
+    "n_carve_after_placed": [
+     44,
+     3
+    ],
+    "grounding_status_after_placed": [
+     {
+      "ok": 44
+     },
+     {
+      "ok": 3,
+      "subtask_gated": 41
+     }
+    ],
+    "d_dJ_rad_last": 0.0017597770669881413,
+    "d_dEE_mm_last": -1.8882538739009629,
+    "dJ_rad_last": [
+     0.07684223705746111,
+     0.07860201412444925
+    ],
+    "dEE_mm_last": [
+     14.404699570127207,
+     12.516445696226244
+    ],
+    "hurdle_contact_steps": [
+     0,
+     0
+    ]
+   },
+   "H:1995_s19953": {
+    "stage": "H",
+    "episode": 1995,
+    "seed": 19953,
+    "n_steps_common": 600,
+    "n_steps_V7": 600,
+    "n_steps_V7g": 600,
+    "first_exec_diff_step": 248,
+    "first_chunk_diff_t": 248,
+    "n_steps_exec_differ": 348,
+    "max_arm_dJ_between_rad": 0.5078790590884035,
+    "mean_arm_dJ_between_rad": 0.16608987115244492,
+    "argmax_step": 588,
+    "mode": [
+     "full",
+     "full"
+    ],
+    "success": [
+     true,
+     true
+    ],
+    "success_rel": [
+     true,
+     true
+    ],
+    "t_placed": [
+     224,
+     224
+    ],
+    "d_n_hold": -2,
+    "d_n_hold_after_placed": -2,
+    "d_n_switch_after_placed": -5,
+    "d_n_carve_after_placed": -40,
+    "n_subtask_no_target": [
+     0,
+     42
+    ],
+    "n_hold": [
+     2,
+     0
+    ],
+    "n_switch_after_placed": [
+     5,
+     0
+    ],
+    "n_carve_after_placed": [
+     45,
+     5
+    ],
+    "grounding_status_after_placed": [
+     {
+      "no_admissible": 2,
+      "ok": 45
+     },
+     {
+      "ok": 5,
+      "subtask_gated": 42
+     }
+    ],
+    "d_dJ_rad_last": -0.2840603750492346,
+    "d_dEE_mm_last": -66.62342218708886,
+    "dJ_rad_last": [
+     0.647247827647228,
+     0.3631874525979934
+    ],
+    "dEE_mm_last": [
+     98.66361612706866,
+     32.040193939979794
+    ],
+    "hurdle_contact_steps": [
+     0,
+     0
+    ]
+   }
+  },
+  "pair_rank_by_max_arm_dJ_between_rad": [
+   "H:1995_s19953",
+   "H:1967_s19673",
+   "H:1968_s19681",
+   "H:1925_s19251",
+   "H:1807_s18071",
+   "H:1807_s18073",
+   "H:1834_s18343",
+   "H:1982_s19822",
+   "H:1925_s19253",
+   "B:1968_s19681",
+   "H:1995_s19952",
+   "H:1968_s19683",
+   "B:1982_s19822",
+   "B:1995_s19952",
+   "H:1982_s19823",
+   "B:1807_s18071",
+   "B:1967_s19672",
+   "H:1834_s18341",
+   "H:1967_s19672"
+  ],
+  "n_pairs_identical_exec": 3,
+  "n_pairs_exec_differ": 16,
+  "n_pairs_chunk_state_differ": 16,
+  "video_pairs": [
+   "H:1968_s19683",
+   "H:1995_s19953",
+   "H:1925_s19251"
+  ],
+  "video_selection_rule": "among pairs with V7g n_subtask_no_target > 0: three largest |d dEE_last| (mm)",
+  "videos": [
+   {
+    "file": "../gate_demo/gd_1968_s19683.mp4",
+    "pair": "H:1968:19683",
+    "n_frames": 600,
+    "n_frames_V7": 272,
+    "n_frames_V7g": 600,
+    "size": [
+     1280,
+     910
+    ],
+    "nmax_steps": 600
+   },
+   {
+    "file": "../gate_demo/gd_1995_s19953.mp4",
+    "pair": "H:1995:19953",
+    "n_frames": 600,
+    "n_frames_V7": 600,
+    "n_frames_V7g": 600,
+    "size": [
+     1280,
+     910
+    ],
+    "nmax_steps": 600
+   },
+   {
+    "file": "../gate_demo/gd_1925_s19251.mp4",
+    "pair": "H:1925:19251",
+    "n_frames": 271,
+    "n_frames_V7": 268,
+    "n_frames_V7g": 271,
+    "size": [
+     1280,
+     910
+    ],
+    "nmax_steps": 272
+   }
+  ],
+  "runs_per_arm": {
+   "V7/B/V7_ep1807_s18071": {
+    "key": "V7/B/V7_ep1807_s18071",
+    "arm": "V7",
+    "stage": "B",
+    "episode": 1807,
+    "seed": 18071,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 201,
+    "release_mode": "open_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 120,
+    "t_placed": 216,
+    "first_label_t": {
+     "pick": 16,
+     "place": 128,
+     "home": 232
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 46,
+     "pick": 14,
+     "place": 13
+    },
+    "home_after_placed_delay": 16,
+    "grounding_status_counts": {
+     "ok": 75
+    },
+    "grounding_status_after_placed": {
+     "ok": 48
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 6,
+    "reason_kind_counts": {
+     "budget_only": 75
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 48,
+     "mode_counts": {
+      "keep": 29,
+      "occluded": 18,
+      "switch": 1
+     },
+     "n_switch": 1,
+     "n_first": 0,
+     "n_carve": 48,
+     "n_has_target": 48,
+     "n_manip_id_not_none": 48,
+     "ids_manip": [
+      0,
+      1
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 75,
+    "pose": {
+     "dJ_rad_last": 0.11001366290623046,
+     "dEE_mm_last": 10.744871357333546,
+     "dJ_rad_at_placed": 1.6343743745389152,
+     "dEE_mm_at_placed": 350.57784505973245,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.09029474012744018,
+     "dEE_mm_min_from_placed": 9.840878192644098
+    },
+    "hurdle_contact_steps": null,
+    "hurdle_min_robot_clearance_m": null,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7/B/V7_ep1967_s19672": {
+    "key": "V7/B/V7_ep1967_s19672",
+    "arm": "V7",
+    "stage": "B",
+    "episode": 1967,
+    "seed": 19672,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "success_rel": false,
+    "place_rel": false,
+    "released": false,
+    "release_t": null,
+    "release_mode": null,
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 152,
+    "t_placed": null,
+    "first_label_t": {
+     "pick": 16,
+     "place": 160,
+     "home": 280
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 4,
+     "pick": 41,
+     "place": 28
+    },
+    "home_after_placed_delay": null,
+    "grounding_status_counts": {
+     "ok": 75
+    },
+    "grounding_status_after_placed": {},
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 0,
+    "reason_kind_counts": {
+     "budget_only": 75
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 0,
+     "mode_counts": {},
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 0,
+     "n_has_target": 0,
+     "n_manip_id_not_none": 0,
+     "ids_manip": [],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 75,
+    "pose": {
+     "dJ_rad_last": 1.5797256456307807,
+     "dEE_mm_last": 216.94535211397442,
+     "dJ_rad_at_placed": null,
+     "dEE_mm_at_placed": null,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": null,
+     "dEE_mm_min_from_placed": null
+    },
+    "hurdle_contact_steps": null,
+    "hurdle_min_robot_clearance_m": null,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7/B/V7_ep1968_s19681": {
+    "key": "V7/B/V7_ep1968_s19681",
+    "arm": "V7",
+    "stage": "B",
+    "episode": 1968,
+    "seed": 19681,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 220,
+    "release_mode": "closed_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 144,
+    "t_placed": 232,
+    "first_label_t": {
+     "pick": 16,
+     "place": 152,
+     "home": 264
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 42,
+     "pick": 17,
+     "place": 14
+    },
+    "home_after_placed_delay": 32,
+    "grounding_status_counts": {
+     "ok": 75
+    },
+    "grounding_status_after_placed": {
+     "ok": 46
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 8,
+    "reason_kind_counts": {
+     "budget_only": 75
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 46,
+     "mode_counts": {
+      "keep": 18,
+      "occluded": 27,
+      "switch": 1
+     },
+     "n_switch": 1,
+     "n_first": 0,
+     "n_carve": 46,
+     "n_has_target": 46,
+     "n_manip_id_not_none": 46,
+     "ids_manip": [
+      0,
+      1
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 75,
+    "pose": {
+     "dJ_rad_last": 0.10579535327433526,
+     "dEE_mm_last": 27.403088357707954,
+     "dJ_rad_at_placed": 1.4586365160498802,
+     "dEE_mm_at_placed": 338.7978897065371,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.0977762100139331,
+     "dEE_mm_min_from_placed": 22.227268932028558
+    },
+    "hurdle_contact_steps": null,
+    "hurdle_min_robot_clearance_m": null,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7/B/V7_ep1982_s19822": {
+    "key": "V7/B/V7_ep1982_s19822",
+    "arm": "V7",
+    "stage": "B",
+    "episode": 1982,
+    "seed": 19822,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 246,
+    "release_mode": "open_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 144,
+    "t_placed": 256,
+    "first_label_t": {
+     "pick": 16,
+     "place": 168,
+     "home": 280
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 40,
+     "pick": 19,
+     "place": 14
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "ok": 75
+    },
+    "grounding_status_after_placed": {
+     "ok": 43
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 5,
+    "reason_kind_counts": {
+     "budget_only": 75
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 43,
+     "mode_counts": {
+      "keep": 38,
+      "occluded": 4,
+      "switch": 1
+     },
+     "n_switch": 1,
+     "n_first": 0,
+     "n_carve": 43,
+     "n_has_target": 43,
+     "n_manip_id_not_none": 43,
+     "ids_manip": [
+      0,
+      1
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 75,
+    "pose": {
+     "dJ_rad_last": 0.12354267161565709,
+     "dEE_mm_last": 23.870235515372855,
+     "dJ_rad_at_placed": 1.3962637733638241,
+     "dEE_mm_at_placed": 328.46039666002144,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.11220977244282314,
+     "dEE_mm_min_from_placed": 20.047564474828132
+    },
+    "hurdle_contact_steps": null,
+    "hurdle_min_robot_clearance_m": null,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7/B/V7_ep1995_s19952": {
+    "key": "V7/B/V7_ep1995_s19952",
+    "arm": "V7",
+    "stage": "B",
+    "episode": 1995,
+    "seed": 19952,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 243,
+    "release_mode": "open_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 152,
+    "t_placed": 256,
+    "first_label_t": {
+     "pick": 16,
+     "place": 160,
+     "home": 272
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 41,
+     "pick": 18,
+     "place": 14
+    },
+    "home_after_placed_delay": 16,
+    "grounding_status_counts": {
+     "ok": 75
+    },
+    "grounding_status_after_placed": {
+     "ok": 43
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 6,
+    "reason_kind_counts": {
+     "budget_only": 75
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 43,
+     "mode_counts": {
+      "keep": 37,
+      "occluded": 5,
+      "switch": 1
+     },
+     "n_switch": 1,
+     "n_first": 0,
+     "n_carve": 43,
+     "n_has_target": 43,
+     "n_manip_id_not_none": 43,
+     "ids_manip": [
+      0,
+      1
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 75,
+    "pose": {
+     "dJ_rad_last": 0.13233594955537353,
+     "dEE_mm_last": 10.208920617473884,
+     "dJ_rad_at_placed": 1.419323505126225,
+     "dEE_mm_at_placed": 301.5229938766799,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.09634268826473454,
+     "dEE_mm_min_from_placed": 10.301177187627577
+    },
+    "hurdle_contact_steps": null,
+    "hurdle_min_robot_clearance_m": null,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7/H/V7_ep1807_s18071": {
+    "key": "V7/H/V7_ep1807_s18071",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18071,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 180,
+    "release_mode": "closed_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 33,
+    "n_control": 261,
+    "n_hold": 1,
+    "hold_t": [
+     248
+    ],
+    "hold_kinds": {
+     "collision": 1
+    },
+    "hold_by_region": {
+     "after_placed": 1
+    },
+    "hold_by_latch": {
+     "placed": 1
+    },
+    "hold_by_label": {
+     "home": 1
+    },
+    "hold_by_grounding": {
+     "ok": 1
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 1,
+    "t_first_held": 120,
+    "t_placed": 192,
+    "first_label_t": {
+     "pick": 16,
+     "place": 136,
+     "home": 240
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 3,
+     "pick": 15,
+     "place": 13
+    },
+    "home_after_placed_delay": 48,
+    "grounding_status_counts": {
+     "ok": 33
+    },
+    "grounding_status_after_placed": {
+     "ok": 9
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 8,
+    "reason_kind_counts": {
+     "budget_only": 32,
+     "collision": 1
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 9,
+     "mode_counts": {
+      "occluded": 8,
+      "switch": 1
+     },
+     "n_switch": 1,
+     "n_first": 0,
+     "n_carve": 9,
+     "n_has_target": 9,
+     "n_manip_id_not_none": 9,
+     "ids_manip": [
+      0,
+      1
+     ],
+     "n_hold": 1
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 33,
+    "pose": {
+     "dJ_rad_last": 0.7241042587176365,
+     "dEE_mm_last": 200.42993903320948,
+     "dJ_rad_at_placed": 1.5231121810211208,
+     "dEE_mm_at_placed": 346.6465961391669,
+     "side": "left",
+     "n_ctrl": 261,
+     "dJ_rad_min_from_placed": 0.9989845770897335,
+     "dEE_mm_min_from_placed": 259.700419033649
+    },
+    "hurdle_contact_steps": 2,
+    "hurdle_min_robot_clearance_m": -0.0011303155929311848,
+    "n_chunks_server": 33,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "first_t": 260,
+      "n_rows": 1,
+      "max_pen_mm": 2.5037418442718993
+     }
+    ]
+   },
+   "V7/H/V7_ep1807_s18073": {
+    "key": "V7/H/V7_ep1807_s18073",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18073,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 220,
+    "release_mode": "open_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 34,
+    "n_control": 266,
+    "n_hold": 1,
+    "hold_t": [
+     208
+    ],
+    "hold_kinds": {
+     "collision": 1
+    },
+    "hold_by_region": {
+     "held_before_placed": 1
+    },
+    "hold_by_latch": {
+     "held": 1
+    },
+    "hold_by_label": {
+     "place": 1
+    },
+    "hold_by_grounding": {
+     "ok": 1
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 1,
+    "t_first_held": 120,
+    "t_placed": 232,
+    "first_label_t": {
+     "pick": 16,
+     "place": 128,
+     "home": 256
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 2,
+     "pick": 14,
+     "place": 16
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "ok": 34
+    },
+    "grounding_status_after_placed": {
+     "ok": 5
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 4,
+    "reason_kind_counts": {
+     "allowed_contact": 1,
+     "budget_only": 33,
+     "collision": 1
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 5,
+     "mode_counts": {
+      "hold": 1,
+      "keep": 1,
+      "occluded": 2,
+      "switch": 1
+     },
+     "n_switch": 1,
+     "n_first": 0,
+     "n_carve": 5,
+     "n_has_target": 5,
+     "n_manip_id_not_none": 5,
+     "ids_manip": [
+      0,
+      1
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 34,
+    "pose": {
+     "dJ_rad_last": 0.7850625811699918,
+     "dEE_mm_last": 217.62494130649526,
+     "dJ_rad_at_placed": 1.4648173133716873,
+     "dEE_mm_at_placed": 319.4417782958221,
+     "side": "left",
+     "n_ctrl": 266,
+     "dJ_rad_min_from_placed": 0.8348738686560224,
+     "dEE_mm_min_from_placed": 238.66813796025627
+    },
+    "hurdle_contact_steps": 2,
+    "hurdle_min_robot_clearance_m": -0.0003737706683363054,
+    "n_chunks_server": 34,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "first_t": 265,
+      "n_rows": 1,
+      "max_pen_mm": 1.202033315409733
+     }
+    ]
+   },
+   "V7/H/V7_ep1834_s18341": {
+    "key": "V7/H/V7_ep1834_s18341",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1834,
+    "seed": 18341,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 199,
+    "release_mode": "closed_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 30,
+    "n_control": 238,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 128,
+    "t_placed": 224,
+    "first_label_t": {
+     "pick": 16,
+     "place": 152,
+     "home": null
+    },
+    "label_counts": {
+     "None": 2,
+     "pick": 17,
+     "place": 11
+    },
+    "home_after_placed_delay": null,
+    "grounding_status_counts": {
+     "ok": 30
+    },
+    "grounding_status_after_placed": {
+     "ok": 2
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 2,
+    "reason_kind_counts": {
+     "budget_only": 30
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 2,
+     "mode_counts": {
+      "occluded": 2
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 2,
+     "n_has_target": 2,
+     "n_manip_id_not_none": 2,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 30,
+    "pose": {
+     "dJ_rad_last": 1.0645667396517027,
+     "dEE_mm_last": 222.07195654903708,
+     "dJ_rad_at_placed": 0.6296363748782493,
+     "dEE_mm_at_placed": 152.9223564444029,
+     "side": "right",
+     "n_ctrl": 238,
+     "dJ_rad_min_from_placed": 0.6296363748782493,
+     "dEE_mm_min_from_placed": 152.9223564444029
+    },
+    "hurdle_contact_steps": 4,
+    "hurdle_min_robot_clearance_m": -0.0010738342319748049,
+    "n_chunks_server": 30,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "link_right_arm_4",
+      "kind": "robot_other",
+      "phase": "after_release",
+      "first_t": 237,
+      "n_rows": 1,
+      "max_pen_mm": 1.4270473748641908
+     }
+    ]
+   },
+   "V7/H/V7_ep1834_s18343": {
+    "key": "V7/H/V7_ep1834_s18343",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1834,
+    "seed": 18343,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 298,
+    "release_mode": "closed_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 11,
+    "hold_t": [
+     176,
+     224,
+     232,
+     240,
+     248,
+     256,
+     264,
+     272,
+     280,
+     288,
+     296
+    ],
+    "hold_kinds": {
+     "collision": 11,
+     "unverified": 10
+    },
+    "hold_by_region": {
+     "held_before_placed": 11
+    },
+    "hold_by_latch": {
+     "held": 11
+    },
+    "hold_by_label": {
+     "place": 11
+    },
+    "hold_by_grounding": {
+     "ok": 11
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 10,
+    "t_first_held": 128,
+    "t_placed": 312,
+    "first_label_t": {
+     "pick": 16,
+     "place": 152,
+     "home": 336
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 33,
+     "pick": 17,
+     "place": 23
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "ok": 75
+    },
+    "grounding_status_after_placed": {
+     "ok": 36
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 3,
+    "reason_kind_counts": {
+     "allowed_contact": 9,
+     "budget_only": 64,
+     "collision": 11,
+     "unverified": 10
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 36,
+     "mode_counts": {
+      "keep": 15,
+      "occluded": 20,
+      "switch": 1
+     },
+     "n_switch": 1,
+     "n_first": 0,
+     "n_carve": 36,
+     "n_has_target": 36,
+     "n_manip_id_not_none": 36,
+     "ids_manip": [
+      0,
+      1
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 75,
+    "pose": {
+     "dJ_rad_last": 0.6858578561140656,
+     "dEE_mm_last": 199.6349082671155,
+     "dJ_rad_at_placed": 0.7832909963224293,
+     "dEE_mm_at_placed": 283.323500728134,
+     "side": "right",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.6598070912110254,
+     "dEE_mm_min_from_placed": 193.29412517144684
+    },
+    "hurdle_contact_steps": 0,
+    "hurdle_min_robot_clearance_m": 0.009924662883535638,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7/H/V7_ep1925_s19251": {
+    "key": "V7/H/V7_ep1925_s19251",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1925,
+    "seed": 19251,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 215,
+    "release_mode": "open_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 34,
+    "n_control": 268,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 120,
+    "t_placed": 232,
+    "first_label_t": {
+     "pick": 16,
+     "place": 128,
+     "home": 256
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 2,
+     "pick": 14,
+     "place": 16
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "ok": 34
+    },
+    "grounding_status_after_placed": {
+     "ok": 5
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 5,
+    "reason_kind_counts": {
+     "budget_only": 34
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 5,
+     "mode_counts": {
+      "occluded": 4,
+      "switch": 1
+     },
+     "n_switch": 1,
+     "n_first": 0,
+     "n_carve": 5,
+     "n_has_target": 5,
+     "n_manip_id_not_none": 5,
+     "ids_manip": [
+      0,
+      1
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 34,
+    "pose": {
+     "dJ_rad_last": 0.6889201374209155,
+     "dEE_mm_last": 178.33084129856178,
+     "dJ_rad_at_placed": 1.3310807656224979,
+     "dEE_mm_at_placed": 298.0804378954668,
+     "side": "left",
+     "n_ctrl": 268,
+     "dJ_rad_min_from_placed": 0.8494629960647566,
+     "dEE_mm_min_from_placed": 236.14423581629006
+    },
+    "hurdle_contact_steps": 2,
+    "hurdle_min_robot_clearance_m": -0.00010621098918651463,
+    "n_chunks_server": 34,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "first_t": 266,
+      "n_rows": 2,
+      "max_pen_mm": 0.10621098918651463
+     }
+    ]
+   },
+   "V7/H/V7_ep1925_s19253": {
+    "key": "V7/H/V7_ep1925_s19253",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1925,
+    "seed": 19253,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 223,
+    "release_mode": "open_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 136,
+    "t_placed": 240,
+    "first_label_t": {
+     "pick": 16,
+     "place": 144,
+     "home": 256
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 43,
+     "pick": 16,
+     "place": 14
+    },
+    "home_after_placed_delay": 16,
+    "grounding_status_counts": {
+     "ok": 75
+    },
+    "grounding_status_after_placed": {
+     "ok": 45
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 6,
+    "reason_kind_counts": {
+     "budget_only": 75
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 45,
+     "mode_counts": {
+      "keep": 37,
+      "occluded": 7,
+      "switch": 1
+     },
+     "n_switch": 1,
+     "n_first": 0,
+     "n_carve": 45,
+     "n_has_target": 45,
+     "n_manip_id_not_none": 45,
+     "ids_manip": [
+      0,
+      1
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 75,
+    "pose": {
+     "dJ_rad_last": 0.29745476431514417,
+     "dEE_mm_last": 25.99556243011451,
+     "dJ_rad_at_placed": 1.4377097695313288,
+     "dEE_mm_at_placed": 309.76106699721305,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.2255088838318962,
+     "dEE_mm_min_from_placed": 21.596266244133986
+    },
+    "hurdle_contact_steps": 23,
+    "hurdle_min_robot_clearance_m": 0.004004228999907902,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "first_t": 174,
+      "n_rows": 2,
+      "max_pen_mm": 0.40380881641065813
+     }
+    ]
+   },
+   "V7/H/V7_ep1967_s19672": {
+    "key": "V7/H/V7_ep1967_s19672",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19672,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "success_rel": false,
+    "place_rel": false,
+    "released": false,
+    "release_t": null,
+    "release_mode": null,
+    "mode": "obstacle_stop",
+    "n_planning": 59,
+    "n_control": 467,
+    "n_hold": 1,
+    "hold_t": [
+     280
+    ],
+    "hold_kinds": {
+     "collision": 1
+    },
+    "hold_by_region": {
+     "before_first_held": 1
+    },
+    "hold_by_latch": {
+     "closing": 1
+    },
+    "hold_by_label": {
+     "place": 1
+    },
+    "hold_by_grounding": {
+     "ok": 1
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 1,
+    "t_first_held": null,
+    "t_placed": null,
+    "first_label_t": {
+     "pick": 16,
+     "place": 208,
+     "home": 336
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 5,
+     "pick": 36,
+     "place": 16
+    },
+    "home_after_placed_delay": null,
+    "grounding_status_counts": {
+     "ok": 59
+    },
+    "grounding_status_after_placed": {},
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 2,
+    "reason_kind_counts": {
+     "budget_only": 58,
+     "collision": 1
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 0,
+     "mode_counts": {},
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 0,
+     "n_has_target": 0,
+     "n_manip_id_not_none": 0,
+     "ids_manip": [],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 59,
+    "pose": {
+     "dJ_rad_last": 0.8975116344302645,
+     "dEE_mm_last": 142.15797257257535,
+     "dJ_rad_at_placed": null,
+     "dEE_mm_at_placed": null,
+     "side": "left",
+     "n_ctrl": 467,
+     "dJ_rad_min_from_placed": null,
+     "dEE_mm_min_from_placed": null
+    },
+    "hurdle_contact_steps": 5,
+    "hurdle_min_robot_clearance_m": -0.0001249854859011225,
+    "n_chunks_server": 59,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "first_t": 466,
+      "n_rows": 1,
+      "max_pen_mm": 0.13981121516529021
+     }
+    ]
+   },
+   "V7/H/V7_ep1967_s19673": {
+    "key": "V7/H/V7_ep1967_s19673",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19673,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "success_rel": false,
+    "place_rel": false,
+    "released": false,
+    "release_t": null,
+    "release_mode": null,
+    "mode": "obstacle_stop",
+    "n_planning": 59,
+    "n_control": 472,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": null,
+    "t_placed": null,
+    "first_label_t": {
+     "pick": 16,
+     "place": 200,
+     "home": 312
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 6,
+     "pick": 37,
+     "place": 14
+    },
+    "home_after_placed_delay": null,
+    "grounding_status_counts": {
+     "ok": 59
+    },
+    "grounding_status_after_placed": {},
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 1,
+    "reason_kind_counts": {
+     "budget_only": 59
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 0,
+     "mode_counts": {},
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 0,
+     "n_has_target": 0,
+     "n_manip_id_not_none": 0,
+     "ids_manip": [],
+     "n_hold": 0
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 59,
+    "pose": {
+     "dJ_rad_last": 1.048380505889528,
+     "dEE_mm_last": 158.16030768738239,
+     "dJ_rad_at_placed": null,
+     "dEE_mm_at_placed": null,
+     "side": "left",
+     "n_ctrl": 472,
+     "dJ_rad_min_from_placed": null,
+     "dEE_mm_min_from_placed": null
+    },
+    "hurdle_contact_steps": 2,
+    "hurdle_min_robot_clearance_m": -0.00012411785042773862,
+    "n_chunks_server": 59,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "first_t": 471,
+      "n_rows": 1,
+      "max_pen_mm": 0.334820816629321
+     }
+    ]
+   },
+   "V7/H/V7_ep1968_s19681": {
+    "key": "V7/H/V7_ep1968_s19681",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19681,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 209,
+    "release_mode": "closed_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 160,
+    "t_placed": 224,
+    "first_label_t": {
+     "pick": 16,
+     "place": 168,
+     "home": 288
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 39,
+     "pick": 19,
+     "place": 15
+    },
+    "home_after_placed_delay": 64,
+    "grounding_status_counts": {
+     "ok": 75
+    },
+    "grounding_status_after_placed": {
+     "ok": 47
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 13,
+    "reason_kind_counts": {
+     "budget_only": 75
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 47,
+     "mode_counts": {
+      "hold": 2,
+      "keep": 32,
+      "occluded": 9,
+      "switch": 4
+     },
+     "n_switch": 4,
+     "n_first": 0,
+     "n_carve": 47,
+     "n_has_target": 47,
+     "n_manip_id_not_none": 47,
+     "ids_manip": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 4,
+    "n_first_total": 1,
+    "n_carve_total": 75,
+    "pose": {
+     "dJ_rad_last": 0.12368948585539838,
+     "dEE_mm_last": 28.646374790628716,
+     "dJ_rad_at_placed": 1.0678736165892047,
+     "dEE_mm_at_placed": 328.92031432418895,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.10778192415574342,
+     "dEE_mm_min_from_placed": 28.639105047718562
+    },
+    "hurdle_contact_steps": 33,
+    "hurdle_min_robot_clearance_m": 0.000731643107067895,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "first_t": 206,
+      "n_rows": 3,
+      "max_pen_mm": 0.6968389629285233
+     }
+    ]
+   },
+   "V7/H/V7_ep1968_s19683": {
+    "key": "V7/H/V7_ep1968_s19683",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19683,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 216,
+    "release_mode": "open_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 34,
+    "n_control": 272,
+    "n_hold": 1,
+    "hold_t": [
+     216
+    ],
+    "hold_kinds": {
+     "collision": 1
+    },
+    "hold_by_region": {
+     "held_before_placed": 1
+    },
+    "hold_by_latch": {
+     "held": 1
+    },
+    "hold_by_label": {
+     "place": 1
+    },
+    "hold_by_grounding": {
+     "ok": 1
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 1,
+    "t_first_held": 120,
+    "t_placed": 232,
+    "first_label_t": {
+     "pick": 16,
+     "place": 136,
+     "home": 256
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 2,
+     "pick": 15,
+     "place": 15
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "ok": 34
+    },
+    "grounding_status_after_placed": {
+     "ok": 5
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 4,
+    "reason_kind_counts": {
+     "allowed_contact": 1,
+     "budget_only": 33,
+     "collision": 1
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 5,
+     "mode_counts": {
+      "hold": 1,
+      "keep": 1,
+      "occluded": 2,
+      "switch": 1
+     },
+     "n_switch": 1,
+     "n_first": 0,
+     "n_carve": 5,
+     "n_has_target": 5,
+     "n_manip_id_not_none": 5,
+     "ids_manip": [
+      0,
+      1
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 34,
+    "pose": {
+     "dJ_rad_last": 0.34389331733758877,
+     "dEE_mm_last": 120.19409000119343,
+     "dJ_rad_at_placed": 1.377960230710595,
+     "dEE_mm_at_placed": 319.5322576370074,
+     "side": "left",
+     "n_ctrl": 272,
+     "dJ_rad_min_from_placed": 0.8041440468389442,
+     "dEE_mm_min_from_placed": 249.9427100159917
+    },
+    "hurdle_contact_steps": 3,
+    "hurdle_min_robot_clearance_m": -0.000425824733080166,
+    "n_chunks_server": 34,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "first_t": 271,
+      "n_rows": 1,
+      "max_pen_mm": 0.5348784559624075
+     }
+    ]
+   },
+   "V7/H/V7_ep1982_s19822": {
+    "key": "V7/H/V7_ep1982_s19822",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19822,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 169,
+    "release_mode": "closed_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 35,
+    "n_control": 275,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 128,
+    "t_placed": 184,
+    "first_label_t": {
+     "pick": 16,
+     "place": 136,
+     "home": 256
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 3,
+     "pick": 15,
+     "place": 15
+    },
+    "home_after_placed_delay": 72,
+    "grounding_status_counts": {
+     "ok": 35
+    },
+    "grounding_status_after_placed": {
+     "ok": 12
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 3,
+    "reason_kind_counts": {
+     "budget_only": 35
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 12,
+     "mode_counts": {
+      "keep": 9,
+      "occluded": 2,
+      "switch": 1
+     },
+     "n_switch": 1,
+     "n_first": 0,
+     "n_carve": 12,
+     "n_has_target": 12,
+     "n_manip_id_not_none": 12,
+     "ids_manip": [
+      0,
+      1
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 1,
+    "n_first_total": 1,
+    "n_carve_total": 35,
+    "pose": {
+     "dJ_rad_last": 0.30270923681932155,
+     "dEE_mm_last": 105.21149651171059,
+     "dJ_rad_at_placed": 1.0658228450571,
+     "dEE_mm_at_placed": 319.9117259923041,
+     "side": "left",
+     "n_ctrl": 275,
+     "dJ_rad_min_from_placed": 0.3770303347569287,
+     "dEE_mm_min_from_placed": 126.80584443318519
+    },
+    "hurdle_contact_steps": 35,
+    "hurdle_min_robot_clearance_m": -0.000855689790909402,
+    "n_chunks_server": 35,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "first_t": 168,
+      "n_rows": 2,
+      "max_pen_mm": 0.2326400396496769
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "first_t": 274,
+      "n_rows": 1,
+      "max_pen_mm": 1.06506598472186
+     }
+    ]
+   },
+   "V7/H/V7_ep1982_s19823": {
+    "key": "V7/H/V7_ep1982_s19823",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19823,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 240,
+    "release_mode": "open_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 37,
+    "n_control": 289,
+    "n_hold": 1,
+    "hold_t": [
+     128
+    ],
+    "hold_kinds": {
+     "unverified": 1
+    },
+    "hold_by_region": {
+     "held_before_placed": 1
+    },
+    "hold_by_latch": {
+     "held": 1
+    },
+    "hold_by_label": {
+     "pick": 1
+    },
+    "hold_by_grounding": {
+     "ok": 1
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 1,
+    "t_first_held": 128,
+    "t_placed": 256,
+    "first_label_t": {
+     "pick": 16,
+     "place": 144,
+     "home": 272
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 3,
+     "pick": 16,
+     "place": 16
+    },
+    "home_after_placed_delay": 16,
+    "grounding_status_counts": {
+     "ok": 37
+    },
+    "grounding_status_after_placed": {
+     "ok": 5
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 5,
+    "reason_kind_counts": {
+     "allowed_contact": 1,
+     "budget_only": 36,
+     "unverified": 1
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 5,
+     "mode_counts": {
+      "occluded": 5
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 5,
+     "n_has_target": 5,
+     "n_manip_id_not_none": 5,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 37,
+    "pose": {
+     "dJ_rad_last": 0.25613085127993934,
+     "dEE_mm_last": 93.98474432235297,
+     "dJ_rad_at_placed": 1.17920071861475,
+     "dEE_mm_at_placed": 296.9233687036563,
+     "side": "left",
+     "n_ctrl": 289,
+     "dJ_rad_min_from_placed": 0.25613085127993934,
+     "dEE_mm_min_from_placed": 93.98474432235297
+    },
+    "hurdle_contact_steps": 5,
+    "hurdle_min_robot_clearance_m": -0.00018692524490173008,
+    "n_chunks_server": 37,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "first_t": 288,
+      "n_rows": 1,
+      "max_pen_mm": 0.18888931477452875
+     }
+    ]
+   },
+   "V7/H/V7_ep1995_s19952": {
+    "key": "V7/H/V7_ep1995_s19952",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1995,
+    "seed": 19952,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 226,
+    "release_mode": "closed_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 144,
+    "t_placed": 248,
+    "first_label_t": {
+     "pick": 16,
+     "place": 144,
+     "home": 272
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 41,
+     "pick": 16,
+     "place": 16
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "ok": 75
+    },
+    "grounding_status_after_placed": {
+     "ok": 44
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 22,
+    "reason_kind_counts": {
+     "budget_only": 75
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 44,
+     "mode_counts": {
+      "hold": 11,
+      "keep": 22,
+      "occluded": 6,
+      "switch": 5
+     },
+     "n_switch": 5,
+     "n_first": 0,
+     "n_carve": 44,
+     "n_has_target": 44,
+     "n_manip_id_not_none": 44,
+     "ids_manip": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 5,
+    "n_first_total": 1,
+    "n_carve_total": 75,
+    "pose": {
+     "dJ_rad_last": 0.07684223705746111,
+     "dEE_mm_last": 14.404699570127207,
+     "dJ_rad_at_placed": 1.3347188478437568,
+     "dEE_mm_at_placed": 296.2072998520958,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.07122505426069146,
+     "dEE_mm_min_from_placed": 14.514675750307964
+    },
+    "hurdle_contact_steps": 0,
+    "hurdle_min_robot_clearance_m": 0.0034027551195306323,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7/H/V7_ep1995_s19953": {
+    "key": "V7/H/V7_ep1995_s19953",
+    "arm": "V7",
+    "stage": "H",
+    "episode": 1995,
+    "seed": 19953,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 207,
+    "release_mode": "closed_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 2,
+    "hold_t": [
+     448,
+     456
+    ],
+    "hold_kinds": {
+     "uncertified": 2
+    },
+    "hold_by_region": {
+     "after_placed": 2
+    },
+    "hold_by_latch": {
+     "placed": 2
+    },
+    "hold_by_label": {
+     "home": 2
+    },
+    "hold_by_grounding": {
+     "no_admissible": 2
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 2,
+    "t_first_held": 152,
+    "t_placed": 224,
+    "first_label_t": {
+     "pick": 16,
+     "place": 160,
+     "home": 328
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 34,
+     "pick": 18,
+     "place": 21
+    },
+    "home_after_placed_delay": 104,
+    "grounding_status_counts": {
+     "no_admissible": 2,
+     "ok": 73
+    },
+    "grounding_status_after_placed": {
+     "no_admissible": 2,
+     "ok": 45
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 20,
+    "reason_kind_counts": {
+     "budget_only": 74,
+     "follow_to": 1,
+     "uncertified": 2
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 47,
+     "mode_counts": {
+      "keep": 13,
+      "occluded": 29,
+      "switch": 5
+     },
+     "n_switch": 5,
+     "n_first": 0,
+     "n_carve": 45,
+     "n_has_target": 45,
+     "n_manip_id_not_none": 47,
+     "ids_manip": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "n_hold": 2
+    },
+    "n_switch_total": 5,
+    "n_first_total": 1,
+    "n_carve_total": 73,
+    "pose": {
+     "dJ_rad_last": 0.647247827647228,
+     "dEE_mm_last": 98.66361612706866,
+     "dJ_rad_at_placed": 1.1815973508856255,
+     "dEE_mm_at_placed": 313.9534857551664,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.5206947499187949,
+     "dEE_mm_min_from_placed": 96.45056488629753
+    },
+    "hurdle_contact_steps": 0,
+    "hurdle_min_robot_clearance_m": 0.008209544986066852,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/B/V7g_ep1807_s18071": {
+    "key": "V7g/B/V7g_ep1807_s18071",
+    "arm": "V7g",
+    "stage": "B",
+    "episode": 1807,
+    "seed": 18071,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 201,
+    "release_mode": "open_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 120,
+    "t_placed": 216,
+    "first_label_t": {
+     "pick": 16,
+     "place": 128,
+     "home": 232
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 46,
+     "pick": 14,
+     "place": 13
+    },
+    "home_after_placed_delay": 16,
+    "grounding_status_counts": {
+     "no_admissible": 13,
+     "ok": 29,
+     "subtask_gated": 33
+    },
+    "grounding_status_after_placed": {
+     "no_admissible": 13,
+     "ok": 2,
+     "subtask_gated": 33
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 33,
+    "n_blocked_switch": 2,
+    "n_would_block_first": 33,
+    "n_would_block_switch": 2,
+    "reason_kind_counts": {
+     "budget_only": 75,
+     "subtask_no_target": 46
+    },
+    "n_subtask_no_target": 46,
+    "subtask_no_target_gs": {
+     "no_admissible": 13,
+     "subtask_gated": 33
+    },
+    "subtask_no_target_t": [
+     232,
+     240,
+     248,
+     256,
+     264,
+     272,
+     280,
+     288,
+     296,
+     304,
+     312,
+     320,
+     328,
+     336,
+     344,
+     352,
+     360,
+     368,
+     376,
+     384,
+     392,
+     400,
+     408,
+     416,
+     424,
+     432,
+     440,
+     448,
+     456,
+     464,
+     472,
+     480,
+     488,
+     496,
+     504,
+     512,
+     520,
+     528,
+     536,
+     544,
+     552,
+     560,
+     568,
+     576,
+     584,
+     592
+    ],
+    "after_placed": {
+     "n_chunks": 48,
+     "mode_counts": {
+      "no_admissible": 13,
+      "occluded": 2,
+      "subtask_gated": 33
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 2,
+     "n_has_target": 2,
+     "n_manip_id_not_none": 2,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 29,
+    "pose": {
+     "dJ_rad_last": 0.11099613820940296,
+     "dEE_mm_last": 11.041954810457376,
+     "dJ_rad_at_placed": 1.6343743745389152,
+     "dEE_mm_at_placed": 350.57784505973245,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.09061982115666392,
+     "dEE_mm_min_from_placed": 10.024363384683044
+    },
+    "hurdle_contact_steps": null,
+    "hurdle_min_robot_clearance_m": null,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/B/V7g_ep1967_s19672": {
+    "key": "V7g/B/V7g_ep1967_s19672",
+    "arm": "V7g",
+    "stage": "B",
+    "episode": 1967,
+    "seed": 19672,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "success_rel": false,
+    "place_rel": false,
+    "released": false,
+    "release_t": null,
+    "release_mode": null,
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 152,
+    "t_placed": null,
+    "first_label_t": {
+     "pick": 16,
+     "place": 160,
+     "home": 280
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 4,
+     "pick": 41,
+     "place": 28
+    },
+    "home_after_placed_delay": null,
+    "grounding_status_counts": {
+     "ok": 75
+    },
+    "grounding_status_after_placed": {},
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 0,
+    "reason_kind_counts": {
+     "budget_only": 75
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 0,
+     "mode_counts": {},
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 0,
+     "n_has_target": 0,
+     "n_manip_id_not_none": 0,
+     "ids_manip": [],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 75,
+    "pose": {
+     "dJ_rad_last": 1.5797256456307807,
+     "dEE_mm_last": 216.94535211397442,
+     "dJ_rad_at_placed": null,
+     "dEE_mm_at_placed": null,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": null,
+     "dEE_mm_min_from_placed": null
+    },
+    "hurdle_contact_steps": null,
+    "hurdle_min_robot_clearance_m": null,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/B/V7g_ep1968_s19681": {
+    "key": "V7g/B/V7g_ep1968_s19681",
+    "arm": "V7g",
+    "stage": "B",
+    "episode": 1968,
+    "seed": 19681,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 220,
+    "release_mode": "closed_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 144,
+    "t_placed": 232,
+    "first_label_t": {
+     "pick": 16,
+     "place": 152,
+     "home": 264
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 42,
+     "pick": 17,
+     "place": 14
+    },
+    "home_after_placed_delay": 32,
+    "grounding_status_counts": {
+     "no_admissible": 8,
+     "ok": 33,
+     "subtask_gated": 34
+    },
+    "grounding_status_after_placed": {
+     "no_admissible": 8,
+     "ok": 4,
+     "subtask_gated": 34
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 34,
+    "n_blocked_switch": 4,
+    "n_would_block_first": 34,
+    "n_would_block_switch": 4,
+    "reason_kind_counts": {
+     "budget_only": 75,
+     "subtask_no_target": 42
+    },
+    "n_subtask_no_target": 42,
+    "subtask_no_target_gs": {
+     "no_admissible": 8,
+     "subtask_gated": 34
+    },
+    "subtask_no_target_t": [
+     264,
+     272,
+     280,
+     288,
+     296,
+     304,
+     312,
+     320,
+     328,
+     336,
+     344,
+     352,
+     360,
+     368,
+     376,
+     384,
+     392,
+     400,
+     408,
+     416,
+     424,
+     432,
+     440,
+     448,
+     456,
+     464,
+     472,
+     480,
+     488,
+     496,
+     504,
+     512,
+     520,
+     528,
+     536,
+     544,
+     552,
+     560,
+     568,
+     576,
+     584,
+     592
+    ],
+    "after_placed": {
+     "n_chunks": 46,
+     "mode_counts": {
+      "no_admissible": 8,
+      "occluded": 4,
+      "subtask_gated": 34
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 4,
+     "n_has_target": 4,
+     "n_manip_id_not_none": 4,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 33,
+    "pose": {
+     "dJ_rad_last": 0.10982126504422192,
+     "dEE_mm_last": 27.10866997289473,
+     "dJ_rad_at_placed": 1.4586365160498802,
+     "dEE_mm_at_placed": 338.7978897065371,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.09630011139091568,
+     "dEE_mm_min_from_placed": 21.609616811910307
+    },
+    "hurdle_contact_steps": null,
+    "hurdle_min_robot_clearance_m": null,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/B/V7g_ep1982_s19822": {
+    "key": "V7g/B/V7g_ep1982_s19822",
+    "arm": "V7g",
+    "stage": "B",
+    "episode": 1982,
+    "seed": 19822,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 246,
+    "release_mode": "open_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 144,
+    "t_placed": 256,
+    "first_label_t": {
+     "pick": 16,
+     "place": 168,
+     "home": 280
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 40,
+     "pick": 19,
+     "place": 14
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "ok": 35,
+     "subtask_gated": 40
+    },
+    "grounding_status_after_placed": {
+     "ok": 3,
+     "subtask_gated": 40
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 40,
+    "n_blocked_switch": 3,
+    "n_would_block_first": 40,
+    "n_would_block_switch": 3,
+    "reason_kind_counts": {
+     "budget_only": 75,
+     "subtask_no_target": 40
+    },
+    "n_subtask_no_target": 40,
+    "subtask_no_target_gs": {
+     "subtask_gated": 40
+    },
+    "subtask_no_target_t": [
+     280,
+     288,
+     296,
+     304,
+     312,
+     320,
+     328,
+     336,
+     344,
+     352,
+     360,
+     368,
+     376,
+     384,
+     392,
+     400,
+     408,
+     416,
+     424,
+     432,
+     440,
+     448,
+     456,
+     464,
+     472,
+     480,
+     488,
+     496,
+     504,
+     512,
+     520,
+     528,
+     536,
+     544,
+     552,
+     560,
+     568,
+     576,
+     584,
+     592
+    ],
+    "after_placed": {
+     "n_chunks": 43,
+     "mode_counts": {
+      "occluded": 3,
+      "subtask_gated": 40
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 3,
+     "n_has_target": 3,
+     "n_manip_id_not_none": 3,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 35,
+    "pose": {
+     "dJ_rad_last": 0.12249518032183167,
+     "dEE_mm_last": 22.39323889949559,
+     "dJ_rad_at_placed": 1.3962637733638241,
+     "dEE_mm_at_placed": 328.46039666002144,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.11011453529808864,
+     "dEE_mm_min_from_placed": 18.39151768764
+    },
+    "hurdle_contact_steps": null,
+    "hurdle_min_robot_clearance_m": null,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/B/V7g_ep1995_s19952": {
+    "key": "V7g/B/V7g_ep1995_s19952",
+    "arm": "V7g",
+    "stage": "B",
+    "episode": 1995,
+    "seed": 19952,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 243,
+    "release_mode": "open_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 152,
+    "t_placed": 256,
+    "first_label_t": {
+     "pick": 16,
+     "place": 160,
+     "home": 272
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 41,
+     "pick": 18,
+     "place": 14
+    },
+    "home_after_placed_delay": 16,
+    "grounding_status_counts": {
+     "ok": 34,
+     "subtask_gated": 41
+    },
+    "grounding_status_after_placed": {
+     "ok": 2,
+     "subtask_gated": 41
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 41,
+    "n_blocked_switch": 2,
+    "n_would_block_first": 41,
+    "n_would_block_switch": 2,
+    "reason_kind_counts": {
+     "budget_only": 75,
+     "subtask_no_target": 41
+    },
+    "n_subtask_no_target": 41,
+    "subtask_no_target_gs": {
+     "subtask_gated": 41
+    },
+    "subtask_no_target_t": [
+     272,
+     280,
+     288,
+     296,
+     304,
+     312,
+     320,
+     328,
+     336,
+     344,
+     352,
+     360,
+     368,
+     376,
+     384,
+     392,
+     400,
+     408,
+     416,
+     424,
+     432,
+     440,
+     448,
+     456,
+     464,
+     472,
+     480,
+     488,
+     496,
+     504,
+     512,
+     520,
+     528,
+     536,
+     544,
+     552,
+     560,
+     568,
+     576,
+     584,
+     592
+    ],
+    "after_placed": {
+     "n_chunks": 43,
+     "mode_counts": {
+      "occluded": 2,
+      "subtask_gated": 41
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 2,
+     "n_has_target": 2,
+     "n_manip_id_not_none": 2,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 34,
+    "pose": {
+     "dJ_rad_last": 0.13221594546114643,
+     "dEE_mm_last": 10.080334295816796,
+     "dJ_rad_at_placed": 1.419323505126225,
+     "dEE_mm_at_placed": 301.5229938766799,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.0953484040596116,
+     "dEE_mm_min_from_placed": 10.142470576349359
+    },
+    "hurdle_contact_steps": null,
+    "hurdle_min_robot_clearance_m": null,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/H/V7g_ep1807_s18071": {
+    "key": "V7g/H/V7g_ep1807_s18071",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18071,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 180,
+    "release_mode": "closed_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 33,
+    "n_control": 262,
+    "n_hold": 1,
+    "hold_t": [
+     248
+    ],
+    "hold_kinds": {
+     "collision": 1
+    },
+    "hold_by_region": {
+     "after_placed": 1
+    },
+    "hold_by_latch": {
+     "placed": 1
+    },
+    "hold_by_label": {
+     "home": 1
+    },
+    "hold_by_grounding": {
+     "subtask_gated": 1
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 1,
+    "t_first_held": 120,
+    "t_placed": 192,
+    "first_label_t": {
+     "pick": 16,
+     "place": 136,
+     "home": 240
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 3,
+     "pick": 15,
+     "place": 13
+    },
+    "home_after_placed_delay": 48,
+    "grounding_status_counts": {
+     "ok": 30,
+     "subtask_gated": 3
+    },
+    "grounding_status_after_placed": {
+     "ok": 6,
+     "subtask_gated": 3
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 3,
+    "n_blocked_switch": 5,
+    "n_would_block_first": 3,
+    "n_would_block_switch": 5,
+    "reason_kind_counts": {
+     "budget_only": 32,
+     "collision": 1,
+     "subtask_no_target": 3
+    },
+    "n_subtask_no_target": 3,
+    "subtask_no_target_gs": {
+     "subtask_gated": 3
+    },
+    "subtask_no_target_t": [
+     240,
+     248,
+     256
+    ],
+    "after_placed": {
+     "n_chunks": 9,
+     "mode_counts": {
+      "occluded": 6,
+      "subtask_gated": 3
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 6,
+     "n_has_target": 6,
+     "n_manip_id_not_none": 6,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 1
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 30,
+    "pose": {
+     "dJ_rad_last": 0.7018931731712865,
+     "dEE_mm_last": 189.5451883774736,
+     "dJ_rad_at_placed": 1.5231121810211208,
+     "dEE_mm_at_placed": 346.6465961391669,
+     "side": "left",
+     "n_ctrl": 262,
+     "dJ_rad_min_from_placed": 1.0011456158218182,
+     "dEE_mm_min_from_placed": 259.67861370613446
+    },
+    "hurdle_contact_steps": 5,
+    "hurdle_min_robot_clearance_m": -0.002194208828788166,
+    "n_chunks_server": 33,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "first_t": 261,
+      "n_rows": 1,
+      "max_pen_mm": 2.6710373887204963
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1807_s18073": {
+    "key": "V7g/H/V7g_ep1807_s18073",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1807,
+    "seed": 18073,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 220,
+    "release_mode": "open_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 34,
+    "n_control": 266,
+    "n_hold": 1,
+    "hold_t": [
+     208
+    ],
+    "hold_kinds": {
+     "collision": 1
+    },
+    "hold_by_region": {
+     "held_before_placed": 1
+    },
+    "hold_by_latch": {
+     "held": 1
+    },
+    "hold_by_label": {
+     "place": 1
+    },
+    "hold_by_grounding": {
+     "ok": 1
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 1,
+    "t_first_held": 120,
+    "t_placed": 232,
+    "first_label_t": {
+     "pick": 16,
+     "place": 128,
+     "home": 256
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 2,
+     "pick": 14,
+     "place": 16
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "ok": 32,
+     "subtask_gated": 2
+    },
+    "grounding_status_after_placed": {
+     "ok": 3,
+     "subtask_gated": 2
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 2,
+    "n_blocked_switch": 3,
+    "n_would_block_first": 2,
+    "n_would_block_switch": 3,
+    "reason_kind_counts": {
+     "allowed_contact": 1,
+     "budget_only": 33,
+     "collision": 1,
+     "subtask_no_target": 2
+    },
+    "n_subtask_no_target": 2,
+    "subtask_no_target_gs": {
+     "subtask_gated": 2
+    },
+    "subtask_no_target_t": [
+     256,
+     264
+    ],
+    "after_placed": {
+     "n_chunks": 5,
+     "mode_counts": {
+      "occluded": 3,
+      "subtask_gated": 2
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 3,
+     "n_has_target": 3,
+     "n_manip_id_not_none": 3,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 32,
+    "pose": {
+     "dJ_rad_last": 0.7642384458357855,
+     "dEE_mm_last": 218.15942411505014,
+     "dJ_rad_at_placed": 1.4648173133716873,
+     "dEE_mm_at_placed": 319.4417782958221,
+     "side": "left",
+     "n_ctrl": 266,
+     "dJ_rad_min_from_placed": 0.8353379584165459,
+     "dEE_mm_min_from_placed": 238.99341666540886
+    },
+    "hurdle_contact_steps": 2,
+    "hurdle_min_robot_clearance_m": -0.00019315327279614998,
+    "n_chunks_server": 34,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "first_t": 265,
+      "n_rows": 1,
+      "max_pen_mm": 0.24063986493759632
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1834_s18341": {
+    "key": "V7g/H/V7g_ep1834_s18341",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1834,
+    "seed": 18341,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 199,
+    "release_mode": "closed_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 30,
+    "n_control": 238,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 128,
+    "t_placed": 224,
+    "first_label_t": {
+     "pick": 16,
+     "place": 152,
+     "home": null
+    },
+    "label_counts": {
+     "None": 2,
+     "pick": 17,
+     "place": 11
+    },
+    "home_after_placed_delay": null,
+    "grounding_status_counts": {
+     "ok": 30
+    },
+    "grounding_status_after_placed": {
+     "ok": 2
+    },
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 2,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 2,
+    "reason_kind_counts": {
+     "budget_only": 30
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 2,
+     "mode_counts": {
+      "occluded": 2
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 2,
+     "n_has_target": 2,
+     "n_manip_id_not_none": 2,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 30,
+    "pose": {
+     "dJ_rad_last": 1.0645667396517027,
+     "dEE_mm_last": 222.07195654903708,
+     "dJ_rad_at_placed": 0.6296363748782493,
+     "dEE_mm_at_placed": 152.9223564444029,
+     "side": "right",
+     "n_ctrl": 238,
+     "dJ_rad_min_from_placed": 0.6296363748782493,
+     "dEE_mm_min_from_placed": 152.9223564444029
+    },
+    "hurdle_contact_steps": 4,
+    "hurdle_min_robot_clearance_m": -0.0010738342319748049,
+    "n_chunks_server": 30,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "link_right_arm_4",
+      "kind": "robot_other",
+      "phase": "after_release",
+      "first_t": 237,
+      "n_rows": 1,
+      "max_pen_mm": 1.4270473748641908
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1834_s18343": {
+    "key": "V7g/H/V7g_ep1834_s18343",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1834,
+    "seed": 18343,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 298,
+    "release_mode": "closed_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 11,
+    "hold_t": [
+     176,
+     224,
+     232,
+     240,
+     248,
+     256,
+     264,
+     272,
+     280,
+     288,
+     296
+    ],
+    "hold_kinds": {
+     "collision": 11,
+     "unverified": 10
+    },
+    "hold_by_region": {
+     "held_before_placed": 11
+    },
+    "hold_by_latch": {
+     "held": 11
+    },
+    "hold_by_label": {
+     "place": 11
+    },
+    "hold_by_grounding": {
+     "ok": 11
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 10,
+    "t_first_held": 128,
+    "t_placed": 312,
+    "first_label_t": {
+     "pick": 16,
+     "place": 152,
+     "home": 336
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 33,
+     "pick": 17,
+     "place": 23
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "no_admissible": 15,
+     "ok": 42,
+     "subtask_gated": 18
+    },
+    "grounding_status_after_placed": {
+     "no_admissible": 15,
+     "ok": 3,
+     "subtask_gated": 18
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 18,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 18,
+    "n_would_block_switch": 0,
+    "reason_kind_counts": {
+     "allowed_contact": 9,
+     "budget_only": 64,
+     "collision": 11,
+     "subtask_no_target": 33,
+     "unverified": 10
+    },
+    "n_subtask_no_target": 33,
+    "subtask_no_target_gs": {
+     "no_admissible": 15,
+     "subtask_gated": 18
+    },
+    "subtask_no_target_t": [
+     336,
+     344,
+     352,
+     360,
+     368,
+     376,
+     384,
+     392,
+     400,
+     408,
+     416,
+     424,
+     432,
+     440,
+     448,
+     456,
+     464,
+     472,
+     480,
+     488,
+     496,
+     504,
+     512,
+     520,
+     528,
+     536,
+     544,
+     552,
+     560,
+     568,
+     576,
+     584,
+     592
+    ],
+    "after_placed": {
+     "n_chunks": 36,
+     "mode_counts": {
+      "no_admissible": 15,
+      "occluded": 3,
+      "subtask_gated": 18
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 3,
+     "n_has_target": 3,
+     "n_manip_id_not_none": 3,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 42,
+    "pose": {
+     "dJ_rad_last": 0.664426851104316,
+     "dEE_mm_last": 194.83184871489544,
+     "dJ_rad_at_placed": 0.7832909963224293,
+     "dEE_mm_at_placed": 283.323500728134,
+     "side": "right",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.6569860483371047,
+     "dEE_mm_min_from_placed": 192.37225964837506
+    },
+    "hurdle_contact_steps": 0,
+    "hurdle_min_robot_clearance_m": 0.009924662883535638,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/H/V7g_ep1925_s19251": {
+    "key": "V7g/H/V7g_ep1925_s19251",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1925,
+    "seed": 19251,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 215,
+    "release_mode": "open_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 34,
+    "n_control": 271,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 120,
+    "t_placed": 232,
+    "first_label_t": {
+     "pick": 16,
+     "place": 128,
+     "home": 256
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 2,
+     "pick": 14,
+     "place": 16
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "ok": 32,
+     "subtask_gated": 2
+    },
+    "grounding_status_after_placed": {
+     "ok": 3,
+     "subtask_gated": 2
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 2,
+    "n_blocked_switch": 3,
+    "n_would_block_first": 2,
+    "n_would_block_switch": 3,
+    "reason_kind_counts": {
+     "budget_only": 34,
+     "subtask_no_target": 2
+    },
+    "n_subtask_no_target": 2,
+    "subtask_no_target_gs": {
+     "subtask_gated": 2
+    },
+    "subtask_no_target_t": [
+     256,
+     264
+    ],
+    "after_placed": {
+     "n_chunks": 5,
+     "mode_counts": {
+      "occluded": 3,
+      "subtask_gated": 2
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 3,
+     "n_has_target": 3,
+     "n_manip_id_not_none": 3,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 32,
+    "pose": {
+     "dJ_rad_last": 0.4287345931213734,
+     "dEE_mm_last": 122.11998861192092,
+     "dJ_rad_at_placed": 1.3310807656224979,
+     "dEE_mm_at_placed": 298.0804378954668,
+     "side": "left",
+     "n_ctrl": 271,
+     "dJ_rad_min_from_placed": 0.8477691646765637,
+     "dEE_mm_min_from_placed": 233.25205803137297
+    },
+    "hurdle_contact_steps": 4,
+    "hurdle_min_robot_clearance_m": -0.0015675436802431789,
+    "n_chunks_server": 34,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "first_t": 270,
+      "n_rows": 1,
+      "max_pen_mm": 2.3594585354623514
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1925_s19253": {
+    "key": "V7g/H/V7g_ep1925_s19253",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1925,
+    "seed": 19253,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 223,
+    "release_mode": "open_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 136,
+    "t_placed": 240,
+    "first_label_t": {
+     "pick": 16,
+     "place": 144,
+     "home": 256
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 43,
+     "pick": 16,
+     "place": 14
+    },
+    "home_after_placed_delay": 16,
+    "grounding_status_counts": {
+     "ok": 32,
+     "subtask_gated": 43
+    },
+    "grounding_status_after_placed": {
+     "ok": 2,
+     "subtask_gated": 43
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 43,
+    "n_blocked_switch": 0,
+    "n_would_block_first": 43,
+    "n_would_block_switch": 0,
+    "reason_kind_counts": {
+     "budget_only": 75,
+     "subtask_no_target": 43
+    },
+    "n_subtask_no_target": 43,
+    "subtask_no_target_gs": {
+     "subtask_gated": 43
+    },
+    "subtask_no_target_t": [
+     256,
+     264,
+     272,
+     280,
+     288,
+     296,
+     304,
+     312,
+     320,
+     328,
+     336,
+     344,
+     352,
+     360,
+     368,
+     376,
+     384,
+     392,
+     400,
+     408,
+     416,
+     424,
+     432,
+     440,
+     448,
+     456,
+     464,
+     472,
+     480,
+     488,
+     496,
+     504,
+     512,
+     520,
+     528,
+     536,
+     544,
+     552,
+     560,
+     568,
+     576,
+     584,
+     592
+    ],
+    "after_placed": {
+     "n_chunks": 45,
+     "mode_counts": {
+      "occluded": 2,
+      "subtask_gated": 43
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 2,
+     "n_has_target": 2,
+     "n_manip_id_not_none": 2,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 32,
+    "pose": {
+     "dJ_rad_last": 0.2851531493712674,
+     "dEE_mm_last": 23.99895528494468,
+     "dJ_rad_at_placed": 1.4377097695313288,
+     "dEE_mm_at_placed": 309.76106699721305,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.22374586654445647,
+     "dEE_mm_min_from_placed": 21.118444217064745
+    },
+    "hurdle_contact_steps": 23,
+    "hurdle_min_robot_clearance_m": 0.0027817064908980237,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "first_t": 174,
+      "n_rows": 2,
+      "max_pen_mm": 0.40380881641065813
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1967_s19672": {
+    "key": "V7g/H/V7g_ep1967_s19672",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19672,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "success_rel": false,
+    "place_rel": false,
+    "released": false,
+    "release_t": null,
+    "release_mode": null,
+    "mode": "obstacle_stop",
+    "n_planning": 59,
+    "n_control": 467,
+    "n_hold": 1,
+    "hold_t": [
+     280
+    ],
+    "hold_kinds": {
+     "collision": 1
+    },
+    "hold_by_region": {
+     "before_first_held": 1
+    },
+    "hold_by_latch": {
+     "closing": 1
+    },
+    "hold_by_label": {
+     "place": 1
+    },
+    "hold_by_grounding": {
+     "ok": 1
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 1,
+    "t_first_held": null,
+    "t_placed": null,
+    "first_label_t": {
+     "pick": 16,
+     "place": 208,
+     "home": 336
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 5,
+     "pick": 36,
+     "place": 16
+    },
+    "home_after_placed_delay": null,
+    "grounding_status_counts": {
+     "ok": 59
+    },
+    "grounding_status_after_placed": {},
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 2,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 2,
+    "reason_kind_counts": {
+     "budget_only": 58,
+     "collision": 1
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 0,
+     "mode_counts": {},
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 0,
+     "n_has_target": 0,
+     "n_manip_id_not_none": 0,
+     "ids_manip": [],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 59,
+    "pose": {
+     "dJ_rad_last": 0.8975116344302645,
+     "dEE_mm_last": 142.15797257257535,
+     "dJ_rad_at_placed": null,
+     "dEE_mm_at_placed": null,
+     "side": "left",
+     "n_ctrl": 467,
+     "dJ_rad_min_from_placed": null,
+     "dEE_mm_min_from_placed": null
+    },
+    "hurdle_contact_steps": 5,
+    "hurdle_min_robot_clearance_m": -0.0001249854859011225,
+    "n_chunks_server": 59,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "first_t": 466,
+      "n_rows": 1,
+      "max_pen_mm": 0.13981121516529021
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1967_s19673": {
+    "key": "V7g/H/V7g_ep1967_s19673",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1967,
+    "seed": 19673,
+    "success": false,
+    "grasp": false,
+    "place": false,
+    "success_rel": false,
+    "place_rel": false,
+    "released": false,
+    "release_t": null,
+    "release_mode": null,
+    "mode": "obstacle_stop",
+    "n_planning": 59,
+    "n_control": 472,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": null,
+    "t_placed": null,
+    "first_label_t": {
+     "pick": 16,
+     "place": 200,
+     "home": 312
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 6,
+     "pick": 37,
+     "place": 14
+    },
+    "home_after_placed_delay": null,
+    "grounding_status_counts": {
+     "ok": 59
+    },
+    "grounding_status_after_placed": {},
+    "n_released_flag": 0,
+    "n_blocked_first": 0,
+    "n_blocked_switch": 1,
+    "n_would_block_first": 0,
+    "n_would_block_switch": 1,
+    "reason_kind_counts": {
+     "budget_only": 59
+    },
+    "n_subtask_no_target": 0,
+    "subtask_no_target_gs": {},
+    "subtask_no_target_t": [],
+    "after_placed": {
+     "n_chunks": 0,
+     "mode_counts": {},
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 0,
+     "n_has_target": 0,
+     "n_manip_id_not_none": 0,
+     "ids_manip": [],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 59,
+    "pose": {
+     "dJ_rad_last": 1.119492393461112,
+     "dEE_mm_last": 162.81618503703928,
+     "dJ_rad_at_placed": null,
+     "dEE_mm_at_placed": null,
+     "side": "left",
+     "n_ctrl": 472,
+     "dJ_rad_min_from_placed": null,
+     "dEE_mm_min_from_placed": null
+    },
+    "hurdle_contact_steps": 4,
+    "hurdle_min_robot_clearance_m": -0.00018728134316531656,
+    "n_chunks_server": 59,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "first_t": 471,
+      "n_rows": 1,
+      "max_pen_mm": 0.23697894567726274
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1968_s19681": {
+    "key": "V7g/H/V7g_ep1968_s19681",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19681,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 209,
+    "release_mode": "closed_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 160,
+    "t_placed": 224,
+    "first_label_t": {
+     "pick": 16,
+     "place": 168,
+     "home": 288
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 39,
+     "pick": 19,
+     "place": 15
+    },
+    "home_after_placed_delay": 64,
+    "grounding_status_counts": {
+     "ok": 36,
+     "subtask_gated": 39
+    },
+    "grounding_status_after_placed": {
+     "ok": 8,
+     "subtask_gated": 39
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 39,
+    "n_blocked_switch": 6,
+    "n_would_block_first": 39,
+    "n_would_block_switch": 6,
+    "reason_kind_counts": {
+     "budget_only": 75,
+     "subtask_no_target": 39
+    },
+    "n_subtask_no_target": 39,
+    "subtask_no_target_gs": {
+     "subtask_gated": 39
+    },
+    "subtask_no_target_t": [
+     288,
+     296,
+     304,
+     312,
+     320,
+     328,
+     336,
+     344,
+     352,
+     360,
+     368,
+     376,
+     384,
+     392,
+     400,
+     408,
+     416,
+     424,
+     432,
+     440,
+     448,
+     456,
+     464,
+     472,
+     480,
+     488,
+     496,
+     504,
+     512,
+     520,
+     528,
+     536,
+     544,
+     552,
+     560,
+     568,
+     576,
+     584,
+     592
+    ],
+    "after_placed": {
+     "n_chunks": 47,
+     "mode_counts": {
+      "occluded": 8,
+      "subtask_gated": 39
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 8,
+     "n_has_target": 8,
+     "n_manip_id_not_none": 8,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 36,
+    "pose": {
+     "dJ_rad_last": 0.1125773986240151,
+     "dEE_mm_last": 29.02529614408863,
+     "dJ_rad_at_placed": 1.0678736165892047,
+     "dEE_mm_at_placed": 328.92031432418895,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.10156845890959183,
+     "dEE_mm_min_from_placed": 29.046399294431097
+    },
+    "hurdle_contact_steps": 33,
+    "hurdle_min_robot_clearance_m": 0.0014906221030164101,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "first_t": 206,
+      "n_rows": 3,
+      "max_pen_mm": 0.6968389629285233
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1968_s19683": {
+    "key": "V7g/H/V7g_ep1968_s19683",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1968,
+    "seed": 19683,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 216,
+    "release_mode": "open_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 1,
+    "hold_t": [
+     216
+    ],
+    "hold_kinds": {
+     "collision": 1
+    },
+    "hold_by_region": {
+     "held_before_placed": 1
+    },
+    "hold_by_latch": {
+     "held": 1
+    },
+    "hold_by_label": {
+     "place": 1
+    },
+    "hold_by_grounding": {
+     "ok": 1
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 1,
+    "t_first_held": 120,
+    "t_placed": 232,
+    "first_label_t": {
+     "pick": 16,
+     "place": 136,
+     "home": 256
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 43,
+     "pick": 15,
+     "place": 15
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "ok": 32,
+     "subtask_gated": 43
+    },
+    "grounding_status_after_placed": {
+     "ok": 3,
+     "subtask_gated": 43
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 43,
+    "n_blocked_switch": 3,
+    "n_would_block_first": 43,
+    "n_would_block_switch": 3,
+    "reason_kind_counts": {
+     "allowed_contact": 1,
+     "budget_only": 74,
+     "collision": 1,
+     "subtask_no_target": 43
+    },
+    "n_subtask_no_target": 43,
+    "subtask_no_target_gs": {
+     "subtask_gated": 43
+    },
+    "subtask_no_target_t": [
+     256,
+     264,
+     272,
+     280,
+     288,
+     296,
+     304,
+     312,
+     320,
+     328,
+     336,
+     344,
+     352,
+     360,
+     368,
+     376,
+     384,
+     392,
+     400,
+     408,
+     416,
+     424,
+     432,
+     440,
+     448,
+     456,
+     464,
+     472,
+     480,
+     488,
+     496,
+     504,
+     512,
+     520,
+     528,
+     536,
+     544,
+     552,
+     560,
+     568,
+     576,
+     584,
+     592
+    ],
+    "after_placed": {
+     "n_chunks": 46,
+     "mode_counts": {
+      "occluded": 3,
+      "subtask_gated": 43
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 3,
+     "n_has_target": 3,
+     "n_manip_id_not_none": 3,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 32,
+    "pose": {
+     "dJ_rad_last": 0.11839358829537255,
+     "dEE_mm_last": 29.056614356568893,
+     "dJ_rad_at_placed": 1.377960230710595,
+     "dEE_mm_at_placed": 319.5322576370074,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.10829040472889374,
+     "dEE_mm_min_from_placed": 28.918268794121776
+    },
+    "hurdle_contact_steps": 0,
+    "hurdle_min_robot_clearance_m": 0.0006337058073269588,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/H/V7g_ep1982_s19822": {
+    "key": "V7g/H/V7g_ep1982_s19822",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19822,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 169,
+    "release_mode": "closed_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 35,
+    "n_control": 276,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 128,
+    "t_placed": 184,
+    "first_label_t": {
+     "pick": 16,
+     "place": 136,
+     "home": 256
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 3,
+     "pick": 15,
+     "place": 15
+    },
+    "home_after_placed_delay": 72,
+    "grounding_status_counts": {
+     "ok": 32,
+     "subtask_gated": 3
+    },
+    "grounding_status_after_placed": {
+     "ok": 9,
+     "subtask_gated": 3
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 3,
+    "n_blocked_switch": 9,
+    "n_would_block_first": 3,
+    "n_would_block_switch": 9,
+    "reason_kind_counts": {
+     "budget_only": 35,
+     "subtask_no_target": 3
+    },
+    "n_subtask_no_target": 3,
+    "subtask_no_target_gs": {
+     "subtask_gated": 3
+    },
+    "subtask_no_target_t": [
+     256,
+     264,
+     272
+    ],
+    "after_placed": {
+     "n_chunks": 12,
+     "mode_counts": {
+      "occluded": 9,
+      "subtask_gated": 3
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 9,
+     "n_has_target": 9,
+     "n_manip_id_not_none": 9,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 32,
+    "pose": {
+     "dJ_rad_last": 0.27806919019984394,
+     "dEE_mm_last": 90.66205755036987,
+     "dJ_rad_at_placed": 1.0658228450571,
+     "dEE_mm_at_placed": 319.9117259923041,
+     "side": "left",
+     "n_ctrl": 276,
+     "dJ_rad_min_from_placed": 0.3638977392491341,
+     "dEE_mm_min_from_placed": 123.95898390279939
+    },
+    "hurdle_contact_steps": 35,
+    "hurdle_min_robot_clearance_m": -0.0003544269113158905,
+    "n_chunks_server": 35,
+    "n_budget_hit": 0,
+    "success_ct": false,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "first_t": 168,
+      "n_rows": 2,
+      "max_pen_mm": 0.2326400396496769
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "first_t": 275,
+      "n_rows": 1,
+      "max_pen_mm": 0.443277433550205
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1982_s19823": {
+    "key": "V7g/H/V7g_ep1982_s19823",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1982,
+    "seed": 19823,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 240,
+    "release_mode": "open_cmd",
+    "mode": "obstacle_stop",
+    "n_planning": 37,
+    "n_control": 289,
+    "n_hold": 1,
+    "hold_t": [
+     128
+    ],
+    "hold_kinds": {
+     "unverified": 1
+    },
+    "hold_by_region": {
+     "held_before_placed": 1
+    },
+    "hold_by_latch": {
+     "held": 1
+    },
+    "hold_by_label": {
+     "pick": 1
+    },
+    "hold_by_grounding": {
+     "ok": 1
+    },
+    "trailing_hold": 0,
+    "longest_hold_run": 1,
+    "t_first_held": 128,
+    "t_placed": 256,
+    "first_label_t": {
+     "pick": 16,
+     "place": 144,
+     "home": 272
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 3,
+     "pick": 16,
+     "place": 16
+    },
+    "home_after_placed_delay": 16,
+    "grounding_status_counts": {
+     "ok": 34,
+     "subtask_gated": 3
+    },
+    "grounding_status_after_placed": {
+     "ok": 2,
+     "subtask_gated": 3
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 3,
+    "n_blocked_switch": 2,
+    "n_would_block_first": 3,
+    "n_would_block_switch": 2,
+    "reason_kind_counts": {
+     "allowed_contact": 1,
+     "budget_only": 36,
+     "subtask_no_target": 3,
+     "unverified": 1
+    },
+    "n_subtask_no_target": 3,
+    "subtask_no_target_gs": {
+     "subtask_gated": 3
+    },
+    "subtask_no_target_t": [
+     272,
+     280,
+     288
+    ],
+    "after_placed": {
+     "n_chunks": 5,
+     "mode_counts": {
+      "occluded": 2,
+      "subtask_gated": 3
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 2,
+     "n_has_target": 2,
+     "n_manip_id_not_none": 2,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 34,
+    "pose": {
+     "dJ_rad_last": 0.2587826936874221,
+     "dEE_mm_last": 92.89459092146019,
+     "dJ_rad_at_placed": 1.17920071861475,
+     "dEE_mm_at_placed": 296.9233687036563,
+     "side": "left",
+     "n_ctrl": 289,
+     "dJ_rad_min_from_placed": 0.2587826936874221,
+     "dEE_mm_min_from_placed": 92.89459092146019
+    },
+    "hurdle_contact_steps": 2,
+    "hurdle_min_robot_clearance_m": -0.00015189411820227053,
+    "n_chunks_server": 37,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "first_t": 288,
+      "n_rows": 1,
+      "max_pen_mm": 0.22338989690110986
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1995_s19952": {
+    "key": "V7g/H/V7g_ep1995_s19952",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1995,
+    "seed": 19952,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 226,
+    "release_mode": "closed_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 144,
+    "t_placed": 248,
+    "first_label_t": {
+     "pick": 16,
+     "place": 144,
+     "home": 272
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 41,
+     "pick": 16,
+     "place": 16
+    },
+    "home_after_placed_delay": 24,
+    "grounding_status_counts": {
+     "ok": 34,
+     "subtask_gated": 41
+    },
+    "grounding_status_after_placed": {
+     "ok": 3,
+     "subtask_gated": 41
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 41,
+    "n_blocked_switch": 3,
+    "n_would_block_first": 41,
+    "n_would_block_switch": 3,
+    "reason_kind_counts": {
+     "budget_only": 75,
+     "subtask_no_target": 41
+    },
+    "n_subtask_no_target": 41,
+    "subtask_no_target_gs": {
+     "subtask_gated": 41
+    },
+    "subtask_no_target_t": [
+     272,
+     280,
+     288,
+     296,
+     304,
+     312,
+     320,
+     328,
+     336,
+     344,
+     352,
+     360,
+     368,
+     376,
+     384,
+     392,
+     400,
+     408,
+     416,
+     424,
+     432,
+     440,
+     448,
+     456,
+     464,
+     472,
+     480,
+     488,
+     496,
+     504,
+     512,
+     520,
+     528,
+     536,
+     544,
+     552,
+     560,
+     568,
+     576,
+     584,
+     592
+    ],
+    "after_placed": {
+     "n_chunks": 44,
+     "mode_counts": {
+      "occluded": 3,
+      "subtask_gated": 41
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 3,
+     "n_has_target": 3,
+     "n_manip_id_not_none": 3,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 34,
+    "pose": {
+     "dJ_rad_last": 0.07860201412444925,
+     "dEE_mm_last": 12.516445696226244,
+     "dJ_rad_at_placed": 1.3347188478437568,
+     "dEE_mm_at_placed": 296.2072998520958,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.07187043823585255,
+     "dEE_mm_min_from_placed": 12.585793629802057
+    },
+    "hurdle_contact_steps": 0,
+    "hurdle_min_robot_clearance_m": 0.003599022574309536,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/H/V7g_ep1995_s19953": {
+    "key": "V7g/H/V7g_ep1995_s19953",
+    "arm": "V7g",
+    "stage": "H",
+    "episode": 1995,
+    "seed": 19953,
+    "success": true,
+    "grasp": true,
+    "place": true,
+    "success_rel": true,
+    "place_rel": true,
+    "released": true,
+    "release_t": 207,
+    "release_mode": "closed_cmd",
+    "mode": "full",
+    "n_planning": 75,
+    "n_control": 600,
+    "n_hold": 0,
+    "hold_t": [],
+    "hold_kinds": {},
+    "hold_by_region": {},
+    "hold_by_latch": {},
+    "hold_by_label": {},
+    "hold_by_grounding": {},
+    "trailing_hold": 0,
+    "longest_hold_run": 0,
+    "t_first_held": 152,
+    "t_placed": 224,
+    "first_label_t": {
+     "pick": 16,
+     "place": 160,
+     "home": 264
+    },
+    "label_counts": {
+     "None": 2,
+     "home": 42,
+     "pick": 18,
+     "place": 13
+    },
+    "home_after_placed_delay": 40,
+    "grounding_status_counts": {
+     "ok": 33,
+     "subtask_gated": 42
+    },
+    "grounding_status_after_placed": {
+     "ok": 5,
+     "subtask_gated": 42
+    },
+    "n_released_flag": 1,
+    "n_blocked_first": 42,
+    "n_blocked_switch": 4,
+    "n_would_block_first": 42,
+    "n_would_block_switch": 4,
+    "reason_kind_counts": {
+     "budget_only": 75,
+     "subtask_no_target": 42
+    },
+    "n_subtask_no_target": 42,
+    "subtask_no_target_gs": {
+     "subtask_gated": 42
+    },
+    "subtask_no_target_t": [
+     264,
+     272,
+     280,
+     288,
+     296,
+     304,
+     312,
+     320,
+     328,
+     336,
+     344,
+     352,
+     360,
+     368,
+     376,
+     384,
+     392,
+     400,
+     408,
+     416,
+     424,
+     432,
+     440,
+     448,
+     456,
+     464,
+     472,
+     480,
+     488,
+     496,
+     504,
+     512,
+     520,
+     528,
+     536,
+     544,
+     552,
+     560,
+     568,
+     576,
+     584,
+     592
+    ],
+    "after_placed": {
+     "n_chunks": 47,
+     "mode_counts": {
+      "occluded": 5,
+      "subtask_gated": 42
+     },
+     "n_switch": 0,
+     "n_first": 0,
+     "n_carve": 5,
+     "n_has_target": 5,
+     "n_manip_id_not_none": 5,
+     "ids_manip": [
+      0
+     ],
+     "n_hold": 0
+    },
+    "n_switch_total": 0,
+    "n_first_total": 1,
+    "n_carve_total": 33,
+    "pose": {
+     "dJ_rad_last": 0.3631874525979934,
+     "dEE_mm_last": 32.040193939979794,
+     "dJ_rad_at_placed": 1.1815973508856255,
+     "dEE_mm_at_placed": 313.9534857551664,
+     "side": "left",
+     "n_ctrl": 600,
+     "dJ_rad_min_from_placed": 0.22855730973467686,
+     "dEE_mm_min_from_placed": 18.831334727535832
+    },
+    "hurdle_contact_steps": 0,
+    "hurdle_min_robot_clearance_m": 0.008209544986066852,
+    "n_chunks_server": 75,
+    "n_budget_hit": 0,
+    "success_ct": true,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   }
+  },
+  "crosscheck": "V7g success_ct per run equals T43/CT/raw/ct.json (14/14 H runs)"
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43gd-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43gd-graph.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43gd-table.png",
+   "kind": "table"
+  }
+ ],
+ "videos": [
+  "outputs/verify/T43/gate_demo/gd_1968_s19683.mp4",
+  "outputs/verify/T43/gate_demo/gd_1995_s19953.mp4",
+  "outputs/verify/T43/gate_demo/gd_1925_s19251.mp4",
+  "outputs/verify/T43/gate_demo/README.txt"
+ ],
+ "baseline_check": {
+  "matched": null,
+  "note": "regression-baseline not run in this job; server flags equal V7g flags + --no-subtask-gate, code md5 equals V7g reference"
+ },
+ "verdict": "V7 19/19 runs done, gate OFF confirmed in server cmdline and log",
+ "not_measured": [
+  "contact-rule pre/post split is H-stage only (stage B has no hurdle, success_ct = success_rel)",
+  "pose distance 'at PLACED' uses the step of the first placed chunk, series stride 8 steps"
+ ]
+}

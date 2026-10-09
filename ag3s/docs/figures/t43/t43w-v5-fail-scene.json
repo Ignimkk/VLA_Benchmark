@@ -1,0 +1,61 @@
+{
+ "runs": {
+  "V5_ep1967_s19672": {
+   "run_dir": "/mnt/dev/work/outputs/verify/T43/W/runs/V5/H/V5_ep1967_s19672",
+   "frame_index": 466,
+   "n_frames": 467,
+   "t_closest": 466,
+   "closest_mm": 0.04671453280419638,
+   "closest_is_apple": false,
+   "hurdle_min_mm": {
+    "Af": 7.448568145901117,
+    "Ae": 0.04671453280419638,
+    "B": 147.3963140399288,
+    "C": 53.04179678720633
+   },
+   "crop_rows_cols": [
+    9,
+    384,
+    192,
+    627
+   ],
+   "obstacle_stop_lines": [
+    "[SAFETY] obstacle stop: clearance=-0.0001 m collision=True"
+   ],
+   "grasp_state_counts": {
+    "searching": 2,
+    "latched": 41,
+    "closing": 16
+   }
+  },
+  "V5_ep1967_s19673": {
+   "run_dir": "/mnt/dev/work/outputs/verify/T43/W/runs/V5/H/V5_ep1967_s19673",
+   "frame_index": 471,
+   "n_frames": 472,
+   "t_closest": 471,
+   "closest_mm": 0.3641035059269507,
+   "closest_is_apple": false,
+   "hurdle_min_mm": {
+    "Af": 4.050565642488912,
+    "Ae": 0.3641035059269507,
+    "B": 147.3963140399288,
+    "C": 50.26559388145722
+   },
+   "crop_rows_cols": [
+    9,
+    384,
+    192,
+    627
+   ],
+   "obstacle_stop_lines": [
+    "[SAFETY] obstacle stop: clearance=-0.0001 m collision=True"
+   ],
+   "grasp_state_counts": {
+    "searching": 2,
+    "latched": 43,
+    "closing": 14
+   }
+  }
+ },
+ "definitions": "T43W final figures (verifier): V5 rerun (snapshot 3) + blind round (snapshot /mnt/dev/work-t43b).\ninputs : final/numbers_main.json, final/numbers_blind.json, final/agg.json (final_agg.py), analysis/analysis.json, analysis_blind/analysis.json\noutputs: benchmark/ag3s/docs/figures/t43/{t43w-v5-arms, t43w-v5b-v5s-pairs, t43w-v5-fail-scene}.{png,json}\narms       : hurdle 14 success / grasp / place per arm E0 V1 V3 V4 V5 V5S V5B (left, bars of count of 14) and the no-obstacle 5 (V3 V4 V5, right).\npairs      : V5B vs V5S, 14 (episode, seed) pairs: outcome S / G / - and failure stage per arm (definitions in final_agg.py), 2x2 + exact McNemar p.\nfail-scene : V5 failed hurdle runs (ep1967 s19672, s19673), third-person front frame (recorded third_person_front.mp4, avoidance arrow overlay by the client)\n             at the control row of the minimum hurdle distance over fingers, palm, other robot geoms and the apple (client pair_distance, GJK)."
+}

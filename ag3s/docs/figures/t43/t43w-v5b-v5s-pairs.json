@@ -1,0 +1,161 @@
+{
+ "pairs": {
+  "n_pairs": 14,
+  "keys": [
+   "1807_s18071",
+   "1807_s18073",
+   "1834_s18341",
+   "1834_s18343",
+   "1925_s19251",
+   "1925_s19253",
+   "1967_s19672",
+   "1967_s19673",
+   "1968_s19681",
+   "1968_s19683",
+   "1982_s19822",
+   "1982_s19823",
+   "1995_s19952",
+   "1995_s19953"
+  ],
+  "success": {
+   "both": 9,
+   "V5B_only": 3,
+   "V5S_only": 1,
+   "neither": 1,
+   "mcnemar_exact_p": 0.625
+  },
+  "grasp": {
+   "both": 10,
+   "V5B_only": 2,
+   "V5S_only": 1,
+   "neither": 1,
+   "mcnemar_exact_p": 1.0
+  },
+  "place": {
+   "both": 9,
+   "V5B_only": 3,
+   "V5S_only": 1,
+   "neither": 1,
+   "mcnemar_exact_p": 0.625
+  }
+ },
+ "rows": [
+  [
+   "ep1807 s18071",
+   "S  H0",
+   "S  H45[35]"
+  ],
+  [
+   "ep1807 s18073",
+   "S  H7",
+   "S  H26"
+  ],
+  [
+   "ep1834 s18341",
+   "S  H0",
+   "S  H46[46]"
+  ],
+  [
+   "ep1834 s18343",
+   "S  H50[50]",
+   "G (carry)  H0"
+  ],
+  [
+   "ep1925 s19251",
+   "S  H0",
+   "S  H0"
+  ],
+  [
+   "ep1925 s19253",
+   "S  H1",
+   "S  H0"
+  ],
+  [
+   "ep1967 s19672",
+   "- (grasp_attached_not_lifted)  H0",
+   "- (grasp_closing_only)  H0"
+  ],
+  [
+   "ep1967 s19673",
+   "S  H48[48]",
+   "- (grasp_attached_not_lifted)  H0"
+  ],
+  [
+   "ep1968 s19681",
+   "S  H0",
+   "S  H0"
+  ],
+  [
+   "ep1968 s19683",
+   "S  H0",
+   "S  H4"
+  ],
+  [
+   "ep1982 s19822",
+   "S  H3",
+   "S  H1"
+  ],
+  [
+   "ep1982 s19823",
+   "S  H3",
+   "- (grasp_attached_not_lifted)  H0"
+  ],
+  [
+   "ep1995 s19952",
+   "S  H1",
+   "S  H0"
+  ],
+  [
+   "ep1995 s19953",
+   "- (grasp_attached_not_lifted)  H2",
+   "S  H0"
+  ]
+ ],
+ "fail_stage": {
+  "V5B": {
+   "counts": {
+    "before_pick": 0,
+    "grasp_closing_only": 0,
+    "grasp_attached_not_lifted": 2,
+    "carry": 0,
+    "place": 0
+   },
+   "runs": {
+    "before_pick": [],
+    "grasp_closing_only": [],
+    "grasp_attached_not_lifted": [
+     "1967_s19672",
+     "1995_s19953"
+    ],
+    "carry": [],
+    "place": []
+   },
+   "n_failed": 2
+  },
+  "V5S": {
+   "counts": {
+    "before_pick": 0,
+    "grasp_closing_only": 1,
+    "grasp_attached_not_lifted": 2,
+    "carry": 1,
+    "place": 0
+   },
+   "runs": {
+    "before_pick": [],
+    "grasp_closing_only": [
+     "1967_s19672"
+    ],
+    "grasp_attached_not_lifted": [
+     "1967_s19673",
+     "1982_s19823"
+    ],
+    "carry": [
+     "1834_s18343"
+    ],
+    "place": []
+   },
+   "n_failed": 4
+  }
+ },
+ "definitions": "T43W final figures (verifier): V5 rerun (snapshot 3) + blind round (snapshot /mnt/dev/work-t43b).\ninputs : final/numbers_main.json, final/numbers_blind.json, final/agg.json (final_agg.py), analysis/analysis.json, analysis_blind/analysis.json\noutputs: benchmark/ag3s/docs/figures/t43/{t43w-v5-arms, t43w-v5b-v5s-pairs, t43w-v5-fail-scene}.{png,json}\narms       : hurdle 14 success / grasp / place per arm E0 V1 V3 V4 V5 V5S V5B (left, bars of count of 14) and the no-obstacle 5 (V3 V4 V5, right).\npairs      : V5B vs V5S, 14 (episode, seed) pairs: outcome S / G / - and failure stage per arm (definitions in final_agg.py), 2x2 + exact McNemar p.\nfail-scene : V5 failed hurdle runs (ep1967 s19672, s19673), third-person front frame (recorded third_person_front.mp4, avoidance arrow overlay by the client)\n             at the control row of the minimum hurdle distance over fingers, palm, other robot geoms and the apple (client pair_distance, GJK)."
+}

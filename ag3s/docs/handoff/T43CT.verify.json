@@ -1,0 +1,4189 @@
+{
+ "_comment": "ag3s-verifier T43 CT. numbers and paths only.",
+ "step": "T43CT",
+ "date": "2026-10-06",
+ "runs": [
+  {
+   "id": "replay_ct",
+   "command": "cd /mnt/dev/work && bash outputs/verify/T43/CT/p/run_replays.sh   (JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= XLA_PYTHON_CLIENT_PREALLOCATE=false MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work; .venv-openpi-live; 126 H-stage replays, 4 workers)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/CT/replay/",
+   "stdout_log": "outputs/verify/T43/CT/raw/replay_job_*.log"
+  },
+  {
+   "id": "analysis_v7g",
+   "command": "MUJOCO_GL=osmesa PYTHONPATH=/mnt/dev/work .venv-openpi-live/bin/python outputs/verify/T43/V7g/p/analyze_v7g.py outputs/verify/T43/CT/raw/analysis_v7g.json",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/CT/raw/analysis_v7g.json",
+   "stdout_log": null
+  },
+  {
+   "id": "aggregate",
+   "command": "JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= MUJOCO_GL=osmesa .venv-openpi-live/bin/python outputs/verify/T43/CT/p/agg_ct.py outputs/verify/T43/CT/raw/ct.json",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/CT/raw/ct.json",
+   "stdout_log": "outputs/verify/T43/CT/raw/agg_ct.log"
+  }
+ ],
+ "scripts": [
+  "outputs/verify/T43/CT/p/replay_ct.py",
+  "outputs/verify/T43/CT/p/make_jobs.py",
+  "outputs/verify/T43/CT/p/run_replays.sh",
+  "outputs/verify/T43/CT/p/z4_base.py",
+  "outputs/verify/T43/CT/p/agg_ct.py",
+  "outputs/verify/T43/CT/p/fig_ct.py"
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "snapshots of each arm (manifest model_xml): work-t43w, work-t43w3, work-t43b, work-t43z3, work-t43v7",
+  "dirty_files": []
+ },
+ "numbers": {
+  "n_runs_H": 126,
+  "v7g_H_done": 14,
+  "v7g_B_done_at_aggregate_time": 5,
+  "arms_H": {
+   "E0": {
+    "n": 14,
+    "S_old": 0,
+    "S_release": 0,
+    "S_contact": 0,
+    "pre_release_contact_runs": 13,
+    "post_release_contact_runs": 0,
+    "obstacle_stop_runs": 13,
+    "any_contact_runs": 13,
+    "pre_release_contact_by_kind": {
+     "hand": 13
+    },
+    "flip_rel_to_ct": [],
+    "post_release_contact_keys": [],
+    "success_rel_with_post_release_contact": 0
+   },
+   "V1": {
+    "n": 14,
+    "S_old": 6,
+    "S_release": 6,
+    "S_contact": 2,
+    "pre_release_contact_runs": 12,
+    "post_release_contact_runs": 4,
+    "obstacle_stop_runs": 11,
+    "any_contact_runs": 13,
+    "pre_release_contact_by_kind": {
+     "hand": 7,
+     "apple": 5
+    },
+    "flip_rel_to_ct": [
+     "V1/H/V1_ep1834_s18341",
+     "V1/H/V1_ep1968_s19681",
+     "V1/H/V1_ep1982_s19822",
+     "V1/H/V1_ep1995_s19953"
+    ],
+    "post_release_contact_keys": [
+     "V1/H/V1_ep1834_s18341",
+     "V1/H/V1_ep1834_s18343",
+     "V1/H/V1_ep1925_s19251",
+     "V1/H/V1_ep1968_s19681"
+    ],
+    "success_rel_with_post_release_contact": 3
+   },
+   "V3": {
+    "n": 14,
+    "S_old": 3,
+    "S_release": 3,
+    "S_contact": 3,
+    "pre_release_contact_runs": 2,
+    "post_release_contact_runs": 0,
+    "obstacle_stop_runs": 2,
+    "any_contact_runs": 2,
+    "pre_release_contact_by_kind": {
+     "hand": 2
+    },
+    "flip_rel_to_ct": [],
+    "post_release_contact_keys": [],
+    "success_rel_with_post_release_contact": 0
+   },
+   "V4": {
+    "n": 14,
+    "S_old": 10,
+    "S_release": 10,
+    "S_contact": 6,
+    "pre_release_contact_runs": 6,
+    "post_release_contact_runs": 7,
+    "obstacle_stop_runs": 9,
+    "any_contact_runs": 10,
+    "pre_release_contact_by_kind": {
+     "apple": 4,
+     "hand": 2
+    },
+    "flip_rel_to_ct": [
+     "V4/H/V4_ep1807_s18073",
+     "V4/H/V4_ep1968_s19683",
+     "V4/H/V4_ep1995_s19952",
+     "V4/H/V4_ep1995_s19953"
+    ],
+    "post_release_contact_keys": [
+     "V4/H/V4_ep1807_s18071",
+     "V4/H/V4_ep1807_s18073",
+     "V4/H/V4_ep1925_s19251",
+     "V4/H/V4_ep1925_s19253",
+     "V4/H/V4_ep1982_s19822",
+     "V4/H/V4_ep1995_s19952",
+     "V4/H/V4_ep1995_s19953"
+    ],
+    "success_rel_with_post_release_contact": 6
+   },
+   "V5": {
+    "n": 14,
+    "S_old": 12,
+    "S_release": 12,
+    "S_contact": 9,
+    "pre_release_contact_runs": 5,
+    "post_release_contact_runs": 4,
+    "obstacle_stop_runs": 6,
+    "any_contact_runs": 8,
+    "pre_release_contact_by_kind": {
+     "hand": 2,
+     "apple": 3
+    },
+    "flip_rel_to_ct": [
+     "V5/H/V5_ep1968_s19681",
+     "V5/H/V5_ep1968_s19683",
+     "V5/H/V5_ep1995_s19952"
+    ],
+    "post_release_contact_keys": [
+     "V5/H/V5_ep1925_s19251",
+     "V5/H/V5_ep1968_s19683",
+     "V5/H/V5_ep1982_s19822",
+     "V5/H/V5_ep1982_s19823"
+    ],
+    "success_rel_with_post_release_contact": 4
+   },
+   "V5D": {
+    "n": 14,
+    "S_old": 12,
+    "S_release": 12,
+    "S_contact": 9,
+    "pre_release_contact_runs": 5,
+    "post_release_contact_runs": 9,
+    "obstacle_stop_runs": 11,
+    "any_contact_runs": 11,
+    "pre_release_contact_by_kind": {
+     "hand": 2,
+     "apple": 3
+    },
+    "flip_rel_to_ct": [
+     "V5D/H/V5D_ep1968_s19681",
+     "V5D/H/V5D_ep1968_s19683",
+     "V5D/H/V5D_ep1995_s19952"
+    ],
+    "post_release_contact_keys": [
+     "V5D/H/V5D_ep1807_s18071",
+     "V5D/H/V5D_ep1834_s18341",
+     "V5D/H/V5D_ep1834_s18343",
+     "V5D/H/V5D_ep1925_s19251",
+     "V5D/H/V5D_ep1968_s19681",
+     "V5D/H/V5D_ep1968_s19683",
+     "V5D/H/V5D_ep1982_s19822",
+     "V5D/H/V5D_ep1982_s19823",
+     "V5D/H/V5D_ep1995_s19952"
+    ],
+    "success_rel_with_post_release_contact": 9
+   },
+   "V7g": {
+    "n": 14,
+    "S_old": 12,
+    "S_release": 12,
+    "S_contact": 9,
+    "pre_release_contact_runs": 5,
+    "post_release_contact_runs": 6,
+    "obstacle_stop_runs": 8,
+    "any_contact_runs": 10,
+    "pre_release_contact_by_kind": {
+     "apple": 3,
+     "hand": 2
+    },
+    "flip_rel_to_ct": [
+     "V7g/H/V7g_ep1925_s19253",
+     "V7g/H/V7g_ep1968_s19681",
+     "V7g/H/V7g_ep1982_s19822"
+    ],
+    "post_release_contact_keys": [
+     "V7g/H/V7g_ep1807_s18071",
+     "V7g/H/V7g_ep1807_s18073",
+     "V7g/H/V7g_ep1834_s18341",
+     "V7g/H/V7g_ep1925_s19251",
+     "V7g/H/V7g_ep1982_s19822",
+     "V7g/H/V7g_ep1982_s19823"
+    ],
+    "success_rel_with_post_release_contact": 6
+   },
+   "V5S": {
+    "n": 14,
+    "S_old": 10,
+    "S_release": 10,
+    "S_contact": 6,
+    "pre_release_contact_runs": 7,
+    "post_release_contact_runs": 5,
+    "obstacle_stop_runs": 7,
+    "any_contact_runs": 10,
+    "pre_release_contact_by_kind": {
+     "apple": 5,
+     "hand": 2
+    },
+    "flip_rel_to_ct": [
+     "V5S/H/V5S_ep1968_s19681",
+     "V5S/H/V5S_ep1968_s19683",
+     "V5S/H/V5S_ep1982_s19822",
+     "V5S/H/V5S_ep1995_s19952"
+    ],
+    "post_release_contact_keys": [
+     "V5S/H/V5S_ep1807_s18073",
+     "V5S/H/V5S_ep1834_s18343",
+     "V5S/H/V5S_ep1925_s19251",
+     "V5S/H/V5S_ep1925_s19253",
+     "V5S/H/V5S_ep1968_s19683"
+    ],
+    "success_rel_with_post_release_contact": 4
+   },
+   "V5B": {
+    "n": 14,
+    "S_old": 12,
+    "S_release": 12,
+    "S_contact": 10,
+    "pre_release_contact_runs": 3,
+    "post_release_contact_runs": 7,
+    "obstacle_stop_runs": 8,
+    "any_contact_runs": 8,
+    "pre_release_contact_by_kind": {
+     "apple": 2,
+     "hand": 1
+    },
+    "flip_rel_to_ct": [
+     "V5B/H/V5B_ep1807_s18071",
+     "V5B/H/V5B_ep1968_s19681"
+    ],
+    "post_release_contact_keys": [
+     "V5B/H/V5B_ep1807_s18071",
+     "V5B/H/V5B_ep1807_s18073",
+     "V5B/H/V5B_ep1925_s19251",
+     "V5B/H/V5B_ep1925_s19253",
+     "V5B/H/V5B_ep1968_s19681",
+     "V5B/H/V5B_ep1982_s19822",
+     "V5B/H/V5B_ep1995_s19952"
+    ],
+    "success_rel_with_post_release_contact": 7
+   }
+  },
+  "success_ct_runs": {
+   "E0": [],
+   "V1": [
+    "V1/H/V1_ep1925_s19251",
+    "V1/H/V1_ep1982_s19823"
+   ],
+   "V3": [
+    "V3/H/V3_ep1834_s18341",
+    "V3/H/V3_ep1834_s18343",
+    "V3/H/V3_ep1982_s19822"
+   ],
+   "V4": [
+    "V4/H/V4_ep1834_s18341",
+    "V4/H/V4_ep1925_s19251",
+    "V4/H/V4_ep1925_s19253",
+    "V4/H/V4_ep1968_s19681",
+    "V4/H/V4_ep1982_s19822",
+    "V4/H/V4_ep1982_s19823"
+   ],
+   "V5": [
+    "V5/H/V5_ep1807_s18071",
+    "V5/H/V5_ep1807_s18073",
+    "V5/H/V5_ep1834_s18341",
+    "V5/H/V5_ep1834_s18343",
+    "V5/H/V5_ep1925_s19251",
+    "V5/H/V5_ep1925_s19253",
+    "V5/H/V5_ep1982_s19822",
+    "V5/H/V5_ep1982_s19823",
+    "V5/H/V5_ep1995_s19953"
+   ],
+   "V5D": [
+    "V5D/H/V5D_ep1807_s18071",
+    "V5D/H/V5D_ep1807_s18073",
+    "V5D/H/V5D_ep1834_s18341",
+    "V5D/H/V5D_ep1834_s18343",
+    "V5D/H/V5D_ep1925_s19251",
+    "V5D/H/V5D_ep1925_s19253",
+    "V5D/H/V5D_ep1982_s19822",
+    "V5D/H/V5D_ep1982_s19823",
+    "V5D/H/V5D_ep1995_s19953"
+   ],
+   "V7g": [
+    "V7g/H/V7g_ep1807_s18071",
+    "V7g/H/V7g_ep1807_s18073",
+    "V7g/H/V7g_ep1834_s18341",
+    "V7g/H/V7g_ep1834_s18343",
+    "V7g/H/V7g_ep1925_s19251",
+    "V7g/H/V7g_ep1968_s19683",
+    "V7g/H/V7g_ep1982_s19823",
+    "V7g/H/V7g_ep1995_s19952",
+    "V7g/H/V7g_ep1995_s19953"
+   ],
+   "V5S": [
+    "V5S/H/V5S_ep1807_s18071",
+    "V5S/H/V5S_ep1807_s18073",
+    "V5S/H/V5S_ep1834_s18341",
+    "V5S/H/V5S_ep1925_s19251",
+    "V5S/H/V5S_ep1925_s19253",
+    "V5S/H/V5S_ep1995_s19953"
+   ],
+   "V5B": [
+    "V5B/H/V5B_ep1807_s18073",
+    "V5B/H/V5B_ep1834_s18341",
+    "V5B/H/V5B_ep1834_s18343",
+    "V5B/H/V5B_ep1925_s19251",
+    "V5B/H/V5B_ep1925_s19253",
+    "V5B/H/V5B_ep1967_s19673",
+    "V5B/H/V5B_ep1968_s19683",
+    "V5B/H/V5B_ep1982_s19822",
+    "V5B/H/V5B_ep1982_s19823",
+    "V5B/H/V5B_ep1995_s19952"
+   ]
+  },
+  "pairs": {
+   "V5_vs_V4": {
+    "success": {
+     "n_pairs": 14,
+     "both": 10,
+     "A_only": 2,
+     "B_only": 0,
+     "neither": 2,
+     "A_total": 12,
+     "B_total": 10,
+     "mcnemar_exact_p": 0.5,
+     "A_only_keys": [
+      "1807_s18071",
+      "1834_s18343"
+     ],
+     "B_only_keys": []
+    },
+    "success_rel": {
+     "n_pairs": 14,
+     "both": 10,
+     "A_only": 2,
+     "B_only": 0,
+     "neither": 2,
+     "A_total": 12,
+     "B_total": 10,
+     "mcnemar_exact_p": 0.5,
+     "A_only_keys": [
+      "1807_s18071",
+      "1834_s18343"
+     ],
+     "B_only_keys": []
+    },
+    "success_ct": {
+     "n_pairs": 14,
+     "both": 5,
+     "A_only": 4,
+     "B_only": 1,
+     "neither": 4,
+     "A_total": 9,
+     "B_total": 6,
+     "mcnemar_exact_p": 0.375,
+     "A_only_keys": [
+      "1807_s18071",
+      "1807_s18073",
+      "1834_s18343",
+      "1995_s19953"
+     ],
+     "B_only_keys": [
+      "1968_s19681"
+     ]
+    }
+   },
+   "V5D_vs_V5": {
+    "success": {
+     "n_pairs": 14,
+     "both": 12,
+     "A_only": 0,
+     "B_only": 0,
+     "neither": 2,
+     "A_total": 12,
+     "B_total": 12,
+     "mcnemar_exact_p": 1.0,
+     "A_only_keys": [],
+     "B_only_keys": []
+    },
+    "success_rel": {
+     "n_pairs": 14,
+     "both": 12,
+     "A_only": 0,
+     "B_only": 0,
+     "neither": 2,
+     "A_total": 12,
+     "B_total": 12,
+     "mcnemar_exact_p": 1.0,
+     "A_only_keys": [],
+     "B_only_keys": []
+    },
+    "success_ct": {
+     "n_pairs": 14,
+     "both": 9,
+     "A_only": 0,
+     "B_only": 0,
+     "neither": 5,
+     "A_total": 9,
+     "B_total": 9,
+     "mcnemar_exact_p": 1.0,
+     "A_only_keys": [],
+     "B_only_keys": []
+    }
+   },
+   "V7g_vs_V5D": {
+    "success": {
+     "n_pairs": 14,
+     "both": 12,
+     "A_only": 0,
+     "B_only": 0,
+     "neither": 2,
+     "A_total": 12,
+     "B_total": 12,
+     "mcnemar_exact_p": 1.0,
+     "A_only_keys": [],
+     "B_only_keys": []
+    },
+    "success_rel": {
+     "n_pairs": 14,
+     "both": 12,
+     "A_only": 0,
+     "B_only": 0,
+     "neither": 2,
+     "A_total": 12,
+     "B_total": 12,
+     "mcnemar_exact_p": 1.0,
+     "A_only_keys": [],
+     "B_only_keys": []
+    },
+    "success_ct": {
+     "n_pairs": 14,
+     "both": 7,
+     "A_only": 2,
+     "B_only": 2,
+     "neither": 3,
+     "A_total": 9,
+     "B_total": 9,
+     "mcnemar_exact_p": 1.0,
+     "A_only_keys": [
+      "1968_s19683",
+      "1995_s19952"
+     ],
+     "B_only_keys": [
+      "1925_s19253",
+      "1982_s19822"
+     ]
+    }
+   },
+   "V5B_vs_V5S": {
+    "success": {
+     "n_pairs": 14,
+     "both": 9,
+     "A_only": 3,
+     "B_only": 1,
+     "neither": 1,
+     "A_total": 12,
+     "B_total": 10,
+     "mcnemar_exact_p": 0.625,
+     "A_only_keys": [
+      "1834_s18343",
+      "1967_s19673",
+      "1982_s19823"
+     ],
+     "B_only_keys": [
+      "1995_s19953"
+     ]
+    },
+    "success_rel": {
+     "n_pairs": 14,
+     "both": 9,
+     "A_only": 3,
+     "B_only": 1,
+     "neither": 1,
+     "A_total": 12,
+     "B_total": 10,
+     "mcnemar_exact_p": 0.625,
+     "A_only_keys": [
+      "1834_s18343",
+      "1967_s19673",
+      "1982_s19823"
+     ],
+     "B_only_keys": [
+      "1995_s19953"
+     ]
+    },
+    "success_ct": {
+     "n_pairs": 14,
+     "both": 4,
+     "A_only": 6,
+     "B_only": 2,
+     "neither": 2,
+     "A_total": 10,
+     "B_total": 6,
+     "mcnemar_exact_p": 0.2890625,
+     "A_only_keys": [
+      "1834_s18343",
+      "1967_s19673",
+      "1968_s19683",
+      "1982_s19822",
+      "1982_s19823",
+      "1995_s19952"
+     ],
+     "B_only_keys": [
+      "1807_s18071",
+      "1995_s19953"
+     ]
+    }
+   }
+  },
+  "contact_table": [
+   {
+    "body": "EE_BODY_L",
+    "kind": "hand",
+    "phase": "before_grasp",
+    "n_runs": 12,
+    "runs_by_arm": {
+     "V1": 2,
+     "V3": 2,
+     "V4": 2,
+     "V5": 2,
+     "V5D": 2,
+     "V7g": 2
+    },
+    "first_t_min": 455,
+    "first_t_values": [
+     455,
+     466,
+     466,
+     466,
+     471,
+     471,
+     471,
+     479,
+     479,
+     502,
+     508,
+     508
+    ],
+    "max_pen_mm": 0.4634776567687855,
+    "max_force_N": 136.82108589081358
+   },
+   {
+    "body": "ee_finger_l2",
+    "kind": "hand",
+    "phase": "before_grasp",
+    "n_runs": 5,
+    "runs_by_arm": {
+     "E0": 2,
+     "V5S": 2,
+     "V5B": 1
+    },
+    "first_t_min": 160,
+    "first_t_values": [
+     160,
+     197,
+     197,
+     233,
+     311
+    ],
+    "max_pen_mm": 1.400325626388383,
+    "max_force_N": 206.74733911970642
+   },
+   {
+    "body": "apple",
+    "kind": "apple",
+    "phase": "carry",
+    "n_runs": 25,
+    "runs_by_arm": {
+     "V1": 5,
+     "V4": 4,
+     "V5": 3,
+     "V5D": 3,
+     "V7g": 3,
+     "V5S": 5,
+     "V5B": 2
+    },
+    "first_t_min": 150,
+    "first_t_values": [
+     150,
+     159,
+     159,
+     164,
+     164,
+     164,
+     166,
+     166,
+     168,
+     174,
+     175,
+     182,
+     182,
+     183,
+     183,
+     184,
+     186,
+     190,
+     193,
+     197,
+     205,
+     205,
+     206,
+     206,
+     206
+    ],
+    "max_pen_mm": 2.453901064296337,
+    "max_force_N": 151.76536274725368
+   },
+   {
+    "body": "ee_finger_l2",
+    "kind": "hand",
+    "phase": "carry",
+    "n_runs": 15,
+    "runs_by_arm": {
+     "E0": 10,
+     "V1": 5
+    },
+    "first_t_min": 147,
+    "first_t_values": [
+     147,
+     157,
+     162,
+     171,
+     174,
+     178,
+     179,
+     183,
+     195,
+     197,
+     207,
+     209,
+     233,
+     234,
+     245
+    ],
+    "max_pen_mm": 1.6574618465808548,
+    "max_force_N": 320.70233787907034
+   },
+   {
+    "body": "ee_finger_r2",
+    "kind": "hand",
+    "phase": "carry",
+    "n_runs": 1,
+    "runs_by_arm": {
+     "E0": 1
+    },
+    "first_t_min": 224,
+    "first_t_values": [
+     224
+    ],
+    "max_pen_mm": 0.7753212284053457,
+    "max_force_N": 186.9347934994254
+   },
+   {
+    "body": "ee_finger_l2",
+    "kind": "hand",
+    "phase": "after_release",
+    "n_runs": 28,
+    "runs_by_arm": {
+     "V1": 2,
+     "V4": 5,
+     "V5": 4,
+     "V5D": 6,
+     "V7g": 3,
+     "V5S": 3,
+     "V5B": 5
+    },
+    "first_t_min": 239,
+    "first_t_values": [
+     239,
+     255,
+     264,
+     266,
+     270,
+     270,
+     270,
+     270,
+     271,
+     271,
+     271,
+     272,
+     272,
+     275,
+     279,
+     279,
+     288,
+     288,
+     294,
+     295,
+     300,
+     300,
+     307,
+     308,
+     313,
+     321,
+     338,
+     362
+    ],
+    "max_pen_mm": 2.99853277092383,
+    "max_force_N": 388.71973115448986
+   },
+   {
+    "body": "ee_finger_l1",
+    "kind": "hand",
+    "phase": "after_release",
+    "n_runs": 8,
+    "runs_by_arm": {
+     "V4": 2,
+     "V5D": 1,
+     "V7g": 2,
+     "V5S": 1,
+     "V5B": 2
+    },
+    "first_t_min": 251,
+    "first_t_values": [
+     251,
+     252,
+     261,
+     265,
+     271,
+     297,
+     324,
+     489
+    ],
+    "max_pen_mm": 2.773128155976008,
+    "max_force_N": 407.2311390722075
+   },
+   {
+    "body": "link_right_arm_5",
+    "kind": "robot_other",
+    "phase": "after_release",
+    "n_runs": 3,
+    "runs_by_arm": {
+     "V1": 1,
+     "V5D": 1,
+     "V5S": 1
+    },
+    "first_t_min": 239,
+    "first_t_values": [
+     239,
+     241,
+     258
+    ],
+    "max_pen_mm": 0.3538150445669755,
+    "max_force_N": 250.63495717132156
+   },
+   {
+    "body": "apple",
+    "kind": "apple",
+    "phase": "after_release",
+    "n_runs": 2,
+    "runs_by_arm": {
+     "V1": 1,
+     "V5S": 1
+    },
+    "first_t_min": 189,
+    "first_t_values": [
+     189,
+     198
+    ],
+    "max_pen_mm": 0.20601326808973064,
+    "max_force_N": 1.1831627478269084
+   },
+   {
+    "body": "link_right_arm_4",
+    "kind": "robot_other",
+    "phase": "after_release",
+    "n_runs": 2,
+    "runs_by_arm": {
+     "V1": 1,
+     "V7g": 1
+    },
+    "first_t_min": 237,
+    "first_t_values": [
+     237,
+     284
+    ],
+    "max_pen_mm": 1.4270473748641908,
+    "max_force_N": 839.9824892094878
+   },
+   {
+    "body": "FT_SENSOR_R",
+    "kind": "robot_other",
+    "phase": "after_release",
+    "n_runs": 1,
+    "runs_by_arm": {
+     "V5D": 1
+    },
+    "first_t_min": 341,
+    "first_t_values": [
+     341
+    ],
+    "max_pen_mm": 0.22668341595993152,
+    "max_force_N": 0.0
+   },
+   {
+    "body": "link_right_arm_6",
+    "kind": "robot_other",
+    "phase": "after_release",
+    "n_runs": 1,
+    "runs_by_arm": {
+     "V5D": 1
+    },
+    "first_t_min": 341,
+    "first_t_values": [
+     341
+    ],
+    "max_pen_mm": 0.4004421475163854,
+    "max_force_N": 289.0500194605771
+   }
+  ],
+  "runs": {
+   "E0/H/E0_ep1807_s18071": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 184,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 211,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 209,
+      "last_t": 210,
+      "n_rows": 2,
+      "substeps": 35,
+      "max_pen_mm": 1.559965634116955,
+      "max_force_N": 253.4151499029254
+     }
+    ]
+   },
+   "E0/H/E0_ep1807_s18073": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 208,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 234,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 233,
+      "last_t": 233,
+      "n_rows": 1,
+      "substeps": 12,
+      "max_pen_mm": 1.4351730188806138,
+      "max_force_N": 275.5083807151077
+     }
+    ]
+   },
+   "E0/H/E0_ep1834_s18341": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "E0/H/E0_ep1834_s18343": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 184,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 225,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_r2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#765"
+      ],
+      "first_t": 224,
+      "last_t": 224,
+      "n_rows": 1,
+      "substeps": 6,
+      "max_pen_mm": 0.7753212284053457,
+      "max_force_N": 186.9347934994254
+     }
+    ]
+   },
+   "E0/H/E0_ep1925_s19251": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 176,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 208,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 207,
+      "last_t": 207,
+      "n_rows": 1,
+      "substeps": 15,
+      "max_pen_mm": 1.5714856953711818,
+      "max_force_N": 236.23543275240547
+     }
+    ]
+   },
+   "E0/H/E0_ep1925_s19253": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 160,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 184,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 183,
+      "last_t": 183,
+      "n_rows": 1,
+      "substeps": 9,
+      "max_pen_mm": 1.6574618465808548,
+      "max_force_N": 253.91008970058613
+     }
+    ]
+   },
+   "E0/H/E0_ep1967_s19672": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 168,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 196,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 195,
+      "last_t": 195,
+      "n_rows": 1,
+      "substeps": 18,
+      "max_pen_mm": 1.5319524849172916,
+      "max_force_N": 320.70233787907034
+     }
+    ]
+   },
+   "E0/H/E0_ep1967_s19673": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 176,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 174,
+      "last_t": 175,
+      "n_rows": 2,
+      "substeps": 35,
+      "max_pen_mm": 1.3303908755964624,
+      "max_force_N": 299.52768727096327
+     }
+    ]
+   },
+   "E0/H/E0_ep1968_s19681": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 200,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 235,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 234,
+      "last_t": 234,
+      "n_rows": 1,
+      "substeps": 31,
+      "max_pen_mm": 1.6469741486290472,
+      "max_force_N": 268.3605211894405
+     }
+    ]
+   },
+   "E0/H/E0_ep1968_s19683": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 180,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 179,
+      "last_t": 179,
+      "n_rows": 1,
+      "substeps": 31,
+      "max_pen_mm": 1.4301583896236207,
+      "max_force_N": 293.89628599079515
+     }
+    ]
+   },
+   "E0/H/E0_ep1982_s19822": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 198,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 197,
+      "last_t": 197,
+      "n_rows": 1,
+      "substeps": 33,
+      "max_pen_mm": 1.3189640984571562,
+      "max_force_N": 203.84247686304266
+     }
+    ]
+   },
+   "E0/H/E0_ep1982_s19823": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 208,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 246,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 245,
+      "last_t": 245,
+      "n_rows": 1,
+      "substeps": 31,
+      "max_pen_mm": 1.5777137789424172,
+      "max_force_N": 287.32697410743754
+     }
+    ]
+   },
+   "E0/H/E0_ep1995_s19952": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 161,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 160,
+      "last_t": 160,
+      "n_rows": 1,
+      "substeps": 24,
+      "max_pen_mm": 1.400325626388383,
+      "max_force_N": 167.17137072889108
+     }
+    ]
+   },
+   "E0/H/E0_ep1995_s19953": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 168,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 198,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 197,
+      "last_t": 197,
+      "n_rows": 1,
+      "substeps": 25,
+      "max_pen_mm": 1.3712883467323806,
+      "max_force_N": 237.66284865478207
+     }
+    ]
+   },
+   "V1/H/V1_ep1807_s18071": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 120,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 149,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 147,
+      "last_t": 148,
+      "n_rows": 2,
+      "substeps": 21,
+      "max_pen_mm": 0.9983476878108969,
+      "max_force_N": 218.34990560924436
+     }
+    ]
+   },
+   "V1/H/V1_ep1807_s18073": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 128,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 158,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 157,
+      "last_t": 157,
+      "n_rows": 1,
+      "substeps": 10,
+      "max_pen_mm": 0.38754915251179056,
+      "max_force_N": 219.56937321662087
+     }
+    ]
+   },
+   "V1/H/V1_ep1834_s18341": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 198,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 285,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 190,
+      "last_t": 198,
+      "n_rows": 8,
+      "substeps": 192,
+      "max_pen_mm": 0.6242398080308041,
+      "max_force_N": 81.03473940471366
+     },
+     {
+      "body": "link_right_arm_4",
+      "kind": "robot_other",
+      "phase": "after_release",
+      "geoms": [
+       "geom#523"
+      ],
+      "first_t": 284,
+      "last_t": 284,
+      "n_rows": 1,
+      "substeps": 4,
+      "max_pen_mm": 0.40865792519748434,
+      "max_force_N": 282.26846568427084
+     }
+    ]
+   },
+   "V1/H/V1_ep1834_s18343": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 188,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 242,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 184,
+      "last_t": 188,
+      "n_rows": 5,
+      "substeps": 151,
+      "max_pen_mm": 0.5622953166981078,
+      "max_force_N": 50.88941432613176
+     },
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "after_release",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 189,
+      "last_t": 189,
+      "n_rows": 1,
+      "substeps": 23,
+      "max_pen_mm": 0.052159228765667406,
+      "max_force_N": 1.1440447728118444
+     },
+     {
+      "body": "link_right_arm_5",
+      "kind": "robot_other",
+      "phase": "after_release",
+      "geoms": [
+       "geom#548"
+      ],
+      "first_t": 241,
+      "last_t": 241,
+      "n_rows": 1,
+      "substeps": 12,
+      "max_pen_mm": 0.13319897799498293,
+      "max_force_N": 91.46873011716029
+     }
+    ]
+   },
+   "V1/H/V1_ep1925_s19251": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 120,
+    "release_t": 206,
+    "release_mode": "open_cmd",
+    "n_control_rows": 256,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 255,
+      "last_t": 255,
+      "n_rows": 1,
+      "substeps": 12,
+      "max_pen_mm": 2.99853277092383,
+      "max_force_N": 388.71973115448986
+     }
+    ]
+   },
+   "V1/H/V1_ep1925_s19253": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 172,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 171,
+      "last_t": 171,
+      "n_rows": 1,
+      "substeps": 7,
+      "max_pen_mm": 0.29550213472017556,
+      "max_force_N": 216.42806332527653
+     }
+    ]
+   },
+   "V1/H/V1_ep1967_s19672": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 509,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 508,
+      "last_t": 508,
+      "n_rows": 1,
+      "substeps": 11,
+      "max_pen_mm": 0.4285546539171369,
+      "max_force_N": 111.83734210329726
+     }
+    ]
+   },
+   "V1/H/V1_ep1967_s19673": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 480,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 479,
+      "last_t": 479,
+      "n_rows": 1,
+      "substeps": 28,
+      "max_pen_mm": 0.4634776567687855,
+      "max_force_N": 136.82108589081358
+     }
+    ]
+   },
+   "V1/H/V1_ep1968_s19681": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 176,
+    "release_t": 213,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 240,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 205,
+      "last_t": 213,
+      "n_rows": 9,
+      "substeps": 289,
+      "max_pen_mm": 1.045063873364834,
+      "max_force_N": 96.05688355483892
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 239,
+      "last_t": 239,
+      "n_rows": 1,
+      "substeps": 18,
+      "max_pen_mm": 1.8213112256610167,
+      "max_force_N": 304.1225369747651
+     }
+    ]
+   },
+   "V1/H/V1_ep1968_s19683": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 163,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 162,
+      "last_t": 162,
+      "n_rows": 1,
+      "substeps": 15,
+      "max_pen_mm": 0.5035404178445492,
+      "max_force_N": 255.04832363036493
+     }
+    ]
+   },
+   "V1/H/V1_ep1982_s19822": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 174,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 166,
+      "last_t": 173,
+      "n_rows": 8,
+      "substeps": 223,
+      "max_pen_mm": 1.0435029540969212,
+      "max_force_N": 76.24267297471096
+     }
+    ]
+   },
+   "V1/H/V1_ep1982_s19823": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 221,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V1/H/V1_ep1995_s19952": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 179,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "carry",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 178,
+      "last_t": 178,
+      "n_rows": 1,
+      "substeps": 9,
+      "max_pen_mm": 0.46130831812822226,
+      "max_force_N": 198.8468234642397
+     }
+    ]
+   },
+   "V1/H/V1_ep1995_s19953": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 160,
+    "release_t": 202,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 193,
+      "last_t": 202,
+      "n_rows": 10,
+      "substeps": 286,
+      "max_pen_mm": 0.8988144934657504,
+      "max_force_N": 125.22097788695118
+     }
+    ]
+   },
+   "V3/H/V3_ep1807_s18071": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V3/H/V3_ep1807_s18073": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 120,
+    "release_t": 124,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V3/H/V3_ep1834_s18341": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": 361,
+    "release_mode": "open_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V3/H/V3_ep1834_s18343": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": 359,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V3/H/V3_ep1925_s19251": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V3/H/V3_ep1925_s19253": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V3/H/V3_ep1967_s19672": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 456,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 455,
+      "last_t": 455,
+      "n_rows": 1,
+      "substeps": 4,
+      "max_pen_mm": 0.2950767930401579,
+      "max_force_N": 101.45762221187556
+     }
+    ]
+   },
+   "V3/H/V3_ep1967_s19673": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V3/H/V3_ep1968_s19681": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V3/H/V3_ep1968_s19683": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V3/H/V3_ep1982_s19822": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 253,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V3/H/V3_ep1982_s19823": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V3/H/V3_ep1995_s19952": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 503,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 502,
+      "last_t": 502,
+      "n_rows": 1,
+      "substeps": 7,
+      "max_pen_mm": 0.37587956096926495,
+      "max_force_N": 102.39364270462481
+     }
+    ]
+   },
+   "V3/H/V3_ep1995_s19953": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V4/H/V4_ep1807_s18071": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": 170,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 298,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1079"
+      ],
+      "first_t": 297,
+      "last_t": 297,
+      "n_rows": 1,
+      "substeps": 15,
+      "max_pen_mm": 1.1903451815083663,
+      "max_force_N": 194.2006257711702
+     }
+    ]
+   },
+   "V4/H/V4_ep1807_s18073": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 128,
+    "release_t": 165,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 272,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 159,
+      "last_t": 165,
+      "n_rows": 7,
+      "substeps": 191,
+      "max_pen_mm": 0.49076486077820336,
+      "max_force_N": 109.13614186154503
+     },
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1079"
+      ],
+      "first_t": 271,
+      "last_t": 271,
+      "n_rows": 1,
+      "substeps": 7,
+      "max_pen_mm": 2.7095755395425587,
+      "max_force_N": 363.40443461596215
+     }
+    ]
+   },
+   "V4/H/V4_ep1834_s18341": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 311,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V4/H/V4_ep1834_s18343": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 271,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V4/H/V4_ep1925_s19251": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 120,
+    "release_t": 208,
+    "release_mode": "open_cmd",
+    "n_control_rows": 267,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 266,
+      "last_t": 266,
+      "n_rows": 1,
+      "substeps": 6,
+      "max_pen_mm": 1.0233570631402265,
+      "max_force_N": 177.64530935323947
+     }
+    ]
+   },
+   "V4/H/V4_ep1925_s19253": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 222,
+    "release_mode": "open_cmd",
+    "n_control_rows": 273,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 272,
+      "last_t": 272,
+      "n_rows": 1,
+      "substeps": 31,
+      "max_pen_mm": 1.825915623020662,
+      "max_force_N": 242.5492535610182
+     }
+    ]
+   },
+   "V4/H/V4_ep1967_s19672": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 509,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 508,
+      "last_t": 508,
+      "n_rows": 1,
+      "substeps": 11,
+      "max_pen_mm": 0.4285546539171369,
+      "max_force_N": 111.83734210329726
+     }
+    ]
+   },
+   "V4/H/V4_ep1967_s19673": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 480,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 479,
+      "last_t": 479,
+      "n_rows": 1,
+      "substeps": 28,
+      "max_pen_mm": 0.4634776567687855,
+      "max_force_N": 136.82108589081358
+     }
+    ]
+   },
+   "V4/H/V4_ep1968_s19681": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 176,
+    "release_t": 264,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V4/H/V4_ep1968_s19683": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 216,
+    "release_mode": "open_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 164,
+      "last_t": 165,
+      "n_rows": 2,
+      "substeps": 9,
+      "max_pen_mm": 0.1875319189343326,
+      "max_force_N": 82.47148392306562
+     }
+    ]
+   },
+   "V4/H/V4_ep1982_s19822": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 184,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 272,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 271,
+      "last_t": 271,
+      "n_rows": 1,
+      "substeps": 31,
+      "max_pen_mm": 1.9953839717166375,
+      "max_force_N": 261.81364461353917
+     }
+    ]
+   },
+   "V4/H/V4_ep1982_s19823": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 191,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V4/H/V4_ep1995_s19952": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 184,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 308,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 182,
+      "last_t": 184,
+      "n_rows": 3,
+      "substeps": 52,
+      "max_pen_mm": 0.3363124786017416,
+      "max_force_N": 81.10647202740404
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 307,
+      "last_t": 307,
+      "n_rows": 1,
+      "substeps": 7,
+      "max_pen_mm": 0.8751804538737039,
+      "max_force_N": 137.23753263988925
+     }
+    ]
+   },
+   "V4/H/V4_ep1995_s19953": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 160,
+    "release_t": 199,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 363,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 197,
+      "last_t": 198,
+      "n_rows": 2,
+      "substeps": 28,
+      "max_pen_mm": 0.5287325965188192,
+      "max_force_N": 10.89781174940286
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 362,
+      "last_t": 362,
+      "n_rows": 1,
+      "substeps": 25,
+      "max_pen_mm": 1.3077774682492045,
+      "max_force_N": 165.86107075400685
+     }
+    ]
+   },
+   "V5/H/V5_ep1807_s18071": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 120,
+    "release_t": 165,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5/H/V5_ep1807_s18073": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 128,
+    "release_t": 215,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5/H/V5_ep1834_s18341": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 224,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5/H/V5_ep1834_s18343": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 306,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5/H/V5_ep1925_s19251": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 216,
+    "release_mode": "open_cmd",
+    "n_control_rows": 271,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 270,
+      "last_t": 270,
+      "n_rows": 1,
+      "substeps": 11,
+      "max_pen_mm": 2.561502915272443,
+      "max_force_N": 324.82259404127126
+     }
+    ]
+   },
+   "V5/H/V5_ep1925_s19253": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 369,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5/H/V5_ep1967_s19672": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 467,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 466,
+      "last_t": 466,
+      "n_rows": 1,
+      "substeps": 27,
+      "max_pen_mm": 0.13981121516529021,
+      "max_force_N": 70.73965193142182
+     }
+    ]
+   },
+   "V5/H/V5_ep1967_s19673": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 472,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 471,
+      "last_t": 471,
+      "n_rows": 1,
+      "substeps": 29,
+      "max_pen_mm": 0.334820816629321,
+      "max_force_N": 98.9453289846372
+     }
+    ]
+   },
+   "V5/H/V5_ep1968_s19681": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 176,
+    "release_t": 208,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 206,
+      "last_t": 207,
+      "n_rows": 2,
+      "substeps": 35,
+      "max_pen_mm": 0.42765976281707724,
+      "max_force_N": 66.64537445870978
+     }
+    ]
+   },
+   "V5/H/V5_ep1968_s19683": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 216,
+    "release_mode": "open_cmd",
+    "n_control_rows": 272,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 164,
+      "last_t": 165,
+      "n_rows": 2,
+      "substeps": 10,
+      "max_pen_mm": 0.24371103533328206,
+      "max_force_N": 52.10541376392092
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 271,
+      "last_t": 271,
+      "n_rows": 1,
+      "substeps": 12,
+      "max_pen_mm": 1.2296176811727872,
+      "max_force_N": 236.0599295609013
+     }
+    ]
+   },
+   "V5/H/V5_ep1982_s19822": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 181,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 280,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 279,
+      "last_t": 279,
+      "n_rows": 1,
+      "substeps": 31,
+      "max_pen_mm": 2.0383665897439807,
+      "max_force_N": 267.95415911782726
+     }
+    ]
+   },
+   "V5/H/V5_ep1982_s19823": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": 239,
+    "release_mode": "open_cmd",
+    "n_control_rows": 301,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 300,
+      "last_t": 300,
+      "n_rows": 1,
+      "substeps": 17,
+      "max_pen_mm": 0.5620881510186218,
+      "max_force_N": 164.4018148127156
+     }
+    ]
+   },
+   "V5/H/V5_ep1995_s19952": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": 187,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 183,
+      "last_t": 186,
+      "n_rows": 4,
+      "substeps": 82,
+      "max_pen_mm": 0.28966297769979743,
+      "max_force_N": 81.63097849584652
+     }
+    ]
+   },
+   "V5/H/V5_ep1995_s19953": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 160,
+    "release_t": 253,
+    "release_mode": "open_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5D/H/V5D_ep1807_s18071": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 120,
+    "release_t": 165,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 253,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1079"
+      ],
+      "first_t": 251,
+      "last_t": 252,
+      "n_rows": 2,
+      "substeps": 34,
+      "max_pen_mm": 2.0969856874649624,
+      "max_force_N": 237.67202599691743
+     }
+    ]
+   },
+   "V5D/H/V5D_ep1807_s18073": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 128,
+    "release_t": 215,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5D/H/V5D_ep1834_s18341": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 224,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 259,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "link_right_arm_5",
+      "kind": "robot_other",
+      "phase": "after_release",
+      "geoms": [
+       "geom#548"
+      ],
+      "first_t": 258,
+      "last_t": 258,
+      "n_rows": 1,
+      "substeps": 22,
+      "max_pen_mm": 0.24554276198574498,
+      "max_force_N": 102.62066109161027
+     }
+    ]
+   },
+   "V5D/H/V5D_ep1834_s18343": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 306,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 342,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "FT_SENSOR_R",
+      "kind": "robot_other",
+      "phase": "after_release",
+      "geoms": [
+       "geom#655"
+      ],
+      "first_t": 341,
+      "last_t": 341,
+      "n_rows": 1,
+      "substeps": 21,
+      "max_pen_mm": 0.22668341595993152,
+      "max_force_N": 0.0
+     },
+     {
+      "body": "link_right_arm_6",
+      "kind": "robot_other",
+      "phase": "after_release",
+      "geoms": [
+       "geom#563"
+      ],
+      "first_t": 341,
+      "last_t": 341,
+      "n_rows": 1,
+      "substeps": 13,
+      "max_pen_mm": 0.4004421475163854,
+      "max_force_N": 289.0500194605771
+     }
+    ]
+   },
+   "V5D/H/V5D_ep1925_s19251": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 216,
+    "release_mode": "open_cmd",
+    "n_control_rows": 271,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 270,
+      "last_t": 270,
+      "n_rows": 1,
+      "substeps": 11,
+      "max_pen_mm": 2.561502915272443,
+      "max_force_N": 324.82259404127126
+     }
+    ]
+   },
+   "V5D/H/V5D_ep1925_s19253": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 369,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5D/H/V5D_ep1967_s19672": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 467,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 466,
+      "last_t": 466,
+      "n_rows": 1,
+      "substeps": 27,
+      "max_pen_mm": 0.13981121516529021,
+      "max_force_N": 70.73965193142182
+     }
+    ]
+   },
+   "V5D/H/V5D_ep1967_s19673": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 472,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 471,
+      "last_t": 471,
+      "n_rows": 1,
+      "substeps": 29,
+      "max_pen_mm": 0.334820816629321,
+      "max_force_N": 98.9453289846372
+     }
+    ]
+   },
+   "V5D/H/V5D_ep1968_s19681": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 176,
+    "release_t": 208,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 314,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 206,
+      "last_t": 207,
+      "n_rows": 2,
+      "substeps": 35,
+      "max_pen_mm": 0.42765976281707724,
+      "max_force_N": 66.64537445870978
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 313,
+      "last_t": 313,
+      "n_rows": 1,
+      "substeps": 11,
+      "max_pen_mm": 0.286355531305375,
+      "max_force_N": 122.28041245690785
+     }
+    ]
+   },
+   "V5D/H/V5D_ep1968_s19683": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 216,
+    "release_mode": "open_cmd",
+    "n_control_rows": 272,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 164,
+      "last_t": 165,
+      "n_rows": 2,
+      "substeps": 10,
+      "max_pen_mm": 0.24371103533328206,
+      "max_force_N": 52.10541376392092
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 271,
+      "last_t": 271,
+      "n_rows": 1,
+      "substeps": 12,
+      "max_pen_mm": 1.2296176811727872,
+      "max_force_N": 236.0599295609013
+     }
+    ]
+   },
+   "V5D/H/V5D_ep1982_s19822": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 181,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 273,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 272,
+      "last_t": 272,
+      "n_rows": 1,
+      "substeps": 8,
+      "max_pen_mm": 0.8708512994987667,
+      "max_force_N": 138.31956442062864
+     }
+    ]
+   },
+   "V5D/H/V5D_ep1982_s19823": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": 239,
+    "release_mode": "open_cmd",
+    "n_control_rows": 301,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 300,
+      "last_t": 300,
+      "n_rows": 1,
+      "substeps": 17,
+      "max_pen_mm": 0.5620881510186218,
+      "max_force_N": 164.4018148127156
+     }
+    ]
+   },
+   "V5D/H/V5D_ep1995_s19952": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": 187,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 309,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 183,
+      "last_t": 186,
+      "n_rows": 4,
+      "substeps": 82,
+      "max_pen_mm": 0.28966297769979743,
+      "max_force_N": 81.63097849584652
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 308,
+      "last_t": 308,
+      "n_rows": 1,
+      "substeps": 25,
+      "max_pen_mm": 0.9383670558087281,
+      "max_force_N": 154.45435042954793
+     }
+    ]
+   },
+   "V5D/H/V5D_ep1995_s19953": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 160,
+    "release_t": 253,
+    "release_mode": "open_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/H/V7g_ep1807_s18071": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 120,
+    "release_t": 180,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 262,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1079"
+      ],
+      "first_t": 261,
+      "last_t": 261,
+      "n_rows": 1,
+      "substeps": 32,
+      "max_pen_mm": 2.6710373887204963,
+      "max_force_N": 283.01599268690416
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1807_s18073": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 128,
+    "release_t": 220,
+    "release_mode": "open_cmd",
+    "n_control_rows": 266,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1079"
+      ],
+      "first_t": 265,
+      "last_t": 265,
+      "n_rows": 1,
+      "substeps": 9,
+      "max_pen_mm": 0.24063986493759632,
+      "max_force_N": 147.01230331274326
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1834_s18341": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 199,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 238,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "link_right_arm_4",
+      "kind": "robot_other",
+      "phase": "after_release",
+      "geoms": [
+       "geom#519"
+      ],
+      "first_t": 237,
+      "last_t": 237,
+      "n_rows": 1,
+      "substeps": 16,
+      "max_pen_mm": 1.4270473748641908,
+      "max_force_N": 839.9824892094878
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1834_s18343": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 298,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/H/V7g_ep1925_s19251": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 215,
+    "release_mode": "open_cmd",
+    "n_control_rows": 271,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 270,
+      "last_t": 270,
+      "n_rows": 1,
+      "substeps": 16,
+      "max_pen_mm": 2.3594585354623514,
+      "max_force_N": 333.333493336121
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1925_s19253": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 223,
+    "release_mode": "open_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 174,
+      "last_t": 175,
+      "n_rows": 2,
+      "substeps": 24,
+      "max_pen_mm": 0.40380881641065813,
+      "max_force_N": 70.74730395216596
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1967_s19672": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 467,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 466,
+      "last_t": 466,
+      "n_rows": 1,
+      "substeps": 27,
+      "max_pen_mm": 0.13981121516529021,
+      "max_force_N": 70.73965193142182
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1967_s19673": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 472,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "EE_BODY_L",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1052"
+      ],
+      "first_t": 471,
+      "last_t": 471,
+      "n_rows": 1,
+      "substeps": 11,
+      "max_pen_mm": 0.23697894567726274,
+      "max_force_N": 87.8653024738969
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1968_s19681": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 176,
+    "release_t": 209,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 206,
+      "last_t": 208,
+      "n_rows": 3,
+      "substeps": 33,
+      "max_pen_mm": 0.6968389629285233,
+      "max_force_N": 79.42345331749254
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1968_s19683": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 216,
+    "release_mode": "open_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/H/V7g_ep1982_s19822": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 169,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 276,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 168,
+      "last_t": 169,
+      "n_rows": 2,
+      "substeps": 31,
+      "max_pen_mm": 0.2326400396496769,
+      "max_force_N": 59.20377113516095
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 275,
+      "last_t": 275,
+      "n_rows": 1,
+      "substeps": 20,
+      "max_pen_mm": 0.443277433550205,
+      "max_force_N": 171.29889982505492
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1982_s19823": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": 240,
+    "release_mode": "open_cmd",
+    "n_control_rows": 289,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 288,
+      "last_t": 288,
+      "n_rows": 1,
+      "substeps": 11,
+      "max_pen_mm": 0.22338989690110986,
+      "max_force_N": 127.20830876571885
+     }
+    ]
+   },
+   "V7g/H/V7g_ep1995_s19952": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": 226,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V7g/H/V7g_ep1995_s19953": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 160,
+    "release_t": 207,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5S/H/V5S_ep1807_s18071": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 160,
+    "release_t": 273,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5S/H/V5S_ep1807_s18073": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 237,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 490,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1079"
+      ],
+      "first_t": 489,
+      "last_t": 489,
+      "n_rows": 1,
+      "substeps": 4,
+      "max_pen_mm": 0.24285221853021996,
+      "max_force_N": 143.03912695418038
+     }
+    ]
+   },
+   "V5S/H/V5S_ep1834_s18341": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 314,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5S/H/V5S_ep1834_s18343": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 197,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 240,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 186,
+      "last_t": 197,
+      "n_rows": 12,
+      "substeps": 503,
+      "max_pen_mm": 0.5497589134778984,
+      "max_force_N": 66.5399438981414
+     },
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "after_release",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 198,
+      "last_t": 199,
+      "n_rows": 2,
+      "substeps": 27,
+      "max_pen_mm": 0.20601326808973064,
+      "max_force_N": 1.1831627478269084
+     },
+     {
+      "body": "link_right_arm_5",
+      "kind": "robot_other",
+      "phase": "after_release",
+      "geoms": [
+       "geom#546"
+      ],
+      "first_t": 239,
+      "last_t": 239,
+      "n_rows": 1,
+      "substeps": 4,
+      "max_pen_mm": 0.3538150445669755,
+      "max_force_N": 250.63495717132156
+     }
+    ]
+   },
+   "V5S/H/V5S_ep1925_s19251": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 213,
+    "release_mode": "open_cmd",
+    "n_control_rows": 265,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 264,
+      "last_t": 264,
+      "n_rows": 1,
+      "substeps": 34,
+      "max_pen_mm": 2.428615864639473,
+      "max_force_N": 280.6800104323985
+     }
+    ]
+   },
+   "V5S/H/V5S_ep1925_s19253": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 160,
+    "release_t": 232,
+    "release_mode": "open_cmd",
+    "n_control_rows": 289,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 288,
+      "last_t": 288,
+      "n_rows": 1,
+      "substeps": 28,
+      "max_pen_mm": 0.7662882626829383,
+      "max_force_N": 193.81381658225163
+     }
+    ]
+   },
+   "V5S/H/V5S_ep1967_s19672": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 198,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 197,
+      "last_t": 197,
+      "n_rows": 1,
+      "substeps": 2,
+      "max_pen_mm": 0.016983676075339738,
+      "max_force_N": 175.17596454057895
+     }
+    ]
+   },
+   "V5S/H/V5S_ep1967_s19673": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 312,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 311,
+      "last_t": 311,
+      "n_rows": 1,
+      "substeps": 10,
+      "max_pen_mm": 0.8896936392573644,
+      "max_force_N": 206.74733911970642
+     }
+    ]
+   },
+   "V5S/H/V5S_ep1968_s19681": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": 220,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 182,
+      "last_t": 183,
+      "n_rows": 2,
+      "substeps": 18,
+      "max_pen_mm": 0.33137333376492134,
+      "max_force_N": 62.1876832379685
+     }
+    ]
+   },
+   "V5S/H/V5S_ep1968_s19683": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 246,
+    "release_mode": "open_cmd",
+    "n_control_rows": 296,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 166,
+      "last_t": 167,
+      "n_rows": 2,
+      "substeps": 10,
+      "max_pen_mm": 0.36955089450689366,
+      "max_force_N": 54.5088556657942
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 295,
+      "last_t": 295,
+      "n_rows": 1,
+      "substeps": 15,
+      "max_pen_mm": 0.8498761049522373,
+      "max_force_N": 230.20179810249033
+     }
+    ]
+   },
+   "V5S/H/V5S_ep1982_s19822": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 177,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 175,
+      "last_t": 176,
+      "n_rows": 2,
+      "substeps": 15,
+      "max_pen_mm": 0.42070578296238975,
+      "max_force_N": 48.111481632950245
+     }
+    ]
+   },
+   "V5S/H/V5S_ep1982_s19823": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5S/H/V5S_ep1995_s19952": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 128,
+    "release_t": 165,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 159,
+      "last_t": 165,
+      "n_rows": 7,
+      "substeps": 213,
+      "max_pen_mm": 1.1412484880570835,
+      "max_force_N": 123.19294614914301
+     }
+    ]
+   },
+   "V5S/H/V5S_ep1995_s19953": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 152,
+    "release_t": 236,
+    "release_mode": "open_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5B/H/V5B_ep1807_s18071": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 120,
+    "release_t": 154,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 253,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 150,
+      "last_t": 154,
+      "n_rows": 5,
+      "substeps": 110,
+      "max_pen_mm": 0.8304988564980086,
+      "max_force_N": 88.24114322685935
+     },
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1079"
+      ],
+      "first_t": 252,
+      "last_t": 252,
+      "n_rows": 1,
+      "substeps": 22,
+      "max_pen_mm": 2.773128155976008,
+      "max_force_N": 407.2311390722075
+     }
+    ]
+   },
+   "V5B/H/V5B_ep1807_s18073": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 192,
+    "release_t": 272,
+    "release_mode": "open_cmd",
+    "n_control_rows": 325,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l1",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1079"
+      ],
+      "first_t": 324,
+      "last_t": 324,
+      "n_rows": 1,
+      "substeps": 30,
+      "max_pen_mm": 1.9295457571140568,
+      "max_force_N": 298.12399943043164
+     }
+    ]
+   },
+   "V5B/H/V5B_ep1834_s18341": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 238,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5B/H/V5B_ep1834_s18343": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 112,
+    "release_t": 286,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5B/H/V5B_ep1925_s19251": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 216,
+    "release_mode": "open_cmd",
+    "n_control_rows": 280,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 279,
+      "last_t": 279,
+      "n_rows": 1,
+      "substeps": 16,
+      "max_pen_mm": 1.7803127728062105,
+      "max_force_N": 276.8162980426186
+     }
+    ]
+   },
+   "V5B/H/V5B_ep1925_s19253": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 227,
+    "release_mode": "open_cmd",
+    "n_control_rows": 295,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 294,
+      "last_t": 294,
+      "n_rows": 1,
+      "substeps": 31,
+      "max_pen_mm": 2.7854654193084536,
+      "max_force_N": 318.28500663025784
+     }
+    ]
+   },
+   "V5B/H/V5B_ep1967_s19672": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5B/H/V5B_ep1967_s19673": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 144,
+    "release_t": 256,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5B/H/V5B_ep1968_s19681": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": false,
+    "grasp": true,
+    "grasp_t": 176,
+    "release_t": 208,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 322,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "apple",
+      "kind": "apple",
+      "phase": "carry",
+      "geoms": [
+       "apple_geom"
+      ],
+      "first_t": 205,
+      "last_t": 207,
+      "n_rows": 3,
+      "substeps": 97,
+      "max_pen_mm": 2.453901064296337,
+      "max_force_N": 151.76536274725368
+     },
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 321,
+      "last_t": 321,
+      "n_rows": 1,
+      "substeps": 5,
+      "max_pen_mm": 0.06230723277247073,
+      "max_force_N": 112.56431881348198
+     }
+    ]
+   },
+   "V5B/H/V5B_ep1968_s19683": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 136,
+    "release_t": 176,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5B/H/V5B_ep1982_s19822": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 176,
+    "release_t": 273,
+    "release_mode": "open_cmd",
+    "n_control_rows": 339,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 338,
+      "last_t": 338,
+      "n_rows": 1,
+      "substeps": 16,
+      "max_pen_mm": 2.240867640742184,
+      "max_force_N": 299.5240430011259
+     }
+    ]
+   },
+   "V5B/H/V5B_ep1982_s19823": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 200,
+    "release_t": 288,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 600,
+    "obstacle_stop": false,
+    "pre_release_contact": false,
+    "post_release_contact": false,
+    "contacts": []
+   },
+   "V5B/H/V5B_ep1995_s19952": {
+    "success": true,
+    "success_rel": true,
+    "success_ct": true,
+    "grasp": true,
+    "grasp_t": 128,
+    "release_t": 152,
+    "release_mode": "closed_cmd",
+    "n_control_rows": 271,
+    "obstacle_stop": true,
+    "pre_release_contact": false,
+    "post_release_contact": true,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "after_release",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 270,
+      "last_t": 270,
+      "n_rows": 1,
+      "substeps": 6,
+      "max_pen_mm": 0.3940656473762644,
+      "max_force_N": 153.0584503428604
+     }
+    ]
+   },
+   "V5B/H/V5B_ep1995_s19953": {
+    "success": false,
+    "success_rel": false,
+    "success_ct": false,
+    "grasp": false,
+    "grasp_t": null,
+    "release_t": null,
+    "release_mode": null,
+    "n_control_rows": 234,
+    "obstacle_stop": true,
+    "pre_release_contact": true,
+    "post_release_contact": false,
+    "contacts": [
+     {
+      "body": "ee_finger_l2",
+      "kind": "hand",
+      "phase": "before_grasp",
+      "geoms": [
+       "geom#1086"
+      ],
+      "first_t": 233,
+      "last_t": 233,
+      "n_rows": 1,
+      "substeps": 2,
+      "max_pen_mm": 0.049588377053310165,
+      "max_force_N": 127.14401336019499
+     }
+    ]
+   }
+  },
+  "crosscheck_vs_check_json": {
+   "n": 126,
+   "contact_pairs_mismatch": 0,
+   "robot_collision_flag_mismatch": 0,
+   "payload_collision_flag_mismatch": 0,
+   "qpos_mismatch_replays": 0,
+   "runs_where_check_contact_steps_eq_replay_contact_rows": 52,
+   "runs_where_any_contact_agrees": 126,
+   "n_control_rows_equals_check_n_control": 126,
+   "z4_release_t_and_success_rel_equal_to_prior_z4_json_runs": "all 112 runs of E0 V1 V3 V4 V5 V5S V5B V5D (V7g has no prior z4 json)"
+  },
+  "geom_id_to_body": {
+   "519": "link_right_arm_4",
+   "523": "link_right_arm_4",
+   "546": "link_right_arm_5",
+   "548": "link_right_arm_5",
+   "563": "link_right_arm_6",
+   "655": "FT_SENSOR_R",
+   "765": "ee_finger_r2",
+   "1052": "EE_BODY_L",
+   "1079": "ee_finger_l1",
+   "1086": "ee_finger_l2",
+   "1307": "apple (apple_geom)"
+  },
+  "geom_id_check": "ids identical in model_transport_pick_place_obstacles.xml and model_transport.xml (work-t43z3) and in the replay model of every snapshot (work-t43w, w3, b, z3, v7); obstacle geoms 1384 bar, 1386 leg_left, 1388 leg_right",
+  "margin_contact_substeps": 0
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43ct-table.png",
+   "kind": "table",
+   "sidecar": "benchmark/ag3s/docs/figures/t43/t43ct-table.json"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43ct-graph.png",
+   "kind": "graph",
+   "sidecar": "benchmark/ag3s/docs/figures/t43/t43ct-graph.json"
+  }
+ ],
+ "baseline_check": {
+  "matched": null,
+  "note": "aggregation only, no regression baseline run; old S and Z4 S_release equal the earlier Z4 / Z3V json for every shared run"
+ },
+ "verdict": "aggregation complete for H stage (126 runs, V7g H 14/14); replay qpos_mismatch 0 on 126/126; contact pairs and robot/payload flags equal check.json on 126/126",
+ "not_measured": [
+  "scene figure (rule A 1) not made",
+  "stage B (no obstacle) not scored",
+  "check.json contact_steps does not equal replay contact rows or sub-steps (counted differently)",
+  "V7g stage B runs were 5/5 done at the end; no hurdle there"
+ ]
+}

@@ -329,6 +329,30 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **GJK 기준 거리** | MuJoCo 와 독립으로 짠 convex 거리 계산 (`gjk.py`, verifier). box–box 에서 정확한 값과 최대 0.0015 mm 차이. T40 에서 `mj_geomDistance` · client 거리의 정답 대조에 쓴다. 겹치면 separation 0 을 돌려준다 |
 | **placement tier (T1–T4)** | F 의 허들 배치 후보를 고르는 등급. T1 = (c_low 이고 margin ≥ 10 mm) · T2 = (c_low 이고 margin ≥ 5 mm) · T3 = c_low · T4 = feasible. **margin** = reset robot · reset object · 들기 전 최소 · t0 최소 중 가장 작은 값. **c_low** = 막대를 20 mm 낮춰도 운반을 막는다 |
 
+### T43 허들 회피 보강 (2026-10-09 추가)
+
+| 용어 | 뜻 |
+|---|---|
+| **H / B (T43)** | H = P2 배치의 허들 있는 14 run (7 episode × 2 seed). B = 장애물 없는 5 run. T43 절의 모든 표가 이 둘로 나뉜다 |
+| **S / G / P (기존 규칙)** | S = 마지막 planning 행에서 사과 중심이 crate 안, G = 쥐기 성공, P = 놓는 시점까지 감. 실제로 손을 열었는지 (release) 와 허들 접촉을 **보지 않는다** |
+| **release 규칙 (Z4)** | S 에 "사과가 손에서 떨어졌고 (사과–손가락 중점 거리 · 손을 따라 움직이지 않음) 마지막에 crate 안이고 그 뒤 손과 분리를 유지" 를 더한 재채점. 열고 놓음 (`open_cmd`) 과 닫힌 채 빠짐 (`closed_cmd`) 도 구분한다 |
+| **접촉 포함 성공 (CT 규칙)** | release 규칙 성공 ∧ place 시점까지 로봇 · 사과의 허들 MuJoCo contact 0. 놓은 뒤 돌아오는 길의 접촉은 별도 열 (사용자 확정 2026-10-06 09:10) |
+| **held row** | TO 의 충돌 행 중 **손에 든 사과의 질의 구** 가 만드는 행 (로봇 행과 구분). 기본으로는 class `held` 라 장애물 margin 을 받지 않는다 |
+| **body cover** | attach 때 쥔 사과를 덮어 만드는 질의 구 집합. `sphere` 모드 (구 1–2 개) 와 `segments` 모드 (선분을 따라 늘어선 구) 가 있다 |
+| **slip detach (`--held-slip-detach`)** | 측정 개도가 attach 순간보다 0.05 이상 더 닫혔고 마지막 실행 gripper 명령과 0.05 안으로 붙은 요청이 2 번 연속이면 "사과가 닫힌 손에서 빠졌다" 고 보고 detach 하는 규칙. 실행 피드백만 쓴다 |
+| **held cover cap (`--held-cover-cap-mm`)** | attach 때 held 질의 구의 반지름을 관측 사과 반폭 + a, 중심을 사과 중심에서 a 안으로 묶고 중복 구를 지우는 규칙 (a = 10 mm) |
+| **`follow_to` (`--hold-follow-to`)** | HOLD 였을 chunk 가 collision 사유뿐 · 위반 행이 margin 안쪽뿐 · 현재 상태보다 악화 안 함을 만족하면 HOLD 대신 TO refined chunk 를 실행하는 verdict |
+| **finger cover (`--finger-cover`)** | 손가락 link 마다 따로, 손가락 collision mesh 를 담는 구 사슬 (손가락당 56 구, 반지름 2.5–8.4 mm). 두 손가락을 한 덩어리로 감싸지 않는다 |
+| **P / C / M (TK)** | 한 chunk 의 행 k 에서 P = TO refined 자세 (FK), C = client 가 실제로 내린 명령, M = MuJoCo 측정 자세. P − C 는 0 이었고 C − M 이 servo lag 이다 |
+| **servo lag** | position actuator 가 명령을 늦게 따라가는 것. 모델값 `(kv + b)/kp` = 2.39–2.75 행 (1 행 = 0.066 s), 실측 EE 지연 ≈ 1.9 행. E0 (TO 없음) 도 같다 |
+| **below-margin moment (HX)** | 허들 100 mm 안의 행에서 **실제(M) 자세의 기하 거리가 10 mm (obstacle margin) 미달**인 순간. 원인 (i) 계획은 clear 였고 servo lag 만 들어옴 · (ii) TO 가 위반을 보고도 못 풂 · (iii) ESDF 오차 · (iv) margin 0 행 · (v) 기타 |
+| **servo model (`--servo-model`)** | TO 안에서 명령 → 실제 자세를 servo 상수로 예측해 path 행으로 쓰는 것 (`trajopt/servo.py`). 오프라인 예측 오차 중앙 0.02–0.08 mm. V9 에서만 TO 에 넣었고, 이후 arm 은 평가 도구로만 쓴다 |
+| **receding horizon · lookahead (TA 의 A)** | 최적화 창을 실행 창 (8 step) 보다 긴 16 step 으로 잡고, 뒤 8 step (꼬리) 은 **장애물 행만 보는 내다보기용** 으로 쓰되 인증은 앞 8 step 만 한다. gate 20 mm = reference 꼬리가 장애물 20 mm 안일 때만 꼬리를 쓴다 |
+| **deflection rate (TA 의 B, `--w-deflection-rate`)** | 정책과의 편향 `D = Q − Q_ref` 의 step 간 변화 `‖ΔD‖²` (직전 청크의 마지막 실행 편향 포함) 에 거는 비용. 한번 비킨 편향이 천천히 변하게 한다 |
+| **servo accel (TA 의 C, `--servo-accel`)** | 명령 2 차 차분에 servo 상수로 유도한 상한 (0.0077–0.0104 rad/행², ε = 1°) 을 soft 로 걸고, 청크 경계 속도 행을 더하는 것. `relaxed` = 정책보다 더 날카롭게만 만들지 못하게 |
+| **HM (`--held-obstacle-margin`)** | held row 를 최근접 표면으로 분류해 (지지면 · 사과 자신의 잔상 제외) 장애물이면 obstacle margin 10 mm 를 주는 flag. 사용자 보류 (2026-10-07) |
+| **exact McNemar p** | 같은 (episode, seed) 로 짝지은 두 arm 에서 성공 · 실패가 갈린 쌍만 보는 exact 검정 |
+
 ---
 
 > **갈림길에서 안 고른 선택지** — 맨 아래 **"선택한 것과 안 고른 것 — 되돌아올 지점"** 절.
@@ -375,6 +399,13 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | **T40** 통합 main 의 closed-loop 시연: (1) 장애물 없음 (2) 사과 → crate 운반 경로 위 허들 (subtask gate off, 사용자 판정 2026-10-03) | 장애물이 없으면 T39 와 같은 결과인가. 운반 경로 위에 허들을 두면 E0 · E3b 는 어떻게 되나 | **G · D 측정 완료**(2026-10-04, 판정 대기) — **장애물 없음 B 12 / 12 success · 12 / 12 T39 와 비트 동일.** 허들 (C · D, 9 run 씩) **E3b 2 / 9 · E0 0 / 9** — E3b 성공 둘은 모두 놓은 뒤 obstacle stop. 5 run 은 client 거리가 접촉 없이 정확히 0.0 을 돌려줘 멈춘 것이라 판정할 수 없다 (열림, 재측정 대기 17). ep1828 은 배치 없음 (재측정 대기 19). 절 "T40" |
 | ↳ T40 A · E | A: bollard · divider 로 운반 회피를 시험할 수 있는가. E: 허들 `hurdle_0` 추가 · 제거 | A: bollard 는 사과에서 36.8–38.5 mm 라 접근부터 간섭 (6 episode 중 4 개에서 기록 궤적의 접근 구간 겹침), divider (80 mm) 는 사과 바닥 높이 (최소 180.4 mm) 보다 낮아 best 배치가 6 개 중 1 개만 둘 다 막음. 막힘 둘 (16D + 장애물 → block XML · `mj_geomDistance` box 오류 최대 284.18 mm). E: `hurdle_0` (capsule · cylinder), `bar_height` 0.20–0.32 m, `clear` 비트 동일 (구현자 · 26 tests) (2026-10-03) |
 | ↳ T40 F · OOM | F: 허들 배치. 첫 탐색 중 pod memory 한도 | 배치 5 episode (tier 1 이 4 개, 1995 만 tier 3 · margin 1.5 mm), **1828 은 (a)–(d) 를 만족하는 배치 0 으로 제외.** 2026-10-03 12:19 UTC OOM — worker 60 개로 80 GiB cgroup 이 차서 kill 17 건 (다른 세션의 서버 4 · client 3 포함), 새 자원 규칙 (≤ 4 worker · RSS ≤ 16 GB · 띄우기 전 ≤ 64 GiB) |
+| **T43** 허들 회피 보강 (V5 이후): 단계마다 생긴 문제와 해결, TO 경로 모양 A → A+B → A+B+C | 허들 14 + 장애물 없음 5 run 에서 어느 서버 구성이 접촉 없이 허들을 넘고 놓는가 | **V11ABC 까지 측정 완료**(2026-10-07 22:40, 기록 2026-10-09) — 기존 규칙 성공 H **V8 13 · V11A 10 · V11AB 12 · V11ABC 8**, 접촉 포함 **8 · 8 · 12 · 6**, obstacle stop run **10 · 6 · 1 · 2**. V11ABC 는 V11AB 보다 나쁘다 (접촉 포함 0 / 6, p 0.031). **TO 중앙 69.9 → 625.0 · 526.1 · 322.0 ms 로 실시간이 아니다.** 판정 대기: TO 시간 단축 (TP), C 가 낙하를 늘린 원인 (CX), 과일 4 종 · 회피 사용/미사용 영상. 절 "T43" |
+| ↳ T43 W · Y · Z | V5 재실행, place 진단, held 구 크기, release 규칙 | V5 허들 S 12 (V4 10, p 0.5), HOLD 163. place 실패처럼 보인 1925 s19253 은 큰 held 구 + destination margin HOLD 중 닫힌 손에서 사과가 빠진 것 (실제 crate 거리 +14 ~ +24 mm). release 규칙으로 S 가 바뀐 run 0 |
+| ↳ T43 Z3 · Z6 · V7g · GD · CT | slip detach, held 구 상한, subtask gate on, 접촉 포함 성공 | HOLD 217 (V5) → 58 (V5D) → 16 (V7g). gate on/off 성공 동일, PLACED 뒤 target switch 25 → 0. 접촉 포함으로 V5 12/14 → 9/14 |
+| ↳ T43 FC · V8 · DX | 손가락마다 따로 실제 굵기의 구 (손가락당 56 구) | 구 122 → 270, mesh 미덮음 0 / 20,774, HOLD 16 → 6. release 뒤 손가락–막대 접촉 5 → 9 run. 운반 중 사과 접촉 25 건은 TO 계획으로 25/25 통과 (실제 손은 계획에서 23–67 mm 벗어남) |
+| ↳ T43 TK · OC · HX | 계획 대 실제 손의 차이 | 계획 = 명령 (P − C = 0), 차이는 명령 → 측정 (servo lag ≈ 2 행, E0 도 같음). 가림 가설 지지 안 됨 (막대 14/14 보임). 허들 margin 미달 순간 234 중 232 가 servo lag. **TK 정정**: 왼손 손가락 MJCF/URDF 이름 교환 — "ESDF 가 +57/67 mm 멀게 본다" 철회 |
+| ↳ T43 V9 · SV · V10 · XM | servo 모델 TO 투입 / 쥔 사과 margin (HM) / TO 개입 정량화 | V9 파지 H 14 → 5 (servo-after-placed 는 사용자가 철회), V10 (HM) 은 성공 13 → 10 · HOLD 6 → 52 로 보류. XM: V5–V8 TO 는 margin 위 1.5–4.7 mm 만 비킴, 명령 18–21 mm 인데 실제 2–4 mm |
+| ↳ T43 TA · V11A / AB / ABC | 긴 계획 창(A) · 편향 변화율(B) · 가속도(C) | 접촉 포함 성공 8 → 8 → **12** → 6, 운반 중 사과 접촉 5 → 2 → 0 → 1, release 뒤 손가락 접촉 9 → 4 → 0 → 0, 허들 위 실제 간격 중앙 3.8 → 6.7 → 13.6 → 8.1 mm |
 
 ### 이 국면에서 쓰는 자산
 
@@ -453,6 +484,10 @@ cuRobo 이관 과정, I1~I4. 아래 **"물려받은 결정"** 표가 그 자리�
 | 17 | (T40 이 추가) **client 거리의 false-zero 정지** — `pair_distance` 가 접촉 없이 정확히 0.0 을 돌려줘 obstacle stop (정지 거리 0.0) 이 걸린다 | 정확한 0.0 · 접촉 없음 정지 **5 run** (C E3b ep1995 t = 103 · D E3b ep1967 t = 137 · D E3b ep1982 t = 23 · D E3b ep1995 t = 71 · D E0 ep1967 t = 90). kinematic probe (마지막 행 + 섭동 400 개) 가 3 run 에서 0.0 을 재현: 그 pair 는 허들 발 ↔ 팔 링크 · 손목 · gripper, GJK separation 0.208–0.238 m. ep1967 의 2 run 은 0 / 400 으로 재현 못 함 | **측정 안 됨 · 결함 열림.** 물리 sub-step 에서의 재현 · 원인 · 고친 뒤 재실행이 없다. **이 5 run 은 판정할 수 없다** (E3b 가 못 피한 것인지 거리 검사의 거짓 0 인지 가를 수 없음). E 의 survey (cylinder–mesh 102,319 쌍 < 0.25 m 에서 오류 0, 구현자) 와 맞지 않는 것도 풀지 않았다 |
 | 18 | (T40 이 추가) **접근 단계 finger contact 의 원인** — 허들 run 에서 grasp 전에 gripper · finger 가 막대와 닿아 끝난 run | 접촉 정지 7 run (C E0 ep1807 · ep1995, C E3b ep1807 · ep1967 · ep1982, D E0 ep1982 · ep1995). E0 의 접촉은 HOLD 0 chunk 에서도 난다. E3b 3 run 은 접촉 전에 HOLD 가 있었다 (ep1807 HOLD 5 · 연속 3 뒤 chunk 에서 접촉, ep1967 HOLD t = 192 뒤 t = 203, ep1982 HOLD t = 176 뒤 t = 178) | **원인 미확정.** 후보만 적는다 (어느 것도 확인하지 않았다): (i) 가는 막대 (반지름 12 mm) 대 거친 20 mm 계층, (ii) margin 0 (어느 parameter 의 margin 인지는 `verify.json` 에 없다), (iii) HOLD 직후의 chunk. 이 중 무엇인지 가르는 측정이 없다 |
 | 19 | (T40 이 추가) **ep1828 의 허들 run** | 조건 (a)–(d) 를 만족하는 배치가 base 18,480 · `u` 확장 24,640 후보에서 모두 0. B (장애물 없음) 만 있다 | **측정 안 됨** |
+| 20 | (T43 이 추가) **V11ABC 에서 C (가속도 · 경계 속도) 가 낙하를 늘린 원인** | 낙하 5 run (B 1967 s19672 · H 1807 s18071 · s18073 · 1967 s19672 · 1995 s19953) · 파지 못 함 2 run (1982 s19822 H · B) · held HOLD 17 (모두 운반 중) · 방향 반전 0.194 → 0.234. B 1967 s19672 의 낙하는 `held_slip` detach (t 200) | **원인 미확정.** 첫 갈림 chunk · C 행 active 여부 · 손가락–사과 상대 운동은 안 쟀다. CX 진단 진행 중 (2026-10-09 의뢰) |
+| 21 | (T43 이 추가) **TO 연산 시간이 실시간이 아니다 — 증가분의 원인** | TO 중앙 V8 69.9 · V11A 625.0 · V11AB 526.1 · V11ABC 322.0 ms, round trip 947–1728 ms, 모든 chunk 가 533.3 ms 초과. pod load 1 은 V8 14.6 대 V11 60.0 / 91.1 / 90.4. V11 세 arm 안 load–TO Spearman ρ −0.047, V8 포함 ρ 0.548 | **같은 부하의 통제 측정 없음.** 단계별 (ESDF 질의 · FK · linearize · QP · check) 분해와 단축안은 TP 에서 (2026-10-09 의뢰) |
+| 22 | (T43 이 추가) **과일 4 종 (사과 · 오렌지 · 배 · 바나나) 과 충돌 회피 사용/미사용 비교 영상** | 측정 · 영상 없음. 바나나는 task 문서에 "T42 에서 장애물 없이도 성공 episode 없음" 으로 적혀 있다 | **측정 안 됨.** 사용자 판정 대기 (바나나), TP 뒤 진행 |
+| 23 | (T43 이 추가) **servo 모델을 TO 에 쓸 때의 받침면 path 행** | V9 에서 실패 13 쌍의 closing 직전 binding 71 / 78 chunk 가 path 행 (`path:support:table` 40). V8 은 waypoint 78 / 78. sweep 만 있는 arm 의 closed-loop 기록이 없어 servo 와 sweep 중 원인을 가르지 못했다 | **고치지 않음 · 가르지 못함.** servo-after-placed 는 사용자가 철회 |
 
 ~~재측정이 끝나면 이 표의 `상태` 를 값과 함께 갱신하고, 값이 달라진 것은 **왜 달라졌는지**를
 같은 자리에 적는다. 값이 같으면 그것도 적는다 — "모델을 바꿔도 안 바뀌었다" 는 결과다.~~
@@ -5433,3 +5468,880 @@ reset 검사의 기준은 clearance > 0 이므로 1995 는 1.9 mm (robot) 로 �
 - figure: `figures/t40/` — A: `t40a-layout` · `t40a-distance` · `t40a-table` · `t40a-scene-{1807_18071, 1968_19681, 1982_19822, 1828_18281, 1995_19952, 1967_19672}`. F · G · D: `t40fg-placement` · `t40fg-table` · `t40fg-distance` · `t40fg-distance-d` · `t40fg-scene-{1807, 1968, 1982, 1995, 1967}` · `t40fg-scene-{1807, 1982, 1995, 1967}-d`. 각각 `.json` sidecar 가 있다.
 
 **다음 판정은 사용자에게 있다:** (1) false-zero distance 를 고칠 것인가, 그 뒤 5 run 을 다시 돌릴 것인가 (재측정 대기 17). (2) 접근 단계 finger contact 를 어느 후보부터 가를 것인가 (재측정 대기 18). (3) `--obstacle-stop-distance` 를 0.0 에서 바꿀 것인가, `--links` 범위를 넓힐 것인가. (4) ep1828 에 허들을 두는 다른 방법을 쓸 것인가 (재측정 대기 19). (5) main (gate 기본 on) 으로 같은 시연을 다시 할 것인가 (`--no-subtask-gate` 를 명시하지 않으면 SUBTASK 이후의 동작이다).
+
+
+---
+
+## T43 — 허들 회피 보강, V5 이후: 단계마다 생긴 문제와 해결, 그리고 TO 경로 모양 A → A+B → A+B+C (2026-10-06 ~ 2026-10-09)
+
+**이 절이 답하는 물음.** 사과를 crate 로 나르는 경로 위에 가로 막대 (hurdle) 를 놓은 장면에서, AG3S + cuRobo ESDF + TO (trajectory optimization) 가 얹힌 서버를 **한 단계씩 고쳐 가며** 무엇이 해결되고 그 뒤에 무엇이 새로 드러났는가. 시작점은 V5 (아래 §2) 이고, 끝은 TO 의 **경로 모양** 을 다듬는 A · A+B · A+B+C 와 그것을 V8 과 나란히 놓은 네 arm 비교 (§13) 이다.
+
+**읽는 법과 출처 규약.**
+
+- 수치는 `handoff/T43*.verify.json` 의 `numbers` 에서만 왔다 (W · Y · Z · Z3V · CT · V7g · GD · V8 · DX · TK · OC · HX · V9 · SV · V10 · XM · V11A · V11AB · V11ABC). 구현 단계 (Z3 · Z6 · FC · FR · HM · TA) 의 수치는 `T43*.impl.md` 가 보고한 **오프라인 측정** 이고, 표에 **(구현자)** 라고 밝혔다. 어느 쪽에도 없는 수치는 쓰지 않았다.
+- 설계 · 사용자 판정은 `handoff/T43.task.md` 에서 왔다. 판정 시각은 그 문서의 절 제목에 적힌 것을 그대로 옮겼다 (2026-10-07 판정은 시각이 없다).
+- 이 절은 **무엇이 어떻게 측정됐는지만** 적는다. 원인을 단정하지 않는다. 원인이 확정되지 않은 것은 §14 와 맨 위 "재측정 대기" 20–23 에 둔다.
+- **범위.** T43 은 2026-10-05 에 시작했다 (허들 재배치 P · P2, 남은 틈 3 수정 Q · R · R2, 진단 S · S2 · U, 식별 수정 T · T2, 첫 비교 V). 그 부분은 이 로그에 아직 없고 `handoff/T43.task.md` 에 있다. **이 절은 W (V5 재실행) 부터 시작한다.** W 안에서 쓰는 E0 · V1 · V3 · V4 수치는 `T43W.verify.json` 에서 왔다.
+- 시각은 UTC 이다. 구현 commit 시각은 git, 측정 시각은 `verify.json` 의 마지막 갱신 시각이다 (`TK` 는 2026-10-06 13:40 에 처음 쓰고 2026-10-07 09:11 에 정정했다).
+- 그림은 `figures/t43/` 에 있고 각 그림 옆에 `.json` sidecar 가 있다. 그림은 verifier 가 만들었고 scribe 는 링크만 한다.
+
+### 0. 이 절에서 쓰는 말
+
+| 말 | 뜻 |
+|---|---|
+| **hurdle (허들 · 막대)** | 사과 운반 경로를 가로지르는 장애물. T40 의 `hurdle_0` 를 crate 손잡이 안쪽에 맞춘 **P2 배치** (`overbar_0`) 를 쓴다. 7 episode × 2 seed = 14 run 이 **H** 단계이다 |
+| **H / B** | H = 허들 있는 14 run. **B** = 장애물 없는 5 run (같은 5 episode 의 일부). 이 절의 모든 "H 14" "B 5" 가 이것이다 |
+| **S / G / P (기존 규칙)** | **S** success = 사과가 마지막 planning 행에서 crate 안에 있다. **G** grasp = 쥐기에 성공했다. **P** place = 놓는 시점까지 갔다. 이 규칙은 **실제로 손을 열어 놓았는지 (release) 와 허들에 닿았는지를 보지 않는다** — 그래서 아래 두 규칙을 붙였다 |
+| **release 규칙 (Z4)** | S 에 "사과가 손에서 떨어졌고 (사과–손가락 중점 거리 · 손을 따라 움직이지 않음), 마지막에 crate 안이고, 그 뒤 손과 분리를 유지했다" 를 더한 재채점 (§3). 열고 놓았는지 (`open_cmd`) 닫힌 채 빠졌는지 (`closed_cmd`) 도 구분한다 |
+| **접촉 포함 성공 (CT 규칙)** | release 규칙 성공 ∧ **place 시점까지 로봇 · 사과가 허들과 접촉한 MuJoCo contact 가 0**. 사용자가 2026-10-06 09:10 에 확정했다 (§6). 놓은 뒤 돌아오는 길의 접촉은 별도 열이다 |
+| **obstacle stop** | client 가 로봇 (또는 쥔 사과) 과 장애물의 접촉 · 거리를 매 control step 재서 episode 를 끝내는 것 (T40 용어). 이 절에서는 대부분 접촉 직후의 종료이다 |
+| **HOLD** | 판정이 chunk 를 막아 client 가 직전 명령을 유지하는 것 (용어 절). **trailing HOLD** = run 의 끝까지 이어진 HOLD |
+| **held row** | TO 의 충돌 행 중 **손에 든 사과의 질의 구** 가 만드는 행. 로봇 행 (손가락 · 손바닥 · 팔) 과 구분한다 |
+| **body cover** | attach 때 쥔 사과를 덮어 만드는 질의 구 (`sphere` 는 구 1–2 개, `segments` 는 선분을 따라 늘어선 구) |
+| **finger cover (`--finger-cover`)** | 손가락 link 마다 따로, 손가락 collision mesh 를 덮는 구 사슬 (§7) |
+| **servo lag** | 명령 (`d.ctrl`) 에 비해 실제 관절이 늦게 따라가는 것. MuJoCo position actuator 의 정상 지연이다. 이 절에서 측정한 값은 약 2 행 (§8) |
+| **receding horizon · lookahead (A)** | 최적화 창을 실행 창 (8 step) 보다 길게 (16 step) 잡고, 뒤쪽 꼬리는 **장애물만 보는 내다보기용** 으로 쓰되 인증은 앞 8 step 만 하는 것 (§12) |
+| **deflection rate (B)** | 정책과의 편향 `D = Q − Q_ref` 의 step 간 변화량 `‖ΔD‖²` 에 거는 비용. 한번 비킨 편향이 천천히 변하게 한다 (§12) |
+| **servo accel (C)** | 명령의 2 차 차분 (가속도) 에 servo 상수로 유도한 상한을 soft 로 거는 것, 그리고 청크 경계의 속도 행 (§12) |
+| **McNemar exact p** | 같은 (episode, seed) 로 짝지은 두 arm 의 성공 · 실패가 갈린 쌍만 보는 exact 검정 |
+
+### 1. arm 기호
+
+각 arm 은 앞 arm 위에 flag 를 더한 것이다. 같은 (episode, seed) 로 짝지어 비교한다. `a` = `--obstacle-margin 0.010` (장애물에만 10 mm margin), `c` = `--safe-hold-mode measured`.
+
+| arm | 구성 | 어느 STEP |
+|---|---|---|
+| **E0** | VLA 단독 (AG3S · TO 없음, `--no-safe`) | W |
+| **V1** | a + c | W |
+| **V4** | a + c + **R2** (쥔 과일 body cover + J1 조건부) | W |
+| **V3** | V4 + 경량 **Q** (servo 추종 모델 + 경유점 사이 연속 충돌 검사 sweep) | W |
+| **V5** | V4 + `--closing-keep-geometry` · `--latched-identity-hold` · `--supported-max-bottom-mm 60` (closing 때 carve-out 기하 유지 · 정체 lock · 받침 높이 조건) | W |
+| **V5S / V5B** | V5 를 같은 코드에서 정책 RGB 에 장애물이 **보이게 (V5S)** / **숨겨서 (V5B, blind)** 돌린 짝 | W |
+| **V5D** | V5 + `--held-slip-detach` (gate off) | Z3V |
+| **V7 / V7g** | V5 flags + `--held-slip-detach` + `--held-cover-cap-mm 10` + `--hold-follow-to 3`. **V7g = subtask gate on**, V7 = `--no-subtask-gate` (gate off) | V7g · GD |
+| **V8** | V7g + `--finger-cover both` | V8 |
+| **V9** | V8 + `--servo-model` (sweep 없이) | V9 |
+| **V10** | V8 + `--held-obstacle-margin` (HM) | V10 |
+| **V11A** | V8 + `--plan-horizon 16 --lookahead obstacles --lookahead-gate-mm 20 --qp-eps 1e-4` | V11A |
+| **V11AB** | V11A + `--w-deflection-rate 20` | V11AB |
+| **V11ABC** | V11AB + `--servo-accel relaxed --servo-accel-tolerance-deg 1 --servo-accel-weight 0.01` | V11ABC |
+
+### 타임라인
+
+| 시각 (UTC) | 무엇 | 출처 |
+|---|---|---|
+| 2026-10-06 01:12 | `AG3SConfig` 왕복 버그 수정 commit `72ed927` (§2 의 V5 · V6 무효 run 의 원인) | git |
+| 2026-10-06 03:06 | **W** 마무리 — V5 재실행 · blind 라운드 · 집계 | `T43W.verify.json` |
+| 2026-10-06 03:20 | 사용자 판정: blind 종료, place 진단 (Y1 · Y2) | `T43.task.md` |
+| 2026-10-06 04:30 | 사용자 판정: Z 묶음 (Z1 · Z4 · Z5 · Z3) | `T43.task.md` |
+| 2026-10-06 05:02 | **Y** (place 진단) | `T43Y.verify.json` |
+| 2026-10-06 06:39 | **Z3** 구현 commit (benchmark `cf6b410`, 루트 `fb841c0`) | git |
+| 2026-10-06 06:47 | **Z** (Z1 · Z4 · Z5) | `T43Z.verify.json` |
+| 2026-10-06 07:10 | 사용자 판정: 구 크기 = (a), HOLD 원칙 | `T43.task.md` |
+| 2026-10-06 07:55 | **Z6** 구현 commit (`f2f335b`, 루트 `0811598`) | git |
+| 2026-10-06 08:10 | 사용자 판정: gate 켜기, follow-TO 켜기 | `T43.task.md` |
+| 2026-10-06 08:17 | **Z3V** (V5D 19 run) | `T43Z3V.verify.json` |
+| 2026-10-06 09:01 · 09:07 | **CT** (접촉 포함 재채점) · **V7g** | `T43CT` · `T43V7g.verify.json` |
+| 2026-10-06 09:10 · 10:00 | 사용자 판정: 접촉을 성공 판정에 포함 · 손가락 구 = B | `T43.task.md` |
+| 2026-10-06 09:47 | **GD** (gate on/off A/B) | `T43GD.verify.json` |
+| 2026-10-06 10:17 | **FC** 구현 commit (`786cf1b`, 루트 `53a9c8f`) | git |
+| 2026-10-06 10:46 | **DX** (운반 중 사과–막대 · ESDF 에 막대 없음 진단) | `T43DX.verify.json` |
+| 2026-10-06 11:30 | **V8** (finger cover) | `T43V8.verify.json` |
+| 2026-10-06 11:52 | **FR** 구현 commit (`a297155`, 루트 `c908895`) | git |
+| 2026-10-06 12:40 | 사용자 판정: TK 진단 (c) 진행, gate on 유지 | `T43.task.md` |
+| 2026-10-06 13:40 | **TK** (처음 쓴 시각 — 이 판은 `_superseded` 로 남음) | `T43TK.verify.json` |
+| 2026-10-07 08:11 · 08:24 | **OC** · **HX** | `T43OC` · `T43HX.verify.json` |
+| 2026-10-07 09:11 | **TK 정정** (왼손 손가락 이름 대응) | `T43TK.verify.json` |
+| 2026-10-07 10:09 | **V9** (servo model) | `T43V9.verify.json` |
+| 2026-10-07 10:32 | **HM** 구현 commit (`308ddfd`, 루트 `2add93b`) | git |
+| 2026-10-07 10:46 | **SV** (servo 파지 붕괴 진단) | `T43SV.verify.json` |
+| 2026-10-07 11:55 · 12:32 | **XM** · **V10** | `T43XM` · `T43V10.verify.json` |
+| 2026-10-07 17:06 | **TA** 구현 commit (`3ca1b21`, 루트 `331273f`) | git |
+| 2026-10-07 18:31 · 21:10 · 22:40 | **V11A** · **V11AB** · **V11ABC** | `T43V11A` · `T43V11AB` · `T43V11ABC.verify.json` |
+| 2026-10-09 | 사용자 판정: V11AB 채택 전 시험 (§14) | `T43.task.md` |
+
+### 2. W — V5 를 다시 돌리고, 정책에 장애물이 보이는 영향을 가른다 (2026-10-06 ~ 03:06)
+
+**바꾼 것.** V5 는 V4 위에 세 flag (closing 동안 target carve-out 기하 유지 · 정체 lock · 받침 높이 조건) 를 얹은 arm 이다. 처음 돌린 V5 · V6 16 run 은 **무효**였다. T2 flag 를 켜면 `AG3SConfig.with_overrides` 가 `to_dict()` 를 거치면서 최상위 `collision_backend` 를 잃어 esdf 가 primitive 로 바뀌었고, 모든 chunk 가 `uncertified: no scene` HOLD 였다 (V5 961/961, V6 361/361 verdict 줄). verifier 가 16 run (V5 12 · V6 4) 을 `runs/{V5,V6}_invalid_collision_backend/` 로 격리했고, 근본 수정은 benchmark `72ed927` (2026-10-06 01:12) — `to_dict` · `from_dict` 가 최상위 필드를 클래스 정의에서 읽고, 서버 시작 때 설정 검사를 한다. 재실행의 V5 chunk 는 전부 `esdf_stats` 를 가진다 (V5 1234/1234, 서버 로그의 `no scene` 줄 0). V6 은 다시 돌리지 않았다.
+
+사용자 판정 (2026-10-06): "축소하세요" — blind 라운드는 **V5B (장애물을 정책 RGB 에서만 숨김) 대 V5S (같은 코드, 보임)** 14 짝만 하고, 이유는 "blind 모드는 현실과 다르고 attention 도 장애물을 못 봐 프로젝트 핵심 (attention 기반 target/obstacle 구분) 을 비켜 간다" 였다.
+
+**결과.** P2 막대 14 run (H) 과 장애물 없음 5 run (B). 짝은 같은 (episode, seed).
+
+| arm | H: S / G / P | H: obstacle stop run | B: S / G / P | TO 중앙 / p90 (ms, H) | HOLD chunk (H · B) |
+|---|---|---|---|---|---|
+| E0 | 0 / 11 / 0 | 13 | – | – | 0 |
+| V1 | 6 / 12 / 6 | 11 | – | 63.4 / 224.9 | 11 |
+| V3 | 3 / 4 / 3 | 2 | 1 / 2 / 1 | 135.5 / 267.2 | 4 · 5 |
+| V4 | 10 / 12 / 10 | 9 | 4 / 4 / 4 | 68.7 / 162.0 | 56 · 4 |
+| **V5** | **12 / 12 / 12** | 6 | 4 / 4 / 4 | 61.5 / 138.9 | 163 · 54 |
+| V5S (보임) | 10 / 11 / 10 | 7 | – | – | 122 |
+| V5B (숨김) | 12 / 12 / 12 | 8 | – | – | 115 |
+
+출처: `T43W.verify.json` `numbers.summary_per_arm` · `numbers.v5_rerun_and_blind` · `numbers_blind.summary_per_arm`.
+
+| 짝 (14) | 성공이 갈린 쌍 (앞 arm 만 / 뒤 arm 만) | exact p |
+|---|---|---|
+| V1 대 E0 | V1 만 6 / E0 만 0 | 0.031 |
+| V4 대 V1 | V4 만 4 / V1 만 0 | 0.125 |
+| V3 대 V4 | V3 만 1 / V4 만 8 (grasp: V4 만 8 / 0, p 0.0078) | 0.039 |
+| V5 대 V4 | V5 만 2 / V4 만 0 | 0.5 |
+| V5 대 V1 | V5 만 6 / V1 만 0 | 0.031 |
+| V5B 대 V5S | V5B 만 3 / V5S 만 1 | 0.625 |
+
+**해결된 것.**
+
+- **파지 직전 closing 청크의 편향이 줄었다.** closing chunk 의 carve-out 공 반지름 중앙값 V4 50.0 → V5 55.0 mm, 손가락이 사과에서 밀려난 양 (outward) 의 p90 16.2 → 7.6 mm, 최대 144.8 → 30.9 mm (closing chunk 54 → 45). `figures/t43/t43w-v5-focus.png`.
+- 허들 14 run 의 성공이 V4 10 → V5 12. 파지는 둘 다 12 (같은 두 run, ep1967 두 seed, 이 둘은 closing 에서 끝났다).
+- 정책 RGB 에 장애물이 보이는 영향은 V5B 12 대 V5S 10 (p 0.625) 로 **유의하지 않았고** 사용자가 blind 를 닫았다. V5S 와 V5 의 차이는 코드 snapshot 이 다른 것으로만 기록한다 (V5 는 `/mnt/dev/work-t43w3`, V5S 는 `/mnt/dev/work-t43b`).
+- V3 (Q: servo + sweep) 는 파지를 해쳤다 (H 12 → 4). lead 판단은 "Q 는 기본 제외" (`T43.task.md`).
+
+**새로 드러난 문제.**
+
+- **HOLD 가 늘었다.** V4 56 → V5 163 chunk. 그중 ep1807 두 seed 의 trailing HOLD (run 끝까지 이어진 HOLD) 가 50 · 47 chunk 이고 place 이후이다. 쥔 사과 행 (held row) 이 worst row 인 위반 chunk 가 V4 33 (2 run) → V5 148 (4 run). HOLD 사유 kind 별로는 `collision` 162 · `unverified` 9 (한 chunk 에 사유가 여럿일 수 있다).
+- **S 는 release 를 보지 않는다.** 성공은 마지막 planning 행에서 사과 중심이 crate 안이면 true 라서, HOLD 가 많은 run 도 성공으로 센다 (예: 1925 s19253). 이것이 §3 (Y) 의 출발이다.
+- V4 에서 보이던 1834 s18341 의 held 행 위반 (30 chunk, 최소 −30.8 mm) 은 V5 에서 재현되지 않았다. 대신 1834 s18343 에 3 chunk (최소 −20.9 mm) 가 있다.
+
+![T43 W 장면](figures/t43/t43w-scene.png)
+
+그림: [`t43w-scene`](figures/t43/t43w-scene.png) (P2 배치의 장면) · [`t43w-distance`](figures/t43/t43w-distance.png) · [`t43w-chunk-time`](figures/t43/t43w-chunk-time.png) · [`t43w-table`](figures/t43/t43w-table.png) · [`t43w-v5-arms`](figures/t43/t43w-v5-arms.png) (arm 별 막대) · [`t43w-v5b-v5s-pairs`](figures/t43/t43w-v5b-v5s-pairs.png) · [`t43w-v5-fail-scene`](figures/t43/t43w-v5-fail-scene.png) (V5 실패 run 의 실패 순간) · [`t43w-v5-focus`](figures/t43/t43w-v5-focus.png).
+
+**측정 못 한 것.** server TO · round trip 시간은 공유 pod 의 부하와 섞여 있다 (부하 샘플 530 개, load 1 평균 17.3 · 최대 72.6). 청크별 clearance · SQP 반복 수는 기준선이 아니다 (wall-clock 예산). V6 은 유효한 closed loop run 이 없다.
+
+---
+
+### 3. Y · Z — place 진단, held 구 크기, release 규칙, E0 의 release (2026-10-06 03:20 ~ 06:47)
+
+사용자 관찰 (2026-10-06 03:20): "`V5/H/V5_ep1925_s19253` — place 직전 바구니와 사과의 충돌로 놓지 못하는 것 같다" 와 "V4 영상은 place 때 사과를 미끄러지듯 놓는다. V5 에서 무엇이 바뀌어 개선됐나?". 둘 다 verifier 가 새 run 없이 기록 재생 (CPU) 으로 답했다 (물리 replay 의 qpos 불일치 0 행 · 38/38 run).
+
+#### 3-1. Y1 — 1925 s19253 에서 무슨 일이 있었나
+
+| | V4 (같은 ep · seed) | V5 |
+|---|---|---|
+| 쥔 사과 body cover 질의 구 반지름 | 39.19 · 39.19 · 8.89 mm | **58.33 · 55.80 mm** |
+| HOLD chunk | 0 | **46** (전부 worst row = held 구 0 대 destination crate) |
+| place_t (기존 규칙) | 216 | 352 |
+| 손 열기 명령 (정책 / 실제 적용) | 216 / 221 | 248 / **582** |
+| release (사과가 손에서 떨어짐) | t 222, **`open_cmd`** (열고 놓음) | t 369, **`closed_cmd`** (닫힌 채 빠짐) |
+| server 의 detach | t 232 | **없음 — 끝까지 attached** |
+
+V5 의 HOLD 46 chunk 는 모두 구 0 (r 58.33 mm) 이 destination crate 에 걸린 것이다: TO clearance −11.4 ~ −2.3 mm, `ESDF − r` +8.6 ~ +17.7 mm, 적용된 margin 20 mm (destination 규칙), **실제 crate 까지 거리 − r 은 +14.3 ~ +24.3 mm** (모든 구의 최소 +6.7 mm), 손–crate MuJoCo 접촉 0 행. HOLD 동안 사과는 손 안에서 미끄러졌다 (손–사과 상대 변위 8.8 → 19.7 mm, crate 프레임 사과 높이 88.0 → 72.9 mm, t 248 → 367) 가 t 369 에 높이 79.7 mm 에서 **닫힌 손에서 빠졌다.**
+
+같은 모양의 V5 run (body cover 가 `segments` 모드, 구 반지름 52–59 mm): 1807 s18071 (trailing HOLD 50) · 1807 s18073 (47) · B 1807 s18071 (49). 대조로 V4 1834 s18341 도 trailing HOLD 가 46 chunk 이지만 구는 `sphere` 모드 (37.4 mm) 이고 held 행 위반 (최소 −30.8 mm) 이 binding 이다 — 같은 기전이라고 단정하지 않는다.
+
+#### 3-2. Y2 — V4 와 V5 의 place 지표 차이
+
+| (둘 다 성공한 14 짝) | V4 | V5 | 짝 차이 중앙 (V5 − V4) | p |
+|---|---|---|---|---|
+| release 때 사과–바닥 간격 중앙 (mm) | 110.8 | 76.4 | +1.9 | 0.79 (부호 검정) |
+| release 때 수직 속도 중앙 (mm/s) | −480.2 | −530.9 | +2.1 | 1.0 |
+| release 방식 | open 6 · closed 8 | open 6 · closed 8 | — | — |
+
+V4 → V5 에서 place 지표의 차이는 **측정으로 구분되지 않았다.** 두 arm 의 실행이 갈라지는 첫 chunk 는 갈라진 18 쌍 모두에서 V5 의 `closing_kept_geometry` 첫 chunk (또는 그 +8 step) 이고, 그중 13 쌍은 그 chunk 에서 정책 reference 가 같다. V5 flag 3 개가 place 지표를 바꾼다는 증거는 이 기록에 없다.
+
+#### 3-3. Z — 사용자 판정과 세 측정 (2026-10-06 04:30)
+
+사용자 판정: (1) held 구 크기 그림을 보고 판단한다, (2) HOLD 를 벗어나는 방법을 제안한다, (3) **"손에서 떨어지면 attach 를 해제하고 그때부터 사과는 로봇과 연결되지 않는다"** (확정), (4) 성공 판정에 release 를 넣어 재채점한다, (5) E0 가 닫힌 채 놓는 비율을 잰다.
+
+**Z1 — attach 시점의 held 구 크기** (`numbers.Z1`). crate 안쪽 반폭 x 82 mm · y 142 mm, destination margin 20 mm, 사과 mesh 반폭 x 33.4 · y 33.6 · z 30.3 mm (중앙).
+
+| arm | attach run | body cover `segments` run | `segments` 의 최대 반지름 (중앙, mm) | `sphere` 의 최대 반지름 (중앙) | r + margin 이 crate x 반폭에 들어가는 run |
+|---|---|---|---|---|---|
+| V4 | 17 | 1 | 41.6 | 37.8 | **17 / 17** |
+| V5 | 17 | **4** | **58.6** (58.3–59.1) | 38.4 | **13 / 17** |
+| V5S | 13 | 2 | 58.4 | 38.4 | 11 / 13 |
+| V5B | 14 | 1 | 56.7 | 38.4 | 13 / 14 |
+
+56.7–59.1 mm 의 큰 구는 7 run (V5 4 · V5S 2 · V5B 1) 이고 전부 `segments` 모드이다 (V4 의 `segments` 1 run 은 41.6 mm). 이 큰 구는 `r + 20 mm` 가 82 mm 반폭에 들어가지 않는다. 그림: [`t43z-held-sphere-closeup`](figures/t43/t43z-held-sphere-closeup.png) · [`-scene`](figures/t43/t43z-held-sphere-scene.png) · [`-radii`](figures/t43/t43z-held-sphere-radii.png).
+
+**Z4 — release 규칙으로 재채점** (`numbers.Z4`, H 14 run). 새 run 없이 75 run 을 새로 재생했고 (qpos 불일치 0 행), 기존 38 run 은 Y 의 값을 재사용했다.
+
+| arm | S (기존) | release 한 run | S (release 규칙) | 열고 놓음 (`open_cmd`) | 닫힌 채 빠짐 (`closed_cmd`) |
+|---|---|---|---|---|---|
+| E0 | 0 | 0 | 0 | – | – |
+| V1 | 6 | 7 | 6 | 1 | 6 |
+| V3 | 3 | 4 | 3 | 1 | 3 |
+| V4 | 10 | 12 | 10 | 3 | 9 |
+| V5 | 12 | 12 | 12 | 4 | 8 |
+| V5S | 10 | 11 | 10 | 4 | 7 |
+| V5B | 12 | 12 | 12 | 4 | 8 |
+
+**S 가 바뀐 run 은 0** (`n_flips`). 짝 p 값도 W 와 같다 (V5 대 V4 p 0.5, V5 대 V1 p 0.031). 즉 release 규칙은 **성공 · 실패를 바꾸지 않지만 "어떻게 놓았나" 를 드러낸다**: 닫힌 채 빠진 run 이 V4 H 9 / 12 · V5 H 8 / 12 이다. 그림: [`t43z-release-rescore`](figures/t43/t43z-release-rescore.png).
+
+**Z5 — E0 는 닫힌 채 놓나** (GPU, E0 를 **장애물 없이** 같은 7 episode × 2 seed 14 run, 재시도 0, rc 0).
+
+| 대상 | run | S / G / P | release | 닫힌 채 | 열고 | release 때 사과–바닥 간격 중앙 (mm) | 열릴 때 TCP 속도 중앙 (mm/s) |
+|---|---|---|---|---|---|---|---|
+| **E0 (Z5, 장애물 없음)** | 14 | 13 / 13 / 13 | 13 | **1** | 12 | 63.4 | 5.4 |
+| E0 (T39, 장애물 없음, 같은 checkpoint) | 48 | 30 / 34 / 30 | 34 | 9 | 25 | 66.6 | 8.9 |
+| V4 H (허들) | 14 | 10 / 12 / 10 | 12 | 9 | 3 | 189.2 | 35.3 |
+| V5 H (허들) | 14 | 12 / 12 / 12 | 12 | 8 | 4 | 157.1 | 37.7 |
+| V4 B (장애물 없음) | 5 | 4 / 4 / 4 | 4 | 1 | 3 | 64.0 | 34.9 |
+| V5 B (장애물 없음) | 5 | 4 / 4 / 4 | 4 | 2 | 2 | 66.7 | 43.3 |
+
+정책 단독은 **장애물이 없으면** 대부분 열고 놓는다 (닫힌 채 1/13 · 9/34). 허들이 있는 AG3S/TO arm 은 닫힌 채 빠지는 비율이 높다 (8–9 / 12). 그 원인을 이 기록만으로 단정하지 않는다. 그림: [`t43z5-release-graph`](figures/t43/t43z5-release-graph.png) · [`t43z5-release-table`](figures/t43/t43z5-release-table.png). Y 그림: [`t43y-y1-scene`](figures/t43/t43y-y1-scene.png) · [`-y1-timeline`](figures/t43/t43y-y1-timeline.png) · [`-y1-table`](figures/t43/t43y-y1-table.png) · [`-y2-scene`](figures/t43/t43y-y2-scene.png) · [`-y2-pairs`](figures/t43/t43y-y2-pairs.png) · [`-y2-table`](figures/t43/t43y-y2-table.png).
+
+![T43 Y1 타임라인](figures/t43/t43y-y1-timeline.png)
+
+**해결된 것.** place 실패처럼 보이던 V5 1925 s19253 은 crate 충돌이 아니라 **큰 held 구 + destination margin 이 HOLD 를 만들고, HOLD 동안 닫힌 손에서 사과가 빠진 것** 이다 (실제 거리는 +14 ~ +24 mm, 접촉 0). 규칙 자체는 바뀌지 않았다 (S 변경 0).
+
+**새로 드러난 문제.** (i) 사과가 손에서 빠져도 server 는 끝까지 attached 로 둔다 → 사과 위치에 phantom 구가 남아 HOLD 가 이어진다. (ii) `segments` 모드의 held 구는 56.7–59.1 mm 로 사과 반폭 33.4 mm 보다 훨씬 크다. 각각 §4 (Z3) 와 §5 (Z6) 의 입력이다.
+
+---
+
+### 4. Z3 · Z3V — 닫힌 채 손에서 빠지면 detach (2026-10-06 06:39 ~ 08:17)
+
+**바꾼 것 (Z3, benchmark `cf6b410`, `--held-slip-detach`, 기본 off · off 면 비트 동일).** grasp latch 가 **실행 피드백만** 보고 (MuJoCo 정답은 쓰지 않는다) 판정한다. HELD 상태에서 측정 개도가 attach 순간보다 **0.05 이상 더 닫혔고**, 동시에 마지막 *실행된* gripper 명령과 **0.05 안으로 붙은** 요청이 **2 번 연속** 나오면 detach 하고 PLACED 로 넘어간다. 그 뒤 사과는 held 구 · body cover 없이 보통 장면 물체이다. (사과 점을 target cluster 로 읽지 않은 이유: HELD 동안 self-filter 가 사과 점을 지워 `manipulated` 상태가 attach 직전 관측에 동결된 `occluded` 이다. 38 run 에서 HELD 로 끝난 요청 720 개가 전부 그렇다 — 구현자.)
+
+**오프라인 재생 (구현자, 서버 기록 38 run).**
+
+| 항목 | 값 |
+|---|---|
+| release 전 HELD 요청 (모든 run) | 368 개. drop 최대 0.031 → 두 조건이 함께 선 요청 **0** |
+| 닫힌 채 빠진 4 run (V5 1925 s19253 · 1807 s18071 · s18073 · B 1807 s18071) 의 detach t | 384 · 176 · 232 · 360 (측정 release t 369 · 165 · 215 · 345, 기록된 server detach 는 전부 없음) |
+| 거짓 detach | 0 / 38 run |
+| detach 지연 (2 요청 연속, 잡힌 17 run) | release 뒤 11–19 step, 중앙 16 |
+
+**검증 (Z3V, `T43Z3V.verify.json`, V5D 19 run, 2026-10-06 08:17).**
+
+| 항목 | V5 | V5D (+ slip detach) |
+|---|---|---|
+| S / G / P (H 14) | 12 / 12 / 12 | 12 / 12 / 12 (짝 일치 12, p 1.0) |
+| 전체 19 run S | 16 | 16 (p 1.0) |
+| place_t | — | V5 와 16 / 16 run 이 같다 |
+| slip detach 가 난 run | 0 | **10** (예측 t 와 실제 t 가 확인한 6 run 모두 일치) |
+| HOLD chunk (전체) | 217 | **58** |
+| trailing HOLD chunk | 146 (3 run) | **0** |
+| held 행 위반 chunk | 166 | **34** (detach 뒤 0) |
+| detach 뒤 손가락이 binding 인 chunk 중 사과까지 10 mm 안 | 0 / 320 | 0 / 342 |
+| obstacle stop 으로 끝난 run | 6 | **11** |
+
+그림: [`t43z3v-scene`](figures/t43/t43z3v-scene.png) · [`t43z3v-graph`](figures/t43/t43z3v-graph.png) · [`t43z3v-table`](figures/t43/t43z3v-table.png).
+
+**해결된 것.** place 이후 이어지던 phantom HOLD (trailing 146 chunk) 가 사라졌고 held 행 위반이 166 → 34 가 됐다. 성공 · place 시점은 V5 와 같다 (place_t 16 / 16 일치).
+
+**새로 드러난 문제.** obstacle stop 으로 끝나는 run 이 6 → 11 로 늘었고, release 뒤 허들과 닿은 run (CT 규칙의 post-release contact) 이 4 → 9 가 됐다 (§6). HOLD 가 사라진 것과 같은 때에 두 수가 늘었다. 인과는 가르지 않았다.
+
+---
+
+### 5. Z6 · V7g · GD — held 구 상한, TO 궤적 따르기, subtask gate 켜기 (2026-10-06 07:10 ~ 09:47)
+
+**사용자 판정.** (07:10) 구 크기는 **(a)**: held query 구 반지름 상한 + 구 중심을 사과 중심 근처로 제한. HOLD 원칙: "crate 테두리 · 바닥은 모두 장애물로 본다 (그대로). TO 가 그것을 피하는 궤적을 만들 것이니 **그 궤적을 따르도록 유도**한다. held target 의 collision 크기가 원래보다 과하게 크지 않으면 place 가 되어야 한다." 같은 시각, T40 사용자 판정 "subtask gate 는 끄고 진행" 이후 T41–T43 이 모두 `--no-subtask-gate` 였는데 그 이유 기록이 없어, lead 가 사용자에게 이유를 물었다. (08:10) "**gate 켜고 해봅시다**" → subtask gate on. "구가 정상 크기가 되었기 때문에 HOLD 가 많이 줄었을 것. 기록해보고, TO 궤적을 따르도록 진행."
+
+**바꾼 것 (Z6, benchmark `f2f335b`, 둘 다 기본 off · off 면 비트 동일 · AG3SConfig 왕복 테스트 포함).**
+
+1. `--held-cover-cap-mm MM` (근거값 10): attach 때 held query 구 (body cover 의 `sphere` · `segments` 와 H2 덮개) 를 관측 사과 크기 근처로 묶는다. 반지름 ≤ 관측 반폭 + a, 중심은 관측 몸통 중심에서 a 안 (밖이면 그 방향으로 당김), 같은 구 · 다른 구 안에 든 구는 뺀다. a = 10 mm 는 pad 5 + slip 5 와 같은 값이고, a = 15 mm 이면 1925 s19253 이 crate 반폭 82 mm 를 넘는다 (82.6 mm).
+2. `--hold-follow-to N` (`follow_to` verdict): HOLD 였을 chunk 가 (i) HOLD 사유가 `collision` 뿐, (ii) 위반 행이 전부 margin 안쪽 (ESDF − r ≥ 0, 실제 침투 없음), (iii) 최소 clearance 가 같은 질의 구의 **현재 상태 clearance 보다 줄지 않음** (비악화), (iv) 실행할 것이 정책 reference 가 아님 — 을 모두 만족하면 HOLD 하지 않고 **TO refined chunk 를 실행**한다. 연속 한도 N.
+
+**오프라인 (구현자, V5 기록 재계산).**
+
+| 항목 | 값 |
+|---|---|
+| `segments` 4 run 의 구 반지름 | 58–59 → **43.3–43.4 mm** |
+| 반폭 x + 20 mm (crate 반폭 82 mm 이내여야 함) | 88.6–93.8 → **72.6–72.9 mm** (4 run 모두 들어감) |
+| 사과 mesh 덮음 | 2 run 완전, 2 run 은 꼭짓점 1.35 % 가 0.2 / 1.5 mm 밖 |
+| 기록된 HOLD 중 follow_to 가 **확실히 실행**으로 바꿀 chunk | **0** (1925 s19253 의 손에 쥔 HOLD 20 chunk 중 18 은 "악화": 계획이 margin 밖에 있던 구 0 을 crate margin 안쪽으로 넣는다) |
+
+**검증 (V7g, `T43V7g.verify.json`, 19 run, 2026-10-06 09:07).** V7g = V5 flags − `--no-subtask-gate` + `--held-slip-detach` + `--held-cover-cap-mm 10` + `--hold-follow-to 3`.
+
+| 항목 | V5 | V5D | **V7g** |
+|---|---|---|---|
+| S / G / P (H 14) | 12 / 12 / 12 | 12 / 12 / 12 | 12 / 12 / 12 (V5 와 짝 일치 12, p 1.0) |
+| HOLD chunk (전체 19 run) | 217 | 58 | **16** |
+| 그중 held 행이 원인 | 166 | 34 | **1** |
+| 그중 crate 위에서 | 215 | 54 | **12** |
+| trailing HOLD | 146 | 0 | 0 |
+| attach 때 body 구 최대 반지름 (17 attach run 중 최댓값) | 59.1 mm | 59.1 mm | **43.4 mm** |
+| obstacle stop 으로 끝난 run | 6 | 11 | 8 |
+| follow_to 실행 / 거절 | – | – | **0 / 16** (`hold_kinds` 11 · `worsens` 3 · `penetration` 2) |
+| server 시간 (run wall, 중앙 s) | 226 | 197 | 230 |
+
+그림: [`t43v7g-hold-breakdown`](figures/t43/t43v7g-hold-breakdown.png) · [`-pairs-table`](figures/t43/t43v7g-pairs-table.png) · [`-scene`](figures/t43/t43v7g-scene.png).
+
+![T43 V7g HOLD 분해](figures/t43/t43v7g-hold-breakdown.png)
+
+**gate on 의 효과 (GD, `T43GD.verify.json`, 2026-10-06 09:47).** V7 (gate off) 와 V7g (gate on) 를 같은 (episode, seed) 19 짝으로 돌렸다.
+
+| 항목 | V7 (gate off) | V7g (gate on) |
+|---|---|---|
+| S / G / P / release (19) | 16 / 16 / 16 / 16 | 16 / 16 / 16 / 16 (갈린 쌍 0, p 1.0) |
+| 접촉 포함 성공 (CT, 19) | 13 | 13 (갈린 쌍 0, p 1.0) |
+| **PLACED 뒤 target switch** | **25** | **0** |
+| PLACED 뒤 carve 된 chunk | 440 | 60 |
+| `subtask_no_target` chunk (gate 가 target 을 일부러 비움) | 0 | 423 (15 run) |
+| grounding `subtask_gated` · `no_admissible` chunk | 0 · 2 | 387 · 36 |
+| PLACED 뒤 준비 자세까지 EE 거리의 최소 (SUBTASK-e 의 정의, run 중앙, mm) | 95.2 | 29.0 |
+| HOLD chunk · obstacle stop run | 18 · 9 | 16 · 8 |
+
+실행이 갈리는 첫 step 은 갈린 16 짝에서 **200–368** 이다 (PLACED 뒤). 직접 눈으로 비교하도록 같은 ep:seed 의 V7 (off) 대 V7g (on) 3rd person 영상을 좌우로 붙이고 아래에 시간축 (label · latch · HOLD · gate verdict) 을 그린 3 쌍을 만들었다 (`outputs/verify/T43/gate_demo/gd_{1968_s19683, 1995_s19953, 1925_s19251}.mp4`, 선택 규칙: V7g 에서 `subtask_no_target` 이 있는 짝 중 마지막 EE 거리 차가 큰 세 짝). 그림: [`t43gd-scene`](figures/t43/t43gd-scene.png) · [`-graph`](figures/t43/t43gd-graph.png) · [`-table`](figures/t43/t43gd-table.png).
+
+**해결된 것.** (i) 큰 held 구가 만든 HOLD 가 사라졌다 (held 행 HOLD 166 → 1, crate 위 215 → 12). (ii) 성공 · 접촉 포함 성공은 gate on/off 에서 같다. (iii) gate 는 놓은 뒤 target switch 25 건을 0 으로 만들었다. §7 의 DX 가 찾은 "막대가 target-free 층에서 지워진 8 건" 은 8 건 모두 gate off arm 에서 PLACED 뒤 target 이 막대였던 순간이다.
+
+**새로 드러난 문제.** (i) `follow_to` 는 실제로 한 번도 실행되지 않았다 (0 / 16). 구현자의 오프라인 재생 (확실히 실행으로 바뀌는 chunk 0) 과 같은 방향이다. (ii) 남은 HOLD 16 의 15 는 robot (base) 행이다. (iii) obstacle stop 은 8 run 에 남아 있다 (place 전 접촉 5 · release 뒤 접촉 6 run, §6).
+
+---
+
+### 6. CT — 접촉을 성공 판정에 넣는다 (2026-10-06 09:01)
+
+**사용자 판정 (09:10).** "성공 판정에 접촉 포함" 확정. **접촉 포함 성공 (CT 규칙)** = release 규칙 성공 ∧ place 시점까지 로봇 · 사과가 허들과 닿은 MuJoCo contact 가 0. release 뒤 접촉 (돌아가는 길) 은 별도 열. H 126 run 을 CPU 로 재생했다 (qpos 불일치 0 / 126, contact pair · robot · payload 플래그가 `check.json` 과 126 / 126 일치).
+
+| arm (H 14) | S (기존) | S (release) | **S (CT)** | place 전 접촉 run | release 뒤 접촉 run | obstacle stop run |
+|---|---|---|---|---|---|---|
+| E0 | 0 | 0 | 0 | 13 (전부 손) | 0 | 13 |
+| V1 | 6 | 6 | **2** | 12 | 4 | 11 |
+| V3 | 3 | 3 | 3 | 2 | 0 | 2 |
+| V4 | 10 | 10 | **6** | 6 | 7 | 9 |
+| V5 | 12 | 12 | **9** | 5 | 4 | 6 |
+| V5D | 12 | 12 | 9 | 5 | **9** | 11 |
+| V7g | 12 | 12 | 9 | 5 | 6 | 8 |
+| V5S | 10 | 10 | 6 | 7 | 5 | 7 |
+| V5B | 12 | 12 | 10 | 3 | 7 | 8 |
+
+- 접촉 포함으로 빠진 성공 (S release − S CT): V1 4 · V4 4 · V5 3 · V5D 3 · V7g 3 · V5S 4 · V5B 2 run. 운반 중 사과–막대 접촉은 25 run 에 있고 침투 최대 2.45 mm 이다 (V4 · V5 · V5D · V7g 만 보면 0.19–0.70 mm).
+- release 뒤 접촉은 대부분 손가락이다 (MJCF 이름으로 `ee_finger_l2` 28 run, 침투 최대 3.0 mm · `ee_finger_l1` 8 run, 2.8 mm). **주의: CT 의 손가락 이름은 MJCF 이름이고, 왼손은 URDF 와 서로 바뀌어 있다** (MJCF `ee_finger_l2` = URDF `ee_finger_l1`). §8 TK 의 정정이 이것에서 나왔다.
+- 짝: V5 대 V4 CT 성공 4 / 1 (p 0.375), V5D 대 V5 0 / 0, V7g 대 V5D 2 / 2 (p 1.0).
+
+그림: [`t43ct-graph`](figures/t43/t43ct-graph.png) · [`t43ct-table`](figures/t43/t43ct-table.png). 
+
+![T43 CT](figures/t43/t43ct-graph.png)
+
+**새로 드러난 문제.** 기존 규칙에서 12 / 14 이던 V5 · V7g 가 접촉 포함으로는 9 / 14 이다. 접촉은 (i) **운반 중 사과–막대**, (ii) **release 뒤 손가락–막대** 두 곳에 몰린다. 둘은 §7 (DX) · §8 (TK · OC · HX) 이 원인을 본다.
+
+---
+
+### 7. FC · V8 · FR · DX — 손가락마다 따로 실제 굵기의 구, 그리고 접촉 진단 (2026-10-06 09:10 ~ 12:00)
+
+**사용자 판정.** (09:10) "그리퍼의 충돌구를 하나로 통틀어서 하지 말고, 2지 그리퍼이기 때문에 두 개의 충돌 구로" — 해석 확인. (10:00) "내가 말하고자 한 것은 **B — 한 그리퍼마다 양쪽 손가락을 구로 감싸는 방법**." (11:10) "네 진행하세요. 진단도 opus verifier 에게. 구의 개수가 너무 많다면 줄일 수 있는 방안도 TO 시간에 따라서 결정."
+
+**바꾼 것 (FC, benchmark `786cf1b`, `--finger-cover [both|left|right]` · `--finger-cover-overflow MM`, 기본 off · off 면 비트 동일).** 손가락 link 4 개를 **각각 따로**, 손가락 collision mesh 를 담는 구 사슬로 덮는다. 손가락 사이 공간은 비우고 (한 덩어리로 감싸지 않음), 손바닥과 다른 link 는 그대로이다. 기존 수단은 둘 다 부적합했다: `--capsule-radius-scale-link ee_finger_*=1.0` (URDF 상당) 은 mesh 밖으로 19.67 mm 넘치고, T43 R `--gripper-cover` 는 파지 면을 덮지 않고 반지름 상한이 3.25 mm 라 손가락 표본의 3.4 % 만 구 안에 든다 (구현자).
+
+**오프라인 (구현자, W · Z3V · V7g + E0 기록 150 run).**
+
+| 항목 | 이전 (축선 사슬, 배율 0.05) | **FC (overflow 2.5 mm)** |
+|---|---|---|
+| 손가락 구 수 (한 손가락) · 전체 | 19 · 122 | **56 · 270** |
+| 구 반지름 | 2.6–3.3 mm | 2.5–8.4 mm |
+| mesh 표본 중 구 안에 든 비율 · 구 밖 표본 수 | 3.2 % | **100 % · 0 / 20,774** |
+| mesh 밖으로 넘침 (최대) | 5.05 mm | 2.55 mm |
+| 최대 gripper 개도 | 102.3 mm | **94.3 mm** (사과 66.6 mm) |
+| CT 손가락–막대 접촉 57 건을 실제 기하로 보나 | 47 / 57 | **57 / 57** |
+| 같은 접촉 중 기록된 거리장으로 보나 (거리장이 있는 44 건) | 36 | 34 |
+| closing · attach 1254 chunk 중 margin 0 위반 | 5 | 7 (새 3 chunk 는 전부 서버가 이미 HOLD) |
+| TO 벽시계 중앙 (CPU 자가 측정, C1807 / B1968, ms) | 43.7 / 39.7 | 72.7 / 56.7 (×1.4–1.7) |
+
+거리장으로도 못 본 8 건은 그 청크의 거리장에 그 자리의 막대가 없다 (d − r 이 +4 ~ +56 mm). 구 모델로 고칠 수 없다.
+
+**검증 (V8, `T43V8.verify.json`, 19 run, 2026-10-06 11:30).** V8 = V7g + `--finger-cover both` (서버 로그: gate ON · 구 122 → 270).
+
+| 항목 (H 14) | V7g | **V8** |
+|---|---|---|
+| S / G / P (기존 규칙) | 12 / 12 / 12 | **13 / 14 / 13** (성공이 갈린 쌍 V8 만 2 · V7g 만 1, p 1.0) |
+| 접촉 포함 성공 (CT) | 9 | 8 (V8 만 3 · V7g 만 4, p 1.0) |
+| 장애물 없음 B: S | 4 / 5 | 5 / 5 |
+| release 뒤 손가락–막대 접촉 run (최대 침투) | 5 (2.7 mm) | **9 (5.8 mm)** |
+| 운반 중 사과–막대 접촉 run | 3 | 5 |
+| 운반 중 손 접촉 | 0 | 0 |
+| obstacle stop run | 8 | 10 |
+| HOLD chunk | 16 | **6** (finger 3 · held 3) |
+| TO 중앙 / p90 / 최대 (ms, 전체 chunk) | 57.6 / 102.0 / 393.4 | 69.9 / 103.1 / 758.4 |
+| client round trip 중앙 (ms) · 533.3 ms 초과 chunk 몫 | 1020.3 · 1.0 | 947.3 · 1.0 |
+
+두 arm 은 서로 다른 서버 세션이다 (첫 chunk JIT 시간은 인용하지 않았다). 그림: [`t43v8-finger-spheres-scene`](figures/t43/t43v8-finger-spheres-scene.png) (손에 겹친 새 손가락 구, 계획 행 0 의 자세) · [`t43v8-timing`](figures/t43/t43v8-timing.png) · [`t43v8-pairs-table`](figures/t43/t43v8-pairs-table.png).
+
+![T43 V8 손가락 구](figures/t43/t43v8-finger-spheres-scene.png)
+
+**FR — 구 수를 줄이는 선택지 (구현자, benchmark `a297155`, 기본값은 그대로).** 새 flag 셋 (`--finger-cover-solver {greedy,ilp}` · `--finger-cover-gap` · `--finger-cover-max-spheres`, 전부 기본 off).
+
+| 선택지 | 구 / 손가락 · 전체 | 덮지 못한 표본 | 넘침 (mm) | 최대 개도 (mm) | CPU TO (FC 기본 대비) | 새 margin 0 HOLD 후보 |
+|---|---|---|---|---|---|---|
+| FC 기본 (greedy 2.5) | 56 · 270 | 0 | 2.55 | 94.3 | ×1.00 | 0 |
+| **ilp 2.5** (같은 보장, 구만 최소) | 46 · 230 | 0 | 2.52 | 94.3 | ×0.89–0.92 | 0 |
+| ilp 3 | 32 · 174 | 0 | 3.01 | 93.3 | ×0.81 | 0 |
+| **ilp 4** | **19 · 122** | 0 | 4.01 | 91.3 | **×0.70** | 0 (10 mm 띠 청크 97 → 135) |
+| greedy 5 | 24 · 142 | 0 | 5.01 | 89.3 | ×0.75–0.76 | **7** |
+| greedy K 8 (개수 상한) | 8 · 78 | 11,673 | 2.49 | 94.9 | ×0.61–0.63 | 0 (표본 56 % 가 최대 9 mm 밖) |
+
+TO 시간은 CPU 에서 잰 비율이라 GPU 로 바로 옮기지 않는다 (구현자). 사용자는 "구 수는 TO 시간에 따라" 라고 했고, **2026-10-06 12:40 에 "finger-cover 는 기본 구성에 유지, 구 수 조정은 추후"** 로 정했다.
+
+**DX — 접촉의 원인 (`T43DX.verify.json`, 기록 재생 · 새 run 없음, 2026-10-06 10:46).**
+
+*(1) 운반 중 사과–막대 접촉 25 건.*
+
+| 항목 | 값 |
+|---|---|
+| TO 계획에서 held 행 clearance | 25 / 25 에서 ≥ 0 (최소 3.8 mm), 25 / 25 `feasible` · certified · execute |
+| 계획 자세에서 쥔 구–막대 거리 | 6.5 ~ 40.3 mm (중앙 10.8) |
+| 실제 쥔 구–막대 거리 (접촉 순간) | −11.5 ~ +11.4 mm (중앙 −7.2) |
+| 실제 손 위치 − 계획 손 위치 | **23.5 ~ 67.1 mm (중앙 43.8)**, 지연 step 은 22 / 25 가 2 |
+| 운반 행 전체의 같은 편차 (C − M, n 2517) | 중앙 15.0 · p90 31.0 mm |
+| worst row 가 held 행이었던 chunk | 16 / 25. **held 행에 허들 margin (10 mm) 이 걸린 경우 0 / 25** (class `held` 는 obstacle margin 대상이 아니다) |
+| 사과가 손 안에서 pad 5 mm 보다 더 미끄러짐 | 18 / 25 |
+| body cover 가 사과를 덮는 비율 | 중앙 0.78 (최소 0.41), 덮지 못하는 event 8 / 25 |
+
+*(2) release 뒤 손가락이 막대를 못 본 8 건 (FC 의 "거리장으로도 못 본" 8 건).* 8 건 모두 **PLACED · subtask `home` 이후**이고 arm 은 gate off 인 V4 · V5 · V5S · V5B · V5D 이다.
+
+| 확인한 것 | 8 건 중 |
+|---|---|
+| 막대 점이 raw 점군에 없음 | 0 |
+| self-filter 가 점군에서 지움 | 0 (막대 픽셀이 self-filter mask 에 일부 든 event 2) |
+| 막대가 **full 층에** 있음 | **8** |
+| 막대가 **target-free 층에서 없음** | **8** |
+| 손가락 질의가 target-free 층을 읽음 | **8** |
+| 그때 조작 대상 (target) 이 막대 자신 | **8** |
+| 헤드 카메라가 막대 근처를 가림 | 6 (왼 손목 카메라는 8 / 8 에서 막대 픽셀 보임) |
+
+즉 이 8 건은 PLACED 뒤 target 이 막대로 switch 되어 막대가 carve-out 되었고, 손가락 (target 접촉 권한이 있는 link) 이 target-free 층을 읽은 것이다. subtask gate (§5) 가 이 switch 를 막는다. 그림: [`t43dx-1-apple-scene`](figures/t43/t43dx-1-apple-scene.png) · [`-2-apple-graph`](figures/t43/t43dx-2-apple-graph.png) · [`-3-table`](figures/t43/t43dx-3-table.png) · [`-4-finger-scene`](figures/t43/t43dx-4-finger-scene.png) · [`-5-finger-graph`](figures/t43/t43dx-5-finger-graph.png).
+
+**해결된 것.** 손가락 mesh 가 구로 완전히 덮이고 (미덮음 0), 실제 기하로 본 접촉 감지가 47 / 57 → 57 / 57 이 됐다. V8 의 HOLD 는 16 → 6. 파지 G 는 12 → 14.
+
+**새로 드러난 문제.** (i) release 뒤 손가락–막대 접촉이 5 → 9 run, 침투 최대 2.7 → 5.8 mm 로 **늘었다.** (ii) 운반 중 사과 접촉 25 건에서 TO 는 계획대로 통과했지만 (25 / 25), 실제 손은 계획에서 23–67 mm 벗어났다. 계획이 틀린 것이 아니라 **실행이 계획을 따라가지 못한다.** (iii) held 행에는 허들 margin 이 걸리지 않는다 (0 / 25). (iv) TO 중앙은 69.9 ms 이지만 client round trip 중앙이 947.3 ms 이고, 모든 chunk 가 chunk period (533.3 ms) 를 넘는다. (i) · (ii) 는 §8 의 질문이 된다.
+
+---
+
+### 8. TK · OC · HX — 실제 손은 왜 TO 계획에서 벗어나는가 (2026-10-06 12:40 ~ 2026-10-07 08:24)
+
+**사용자 판정.** (2026-10-06 12:40) "진단해보세요, C 로" — 계획이 맞는데 실제 손이 벗어나는 원인을 가른다. gate on 유지 (막대 admissibility 추가 작업은 하지 않음). (2026-10-07) 사용자 가설: "place 할 때 **팔에 의해서 허들이 보이지 않아서** 그런 것 아닐까?" 와 "허들을 넘을 때의 궤적과 그때 그리퍼와 허들의 충돌 거리를 측정하고, 음수이거나 margin 을 넘었다면 **왜 궤적을 수정하지 못했는지** 분석" — OC · HX 로 나눠 Opus verifier 가 맡았다.
+
+#### 8-1. TK — 계획(P) · 명령(C) · 측정(M) 세 자세를 분리해서 잰다
+
+각 chunk 의 행 k 마다 **P** = TO refined 행 k 의 FK, **C** = client 가 그 step 에 실제로 내린 명령 (`d.ctrl`), **M** = MuJoCo 측정 qpos. 새 run 없이 V7g 18 run · V8 19 run · E0 14 run 의 기록으로 쟀다 (`T43TK.verify.json`). 서버에 `--servo-model` 은 없었다.
+
+| 운반 중 행 | V7g | V8 | E0 (TO 없음) |
+|---|---|---|---|
+| 행 수 | 1142 | 1762 | 997 |
+| **P − C** (계획과 명령의 차) 중앙 · p90 | **0.0 · 0.0 mm** | **0.0 · 0.0 mm** | – |
+| **C − M** (명령과 측정의 차) 중앙 · p90 | 20.3 · 31.5 mm | 15.1 · 31.0 mm | 20.0 · 31.1 mm |
+| 손이 움직이는 행에서 EE 가 명령을 따라가는 지연 τ 중앙 | 1.95 행 | 1.90 행 | 1.95 행 |
+| 명령 − 정책 reference (`refined − reference`) 중앙 | 5.4 mm | 5.1 mm | – |
+
+- client 는 refined chunk 를 그대로 `d.ctrl` 에 넣는다 (P − C = 0). 벗어남은 전부 **명령 → 측정** 구간이다.
+- MuJoCo position actuator 의 모델 값은 `(kv + b) / kp` = **2.39–2.75 행** (왼팔 7 관절, kp 1500–2000) 이고 실측 τ ≈ 1.9–1.95 행과 같은 크기이다. 이것이 이 절의 **servo lag (actuator tracking lag ≈ 2 행)** 이다. 한 행은 0.066 s 이므로 약 0.13 s 이다.
+- **E0 (TO 없음) 의 C − M 이 같다** (중앙 20.0 mm). TO 가 만든 현상이 아니다.
+- 한 chunk 의 client round trip 중앙은 V7g 1185.2 ms · V8 948.2 ms 이고 chunk 의 sim 시간은 0.528 s 이다.
+
+그림: [`t43tk-timeline`](figures/t43/t43tk-timeline.png) (P/C/M 시간축) · [`-scene`](figures/t43/t43tk-scene.png) · [`-table`](figures/t43/t43tk-table.png) · [`-contacts`](figures/t43/t43tk-contacts.png).
+
+**TK 정정 (2026-10-07, V9 verifier 가 `_superseded` 로 남김).** 처음 쓴 TK 는 release 뒤 왼손 손가락–막대 접촉 14 건 (V7g 5 · V8 9) 에서 "**ESDF 가 막대를 실제 거리보다 +57 / +67 mm 멀게 본다**" 고 적었다. 원인은 이름이었다: **왼손 손가락의 이름이 MJCF 와 URDF 에서 서로 바뀌어 있다** (MJCF `ee_finger_l1` = URDF `ee_finger_l2`, 반대도 같다; 오른손은 같다). 접촉한 MJCF body 를 같은 이름의 TO link 에 대응시킨 것이 틀렸다. 올바른 이름 대응 (OC 의 `namemap_V8.json` 으로 측정) 으로 다시 계산했다.
+
+| (release 뒤 왼손 손가락, 계획 자세) | 정정 전 (`_superseded`) | **정정 후** |
+|---|---|---|
+| V7g 5 건: ESDF 가 답한 거리 − 기하 거리 (중앙 · 최대) | +56.8 · +80.8 mm | **−1.3 · +2.6 mm** |
+| V8 9 건: 같은 값 | +66.9 · +81.6 mm | **−12.8 · −3.1 mm** |
+| V7g: 접촉 행 k 의 TO clearance (중앙 · 최대) | 89.8 · 104.2 mm | **15.4 · 31.9 mm** |
+| V8: 같은 값 | 99.7 · 149.8 mm | **19.9 · 61.4 mm** |
+
+즉 "ESDF 가 막대를 못 본다" 는 문장은 **철회**한다. 바뀐 접촉은 14 건이다.
+
+#### 8-2. OC — 가림 가설과 거리장 (2026-10-07 08:11)
+
+대상은 TK 의 release 뒤 접촉 16 건 (V7g 손 5 + 팔 1, V8 손 9 + 팔 1; gate on).
+
+| 확인한 것 | V7g 손 5 | V8 손 9 |
+|---|---|---|
+| 접촉 chunk 의 관측에서 막대 픽셀이 접촉 부위 근처에 보임 (아무 카메라) | **5 / 5** | **9 / 9** |
+| 그중 왼쪽 손목 카메라 · 헤드 카메라 | 5 · 4 | 9 · 7 |
+| 마지막으로 막대가 보인 뒤 지난 chunk 수 | 전부 0 | 전부 0 |
+| 막대 점이 raw 점군에 있음 · self-filter 전후 같음 | 5 · 5 | 9 · 9 |
+| 막대가 거리장의 **full 층에** 있음 | 5 | 9 |
+| target-free 층이 있는 접촉 | 0 | 0 |
+| PLACED 뒤 target switch | 0 | 0 |
+| 접촉 순간 `field − mesh` 거리 중앙 | 0.44 mm | 1.69 mm |
+
+- 팔 접촉 2 건 (V7g 1 · V8 1) 은 full 층에 막대가 있고 (2 / 2) target-free 층이 있다.
+- 거리장은 **episode 동안 누적**된다: TSDF 는 카메라마다 running weighted sum 으로 쌓고 (`curobo_builder.py:951` mapper.integrate, kernel `builder_camera_integrate.py:544`/`:556-559`), decay 는 꺼져 있고 (time_decay 1.0 · frustum_decay 1.0), 가려진 voxel 은 옛 값을 유지한다. 거리장 builder 는 한 번 만들어 episode 내내 유지되고 reset 때만 버려진다 (`pipeline.py:2464-2477`). 그래서 팔이 막대를 잠깐 가려도 막대 표면이 거리장에서 사라지지 않는다. eikonal 기울기 중앙 0.999 (V8 1807 s18073 chunk 73).
+- **가림 가설은 이 기록으로 지지되지 않았다.** 그리고 TK 의 +57 / +67 mm 가 이름 대응 오류였음이 OC 에서 확인됐다 (TK 값 = OC 가 MJCF 이름 link 로 잰 값, 14 / 14).
+
+**V8 1807 s18073 t168 의 −0.9 mm chunk.** TO 결과 clearance 가 −0.87 mm 인데 실행된 경위: 위반 행은 `ee_finger_l1` (URDF, 구 반지름 7.19 mm) 이고 분류가 **권한 link ↔ 조작 대상 (id 0, 사과)** 이다 — MJCF 로 재면 손가락–사과 −0.13 mm, 손가락–막대 29.6 mm 로 막대와는 떨어져 있다. 이 행의 `d − r` 은 +19.1 mm 인데 적용된 margin 이 20 mm (implied) 라서 clearance 가 −0.87 mm 로 나왔고, obstacle margin 10 mm 였다면 +9.13 mm 이다. verdict 는 `allowed_contact` (권한 link 대 조작 대상이라 접촉 허용) + `budget_only` (SQP 3 회 상한에서 멈춤, 최종 검사는 통과) 로 `execute` 였다. 초기 위반 46.8 mm 가 0.9 mm 로 줄어 있었다.
+
+그림: [`t43oc-scene`](figures/t43/t43oc-scene.png) · [`-depthmask`](figures/t43/t43oc-depthmask.png) · [`-esdf`](figures/t43/t43oc-esdf.png) · [`-history`](figures/t43/t43oc-history.png) · [`-table`](figures/t43/t43oc-table.png).
+
+#### 8-3. HX — 허들 근처에서 margin 아래로 들어간 순간은 왜 TO 가 못 고쳤나 (2026-10-07 08:24)
+
+**순간 (moment)** = 허들 100 mm 안의 행에서 **실제(M) 자세의 기하 거리가 10 mm (obstacle margin) 미달**인 것. V7g · V8 · V5 의 허들 14 run 에서 실행된 순간이 모두 **234** 개이다 (V7g 89 · V8 89 · V5 56). 순간마다 원인을 먼저 맞는 규칙 하나로 나눈다.
+
+| 원인 (먼저 성립하는 규칙) | V7g | V8 | V5 | 합 |
+|---|---|---|---|---|
+| **(i)** 계획 P (= 명령 C) 는 이미 10 mm 이상 떨어져 있었고, 측정 M 만 들어왔다 — **servo 추종 지연** | 89 | 87 | 56 | **232** |
+| (ii) TO 가 위반을 봤지만 해를 못 찾음 (SQP 반복 · slack · 예산) | 0 | 0 | 0 | 0 |
+| (iii) ESDF 오차 (기하 거리와 ESDF 가 다름) | 0 | 0 | 0 | 0 |
+| (iv) margin 0 인 행 (쥔 사과) | 0 | 2 | 0 | 2 |
+| (v) 기타 | 0 | 0 | 0 | 0 |
+
+- 접촉 22 건 (손가락 release 뒤 14 + 사과 운반 중 8) 에서 **TO 가 본 clearance 가 음수인 chunk 는 0** (`to_clear_lt0`).
+- **servo model 오프라인** (`benchmark/trajopt/servo.py` 의 모델을 기록된 명령에 적용): 예측한 EE 위치와 실제 M 의 차이가 모든 실행 행에서 중앙 **0.02–0.08 mm** · p90 0.31–0.38 mm (V7g 0.024 · 0.313, V8 0.079 · 0.376, V5 0.038 · 0.343). **명령을 그대로 M 이라고 보면 중앙 6.2–8.0 mm · p90 26.9–28.1 mm** 이다.
+- 같은 모델로 접촉 22 건을 보면, 예측 상태가 10 mm 미달인 것이 22 / 22, 접촉(< 0)으로 예측한 것이 16 / 22 이다.
+- 속도 상한 문서 값 10.8° (관절 모두 같은 값으로 가정) 은 이후 TA 가 관절마다 다름을 고쳤다 (§12).
+
+그림: [`t43hx-scene`](figures/t43/t43hx-scene.png) (통과 궤적) · [`-timeline`](figures/t43/t43hx-timeline.png) · [`-cause-table`](figures/t43/t43hx-cause-table.png).
+
+![T43 HX 원인 분해](figures/t43/t43hx-cause-table.png)
+
+**해결된 것(= 답이 나온 것).** 계획은 맞았고 (TO 가 본 clearance 가 음수인 접촉 0), **약 2 행의 servo lag 가 접촉의 직접 원인**이다 (234 순간 중 232). 가림 가설 · ESDF 오차 · SQP 실패는 이 기록에서 0 이다. 그리고 servo 모델의 예측 오차는 중앙 0.1 mm 안 (p90 0.4 mm 안) 이다.
+
+**새로 드러난 문제.** (i) 이 모델을 TO 에 넣으면 (§9, V9) 접촉이 사라지는가? (ii) 쥔 사과 행에는 허들 margin 이 없다 (§7 DX, §10 HM). (iii) 사과 운반 중 명령–측정 차이 (C − M) 중앙이 15–20 mm 인데 obstacle margin 은 10 mm 이다.
+
+---
+
+### 9. V9 · SV — servo 모델을 TO 에 넣었더니 파지가 깨졌다 (2026-10-07 10:09 ~ 10:46)
+
+**사용자 판정 (2026-10-07).** "V9 진행." V9 = V8 + `--servo-model` (sweep 없이). 이어서 "servo model 을 켜면 파지가 왜 깨지는지 Opus verifier 에게. 해결하기 어렵거나 불필요하면 servo model 을 켜지 않은 상태로 한다. 목적은 place 이후 복귀 단계의 그리퍼–허들 접촉."
+
+**V9 결과 (`T43V9.verify.json`, 19 run, V8 과 짝).**
+
+| 항목 | V8 | **V9** | 짝 검정 |
+|---|---|---|---|
+| H 14: S (기존) | 13 | **2** | V8 만 11 / V9 만 0, p 0.00098 |
+| H 14: G | 14 | **5** | V8 만 9 / 0, p 0.0039 |
+| B 5: G | 5 | 1 | V8 만 4 / 0, p 0.125 |
+| H 14: S (CT) | 8 | 2 | V8 만 7 / V9 만 1, p 0.070 |
+| 손가락–허들 접촉 run (release 뒤) | 9 | **0** | |
+| obstacle stop run | 10 | 1 | |
+| HOLD chunk (trailing) | 6 (0) | 17 (13) | |
+| TO 중앙 / p90 / 최대 (ms) | 69.9 / 103.1 / 758.4 | **187.5 / 322.7 / 646.7** | |
+| round trip 중앙 (ms) | 947.3 | 1176.2 | |
+| servo 예측 vs M (모든 실행 행, 중앙 · p90) | 0.067 · 0.384 mm | 0.064 · 0.348 mm | |
+| 명령을 그대로 M 이라 볼 때의 오차 (같은 행, 중앙 · p90) | 6.8 · 26.0 mm | 7.0 · 19.8 mm | |
+
+H 14 run 의 V9 분류 (XM): 성공 2 · 허들 근처에서 낙하 2 · 허들에서 먼 곳에서 낙하 1 · **attach 안 됨 5** · attach 뒤 revoke 4. 사용자 관찰 (2026-10-07): "V9: pick 은 잘 잡는다. 허들을 넘을 때 TO 가 과하게 작용해 그리퍼 쪽만 허들 반대 방향으로 밀어낸다 … 이 과정에서 사과를 떨어뜨린다" — 낙하로 분류된 run 은 3 (허들 근처 2 · 먼 곳 1) 이고, attach 가 안 된 5 run 과 attach 뒤 revoke 4 run 은 이 관찰이 설명하지 않는다 (§11 에서 편향 방향을 잰다). 그림: [`t43v9-hurdle-crossing-scene`](figures/t43/t43v9-hurdle-crossing-scene.png) · [`-timing`](figures/t43/t43v9-timing.png) · [`-pairs-table`](figures/t43/t43v9-pairs-table.png).
+
+**SV — 파지가 왜 깨지나 (`T43SV.verify.json`, 기록 재생, 2026-10-07 10:46).** V9 가 V8 보다 못 쥔 19 쌍 중 13 쌍 (`no_attach` 7 · `attach_revoked` 6; H 9 · B 4) 을 같은 표로 놓았다.
+
+| 항목 (실패 13 쌍의 closing 직전 3 chunk) | V8 | **V9** |
+|---|---|---|
+| binding 행 종류 (78 chunk) | waypoint **78 / 78** | **path 71 / 78**, waypoint 7 |
+| 그중 `path:support:table` (테이블을 받침으로 본 path 행) | 0 | **40** |
+| 첫 closing 때 손끝–사과 (중앙) | 37.7 mm | **46.3 mm** |
+| 첫 closing 때 손끝의 수평 거리 (dxy) · 사과 대비 높이 (dz) 중앙 | 24.0 · −28.5 mm | 43.0 · −18.6 mm |
+| 손가락 받침면(support) 행 clearance 중앙 (계획 P · 예측 S · 실제 M) | 6.5 · −1.5 · −1.4 mm | **14.4 · 6.0 · 5.9 mm** |
+| outward > 2 mm 인 chunk (78 중) · 연속 시작 | 6 · 0 | **34 · 22** |
+| closing 최대 outward 중앙 | −7.6 mm | +9.5 mm |
+
+- path 행이 binding 인 71 chunk 중 58 에서 그 행이 target-free 층을 읽는다 (F1 예외 대상). target 행이 TO 에서 빠진 chunk 는 0.
+- V3 (servo + sweep) 의 파지 손실 10 쌍 (전부 `no_attach`) 도 같은 모양이다: closing 직전 `path:support:table` 43 / 60 chunk, outward > 2 mm 40 / 60 (V4 는 3 / 60).
+- 즉 servo 가 예측한 경로 행에서 **손가락이 테이블 받침 band 에 걸려 TO 가 손가락을 약 8 mm 들어 올린다** (계획 P 중앙 6.5 → 14.4 mm). 그 결과 closing 때 손끝이 사과에서 멀어진다. 이 측정으로 servo 와 sweep 중 어느 쪽이 원인인지는 가르지 못했다 (sweep 만 있는 arm 의 closed-loop 기록이 없다 — `not_measured`).
+
+**복귀 단계만 보는 대안 (SV, V8 · V7g 의 release 뒤 손가락 접촉 14 건 · 운반 중 사과 접촉 8 건에 오프라인 적용).**
+
+| 대안 | 복귀 손가락 접촉(V8 9) 을 미리 봄 (행 선행 중앙) | 운반 중 사과 접촉(V8 5) | 새 HOLD 상한 (V8 복귀 434 chunk) |
+|---|---|---|---|
+| 지금 (margin 10 mm) | 0 / 9 | 0 / 5 (held margin 0) | 0 |
+| (a) servo 예측 clearance < 10 mm | **9 / 9** (7 행) | 5 / 5 (7 행) | 37 chunk |
+| (b) obstacle margin 20 mm | 7 / 9 (8 행) | 5 / 5 (14 행) | **115** chunk |
+| (b) margin 30 mm | 8 / 9 (10.5 행) | 5 / 5 | 202 chunk |
+| (b) margin 40 mm | 9 / 9 (14 행) | – | 297 chunk |
+
+**사용자 판정 (2026-10-07): "servo-after-placed 는 철회."** (a) 를 "PLACED 뒤 (복귀) 에만 servo 를 켠다" 로 쓰면 **PLACED 개념은 pick-and-place 전용**이라는 이유로 철회했다. "모든 시나리오에 적용 가능해야 함." 이후 arm (V10 · V11) 은 servo 모델을 TO 에 넣지 않았다. servo 모델은 평가 도구로만 쓴다.
+
+**해결된 것.** 복귀 접촉은 사라졌다 (9 → 0) — 그러나 파지가 무너졌다.
+
+**새로 드러난 문제.** servo 모델을 TO 에 쓰려면 **받침면(테이블)과 path 행의 처리**를 고쳐야 한다 (closing 중 손가락–테이블 band). 이 일은 하지 않았다. V9 는 TO 시간도 늘렸다 (중앙 69.9 → 187.5 ms).
+
+---
+
+### 10. HM · V10 — 쥔 사과 행에 손가락과 같은 분류 · margin (2026-10-07 10:32 ~ 12:32, 보류)
+
+**사용자 판정 (2026-10-07).** "쥔 순간부터 사과는 로봇에 해당 → 허들을 피해야 한다. 손가락과 같은 분류를 적용하고 margin 도 준다 — 모두 동의, 병행." (DX 가 held 행에 허들 margin 이 0 / 25 로 걸리지 않음을 보였다.)
+
+**바꾼 것 (HM, benchmark `308ddfd`, `--held-obstacle-margin`, `--obstacle-margin` 이 필요 · 기본 off · off 면 비트 동일).** held 질의 행도 **최근접 표면이 무엇인지로** 가른다. 순서: (1) 지지면 (테이블, 평면 판정 2 voxel) → margin 없음, (2) 쥔 사과 자신의 잔상 (최근접 표면점이 attach 때 비운 부피 + 2 voxel = 10 mm 안) → margin 없음, (3) 나머지는 `obstacle` → `max(기존, obstacle_margin)` = 10 mm. 목적지 20 mm 는 그대로 (겹치면 큰 값). 잔상 규칙은 O7 (lift 한 사과 자신의 상) 때문에 넣었다: 표면이 attach 부피에서 가장 가까운 거리가 사과 자신의 상은 −9.2 ~ 7.3 mm, 허들은 199.1 mm 이상이었다 (구현자, V7g · V8 35 grasp run).
+
+**오프라인 (구현자, V7g · V8 기록).**
+
+| 항목 | 값 |
+|---|---|
+| 운반 중 사과–막대 접촉 8 건의 계획 자세 held 행 최소 clearance | **+3.8 ~ +8.2 → −1.8 ~ −6.2 mm** (TO 가 위반을 보는 것 0 / 8 → **8 / 8**) |
+| attach · 들어 올림 105 chunk 에서 새 위반 | **0** |
+| crate 진입 78 chunk 의 새 위반 (label bracket 상한 B0 · 하한 B1) | 39 · 11 (원인: crate 18 · hurdle 4 · 사과 2 · 정체 불명 8 …) |
+| 나머지 운반 248 chunk 의 새 위반 (B0 · B1) | 49 · 42 |
+
+새 위반이 곧 HOLD 는 아니다 (TO 가 계획을 옮겨야 한다는 뜻). 실제 HOLD 수는 오프라인으로 재현하지 못해 V10 으로 쟀다.
+
+**V10 결과 (`T43V10.verify.json`, V8 + HM, 19 run, 2026-10-07 12:32).**
+
+| 항목 (H 14) | V8 | **V10** | 짝 |
+|---|---|---|---|
+| S (기존) · G | 13 · 14 | **10** · 13 | V8 만 3 (1834 두 seed · 1995 s19953) / 0, p 0.25 |
+| S (CT) | 8 | 9 | V10 만 5 / V8 만 4, p 1.0 |
+| 운반 중 사과–허들 접촉 run | 5 | **1** | |
+| 놓기 전 접촉 run | 5 | 2 | |
+| release 뒤 손가락–허들 접촉 run (최대 침투) | 9 (5.8 mm) | 7 (4.2 mm) | |
+| obstacle stop run | 10 | 8 | |
+| HOLD chunk (trailing) | 6 (0) | **52** (11) | |
+| TO 중앙 / p90 (ms) | 69.9 / 103.1 | 84.3 / 153.5 | |
+
+- **새 HOLD 51 개** (V8 에는 없던 것) 의 binding 행: finger 48 (obstacle class 28 · support class 18 · target 2) · held 2 · robot_other 1. 최근접 표면의 정체: 사과 21 · 로봇 자신 17 · 테이블 7 · crate 3 · 허들 1 · 정체 불명 2. V10 HOLD 52 chunk 의 단계는 release 뒤 38 · 운반 8 · crate 위 6 이고, run 별로는 H 1834 s18341 한 run 이 38 이다.
+- HM 이 쥔 사과 행에 준 분류 (attach 서버 chunk 225): worst row 가 held 행인 70 chunk 는 `obstacle` class, 사과 잔상으로 빠진 것은 1. held 행 최소 clearance: obstacle −18.9 mm · support +14.6 mm · 잔상 +5.1 mm.
+- `follow_to` 는 1 번 실행 (거절 `penetration` 39 · `worsens` 11 …).
+
+그림: [`t43v10-hurdle-scene`](figures/t43/t43v10-hurdle-scene.png) · [`-graphs`](figures/t43/t43v10-graphs.png) · [`-pairs-table`](figures/t43/t43v10-pairs-table.png).
+
+**해결된 것.** 운반 중 사과–허들 접촉이 5 → 1 run 이 됐다 (TO 가 held 행의 위반을 본다).
+
+**새로 드러난 문제 → 사용자 판정 (2026-10-07): "V10 (HM) 보류."** "**TO 가 투박한 궤적을 부드럽게 보정하고 속도 · 가속도 제한을 적용하는 것이 먼저 — 지금 margin 을 크게 조절하는 것은 중요하지 않다.**" 이 판정은 V10 측정 (성공 13 → 10, HOLD 6 → 52) 뒤에 나왔다. 이후 TA 의 기준선은 **V8** (HM 없음) 이다. HM flag 는 코드에 남고 기본 off 이다.
+
+---
+
+### 11. XM — 허들을 넘을 때 TO 는 얼마나, 어느 쪽으로 개입하나 (2026-10-07 11:55)
+
+**사용자 관찰 (V5–V9 의 3rd person 영상).** V5–V8: "허들을 넘을 때 chunk 값을 크게 따라가 허들 위로 아주 조금만 들어 올려 넘는다 — TO 개입이 매우 적어 보인다." V9: "그리퍼 쪽만 허들 반대 방향으로 밀려난다." XM 이 이 관찰을 허들 run 전부의 기록으로 정량화했다 (TO 편향 = refined − reference 를 EE 공간의 위 / 허들에서 멀어지는 수평 / 진행 방향으로 분해).
+
+| 허들 통과 (운반, 사과 든 구간) | V5 | V7g | V8 | V9 |
+|---|---|---|---|---|
+| 실행 행에서 손바닥 편향 중앙 · p90 (mm) | 11.5 · 39.1 | 10.7 · 37.8 | 10.4 · 43.1 | **24.1 · 83.6** |
+| 편향 5 mm 초과 행에서 위(+dz) 성분 중앙 / 허들에서 멀어지는 성분 중앙 (mm) | 3.1 / −1.7 | 4.0 / −2.8 | 1.7 / −2.7 | 0.4 / **+28.7** |
+| 편향 5 mm 초과 chunk 의 지배 방향 (up / away / down / toward / along bar) | 24 / 15 / 15 / 8 / 11 | 13 / 13 / 8 / 14 / 1 | 19 / 15 / 10 / 12 / 2 | 4 / **27** / 3 / 1 / 0 |
+| 사과 바닥 – 막대 윗면 **명령(C)** 중앙 (mm) | 21.4 | 18.0 | 19.6 | – |
+| 사과 바닥 – 막대 윗면 **실제(M)** 중앙 (mm) | **3.1** | **2.0** | **3.8** | – |
+| 정책이 위반하는 chunk 에서 TO 결과의 binding clearance 중앙 (margin 위, mm) | +1.5 | +4.7 | +4.6 | +4.9 |
+
+- V5–V8 에서 TO 편향은 실행 행 중앙 10–11 mm 이고 정책이 위반하는 chunk 의 TO 결과는 margin 위 1.5–4.7 mm 에서 멈춘다 — TO 는 **margin 을 겨우 넘기는 만큼만** 비킨다. 명령은 막대 위 18–21 mm 인데 실제는 2–4 mm (servo lag 로 15–17 mm 낮게 지나감).
+- V9 의 편향은 **허들에서 멀어지는 수평 성분이 중앙 +28.7 mm, 진행 방향 성분이 −29.9 mm** (뒤로) 로 사용자 관찰 ("그리퍼만 밀려난다") 과 같은 방향이다. 편향 크기 (손바닥 중앙 24.1 mm) 는 V8 의 2.3 배이다.
+- TO 구조 상수: 계획 창 8 step, w_track 1 · w_smooth 0.05 · w_continuity 0.5, SQP 3 회 상한, trust radius 0.15 rad.
+
+**속도 비례 obstacle margin 의 오프라인 효과 (V7g · V8 기록, servo 없음).** margin = 10 mm + k × (명령 EE 속도 × τ), τ ≈ 2 행 (TK), k ∈ {0.5, 1.0}. 비교 대상은 지금 (cur), HM.
+
+| 접촉 (V8 + V7g) | cur | HM | k = 0.5 | k = 1.0 |
+|---|---|---|---|---|
+| release 뒤 손가락 14 건을 미리 봄 (선행 행 중앙) | 0 | 0 | **14** (10.5 행) | **14** (13.0 행) |
+| 운반 중 사과 8 건을 미리 봄 | 0 | 7 | 7 | 7 |
+
+| 새 HOLD 상한 (chunk, 전체 chunk 중) | approach (661) | closing (99) | 운반 (207) | crate 진입 (224) | 복귀 (917) |
+|---|---|---|---|---|---|
+| cur · HM | 0 · 0 | 0 · 0 | 0 · 28 | 0 · 56 | 0 · 0 |
+| k = 0.5 | 64 | **26** | 77 | 97 | 65 |
+| k = 1.0 | 111 | **38** | 96 | 123 | 110 |
+
+상한이지 재풀이가 아니다. closing 구간에 새 HOLD 후보가 생긴다는 점이 V9 의 파지 붕괴와 같은 방향의 위험이다.
+
+그림: [`t43xm-scene`](figures/t43/t43xm-scene.png) · [`-direction`](figures/t43/t43xm-direction.png) (편향 방향 시간축) · [`-tables`](figures/t43/t43xm-tables.png).
+
+**해결된 것(= 답이 나온 것).** 사용자 관찰이 수치로 확인됐다: V5–V8 의 TO 는 margin 위로만 올려 놓는다 (편향 10–11 mm). 다만 올린 높이는 명령 기준이고 servo lag 가 15–17 mm 를 깎는다. V9 는 수평으로 밀어낸다.
+
+**새로 드러난 문제.** margin 을 크게 키우는 쪽은 closing · 운반 · crate 진입에 새 HOLD 를 만든다. 그래서 사용자는 margin 이 아니라 **TO 경로의 모양 (평활 · 속도 · 가속도)** 을 먼저 다듬으라고 했다 → §12.
+
+---
+
+### 12. TA · V11A · V11AB · V11ABC — TO 경로의 모양을 다듬는다 (2026-10-07 17:06 ~ 22:40)
+
+**사용자 판정 (2026-10-07).** "TO 가 투박한 궤적을 부드럽게 보정하고 속도 · 가속도 제한을 적용하는 것이 먼저 — 지금 margin 을 크게 조절하는 것은 중요하지 않다" (V10 보류와 같은 판정). 이어서 "A, B, C, D 모두 좋은 방안. 우선 **A, B, C 를 적용해 테스트 — A 먼저, 그리고 A+B, A+B+C 순서.** 오프라인 시험 후 결과가 좋으면 서버를 띄워 온라인 실험도." 근거는 XM (§11): 허들 위 명령은 18–21 mm 인데 실제는 2–4 mm, V5–V8 의 TO 는 margin 위 1.5–4.7 mm 만 비킨다, V9 는 수평으로 민다. 기준선은 **V8** (HM 없음) 이다.
+
+#### 12-1. 무엇을 바꿨나 (TA, benchmark `3ca1b21`, 루트 `331273f`, 세 flag 모두 기본 off · off 면 비트 동일: V8 기록 2 run · 150 chunk 에서 0 / 150 차이, 테스트 38 개)
+
+| | flag | 하는 일 |
+|---|---|---|
+| **A — receding horizon · lookahead** | `--plan-horizon 16 --lookahead obstacles --lookahead-gate-mm 20` (+ `--qp-eps 1e-4`) | 최적화 창을 8 → **16 step** 으로 늘린다. **실행과 인증은 앞 8 step 그대로**이고, 뒤 8 step (꼬리) 은 **장애물 행만** 본다 (target · 지지면 · 쥔 물체 자기 잔상 · 평면 행은 뺀다). 꼬리 위반은 창 위반과 같은 slack 값을 치르므로 회피를 꼬리로 미룰 이득이 없다 (T6d 의 "실행 안 될 뒷부분으로 미루기" 를 막는 설계). **gate:** reference 꼬리가 장애물 20 mm 안으로 들어올 때만 꼬리를 쓴다 |
+| **B — deflection rate** | `--w-deflection-rate 20` | 정책과의 편향 `D = Q − Q_ref` 의 step 간 변화 `‖ΔD‖²` 에 비용 `W·(Σ‖D_{k+1} − D_k‖² + ‖D_0 − D_prev‖²)`. `D_prev` = 직전 청크의 마지막 실행 편향이라 청크 경계에서도 이어진다 |
+| **C — servo accel** | `--servo-accel relaxed --servo-accel-tolerance-deg 1 --servo-accel-weight 0.01` | 명령의 2 차 차분 (청크 경계 포함) 에 servo 상수로 유도한 상한 `a_C = ε Δt² / κ` 를 soft 로 건다 (`relaxed` = 정책보다 더 날카롭게만 만들지 못하게). 상한 값은 **0.0077–0.0104 rad/행²** (1.7–2.3 rad/s²) 로, 기존 청크 안 가속도 행 (0.04 rad/행²) 보다 4–5 배 좁다. 그리고 지난 명령 `u[−1]` 에서 새 청크 첫 행으로 가는 **경계 속도 행** 을 더한다 |
+
+**`--qp-eps 1e-4` 가 필요했던 이유 (구현자).** 16 step QP 를 OSQP eps 1e-3 으로 느슨하게 풀면 파지 직전 chunk (V8 H ep1967 s19672 chunk 17) 에서 첫 SQP step 이 0.100 rad 로 엉뚱하게 나가 손바닥이 정책에서 최대 88 mm 벗어났다 (eps 1e-4 에서는 0.019 rad, base 와 같다). A 자체의 문제가 아니라 풀이 정확도였다.
+
+**속도 제한이 모든 행에 걸리는가 (구현자, 먼저 확인).** 청크 안 속도 행과 row 0 anchor 는 V8 의 모든 실행 행에서 지켜진다 (최대 1.000×). HX 의 "0.32 rad/행 초과" 는 모든 관절을 10.8° (0.189 rad) 로 나눈 탓이다: 관절마다 `max_step` 이 다르다 (**0.189** 팔 0–3 · **0.377** 팔 4–5 · **0.126** rad/행 팔 6). 진짜 빈틈은 **청크 경계** (`|Q0 − u[−1]|`, 행이 없다): V8 999 경계 중 1 개가 넘음 (1.20×), V7g 2 개 (1.25×), V1–V5 4204 중 11 개 (최대 2.60×). C 가 이 경계 행을 더한다.
+
+**오프라인 비교 (구현자, V8 19 run 1037 chunk, 정책 chunk · 장면 고정, TO 만 다시 풂, open loop).**
+
+| 변형 | servo 예측 허들 clearance p10 (mm) | 접촉 순간 22 건 중 clear 가 된 수 (구현자 표기) | servo 예측 < 0 인 chunk | 경계 2 차 차분 p90 (rad/행²) | 방향 반전 비율 | CPU 중앙 (기준 ×) |
+|---|---|---|---|---|---|---|
+| base | −0.56 | 9 | 24 | 0.041 | 0.169 | 1 |
+| Q4 (QP 정확도만) | −1.03 | 9 | 25 | 0.040 | 0.153 | 1.02 |
+| A16q (A) | −0.49 | 9 | 24 | 0.040 | 0.153 | 1.91 |
+| A16qB20 (A + B) | **+2.94** | **15** | **14** | 0.046 | 0.219 | 1.93 |
+| A16qB20Cr1 (A + B + C) | +2.85 | **15** | 16 | **0.035** | **0.152** | 2.15 |
+
+- A 단독은 허들 지표를 거의 바꾸지 않는다. 구현자의 해석: open loop 라서 앞 chunk 의 이른 회피가 다음 시작 상태로 이어지지 않으므로 **A 의 효과는 온라인에서만 보일 것**이다 (검증은 §12-2).
+- B 가 접촉을 미리 보는 수를 9 → 15 로 올리고 servo 예측 허들 clearance p10 을 −0.5 → +2.9 mm 로 올린다. 대신 청크 경계가 조금 더 꺾인다. C 가 그 꺾임을 base 아래로 되돌리고 경계 속도 초과를 0 으로 만든다.
+- **파지 구간 표 (V9 의 교훈)**: 사과 앞 72 chunk 중 0.5° 넘게 움직인 chunk — A16q **2** · A16qB20 **27** · A16qB20Cr1 26. 손가락이 사과에서 멀어진 양 (outward) 최대: A16q 4.2 · B20 5.9 · B20Cr1 5.8 mm (p90 0.7–2.3 mm). V9 의 파지 손실 (closing outward > 2 mm 가 지속, 최대 24 mm) 보다 작지만 0 은 아니다 → 온라인 A+B 에서 G 를 V8 과 짝으로 확인해야 한다 (열린 위험 1).
+- 권장 값: H = 16 (24 는 지표가 같고 CPU 2.8×), gate 20 mm (CPU 합 1.87 → 1.68), eps 1e-4, B = 20 (50 은 허들이 조금 낫지만 파지 chunk outward > 2 mm 가 6 → 8), C relaxed 1° weight 0.01 (weight 0.1 이면 새 충돌 chunk 9, strict 는 파지 chunk 를 가장 많이 움직임).
+- 그림 (구현자 산출, docs/figures 아님): `outputs/impl/T43TA/fig/t43ta-{1-scene-carry,2-graph,3-table}.png`.
+
+#### 12-2. 온라인 라운드 (V8 과 짝, 허들 14 + 장애물 없음 5, snapshot benchmark `3ca1b21`)
+
+세 arm 모두 서버 로그에 해당 flag 확인 줄이 있다 (V11A: QP eps · lookahead · gate 20 mm, V11AB: + deflection rate 20, V11ABC: + servo accel relaxed ε = 1°). 연결 오류로 재실행한 시도: V11AB 6 (모든 chunk 연결 오류), V11ABC 2 (8287 서버 무응답, 같은 run ep1834 s18341).
+
+**V11A (A 단독, 2026-10-07 18:31).**
+
+| 항목 | V8 | **V11A** |
+|---|---|---|
+| H 14: S (기존) · G | 13 · 14 | 10 · 14 (V8 만 3: 1967 s19673 · 1982 s19823 · 1995 s19953, p 0.25) |
+| B 5: S · G | 5 · 5 | 4 · 4 |
+| H 14: S (CT) | 8 | 8 (V11A 만 2 · V8 만 2, p 1.0) |
+| 운반 중 사과–허들 접촉 run (최대 침투) | 5 (1.26 mm) | **2** (2.50 mm) |
+| release 뒤 손가락–허들 접촉 run (최대 침투) | 9 (5.80 mm) | **4** (2.20 mm) |
+| obstacle stop run | 10 | 6 |
+| HOLD chunk | 6 | 3 |
+| 허들 통과 때 **실제** 사과 바닥 – 막대 윗면 중앙 (mm, 최소) | 3.8 (−6.4) | **6.7 (−0.1)**, 짝 +5.1 mm (10 중 8 높음) |
+| release 뒤 손가락–허들 최소 거리 ±8 행 (실제, 중앙, mm) | −1.4 | **+3.4** |
+| 첫 closing 때 손끝–사과 거리 (V8 대비 짝 차이 중앙) | – | +1.33 mm (19 중 15 높음, p 0.012) |
+| TO 중앙 / p90 / 최대 (ms) | 69.9 / 103.1 / 758.4 | **625.0 / 1007.4 / 1901.8** |
+| client round trip 중앙 (ms) | 947.3 | 1727.6 |
+| run wall 중앙 (s) | 163 | 292 |
+| 꼬리 gate 가 열린 chunk 몫 | – | 0.555 (676 / 1219) |
+| 같은 라운드의 pod load 1 (run 평균의 중앙) | 14.6 | 60.0 |
+
+**V11AB (A + B, 2026-10-07 21:10).**
+
+| 항목 | V8 | V11A | **V11AB** |
+|---|---|---|---|
+| H 14: S (기존) · G | 13 · 14 | 10 · 14 | **12 · 14** (V8 만 2 · V11AB 만 1, p 1.0) |
+| B 5: S · G | 5 · 5 | 4 · 4 | **5 · 5** |
+| H 14: S (release 규칙) | 13 | 10 | 12 |
+| H 14: **S (CT)** | 8 | 8 | **12** (V11AB 만 5 · V8 만 1, p 0.219) |
+| 운반 중 사과–허들 접촉 run | 5 | 2 | **0** |
+| release 뒤 손가락–허들 접촉 run | 9 | 4 | **0** |
+| place 전 접촉 run (종류) | 5 (사과 5) | 2 (사과 2) | 1 (로봇 팔 link_right_arm_5, 0.36 mm) |
+| obstacle stop run | 10 | 6 | **1** |
+| HOLD chunk | 6 | 3 | 4 (finger 2 · held 2) |
+| 허들 통과 때 **실제** 사과 바닥 – 막대 윗면 중앙 (mm, 최소) | 3.8 (−6.4) | 6.7 (−0.1) | **13.6 (+7.1)** |
+| release 뒤 손가락–허들 최소 거리 ±8 행 (실제, 중앙, mm) | −1.4 | +3.4 | **+9.6** |
+| 허들 통과 손가락 – 허들 최소 ±8 행 (실제, 사과 든 구간, 중앙, mm) | 8.8 | 17.4 | 17.4 |
+| 경계 2 차 차분 중앙 (rad/행², H) | 0.0136 | 0.0115 | 0.0095 |
+| 방향 반전 비율 (H) | 0.207 | 0.204 | 0.194 |
+| closing chunk 중 outward > 2 mm | 10 / 49 | 19 / 80 | 16 / 80 |
+| TO 중앙 / p90 / 최대 (ms) | 69.9 / 103.1 / 758.4 | 625.0 / 1007.4 / 1901.8 | **526.1 / 817.1 / 1399.7** |
+| client round trip 중앙 / p90 (ms) | 947.3 / 1316.2 | 1727.6 / 2392.6 | 1536.2 / 1897.1 |
+| 꼬리 gate 가 열린 chunk 몫 | – | 0.555 | 0.534 (738 / 1381) |
+| pod load 1 (run 평균의 중앙) | 14.6 | 60.0 | 91.1 |
+
+- 남은 실패 2 run: 1967 s19672 (사과가 떨어짐), 1834 s18343 (로봇 팔 link_right_arm_5 접촉 0.36 mm 로 obstacle stop, 243 행).
+- 짝 p 값은 어느 비교도 0.05 를 넘는다 (n = 14). **방향** 만 일관된다: 접촉 포함 성공 8 → 8 → 12, 접촉이 있는 run 이 줄어든다.
+
+**V11ABC (A + B + C, 2026-10-07 22:40).**
+
+| 항목 | V8 | V11AB | **V11ABC** |
+|---|---|---|---|
+| H 14: S (기존) · G | 13 · 14 | 12 · 14 | **8 · 13** |
+| B 5: S · G | 5 · 5 | 5 · 5 | **3 · 4** |
+| 전체 19: S | 18 | 17 | **11** (V11AB 대비 V11AB 만 6 · V11ABC 만 0, **p 0.031**) |
+| H 14: S (release 규칙) | 13 | 12 | 7 |
+| H 14: **S (CT)** | 8 | 12 | **6** (V11AB 만 6 · V11ABC 만 0, **p 0.031**) |
+| 실패 단계 (S 가 어느 arm 에서 true 였다가 V11 에서 false 인 run 집계) | 낙하 1 | 낙하 1 · 접촉 1 | **낙하 5 · 파지 못 함 2 · 접촉 1** |
+| 운반 중 사과–허들 접촉 run · 로봇 팔 접촉 run | 5 · 0 | 0 · 1 | 1 (1.26 mm) · 2 (link_right_arm_4/5) |
+| release 뒤 손가락–허들 접촉 run | 9 | 0 | 0 |
+| obstacle stop run | 10 | 1 | 2 |
+| HOLD chunk (그중 held 행) | 6 (3) | 4 (2) | **19 (17)** — 전부 H, 18 은 운반 중 |
+| follow_to 거절 | 6 | 4 | 19 (`penetration` 17 · `worsens` 2), 실행 0 |
+| 허들 통과 때 실제 사과 바닥 – 막대 윗면 중앙 (mm, 최소, n) | 3.8 (−6.4, 13) | 13.6 (+7.1, 14) | 8.1 (−0.9, 9) |
+| 방향 반전 비율 (H) · 경계 속도 초과 chunk | 0.207 · 2 | 0.194 · 1 | 0.234 · 0 |
+| closing chunk 중 outward > 2 mm | 10 / 49 | 16 / 80 | 25 / 203 |
+| closing 최대 outward 중앙 (V8 대비 짝 차이) | – | +0.59 mm (p 0.060) | **+7.18 mm** (19 중 14 높음, p 0.0039) |
+| 첫 closing 때 손끝–사과 거리 (V8 대비 짝 차이 중앙) | – | +0.46 mm (p 0.11) | +0.99 mm (19 중 16 높음, p 0.0008) |
+| TO 중앙 / p90 / 최대 (ms) | 69.9 / 103.1 / 758.4 | 526.1 / 817.1 / 1399.7 | **322.0 / 1019.3 / 1784.1** |
+| client round trip 중앙 (ms) | 947.3 | 1536.2 | 1673.2 |
+| 꼬리 gate 가 열린 chunk 몫 | – | 0.534 | 0.452 |
+| pod load 1 (run 평균의 중앙) · run wall (s) | 14.6 · 163 | 91.1 · 302 | 90.4 · 328 |
+
+- V11ABC 의 C 기록 (1322 chunk): `servo_accel` 모드 relaxed 가 전 chunk 에 기록, 가속도 상한 초과 행이 있는 chunk 542, overshoot 1e-6 rad 초과 chunk 296 (최대 0.0439 rad), **경계 속도비가 1 을 넘은 chunk 0** (최대 0.66). 경계 속도 초과는 V8 2 · V11AB 1 이던 것이 0 이 됐다.
+- **낙하 5 run**: B 1967 s19672 · H 1807 s18071 · s18073 · 1967 s19672 · 1995 s19953. 파지 못 함 2 run: B · H 1982 s19822. 접촉 1 run: H 1834 s18343 (obstacle stop 252 행). ABC 의 obstacle stop 은 1834 s18341 (265 행) · s18343 (252 행).
+- B 1967 s19672 는 V11ABC 에서 `grasp_detach` 가 `held_slip` 로 t 200 에 났고 사과가 crate 위가 아니었다 (같은 run 이 V8 · V11A · V11AB 에서는 성공).
+- **왜 C 가 낙하를 늘렸는지는 이 기록으로 가리지 못했다.** CX 진단이 의뢰됐다 (§14).
+- 경계 2 차 차분 p90 은 V11AB 0.0452 → V11ABC 0.0400, V8 0.0432 이다. 짝 차이 (V11ABC − V11AB) 중앙은 +0.0009 rad (14 run 중 9 가 높음).
+
+그림: V11A [`crossing-scene`](figures/t43/t43v11a-crossing-scene.png) · [`graph`](figures/t43/t43v11a-graph.png) · [`pairs-table`](figures/t43/t43v11a-pairs-table.png). V11AB [`crossing-scene`](figures/t43/t43v11ab-crossing-scene.png) · [`graph`](figures/t43/t43v11ab-graph.png) · [`pairs-table`](figures/t43/t43v11ab-pairs-table.png). V11ABC [`crossing-scene`](figures/t43/t43v11abc-crossing-scene.png) · [`graph`](figures/t43/t43v11abc-graph.png) · [`pairs-table`](figures/t43/t43v11abc-pairs-table.png).
+
+![T43 V11ABC graph](figures/t43/t43v11abc-graph.png)
+
+**단계별 정리 (바꾼 것 · 해결 · 새 문제).**
+
+| 단계 | 바꾼 것 | 해결된 것 | 새로 드러난 문제 |
+|---|---|---|---|
+| **A** | 창 16 step, 꼬리는 장애물만, gate 20 mm, QP eps 1e-4 | 운반 중 사과 접촉 5 → 2 run, release 뒤 손가락 접촉 9 → 4 run (최대 침투 5.8 → 2.2 mm), obstacle stop 10 → 6, 실제 사과 바닥–막대 윗면 3.8 → 6.7 mm | 성공 (기존) 13 → 10. **TO 중앙 69.9 → 625.0 ms** |
+| **+B** | 편향 변화율 비용 `W = 20` | 접촉 포함 성공 8 → **12**, 운반 중 사과 접촉 0, release 뒤 손가락 접촉 0, obstacle stop 1, 실제 사과 바닥–막대 윗면 13.6 mm (최소 +7.1) | **TO 중앙 526.1 ms**, round trip 1536 ms. 남은 실패 2 run |
+| **+C** | 2 차 차분 상한 + 경계 속도 행 | 경계 속도 초과 chunk 0, 경계 가속도 p90 0.0452 → 0.0400 | 성공 12 → **8**, 접촉 포함 12 → 6 (p 0.031), 낙하 5 · HOLD 19 (held 17), 방향 반전 비율 0.194 → 0.234 |
+
+---
+
+### 13. 지금의 네 arm 비교 — V8 · V11A · V11AB · V11ABC (허들 14 run + 장애물 없음 5 run, 같은 (episode, seed) 짝)
+
+`T43V11ABC.verify.json` 한 파일에 네 arm 이 같은 코드 · 같은 집계로 들어 있다. 시간은 서로 다른 서버 세션이고 pod 부하가 다르다 (아래 §14).
+
+| 항목 | **V8** (기준) | **V11A** | **V11AB** | **V11ABC** |
+|---|---|---|---|---|
+| 추가한 것 | — | + A (창 16) | + B (편향 변화율) | + C (가속도 · 경계 속도) |
+| **H 14: S (기존)** | 13 | 10 | 12 | 8 |
+| H 14: G · P | 14 · 13 | 14 · 10 | 14 · 12 | 13 · 8 |
+| B 5: S | 5 | 4 | 5 | 3 |
+| 전체 19: S | 18 | 14 | 17 | 11 |
+| **H 14: S (release 규칙)** | 13 | 10 | 12 | 7 |
+| **H 14: S (접촉 포함, CT)** | 8 | 8 | **12** | 6 |
+| V8 대비 CT 짝 (arm 만 / V8 만, p) | — | 2 / 2, 1.0 | **5 / 1, 0.219** | 2 / 4, 0.69 |
+| place 전 접촉 run | 5 | 2 | 1 | 3 |
+| 운반 중 사과–허들 접촉 run (최대 침투 mm) | 5 (1.26) | 2 (2.50) | **0** | 1 (1.26) |
+| release 뒤 손가락–허들 접촉 run (최대 침투 mm) | 9 (5.80) | 4 (2.20) | **0** | **0** |
+| obstacle stop run | 10 | 6 | **1** | 2 |
+| HOLD chunk (held 행) | 6 (3) | 3 (0) | 4 (2) | **19 (17)** |
+| 허들 통과 실제 사과 바닥 – 막대 윗면 중앙 (mm) · n | 3.8 · 13 | 6.7 · 10 | **13.6 · 14** | 8.1 · 9 |
+| 허들 통과 실제 사과 바닥 – 막대 윗면 최소 (mm) | −6.4 | −0.1 | **+7.1** | −0.9 |
+| release 뒤 손가락–허들 최소 거리 ±8 행 (실제 중앙 mm · 최소 mm) | −1.4 · −9.5 | +3.4 · −1.5 | +9.6 · +5.7 | +9.3 · +6.5 |
+| closing 중 outward > 2 mm chunk / closing chunk | 10 / 49 | 19 / 80 | 16 / 80 | 25 / 203 |
+| 방향 반전 비율 (H) | 0.207 | 0.204 | 0.194 | 0.234 |
+| 경계 속도 > max chunk (H) | 2 | 0 | 1 | 0 |
+| **TO 중앙 / p90 (ms)** | **69.9 / 103.1** | 625.0 / 1007.4 | 526.1 / 817.1 | 322.0 / 1019.3 |
+| client round trip 중앙 (ms) · 533.3 ms 초과 chunk 몫 | 947.3 · 1.0 | 1727.6 · 1.0 | 1536.2 · 1.0 | 1673.2 · 1.0 |
+| pod load 1 (run 평균의 중앙) | 14.6 | 60.0 | 91.1 | 90.4 |
+
+출처: `T43V11ABC.verify.json` (`totals_old_rule` · `H_totals_by_rule` · `H_pairs_z4_ct_rule` · `contacts_arms` · `finger_hurdle_contacts_by_phase` · `crossing_clearance` · `crossing_stats_xm` · `hold` · `sharpness` · `grasp_phase` · `timing` · `lookahead_gate`). 허들 통과 지표는 H 단계만 있다.
+
+- **V11AB 가 접촉 포함 성공이 가장 많다 (12 / 14; 기존 규칙 성공은 V8 이 13 으로 가장 많다)** 이고 접촉이 거의 없다 (obstacle stop 1). 이 차이의 통계적 근거는 약하다 (V8 대비 p 0.219, n = 14).
+- **V11ABC 는 V11AB 보다 나빠졌다** (접촉 포함 성공 12 → 6, 0 / 6, p 0.031; 전체 S 17 → 11, 0 / 6, p 0.031).
+- **TO 시간은 어느 V11 arm 도 V8 의 4.6–8.9 배** 이다 (중앙 기준). 모든 arm 에서 round trip 이 533.3 ms 를 넘는다. 단 V8 과 V11 라운드는 pod load 가 다르다 (§14).
+
+![네 arm 비교 — V11ABC 짝 표](figures/t43/t43v11abc-pairs-table.png)
+
+---
+
+### 14. 사용자 판정 · 철회, 아직 모르는 것, 되돌아올 지점, 산출물
+
+#### 14-1. 사용자 판정과 철회 (시각순)
+
+| 시각 | 판정 | 어디에 반영됐나 |
+|---|---|---|
+| 2026-10-06 | "축소하세요": blind 라운드는 V5B 대 V5S 14 짝만 | §2 |
+| 2026-10-06 03:20 | blind 종료 (V5B 12 대 V5S 10, p 0.625). place 진단 (Y1 · Y2) | §3 |
+| 2026-10-06 04:30 | held 구 크기를 그림으로 보고 판단 · HOLD 탈출 제안 요청 · **"손에서 떨어지면 attach 를 해제하고 그때부터 사과는 로봇과 연결되지 않는다"** · release 재채점 · E0 release 측정 | §3 · §4 |
+| 2026-10-06 07:10 | 구 크기 **(a)** (반지름 상한 + 중심 제한), HOLD 원칙: crate 는 장애물 그대로, TO 의 회피 궤적을 따르도록 유도, held 크기가 과하지 않으면 place 가 되어야 함 | §5 |
+| 2026-10-06 08:10 | **subtask gate on** ("gate 켜고 해봅시다"), follow-TO 켜기 | §5 |
+| 2026-10-06 09:10 | 손가락 구 해석 확인 · **성공 판정에 접촉 포함** (확정) | §6 |
+| 2026-10-06 10:00 | 손가락 구 = **B** (한 그리퍼마다 양쪽 손가락을 각각 구로 감싼다) | §7 |
+| 2026-10-06 11:10 | V8 · 진단 Opus verifier · 구 수는 TO 시간 보고 결정 | §7 |
+| 2026-10-06 12:40 | TK 진단 (c), gate on 유지 (막대 admissibility 추가 작업은 하지 않음), **finger-cover 는 기본 구성에 유지, 구 수 조정은 추후** | §7 · §8 |
+| 2026-10-07 | 가림 가설 · 허들 통과 궤적 분석 요청 (OC · HX), V9 진행과 TK 정정 (왼손 손가락 이름), 쥔 사과 행 분류 · margin 에 동의 (HM) | §8 · §9 · §10 |
+| 2026-10-07 | servo 파지 붕괴 진단 요청 (SV): "어렵거나 불필요하면 servo model 을 켜지 않은 상태로" | §9 |
+| 2026-10-07 | **철회: servo-after-placed** — "PLACED 개념은 pick-and-place 전용 — 모든 시나리오에 적용 가능해야 함" | §9 |
+| 2026-10-07 | V10 (HM) 와 XM 병행, 이어서 **V10 (HM) 보류** — "TO 가 투박한 궤적을 부드럽게 보정하고 속도 · 가속도 제한을 적용하는 것이 먼저 — 지금 margin 을 크게 조절하는 것은 중요하지 않다" | §10 · §11 |
+| 2026-10-07 | **TO 경로 모양 A → A+B → A+B+C** 순서, 오프라인 후 좋으면 온라인 | §12 |
+| 2026-10-09 | **V11AB 채택 전 시험** — (1) TO 연산 시간이 너무 길다, 지금대로면 사용할 수 없다 → 줄일 방안 (2) 바나나 · 배 · 사과 · 오렌지 모두 (3) 충돌 회피 모듈 사용 / 미사용 비교 영상. C 는 (b) 진단. 결과 기록 | 아래 |
+
+2026-10-09 의 의뢰 (T43.task.md): **TP** (implementer) = V11AB 의 행동은 유지한 채 TO p90 ≤ 100 ms (V8 수준) 와 왕복이 533.3 ms 안에 들어갈 경로를 제시 (같은 기계 · 같은 부하의 통제 측정, 꼬리 coarse 화 · 꼬리 구 수 축소 · GPU batch · warm start · gate 강화 후보). **CX** (verifier) = V11ABC 의 낙하 5 · 파지 실패 2 run 을 V11AB 같은 ep:seed 와 대조해 C 가 낙하를 늘린 원인을 본다. **SC** (이 기록). TP 뒤에 과일 4 종 라운드 (사과 · 오렌지 · 배 · 바나나; 바나나는 T42 library 에서 장애물 없이도 성공 episode 가 없어 사용자 판정이 필요하다고 task 문서에 적혀 있다) 와 충돌 회피 사용 / 미사용 비교 영상이 대기한다.
+
+#### 14-2. 아직 모르는 것
+
+| 항목 | 상태 |
+|---|---|
+| **V11ABC 에서 C 가 낙하를 늘린 원인** | **판정 불가.** 낙하 5 · 파지 못 함 2 · held HOLD 17 의 첫 갈림 chunk · C 행 active 여부는 측정하지 않았다. CX 진행 중 (재측정 대기 20) |
+| **TO 시간의 원인별 분해와 같은 부하 비교** | V8 라운드 load 1 중앙 14.6, V11 라운드 60.0 / 91.1 / 90.4. V11 세 arm 안에서는 load 와 run 별 TO 중앙의 Spearman ρ −0.047 (p 0.73, 55 run) 이지만, V8 까지 합치면 ρ 0.548 (p 4.4e-7, 74 run). V11ABC 라운드는 cpu throttle 이 전체 period 의 22.7 %. **이 기록으로 TO 연산량 증가와 부하를 가르지 못했다.** TP 의 통제 측정 대기 (재측정 대기 21) |
+| 과일 4 종 (사과 · 오렌지 · 배 · 바나나) | 측정 안 함 (TP 뒤, 재측정 대기 22) |
+| 충돌 회피 사용 / 미사용 비교 영상 | 만들지 않음 (재측정 대기 22) |
+| 표본 크기 | 허들 14 + 장애물 없음 5. V11AB 의 CT 성공 12 대 8 은 p 0.219, V11ABC 대 V11AB 만 p 0.031 이다 |
+| V11AB 의 남은 실패 2 run (1967 s19672 낙하 · 1834 s18343 팔 접촉) | 원인을 가르지 않았다 |
+| `follow_to` | V7g · V8 · V11A · V11AB · V11ABC 에서 한 번도 실행되지 않았다 (실행은 V9 3 · V10 1 뿐). 거절 사유는 `penetration` · `worsens` · `hold_kinds` 등이다 |
+| servo 모델을 TO 에 쓸 때 받침면 path 행 | 고치지 않았다 (V9 의 파지 붕괴 원인으로 측정된 것) |
+| A 의 오프라인 대 온라인 차이 | 구현자는 오프라인에서 A 단독 이득이 거의 없다고 보고했는데 (A16q 의 접촉 clear 9 = base), 온라인 V11A 에서는 접촉 run 이 줄었다 (5 → 2, 9 → 4). 이 차이는 오프라인이 open loop 인 탓일 수 있다고 구현자가 적었으나 검증하지 않았다 |
+| 첫 chunk JIT · SQP 반복 수 | 인용하지 않았다 (서버 세션이 다르고 wall-clock 예산 의존) |
+
+#### 14-3. 되돌아올 지점 — 고르지 않은 선택지
+
+| 안 고른 것 | 왜 안 골랐나 | 되돌아올 신호 (**scribe 가 위 기록에서 도출한 것이며 사용자 판정이 아니다**) |
+|---|---|---|
+| servo 모델을 TO 에 직접 (V9) | 파지가 5/14 로 무너졌다 (받침면 path 행) | 받침면 path 행의 처리를 고친 뒤. 단 "PLACED 뒤에만" 은 사용자가 철회 |
+| held 행에 obstacle margin (HM, V10) | 성공 13 → 10 · HOLD 6 → 52 후 사용자 보류 | TA 이후에도 쥔 사과 접촉이 남을 때. V11AB 에서 운반 중 사과 접촉은 0 run |
+| 속도 비례 margin (XM k = 0.5 / 1.0) | closing 에 새 HOLD 후보 26 / 99 · 38 / 99 | margin 을 키울 일이 다시 생길 때 |
+| C 를 strict · weight 0.1 로 | 구현자 오프라인: strict 가 파지 chunk 를 가장 많이 움직임, weight 0.1 은 새 충돌 chunk 9 | C 를 다시 켠다면 CX 결과를 본 뒤 |
+| H = 24 | 오프라인에서 지표가 같고 CPU 2.8× | 실시간 문제가 풀린 뒤 |
+| finger-cover 구 수 줄이기 (ilp 4 mm 등) | 사용자가 "추후" 로 미룸 | TO 시간 단축 (TP) 에서 후보로 다시 나올 때 |
+| 정책-blind 장애물 모드 | 사용자가 닫음 (V5B 12 대 V5S 10, p 0.625) | — |
+
+#### 14-4. 이 STEP 의 산출물
+
+- **코드 (benchmark repo / 루트 repo 순)**: `72ed927` (config 왕복 수정), Z3 `cf6b410` / `fb841c0`, Z6 `f2f335b` / `0811598`, FC `786cf1b` / `53a9c8f`, FR `a297155` / `c908895`, HM `308ddfd` / `2add93b`, TA `3ca1b21` / `331273f`. 전부 flag 기본 off · off 비트 동일.
+- **측정**: `handoff/T43W` · `Y` · `Z` · `Z3V` · `CT` · `V7g` · `GD` · `V8` · `DX` · `TK` · `OC` · `HX` · `V9` · `SV` · `V10` · `XM` · `V11A` · `V11AB` · `V11ABC` `.verify.json`. 구현: `handoff/T43Z3` · `Z6` · `FC` · `FR` · `HM` · `TA` `.impl.md`. 설계 · 판정: `handoff/T43.task.md`.
+- **figure**: `figures/t43/` — `t43w-*` · `t43y-*` · `t43z-*` · `t43z3v-*` · `t43z5-*` · `t43ct-*` · `t43v7g-*` · `t43gd-*` · `t43v8-*` · `t43dx-*` · `t43tk-*` · `t43oc-*` · `t43hx-*` · `t43v9-*` · `t43sv-*` · `t43v10-*` · `t43xm-*` · `t43v11a-*` · `t43v11ab-*` · `t43v11abc-*`. 각각 `.json` sidecar 가 있다.
+- **영상**: `outputs/verify/T43/gate_demo/gd_{1968_s19683,1995_s19953,1925_s19251}.mp4` (gate off 대 on).
+

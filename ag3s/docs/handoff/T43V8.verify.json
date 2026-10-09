@@ -1,0 +1,3128 @@
+{
+ "_comment": "ag3s-verifier T43 V8. Numbers and paths only; tables in outputs/verify/T43/V8/{agg,ct,extra}.json.",
+ "step": "T43V8",
+ "date": "2026-10-06",
+ "runs": [
+  {
+   "id": "V8",
+   "command": "outputs/verify/T43/V8/p/launch_v8.sh (2 chains, ports 8286 / 8287, EST_GB 28)",
+   "venv": ".venv-openpi-live",
+   "server_flags": "V7g flags (T43/V7g/p/start_server.sh) + --finger-cover both (overflow default 2.5 mm)",
+   "runs_dir": "outputs/verify/T43/V8/runs/V8",
+   "n_runs": 19,
+   "n_done": 19,
+   "n_retries": 0,
+   "chain_rc": {
+    "E_H": 0,
+    "E_B": 0,
+    "F_H": 0
+   },
+   "chain_rc_lines": [
+    "E V8H rc=0 2026-10-06T10:51:39+00:00",
+    "E V8B rc=0 2026-10-06T11:13:18+00:00",
+    "F V8H rc=0 2026-10-06T10:55:31+00:00"
+   ],
+   "refusals": 0,
+   "failed_dirs": [],
+   "raw_output": "outputs/verify/T43/V8/runs/V8/chain_8286.log, chain_8287.log, runs/chainE.out, chainF.out, launch.out",
+   "servers": {
+    "server_8286_20261006T102939": {
+     "gpu_total_used_peak_mib": 35924,
+     "gpu_used_before_mib": 0,
+     "cmdline": "k_xla_retry_20260923/29999 --model-xml /mnt/dev/work-t43v8/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml --port 8286 --esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links gripper --target-field-policy exclude-authorized --esdf-margin 0 --no-self-collision --capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32 --obstacle-margin 0.010 --held-body-cover --closing-keep-geometry --latched-identity-hold --supported-max-bottom-mm 60 --held-slip-detach --held-cover-cap-mm 10 --hold-follow-to 3 --finger-cover both --record-constraints /mnt/dev/work/outputs/verify/T43/V8/runs/V8/server_8286_20261006T102939/server_constraints ",
+     "log_gate_on": true,
+     "log_finger_cover_line": "WARNING:root:constraint finger cover (T43 FC): 구 122 → 270 — 손가락마다 따로 collision mesh 전부를 담는 몸통 구 (넘침 ≤ 2.5 mm, 손 both; 손가락 사이는 비어 있다): ee_finger_l1 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm), ee_finger_l2 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm",
+     "log_identity_line": "AG3S identity (T43 T fix 3): closing_keep_geometry=True, held_cover_cap=0.01, held_slip_detach=True, hold_follow_to=3, latched_identity_hold=True, supported_max_bottom=0.06",
+     "log_autotune_off": true,
+     "log_obstacle_margin_10": true,
+     "n_constraint_spheres_in_records": [
+      270
+     ]
+    },
+    "server_8286_20261006T105144": {
+     "gpu_total_used_peak_mib": 35852,
+     "gpu_used_before_mib": 17930,
+     "cmdline": "k_xla_retry_20260923/29999 --model-xml /mnt/dev/work-t43v8/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml --port 8286 --esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links gripper --target-field-policy exclude-authorized --esdf-margin 0 --no-self-collision --capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32 --obstacle-margin 0.010 --held-body-cover --closing-keep-geometry --latched-identity-hold --supported-max-bottom-mm 60 --held-slip-detach --held-cover-cap-mm 10 --hold-follow-to 3 --finger-cover both --record-constraints /mnt/dev/work/outputs/verify/T43/V8/runs/V8/server_8286_20261006T105144/server_constraints ",
+     "log_gate_on": true,
+     "log_finger_cover_line": "WARNING:root:constraint finger cover (T43 FC): 구 122 → 270 — 손가락마다 따로 collision mesh 전부를 담는 몸통 구 (넘침 ≤ 2.5 mm, 손 both; 손가락 사이는 비어 있다): ee_finger_l1 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm), ee_finger_l2 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm",
+     "log_identity_line": "AG3S identity (T43 T fix 3): closing_keep_geometry=True, held_cover_cap=0.01, held_slip_detach=True, hold_follow_to=3, latched_identity_hold=True, supported_max_bottom=0.06",
+     "log_autotune_off": true,
+     "log_obstacle_margin_10": true,
+     "n_constraint_spheres_in_records": [
+      270
+     ]
+    },
+    "server_8287_20261006T103339": {
+     "gpu_total_used_peak_mib": 35924,
+     "gpu_used_before_mib": 17922,
+     "cmdline": "k_xla_retry_20260923/29999 --model-xml /mnt/dev/work-t43v8/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml --port 8287 --esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links gripper --target-field-policy exclude-authorized --esdf-margin 0 --no-self-collision --capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32 --obstacle-margin 0.010 --held-body-cover --closing-keep-geometry --latched-identity-hold --supported-max-bottom-mm 60 --held-slip-detach --held-cover-cap-mm 10 --hold-follow-to 3 --finger-cover both --record-constraints /mnt/dev/work/outputs/verify/T43/V8/runs/V8/server_8287_20261006T103339/server_constraints ",
+     "log_gate_on": true,
+     "log_finger_cover_line": "WARNING:root:constraint finger cover (T43 FC): 구 122 → 270 — 손가락마다 따로 collision mesh 전부를 담는 몸통 구 (넘침 ≤ 2.5 mm, 손 both; 손가락 사이는 비어 있다): ee_finger_l1 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm), ee_finger_l2 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm",
+     "log_identity_line": "AG3S identity (T43 T fix 3): closing_keep_geometry=True, held_cover_cap=0.01, held_slip_detach=True, hold_follow_to=3, latched_identity_hold=True, supported_max_bottom=0.06",
+     "log_autotune_off": true,
+     "log_obstacle_margin_10": true,
+     "n_constraint_spheres_in_records": [
+      270
+     ]
+    }
+   },
+   "chains": {
+    "chain_8286.log": {
+     "n_end_lines": 12,
+     "n_attempt2": 0,
+     "refused": [],
+     "died": [],
+     "code_md5_equal": 2,
+     "import_ok": 2,
+     "start_guard_ok": [
+      "start guard ok gpu_used_mib=0 used+est_gb=28 working_set=21638934528 youngest_server_s=none 2026-10-06T10:29:45+00:00",
+      "start guard ok gpu_used_mib=17930 used+est_gb=46 working_set=42637049856 youngest_server_s=1083 2026-10-06T10:51:48+00:00"
+     ]
+    },
+    "chain_8287.log": {
+     "n_end_lines": 7,
+     "n_attempt2": 0,
+     "refused": [],
+     "died": [],
+     "code_md5_equal": 1,
+     "import_ok": 1,
+     "start_guard_ok": [
+      "start guard ok gpu_used_mib=17922 used+est_gb=46 working_set=29807169536 youngest_server_s=239 2026-10-06T10:33:44+00:00"
+     ]
+    }
+   },
+   "load_samples": "outputs/verify/T43/V8/raw/load_samples.txt",
+   "gate_on_and_finger_cover_check": {
+    "enforced_in": "p/run_chain.sh (REFUSED otherwise)",
+    "gate_on_log_lines": {
+     "server_8286_20261006T102939": true,
+     "server_8286_20261006T105144": true,
+     "server_8287_20261006T103339": true
+    },
+    "finger_cover_log_lines": {
+     "server_8286_20261006T102939": "WARNING:root:constraint finger cover (T43 FC): 구 122 → 270 — 손가락마다 따로 collision mesh 전부를 담는 몸통 구 (넘침 ≤ 2.5 mm, 손 both; 손가락 사이는 비어 있다): ee_finger_l1 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm), ee_finger_l2 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm",
+     "server_8286_20261006T105144": "WARNING:root:constraint finger cover (T43 FC): 구 122 → 270 — 손가락마다 따로 collision mesh 전부를 담는 몸통 구 (넘침 ≤ 2.5 mm, 손 both; 손가락 사이는 비어 있다): ee_finger_l1 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm), ee_finger_l2 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm",
+     "server_8287_20261006T103339": "WARNING:root:constraint finger cover (T43 FC): 구 122 → 270 — 손가락마다 따로 collision mesh 전부를 담는 몸통 구 (넘침 ≤ 2.5 mm, 손 both; 손가락 사이는 비어 있다): ee_finger_l1 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm), ee_finger_l2 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm"
+    },
+    "n_constraint_spheres_in_records": {
+     "server_8286_20261006T102939": [
+      270
+     ],
+     "server_8286_20261006T105144": [
+      270
+     ],
+     "server_8287_20261006T103339": [
+      270
+     ]
+    }
+   }
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "786cf1b",
+  "snapshot": "/mnt/dev/work-t43v8 (outputs/verify/T43/V8/snapshot.txt)",
+  "code_md5_baseline": "outputs/verify/T43/V8/p/code_md5_v8.txt (405 lines, == at every chain preflight)",
+  "diff_vs_work_t43v7_py": [
+   "ag3s/experiments/reports/grounding_report.py",
+   "ag3s/experiments/sources/gripper_cover.py",
+   "ag3s/robot_models/urdf_sphere_chain.py",
+   "trajopt/serve_safe.py"
+  ],
+  "pi05_trees": "diff -rq vs /mnt/dev/work-t43w3/pi05_TO_hybrid empty",
+  "with_overrides_collision_backend": "esdf (outputs/verify/T43/V8/with_overrides_check.txt)"
+ },
+ "baseline_check": {
+  "matched": null,
+  "note": "regression-baseline (.venv-ag3s esdf_rollout) not run (.venv-ag3s excluded). Guards run: code md5 == baseline, import check under snapshot, autotune off, esdf_stats after every run, with_overrides collision_backend esdf, server log gate ON + finger cover 122 -> 270."
+ },
+ "numbers": {
+  "runs": {
+   "n_done": 19,
+   "H": 14,
+   "B": 5,
+   "n_control_lt_600": {
+    "V8": {
+     "V8_ep1807_s18071/H": 315,
+     "V8_ep1807_s18073/H": 271,
+     "V8_ep1834_s18341/H": 250,
+     "V8_ep1925_s19251/H": 280,
+     "V8_ep1925_s19253/H": 280,
+     "V8_ep1967_s19672/H": 310,
+     "V8_ep1968_s19681/H": 289,
+     "V8_ep1982_s19823/H": 291,
+     "V8_ep1995_s19952/H": 292,
+     "V8_ep1995_s19953/H": 287
+    },
+    "V7g": {
+     "V7g_ep1807_s18071/H": 262,
+     "V7g_ep1807_s18073/H": 266,
+     "V7g_ep1834_s18341/H": 238,
+     "V7g_ep1925_s19251/H": 271,
+     "V7g_ep1967_s19672/H": 467,
+     "V7g_ep1967_s19673/H": 472,
+     "V7g_ep1982_s19822/H": 276,
+     "V7g_ep1982_s19823/H": 289
+    }
+   },
+   "wall_s_median": {
+    "V8": 163.0,
+    "V7g": 230.0
+   }
+  },
+  "sgp_old_rule_by_stage": {
+   "V7g": {
+    "H": {
+     "n": 14,
+     "S": 12,
+     "G": 12,
+     "P": 12
+    },
+    "B": {
+     "n": 5,
+     "S": 4,
+     "G": 4,
+     "P": 4
+    }
+   },
+   "V8": {
+    "H": {
+     "n": 14,
+     "S": 13,
+     "G": 14,
+     "P": 13
+    },
+    "B": {
+     "n": 5,
+     "S": 5,
+     "G": 5,
+     "P": 5
+    }
+   }
+  },
+  "pairs_old_rule": {
+   "H": {
+    "n_pairs": 14,
+    "success": {
+     "V8_total": 13,
+     "V7g_total": 12,
+     "both": 11,
+     "V8_only": 2,
+     "V7g_only": 1,
+     "neither": 0,
+     "mcnemar_exact_p": 1.0,
+     "V8_only_keys": [
+      "H:1967_s19672",
+      "H:1967_s19673"
+     ],
+     "V7g_only_keys": [
+      "H:1982_s19822"
+     ]
+    },
+    "grasp": {
+     "V8_total": 14,
+     "V7g_total": 12,
+     "both": 12,
+     "V8_only": 2,
+     "V7g_only": 0,
+     "neither": 0,
+     "mcnemar_exact_p": 0.5,
+     "V8_only_keys": [
+      "H:1967_s19672",
+      "H:1967_s19673"
+     ],
+     "V7g_only_keys": []
+    },
+    "place": {
+     "V8_total": 13,
+     "V7g_total": 12,
+     "both": 11,
+     "V8_only": 2,
+     "V7g_only": 1,
+     "neither": 0,
+     "mcnemar_exact_p": 1.0,
+     "V8_only_keys": [
+      "H:1967_s19672",
+      "H:1967_s19673"
+     ],
+     "V7g_only_keys": [
+      "H:1982_s19822"
+     ]
+    }
+   },
+   "B": {
+    "n_pairs": 5,
+    "success": {
+     "V8_total": 5,
+     "V7g_total": 4,
+     "both": 4,
+     "V8_only": 1,
+     "V7g_only": 0,
+     "neither": 0,
+     "mcnemar_exact_p": 1.0,
+     "V8_only_keys": [
+      "B:1967_s19672"
+     ],
+     "V7g_only_keys": []
+    },
+    "grasp": {
+     "V8_total": 5,
+     "V7g_total": 4,
+     "both": 4,
+     "V8_only": 1,
+     "V7g_only": 0,
+     "neither": 0,
+     "mcnemar_exact_p": 1.0,
+     "V8_only_keys": [
+      "B:1967_s19672"
+     ],
+     "V7g_only_keys": []
+    },
+    "place": {
+     "V8_total": 5,
+     "V7g_total": 4,
+     "both": 4,
+     "V8_only": 1,
+     "V7g_only": 0,
+     "neither": 0,
+     "mcnemar_exact_p": 1.0,
+     "V8_only_keys": [
+      "B:1967_s19672"
+     ],
+     "V7g_only_keys": []
+    }
+   },
+   "ALL": {
+    "n_pairs": 19,
+    "success": {
+     "V8_total": 18,
+     "V7g_total": 16,
+     "both": 15,
+     "V8_only": 3,
+     "V7g_only": 1,
+     "neither": 0,
+     "mcnemar_exact_p": 0.625,
+     "V8_only_keys": [
+      "B:1967_s19672",
+      "H:1967_s19672",
+      "H:1967_s19673"
+     ],
+     "V7g_only_keys": [
+      "H:1982_s19822"
+     ]
+    },
+    "grasp": {
+     "V8_total": 19,
+     "V7g_total": 16,
+     "both": 16,
+     "V8_only": 3,
+     "V7g_only": 0,
+     "neither": 0,
+     "mcnemar_exact_p": 0.25,
+     "V8_only_keys": [
+      "B:1967_s19672",
+      "H:1967_s19672",
+      "H:1967_s19673"
+     ],
+     "V7g_only_keys": []
+    },
+    "place": {
+     "V8_total": 18,
+     "V7g_total": 16,
+     "both": 15,
+     "V8_only": 3,
+     "V7g_only": 1,
+     "neither": 0,
+     "mcnemar_exact_p": 0.625,
+     "V8_only_keys": [
+      "B:1967_s19672",
+      "H:1967_s19672",
+      "H:1967_s19673"
+     ],
+     "V7g_only_keys": [
+      "H:1982_s19822"
+     ]
+    }
+   }
+  },
+  "H_totals_by_rule": {
+   "V7g": {
+    "success": 12,
+    "grasp": 12,
+    "place": 12,
+    "released": 12,
+    "place_rel": 12,
+    "success_rel": 12,
+    "success_ct": 9
+   },
+   "V8": {
+    "success": 13,
+    "grasp": 14,
+    "place": 13,
+    "released": 14,
+    "place_rel": 13,
+    "success_rel": 13,
+    "success_ct": 8
+   }
+  },
+  "H_pairs_z4_and_ct": {
+   "grasp": {
+    "n_pairs": 14,
+    "V8_total": 14,
+    "V7g_total": 12,
+    "both": 12,
+    "V8_only": 2,
+    "V7g_only": 0,
+    "neither": 0,
+    "mcnemar_exact_p": 0.5,
+    "V8_only_keys": [
+     "1967_s19672",
+     "1967_s19673"
+    ],
+    "V7g_only_keys": []
+   },
+   "place_rel": {
+    "n_pairs": 14,
+    "V8_total": 13,
+    "V7g_total": 12,
+    "both": 11,
+    "V8_only": 2,
+    "V7g_only": 1,
+    "neither": 0,
+    "mcnemar_exact_p": 1.0,
+    "V8_only_keys": [
+     "1967_s19672",
+     "1967_s19673"
+    ],
+    "V7g_only_keys": [
+     "1982_s19822"
+    ]
+   },
+   "released": {
+    "n_pairs": 14,
+    "V8_total": 14,
+    "V7g_total": 12,
+    "both": 12,
+    "V8_only": 2,
+    "V7g_only": 0,
+    "neither": 0,
+    "mcnemar_exact_p": 0.5,
+    "V8_only_keys": [
+     "1967_s19672",
+     "1967_s19673"
+    ],
+    "V7g_only_keys": []
+   },
+   "success_rel": {
+    "n_pairs": 14,
+    "V8_total": 13,
+    "V7g_total": 12,
+    "both": 11,
+    "V8_only": 2,
+    "V7g_only": 1,
+    "neither": 0,
+    "mcnemar_exact_p": 1.0,
+    "V8_only_keys": [
+     "1967_s19672",
+     "1967_s19673"
+    ],
+    "V7g_only_keys": [
+     "1982_s19822"
+    ]
+   },
+   "success_ct": {
+    "n_pairs": 14,
+    "V8_total": 8,
+    "V7g_total": 9,
+    "both": 5,
+    "V8_only": 3,
+    "V7g_only": 4,
+    "neither": 2,
+    "mcnemar_exact_p": 1.0,
+    "V8_only_keys": [
+     "1925_s19253",
+     "1967_s19673",
+     "1968_s19681"
+    ],
+    "V7g_only_keys": [
+     "1807_s18071",
+     "1807_s18073",
+     "1968_s19683",
+     "1982_s19823"
+    ]
+   }
+  },
+  "ct_arms": {
+   "V7g": {
+    "n": 14,
+    "S_old": 12,
+    "S_release": 12,
+    "S_contact": 9,
+    "pre_release_contact_runs": 5,
+    "post_release_contact_runs": 6,
+    "obstacle_stop_runs": 8,
+    "any_contact_runs": 10,
+    "pre_release_contact_by_kind": {
+     "apple": 3,
+     "hand": 2
+    },
+    "flip_rel_to_ct": [
+     "V7g/H/V7g_ep1925_s19253",
+     "V7g/H/V7g_ep1968_s19681",
+     "V7g/H/V7g_ep1982_s19822"
+    ],
+    "post_release_contact_keys": [
+     "V7g/H/V7g_ep1807_s18071",
+     "V7g/H/V7g_ep1807_s18073",
+     "V7g/H/V7g_ep1834_s18341",
+     "V7g/H/V7g_ep1925_s19251",
+     "V7g/H/V7g_ep1982_s19822",
+     "V7g/H/V7g_ep1982_s19823"
+    ],
+    "success_rel_with_post_release_contact": 6,
+    "success_ct_runs": [
+     "V7g/H/V7g_ep1807_s18071",
+     "V7g/H/V7g_ep1807_s18073",
+     "V7g/H/V7g_ep1834_s18341",
+     "V7g/H/V7g_ep1834_s18343",
+     "V7g/H/V7g_ep1925_s19251",
+     "V7g/H/V7g_ep1968_s19683",
+     "V7g/H/V7g_ep1982_s19823",
+     "V7g/H/V7g_ep1995_s19952",
+     "V7g/H/V7g_ep1995_s19953"
+    ]
+   },
+   "V8": {
+    "n": 14,
+    "S_old": 13,
+    "S_release": 13,
+    "S_contact": 8,
+    "pre_release_contact_runs": 5,
+    "post_release_contact_runs": 10,
+    "obstacle_stop_runs": 10,
+    "any_contact_runs": 11,
+    "pre_release_contact_by_kind": {
+     "apple": 5
+    },
+    "flip_rel_to_ct": [
+     "V8/H/V8_ep1807_s18071",
+     "V8/H/V8_ep1807_s18073",
+     "V8/H/V8_ep1967_s19672",
+     "V8/H/V8_ep1968_s19683",
+     "V8/H/V8_ep1982_s19823"
+    ],
+    "post_release_contact_keys": [
+     "V8/H/V8_ep1807_s18071",
+     "V8/H/V8_ep1807_s18073",
+     "V8/H/V8_ep1834_s18341",
+     "V8/H/V8_ep1925_s19251",
+     "V8/H/V8_ep1925_s19253",
+     "V8/H/V8_ep1967_s19672",
+     "V8/H/V8_ep1968_s19681",
+     "V8/H/V8_ep1982_s19823",
+     "V8/H/V8_ep1995_s19952",
+     "V8/H/V8_ep1995_s19953"
+    ],
+    "success_rel_with_post_release_contact": 10,
+    "success_ct_runs": [
+     "V8/H/V8_ep1834_s18341",
+     "V8/H/V8_ep1834_s18343",
+     "V8/H/V8_ep1925_s19251",
+     "V8/H/V8_ep1925_s19253",
+     "V8/H/V8_ep1967_s19673",
+     "V8/H/V8_ep1968_s19681",
+     "V8/H/V8_ep1995_s19952",
+     "V8/H/V8_ep1995_s19953"
+    ]
+   }
+  },
+  "ct_pairs": {
+   "V8_vs_V7g": {
+    "success": {
+     "n_pairs": 14,
+     "both": 11,
+     "A_only": 2,
+     "B_only": 1,
+     "neither": 0,
+     "A_total": 13,
+     "B_total": 12,
+     "mcnemar_exact_p": 1.0,
+     "A_only_keys": [
+      "1967_s19672",
+      "1967_s19673"
+     ],
+     "B_only_keys": [
+      "1982_s19822"
+     ]
+    },
+    "success_rel": {
+     "n_pairs": 14,
+     "both": 11,
+     "A_only": 2,
+     "B_only": 1,
+     "neither": 0,
+     "A_total": 13,
+     "B_total": 12,
+     "mcnemar_exact_p": 1.0,
+     "A_only_keys": [
+      "1967_s19672",
+      "1967_s19673"
+     ],
+     "B_only_keys": [
+      "1982_s19822"
+     ]
+    },
+    "success_ct": {
+     "n_pairs": 14,
+     "both": 5,
+     "A_only": 3,
+     "B_only": 4,
+     "neither": 2,
+     "A_total": 8,
+     "B_total": 9,
+     "mcnemar_exact_p": 1.0,
+     "A_only_keys": [
+      "1925_s19253",
+      "1967_s19673",
+      "1968_s19681"
+     ],
+     "B_only_keys": [
+      "1807_s18071",
+      "1807_s18073",
+      "1968_s19683",
+      "1982_s19823"
+     ]
+    }
+   }
+  },
+  "ct_crosscheck_counts": {
+   "n": 28,
+   "pairs_mismatch": 0,
+   "robot_flag_mismatch": 0,
+   "payload_flag_mismatch": 0,
+   "rows_vs_steps": 28,
+   "qpos_mismatch": 0,
+   "stop_vs_rows": 28
+  },
+  "finger_hurdle_contacts_by_phase": {
+   "V7g": {
+    "by_body_phase": [
+     {
+      "body": "ee_finger_l1",
+      "phase": "after_release",
+      "runs": [
+       "1807_s18071",
+       "1807_s18073"
+      ],
+      "n_rows": 2,
+      "substeps": 41,
+      "max_pen_mm": 2.6710373887204963,
+      "max_force_N": 283.01599268690416,
+      "margin_substeps": 0,
+      "n_runs": 2
+     },
+     {
+      "body": "ee_finger_l2",
+      "phase": "after_release",
+      "runs": [
+       "1925_s19251",
+       "1982_s19822",
+       "1982_s19823"
+      ],
+      "n_rows": 3,
+      "substeps": 47,
+      "max_pen_mm": 2.3594585354623514,
+      "max_force_N": 333.333493336121,
+      "margin_substeps": 0,
+      "n_runs": 3
+     }
+    ],
+    "by_phase": {
+     "before_grasp": {
+      "runs": [],
+      "n_runs": 0,
+      "n_rows": 0,
+      "substeps": 0,
+      "max_pen_mm": 0.0
+     },
+     "carry": {
+      "runs": [],
+      "n_runs": 0,
+      "n_rows": 0,
+      "substeps": 0,
+      "max_pen_mm": 0.0
+     },
+     "after_release": {
+      "runs": [
+       "1807_s18071",
+       "1807_s18073",
+       "1925_s19251",
+       "1982_s19822",
+       "1982_s19823"
+      ],
+      "n_runs": 5,
+      "n_rows": 5,
+      "substeps": 88,
+      "max_pen_mm": 2.6710373887204963
+     }
+    }
+   },
+   "V8": {
+    "by_body_phase": [
+     {
+      "body": "ee_finger_l2",
+      "phase": "after_release",
+      "runs": [
+       "1807_s18071",
+       "1807_s18073",
+       "1925_s19251",
+       "1925_s19253",
+       "1967_s19672",
+       "1968_s19681",
+       "1982_s19823",
+       "1995_s19952",
+       "1995_s19953"
+      ],
+      "n_rows": 9,
+      "substeps": 129,
+      "max_pen_mm": 5.795300221963346,
+      "max_force_N": 749.7896798640063,
+      "margin_substeps": 0,
+      "n_runs": 9
+     }
+    ],
+    "by_phase": {
+     "before_grasp": {
+      "runs": [],
+      "n_runs": 0,
+      "n_rows": 0,
+      "substeps": 0,
+      "max_pen_mm": 0.0
+     },
+     "carry": {
+      "runs": [],
+      "n_runs": 0,
+      "n_rows": 0,
+      "substeps": 0,
+      "max_pen_mm": 0.0
+     },
+     "after_release": {
+      "runs": [
+       "1807_s18071",
+       "1807_s18073",
+       "1925_s19251",
+       "1925_s19253",
+       "1967_s19672",
+       "1968_s19681",
+       "1982_s19823",
+       "1995_s19952",
+       "1995_s19953"
+      ],
+      "n_runs": 9,
+      "n_rows": 9,
+      "substeps": 129,
+      "max_pen_mm": 5.795300221963346
+     }
+    }
+   }
+  },
+  "ct_contact_table": [
+   {
+    "body": "EE_BODY_L",
+    "kind": "hand",
+    "phase": "before_grasp",
+    "n_runs": 2,
+    "runs_by_arm": {
+     "V7g": 2
+    },
+    "first_t_min": 466,
+    "first_t_values": [
+     466,
+     471
+    ],
+    "max_pen_mm": 0.23697894567726274,
+    "max_force_N": 87.8653024738969
+   },
+   {
+    "body": "apple",
+    "kind": "apple",
+    "phase": "carry",
+    "n_runs": 8,
+    "runs_by_arm": {
+     "V7g": 3,
+     "V8": 5
+    },
+    "first_t_min": 164,
+    "first_t_values": [
+     164,
+     168,
+     174,
+     174,
+     175,
+     199,
+     206,
+     206
+    ],
+    "max_pen_mm": 1.2579438136058467,
+    "max_force_N": 90.43515551967303
+   },
+   {
+    "body": "ee_finger_l2",
+    "kind": "hand",
+    "phase": "after_release",
+    "n_runs": 12,
+    "runs_by_arm": {
+     "V7g": 3,
+     "V8": 9
+    },
+    "first_t_min": 270,
+    "first_t_values": [
+     270,
+     270,
+     275,
+     279,
+     279,
+     286,
+     288,
+     288,
+     290,
+     291,
+     309,
+     314
+    ],
+    "max_pen_mm": 5.795300221963346,
+    "max_force_N": 749.7896798640063
+   },
+   {
+    "body": "ee_finger_l1",
+    "kind": "hand",
+    "phase": "after_release",
+    "n_runs": 2,
+    "runs_by_arm": {
+     "V7g": 2
+    },
+    "first_t_min": 261,
+    "first_t_values": [
+     261,
+     265
+    ],
+    "max_pen_mm": 2.6710373887204963,
+    "max_force_N": 283.01599268690416
+   },
+   {
+    "body": "link_right_arm_4",
+    "kind": "robot_other",
+    "phase": "after_release",
+    "n_runs": 2,
+    "runs_by_arm": {
+     "V7g": 1,
+     "V8": 1
+    },
+    "first_t_min": 237,
+    "first_t_values": [
+     237,
+     249
+    ],
+    "max_pen_mm": 1.4270473748641908,
+    "max_force_N": 839.9824892094878
+   }
+  ],
+  "obstacle_stop": {
+   "V7g": {
+    "runs": 8,
+    "keys": [
+     "V7g/H/V7g_ep1807_s18071",
+     "V7g/H/V7g_ep1807_s18073",
+     "V7g/H/V7g_ep1834_s18341",
+     "V7g/H/V7g_ep1925_s19251",
+     "V7g/H/V7g_ep1967_s19672",
+     "V7g/H/V7g_ep1967_s19673",
+     "V7g/H/V7g_ep1982_s19822",
+     "V7g/H/V7g_ep1982_s19823"
+    ]
+   },
+   "V8": {
+    "runs": 10,
+    "keys": [
+     "V8/H/V8_ep1807_s18071",
+     "V8/H/V8_ep1807_s18073",
+     "V8/H/V8_ep1834_s18341",
+     "V8/H/V8_ep1925_s19251",
+     "V8/H/V8_ep1925_s19253",
+     "V8/H/V8_ep1967_s19672",
+     "V8/H/V8_ep1968_s19681",
+     "V8/H/V8_ep1982_s19823",
+     "V8/H/V8_ep1995_s19952",
+     "V8/H/V8_ep1995_s19953"
+    ]
+   }
+  },
+  "hold": {
+   "V7g": {
+    "total": 16,
+    "trailing": 0,
+    "runs_with_hold": 6,
+    "by_category": {
+     "finger": 13,
+     "held": 1,
+     "robot_other": 2
+    },
+    "by_target": {
+     "None": 15,
+     "destination": 1
+    },
+    "by_phase": {
+     "carry": 2,
+     "crate_above": 12,
+     "pre_pick": 1,
+     "release_after": 1
+    },
+    "by_binding_link": {
+     "attached:ee_right[1]": 1,
+     "ee_finger_l1": 5,
+     "ee_finger_r1": 8,
+     "ee_right": 2
+    },
+    "cells": {
+     "finger|None|carry": 1,
+     "finger|None|crate_above": 9,
+     "finger|None|pre_pick": 1,
+     "finger|None|release_after": 1,
+     "finger|destination|crate_above": 1,
+     "held|None|carry": 1,
+     "robot_other|None|crate_above": 2
+    },
+    "hold_kinds": {
+     "collision": 15,
+     "unverified": 11
+    },
+    "by_stage_total": {
+     "B": 0,
+     "H": 16
+    }
+   },
+   "V8": {
+    "total": 6,
+    "trailing": 0,
+    "runs_with_hold": 3,
+    "by_category": {
+     "finger": 3,
+     "held": 3
+    },
+    "by_target": {
+     "None": 2,
+     "destination": 2,
+     "target": 2
+    },
+    "by_phase": {
+     "carry": 3,
+     "crate_above": 1,
+     "release_after": 2
+    },
+    "by_binding_link": {
+     "attached:ee_left[1]": 3,
+     "ee_finger_l1": 1,
+     "ee_finger_r1": 2
+    },
+    "cells": {
+     "finger|None|carry": 1,
+     "finger|target|release_after": 2,
+     "held|None|carry": 1,
+     "held|destination|carry": 1,
+     "held|destination|crate_above": 1
+    },
+    "hold_kinds": {
+     "collision": 6
+    },
+    "by_stage_total": {
+     "B": 3,
+     "H": 3
+    }
+   },
+   "per_run_chunks_V8": {
+    "B:1807_s18071": [
+     {
+      "seq": 29,
+      "t": 224,
+      "category": "held",
+      "binding_link": "attached:ee_left[1]",
+      "binding_rows": "waypoint",
+      "target": "destination",
+      "phase": "crate_above",
+      "worst_link": "attached:ee_left[1]",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -4.245886704811675,
+      "clearance_mm": -4.245886704811675
+     },
+     {
+      "seq": 73,
+      "t": 576,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": "target",
+      "phase": "release_after",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -42.50579230129169,
+      "clearance_mm": -42.50579230129169
+     },
+     {
+      "seq": 74,
+      "t": 584,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": "target",
+      "phase": "release_after",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -44.231469710593444,
+      "clearance_mm": -44.231469710593444
+     }
+    ],
+    "H:1807_s18071": [
+     {
+      "seq": 24,
+      "t": 184,
+      "category": "held",
+      "binding_link": "attached:ee_left[1]",
+      "binding_rows": "waypoint",
+      "target": "destination",
+      "phase": "carry",
+      "worst_link": "attached:ee_left[1]",
+      "hurdle_min_mm": 46.000506555017914,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -1.2299960928063187,
+      "clearance_mm": -1.2299960928063187
+     },
+     {
+      "seq": 25,
+      "t": 192,
+      "category": "held",
+      "binding_link": "attached:ee_left[1]",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "attached:ee_left[1]",
+      "hurdle_min_mm": 45.52731303842478,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -8.887357839600812,
+      "clearance_mm": -8.887357839600812
+     }
+    ],
+    "H:1807_s18073": [
+     {
+      "seq": 21,
+      "t": 160,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": 27.387891915841312,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -11.35405242129343,
+      "clearance_mm": -11.35405242129343
+     }
+    ]
+   },
+   "per_run_chunks_V7g": {
+    "H:1807_s18071": [
+     {
+      "seq": 32,
+      "t": 248,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": 63.19829982342505,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -0.8332715172148629,
+      "clearance_mm": -0.8332715172148629
+     }
+    ],
+    "H:1807_s18073": [
+     {
+      "seq": 27,
+      "t": 208,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": 91.02785443960066,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -3.427375899534044,
+      "clearance_mm": -3.427375899534044
+     }
+    ],
+    "H:1834_s18343": [
+     {
+      "seq": 23,
+      "t": 176,
+      "category": "held",
+      "binding_link": "attached:ee_right[1]",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "attached:ee_right[1]",
+      "hurdle_min_mm": 25.831434243934495,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -0.7479201946126377,
+      "clearance_mm": -0.7479201946126377
+     },
+     {
+      "seq": 29,
+      "t": 224,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": 19.86705356932995,
+      "hold_kinds": [
+       "unverified",
+       "collision"
+      ],
+      "binding_clearance_mm": -22.54368859264258,
+      "clearance_mm": -22.54368859264258
+     },
+     {
+      "seq": 30,
+      "t": 232,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": 19.69806259706265,
+      "hold_kinds": [
+       "unverified",
+       "collision"
+      ],
+      "binding_clearance_mm": -22.263615130923508,
+      "clearance_mm": -22.263615130923508
+     },
+     {
+      "seq": 31,
+      "t": 240,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": 19.695783003017784,
+      "hold_kinds": [
+       "unverified",
+       "collision"
+      ],
+      "binding_clearance_mm": -20.66605735245173,
+      "clearance_mm": -20.66605735245173
+     },
+     {
+      "seq": 32,
+      "t": 248,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": 19.69620299412934,
+      "hold_kinds": [
+       "unverified",
+       "collision"
+      ],
+      "binding_clearance_mm": -19.725181941334927,
+      "clearance_mm": -19.725181941334927
+     },
+     {
+      "seq": 33,
+      "t": 256,
+      "category": "robot_other",
+      "binding_link": "ee_right",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_right",
+      "hurdle_min_mm": 19.69635571755138,
+      "hold_kinds": [
+       "unverified",
+       "collision"
+      ],
+      "binding_clearance_mm": -24.382343463744963,
+      "clearance_mm": -24.382343463744963
+     },
+     {
+      "seq": 34,
+      "t": 264,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": 19.696364382027394,
+      "hold_kinds": [
+       "unverified",
+       "collision"
+      ],
+      "binding_clearance_mm": -22.27465096352417,
+      "clearance_mm": -22.27465096352417
+     },
+     {
+      "seq": 35,
+      "t": 272,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": 19.696270728233383,
+      "hold_kinds": [
+       "unverified",
+       "collision"
+      ],
+      "binding_clearance_mm": -22.84139191547571,
+      "clearance_mm": -22.84139191547571
+     },
+     {
+      "seq": 36,
+      "t": 280,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": 19.696267529668148,
+      "hold_kinds": [
+       "unverified",
+       "collision"
+      ],
+      "binding_clearance_mm": -20.314036620056793,
+      "clearance_mm": -20.314036620056793
+     },
+     {
+      "seq": 37,
+      "t": 288,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": 19.696359109148123,
+      "hold_kinds": [
+       "unverified",
+       "collision"
+      ],
+      "binding_clearance_mm": -22.861969639375907,
+      "clearance_mm": -22.861969639375907
+     },
+     {
+      "seq": 38,
+      "t": 296,
+      "category": "robot_other",
+      "binding_link": "ee_right",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_right",
+      "hurdle_min_mm": 19.69646111589138,
+      "hold_kinds": [
+       "unverified",
+       "collision"
+      ],
+      "binding_clearance_mm": -24.721439813786354,
+      "clearance_mm": -24.721439813786354
+     }
+    ],
+    "H:1967_s19672": [
+     {
+      "seq": 36,
+      "t": 280,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "pre_pick",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": 75.23152572461039,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -1.6115971976361412,
+      "clearance_mm": -1.6115971976361412
+     }
+    ],
+    "H:1968_s19683": [
+     {
+      "seq": 28,
+      "t": 216,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": "destination",
+      "phase": "crate_above",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": 99.7973510137319,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -4.295449161936808,
+      "clearance_mm": -4.295449161936808
+     }
+    ],
+    "H:1982_s19823": [
+     {
+      "seq": 17,
+      "t": 128,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": 185.1910491901833,
+      "hold_kinds": [
+       "unverified"
+      ],
+      "binding_clearance_mm": -9.624330774019796,
+      "clearance_mm": -9.624330774019796
+     }
+    ]
+   }
+  },
+  "hold_only_in_one_arm": {
+   "V8_only": [
+    {
+     "seq": 29,
+     "t": 224,
+     "category": "held",
+     "binding_link": "attached:ee_left[1]",
+     "binding_rows": "waypoint",
+     "target": "destination",
+     "phase": "crate_above",
+     "worst_link": "attached:ee_left[1]",
+     "hurdle_min_mm": null,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -4.245886704811675,
+     "clearance_mm": -4.245886704811675,
+     "run": "B:1807_s18071"
+    },
+    {
+     "seq": 73,
+     "t": 576,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": "target",
+     "phase": "release_after",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": null,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -42.50579230129169,
+     "clearance_mm": -42.50579230129169,
+     "run": "B:1807_s18071"
+    },
+    {
+     "seq": 74,
+     "t": 584,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": "target",
+     "phase": "release_after",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": null,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -44.231469710593444,
+     "clearance_mm": -44.231469710593444,
+     "run": "B:1807_s18071"
+    },
+    {
+     "seq": 24,
+     "t": 184,
+     "category": "held",
+     "binding_link": "attached:ee_left[1]",
+     "binding_rows": "waypoint",
+     "target": "destination",
+     "phase": "carry",
+     "worst_link": "attached:ee_left[1]",
+     "hurdle_min_mm": 46.000506555017914,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -1.2299960928063187,
+     "clearance_mm": -1.2299960928063187,
+     "run": "H:1807_s18071"
+    },
+    {
+     "seq": 25,
+     "t": 192,
+     "category": "held",
+     "binding_link": "attached:ee_left[1]",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "attached:ee_left[1]",
+     "hurdle_min_mm": 45.52731303842478,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -8.887357839600812,
+     "clearance_mm": -8.887357839600812,
+     "run": "H:1807_s18071"
+    },
+    {
+     "seq": 21,
+     "t": 160,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": 27.387891915841312,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -11.35405242129343,
+     "clearance_mm": -11.35405242129343,
+     "run": "H:1807_s18073"
+    }
+   ],
+   "V7g_only": [
+    {
+     "seq": 32,
+     "t": 248,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": 63.19829982342505,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -0.8332715172148629,
+     "clearance_mm": -0.8332715172148629,
+     "run": "H:1807_s18071"
+    },
+    {
+     "seq": 27,
+     "t": 208,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": 91.02785443960066,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -3.427375899534044,
+     "clearance_mm": -3.427375899534044,
+     "run": "H:1807_s18073"
+    },
+    {
+     "seq": 23,
+     "t": 176,
+     "category": "held",
+     "binding_link": "attached:ee_right[1]",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "attached:ee_right[1]",
+     "hurdle_min_mm": 25.831434243934495,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -0.7479201946126377,
+     "clearance_mm": -0.7479201946126377,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 29,
+     "t": 224,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": 19.86705356932995,
+     "hold_kinds": [
+      "unverified",
+      "collision"
+     ],
+     "binding_clearance_mm": -22.54368859264258,
+     "clearance_mm": -22.54368859264258,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 30,
+     "t": 232,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": 19.69806259706265,
+     "hold_kinds": [
+      "unverified",
+      "collision"
+     ],
+     "binding_clearance_mm": -22.263615130923508,
+     "clearance_mm": -22.263615130923508,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 31,
+     "t": 240,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": 19.695783003017784,
+     "hold_kinds": [
+      "unverified",
+      "collision"
+     ],
+     "binding_clearance_mm": -20.66605735245173,
+     "clearance_mm": -20.66605735245173,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 32,
+     "t": 248,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": 19.69620299412934,
+     "hold_kinds": [
+      "unverified",
+      "collision"
+     ],
+     "binding_clearance_mm": -19.725181941334927,
+     "clearance_mm": -19.725181941334927,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 33,
+     "t": 256,
+     "category": "robot_other",
+     "binding_link": "ee_right",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_right",
+     "hurdle_min_mm": 19.69635571755138,
+     "hold_kinds": [
+      "unverified",
+      "collision"
+     ],
+     "binding_clearance_mm": -24.382343463744963,
+     "clearance_mm": -24.382343463744963,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 34,
+     "t": 264,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": 19.696364382027394,
+     "hold_kinds": [
+      "unverified",
+      "collision"
+     ],
+     "binding_clearance_mm": -22.27465096352417,
+     "clearance_mm": -22.27465096352417,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 35,
+     "t": 272,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": 19.696270728233383,
+     "hold_kinds": [
+      "unverified",
+      "collision"
+     ],
+     "binding_clearance_mm": -22.84139191547571,
+     "clearance_mm": -22.84139191547571,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 36,
+     "t": 280,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": 19.696267529668148,
+     "hold_kinds": [
+      "unverified",
+      "collision"
+     ],
+     "binding_clearance_mm": -20.314036620056793,
+     "clearance_mm": -20.314036620056793,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 37,
+     "t": 288,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": 19.696359109148123,
+     "hold_kinds": [
+      "unverified",
+      "collision"
+     ],
+     "binding_clearance_mm": -22.861969639375907,
+     "clearance_mm": -22.861969639375907,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 38,
+     "t": 296,
+     "category": "robot_other",
+     "binding_link": "ee_right",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_right",
+     "hurdle_min_mm": 19.69646111589138,
+     "hold_kinds": [
+      "unverified",
+      "collision"
+     ],
+     "binding_clearance_mm": -24.721439813786354,
+     "clearance_mm": -24.721439813786354,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 36,
+     "t": 280,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "pre_pick",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": 75.23152572461039,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -1.6115971976361412,
+     "clearance_mm": -1.6115971976361412,
+     "run": "H:1967_s19672"
+    },
+    {
+     "seq": 28,
+     "t": 216,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": "destination",
+     "phase": "crate_above",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": 99.7973510137319,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -4.295449161936808,
+     "clearance_mm": -4.295449161936808,
+     "run": "H:1968_s19683"
+    },
+    {
+     "seq": 17,
+     "t": 128,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": 185.1910491901833,
+     "hold_kinds": [
+      "unverified"
+     ],
+     "binding_clearance_mm": -9.624330774019796,
+     "clearance_mm": -9.624330774019796,
+     "run": "H:1982_s19823"
+    }
+   ],
+   "both_n": 0,
+   "pairs": 19,
+   "V8_only_n": 6,
+   "V8_only_by_category": {
+    "held": 3,
+    "finger": 3
+   },
+   "V8_only_by_target": {
+    "destination": 2,
+    "target": 2,
+    "None": 2
+   },
+   "V8_only_by_phase": {
+    "crate_above": 1,
+    "release_after": 2,
+    "carry": 3
+   },
+   "V8_only_by_binding_link": {
+    "attached:ee_left[1]": 3,
+    "ee_finger_r1": 2,
+    "ee_finger_l1": 1
+   },
+   "V7g_only_n": 16,
+   "V7g_only_by_category": {
+    "finger": 13,
+    "held": 1,
+    "robot_other": 2
+   },
+   "V7g_only_by_target": {
+    "None": 15,
+    "destination": 1
+   },
+   "V7g_only_by_phase": {
+    "release_after": 1,
+    "crate_above": 12,
+    "carry": 2,
+    "pre_pick": 1
+   },
+   "V7g_only_by_binding_link": {
+    "ee_finger_l1": 5,
+    "attached:ee_right[1]": 1,
+    "ee_finger_r1": 8,
+    "ee_right": 2
+   }
+  },
+  "follow_to": {
+   "V7g": {
+    "decision_counts": {
+     "not_needed": 1130,
+     "hold": 16
+    },
+    "refused_counts": {
+     "worsens": 3,
+     "penetration": 2,
+     "hold_kinds": 11
+    },
+    "n_executed": 0,
+    "n_runs_with_executed": 0,
+    "executed": []
+   },
+   "V8": {
+    "decision_counts": {
+     "not_needed": 1031,
+     "hold": 6
+    },
+    "refused_counts": {
+     "worsens": 2,
+     "penetration": 4
+    },
+    "n_executed": 0,
+    "n_runs_with_executed": 0,
+    "executed": []
+   },
+   "refused_by_run": {
+    "V7g": {
+     "H:1807_s18071": {
+      "worsens": 1
+     },
+     "H:1807_s18073": {
+      "penetration": 1
+     },
+     "H:1834_s18343": {
+      "penetration": 1,
+      "hold_kinds": 10
+     },
+     "H:1967_s19672": {
+      "worsens": 1
+     },
+     "H:1968_s19683": {
+      "worsens": 1
+     },
+     "H:1982_s19823": {
+      "hold_kinds": 1
+     }
+    },
+    "V8": {
+     "B:1807_s18071": {
+      "worsens": 1,
+      "penetration": 2
+     },
+     "H:1807_s18071": {
+      "worsens": 1,
+      "penetration": 1
+     },
+     "H:1807_s18073": {
+      "penetration": 1
+     }
+    }
+   }
+  },
+  "timing": {
+   "V7g": {
+    "ALL": {
+     "n_chunks_excl_first": 1127,
+     "to_solve_ms": {
+      "n": 1127,
+      "median": 57.604058645665646,
+      "p90": 101.95820182561873,
+      "max": 393.3990066871047,
+      "min": 36.2974414601922,
+      "mean": 67.54259262878544
+     },
+     "verdict_trajopt_ms": {
+      "n": 1127,
+      "median": 63.60006611794233,
+      "p90": 110.37759222090244,
+      "max": 400.8986074477434,
+      "min": 41.304636746644974,
+      "mean": 73.90470315389064
+     },
+     "verdict_total_ms": {
+      "n": 1127,
+      "median": 791.4770869538188,
+      "p90": 1143.7348652631044,
+      "max": 2105.085203424096,
+      "min": 637.5210210680962,
+      "mean": 881.731907328047
+     },
+     "round_trip_ms": {
+      "n": 1127,
+      "median": 1020.3366279602051,
+      "p90": 1367.1499252319336,
+      "max": 3500.264883041382,
+      "min": 827.6891708374023,
+      "mean": 1104.367300590373
+     },
+     "round_trip_gt_533_3_n": 1127,
+     "round_trip_n": 1127,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 1127,
+      "median": 15.19,
+      "p90": 25.590400000000002,
+      "max": 162.364,
+      "min": 7.345,
+      "mean": 18.973584738243126
+     },
+     "qp_ms": {
+      "n": 1127,
+      "median": 4.382,
+      "p90": 5.7654,
+      "max": 64.631,
+      "min": 3.114,
+      "mean": 5.28575687666371
+     },
+     "check_ms": {
+      "n": 1127,
+      "median": 13.975,
+      "p90": 19.224,
+      "max": 242.889,
+      "min": 8.791,
+      "mean": 16.53880922803904
+     }
+    },
+    "H": {
+     "n_chunks_excl_first": 757,
+     "to_solve_ms": {
+      "n": 757,
+      "median": 59.72681101411581,
+      "p90": 107.49181676656006,
+      "max": 393.3990066871047,
+      "min": 36.2974414601922,
+      "mean": 70.73824511671161
+     },
+     "verdict_trajopt_ms": {
+      "n": 757,
+      "median": 66.08281005173922,
+      "p90": 119.09449752420187,
+      "max": 400.8986074477434,
+      "min": 41.304636746644974,
+      "mean": 77.58603371861865
+     },
+     "verdict_total_ms": {
+      "n": 757,
+      "median": 953.6838168278337,
+      "p90": 1161.4859160035849,
+      "max": 2105.085203424096,
+      "min": 637.5210210680962,
+      "mean": 929.6819679365251
+     },
+     "round_trip_ms": {
+      "n": 757,
+      "median": 1181.931734085083,
+      "p90": 1386.832857131958,
+      "max": 3500.264883041382,
+      "min": 827.6891708374023,
+      "mean": 1155.353130721038
+     },
+     "round_trip_gt_533_3_n": 757,
+     "round_trip_n": 757,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 757,
+      "median": 15.902,
+      "p90": 28.261199999999995,
+      "max": 162.364,
+      "min": 7.345,
+      "mean": 20.2311928665786
+     },
+     "qp_ms": {
+      "n": 757,
+      "median": 4.501,
+      "p90": 6.0847999999999995,
+      "max": 64.631,
+      "min": 3.114,
+      "mean": 5.607161162483488
+     },
+     "check_ms": {
+      "n": 757,
+      "median": 14.455,
+      "p90": 20.1996,
+      "max": 242.889,
+      "min": 8.791,
+      "mean": 17.43465389696169
+     }
+    },
+    "B": {
+     "n_chunks_excl_first": 370,
+     "to_solve_ms": {
+      "n": 370,
+      "median": 54.18787244707346,
+      "p90": 76.3658720999957,
+      "max": 222.71999530494213,
+      "min": 36.4551804959774,
+      "mean": 61.00446037646081
+     },
+     "verdict_trajopt_ms": {
+      "n": 370,
+      "median": 59.82136679813266,
+      "p90": 86.18287229910504,
+      "max": 227.0666128024459,
+      "min": 43.7020268291235,
+      "mean": 66.37289980929849
+     },
+     "verdict_total_ms": {
+      "n": 370,
+      "median": 742.2586949542165,
+      "p90": 1004.7800461761655,
+      "max": 1260.0601706653833,
+      "min": 654.1636800393462,
+      "mean": 783.6286752182689
+     },
+     "round_trip_ms": {
+      "n": 370,
+      "median": 958.0546617507935,
+      "p90": 1235.1325035095217,
+      "max": 1480.4589748382568,
+      "min": 858.8652610778809,
+      "mean": 1000.0530481338501
+     },
+     "round_trip_gt_533_3_n": 370,
+     "round_trip_n": 370,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 370,
+      "median": 13.061499999999999,
+      "p90": 19.2259,
+      "max": 143.248,
+      "min": 7.479,
+      "mean": 16.400586486486485
+     },
+     "qp_ms": {
+      "n": 370,
+      "median": 4.162,
+      "p90": 4.8887,
+      "max": 50.395,
+      "min": 3.279,
+      "mean": 4.628181081081081
+     },
+     "check_ms": {
+      "n": 370,
+      "median": 13.1415,
+      "p90": 16.3638,
+      "max": 83.753,
+      "min": 8.984,
+      "mean": 14.705959459459459
+     }
+    }
+   },
+   "V8": {
+    "ALL": {
+     "n_chunks_excl_first": 1018,
+     "to_solve_ms": {
+      "n": 1018,
+      "median": 69.9044312350452,
+      "p90": 103.07147791609171,
+      "max": 758.3773648366332,
+      "min": 43.75668987631798,
+      "mean": 80.36500439944372
+     },
+     "verdict_trajopt_ms": {
+      "n": 1018,
+      "median": 75.49234526231885,
+      "p90": 112.11909120902425,
+      "max": 769.2078202962875,
+      "min": 46.369556337594986,
+      "mean": 85.9936619459236
+     },
+     "verdict_total_ms": {
+      "n": 1018,
+      "median": 731.3714236952364,
+      "p90": 1102.955474704504,
+      "max": 2084.788417443633,
+      "min": 610.0546475499868,
+      "mean": 809.3577272291634
+     },
+     "round_trip_ms": {
+      "n": 1018,
+      "median": 947.3187923431396,
+      "p90": 1316.2445783615112,
+      "max": 2667.0262813568115,
+      "min": 800.7669448852539,
+      "mean": 1028.948604709273
+     },
+     "round_trip_gt_533_3_n": 1018,
+     "round_trip_n": 1018,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 1018,
+      "median": 16.238500000000002,
+      "p90": 26.360200000000003,
+      "max": 163.851,
+      "min": 8.71,
+      "mean": 19.665277996070728
+     },
+     "qp_ms": {
+      "n": 1018,
+      "median": 3.7815000000000003,
+      "p90": 4.880700000000001,
+      "max": 235.271,
+      "min": 2.136,
+      "mean": 4.759426326129666
+     },
+     "check_ms": {
+      "n": 1018,
+      "median": 20.5215,
+      "p90": 27.516600000000004,
+      "max": 245.288,
+      "min": 12.949,
+      "mean": 23.228701375245578
+     }
+    },
+    "H": {
+     "n_chunks_excl_first": 648,
+     "to_solve_ms": {
+      "n": 648,
+      "median": 76.18959248065948,
+      "p90": 149.19173410162367,
+      "max": 758.3773648366332,
+      "min": 43.75668987631798,
+      "mean": 88.07740485393384
+     },
+     "verdict_trajopt_ms": {
+      "n": 648,
+      "median": 82.08755357190967,
+      "p90": 158.98930458351978,
+      "max": 769.2078202962875,
+      "min": 46.369556337594986,
+      "mean": 94.43481396280092
+     },
+     "verdict_total_ms": {
+      "n": 648,
+      "median": 772.4595596082509,
+      "p90": 1131.9153737276793,
+      "max": 2084.788417443633,
+      "min": 610.0546475499868,
+      "mean": 865.7133579627829
+     },
+     "round_trip_ms": {
+      "n": 648,
+      "median": 1010.2840662002563,
+      "p90": 1351.7393350601196,
+      "max": 2667.0262813568115,
+      "min": 800.7669448852539,
+      "mean": 1091.623549844012
+     },
+     "round_trip_gt_533_3_n": 648,
+     "round_trip_n": 648,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 648,
+      "median": 18.6845,
+      "p90": 29.998800000000017,
+      "max": 163.851,
+      "min": 8.71,
+      "mean": 21.920623456790125
+     },
+     "qp_ms": {
+      "n": 648,
+      "median": 3.9035,
+      "p90": 5.188,
+      "max": 235.271,
+      "min": 2.405,
+      "mean": 5.369293209876543
+     },
+     "check_ms": {
+      "n": 648,
+      "median": 21.9355,
+      "p90": 29.224500000000003,
+      "max": 245.288,
+      "min": 12.949,
+      "mean": 25.039510802469138
+     }
+    },
+    "B": {
+     "n_chunks_excl_first": 370,
+     "to_solve_ms": {
+      "n": 370,
+      "median": 65.26812352240086,
+      "p90": 79.35248054563999,
+      "max": 105.74476234614849,
+      "min": 46.900524757802486,
+      "mean": 66.85788144130964
+     },
+     "verdict_trajopt_ms": {
+      "n": 370,
+      "median": 68.84496752172709,
+      "p90": 85.35436224192381,
+      "max": 119.59283705800772,
+      "min": 51.53399333357811,
+      "mean": 71.21023895420335
+     },
+     "verdict_total_ms": {
+      "n": 370,
+      "median": 704.6640710905194,
+      "p90": 766.8562047183514,
+      "max": 1048.3722416684031,
+      "min": 624.8615719377995,
+      "mean": 710.659217187581
+     },
+     "round_trip_ms": {
+      "n": 370,
+      "median": 911.6594791412354,
+      "p90": 980.2187442779541,
+      "max": 1258.0015659332275,
+      "min": 825.0930309295654,
+      "mean": 919.1827548516763
+     },
+     "round_trip_gt_533_3_n": 370,
+     "round_trip_n": 370,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 370,
+      "median": 14.8,
+      "p90": 21.498,
+      "max": 30.53,
+      "min": 9.126,
+      "mean": 15.715375675675677
+     },
+     "qp_ms": {
+      "n": 370,
+      "median": 3.641,
+      "p90": 4.1574,
+      "max": 6.897,
+      "min": 2.136,
+      "mean": 3.6913351351351356
+     },
+     "check_ms": {
+      "n": 370,
+      "median": 19.8745,
+      "p90": 23.1898,
+      "max": 31.198,
+      "min": 13.122,
+      "mean": 20.05733783783784
+     }
+    }
+   },
+   "per_run_to_solve_median": {
+    "runs": {
+     "B:1807_s18071": {
+      "V8_median_ms": 65.64457574859262,
+      "V7g_median_ms": 64.75418014451861,
+      "ratio": 1.013750395759576
+     },
+     "B:1967_s19672": {
+      "V8_median_ms": 66.66692020371556,
+      "V7g_median_ms": 62.667529098689556,
+      "ratio": 1.0638191925315537
+     },
+     "B:1968_s19681": {
+      "V8_median_ms": 65.68374950438738,
+      "V7g_median_ms": 48.32763923332095,
+      "ratio": 1.3591342458768343
+     },
+     "B:1982_s19822": {
+      "V8_median_ms": 60.34691305831075,
+      "V7g_median_ms": 51.055850461125374,
+      "ratio": 1.1819784121363275
+     },
+     "B:1995_s19952": {
+      "V8_median_ms": 58.57745837420225,
+      "V7g_median_ms": 49.312724731862545,
+      "ratio": 1.1878771390694107
+     },
+     "H:1807_s18071": {
+      "V8_median_ms": 75.3907160833478,
+      "V7g_median_ms": 52.419827319681644,
+      "ratio": 1.438209928155209
+     },
+     "H:1807_s18073": {
+      "V8_median_ms": 79.09600157290697,
+      "V7g_median_ms": 51.99228785932064,
+      "ratio": 1.5213025783155156
+     },
+     "H:1834_s18341": {
+      "V8_median_ms": 65.75607601553202,
+      "V7g_median_ms": 56.58574774861336,
+      "ratio": 1.1620607420027136
+     },
+     "H:1834_s18343": {
+      "V8_median_ms": 50.91409618034959,
+      "V7g_median_ms": 57.02305119484663,
+      "ratio": 0.8928686752726916
+     },
+     "H:1925_s19251": {
+      "V8_median_ms": 125.1288428902626,
+      "V7g_median_ms": 66.09012559056282,
+      "ratio": 1.8933061750472762
+     },
+     "H:1925_s19253": {
+      "V8_median_ms": 70.63047587871552,
+      "V7g_median_ms": 60.94895815476775,
+      "ratio": 1.1588463202170491
+     },
+     "H:1967_s19672": {
+      "V8_median_ms": 81.94300718605518,
+      "V7g_median_ms": 69.74428333342075,
+      "ratio": 1.1749064334680592
+     },
+     "H:1967_s19673": {
+      "V8_median_ms": 77.98285270109773,
+      "V7g_median_ms": 66.73480058088899,
+      "ratio": 1.1685485237432458
+     },
+     "H:1968_s19681": {
+      "V8_median_ms": 77.94252224266529,
+      "V7g_median_ms": 61.15518929436803,
+      "ratio": 1.27450381794245
+     },
+     "H:1968_s19683": {
+      "V8_median_ms": 74.54331731423736,
+      "V7g_median_ms": 55.912632029503584,
+      "ratio": 1.3332106647188933
+     },
+     "H:1982_s19822": {
+      "V8_median_ms": 92.7855595946312,
+      "V7g_median_ms": 58.60218172892928,
+      "ratio": 1.5833123760446466
+     },
+     "H:1982_s19823": {
+      "V8_median_ms": 69.81444684788585,
+      "V7g_median_ms": 63.60698537901044,
+      "ratio": 1.0975908767234832
+     },
+     "H:1995_s19952": {
+      "V8_median_ms": 69.31645050644875,
+      "V7g_median_ms": 58.746345806866884,
+      "ratio": 1.1799278670767352
+     },
+     "H:1995_s19953": {
+      "V8_median_ms": 81.5207613632083,
+      "V7g_median_ms": 55.142621509730816,
+      "ratio": 1.4783620932643295
+     }
+    },
+    "ratio_median": 1.1819784121363275,
+    "ratio_min": 0.8928686752726916,
+    "ratio_max": 1.8933061750472762,
+    "diff_ms_median": 11.24805212020874,
+    "n_runs_V8_higher": 18,
+    "n_runs": 19
+   },
+   "loadavg_during_V8": {
+    "n_samples": 248,
+    "load1_median": 14.47,
+    "load1_p90": 19.463,
+    "load1_max": 39.3,
+    "working_set_gib_max": 65.49081802368164,
+    "start": 1791282708,
+    "end": 1791285188
+   }
+  },
+  "verdict_kind_counts": {
+   "V8": {
+    "budget_only:execute": 1020,
+    "collision:hold": 6,
+    "subtask_no_target:execute": 368,
+    "allowed_contact:execute": 4
+   },
+   "V7g": {
+    "budget_only:execute": 1130,
+    "collision:hold": 15,
+    "subtask_no_target:execute": 423,
+    "allowed_contact:execute": 12,
+    "unverified:hold": 11
+   }
+  },
+  "hurdle_min_mm_H_per_run": {
+   "V7g": {
+    "H:1807_s18071": {
+     "before_lift": {
+      "Af": 74.8077691250087,
+      "Ae": 72.17771574681875,
+      "B": 185.2426629893668,
+      "C": 108.82728725851273
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 8.19212721174619,
+      "Ae": 33.8792581120307,
+      "B": 2.974488438006507,
+      "C": 103.31968721069046
+     },
+     "after": {
+      "Af": 0.46063261783258097,
+      "Ae": 23.938964048285378,
+      "B": 150.86532075779778,
+      "C": 79.59353711803543
+     },
+     "all": {
+      "Af": 0.46063261783258097,
+      "Ae": 23.938964048285378,
+      "B": 2.974488438006507,
+      "C": 79.59353711803543
+     }
+    },
+    "H:1807_s18073": {
+     "before_lift": {
+      "Af": 75.16435082088846,
+      "Ae": 72.53050531766213,
+      "B": 185.6623364811289,
+      "C": 109.1413564303518
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 2.3242219016880865,
+      "Ae": 31.308925904008593,
+      "B": 1.7235233228417735,
+      "C": 91.42282327664505
+     },
+     "after": {
+      "Af": 11.522937069255887,
+      "Ae": 39.651994781231586,
+      "B": 176.76087714808588,
+      "C": 81.95956768765714
+     },
+     "all": {
+      "Af": 2.3242219016880865,
+      "Ae": 31.308925904008593,
+      "B": 1.7235233228417735,
+      "C": 81.95956768765714
+     }
+    },
+    "H:1834_s18341": {
+     "before_lift": {
+      "Af": 85.27178746061237,
+      "Ae": 81.0493790741851,
+      "B": 175.07032329930038,
+      "C": 120.88206450604231
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 5.468532127468267,
+      "Ae": 37.91119607233759,
+      "B": 5.724382256272892,
+      "C": 80.3085898581112
+     },
+     "after": {
+      "Af": 31.7922320897243,
+      "Ae": 25.63456793191555,
+      "B": 120.59272492472971,
+      "C": 7.427453341483016
+     },
+     "all": {
+      "Af": 5.468532127468267,
+      "Ae": 25.63456793191555,
+      "B": 5.724382256272892,
+      "C": 7.427453341483016
+     }
+    },
+    "H:1834_s18343": {
+     "before_lift": {
+      "Af": 85.27178746061237,
+      "Ae": 81.0093045514707,
+      "B": 179.22174029540767,
+      "C": 120.98129722493971
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 10.069498555163142,
+      "Ae": 19.695783003017784,
+      "B": 4.426007384325713,
+      "C": 63.277904727777305
+     },
+     "after": {
+      "Af": 51.4976458161219,
+      "Ae": 40.50721265882408,
+      "B": 178.341374788928,
+      "C": 80.53665253640187
+     },
+     "all": {
+      "Af": 10.069498555163142,
+      "Ae": 19.695783003017784,
+      "B": 4.426007384325713,
+      "C": 63.277904727777305
+     }
+    },
+    "H:1925_s19251": {
+     "before_lift": {
+      "Af": 63.020765411001975,
+      "Ae": 61.025880160621185,
+      "B": 173.51166391111707,
+      "C": 107.45308770941767
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 8.155930306674806,
+      "Ae": 42.477781217337544,
+      "B": 4.386691132587533,
+      "C": 78.53131945855893
+     },
+     "after": {
+      "Af": 7.022087806233507,
+      "Ae": 30.856055136829912,
+      "B": 172.160728718149,
+      "C": 75.07368245095353
+     },
+     "all": {
+      "Af": 7.022087806233507,
+      "Ae": 30.856055136829912,
+      "B": 4.386691132587533,
+      "C": 75.07368245095353
+     }
+    },
+    "H:1925_s19253": {
+     "before_lift": {
+      "Af": 62.24201366445019,
+      "Ae": 60.22281471309766,
+      "B": 175.5876765132503,
+      "C": 106.71154981049115
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 5.9648250372439096,
+      "Ae": 39.594023968438265,
+      "B": -0.3044818327180929,
+      "C": 84.3210155936067
+     },
+     "after": {
+      "Af": 2.865730576905553,
+      "Ae": 33.29977445085891,
+      "B": 142.55151350899013,
+      "C": 75.50462193538138
+     },
+     "all": {
+      "Af": 2.865730576905553,
+      "Ae": 33.29977445085891,
+      "B": -0.3044818327180929,
+      "C": 75.50462193538138
+     }
+    },
+    "H:1967_s19672": {
+     "before_lift": {
+      "Af": 7.448568145901117,
+      "Ae": 0.04671453280419638,
+      "B": 147.3963140399288,
+      "C": 53.04179678720633
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "all": {
+      "Af": 7.448568145901117,
+      "Ae": 0.04671453280419638,
+      "B": 147.3963140399288,
+      "C": 53.04179678720633
+     }
+    },
+    "H:1967_s19673": {
+     "before_lift": {
+      "Af": 4.050565642488912,
+      "Ae": 1.7124689928605195,
+      "B": 147.3963140399288,
+      "C": 51.57734597392602
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "all": {
+      "Af": 4.050565642488912,
+      "Ae": 1.7124689928605195,
+      "B": 147.3963140399288,
+      "C": 51.57734597392602
+     }
+    },
+    "H:1968_s19681": {
+     "before_lift": {
+      "Af": 90.13719841017817,
+      "Ae": 88.51300552127985,
+      "B": 202.12441560857695,
+      "C": 133.777303717449
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 8.109499280712903,
+      "Ae": 43.010589831104575,
+      "B": -0.15223873006512367,
+      "C": 96.6201093504443
+     },
+     "after": {
+      "Af": 2.92562408466741,
+      "Ae": 36.46709076391095,
+      "B": 200.0400735261313,
+      "C": 87.96692997604036
+     },
+     "all": {
+      "Af": 2.92562408466741,
+      "Ae": 36.46709076391095,
+      "B": -0.15223873006512367,
+      "C": 87.96692997604036
+     }
+    },
+    "H:1968_s19683": {
+     "before_lift": {
+      "Af": 89.91110936726427,
+      "Ae": 88.23962001839239,
+      "B": 202.3569527651207,
+      "C": 133.32866190410235
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 6.899596325572382,
+      "Ae": 42.786197032213146,
+      "B": 2.9299161296490945,
+      "C": 96.6858547146324
+     },
+     "after": {
+      "Af": 0.6337058073269588,
+      "Ae": 36.547596003650774,
+      "B": 178.42180148154256,
+      "C": 90.49952795046363
+     },
+     "all": {
+      "Af": 0.6337058073269588,
+      "Ae": 36.547596003650774,
+      "B": 2.9299161296490945,
+      "C": 90.49952795046363
+     }
+    },
+    "H:1982_s19822": {
+     "before_lift": {
+      "Af": 73.28935109500777,
+      "Ae": 71.93012815387063,
+      "B": 213.06831263031543,
+      "C": 119.51162693277135
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 5.58367124944631,
+      "Ae": 46.72191125065374,
+      "B": -0.018491644367811533,
+      "C": 108.04938632861793
+     },
+     "after": {
+      "Af": 1.385999063550792,
+      "Ae": 32.41899573719123,
+      "B": 128.50673560308198,
+      "C": 82.29892015911439
+     },
+     "all": {
+      "Af": 1.385999063550792,
+      "Ae": 32.41899573719123,
+      "B": -0.018491644367811533,
+      "C": 82.29892015911439
+     }
+    },
+    "H:1982_s19823": {
+     "before_lift": {
+      "Af": 73.65124984193457,
+      "Ae": 72.31723764675326,
+      "B": 212.90814879340238,
+      "C": 120.01960566443327
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 6.2607719354270746,
+      "Ae": 46.92579067911504,
+      "B": 4.4989892949627786,
+      "C": 78.82941378699894
+     },
+     "after": {
+      "Af": 4.377785617075049,
+      "Ae": 32.467348311722446,
+      "B": 186.68219791220122,
+      "C": 78.315096297181
+     },
+     "all": {
+      "Af": 4.377785617075049,
+      "Ae": 32.467348311722446,
+      "B": 4.4989892949627786,
+      "C": 78.315096297181
+     }
+    },
+    "H:1995_s19952": {
+     "before_lift": {
+      "Af": 67.34918760791685,
+      "Ae": 68.01207186179981,
+      "B": 164.02673558321865,
+      "C": 122.97999508268418
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 14.852535833824863,
+      "Ae": 37.23643159431526,
+      "B": 5.295263566364318,
+      "C": 79.94140541474287
+     },
+     "after": {
+      "Af": 4.082186259576282,
+      "Ae": 38.34456118536189,
+      "B": 75.2566345686206,
+      "C": 67.53654566239585
+     },
+     "all": {
+      "Af": 4.082186259576282,
+      "Ae": 37.23643159431526,
+      "B": 5.295263566364318,
+      "C": 67.53654566239585
+     }
+    },
+    "H:1995_s19953": {
+     "before_lift": {
+      "Af": 66.72225612505481,
+      "Ae": 67.40082907830553,
+      "B": 162.81274288083839,
+      "C": 122.43981488428366
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 8.333178518700791,
+      "Ae": 30.80645582197328,
+      "B": 2.7894768601910718,
+      "C": 99.52100465724332
+     },
+     "after": {
+      "Af": 17.84713199974797,
+      "Ae": 43.29456861957274,
+      "B": 94.54319259026344,
+      "C": 95.99553350750647
+     },
+     "all": {
+      "Af": 8.333178518700791,
+      "Ae": 30.80645582197328,
+      "B": 2.7894768601910718,
+      "C": 95.99553350750647
+     }
+    }
+   },
+   "V8": {
+    "H:1807_s18071": {
+     "before_lift": {
+      "Af": 74.8077691250087,
+      "Ae": 72.17771574681875,
+      "B": 182.8284899005108,
+      "C": 108.82728725851273
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 4.376384077528779,
+      "Ae": 31.413396920162693,
+      "B": 0.06230384216317393,
+      "C": 102.23698029156374
+     },
+     "after": {
+      "Af": 4.866839511528373,
+      "Ae": 20.645874901869952,
+      "B": 190.6772996865444,
+      "C": 72.10440572852696
+     },
+     "all": {
+      "Af": 4.376384077528779,
+      "Ae": 20.645874901869952,
+      "B": 0.06230384216317393,
+      "C": 72.10440572852696
+     }
+    },
+    "H:1807_s18073": {
+     "before_lift": {
+      "Af": 75.16435082088846,
+      "Ae": 72.53050531766213,
+      "B": 185.24280108038718,
+      "C": 109.1413564303518
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 6.611784757531394,
+      "Ae": 26.71977032914211,
+      "B": 0.7359516471329326,
+      "C": 96.62963938833485
+     },
+     "after": {
+      "Af": 21.206596818288297,
+      "Ae": 44.38536668435006,
+      "B": 168.67213006125297,
+      "C": 88.48555383762329
+     },
+     "all": {
+      "Af": 6.611784757531394,
+      "Ae": 26.71977032914211,
+      "B": 0.7359516471329326,
+      "C": 88.48555383762329
+     }
+    },
+    "H:1834_s18341": {
+     "before_lift": {
+      "Af": 85.27178746061237,
+      "Ae": 81.0493790741851,
+      "B": 173.96704891596937,
+      "C": 120.88206450604231
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 3.9016069689067416,
+      "Ae": 30.68656029480946,
+      "B": 3.5802076992567153,
+      "C": 35.38362394806581
+     },
+     "after": {
+      "Af": 78.10934458095979,
+      "Ae": 42.33230580577264,
+      "B": 170.69078828980952,
+      "C": 2.292268188999254
+     },
+     "all": {
+      "Af": 3.9016069689067416,
+      "Ae": 30.68656029480946,
+      "B": 3.5802076992567153,
+      "C": 2.292268188999254
+     }
+    },
+    "H:1834_s18343": {
+     "before_lift": {
+      "Af": 85.27178746061237,
+      "Ae": 81.0093045514707,
+      "B": 174.5279906370356,
+      "C": 120.98129722493971
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 34.37985093187926,
+      "Ae": 52.26952534922137,
+      "B": 8.350455214205823,
+      "C": 116.63331861155883
+     },
+     "after": {
+      "Af": 8.106859458481477,
+      "Ae": 37.01034166759348,
+      "B": 122.051629338063,
+      "C": 94.89239578915583
+     },
+     "all": {
+      "Af": 8.106859458481477,
+      "Ae": 37.01034166759348,
+      "B": 8.350455214205823,
+      "C": 94.89239578915583
+     }
+    },
+    "H:1925_s19251": {
+     "before_lift": {
+      "Af": 63.020765411001975,
+      "Ae": 61.025880160621185,
+      "B": 175.5876765132503,
+      "C": 107.45308770941767
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 10.470666176763364,
+      "Ae": 38.28928411439036,
+      "B": 7.2726047465406545,
+      "C": 80.89925795833217
+     },
+     "after": {
+      "Af": 10.09507741023739,
+      "Ae": 34.010982869245716,
+      "B": 148.57897812514517,
+      "C": 75.28540783347265
+     },
+     "all": {
+      "Af": 10.09507741023739,
+      "Ae": 34.010982869245716,
+      "B": 7.2726047465406545,
+      "C": 75.28540783347265
+     }
+    },
+    "H:1925_s19253": {
+     "before_lift": {
+      "Af": 62.24201366445019,
+      "Ae": 60.22281471309766,
+      "B": 175.5876765132503,
+      "C": 106.71154981049115
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 7.456318207858102,
+      "Ae": 42.034292880242226,
+      "B": 5.88697341774717,
+      "C": 77.67771701314435
+     },
+     "after": {
+      "Af": 2.679885045855359,
+      "Ae": 29.013445052401455,
+      "B": 167.71937400178913,
+      "C": 76.07848362869454
+     },
+     "all": {
+      "Af": 2.679885045855359,
+      "Ae": 29.013445052401455,
+      "B": 5.88697341774717,
+      "C": 76.07848362869454
+     }
+    },
+    "H:1967_s19672": {
+     "before_lift": {
+      "Af": 75.15771534719997,
+      "Ae": 72.74217154223938,
+      "B": 147.32666078423185,
+      "C": 112.14286614020418
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 10.13489796190999,
+      "Ae": 46.17677651728359,
+      "B": 1.7988524452263595,
+      "C": 70.08198693755068
+     },
+     "after": {
+      "Af": 11.719644608490064,
+      "Ae": 30.917252862392896,
+      "B": 132.0185714235404,
+      "C": 66.6814489781921
+     },
+     "all": {
+      "Af": 10.13489796190999,
+      "Ae": 30.917252862392896,
+      "B": 1.7988524452263595,
+      "C": 66.6814489781921
+     }
+    },
+    "H:1967_s19673": {
+     "before_lift": {
+      "Af": 75.4517296678527,
+      "Ae": 73.03925435846146,
+      "B": 147.3963140399288,
+      "C": 112.42679536364803
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 12.146113279015411,
+      "Ae": 46.66419383866067,
+      "B": 1.4077842164538397,
+      "C": 74.8719207201819
+     },
+     "after": {
+      "Af": 2.9004883490378712,
+      "Ae": 37.14152502633051,
+      "B": 168.64724310096787,
+      "C": 65.40573358269016
+     },
+     "all": {
+      "Af": 2.9004883490378712,
+      "Ae": 37.14152502633051,
+      "B": 1.4077842164538397,
+      "C": 65.40573358269016
+     }
+    },
+    "H:1968_s19681": {
+     "before_lift": {
+      "Af": 90.13719841017817,
+      "Ae": 88.51300552127985,
+      "B": 203.34442600563068,
+      "C": 133.777303717449
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 13.68296131883318,
+      "Ae": 44.33576963911556,
+      "B": 15.758670960499401,
+      "C": 104.08005668708971
+     },
+     "after": {
+      "Af": 5.932070263639573,
+      "Ae": 32.12687966251486,
+      "B": 181.8112667752532,
+      "C": 84.59092927734332
+     },
+     "all": {
+      "Af": 5.932070263639573,
+      "Ae": 32.12687966251486,
+      "B": 15.758670960499401,
+      "C": 84.59092927734332
+     }
+    },
+    "H:1968_s19683": {
+     "before_lift": {
+      "Af": 89.91110936726427,
+      "Ae": 88.23962001839239,
+      "B": 202.5413901535926,
+      "C": 133.32866190410235
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 4.927550526848439,
+      "Ae": 40.814881499270136,
+      "B": 0.10568461129072809,
+      "C": 95.60416488110032
+     },
+     "after": {
+      "Af": 4.643269544382621,
+      "Ae": 37.99088522397126,
+      "B": 186.5008387826927,
+      "C": 92.80376874220484
+     },
+     "all": {
+      "Af": 4.643269544382621,
+      "Ae": 37.99088522397126,
+      "B": 0.10568461129072809,
+      "C": 92.80376874220484
+     }
+    },
+    "H:1982_s19822": {
+     "before_lift": {
+      "Af": 73.28935109500777,
+      "Ae": 71.93012815387063,
+      "B": 214.21239647145953,
+      "C": 119.51162693277135
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 133.83121900570242,
+      "Ae": 139.3370338786487,
+      "B": 154.79166027886143,
+      "C": 172.7506549371209
+     },
+     "after": {
+      "Af": 4.072647752349861,
+      "Ae": 33.70028627392886,
+      "B": 57.556801145067176,
+      "C": 79.02527505831885
+     },
+     "all": {
+      "Af": 4.072647752349861,
+      "Ae": 33.70028627392886,
+      "B": 57.556801145067176,
+      "C": 79.02527505831885
+     }
+    },
+    "H:1982_s19823": {
+     "before_lift": {
+      "Af": 73.65124984193457,
+      "Ae": 72.31723764675326,
+      "B": 210.48966871872256,
+      "C": 120.01960566443327
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 3.9424176720741464,
+      "Ae": 44.6993552997396,
+      "B": -0.8506591208662234,
+      "C": 104.44310993735894
+     },
+     "after": {
+      "Af": 9.260400301638567,
+      "Ae": 30.396832164621514,
+      "B": 101.55175517672781,
+      "C": 81.24732991264976
+     },
+     "all": {
+      "Af": 3.9424176720741464,
+      "Ae": 30.396832164621514,
+      "B": -0.8506591208662234,
+      "C": 81.24732991264976
+     }
+    },
+    "H:1995_s19952": {
+     "before_lift": {
+      "Af": 67.34918760791685,
+      "Ae": 68.01207186179981,
+      "B": 164.02673558321865,
+      "C": 122.97999508268418
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 33.86832960598157,
+      "Ae": 66.44349898569897,
+      "B": 12.337326926456997,
+      "C": 99.76675952056948
+     },
+     "after": {
+      "Af": 3.7138335291229363,
+      "Ae": 25.82237404500946,
+      "B": 132.85949377782674,
+      "C": 78.15344327595159
+     },
+     "all": {
+      "Af": 3.7138335291229363,
+      "Ae": 25.82237404500946,
+      "B": 12.337326926456997,
+      "C": 78.15344327595159
+     }
+    },
+    "H:1995_s19953": {
+     "before_lift": {
+      "Af": 66.72225612505481,
+      "Ae": 67.40082907830553,
+      "B": 164.02673558321865,
+      "C": 122.43981488428366
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 40.47935384201047,
+      "Ae": 63.20337574173646,
+      "B": 19.166529632863035,
+      "C": 73.0506061036778
+     },
+     "after": {
+      "Af": 11.707346743192478,
+      "Ae": 34.99184602681547,
+      "B": 141.13215370013106,
+      "C": 65.91083074899008
+     },
+     "all": {
+      "Af": 11.707346743192478,
+      "Ae": 34.99184602681547,
+      "B": 19.166529632863035,
+      "C": 65.91083074899008
+     }
+    }
+   }
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43v8-finger-spheres-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43v8-timing.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43v8-pairs-table.png",
+   "kind": "table"
+  }
+ ],
+ "scripts": [
+  "p/launch_v8.sh",
+  "p/run_chain.sh",
+  "p/start_server.sh",
+  "p/run_client.sh",
+  "p/analyze_v8.py",
+  "p/run_replays_v8.sh",
+  "p/agg_ct_v8.py",
+  "p/z4_base_v8.py",
+  "p/agg_v8.py",
+  "p/extra_v8.py",
+  "p/scene_probe.py",
+  "p/fig_v8_scene.py",
+  "p/fig_v8_graphs.py",
+  "p/build_verify_v8.py"
+ ],
+ "raw": {
+  "agg": "outputs/verify/T43/V8/agg.json",
+  "ct": "outputs/verify/T43/V8/ct.json",
+  "extra": "outputs/verify/T43/V8/extra.json",
+  "analysis": "outputs/verify/T43/V8/analysis/analysis.json",
+  "replay": "outputs/verify/T43/V8/replay",
+  "snapshot": "outputs/verify/T43/V8/snapshot.txt",
+  "V7g_analysis": "outputs/verify/T43/V7g/analysis/analysis.json",
+  "V7g_replay": "outputs/verify/T43/CT/replay"
+ },
+ "verdict": "19/19 runs done, 0 retries, chain rc 0, gate ON and finger cover 122 -> 270 in server log; guards matched. (facts only)",
+ "not_measured": [
+  "regression-baseline esdf_rollout (.venv-ag3s excluded)",
+  "V7g and V8 come from different server sessions; first-chunk JIT time not cited; SQP iteration counts not cited (not a baseline)",
+  "Z4 / CT rules and hurdle contacts are H-stage only (stage B has no hurdle; no B replays)",
+  "scene figure pose = planned row 0 of the chunk (record sphere_centres), not the recorded qpos at the contact row",
+  "pod working set peak during the V8 round 65.5 GiB (other sessions included; per-run guard checked working set + 4 GiB <= 64 GiB before each client)"
+ ]
+}

@@ -1,0 +1,121 @@
+{
+ "figure": "benchmark/ag3s/docs/figures/t43/t43v10-hurdle-scene.png",
+ "script": "/mnt/dev/work/outputs/verify/T43/V10/p/fig_v10_scene.py",
+ "panels": [
+  {
+   "arm": "V8",
+   "run": "V8/H/V8_ep1807_s18073",
+   "row_t": 175,
+   "apple_bar_min_mm_at_row": 0.7359516471329326,
+   "grasp_t": 136,
+   "release_t": 181,
+   "contacts": [
+    [
+     "carry",
+     "apple",
+     174,
+     0.0
+    ],
+    [
+     "after_release",
+     "ee_finger_l2",
+     270,
+     5.8
+    ]
+   ],
+   "camera": {
+    "lookat_world": [
+     0.5481720284941097,
+     0.0651777924479981,
+     1.0943408091565439
+    ],
+    "distance": 0.75,
+    "azimuth": 165.0,
+    "elevation": -12.0
+   },
+   "n_trail_points": 46
+  },
+  {
+   "arm": "V10",
+   "run": "V10/H/V10_ep1807_s18073",
+   "row_t": 165,
+   "apple_bar_min_mm_at_row": 8.053001887986404,
+   "grasp_t": 136,
+   "release_t": 220,
+   "contacts": [
+    [
+     "after_release",
+     "ee_finger_l2",
+     271,
+     4.2
+    ]
+   ],
+   "camera": {
+    "lookat_world": [
+     0.5675029009855466,
+     0.10674413546713116,
+     1.120031744127021
+    ],
+    "distance": 0.75,
+    "azimuth": 165.0,
+    "elevation": -12.0
+   },
+   "n_trail_points": 85
+  },
+  {
+   "arm": "V8",
+   "run": "V8/H/V8_ep1968_s19683",
+   "row_t": 165,
+   "apple_bar_min_mm_at_row": 0.10568461129072809,
+   "grasp_t": 136,
+   "release_t": 216,
+   "contacts": [
+    [
+     "carry",
+     "apple",
+     164,
+     0.3
+    ]
+   ],
+   "camera": {
+    "lookat_world": [
+     0.559657694458281,
+     0.07766132297000602,
+     1.0857697120236087
+    ],
+    "distance": 0.75,
+    "azimuth": 165.0,
+    "elevation": -12.0
+   },
+   "n_trail_points": 81
+  },
+  {
+   "arm": "V10",
+   "run": "V10/H/V10_ep1968_s19683",
+   "row_t": 165,
+   "apple_bar_min_mm_at_row": 4.254660390943569,
+   "grasp_t": 136,
+   "release_t": 215,
+   "contacts": [],
+   "camera": {
+    "lookat_world": [
+     0.5606446711092266,
+     0.07421754713998173,
+     1.0900067765130956
+    ],
+    "distance": 0.75,
+    "azimuth": 165.0,
+    "elevation": -12.0
+   },
+   "n_trail_points": 80
+  }
+ ],
+ "sources": [
+  "/mnt/dev/work/outputs/verify/T43/V8/analysis/analysis.json",
+  "/mnt/dev/work/outputs/verify/T43/V10/analysis/analysis.json",
+  "/mnt/dev/work/outputs/verify/T43/V10/ct.json",
+  "/mnt/dev/work/outputs/verify/T43/V8/replay",
+  "/mnt/dev/work/outputs/verify/T43/V10/replay"
+ ],
+ "pose": "recorded control-row qpos (pre-state of that row)"
+}

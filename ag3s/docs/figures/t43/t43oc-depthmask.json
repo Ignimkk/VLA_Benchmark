@@ -1,0 +1,155 @@
+{
+ "script": "/mnt/dev/work/outputs/verify/T43/OC/p/fig_scene_oc.py",
+ "definitions": "T43 OC real-scene figures (verifier, CPU only, recorded data). One process, V8 snapshot.\nusage: T43W_SNAP=/mnt/dev/work-t43v8 PYTHONPATH=/mnt/dev/work-t43v8 fig_scene_oc.py RAW_JSON KEY:T [KEY:T ...]\nState = observation state of the executing chunk (planning-row qpos of exec_seq; the depth the server integrated for that chunk).\nt43oc-scene.png    : per contact: free-camera render at pb (pb = bar point at the contact, physics replay; red marker) + head / left wrist /\n                     right wrist RGB renders with the bar pixel classes overlaid.\nt43oc-depthmask.png: per contact: the three depth images (grey) with the same bar pixel classes.\n  bar pixel classes (oc_contact.py rules): bar px = segmentation body is a hurdle body and back-projected point within 10 mm of the hurdle;\n    near = |P - pb| < 30 mm; robot-filtered = self_filter_mask (build_robot_model(scene), code-default inflation) -> depth 0 in the TSDF input;\n    slot 0 = bar, near, kept; slot 2 = bar, elsewhere, kept; slot 1 = bar, robot-filtered.\nt43oc-esdf.png     : per contact: (a) location map, base-frame top view (x-y): fine-window footprint, bar capsule, slice line x = pb_x, pb;\n                     (b) recorded full-layer fine ESDF (5 mm, executing chunk) on the plane x = pb_x (y-z), d = 0 contour, true bar circle,\n                     pb, finger / arm contact point pf; (c) coarse ESDF (20 mm) on the same plane.",
+ "contacts": [
+  {
+   "key": "V8/H/V8_ep1807_s18073",
+   "t": 270,
+   "exec_seq": 34,
+   "pb_world": [
+    0.5291524884327088,
+    0.10250368025008556,
+    1.0696945332454055
+   ],
+   "pf_world": [
+    0.5291525869208875,
+    0.10829710253116047,
+    1.0698420558746307
+   ],
+   "pb_base": [
+    0.5291153010152944,
+    0.10286259999609314,
+    1.0696945332454055
+   ],
+   "cams": {
+    "zed_left": {
+     "near_kept": 27,
+     "elsewhere_kept": 1463,
+     "robot_filtered": 0,
+     "pb_px": [
+      296.1234936731824,
+      246.00471735647932
+     ],
+     "pb_occluded": true
+    },
+    "wrist_cam_l": {
+     "near_kept": 2657,
+     "elsewhere_kept": 12615,
+     "robot_filtered": 0,
+     "pb_px": null,
+     "pb_occluded": null
+    },
+    "wrist_cam_r": {
+     "near_kept": 0,
+     "elsewhere_kept": 964,
+     "robot_filtered": 0,
+     "pb_px": null,
+     "pb_occluded": null
+    }
+   },
+   "fine_d_pb_mm": 0.46325684525072575,
+   "fine_origin": [
+    0.182017023563385,
+    -0.20632701843976975,
+    0.7997704696655272
+   ],
+   "fine_voxel": 0.005,
+   "fine_upper": [
+    0.817017023563385,
+    0.42867298156023026,
+    1.4347704696655272
+   ],
+   "fine_slice_min_mm": -9.923985227942467,
+   "fine_slice_max_mm": 200.74474811553955,
+   "coarse_d_pb_mm": 3.570057451725006,
+   "coarse_origin": [
+    -0.820000011920929,
+    -1.27,
+    -0.46999998807907106
+   ],
+   "coarse_voxel": 0.02,
+   "coarse_upper": [
+    1.719999988079071,
+    1.27,
+    2.070000011920929
+   ],
+   "coarse_slice_min_mm": -18.03816668689251,
+   "coarse_slice_max_mm": 196.30590081214905
+  },
+  {
+   "key": "V8/H/V8_ep1834_s18341",
+   "t": 249,
+   "exec_seq": 32,
+   "pb_world": [
+    0.366883012608206,
+    -0.11171829857801349,
+    1.0816741140654942
+   ],
+   "pf_world": [
+    0.3669157666798669,
+    -0.11162464748908058,
+    1.081257123868606
+   ],
+   "pb_base": [
+    0.36690086542413014,
+    -0.11171611106043704,
+    1.081674114065494
+   ],
+   "cams": {
+    "zed_left": {
+     "near_kept": 0,
+     "elsewhere_kept": 1265,
+     "robot_filtered": 0,
+     "pb_px": [
+      415.30862829598556,
+      300.22832271655784
+     ],
+     "pb_occluded": true
+    },
+    "wrist_cam_l": {
+     "near_kept": 0,
+     "elsewhere_kept": 4982,
+     "robot_filtered": 0,
+     "pb_px": null,
+     "pb_occluded": null
+    },
+    "wrist_cam_r": {
+     "near_kept": 0,
+     "elsewhere_kept": 0,
+     "robot_filtered": 0,
+     "pb_px": null,
+     "pb_occluded": null
+    }
+   },
+   "fine_d_pb_mm": 0.0,
+   "fine_origin": [
+    0.15908398747444152,
+    -0.4107433381676674,
+    0.6684336614608763
+   ],
+   "fine_voxel": 0.005,
+   "fine_upper": [
+    0.7940839874744415,
+    0.22425666183233262,
+    1.3034336614608764
+   ],
+   "fine_slice_min_mm": -9.256194345653057,
+   "fine_slice_max_mm": 206.2911093235016,
+   "coarse_d_pb_mm": 1.7164776800200343,
+   "coarse_origin": [
+    -0.820000011920929,
+    -1.27,
+    -0.46999998807907106
+   ],
+   "coarse_voxel": 0.02,
+   "coarse_upper": [
+    1.719999988079071,
+    1.27,
+    2.070000011920929
+   ],
+   "coarse_slice_min_mm": -4.967066925019026,
+   "coarse_slice_max_mm": 201.14685595035553
+  }
+ ],
+ "figure": "depthmask"
+}

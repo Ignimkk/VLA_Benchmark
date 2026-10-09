@@ -1,0 +1,3616 @@
+{
+ "_comment": "ag3s-verifier. numbers and paths only.",
+ "step": "T43Z3V",
+ "date": "2026-10-06",
+ "runs": [
+  {
+   "id": "V5D",
+   "command": "outputs/verify/T43/Z3V/p/launch_z3v.sh (2 chains, ports 8284 / 8285, EST_GB 28)",
+   "server_flags": "V5 flags of T43/W/p5/start_server.sh (incl. --no-subtask-gate) + --held-slip-detach",
+   "venv": ".venv-openpi-live",
+   "runs_dir": "outputs/verify/T43/Z3V/runs/V5D",
+   "n_runs": 19,
+   "n_done": 19,
+   "n_retries": 0,
+   "chain_rc": {
+    "E_H": 0,
+    "E_B": 0,
+    "F_H": 0
+   },
+   "refusals": 0,
+   "raw_output": "outputs/verify/T43/Z3V/runs/V5D/chain_8284.log, chain_8285.log, runs/chainE.out, runs/chainF.out",
+   "gpu": {
+    "server_8284_20261006T073048": {
+     "gpu_total_used_peak_mib": 35860,
+     "gpu_used_before_mib": 0
+    },
+    "server_8284_20261006T075056": {
+     "gpu_total_used_peak_mib": 35860,
+     "gpu_used_before_mib": 17930
+    },
+    "server_8285_20261006T073118": {
+     "gpu_total_used_peak_mib": 35860,
+     "gpu_used_before_mib": 16930
+    }
+   }
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "cf6b410",
+  "snapshot": "/mnt/dev/work-t43z3 (outputs/verify/T43/Z3V/snapshot.txt)",
+  "code_md5_baseline": "outputs/verify/T43/Z3V/p/code_md5_z3v.txt (405 lines, == at every chain preflight)",
+  "diff_vs_work_t43w3": [
+   "ag3s/config.py",
+   "trajopt/grasp_latch.py",
+   "trajopt/safe_policy.py",
+   "trajopt/serve_safe.py"
+  ],
+  "with_overrides_collision_backend": "esdf",
+  "root_tests_commit": "fb841c0"
+ },
+ "baseline_check": {
+  "matched": null,
+  "note": "regression-baseline (.venv-ag3s esdf_rollout) not run: .venv-ag3s is excluded for this job. Guards run instead: code md5 == baseline, import check under snapshot, autotune off, esdf_stats present after every run (no REFUSED lines), server log held_slip_detach=True."
+ },
+ "numbers": {
+  "paired_2x2_V5D_vs_V5": {
+   "H": {
+    "success": {
+     "n_pairs": 14,
+     "V5_total": 12,
+     "V5D_total": 12,
+     "both": 12,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "grasp": {
+     "n_pairs": 14,
+     "V5_total": 12,
+     "V5D_total": 12,
+     "both": 12,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "place": {
+     "n_pairs": 14,
+     "V5_total": 12,
+     "V5D_total": 12,
+     "both": 12,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "success_rel": {
+     "n_pairs": 14,
+     "V5_total": 12,
+     "V5D_total": 12,
+     "both": 12,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "place_rel": {
+     "n_pairs": 14,
+     "V5_total": 12,
+     "V5D_total": 12,
+     "both": 12,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "released": {
+     "n_pairs": 14,
+     "V5_total": 12,
+     "V5D_total": 12,
+     "both": 12,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 2,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    }
+   },
+   "B": {
+    "success": {
+     "n_pairs": 5,
+     "V5_total": 4,
+     "V5D_total": 4,
+     "both": 4,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "grasp": {
+     "n_pairs": 5,
+     "V5_total": 4,
+     "V5D_total": 4,
+     "both": 4,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "place": {
+     "n_pairs": 5,
+     "V5_total": 4,
+     "V5D_total": 4,
+     "both": 4,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "success_rel": {
+     "n_pairs": 5,
+     "V5_total": 4,
+     "V5D_total": 4,
+     "both": 4,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "place_rel": {
+     "n_pairs": 5,
+     "V5_total": 4,
+     "V5D_total": 4,
+     "both": 4,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "released": {
+     "n_pairs": 5,
+     "V5_total": 4,
+     "V5D_total": 4,
+     "both": 4,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 1,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    }
+   },
+   "ALL": {
+    "success": {
+     "n_pairs": 19,
+     "V5_total": 16,
+     "V5D_total": 16,
+     "both": 16,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "grasp": {
+     "n_pairs": 19,
+     "V5_total": 16,
+     "V5D_total": 16,
+     "both": 16,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "place": {
+     "n_pairs": 19,
+     "V5_total": 16,
+     "V5D_total": 16,
+     "both": 16,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "success_rel": {
+     "n_pairs": 19,
+     "V5_total": 16,
+     "V5D_total": 16,
+     "both": 16,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "place_rel": {
+     "n_pairs": 19,
+     "V5_total": 16,
+     "V5D_total": 16,
+     "both": 16,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    },
+    "released": {
+     "n_pairs": 19,
+     "V5_total": 16,
+     "V5D_total": 16,
+     "both": 16,
+     "V5_only": 0,
+     "V5D_only": 0,
+     "neither": 3,
+     "mcnemar_exact_p": 1.0,
+     "V5_only_runs": [],
+     "V5D_only_runs": []
+    }
+   }
+  },
+  "totals": {
+   "V5": {
+    "n_hold": 217,
+    "trailing_hold_chunks_sum": 146,
+    "runs_with_trailing_hold": 3,
+    "runs_with_hold": 8,
+    "held_row_viol_all": 166,
+    "held_row_viol_ge_detach_t": 0,
+    "chunks_attached_ge_detach_t": 0,
+    "chunks_wp_held_ge_detach_t": 0,
+    "finger_apple_after_detach": {
+     "n_chunks_after_detach": 322,
+     "n_binding_finger_link": 320,
+     "n_finger_apple_le_10mm": 0,
+     "n_finger_apple_le_20mm": 0,
+     "n_finger_apple_le_50mm": 2
+    },
+    "n_runs_with_detach": 12,
+    "n_runs_slip_detach": 0
+   },
+   "V5D": {
+    "n_hold": 58,
+    "trailing_hold_chunks_sum": 0,
+    "runs_with_trailing_hold": 0,
+    "runs_with_hold": 7,
+    "held_row_viol_all": 34,
+    "held_row_viol_ge_detach_t": 0,
+    "chunks_attached_ge_detach_t": 0,
+    "chunks_wp_held_ge_detach_t": 0,
+    "finger_apple_after_detach": {
+     "n_chunks_after_detach": 346,
+     "n_binding_finger_link": 342,
+     "n_finger_apple_le_10mm": 0,
+     "n_finger_apple_le_20mm": 0,
+     "n_finger_apple_le_50mm": 4
+    },
+    "n_runs_with_detach": 16,
+    "n_runs_slip_detach": 10
+   },
+   "by_stage": {
+    "H": {
+     "V5": {
+      "n_hold": 163,
+      "runs_trailing_hold": 2
+     },
+     "V5D": {
+      "n_hold": 38,
+      "runs_trailing_hold": 0
+     }
+    },
+    "B": {
+     "V5": {
+      "n_hold": 54,
+      "runs_trailing_hold": 1
+     },
+     "V5D": {
+      "n_hold": 20,
+      "runs_trailing_hold": 0
+     }
+    }
+   }
+  },
+  "stops_summary": {
+   "V5": {
+    "n_runs_stop": 6,
+    "n_runs_stop_H": 6,
+    "sum_planning_rows": 1234,
+    "sum_hold": 217
+   },
+   "V5D": {
+    "n_runs_stop": 11,
+    "n_runs_stop_H": 11,
+    "sum_planning_rows": 1046,
+    "sum_hold": 58
+   }
+  },
+  "place_t_pairs": {
+   "n_both_placed": 16,
+   "rows": [
+    [
+     "B:1807_s18071",
+     208,
+     208
+    ],
+    [
+     "B:1968_s19681",
+     216,
+     216
+    ],
+    [
+     "B:1982_s19822",
+     240,
+     240
+    ],
+    [
+     "B:1995_s19952",
+     240,
+     240
+    ],
+    [
+     "H:1807_s18071",
+     168,
+     168
+    ],
+    [
+     "H:1807_s18073",
+     224,
+     224
+    ],
+    [
+     "H:1834_s18341",
+     232,
+     232
+    ],
+    [
+     "H:1834_s18343",
+     312,
+     312
+    ],
+    [
+     "H:1925_s19251",
+     216,
+     216
+    ],
+    [
+     "H:1925_s19253",
+     352,
+     352
+    ],
+    [
+     "H:1968_s19681",
+     216,
+     216
+    ],
+    [
+     "H:1968_s19683",
+     216,
+     216
+    ],
+    [
+     "H:1982_s19822",
+     184,
+     184
+    ],
+    [
+     "H:1982_s19823",
+     240,
+     240
+    ],
+    [
+     "H:1995_s19952",
+     192,
+     192
+    ],
+    [
+     "H:1995_s19953",
+     248,
+     248
+    ]
+   ],
+   "median_diff_V5D_minus_V5": 0.0,
+   "mean_V5": 231.5,
+   "mean_V5D": 231.5
+  },
+  "slip_table": [
+   {
+    "run": "B:1807_s18071",
+    "V5D_release_t_measured": 345,
+    "release_mode": "closed_cmd",
+    "predicted_slip_detach_t": 360,
+    "V5D_detach_t": 360,
+    "V5D_slip_flag": true,
+    "V5_detach_t": null,
+    "V5_release_t_measured": 345,
+    "V5D_attach_t": 120,
+    "slip_evidence": {
+     "attach_opening": 0.7204897403717041,
+     "hold_command": 0.5895066857337952,
+     "drop": 0.1311,
+     "gap": -0.0001,
+     "now": true,
+     "streak": 2,
+     "frames": 2
+    }
+   },
+   {
+    "run": "B:1967_s19672",
+    "V5D_release_t_measured": null,
+    "release_mode": null,
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": null,
+    "V5D_slip_flag": null,
+    "V5_detach_t": null,
+    "V5_release_t_measured": null,
+    "V5D_attach_t": 152,
+    "slip_evidence": null
+   },
+   {
+    "run": "B:1968_s19681",
+    "V5D_release_t_measured": 214,
+    "release_mode": "closed_cmd",
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": 232,
+    "V5D_slip_flag": true,
+    "V5_detach_t": 320,
+    "V5_release_t_measured": 214,
+    "V5D_attach_t": 144,
+    "slip_evidence": {
+     "attach_opening": 0.725188672542572,
+     "hold_command": 0.46985602378845215,
+     "drop": 0.2518,
+     "gap": 0.0035,
+     "now": true,
+     "streak": 2,
+     "frames": 2
+    }
+   },
+   {
+    "run": "B:1982_s19822",
+    "V5D_release_t_measured": 245,
+    "release_mode": "open_cmd",
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": 256,
+    "V5D_slip_flag": false,
+    "V5_detach_t": 256,
+    "V5_release_t_measured": 245,
+    "V5D_attach_t": 144,
+    "slip_evidence": {
+     "attach_opening": 0.7322080135345459,
+     "hold_command": 0.9997596144676208,
+     "drop": -0.2678,
+     "gap": 0.0002,
+     "now": false,
+     "streak": 0,
+     "frames": 2
+    }
+   },
+   {
+    "run": "B:1995_s19952",
+    "V5D_release_t_measured": 245,
+    "release_mode": "open_cmd",
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": 256,
+    "V5D_slip_flag": false,
+    "V5_detach_t": 256,
+    "V5_release_t_measured": 245,
+    "V5D_attach_t": 152,
+    "slip_evidence": {
+     "attach_opening": 0.7181426286697388,
+     "hold_command": 0.9981068968772888,
+     "drop": -0.2817,
+     "gap": 0.0017,
+     "now": false,
+     "streak": 0,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1807_s18071",
+    "V5D_release_t_measured": 165,
+    "release_mode": "closed_cmd",
+    "predicted_slip_detach_t": 176,
+    "V5D_detach_t": 176,
+    "V5D_slip_flag": true,
+    "V5_detach_t": null,
+    "V5_release_t_measured": 165,
+    "V5D_attach_t": 120,
+    "slip_evidence": {
+     "attach_opening": 0.7166590690612793,
+     "hold_command": 0.5036035776138306,
+     "drop": 0.2204,
+     "gap": -0.0073,
+     "now": true,
+     "streak": 2,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1807_s18073",
+    "V5D_release_t_measured": 215,
+    "release_mode": "closed_cmd",
+    "predicted_slip_detach_t": 232,
+    "V5D_detach_t": 232,
+    "V5D_slip_flag": true,
+    "V5_detach_t": null,
+    "V5_release_t_measured": 215,
+    "V5D_attach_t": 120,
+    "slip_evidence": {
+     "attach_opening": 0.7181997895240784,
+     "hold_command": 0.5537762641906738,
+     "drop": 0.1645,
+     "gap": -0.0,
+     "now": true,
+     "streak": 2,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1834_s18341",
+    "V5D_release_t_measured": 224,
+    "release_mode": "closed_cmd",
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": 240,
+    "V5D_slip_flag": true,
+    "V5_detach_t": 336,
+    "V5_release_t_measured": 224,
+    "V5D_attach_t": 128,
+    "slip_evidence": {
+     "attach_opening": 0.7436482906341553,
+     "hold_command": 0.5478016138076782,
+     "drop": 0.1909,
+     "gap": 0.0049,
+     "now": true,
+     "streak": 2,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1834_s18343",
+    "V5D_release_t_measured": 306,
+    "release_mode": "closed_cmd",
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": 320,
+    "V5D_slip_flag": true,
+    "V5_detach_t": 424,
+    "V5_release_t_measured": 306,
+    "V5D_attach_t": 128,
+    "slip_evidence": {
+     "attach_opening": 0.7405256628990173,
+     "hold_command": 0.5906540155410767,
+     "drop": 0.15,
+     "gap": -0.0001,
+     "now": true,
+     "streak": 2,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1925_s19251",
+    "V5D_release_t_measured": 216,
+    "release_mode": "open_cmd",
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": 232,
+    "V5D_slip_flag": false,
+    "V5_detach_t": 232,
+    "V5_release_t_measured": 216,
+    "V5D_attach_t": 120,
+    "slip_evidence": {
+     "attach_opening": 0.7294408082962036,
+     "hold_command": 1.0,
+     "drop": -0.2702,
+     "gap": -0.0003,
+     "now": false,
+     "streak": 0,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1925_s19253",
+    "V5D_release_t_measured": 369,
+    "release_mode": "closed_cmd",
+    "predicted_slip_detach_t": 384,
+    "V5D_detach_t": 384,
+    "V5D_slip_flag": true,
+    "V5_detach_t": null,
+    "V5_release_t_measured": 369,
+    "V5D_attach_t": 136,
+    "slip_evidence": {
+     "attach_opening": 0.730679452419281,
+     "hold_command": 0.5930750966072083,
+     "drop": 0.1377,
+     "gap": -0.0001,
+     "now": true,
+     "streak": 2,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1967_s19672",
+    "V5D_release_t_measured": null,
+    "release_mode": null,
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": null,
+    "V5D_slip_flag": null,
+    "V5_detach_t": null,
+    "V5_release_t_measured": null,
+    "V5D_attach_t": null,
+    "slip_evidence": null
+   },
+   {
+    "run": "H:1967_s19673",
+    "V5D_release_t_measured": null,
+    "release_mode": null,
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": null,
+    "V5D_slip_flag": null,
+    "V5_detach_t": null,
+    "V5_release_t_measured": null,
+    "V5D_attach_t": null,
+    "slip_evidence": null
+   },
+   {
+    "run": "H:1968_s19681",
+    "V5D_release_t_measured": 208,
+    "release_mode": "closed_cmd",
+    "predicted_slip_detach_t": 224,
+    "V5D_detach_t": 224,
+    "V5D_slip_flag": true,
+    "V5_detach_t": 280,
+    "V5_release_t_measured": 208,
+    "V5D_attach_t": 160,
+    "slip_evidence": {
+     "attach_opening": 0.7202039361000061,
+     "hold_command": 0.5003812909126282,
+     "drop": 0.2213,
+     "gap": -0.0015,
+     "now": true,
+     "streak": 2,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1968_s19683",
+    "V5D_release_t_measured": 216,
+    "release_mode": "open_cmd",
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": 232,
+    "V5D_slip_flag": false,
+    "V5_detach_t": 232,
+    "V5_release_t_measured": 216,
+    "V5D_attach_t": 120,
+    "slip_evidence": {
+     "attach_opening": 0.7205131649971008,
+     "hold_command": 0.999661386013031,
+     "drop": -0.2798,
+     "gap": 0.0006,
+     "now": false,
+     "streak": 0,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1982_s19822",
+    "V5D_release_t_measured": 181,
+    "release_mode": "closed_cmd",
+    "predicted_slip_detach_t": 192,
+    "V5D_detach_t": 192,
+    "V5D_slip_flag": true,
+    "V5_detach_t": 240,
+    "V5_release_t_measured": 181,
+    "V5D_attach_t": 128,
+    "slip_evidence": {
+     "attach_opening": 0.724427342414856,
+     "hold_command": 0.5152867436408997,
+     "drop": 0.2045,
+     "gap": 0.0047,
+     "now": true,
+     "streak": 2,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1982_s19823",
+    "V5D_release_t_measured": 239,
+    "release_mode": "open_cmd",
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": 256,
+    "V5D_slip_flag": false,
+    "V5_detach_t": 256,
+    "V5_release_t_measured": 239,
+    "V5D_attach_t": 128,
+    "slip_evidence": {
+     "attach_opening": 0.7181072235107422,
+     "hold_command": 0.9995975494384766,
+     "drop": -0.2814,
+     "gap": -0.0001,
+     "now": false,
+     "streak": 0,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1995_s19952",
+    "V5D_release_t_measured": 187,
+    "release_mode": "closed_cmd",
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": 200,
+    "V5D_slip_flag": true,
+    "V5_detach_t": 256,
+    "V5_release_t_measured": 187,
+    "V5D_attach_t": 144,
+    "slip_evidence": {
+     "attach_opening": 0.7239224314689636,
+     "hold_command": 0.5132647752761841,
+     "drop": 0.2117,
+     "gap": -0.0011,
+     "now": true,
+     "streak": 2,
+     "frames": 2
+    }
+   },
+   {
+    "run": "H:1995_s19953",
+    "V5D_release_t_measured": 253,
+    "release_mode": "open_cmd",
+    "predicted_slip_detach_t": null,
+    "V5D_detach_t": 264,
+    "V5D_slip_flag": false,
+    "V5_detach_t": 264,
+    "V5_release_t_measured": 253,
+    "V5D_attach_t": 152,
+    "slip_evidence": {
+     "attach_opening": 0.7302759885787964,
+     "hold_command": 0.9975296854972839,
+     "drop": -0.2688,
+     "gap": 0.0016,
+     "now": false,
+     "streak": 0,
+     "frames": 2
+    }
+   }
+  ],
+  "per_run": {
+   "B:1807_s18071": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 120,
+     "place_t": 208,
+     "n_hold": 50,
+     "trailing_hold": 49,
+     "longest_hold_run": 49,
+     "attach_t": 120,
+     "detach_t": null,
+     "slip": null,
+     "release_t_measured": 345,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 14,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 59,
+       "waypoint:held": 16
+      },
+      "hold_chunks": {
+       "waypoint:base": 36,
+       "waypoint:held": 14
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 0,
+      "n_binding_finger_link": 0,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {},
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": null
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 120,
+     "place_t": 208,
+     "n_hold": 20,
+     "trailing_hold": 0,
+     "longest_hold_run": 19,
+     "attach_t": 120,
+     "detach_t": 360,
+     "slip": true,
+     "release_t_measured": 345,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 10,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 63,
+       "waypoint:held": 12
+      },
+      "hold_chunks": {
+       "waypoint:base": 10,
+       "waypoint:held": 10
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 30,
+      "n_binding_finger_link": 30,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 30
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 169.91928963847718
+     }
+    },
+    "predicted_slip_detach_t": 360,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": null,
+      "hurdle_contact_rows": null,
+      "n_hold": 50,
+      "hold_per_planning_row": 0.6666666666666666
+     },
+     "V5D": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 360,
+      "hurdle_contact_rows": null,
+      "n_hold": 20,
+      "hold_per_planning_row": 0.26666666666666666
+     }
+    }
+   },
+   "B:1967_s19672": {
+    "V5": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 152,
+     "detach_t": null,
+     "slip": null,
+     "release_t_measured": null,
+     "release_mode": null,
+     "success_rel": false,
+     "place_rel": false,
+     "released": false,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 75
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 0,
+      "n_binding_finger_link": 0,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {},
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": null
+     }
+    },
+    "V5D": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 152,
+     "detach_t": null,
+     "slip": null,
+     "release_t_measured": null,
+     "release_mode": null,
+     "success_rel": false,
+     "place_rel": false,
+     "released": false,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 75
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 0,
+      "n_binding_finger_link": 0,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {},
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": null
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": null,
+      "hurdle_contact_rows": null,
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     },
+     "V5D": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": null,
+      "hurdle_contact_rows": null,
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   },
+   "B:1968_s19681": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 152,
+     "place_t": 216,
+     "n_hold": 4,
+     "trailing_hold": 0,
+     "longest_hold_run": 2,
+     "attach_t": 144,
+     "detach_t": 320,
+     "slip": null,
+     "release_t_measured": 214,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 4,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 66,
+       "waypoint:held": 9
+      },
+      "hold_chunks": {
+       "waypoint:held": 4
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 35,
+      "n_binding_finger_link": 35,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 35
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 107.15519179591377
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 152,
+     "place_t": 216,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 144,
+     "detach_t": 232,
+     "slip": true,
+     "release_t_measured": 214,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 73,
+       "waypoint:held": 2
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 46,
+      "n_binding_finger_link": 46,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 46
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 57.734591987049825
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 320,
+      "hurdle_contact_rows": null,
+      "n_hold": 4,
+      "hold_per_planning_row": 0.05333333333333334
+     },
+     "V5D": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 232,
+      "hurdle_contact_rows": null,
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   },
+   "B:1982_s19822": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 160,
+     "place_t": 240,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 144,
+     "detach_t": 256,
+     "slip": null,
+     "release_t_measured": 245,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 73,
+       "waypoint:held": 2
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 43,
+      "n_binding_finger_link": 43,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 43
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 102.24112065989397
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 160,
+     "place_t": 240,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 144,
+     "detach_t": 256,
+     "slip": false,
+     "release_t_measured": 245,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 73,
+       "waypoint:held": 2
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 43,
+      "n_binding_finger_link": 43,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 43
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 102.24112065989397
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 256,
+      "hurdle_contact_rows": null,
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     },
+     "V5D": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 256,
+      "hurdle_contact_rows": null,
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   },
+   "B:1995_s19952": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 160,
+     "place_t": 240,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 152,
+     "detach_t": 256,
+     "slip": null,
+     "release_t_measured": 245,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 72,
+       "waypoint:held": 3
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 43,
+      "n_binding_finger_link": 43,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 1,
+      "n_binding_category": {
+       "base": 43
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 48.559905841937066
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 160,
+     "place_t": 240,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 152,
+     "detach_t": 256,
+     "slip": false,
+     "release_t_measured": 245,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 72,
+       "waypoint:held": 3
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 43,
+      "n_binding_finger_link": 43,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 1,
+      "n_binding_category": {
+       "base": 43
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 48.559905841937066
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 256,
+      "hurdle_contact_rows": null,
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     },
+     "V5D": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 256,
+      "hurdle_contact_rows": null,
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   },
+   "H:1807_s18071": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 120,
+     "place_t": 168,
+     "n_hold": 50,
+     "trailing_hold": 50,
+     "longest_hold_run": 50,
+     "attach_t": 120,
+     "detach_t": null,
+     "slip": null,
+     "release_t_measured": 165,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 50,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 21,
+       "waypoint:held": 54
+      },
+      "hold_chunks": {
+       "waypoint:held": 50
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 0,
+      "n_binding_finger_link": 0,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {},
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": null
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 120,
+     "place_t": 168,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 120,
+     "detach_t": 176,
+     "slip": true,
+     "release_t_measured": 165,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 30,
+       "waypoint:held": 2
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 10,
+      "n_binding_finger_link": 10,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 10
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 52.35953965344329
+     }
+    },
+    "predicted_slip_detach_t": 176,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": null,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 50,
+      "hold_per_planning_row": 0.6666666666666666
+     },
+     "V5D": {
+      "stop": true,
+      "stop_clearance_m": -0.0009,
+      "n_planning": 32,
+      "n_control": 253,
+      "detach_t": 176,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 1,
+        "first_t": 252,
+        "first_phase": "after"
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   },
+   "H:1807_s18073": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 224,
+     "n_hold": 49,
+     "trailing_hold": 47,
+     "longest_hold_run": 47,
+     "attach_t": 120,
+     "detach_t": null,
+     "slip": null,
+     "release_t_measured": 215,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 49,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 23,
+       "waypoint:held": 52
+      },
+      "hold_chunks": {
+       "waypoint:held": 49
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 0,
+      "n_binding_finger_link": 0,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {},
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": null
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 128,
+     "place_t": 224,
+     "n_hold": 3,
+     "trailing_hold": 0,
+     "longest_hold_run": 2,
+     "attach_t": 120,
+     "detach_t": 232,
+     "slip": true,
+     "release_t_measured": 215,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 3,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 69,
+       "waypoint:held": 6
+      },
+      "hold_chunks": {
+       "waypoint:held": 3
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 46,
+      "n_binding_finger_link": 46,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 1,
+      "n_binding_category": {
+       "base": 46
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 46.78198745271115
+     }
+    },
+    "predicted_slip_detach_t": 232,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": null,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 49,
+      "hold_per_planning_row": 0.6533333333333333
+     },
+     "V5D": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 232,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 3,
+      "hold_per_planning_row": 0.04
+     }
+    }
+   },
+   "H:1834_s18341": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 144,
+     "place_t": 232,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 128,
+     "detach_t": 336,
+     "slip": null,
+     "release_t_measured": 224,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 61,
+       "waypoint:held": 14
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 33,
+      "n_binding_finger_link": 33,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 33
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 207.03003447956192
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 144,
+     "place_t": 232,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 128,
+     "detach_t": 240,
+     "slip": true,
+     "release_t_measured": 224,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 26,
+       "waypoint:held": 7
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 3,
+      "n_binding_finger_link": 1,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 3
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 191.5406168918423
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 336,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     },
+     "V5D": {
+      "stop": true,
+      "stop_clearance_m": -0.0002,
+      "n_planning": 33,
+      "n_control": 259,
+      "detach_t": 240,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   },
+   "H:1834_s18343": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 144,
+     "place_t": 312,
+     "n_hold": 16,
+     "trailing_hold": 0,
+     "longest_hold_run": 14,
+     "attach_t": 128,
+     "detach_t": 424,
+     "slip": null,
+     "release_t_measured": 306,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 3,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 65,
+       "waypoint:held": 10
+      },
+      "hold_chunks": {
+       "waypoint:base": 13,
+       "waypoint:held": 3
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 22,
+      "n_binding_finger_link": 20,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 22
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 193.56435644048344
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 144,
+     "place_t": 312,
+     "n_hold": 11,
+     "trailing_hold": 0,
+     "longest_hold_run": 11,
+     "attach_t": 128,
+     "detach_t": 320,
+     "slip": true,
+     "release_t_measured": 306,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 37,
+       "waypoint:held": 6
+      },
+      "hold_chunks": {
+       "waypoint:base": 11
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 3,
+      "n_binding_finger_link": 1,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 3
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 229.3458021646081
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 424,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 16,
+      "hold_per_planning_row": 0.21333333333333335
+     },
+     "V5D": {
+      "stop": true,
+      "stop_clearance_m": -0.0004,
+      "n_planning": 43,
+      "n_control": 342,
+      "detach_t": 320,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 11,
+      "hold_per_planning_row": 0.2558139534883721
+     }
+    }
+   },
+   "H:1925_s19251": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 136,
+     "place_t": 216,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 120,
+     "detach_t": 232,
+     "slip": null,
+     "release_t_measured": 216,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 31,
+       "waypoint:held": 3
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 5,
+      "n_binding_finger_link": 5,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 5
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 62.686715471443335
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 136,
+     "place_t": 216,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 120,
+     "detach_t": 232,
+     "slip": false,
+     "release_t_measured": 216,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 31,
+       "waypoint:held": 3
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 5,
+      "n_binding_finger_link": 5,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 5
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 62.686715471443335
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": true,
+      "stop_clearance_m": -0.0019,
+      "n_planning": 34,
+      "n_control": 271,
+      "detach_t": 232,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     },
+     "V5D": {
+      "stop": true,
+      "stop_clearance_m": -0.0019,
+      "n_planning": 34,
+      "n_control": 271,
+      "detach_t": 232,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   },
+   "H:1925_s19253": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 144,
+     "place_t": 352,
+     "n_hold": 46,
+     "trailing_hold": 0,
+     "longest_hold_run": 41,
+     "attach_t": 136,
+     "detach_t": null,
+     "slip": null,
+     "release_t_measured": 369,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 46,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 20,
+       "waypoint:held": 55
+      },
+      "hold_chunks": {
+       "waypoint:held": 46
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 0,
+      "n_binding_finger_link": 0,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {},
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": null
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 144,
+     "place_t": 352,
+     "n_hold": 21,
+     "trailing_hold": 0,
+     "longest_hold_run": 17,
+     "attach_t": 136,
+     "detach_t": 384,
+     "slip": true,
+     "release_t_measured": 369,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 21,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 47,
+       "waypoint:held": 28
+      },
+      "hold_chunks": {
+       "waypoint:held": 21
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 27,
+      "n_binding_finger_link": 27,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 1,
+      "n_binding_category": {
+       "base": 27
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 49.3392515377706
+     }
+    },
+    "predicted_slip_detach_t": 384,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": null,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 46,
+      "hold_per_planning_row": 0.6133333333333333
+     },
+     "V5D": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 384,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 21,
+      "hold_per_planning_row": 0.28
+     }
+    }
+   },
+   "H:1967_s19672": {
+    "V5": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "n_hold": 1,
+     "trailing_hold": 0,
+     "longest_hold_run": 1,
+     "attach_t": null,
+     "detach_t": null,
+     "slip": null,
+     "release_t_measured": null,
+     "release_mode": null,
+     "success_rel": false,
+     "place_rel": false,
+     "released": false,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 59
+      },
+      "hold_chunks": {
+       "waypoint:base": 1
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 0,
+      "n_binding_finger_link": 0,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {},
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": null
+     }
+    },
+    "V5D": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "n_hold": 1,
+     "trailing_hold": 0,
+     "longest_hold_run": 1,
+     "attach_t": null,
+     "detach_t": null,
+     "slip": null,
+     "release_t_measured": null,
+     "release_mode": null,
+     "success_rel": false,
+     "place_rel": false,
+     "released": false,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 59
+      },
+      "hold_chunks": {
+       "waypoint:base": 1
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 0,
+      "n_binding_finger_link": 0,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {},
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": null
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": true,
+      "stop_clearance_m": -0.0001,
+      "n_planning": 59,
+      "n_control": 467,
+      "detach_t": null,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 1,
+      "hold_per_planning_row": 0.01694915254237288
+     },
+     "V5D": {
+      "stop": true,
+      "stop_clearance_m": -0.0001,
+      "n_planning": 59,
+      "n_control": 467,
+      "detach_t": null,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 1,
+      "hold_per_planning_row": 0.01694915254237288
+     }
+    }
+   },
+   "H:1967_s19673": {
+    "V5": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": null,
+     "detach_t": null,
+     "slip": null,
+     "release_t_measured": null,
+     "release_mode": null,
+     "success_rel": false,
+     "place_rel": false,
+     "released": false,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 59
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 0,
+      "n_binding_finger_link": 0,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {},
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": null
+     }
+    },
+    "V5D": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "grasp_t": null,
+     "place_t": null,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": null,
+     "detach_t": null,
+     "slip": null,
+     "release_t_measured": null,
+     "release_mode": null,
+     "success_rel": false,
+     "place_rel": false,
+     "released": false,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 59
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 0,
+      "n_binding_finger_link": 0,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {},
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": null
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": true,
+      "stop_clearance_m": -0.0001,
+      "n_planning": 59,
+      "n_control": 472,
+      "detach_t": null,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     },
+     "V5D": {
+      "stop": true,
+      "stop_clearance_m": -0.0001,
+      "n_planning": 59,
+      "n_control": 472,
+      "detach_t": null,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   },
+   "H:1968_s19681": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 176,
+     "place_t": 216,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 160,
+     "detach_t": 280,
+     "slip": null,
+     "release_t_measured": 208,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 72,
+       "waypoint:held": 3
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 40,
+      "n_binding_finger_link": 40,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 40
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 67.4510239596079
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 176,
+     "place_t": 216,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 160,
+     "detach_t": 224,
+     "slip": true,
+     "release_t_measured": 208,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 39,
+       "waypoint:held": 1
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 12,
+      "n_binding_finger_link": 12,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 12
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 52.279917430405156
+     }
+    },
+    "predicted_slip_detach_t": 224,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 280,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 1,
+        "first_t": 207,
+        "first_phase": "carry"
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     },
+     "V5D": {
+      "stop": true,
+      "stop_clearance_m": -0.0001,
+      "n_planning": 40,
+      "n_control": 314,
+      "detach_t": 224,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 1,
+        "first_t": 207,
+        "first_phase": "carry"
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   },
+   "H:1968_s19683": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 136,
+     "place_t": 216,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 120,
+     "detach_t": 232,
+     "slip": null,
+     "release_t_measured": 216,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 31,
+       "waypoint:held": 3
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 5,
+      "n_binding_finger_link": 5,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 5
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 68.13826452053029
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 136,
+     "place_t": 216,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 120,
+     "detach_t": 232,
+     "slip": false,
+     "release_t_measured": 216,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 31,
+       "waypoint:held": 3
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 5,
+      "n_binding_finger_link": 5,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 5
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 68.13826452053029
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": true,
+      "stop_clearance_m": -0.0011,
+      "n_planning": 34,
+      "n_control": 272,
+      "detach_t": 232,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 1,
+        "first_t": 165,
+        "first_phase": "carry"
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     },
+     "V5D": {
+      "stop": true,
+      "stop_clearance_m": -0.0011,
+      "n_planning": 34,
+      "n_control": 272,
+      "detach_t": 232,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 1,
+        "first_t": 165,
+        "first_phase": "carry"
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   },
+   "H:1982_s19822": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 136,
+     "place_t": 184,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 128,
+     "detach_t": 240,
+     "slip": null,
+     "release_t_measured": 181,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 31,
+       "waypoint:held": 4
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 5,
+      "n_binding_finger_link": 5,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 5
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 100.99274017863615
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 136,
+     "place_t": 184,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 128,
+     "detach_t": 192,
+     "slip": true,
+     "release_t_measured": 181,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 34,
+       "waypoint:held": 1
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 11,
+      "n_binding_finger_link": 11,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 11
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 112.18231633166317
+     }
+    },
+    "predicted_slip_detach_t": 192,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": true,
+      "stop_clearance_m": -0.0015,
+      "n_planning": 35,
+      "n_control": 280,
+      "detach_t": 240,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     },
+     "V5D": {
+      "stop": true,
+      "stop_clearance_m": -0.0003,
+      "n_planning": 35,
+      "n_control": 273,
+      "detach_t": 192,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   },
+   "H:1982_s19823": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 152,
+     "place_t": 240,
+     "n_hold": 1,
+     "trailing_hold": 0,
+     "longest_hold_run": 1,
+     "attach_t": 128,
+     "detach_t": 256,
+     "slip": null,
+     "release_t_measured": 239,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 36,
+       "waypoint:held": 2
+      },
+      "hold_chunks": {
+       "waypoint:base": 1
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 6,
+      "n_binding_finger_link": 6,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 6
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 185.11078166812263
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 152,
+     "place_t": 240,
+     "n_hold": 1,
+     "trailing_hold": 0,
+     "longest_hold_run": 1,
+     "attach_t": 128,
+     "detach_t": 256,
+     "slip": false,
+     "release_t_measured": 239,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 36,
+       "waypoint:held": 2
+      },
+      "hold_chunks": {
+       "waypoint:base": 1
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 6,
+      "n_binding_finger_link": 6,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 6
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 185.11078166812263
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": true,
+      "stop_clearance_m": -0.0001,
+      "n_planning": 38,
+      "n_control": 301,
+      "detach_t": 256,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 1,
+      "hold_per_planning_row": 0.02631578947368421
+     },
+     "V5D": {
+      "stop": true,
+      "stop_clearance_m": -0.0001,
+      "n_planning": 38,
+      "n_control": 301,
+      "detach_t": 256,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 1,
+      "hold_per_planning_row": 0.02631578947368421
+     }
+    }
+   },
+   "H:1995_s19952": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 152,
+     "place_t": 192,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 144,
+     "detach_t": 256,
+     "slip": null,
+     "release_t_measured": 187,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 71,
+       "waypoint:held": 4
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 43,
+      "n_binding_finger_link": 43,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 43
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 132.20618258358613
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 152,
+     "place_t": 192,
+     "n_hold": 1,
+     "trailing_hold": 0,
+     "longest_hold_run": 1,
+     "attach_t": 144,
+     "detach_t": 200,
+     "slip": true,
+     "release_t_measured": 187,
+     "release_mode": "closed_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 37,
+       "waypoint:held": 2
+      },
+      "hold_chunks": {
+       "waypoint:base": 1
+      }
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 14,
+      "n_binding_finger_link": 14,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 0,
+      "n_binding_category": {
+       "base": 14
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 81.90962566121632
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 256,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 2,
+        "first_t": 184,
+        "first_phase": "carry"
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     },
+     "V5D": {
+      "stop": true,
+      "stop_clearance_m": -0.0005,
+      "n_planning": 39,
+      "n_control": 309,
+      "detach_t": 200,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 2,
+        "first_t": 184,
+        "first_phase": "carry"
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 1,
+      "hold_per_planning_row": 0.02564102564102564
+     }
+    }
+   },
+   "H:1995_s19953": {
+    "V5": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 160,
+     "place_t": 248,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 152,
+     "detach_t": 264,
+     "slip": null,
+     "release_t_measured": 253,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 72,
+       "waypoint:held": 3
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 42,
+      "n_binding_finger_link": 42,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 1,
+      "n_binding_category": {
+       "base": 42
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 33.49235220643592
+     }
+    },
+    "V5D": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "grasp_t": 160,
+     "place_t": 248,
+     "n_hold": 0,
+     "trailing_hold": 0,
+     "longest_hold_run": 0,
+     "attach_t": 152,
+     "detach_t": 264,
+     "slip": false,
+     "release_t_measured": 253,
+     "release_mode": "open_cmd",
+     "success_rel": true,
+     "place_rel": true,
+     "released": true,
+     "held_row_viol": {
+      "n_all": 0,
+      "n_ge_detach_t": 0,
+      "n_path_all": 0,
+      "n_chunks_attached_ge_detach_t": 0,
+      "n_chunks_wp_held_ge_detach_t": 0
+     },
+     "binding": {
+      "all": {
+       "waypoint:base": 72,
+       "waypoint:held": 3
+      },
+      "hold_chunks": {}
+     },
+     "finger_apple_after_detach": {
+      "n_chunks_after_detach": 42,
+      "n_binding_finger_link": 42,
+      "n_finger_apple_le_10mm": 0,
+      "n_finger_apple_le_20mm": 0,
+      "n_finger_apple_le_50mm": 1,
+      "n_binding_category": {
+       "base": 42
+      },
+      "n_binding_obstacle_rows_apple_gap_lt_0": 0,
+      "min_apple_surface_mm_finger_rows": 33.49235220643592
+     }
+    },
+    "predicted_slip_detach_t": null,
+    "stops_and_contacts": {
+     "V5": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 264,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     },
+     "V5D": {
+      "stop": false,
+      "stop_clearance_m": null,
+      "n_planning": 75,
+      "n_control": 600,
+      "detach_t": 264,
+      "hurdle_contact_rows": {
+       "Af": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "Ae": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "B": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       },
+       "C": {
+        "n_rows_le_0": 0,
+        "first_t": null,
+        "first_phase": null
+       }
+      },
+      "n_hold": 0,
+      "hold_per_planning_row": 0.0
+     }
+    }
+   }
+  },
+  "predicted_vs_actual_slip_detach_t": {
+   "B:1807_s18071": {
+    "predicted": 360,
+    "actual": 360,
+    "release_measured": 345
+   },
+   "H:1807_s18071": {
+    "predicted": 176,
+    "actual": 176,
+    "release_measured": 165
+   },
+   "H:1807_s18073": {
+    "predicted": 232,
+    "actual": 232,
+    "release_measured": 215
+   },
+   "H:1925_s19253": {
+    "predicted": 384,
+    "actual": 384,
+    "release_measured": 369
+   },
+   "H:1968_s19681": {
+    "predicted": 224,
+    "actual": 224,
+    "release_measured": 208
+   },
+   "H:1982_s19822": {
+    "predicted": 192,
+    "actual": 192,
+    "release_measured": 181
+   }
+  },
+  "release_t_V5D_equals_V5_all_runs": true,
+  "replay_qpos_mismatch_rows": 0
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43z3v-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43z3v-graph.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43z3v-table.png",
+   "kind": "table"
+  }
+ ],
+ "scripts": [
+  "outputs/verify/T43/Z3V/p/analyze_z3v.py",
+  "outputs/verify/T43/Z3V/p/z4_z3v.py",
+  "outputs/verify/T43/Z3V/p/aggregate_z3v.py",
+  "outputs/verify/T43/Z3V/p/aggregate_extra.py",
+  "outputs/verify/T43/Z3V/p/stops.py",
+  "outputs/verify/T43/Z3V/p/fig_z3v.py"
+ ],
+ "raw": {
+  "aggregate": "outputs/verify/T43/Z3V/aggregate.json",
+  "z4": "outputs/verify/T43/Z3V/z4.json",
+  "analysis": "outputs/verify/T43/Z3V/analysis/analysis.json",
+  "replay": "outputs/verify/T43/Z3V/replay",
+  "stops": "outputs/verify/T43/Z3V/raw/stops.json"
+ },
+ "verdict": "19/19 runs complete, 0 retries; paired S/G/P identical V5 vs V5D under old and Z4 rules",
+ "not_measured": [
+  "regression-baseline esdf_rollout",
+  "apple-finger binding via a direct finger-apple contact measure (proxy: binding link name contains finger and query sphere surface to apple surface gap)"
+ ]
+}

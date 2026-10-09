@@ -1,0 +1,88 @@
+{
+ "figure": "/mnt/dev/work/benchmark/ag3s/docs/figures/t43/t43v7g-scene.png",
+ "script": "/mnt/dev/work/outputs/verify/T43/V7g/p/fig_v7g.py",
+ "panels": {
+  "V5": {
+   "t": 216,
+   "radii_mm": [
+    58.332,
+    55.795
+   ],
+   "hold": true,
+   "crate_sd_mm_now": [
+    51.34406470469526,
+    37.69041617924125
+   ],
+   "apple_in_crate_mm": [
+    -18.894238341291953,
+    -74.63966188432941,
+    134.79466581199557
+   ],
+   "spheres_world": [
+    [
+     0.4921160247938786,
+     -0.05796435263374144,
+     1.0287354890805525
+    ],
+    [
+     0.45898744082113224,
+     -0.058762171783698865,
+     1.0226375083028971
+    ]
+   ]
+  },
+  "V7g": {
+   "t": 216,
+   "radii_mm": [
+    43.401,
+    43.401
+   ],
+   "hold": false,
+   "crate_sd_mm_now": [
+    33.5265741316717,
+    14.988705003900495
+   ],
+   "apple_in_crate_mm": [
+    -13.999189459029054,
+    -64.61517635523153,
+    71.9712872219323
+   ],
+   "spheres_world": [
+    [
+     0.48693167777261614,
+     -0.048002070593849595,
+     0.9680252915554348
+    ],
+    [
+     0.46818932450845585,
+     -0.04816976797788011,
+     0.9647187958713594
+    ]
+   ]
+  }
+ },
+ "close_camera": {
+  "lookat": [
+   0.5,
+   -0.02,
+   0.93
+  ],
+  "distance": 0.75,
+  "azimuth": 90.0,
+  "elevation": -6.0
+ },
+ "video_camera": {
+  "lookat": [
+   0.45,
+   0.0,
+   0.85
+  ],
+  "distance": 1.7,
+  "azimuth": 180.0,
+  "elevation": -18.0
+ },
+ "sources": [
+  "/mnt/dev/work/outputs/verify/T43/V7g/server_chunks_V5.json",
+  "/mnt/dev/work/outputs/verify/T43/V7g/server_chunks_V7g.json"
+ ]
+}

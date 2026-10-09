@@ -1,0 +1,3613 @@
+{
+ "_comment": "ag3s-verifier T43 TK. numbers and paths only. CPU, recorded data only, no new runs.",
+ "step": "T43TK",
+ "date": "2026-10-06",
+ "runs": [
+  {
+   "id": "tk_measure",
+   "command": "bash outputs/verify/T43/TK/p/run_tk.sh (one process per arm: T43W_SNAP=work-t43v7 V7g | work-t43v8 V8 | work-t43w3 E0; JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= XLA_PYTHON_CLIENT_PREALLOCATE=false MUJOCO_GL=osmesa)",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/TK/raw/tk_{V7g,V8,E0}.json",
+   "stdout_log": "outputs/verify/T43/TK/raw/tk_{V7g,V8,E0}.log"
+  },
+  {
+   "id": "tk_agg",
+   "command": ".venv-openpi-live/bin/python outputs/verify/T43/TK/p/tk_agg.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "outputs/verify/T43/TK/raw/tk_summary.json",
+   "stdout_log": "outputs/verify/T43/TK/raw/tk_agg.log"
+  },
+  {
+   "id": "round_trip",
+   "command": "inline python over analysis json (time_ms_excl_first.client_round_trip)",
+   "venv": "system python3",
+   "raw_output": "outputs/verify/T43/TK/raw/roundtrip.json",
+   "stdout_log": null
+  },
+  {
+   "id": "figures",
+   "command": "outputs/verify/T43/TK/p/fig_scene_tk.py (T43W_SNAP=work-t43v8; V8_ep1807_s18071:206 V8_ep1807_s18073:270) \u00b7 fig_graph_tk.py \u00b7 fig_table_tk.py",
+   "venv": ".venv-openpi-live",
+   "raw_output": "benchmark/ag3s/docs/figures/t43/t43tk-*.json",
+   "stdout_log": null
+  }
+ ],
+ "scripts": [
+  "outputs/verify/T43/TK/p/tk_measure.py",
+  "outputs/verify/T43/TK/p/run_tk.sh",
+  "outputs/verify/T43/TK/p/tk_agg.py",
+  "outputs/verify/T43/TK/p/fig_scene_tk.py",
+  "outputs/verify/T43/TK/p/fig_graph_tk.py",
+  "outputs/verify/T43/TK/p/fig_table_tk.py"
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "a297155 (not used); client code read from snapshots work-t43v7 / work-t43v8 / work-t43w3: pi05_infer.py md5 2a91376d\u2026, benchmark/trajopt/client.py md5 df0b2198\u2026 identical in all three (raw/code_md5.txt)",
+  "dirty_files": []
+ },
+ "numbers": {
+  "V7g": {
+   "carry": {
+    "PC_mm": {
+     "median": 0.0,
+     "p90": 0.0,
+     "n": 1142
+    },
+    "CM_mm": {
+     "median": 20.2976,
+     "p90": 31.4833,
+     "n": 1142
+    },
+    "PM_mm": {
+     "median": 20.2976,
+     "p90": 31.4833,
+     "n": 1142
+    },
+    "CM_rad_maxjoint": {
+     "median": 0.0537,
+     "p90": 0.0743,
+     "n": 1142
+    },
+    "CM_rad_joint": {
+     "median": [
+      0.0175,
+      0.0228,
+      0.0177,
+      0.0102,
+      0.0156,
+      0.0216,
+      0.0338
+     ],
+     "p90": [
+      0.0374,
+      0.0439,
+      0.054,
+      0.0662,
+      0.0521,
+      0.0706,
+      0.0645
+     ]
+    },
+    "tau_ee_rows_moving": {
+     "median": 1.95,
+     "p90": 2.65,
+     "n": 996
+    },
+    "tau_joint_rows_moving": {
+     "median": 2.15,
+     "p90": 2.45,
+     "n": 996
+    },
+    "cross_track_mm_moving": {
+     "median": 3.7044,
+     "p90": 6.778,
+     "n": 996
+    },
+    "speed_cmd_mm_per_row": {
+     "median": 9.2302,
+     "p90": 16.6955,
+     "n": 1142
+    },
+    "refined_minus_reference_mm": {
+     "median": 5.4337,
+     "p90": 21.9606,
+     "n": 1142
+    },
+    "n_exec_rows": 1142
+   },
+   "other": {
+    "PC_mm": {
+     "median": 0.0,
+     "p90": 0.0,
+     "n": 7263
+    },
+    "CM_mm": {
+     "median": 6.2343,
+     "p90": 18.8403,
+     "n": 7263
+    },
+    "PM_mm": {
+     "median": 6.2343,
+     "p90": 18.8403,
+     "n": 7263
+    },
+    "CM_rad_maxjoint": {
+     "median": 0.0106,
+     "p90": 0.0532,
+     "n": 7263
+    },
+    "CM_rad_joint": {
+     "median": [
+      0.0083,
+      0.0034,
+      0.0036,
+      0.0048,
+      0.0015,
+      0.0025,
+      0.002
+     ],
+     "p90": [
+      0.0267,
+      0.0166,
+      0.0197,
+      0.0304,
+      0.0189,
+      0.0444,
+      0.0313
+     ]
+    },
+    "tau_ee_rows_moving": {
+     "median": 1.9,
+     "p90": 3.6,
+     "n": 2518
+    },
+    "tau_joint_rows_moving": {
+     "median": 2.0,
+     "p90": 2.45,
+     "n": 2518
+    },
+    "cross_track_mm_moving": {
+     "median": 4.1308,
+     "p90": 6.5759,
+     "n": 2518
+    },
+    "speed_cmd_mm_per_row": {
+     "median": 1.2032,
+     "p90": 9.2404,
+     "n": 7245
+    },
+    "refined_minus_reference_mm": {
+     "median": 0.9145,
+     "p90": 10.64,
+     "n": 7263
+    },
+    "n_exec_rows": 7263
+   },
+   "hold_rows": {
+    "PC_mm": {
+     "median": 46.4205,
+     "p90": 84.4313,
+     "n": 128
+    },
+    "CM_mm": {
+     "median": 6.33,
+     "p90": 6.3418,
+     "n": 128
+    },
+    "n": 128
+   },
+   "n_rows_by_cls": {
+    "exec": 8405,
+    "hold": 128,
+    "stop": 8
+   },
+   "n_runs": 18,
+   "speed_bins_exec": [
+    {
+     "bin": [
+      0,
+      1
+     ],
+     "n": 3457,
+     "CM_mm": {
+      "median": 5.9015,
+      "p90": 7.6261,
+      "n": 3457
+     },
+     "CM_over_speed": {
+      "median": 9.2674,
+      "p90": 12.2918,
+      "n": 951
+     },
+     "tau_ee": {
+      "median": 3.0,
+      "p90": 6.0,
+      "n": 3384
+     }
+    },
+    {
+     "bin": [
+      1,
+      3
+     ],
+     "n": 1412,
+     "CM_mm": {
+      "median": 7.4744,
+      "p90": 11.721,
+      "n": 1412
+     },
+     "CM_over_speed": {
+      "median": 4.3548,
+      "p90": 7.0282,
+      "n": 1412
+     },
+     "tau_ee": {
+      "median": 3.0,
+      "p90": 5.85,
+      "n": 1381
+     }
+    },
+    {
+     "bin": [
+      3,
+      10
+     ],
+     "n": 2408,
+     "CM_mm": {
+      "median": 8.8159,
+      "p90": 21.531,
+      "n": 2408
+     },
+     "CM_over_speed": {
+      "median": 1.5571,
+      "p90": 3.4413,
+      "n": 2408
+     },
+     "tau_ee": {
+      "median": 1.3,
+      "p90": 3.65,
+      "n": 2404
+     }
+    },
+    {
+     "bin": [
+      10,
+      20
+     ],
+     "n": 952,
+     "CM_mm": {
+      "median": 27.2096,
+      "p90": 33.0234,
+      "n": 952
+     },
+     "CM_over_speed": {
+      "median": 2.0151,
+      "p90": 2.4973,
+      "n": 952
+     },
+     "tau_ee": {
+      "median": 2.05,
+      "p90": 2.6,
+      "n": 952
+     }
+    },
+    {
+     "bin": [
+      20,
+      30
+     ],
+     "n": 106,
+     "CM_mm": {
+      "median": 37.8805,
+      "p90": 44.7397,
+      "n": 106
+     },
+     "CM_over_speed": {
+      "median": 1.5831,
+      "p90": 1.986,
+      "n": 106
+     },
+     "tau_ee": {
+      "median": 1.9,
+      "p90": 2.5,
+      "n": 106
+     }
+    },
+    {
+     "bin": [
+      30,
+      45
+     ],
+     "n": 35,
+     "CM_mm": {
+      "median": 44.7838,
+      "p90": 55.8817,
+      "n": 35
+     },
+     "CM_over_speed": {
+      "median": 1.257,
+      "p90": 1.6725,
+      "n": 35
+     },
+     "tau_ee": {
+      "median": 1.6,
+      "p90": 2.21,
+      "n": 35
+     }
+    },
+    {
+     "bin": [
+      45,
+      null
+     ],
+     "n": 17,
+     "CM_mm": {
+      "median": 56.6388,
+      "p90": 115.9744,
+      "n": 17
+     },
+     "CM_over_speed": {
+      "median": 1.0036,
+      "p90": 1.2358,
+      "n": 17
+     },
+     "tau_ee": {
+      "median": 1.2,
+      "p90": 2.06,
+      "n": 17
+     }
+    }
+   ],
+   "run_lag_tau_rows": {
+    "median": 2.075,
+    "p90": 2.2,
+    "n": 16
+   },
+   "run_lag_median_mm_at_tau": {
+    "median": 6.6683,
+    "p90": 6.893,
+    "n": 16
+   },
+   "run_lag_median_mm_at_0": {
+    "median": 20.1084,
+    "p90": 26.0802,
+    "n": 16
+   },
+   "qnow": {
+    "n_chunks": 1071,
+    "cap_minus_pre0_rad_max": 0.0,
+    "cap_minus_Mprev_rad_max": 0,
+    "cap_minus_infstate_rad_max": 0.0,
+    "qnow_minus_Cprev_mm_prev_hold": {
+     "median": 6.3418,
+     "p90": 6.3575,
+     "n": 16
+    },
+    "qnow_minus_Cprev_rad_joint_prev_exec": {
+     "median": [
+      0.0093,
+      0.0036,
+      0.004,
+      0.0057,
+      0.003,
+      0.0039,
+      0.0048
+     ],
+     "p90": [
+      0.0305,
+      0.0269,
+      0.032,
+      0.0363,
+      0.0291,
+      0.0528,
+      0.0459
+     ]
+    },
+    "qnow_minus_Pprev_mm_prev_exec": {
+     "median": 7.1137,
+     "p90": 25.6778,
+     "n": 1037
+    },
+    "P0_minus_qnow_rad_max": {
+     "median": 0.0168,
+     "p90": 0.0801,
+     "n": 1071
+    },
+    "R0_minus_qnow_rad_max": {
+     "median": 0.0146,
+     "p90": 0.0747,
+     "n": 1071
+    },
+    "refined_vs_EA_max": 0.0,
+    "refined_vs_traj_predicted_max": 0.0,
+    "feedback_applied_vs_EA_max": 7.483908026628683e-08,
+    "n_feedback_checked": 1053,
+    "n_refined_checked": 1055,
+    "qnow_minus_Cprev_mm_prev_exec": {
+     "carry": {
+      "median": 20.0938,
+      "p90": 32.7337,
+      "n": 157
+     },
+     "other": {
+      "median": 6.2542,
+      "p90": 18.8108,
+      "n": 880
+     }
+    }
+   },
+   "by_k_carry": [
+    {
+     "k": 0,
+     "n": 153,
+     "speed_cmd_mm": {
+      "median": 6.1476,
+      "p90": 17.2994,
+      "n": 153
+     },
+     "CM_mm": {
+      "median": 20.5586,
+      "p90": 28.5118,
+      "n": 153
+     },
+     "frac_cmd_dir_reversal": 0.2876,
+     "cmd_accel_mm": {
+      "median": 7.708,
+      "p90": 21.3718,
+      "n": 153
+     }
+    },
+    {
+     "k": 1,
+     "n": 140,
+     "speed_cmd_mm": {
+      "median": 9.3518,
+      "p90": 14.9788,
+      "n": 140
+     },
+     "CM_mm": {
+      "median": 20.3938,
+      "p90": 29.1748,
+      "n": 140
+     },
+     "frac_cmd_dir_reversal": 0.2143,
+     "cmd_accel_mm": {
+      "median": 6.3371,
+      "p90": 15.9006,
+      "n": 140
+     }
+    },
+    {
+     "k": 2,
+     "n": 141,
+     "speed_cmd_mm": {
+      "median": 10.0707,
+      "p90": 16.5928,
+      "n": 141
+     },
+     "CM_mm": {
+      "median": 22.9955,
+      "p90": 30.9612,
+      "n": 141
+     },
+     "frac_cmd_dir_reversal": 0.0213,
+     "cmd_accel_mm": {
+      "median": 1.8217,
+      "p90": 6.7695,
+      "n": 141
+     }
+    },
+    {
+     "k": 3,
+     "n": 141,
+     "speed_cmd_mm": {
+      "median": 9.7634,
+      "p90": 16.773,
+      "n": 141
+     },
+     "CM_mm": {
+      "median": 21.8363,
+      "p90": 31.3076,
+      "n": 141
+     },
+     "frac_cmd_dir_reversal": 0.0213,
+     "cmd_accel_mm": {
+      "median": 1.6204,
+      "p90": 5.0473,
+      "n": 141
+     }
+    },
+    {
+     "k": 4,
+     "n": 141,
+     "speed_cmd_mm": {
+      "median": 9.9144,
+      "p90": 15.7698,
+      "n": 141
+     },
+     "CM_mm": {
+      "median": 20.4865,
+      "p90": 32.1807,
+      "n": 141
+     },
+     "frac_cmd_dir_reversal": 0.0142,
+     "cmd_accel_mm": {
+      "median": 1.6931,
+      "p90": 6.2201,
+      "n": 141
+     }
+    },
+    {
+     "k": 5,
+     "n": 141,
+     "speed_cmd_mm": {
+      "median": 9.4823,
+      "p90": 16.5738,
+      "n": 141
+     },
+     "CM_mm": {
+      "median": 20.2906,
+      "p90": 32.2906,
+      "n": 141
+     },
+     "frac_cmd_dir_reversal": 0.0567,
+     "cmd_accel_mm": {
+      "median": 1.6484,
+      "p90": 6.4979,
+      "n": 141
+     }
+    },
+    {
+     "k": 6,
+     "n": 141,
+     "speed_cmd_mm": {
+      "median": 8.8794,
+      "p90": 16.8175,
+      "n": 141
+     },
+     "CM_mm": {
+      "median": 18.8833,
+      "p90": 32.4903,
+      "n": 141
+     },
+     "frac_cmd_dir_reversal": 0.0638,
+     "cmd_accel_mm": {
+      "median": 1.7202,
+      "p90": 6.9029,
+      "n": 141
+     }
+    },
+    {
+     "k": 7,
+     "n": 141,
+     "speed_cmd_mm": {
+      "median": 9.725,
+      "p90": 17.8627,
+      "n": 141
+     },
+     "CM_mm": {
+      "median": 18.552,
+      "p90": 33.7246,
+      "n": 141
+     },
+     "frac_cmd_dir_reversal": 0.0567,
+     "cmd_accel_mm": {
+      "median": 1.9372,
+      "p90": 7.8848,
+      "n": 141
+     }
+    }
+   ],
+   "carry_exec_contact_runs_CM_mm": {
+    "median": 21.8243,
+    "p90": 31.0033,
+    "n": 535
+   },
+   "carry_exec_clean_runs_CM_mm": {
+    "median": 18.7019,
+    "p90": 31.9605,
+    "n": 607
+   },
+   "contact_runs": [
+    "V7g/H/V7g_ep1807_s18071",
+    "V7g/H/V7g_ep1807_s18073",
+    "V7g/H/V7g_ep1834_s18341",
+    "V7g/H/V7g_ep1925_s19251",
+    "V7g/H/V7g_ep1925_s19253",
+    "V7g/H/V7g_ep1967_s19672",
+    "V7g/H/V7g_ep1967_s19673",
+    "V7g/H/V7g_ep1968_s19681",
+    "V7g/H/V7g_ep1982_s19822",
+    "V7g/H/V7g_ep1982_s19823"
+   ]
+  },
+  "V8": {
+   "carry": {
+    "PC_mm": {
+     "median": 0.0,
+     "p90": 0.0,
+     "n": 1762
+    },
+    "CM_mm": {
+     "median": 15.1069,
+     "p90": 31.0405,
+     "n": 1762
+    },
+    "PM_mm": {
+     "median": 15.1069,
+     "p90": 31.0405,
+     "n": 1762
+    },
+    "CM_rad_maxjoint": {
+     "median": 0.0494,
+     "p90": 0.0739,
+     "n": 1762
+    },
+    "CM_rad_joint": {
+     "median": [
+      0.0164,
+      0.014,
+      0.0157,
+      0.0129,
+      0.0139,
+      0.0209,
+      0.0231
+     ],
+     "p90": [
+      0.0365,
+      0.0425,
+      0.0533,
+      0.0619,
+      0.0499,
+      0.0654,
+      0.0635
+     ]
+    },
+    "tau_ee_rows_moving": {
+     "median": 1.9,
+     "p90": 2.75,
+     "n": 1445
+    },
+    "tau_joint_rows_moving": {
+     "median": 2.1,
+     "p90": 2.45,
+     "n": 1445
+    },
+    "cross_track_mm_moving": {
+     "median": 3.8422,
+     "p90": 6.8693,
+     "n": 1445
+    },
+    "speed_cmd_mm_per_row": {
+     "median": 8.7459,
+     "p90": 16.3438,
+     "n": 1762
+    },
+    "refined_minus_reference_mm": {
+     "median": 5.0978,
+     "p90": 24.4234,
+     "n": 1762
+    },
+    "n_exec_rows": 1762
+   },
+   "other": {
+    "PC_mm": {
+     "median": 0.0,
+     "p90": 0.0,
+     "n": 6445
+    },
+    "CM_mm": {
+     "median": 6.1593,
+     "p90": 19.8857,
+     "n": 6445
+    },
+    "PM_mm": {
+     "median": 6.1593,
+     "p90": 19.8857,
+     "n": 6445
+    },
+    "CM_rad_maxjoint": {
+     "median": 0.0097,
+     "p90": 0.0532,
+     "n": 6445
+    },
+    "CM_rad_joint": {
+     "median": [
+      0.0083,
+      0.0035,
+      0.0035,
+      0.005,
+      0.0013,
+      0.0022,
+      0.0019
+     ],
+     "p90": [
+      0.0293,
+      0.0171,
+      0.0196,
+      0.033,
+      0.019,
+      0.0463,
+      0.0311
+     ]
+    },
+    "tau_ee_rows_moving": {
+     "median": 1.95,
+     "p90": 3.5,
+     "n": 2253
+    },
+    "tau_joint_rows_moving": {
+     "median": 2.0,
+     "p90": 2.4,
+     "n": 2253
+    },
+    "cross_track_mm_moving": {
+     "median": 3.898,
+     "p90": 6.2722,
+     "n": 2253
+    },
+    "speed_cmd_mm_per_row": {
+     "median": 1.0587,
+     "p90": 9.2284,
+     "n": 6426
+    },
+    "refined_minus_reference_mm": {
+     "median": 0.7897,
+     "p90": 8.8122,
+     "n": 6445
+    },
+    "n_exec_rows": 6445
+   },
+   "hold_rows": {
+    "PC_mm": {
+     "median": 45.2994,
+     "p90": 166.0934,
+     "n": 48
+    },
+    "CM_mm": {
+     "median": 5.8165,
+     "p90": 7.1771,
+     "n": 48
+    },
+    "n": 48
+   },
+   "n_rows_by_cls": {
+    "exec": 8207,
+    "hold": 48,
+    "stop": 10
+   },
+   "n_runs": 19,
+   "speed_bins_exec": [
+    {
+     "bin": [
+      0,
+      1
+     ],
+     "n": 3224,
+     "CM_mm": {
+      "median": 5.8683,
+      "p90": 8.274,
+      "n": 3224
+     },
+     "CM_over_speed": {
+      "median": 9.3657,
+      "p90": 12.8769,
+      "n": 1058
+     },
+     "tau_ee": {
+      "median": 3.0,
+      "p90": 6.0,
+      "n": 3145
+     }
+    },
+    {
+     "bin": [
+      1,
+      3
+     ],
+     "n": 1262,
+     "CM_mm": {
+      "median": 7.2986,
+      "p90": 11.9264,
+      "n": 1262
+     },
+     "CM_over_speed": {
+      "median": 4.5187,
+      "p90": 7.0531,
+      "n": 1262
+     },
+     "tau_ee": {
+      "median": 3.0,
+      "p90": 5.4,
+      "n": 1231
+     }
+    },
+    {
+     "bin": [
+      3,
+      10
+     ],
+     "n": 2465,
+     "CM_mm": {
+      "median": 9.0045,
+      "p90": 21.6106,
+      "n": 2465
+     },
+     "CM_over_speed": {
+      "median": 1.4748,
+      "p90": 3.5166,
+      "n": 2465
+     },
+     "tau_ee": {
+      "median": 1.25,
+      "p90": 3.5,
+      "n": 2461
+     }
+    },
+    {
+     "bin": [
+      10,
+      20
+     ],
+     "n": 1075,
+     "CM_mm": {
+      "median": 27.4028,
+      "p90": 32.855,
+      "n": 1075
+     },
+     "CM_over_speed": {
+      "median": 2.0232,
+      "p90": 2.5152,
+      "n": 1075
+     },
+     "tau_ee": {
+      "median": 2.1,
+      "p90": 2.6,
+      "n": 1075
+     }
+    },
+    {
+     "bin": [
+      20,
+      30
+     ],
+     "n": 99,
+     "CM_mm": {
+      "median": 39.4546,
+      "p90": 47.6107,
+      "n": 99
+     },
+     "CM_over_speed": {
+      "median": 1.6299,
+      "p90": 2.0379,
+      "n": 99
+     },
+     "tau_ee": {
+      "median": 1.85,
+      "p90": 2.76,
+      "n": 99
+     }
+    },
+    {
+     "bin": [
+      30,
+      45
+     ],
+     "n": 43,
+     "CM_mm": {
+      "median": 43.4326,
+      "p90": 55.1287,
+      "n": 43
+     },
+     "CM_over_speed": {
+      "median": 1.2372,
+      "p90": 1.5245,
+      "n": 43
+     },
+     "tau_ee": {
+      "median": 1.6,
+      "p90": 2.55,
+      "n": 43
+     }
+    },
+    {
+     "bin": [
+      45,
+      null
+     ],
+     "n": 20,
+     "CM_mm": {
+      "median": 56.5375,
+      "p90": 83.1011,
+      "n": 20
+     },
+     "CM_over_speed": {
+      "median": 1.0177,
+      "p90": 1.2502,
+      "n": 20
+     },
+     "tau_ee": {
+      "median": 1.5,
+      "p90": 2.26,
+      "n": 20
+     }
+    }
+   ],
+   "run_lag_tau_rows": {
+    "median": 1.95,
+    "p90": 2.12,
+    "n": 19
+   },
+   "run_lag_median_mm_at_tau": {
+    "median": 6.6061,
+    "p90": 7.0774,
+    "n": 19
+   },
+   "run_lag_median_mm_at_0": {
+    "median": 18.0558,
+    "p90": 27.2314,
+    "n": 19
+   },
+   "qnow": {
+    "n_chunks": 1037,
+    "cap_minus_pre0_rad_max": 0.0,
+    "cap_minus_Mprev_rad_max": 0,
+    "cap_minus_infstate_rad_max": 0.0,
+    "qnow_minus_Cprev_mm_prev_hold": {
+     "median": 6.4951,
+     "p90": 7.2376,
+     "n": 6
+    },
+    "qnow_minus_Cprev_rad_joint_prev_exec": {
+     "median": [
+      0.0091,
+      0.0037,
+      0.004,
+      0.006,
+      0.0035,
+      0.0039,
+      0.0079
+     ],
+     "p90": [
+      0.0318,
+      0.0268,
+      0.0327,
+      0.0386,
+      0.0297,
+      0.0576,
+      0.0479
+     ]
+    },
+    "qnow_minus_Pprev_mm_prev_exec": {
+     "median": 7.3364,
+     "p90": 26.6928,
+     "n": 1012
+    },
+    "P0_minus_qnow_rad_max": {
+     "median": 0.0184,
+     "p90": 0.0813,
+     "n": 1037
+    },
+    "R0_minus_qnow_rad_max": {
+     "median": 0.0155,
+     "p90": 0.0758,
+     "n": 1037
+    },
+    "refined_vs_EA_max": 0.0,
+    "refined_vs_traj_predicted_max": 0.0,
+    "feedback_applied_vs_EA_max": 5.132922309414312e-08,
+    "n_feedback_checked": 1018,
+    "n_refined_checked": 1031,
+    "qnow_minus_Cprev_mm_prev_exec": {
+     "carry": {
+      "median": 16.2947,
+      "p90": 31.4207,
+      "n": 236
+     },
+     "other": {
+      "median": 6.119,
+      "p90": 18.6639,
+      "n": 776
+     }
+    }
+   },
+   "by_k_carry": [
+    {
+     "k": 0,
+     "n": 233,
+     "speed_cmd_mm": {
+      "median": 6.5953,
+      "p90": 18.3096,
+      "n": 233
+     },
+     "CM_mm": {
+      "median": 15.1596,
+      "p90": 27.4949,
+      "n": 233
+     },
+     "frac_cmd_dir_reversal": 0.3648,
+     "cmd_accel_mm": {
+      "median": 7.4055,
+      "p90": 21.3803,
+      "n": 233
+     }
+    },
+    {
+     "k": 1,
+     "n": 215,
+     "speed_cmd_mm": {
+      "median": 8.5165,
+      "p90": 15.9316,
+      "n": 215
+     },
+     "CM_mm": {
+      "median": 17.0231,
+      "p90": 29.2245,
+      "n": 215
+     },
+     "frac_cmd_dir_reversal": 0.2837,
+     "cmd_accel_mm": {
+      "median": 5.8581,
+      "p90": 21.2103,
+      "n": 215
+     }
+    },
+    {
+     "k": 2,
+     "n": 218,
+     "speed_cmd_mm": {
+      "median": 8.9912,
+      "p90": 16.4221,
+      "n": 218
+     },
+     "CM_mm": {
+      "median": 16.9189,
+      "p90": 30.5212,
+      "n": 218
+     },
+     "frac_cmd_dir_reversal": 0.0275,
+     "cmd_accel_mm": {
+      "median": 1.6969,
+      "p90": 6.492,
+      "n": 218
+     }
+    },
+    {
+     "k": 3,
+     "n": 218,
+     "speed_cmd_mm": {
+      "median": 9.0111,
+      "p90": 15.7064,
+      "n": 218
+     },
+     "CM_mm": {
+      "median": 16.0901,
+      "p90": 31.2849,
+      "n": 218
+     },
+     "frac_cmd_dir_reversal": 0.0321,
+     "cmd_accel_mm": {
+      "median": 1.7209,
+      "p90": 6.364,
+      "n": 218
+     }
+    },
+    {
+     "k": 4,
+     "n": 218,
+     "speed_cmd_mm": {
+      "median": 8.7384,
+      "p90": 16.0822,
+      "n": 218
+     },
+     "CM_mm": {
+      "median": 15.2974,
+      "p90": 32.1933,
+      "n": 218
+     },
+     "frac_cmd_dir_reversal": 0.0505,
+     "cmd_accel_mm": {
+      "median": 1.3809,
+      "p90": 5.6493,
+      "n": 218
+     }
+    },
+    {
+     "k": 5,
+     "n": 218,
+     "speed_cmd_mm": {
+      "median": 8.6112,
+      "p90": 16.6082,
+      "n": 218
+     },
+     "CM_mm": {
+      "median": 13.8519,
+      "p90": 32.3232,
+      "n": 218
+     },
+     "frac_cmd_dir_reversal": 0.0642,
+     "cmd_accel_mm": {
+      "median": 1.5157,
+      "p90": 6.3151,
+      "n": 218
+     }
+    },
+    {
+     "k": 6,
+     "n": 218,
+     "speed_cmd_mm": {
+      "median": 8.8334,
+      "p90": 16.235,
+      "n": 218
+     },
+     "CM_mm": {
+      "median": 12.5822,
+      "p90": 32.5064,
+      "n": 218
+     },
+     "frac_cmd_dir_reversal": 0.0596,
+     "cmd_accel_mm": {
+      "median": 1.6538,
+      "p90": 7.2456,
+      "n": 218
+     }
+    },
+    {
+     "k": 7,
+     "n": 218,
+     "speed_cmd_mm": {
+      "median": 9.4249,
+      "p90": 16.4964,
+      "n": 218
+     },
+     "CM_mm": {
+      "median": 12.7413,
+      "p90": 32.1589,
+      "n": 218
+     },
+     "frac_cmd_dir_reversal": 0.0505,
+     "cmd_accel_mm": {
+      "median": 1.659,
+      "p90": 9.317,
+      "n": 218
+     }
+    }
+   ],
+   "carry_exec_contact_runs_CM_mm": {
+    "median": 18.2146,
+    "p90": 31.7075,
+    "n": 819
+   },
+   "carry_exec_clean_runs_CM_mm": {
+    "median": 12.9307,
+    "p90": 30.6794,
+    "n": 943
+   },
+   "contact_runs": [
+    "V8/H/V8_ep1807_s18071",
+    "V8/H/V8_ep1807_s18073",
+    "V8/H/V8_ep1834_s18341",
+    "V8/H/V8_ep1925_s19251",
+    "V8/H/V8_ep1925_s19253",
+    "V8/H/V8_ep1967_s19672",
+    "V8/H/V8_ep1968_s19681",
+    "V8/H/V8_ep1968_s19683",
+    "V8/H/V8_ep1982_s19823",
+    "V8/H/V8_ep1995_s19952",
+    "V8/H/V8_ep1995_s19953"
+   ]
+  },
+  "E0": {
+   "carry": {
+    "PC_mm": {
+     "median": 0.0,
+     "p90": 0.0,
+     "n": 997
+    },
+    "CM_mm": {
+     "median": 20.0381,
+     "p90": 31.0579,
+     "n": 997
+    },
+    "PM_mm": {
+     "median": 20.0381,
+     "p90": 31.0579,
+     "n": 997
+    },
+    "CM_rad_maxjoint": {
+     "median": 0.0539,
+     "p90": 0.0736,
+     "n": 997
+    },
+    "CM_rad_joint": {
+     "median": [
+      0.0177,
+      0.0232,
+      0.0168,
+      0.0137,
+      0.0129,
+      0.0233,
+      0.0278
+     ],
+     "p90": [
+      0.0357,
+      0.0442,
+      0.0525,
+      0.0634,
+      0.0521,
+      0.0655,
+      0.0661
+     ]
+    },
+    "tau_ee_rows_moving": {
+     "median": 1.95,
+     "p90": 2.7,
+     "n": 860
+    },
+    "tau_joint_rows_moving": {
+     "median": 2.1,
+     "p90": 2.45,
+     "n": 860
+    },
+    "cross_track_mm_moving": {
+     "median": 3.968,
+     "p90": 6.4088,
+     "n": 860
+    },
+    "speed_cmd_mm_per_row": {
+     "median": 9.2161,
+     "p90": 15.993,
+     "n": 997
+    },
+    "refined_minus_reference_mm": null,
+    "n_exec_rows": 997
+   },
+   "other": {
+    "PC_mm": {
+     "median": 0.0,
+     "p90": 0.0,
+     "n": 7403
+    },
+    "CM_mm": {
+     "median": 5.9228,
+     "p90": 16.8456,
+     "n": 7403
+    },
+    "PM_mm": {
+     "median": 5.9228,
+     "p90": 16.8456,
+     "n": 7403
+    },
+    "CM_rad_maxjoint": {
+     "median": 0.0083,
+     "p90": 0.0502,
+     "n": 7403
+    },
+    "CM_rad_joint": {
+     "median": [
+      0.0081,
+      0.0033,
+      0.0033,
+      0.0048,
+      0.0009,
+      0.0019,
+      0.0014
+     ],
+     "p90": [
+      0.0264,
+      0.0146,
+      0.0176,
+      0.0264,
+      0.0177,
+      0.0404,
+      0.0282
+     ]
+    },
+    "tau_ee_rows_moving": {
+     "median": 2.0,
+     "p90": 3.75,
+     "n": 2058
+    },
+    "tau_joint_rows_moving": {
+     "median": 2.05,
+     "p90": 2.45,
+     "n": 2058
+    },
+    "cross_track_mm_moving": {
+     "median": 3.933,
+     "p90": 6.5184,
+     "n": 2058
+    },
+    "speed_cmd_mm_per_row": {
+     "median": 0.9762,
+     "p90": 8.6747,
+     "n": 7389
+    },
+    "refined_minus_reference_mm": null,
+    "n_exec_rows": 7403
+   },
+   "hold_rows": {
+    "PC_mm": null,
+    "CM_mm": null,
+    "n": 0
+   },
+   "n_rows_by_cls": {
+    "exec": 8400,
+    "hold": 0,
+    "stop": 0
+   },
+   "n_runs": 14,
+   "speed_bins_exec": [
+    {
+     "bin": [
+      0,
+      1
+     ],
+     "n": 3796,
+     "CM_mm": {
+      "median": 5.7285,
+      "p90": 6.3089,
+      "n": 3796
+     },
+     "CM_over_speed": {
+      "median": 8.1822,
+      "p90": 10.9099,
+      "n": 2260
+     },
+     "tau_ee": {
+      "median": 3.0,
+      "p90": 6.0,
+      "n": 3741
+     }
+    },
+    {
+     "bin": [
+      1,
+      3
+     ],
+     "n": 1668,
+     "CM_mm": {
+      "median": 6.1932,
+      "p90": 10.6446,
+      "n": 1668
+     },
+     "CM_over_speed": {
+      "median": 4.5079,
+      "p90": 6.4905,
+      "n": 1668
+     },
+     "tau_ee": {
+      "median": 3.0,
+      "p90": 6.0,
+      "n": 1643
+     }
+    },
+    {
+     "bin": [
+      3,
+      10
+     ],
+     "n": 1943,
+     "CM_mm": {
+      "median": 9.2997,
+      "p90": 22.1261,
+      "n": 1943
+     },
+     "CM_over_speed": {
+      "median": 1.5389,
+      "p90": 3.6056,
+      "n": 1943
+     },
+     "tau_ee": {
+      "median": 1.45,
+      "p90": 4.0,
+      "n": 1939
+     }
+    },
+    {
+     "bin": [
+      10,
+      20
+     ],
+     "n": 927,
+     "CM_mm": {
+      "median": 27.7731,
+      "p90": 33.0322,
+      "n": 927
+     },
+     "CM_over_speed": {
+      "median": 2.0084,
+      "p90": 2.4627,
+      "n": 927
+     },
+     "tau_ee": {
+      "median": 2.05,
+      "p90": 2.6,
+      "n": 927
+     }
+    },
+    {
+     "bin": [
+      20,
+      30
+     ],
+     "n": 51,
+     "CM_mm": {
+      "median": 38.4967,
+      "p90": 42.1104,
+      "n": 51
+     },
+     "CM_over_speed": {
+      "median": 1.837,
+      "p90": 1.9922,
+      "n": 51
+     },
+     "tau_ee": {
+      "median": 1.9,
+      "p90": 2.15,
+      "n": 51
+     }
+    },
+    {
+     "bin": [
+      30,
+      45
+     ],
+     "n": 1,
+     "CM_mm": {
+      "median": 22.0907,
+      "p90": 22.0907,
+      "n": 1
+     },
+     "CM_over_speed": {
+      "median": 0.6676,
+      "p90": 0.6676,
+      "n": 1
+     },
+     "tau_ee": {
+      "median": 0.65,
+      "p90": 0.65,
+      "n": 1
+     }
+    },
+    {
+     "bin": [
+      45,
+      null
+     ],
+     "n": 0,
+     "CM_mm": null,
+     "CM_over_speed": null,
+     "tau_ee": null
+    }
+   ],
+   "run_lag_tau_rows": {
+    "median": 1.95,
+    "p90": 2.15,
+    "n": 13
+   },
+   "run_lag_median_mm_at_tau": {
+    "median": 6.3571,
+    "p90": 7.6715,
+    "n": 13
+   },
+   "run_lag_median_mm_at_0": {
+    "median": 20.5731,
+    "p90": 24.8007,
+    "n": 13
+   },
+   "qnow": {
+    "n_chunks": 1050,
+    "cap_minus_pre0_rad_max": 0.0,
+    "cap_minus_Mprev_rad_max": 0,
+    "cap_minus_infstate_rad_max": 0.0,
+    "qnow_minus_Cprev_mm_prev_hold": null,
+    "qnow_minus_Cprev_rad_joint_prev_exec": {
+     "median": [
+      0.0082,
+      0.0035,
+      0.0036,
+      0.0049,
+      0.0014,
+      0.0021,
+      0.0018
+     ],
+     "p90": [
+      0.0293,
+      0.0254,
+      0.0262,
+      0.0322,
+      0.0267,
+      0.0498,
+      0.0422
+     ]
+    },
+    "qnow_minus_Pprev_mm_prev_exec": {
+     "median": 6.0669,
+     "p90": 25.1779,
+     "n": 1036
+    },
+    "P0_minus_qnow_rad_max": {
+     "median": 0.0092,
+     "p90": 0.073,
+     "n": 1050
+    },
+    "R0_minus_qnow_rad_max": null,
+    "refined_vs_EA_max": 0,
+    "refined_vs_traj_predicted_max": 0,
+    "feedback_applied_vs_EA_max": 0,
+    "n_feedback_checked": 0,
+    "n_refined_checked": 0,
+    "qnow_minus_Cprev_mm_prev_exec": {
+     "carry": {
+      "median": 20.2265,
+      "p90": 31.5517,
+      "n": 136
+     },
+     "other": {
+      "median": 5.9347,
+      "p90": 16.2678,
+      "n": 900
+     }
+    }
+   },
+   "by_k_carry": [
+    {
+     "k": 0,
+     "n": 136,
+     "speed_cmd_mm": {
+      "median": 6.2788,
+      "p90": 11.9829,
+      "n": 136
+     },
+     "CM_mm": {
+      "median": 18.9491,
+      "p90": 26.5498,
+      "n": 136
+     },
+     "frac_cmd_dir_reversal": 0.2426,
+     "cmd_accel_mm": {
+      "median": 6.7087,
+      "p90": 12.0942,
+      "n": 136
+     }
+    },
+    {
+     "k": 1,
+     "n": 123,
+     "speed_cmd_mm": {
+      "median": 10.9767,
+      "p90": 16.6793,
+      "n": 123
+     },
+     "CM_mm": {
+      "median": 21.9028,
+      "p90": 29.3576,
+      "n": 123
+     },
+     "frac_cmd_dir_reversal": 0.0813,
+     "cmd_accel_mm": {
+      "median": 6.4613,
+      "p90": 10.3352,
+      "n": 123
+     }
+    },
+    {
+     "k": 2,
+     "n": 123,
+     "speed_cmd_mm": {
+      "median": 9.706,
+      "p90": 16.6689,
+      "n": 123
+     },
+     "CM_mm": {
+      "median": 21.6424,
+      "p90": 31.0997,
+      "n": 123
+     },
+     "frac_cmd_dir_reversal": 0.0325,
+     "cmd_accel_mm": {
+      "median": 1.9993,
+      "p90": 4.1034,
+      "n": 123
+     }
+    },
+    {
+     "k": 3,
+     "n": 123,
+     "speed_cmd_mm": {
+      "median": 9.4098,
+      "p90": 15.958,
+      "n": 123
+     },
+     "CM_mm": {
+      "median": 20.8975,
+      "p90": 31.29,
+      "n": 123
+     },
+     "frac_cmd_dir_reversal": 0.0407,
+     "cmd_accel_mm": {
+      "median": 1.9029,
+      "p90": 3.8993,
+      "n": 123
+     }
+    },
+    {
+     "k": 4,
+     "n": 123,
+     "speed_cmd_mm": {
+      "median": 9.7405,
+      "p90": 15.7604,
+      "n": 123
+     },
+     "CM_mm": {
+      "median": 21.1853,
+      "p90": 31.4556,
+      "n": 123
+     },
+     "frac_cmd_dir_reversal": 0.0732,
+     "cmd_accel_mm": {
+      "median": 1.7904,
+      "p90": 3.4329,
+      "n": 123
+     }
+    },
+    {
+     "k": 5,
+     "n": 123,
+     "speed_cmd_mm": {
+      "median": 9.5348,
+      "p90": 16.2838,
+      "n": 123
+     },
+     "CM_mm": {
+      "median": 18.2648,
+      "p90": 31.7789,
+      "n": 123
+     },
+     "frac_cmd_dir_reversal": 0.0407,
+     "cmd_accel_mm": {
+      "median": 1.753,
+      "p90": 3.8281,
+      "n": 123
+     }
+    },
+    {
+     "k": 6,
+     "n": 123,
+     "speed_cmd_mm": {
+      "median": 9.5669,
+      "p90": 15.6713,
+      "n": 123
+     },
+     "CM_mm": {
+      "median": 16.6629,
+      "p90": 32.5215,
+      "n": 123
+     },
+     "frac_cmd_dir_reversal": 0.0569,
+     "cmd_accel_mm": {
+      "median": 1.8506,
+      "p90": 3.6799,
+      "n": 123
+     }
+    },
+    {
+     "k": 7,
+     "n": 123,
+     "speed_cmd_mm": {
+      "median": 10.2743,
+      "p90": 15.5632,
+      "n": 123
+     },
+     "CM_mm": {
+      "median": 15.0446,
+      "p90": 32.1147,
+      "n": 123
+     },
+     "frac_cmd_dir_reversal": 0.0813,
+     "cmd_accel_mm": {
+      "median": 1.9297,
+      "p90": 3.4988,
+      "n": 123
+     }
+    }
+   ]
+  },
+  "model_servo_left_arm": {
+   "timestep": 0.002,
+   "integrator": 0,
+   "substeps_per_row": 33,
+   "row_period_s": 0.066,
+   "CTRL_HZ": 15,
+   "OPEN_LOOP_HORIZON": 8,
+   "left_arm": [
+    {
+     "joint": "left_arm_0",
+     "kp": 2000.0,
+     "kv": 301.2587003581707,
+     "damping": 30.0,
+     "armature": 10.0,
+     "I_diag": 10.849438398257544,
+     "wn_rad_s": 13.577236053051655,
+     "zeta": 1.1243943923474975,
+     "ramp_lag_s_(kv+b)/kp": 0.16562935017908534,
+     "ramp_lag_steps": 2.48444025268628,
+     "ctrlrange": [
+      -2.35619,
+      2.35619
+     ],
+     "forcerange": [
+      0.0,
+      0.0
+     ],
+     "forcelimited": 0
+    },
+    {
+     "joint": "left_arm_1",
+     "kp": 2000.0,
+     "kv": 303.34556704383283,
+     "damping": 30.0,
+     "armature": 10.0,
+     "I_diag": 10.514375045842318,
+     "wn_rad_s": 13.791873519996818,
+     "zeta": 1.1493649747800405,
+     "ramp_lag_s_(kv+b)/kp": 0.16667278352191642,
+     "ramp_lag_steps": 2.5000917528287463,
+     "ctrlrange": [
+      -0.04999999999999982,
+      3.14159
+     ],
+     "forcerange": [
+      0.0,
+      0.0
+     ],
+     "forcelimited": 0
+    },
+    {
+     "joint": "left_arm_2",
+     "kp": 1500.0,
+     "kv": 245.06407653502654,
+     "damping": 30.0,
+     "armature": 10.0,
+     "I_diag": 10.34540023651961,
+     "wn_rad_s": 12.041261304188621,
+     "zeta": 1.1040394736511974,
+     "ramp_lag_s_(kv+b)/kp": 0.183376051023351,
+     "ramp_lag_steps": 2.750640765350265,
+     "ctrlrange": [
+      -2.0944,
+      2.0944
+     ],
+     "forcerange": [
+      0.0,
+      0.0
+     ],
+     "forcelimited": 0
+    },
+    {
+     "joint": "left_arm_3",
+     "kp": 2000.0,
+     "kv": 288.31030299062013,
+     "damping": 30.0,
+     "armature": 10.0,
+     "I_diag": 10.28449678002358,
+     "wn_rad_s": 13.94515913453605,
+     "zeta": 1.1097219573416461,
+     "ramp_lag_s_(kv+b)/kp": 0.15915515149531007,
+     "ramp_lag_steps": 2.387327272429651,
+     "ctrlrange": [
+      -2.61799,
+      0.009999999999999787
+     ],
+     "forcerange": [
+      0.0,
+      0.0
+     ],
+     "forcelimited": 0
+    },
+    {
+     "joint": "left_arm_4",
+     "kp": 1500.0,
+     "kv": 244.99606119530162,
+     "damping": 30.0,
+     "armature": 10.0,
+     "I_diag": 10.041737154341586,
+     "wn_rad_s": 12.221969759798442,
+     "zeta": 1.1203311813308863,
+     "ramp_lag_s_(kv+b)/kp": 0.18333070746353444,
+     "ramp_lag_steps": 2.749960611953017,
+     "ctrlrange": [
+      -6.28319,
+      6.28319
+     ],
+     "forcerange": [
+      0.0,
+      0.0
+     ],
+     "forcelimited": 0
+    },
+    {
+     "joint": "left_arm_5",
+     "kp": 1500.0,
+     "kv": 245.45033044605333,
+     "damping": 30.0,
+     "armature": 10.0,
+     "I_diag": 10.041083003864745,
+     "wn_rad_s": 12.22236786810678,
+     "zeta": 1.122218422701079,
+     "ramp_lag_s_(kv+b)/kp": 0.18363355363070222,
+     "ramp_lag_steps": 2.7545033044605334,
+     "ctrlrange": [
+      -1.74533,
+      2.00713
+     ],
+     "forcerange": [
+      0.0,
+      0.0
+     ],
+     "forcelimited": 0
+    },
+    {
+     "joint": "left_arm_6",
+     "kp": 1500.0,
+     "kv": 244.96966726654586,
+     "damping": 30.0,
+     "armature": 10.0,
+     "I_diag": 10.001859023856571,
+     "wn_rad_s": 12.246310457649782,
+     "zeta": 1.1224546372609272,
+     "ramp_lag_s_(kv+b)/kp": 0.18331311151103058,
+     "ramp_lag_steps": 2.7496966726654586,
+     "ctrlrange": [
+      -2.96706,
+      2.96706
+     ],
+     "forcerange": [
+      0.0,
+      0.0
+     ],
+     "forcelimited": 0
+    }
+   ]
+  },
+  "round_trip": {
+   "V7g": {
+    "n_runs": 18,
+    "client_round_trip_ms_median_of_run_medians": 1185.2012872695923,
+    "min": 905.7855606079102,
+    "max": 1335.9720706939697,
+    "sim_time_per_chunk_s": 0.528
+   },
+   "V8": {
+    "n_runs": 19,
+    "client_round_trip_ms_median_of_run_medians": 948.2299089431763,
+    "min": 862.0579242706299,
+    "max": 1320.117473602295,
+    "sim_time_per_chunk_s": 0.528
+   }
+  },
+  "contacts": [
+   {
+    "arm": "V7g",
+    "key": "V7g/H/V7g_ep1807_s18071",
+    "kind": "hand",
+    "body": "ee_finger_l1",
+    "phase_ct": "after_release",
+    "t": 261,
+    "k": 5,
+    "seq": 33,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 2.6710373887204963,
+    "bar_P_mm": 12.838265492524137,
+    "bar_C_mm": 12.838265492524137,
+    "bar_M_mm": -3.5473592611997216,
+    "bar_M_pre_mm": 0.46063261783258097,
+    "bar_Cm1_mm": 32.20449758221149,
+    "bar_Cm2_mm": 10.44346752479523,
+    "bar_Cm3_mm": 31.552944988330182,
+    "bar_Prows_min_mm": 10.44346752479523,
+    "bar_Prows_argmin_t": 259,
+    "PC_mm": 0.0,
+    "CM_mm": 45.28127455849065,
+    "PM_mm": 45.28127455849065,
+    "tau_ee": 2.6,
+    "cross_track_mm": 8.73325577114574,
+    "esdf_link_minus_geom_P_mm": 2.5933751771793467,
+    "speed_cmd_mm": 13.094855467671254,
+    "to_status": "feasible",
+    "to_clearance_mm": 3.6414990328996844,
+    "clear_row_k_mm": 15.431640669703484,
+    "clear_row_k_link_mm": 15.431640669703484,
+    "clear_chunk_link_mm": 15.552585944533348,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.003641499032899684, 'step': 3, 'query': 119, 'link': 'ee_finger_l2', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5621999721570288, 0.14172704815224926, 1.083916755755439], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 39.48795422911644,
+     "esdf_link_minus_geom_P_mm": 26.649688736592303,
+     "link_used_old": "ee_finger_l1",
+     "link_used_new": "ee_finger_l2"
+    }
+   },
+   {
+    "arm": "V7g",
+    "key": "V7g/H/V7g_ep1807_s18073",
+    "kind": "hand",
+    "body": "ee_finger_l1",
+    "phase_ct": "after_release",
+    "t": 265,
+    "k": 1,
+    "seq": 34,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 0.24063986493759632,
+    "bar_P_mm": 21.23740504703627,
+    "bar_C_mm": 21.23740504703627,
+    "bar_M_mm": 0.2291751129698122,
+    "bar_M_pre_mm": 11.522937069255887,
+    "bar_Cm1_mm": 15.562356851504898,
+    "bar_Cm2_mm": 13.89699142525902,
+    "bar_Cm3_mm": 38.489607753284346,
+    "bar_Prows_min_mm": 13.89699142525902,
+    "bar_Prows_argmin_t": 263,
+    "PC_mm": 0.0,
+    "CM_mm": 38.96411712195439,
+    "PM_mm": 38.96411712195439,
+    "tau_ee": 2.4000000000000004,
+    "cross_track_mm": 5.205129013174025,
+    "esdf_link_minus_geom_P_mm": 0.4303566811312649,
+    "speed_cmd_mm": 10.645021379077857,
+    "to_status": "feasible",
+    "to_clearance_mm": 5.451594675615017,
+    "clear_row_k_mm": 21.667761728167534,
+    "clear_row_k_link_mm": 21.667761728167534,
+    "clear_chunk_link_mm": 15.45159425586462,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.005451594675615018, 'step': 4, 'query': 102, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.54801297752877, 0.08532534893996639, 1.0935138312685895], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 41.76686704158783,
+     "esdf_link_minus_geom_P_mm": 20.52946199455156,
+     "link_used_old": "ee_finger_l1",
+     "link_used_new": "ee_finger_l2"
+    }
+   },
+   {
+    "arm": "V7g",
+    "key": "V7g/H/V7g_ep1834_s18341",
+    "kind": "robot_other",
+    "body": "link_right_arm_4",
+    "phase_ct": "after_release",
+    "t": 237,
+    "k": 5,
+    "seq": 30,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 1.4270473748641908,
+    "bar_P_mm": -16.511137582854474,
+    "bar_C_mm": -16.511137582854474,
+    "bar_M_mm": -1.8319461524880978,
+    "bar_M_pre_mm": 7.427453341483016,
+    "bar_Cm1_mm": -4.166606080355637,
+    "bar_Cm2_mm": 9.332275865316916,
+    "bar_Cm3_mm": 24.941327701851574,
+    "bar_Prows_min_mm": -16.511137582854474,
+    "bar_Prows_argmin_t": 237,
+    "PC_mm": 0.0,
+    "CM_mm": 35.551710685409056,
+    "PM_mm": 35.551710685409056,
+    "tau_ee": 1.4000000000000001,
+    "cross_track_mm": 15.20064658043562,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 34.14125265810813,
+    "to_status": "feasible",
+    "to_clearance_mm": 7.0597759077424636,
+    "clear_row_k_mm": 17.740244045853615,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.0070597759077424636, 'step': 7, 'query': 78, 'link': 'ee_finger_r2', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.46206470467774297, 0.09699891757014484, 0.9666474919249608], 'tier': 'target_free', 'authorized_rows': {'n': 488, 'by_tier': {'outside': 0, 'coarse': 0, 'fine': 0, 'target_free': 488, 'window_edge': 0, 'static': 0}, 'n_unresolved': 0, 'n_bounded': 0, 'verifiable': True, 'reads_target_free': True, 'note': None}, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)"
+   },
+   {
+    "arm": "V7g",
+    "key": "V7g/H/V7g_ep1925_s19251",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 270,
+    "k": 6,
+    "seq": 34,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 2.3594585354623514,
+    "bar_P_mm": 33.02560468493368,
+    "bar_C_mm": 33.02560468493368,
+    "bar_M_mm": -2.6109824137374607,
+    "bar_M_pre_mm": 13.328251095516514,
+    "bar_Cm1_mm": 20.68539061414355,
+    "bar_Cm2_mm": 17.73852809665889,
+    "bar_Cm3_mm": 17.332658933326577,
+    "bar_Prows_min_mm": 17.332658933326577,
+    "bar_Prows_argmin_t": 267,
+    "PC_mm": 0.0,
+    "CM_mm": 58.24826641393421,
+    "PM_mm": 58.24826641393421,
+    "tau_ee": 1.8,
+    "cross_track_mm": 14.077340375758194,
+    "esdf_link_minus_geom_P_mm": -18.11578777907755,
+    "speed_cmd_mm": 22.70737468164411,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.8746007618154525,
+    "clear_row_k_mm": 14.909816905856133,
+    "clear_row_k_link_mm": 14.909816905856133,
+    "clear_chunk_link_mm": 14.874600805342197,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.0048746007618154525, 'step': 0, 'query': 117, 'link': 'ee_finger_l2', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5417908605590841, 0.13135535746045687, 1.0822177388922205], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 89.79189395904541,
+     "esdf_link_minus_geom_P_mm": 56.76628927411173,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   },
+   {
+    "arm": "V7g",
+    "key": "V7g/H/V7g_ep1925_s19253",
+    "kind": "apple",
+    "body": "apple",
+    "phase_ct": "carry",
+    "t": 174,
+    "k": 6,
+    "seq": 22,
+    "row_cls": "exec",
+    "ct_max_pen_mm": 0.40380881641065813,
+    "bar_P_mm": 17.80509128055919,
+    "bar_C_mm": 17.80509128055919,
+    "bar_M_mm": -0.30448183271809987,
+    "bar_M_pre_mm": 0.5781941006193191,
+    "bar_Cm1_mm": 17.95192263576652,
+    "bar_Cm2_mm": 13.97611018936679,
+    "bar_Cm3_mm": 13.894671767444775,
+    "bar_Prows_min_mm": 13.86695380585484,
+    "bar_Prows_argmin_t": 170,
+    "PC_mm": 0.0,
+    "CM_mm": 36.91580100413903,
+    "PM_mm": 36.91580100413903,
+    "tau_ee": 2.0500000000000003,
+    "cross_track_mm": 11.92139527859886,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 17.993413853635037,
+    "to_status": "feasible",
+    "to_clearance_mm": 0.7638456216901117,
+    "clear_row_k_mm": 16.67885109782219,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.0007638456216901117, 'step': 0, 'query': 99, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5665713946617157, 0.15781579530758236, 1.0681274263050018], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'target'}",
+    "post_src": "control row t+1 qpos"
+   },
+   {
+    "arm": "V7g",
+    "key": "V7g/H/V7g_ep1967_s19672",
+    "kind": "hand",
+    "body": "EE_BODY_L",
+    "phase_ct": "before_grasp",
+    "t": 466,
+    "k": 2,
+    "seq": 59,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 0.13981121516529021,
+    "bar_P_mm": 3.713235266315555,
+    "bar_C_mm": 3.713235266315555,
+    "bar_M_mm": -0.2524783416308057,
+    "bar_M_pre_mm": 0.04671453280419638,
+    "bar_Cm1_mm": 5.410773485067275,
+    "bar_Cm2_mm": 7.499085024735074,
+    "bar_Cm3_mm": 6.6426538323236635,
+    "bar_Prows_min_mm": 3.713235266315555,
+    "bar_Prows_argmin_t": 466,
+    "PC_mm": 0.0,
+    "CM_mm": 7.618651595519104,
+    "PM_mm": 7.618651595519104,
+    "tau_ee": 3.0,
+    "cross_track_mm": 7.0832434149578685,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 2.621191952972709,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.422125709830629,
+    "clear_row_k_mm": 15.034766867756844,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.004422125709830629, 'step': 7, 'query': 84, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.6030885969597246, 0.10689469067808366, 1.0568112906687812], 'tier': 'target_free', 'authorized_rows': {'n': 488, 'by_tier': {'outside': 0, 'coarse': 0, 'fine': 0, 'target_free': 488, 'window_edge': 0, 'static': 0}, 'n_unresolved': 0, 'n_bounded': 0, 'verifiable': True, 'reads_target_free': True, 'note': None}, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)"
+   },
+   {
+    "arm": "V7g",
+    "key": "V7g/H/V7g_ep1967_s19673",
+    "kind": "hand",
+    "body": "EE_BODY_L",
+    "phase_ct": "before_grasp",
+    "t": 471,
+    "k": 7,
+    "seq": 59,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 0.23697894567726274,
+    "bar_P_mm": 3.273664738926098,
+    "bar_C_mm": 3.273664738926098,
+    "bar_M_mm": -0.3329710712895884,
+    "bar_M_pre_mm": 1.7124689928605195,
+    "bar_Cm1_mm": 7.129173319148315,
+    "bar_Cm2_mm": 10.75004802513821,
+    "bar_Cm3_mm": 12.801397330679881,
+    "bar_Prows_min_mm": 3.273664738926098,
+    "bar_Prows_argmin_t": 471,
+    "PC_mm": 0.0,
+    "CM_mm": 6.834683739370644,
+    "PM_mm": 6.834683739370644,
+    "tau_ee": 0.0,
+    "cross_track_mm": 6.834683739370644,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 4.200710351713999,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.908881823448794,
+    "clear_row_k_mm": 2.8347130864858627,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.004908881823448794, 'step': 4, 'query': 117, 'link': 'ee_finger_l2', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.6884134450451769, 0.19659361654349788, 1.048863585207998], 'tier': 'target_free', 'authorized_rows': {'n': 488, 'by_tier': {'outside': 0, 'coarse': 0, 'fine': 0, 'target_free': 488, 'window_edge': 0, 'static': 0}, 'n_unresolved': 0, 'n_bounded': 0, 'verifiable': True, 'reads_target_free': True, 'note': None}, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)"
+   },
+   {
+    "arm": "V7g",
+    "key": "V7g/H/V7g_ep1968_s19681",
+    "kind": "apple",
+    "body": "apple",
+    "phase_ct": "carry",
+    "t": 206,
+    "k": 6,
+    "seq": 26,
+    "row_cls": "exec",
+    "ct_max_pen_mm": 0.6968389629285233,
+    "bar_P_mm": 17.121636647371776,
+    "bar_C_mm": 17.121636647371776,
+    "bar_M_mm": -0.152238730065141,
+    "bar_M_pre_mm": 3.9748766188413485,
+    "bar_Cm1_mm": 17.487784609405537,
+    "bar_Cm2_mm": 19.60008863564602,
+    "bar_Cm3_mm": 22.11535320632754,
+    "bar_Prows_min_mm": 17.121636647371776,
+    "bar_Prows_argmin_t": 206,
+    "PC_mm": 0.0,
+    "CM_mm": 41.300299049367,
+    "PM_mm": 41.300299049367,
+    "tau_ee": 1.6500000000000001,
+    "cross_track_mm": 15.966353517913188,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 23.427151970779615,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.438829511843677,
+    "clear_row_k_mm": 17.458058893680573,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.004438829511843677, 'step': 3, 'query': 123, 'link': 'attached:ee_left[1]', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5710788652236259, 0.11140923834653227, 1.1124156587175733], 'tier': 'coarse', 'authorized_rows': None, 'obstacle_margin_class': 'held'}",
+    "post_src": "control row t+1 qpos"
+   },
+   {
+    "arm": "V7g",
+    "key": "V7g/H/V7g_ep1982_s19822",
+    "kind": "apple",
+    "body": "apple",
+    "phase_ct": "carry",
+    "t": 168,
+    "k": 0,
+    "seq": 22,
+    "row_cls": "exec",
+    "ct_max_pen_mm": 0.2326400396496769,
+    "bar_P_mm": 20.781817973029412,
+    "bar_C_mm": 20.781817973029412,
+    "bar_M_mm": -0.018491644367778573,
+    "bar_M_pre_mm": 0.23466890504254476,
+    "bar_Cm1_mm": 22.181625258978983,
+    "bar_Cm2_mm": 21.174447095400726,
+    "bar_Cm3_mm": 7.248930049911336,
+    "bar_Prows_min_mm": 5.920378156554822,
+    "bar_Prows_argmin_t": 164,
+    "PC_mm": 0.0,
+    "CM_mm": 29.881768189125083,
+    "PM_mm": 29.881768189125083,
+    "tau_ee": 1.75,
+    "cross_track_mm": 17.666691377278646,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 6.471789079258584,
+    "to_status": "feasible",
+    "to_clearance_mm": 5.549286129978265,
+    "clear_row_k_mm": 23.48606288433075,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.005549286129978265, 'step': 0, 'query': 123, 'link': 'attached:ee_left[1]', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5579217048891887, 0.07580661135400765, 1.0959693761671767], 'tier': 'coarse', 'authorized_rows': None, 'obstacle_margin_class': 'held'}",
+    "post_src": "control row t+1 qpos"
+   },
+   {
+    "arm": "V7g",
+    "key": "V7g/H/V7g_ep1982_s19822",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 275,
+    "k": 3,
+    "seq": 35,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 0.443277433550205,
+    "bar_P_mm": 33.181676021192025,
+    "bar_C_mm": 33.181676021192025,
+    "bar_M_mm": -0.5601964064831152,
+    "bar_M_pre_mm": 1.385999063550792,
+    "bar_Cm1_mm": 19.05980989504686,
+    "bar_Cm2_mm": 20.590176374821144,
+    "bar_Cm3_mm": 17.504789057832195,
+    "bar_Prows_min_mm": 14.026068397337534,
+    "bar_Prows_argmin_t": 271,
+    "PC_mm": 0.0,
+    "CM_mm": 46.087373837227034,
+    "PM_mm": 46.087373837227034,
+    "tau_ee": 2.45,
+    "cross_track_mm": 14.633502910007843,
+    "esdf_link_minus_geom_P_mm": -1.2819183379148953,
+    "speed_cmd_mm": 15.898886592876547,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.8077441755088755,
+    "clear_row_k_mm": 31.89975768327713,
+    "clear_row_k_link_mm": 31.89975768327713,
+    "clear_chunk_link_mm": 59.38238650560379,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.004807744175508876, 'step': 1, 'query': 102, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.549546447797142, 0.12345132006519169, 1.0816566486123682], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 104.22834753990173,
+     "esdf_link_minus_geom_P_mm": 71.0466715187097,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   },
+   {
+    "arm": "V7g",
+    "key": "V7g/H/V7g_ep1982_s19823",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 288,
+    "k": 0,
+    "seq": 37,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 0.22338989690110986,
+    "bar_P_mm": 17.832623040994438,
+    "bar_C_mm": 17.832623040994438,
+    "bar_M_mm": -0.2021827489657093,
+    "bar_M_pre_mm": 4.377785617075049,
+    "bar_Cm1_mm": 18.92053401603984,
+    "bar_Cm2_mm": 22.578748269105613,
+    "bar_Cm3_mm": 16.855940783600666,
+    "bar_Prows_min_mm": 15.103438879856524,
+    "bar_Prows_argmin_t": 284,
+    "PC_mm": 0.0,
+    "CM_mm": 28.677391308789765,
+    "PM_mm": 28.677391308789765,
+    "tau_ee": 2.5500000000000003,
+    "cross_track_mm": 15.628545508822505,
+    "esdf_link_minus_geom_P_mm": -2.401585868319305,
+    "speed_cmd_mm": 3.430834614200468,
+    "to_status": "feasible",
+    "to_clearance_mm": 5.431037094608281,
+    "clear_row_k_mm": 15.431037172675133,
+    "clear_row_k_link_mm": 15.431037172675133,
+    "clear_chunk_link_mm": 98.67348521947861,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.005431037094608281, 'step': 0, 'query': 102, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5394820623711155, 0.14408735964230335, 1.0648914129016471], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 98.67348521947861,
+     "esdf_link_minus_geom_P_mm": 80.84086217848417,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1807_s18071",
+    "kind": "apple",
+    "body": "apple",
+    "phase_ct": "carry",
+    "t": 206,
+    "k": 6,
+    "seq": 26,
+    "row_cls": "exec",
+    "ct_max_pen_mm": 0.854071246239204,
+    "bar_P_mm": 26.03399396665632,
+    "bar_C_mm": 26.03399396665632,
+    "bar_M_mm": 0.062303842162951886,
+    "bar_M_pre_mm": 4.944227224830854,
+    "bar_Cm1_mm": 21.021185678374113,
+    "bar_Cm2_mm": 13.971545208450568,
+    "bar_Cm3_mm": 18.406745103782818,
+    "bar_Prows_min_mm": 5.154707843730896,
+    "bar_Prows_argmin_t": 196,
+    "PC_mm": 0.0,
+    "CM_mm": 54.670855685515896,
+    "PM_mm": 54.670855685515896,
+    "tau_ee": 1.7000000000000002,
+    "cross_track_mm": 13.665118841956213,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 40.79491847280611,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.870052404419137,
+    "clear_row_k_mm": 24.208271875977516,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.004870052404419137, 'step': 5, 'query': 271, 'link': 'attached:ee_left[1]', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5727766068593465, 0.1105481003715718, 1.1331602563939749], 'tier': 'coarse', 'authorized_rows': None, 'obstacle_margin_class': 'held'}",
+    "post_src": "control row t+1 qpos"
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1807_s18071",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 314,
+    "k": 2,
+    "seq": 40,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 2.4020571907945114,
+    "bar_P_mm": 75.26180174315672,
+    "bar_C_mm": 75.26180174315672,
+    "bar_M_mm": -3.7738928724078984,
+    "bar_M_pre_mm": 4.866839511528373,
+    "bar_Cm1_mm": 35.40568538634677,
+    "bar_Cm2_mm": 69.06812649226438,
+    "bar_Cm3_mm": 39.3609561476342,
+    "bar_Prows_min_mm": 9.180399114766713,
+    "bar_Prows_argmin_t": 310,
+    "PC_mm": 0.0,
+    "CM_mm": 98.13519944699642,
+    "PM_mm": 98.13519944699642,
+    "tau_ee": 2.5500000000000003,
+    "cross_track_mm": 24.049920628368845,
+    "esdf_link_minus_geom_P_mm": -13.85354276860457,
+    "speed_cmd_mm": 50.39066464559465,
+    "to_status": "feasible",
+    "to_clearance_mm": 7.785984232312194,
+    "clear_row_k_mm": 41.225019842386246,
+    "clear_row_k_link_mm": 61.408258974552155,
+    "clear_chunk_link_mm": 52.479494363069534,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.007785984232312195, 'step': 1, 'query': 158, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5408419387985239, 0.16579886724453005, 1.07182848036515], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 149.7650295495987,
+     "esdf_link_minus_geom_P_mm": 74.50322780644197,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1807_s18073",
+    "kind": "apple",
+    "body": "apple",
+    "phase_ct": "carry",
+    "t": 174,
+    "k": 6,
+    "seq": 22,
+    "row_cls": "exec",
+    "ct_max_pen_mm": 0.022611399525753265,
+    "bar_P_mm": 32.775088742295,
+    "bar_C_mm": 32.775088742295,
+    "bar_M_mm": 0.7359516471328806,
+    "bar_M_pre_mm": 0.8218345580238775,
+    "bar_Cm1_mm": 26.945966899576128,
+    "bar_Cm2_mm": 26.156321048196244,
+    "bar_Cm3_mm": 19.65838954303643,
+    "bar_Prows_min_mm": 3.7374250876142794,
+    "bar_Prows_argmin_t": 161,
+    "PC_mm": 0.0,
+    "CM_mm": 52.7746663668099,
+    "PM_mm": 52.7746663668099,
+    "tau_ee": 1.55,
+    "cross_track_mm": 19.1963148453207,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 28.34451323234033,
+    "to_status": "violated",
+    "to_clearance_mm": -0.8702126286635192,
+    "clear_row_k_mm": 18.98033730685711,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': -0.0008702126286635192, 'step': 0, 'query': 166, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5635917940983237, 0.15475797023930304, 1.0771891272249337], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'target'}",
+    "post_src": "control row t+1 qpos"
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1807_s18073",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 270,
+    "k": 6,
+    "seq": 34,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 5.795300221963346,
+    "bar_P_mm": 100.11166848342576,
+    "bar_C_mm": 100.11166848342576,
+    "bar_M_mm": -9.463630835940855,
+    "bar_M_pre_mm": 34.58067590962241,
+    "bar_Cm1_mm": 35.36232075998193,
+    "bar_Cm2_mm": 39.54118289390566,
+    "bar_Cm3_mm": 90.65146361194535,
+    "bar_Prows_min_mm": 35.36232075998193,
+    "bar_Prows_argmin_t": 269,
+    "PC_mm": 0.0,
+    "CM_mm": 135.88647419767221,
+    "PM_mm": 135.88647419767221,
+    "tau_ee": 1.6500000000000001,
+    "cross_track_mm": 11.50887138803704,
+    "esdf_link_minus_geom_P_mm": -46.46277941863694,
+    "speed_cmd_mm": 70.76089213552282,
+    "to_status": "feasible",
+    "to_clearance_mm": 7.083951675155307,
+    "clear_row_k_mm": 17.247794196009636,
+    "clear_row_k_link_mm": 53.64888906478882,
+    "clear_chunk_link_mm": 42.848531156778336,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.0070839516751553065, 'step': 5, 'query': 103, 'link': 'ee_finger_r2', 'slot': None, 'candidate_id': None, 'obstacle': 'destination', 'point_m': [0.48803972417357844, -0.24727137239844743, 0.9841476174892554], 'tier': 'coarse', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 136.92781329154968,
+     "esdf_link_minus_geom_P_mm": 36.81614480812392,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1834_s18341",
+    "kind": "robot_other",
+    "body": "link_right_arm_4",
+    "phase_ct": "after_release",
+    "t": 249,
+    "k": 1,
+    "seq": 32,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 0.42863058683378574,
+    "bar_P_mm": -7.271303885404973,
+    "bar_C_mm": -7.271303885404973,
+    "bar_M_mm": -0.45227290757631106,
+    "bar_M_pre_mm": 2.292268188999254,
+    "bar_Cm1_mm": -2.2304507452510123,
+    "bar_Cm2_mm": 4.493760885676001,
+    "bar_Cm3_mm": 4.83928280210329,
+    "bar_Prows_min_mm": -7.271303885404973,
+    "bar_Prows_argmin_t": 249,
+    "PC_mm": 0.0,
+    "CM_mm": 6.816722689404998,
+    "PM_mm": 6.816722689404998,
+    "tau_ee": 1.2000000000000002,
+    "cross_track_mm": 4.535272718499994,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 6.866242514285959,
+    "to_status": "feasible",
+    "to_clearance_mm": 15.781221677876905,
+    "clear_row_k_mm": 9.000458754599094,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.015781221677876905, 'step': 5, 'query': 46, 'link': 'ee_finger_r1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5406081791561542, 0.05892167218518637, 0.9741544358067452], 'tier': 'target_free', 'authorized_rows': {'n': 1080, 'by_tier': {'outside': 0, 'coarse': 0, 'fine': 0, 'target_free': 1080, 'window_edge': 0, 'static': 0}, 'n_unresolved': 0, 'n_bounded': 0, 'verifiable': True, 'reads_target_free': True, 'note': None}, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)"
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1925_s19251",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 279,
+    "k": 7,
+    "seq": 35,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 2.2502140495507876,
+    "bar_P_mm": 36.75487068911422,
+    "bar_C_mm": 36.75487068911422,
+    "bar_M_mm": -1.5700526938147927,
+    "bar_M_pre_mm": 18.32658119746757,
+    "bar_Cm1_mm": 17.764785301944364,
+    "bar_Cm2_mm": 19.078009968086924,
+    "bar_Cm3_mm": 36.15056069956581,
+    "bar_Prows_min_mm": 17.764785301944364,
+    "bar_Prows_argmin_t": 278,
+    "PC_mm": 0.0,
+    "CM_mm": 59.6333500067317,
+    "PM_mm": 59.6333500067317,
+    "tau_ee": 1.8,
+    "cross_track_mm": 13.409497044057238,
+    "esdf_link_minus_geom_P_mm": -16.805345094402917,
+    "speed_cmd_mm": 31.05786095090158,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.838460350884052,
+    "clear_row_k_mm": 19.949525594711304,
+    "clear_row_k_link_mm": 19.949525594711304,
+    "clear_chunk_link_mm": 16.112767159938812,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.004838460350884052, 'step': 5, 'query': 202, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5430373459463372, 0.09556375067763467, 1.0790193639002013], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 98.78464788198471,
+     "esdf_link_minus_geom_P_mm": 62.02977719287049,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1925_s19253",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 279,
+    "k": 7,
+    "seq": 35,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 1.6901076285253254,
+    "bar_P_mm": 28.61322579641196,
+    "bar_C_mm": 28.61322579641196,
+    "bar_M_mm": -1.4812028190587367,
+    "bar_M_pre_mm": 20.570911129223965,
+    "bar_Cm1_mm": 16.717441887345263,
+    "bar_Cm2_mm": 17.436106178714365,
+    "bar_Cm3_mm": 18.3044509075016,
+    "bar_Prows_min_mm": 16.717441887345263,
+    "bar_Prows_argmin_t": 278,
+    "PC_mm": 0.0,
+    "CM_mm": 54.12625519022262,
+    "PM_mm": 54.12625519022262,
+    "tau_ee": 1.8,
+    "cross_track_mm": 14.134199773272762,
+    "esdf_link_minus_geom_P_mm": -12.760817312787502,
+    "speed_cmd_mm": 37.02601931119709,
+    "to_status": "feasible",
+    "to_clearance_mm": 3.9844070526454183,
+    "clear_row_k_mm": 15.852408483624458,
+    "clear_row_k_link_mm": 15.852408483624458,
+    "clear_chunk_link_mm": 14.972945675253868,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.003984407052645418, 'step': 6, 'query': 158, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.549617702916622, 0.12744131005345552, 1.084388743061646], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 94.53990310430527,
+     "esdf_link_minus_geom_P_mm": 65.9266773078933,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1967_s19672",
+    "kind": "apple",
+    "body": "apple",
+    "phase_ct": "carry",
+    "t": 199,
+    "k": 7,
+    "seq": 25,
+    "row_cls": "exec",
+    "ct_max_pen_mm": 0.5942685483428782,
+    "bar_P_mm": 15.519944809295115,
+    "bar_C_mm": 15.519944809295115,
+    "bar_M_mm": 1.9306815107276234,
+    "bar_M_pre_mm": 1.7988524452263541,
+    "bar_Cm1_mm": 11.493128424129608,
+    "bar_Cm2_mm": 10.481122052615056,
+    "bar_Cm3_mm": 26.410470278320126,
+    "bar_Prows_min_mm": 10.481122052615056,
+    "bar_Prows_argmin_t": 197,
+    "PC_mm": 0.0,
+    "CM_mm": 30.49304328162286,
+    "PM_mm": 30.49304328162286,
+    "tau_ee": 1.9000000000000001,
+    "cross_track_mm": 6.885477609764053,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 10.585186600096987,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.746925252133834,
+    "clear_row_k_mm": 14.973275363445282,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.004746925252133834, 'step': 6, 'query': 271, 'link': 'attached:ee_left[1]', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.524802832442869, 0.09132992567081308, 1.0800992764925779], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'held'}",
+    "post_src": "control row t+1 qpos"
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1967_s19672",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 309,
+    "k": 5,
+    "seq": 39,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 1.939808271837663,
+    "bar_P_mm": 26.59770856369333,
+    "bar_C_mm": 26.59770856369333,
+    "bar_M_mm": -1.3582999048193483,
+    "bar_M_pre_mm": 12.64939270321131,
+    "bar_Cm1_mm": 19.71655554666633,
+    "bar_Cm2_mm": 15.05746095011327,
+    "bar_Cm3_mm": 23.43025794326851,
+    "bar_Prows_min_mm": 15.05746095011327,
+    "bar_Prows_argmin_t": 307,
+    "PC_mm": 0.0,
+    "CM_mm": 49.475030822905886,
+    "PM_mm": 49.475030822905886,
+    "tau_ee": 1.85,
+    "cross_track_mm": 11.882922078329191,
+    "esdf_link_minus_geom_P_mm": -5.338238652237223,
+    "speed_cmd_mm": 20.018655974094997,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.33417526047433,
+    "clear_row_k_mm": 21.259469911456108,
+    "clear_row_k_link_mm": 21.259469911456108,
+    "clear_chunk_link_mm": 21.39619179069996,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.0043341752604743305, 'step': 3, 'query': 202, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5376525013823475, 0.12317266282794846, 1.076796245400327], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 106.13177716732025,
+     "esdf_link_minus_geom_P_mm": 79.53406860362692,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1968_s19681",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 288,
+    "k": 0,
+    "seq": 37,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 1.0241256649159685,
+    "bar_P_mm": 18.126863899553825,
+    "bar_C_mm": 18.126863899553825,
+    "bar_M_mm": -0.9235924362122339,
+    "bar_M_pre_mm": 5.932070263639573,
+    "bar_Cm1_mm": 20.652999913751582,
+    "bar_Cm2_mm": 19.04363218701191,
+    "bar_Cm3_mm": 15.28732033802292,
+    "bar_Prows_min_mm": 15.28732033802292,
+    "bar_Prows_argmin_t": 285,
+    "PC_mm": 0.0,
+    "CM_mm": 35.24313107044166,
+    "PM_mm": 35.24313107044166,
+    "tau_ee": 2.6500000000000004,
+    "cross_track_mm": 14.389470995093202,
+    "esdf_link_minus_geom_P_mm": -3.0921994772801895,
+    "speed_cmd_mm": 5.843186356257527,
+    "to_status": "feasible",
+    "to_clearance_mm": 5.034664052544543,
+    "clear_row_k_mm": 15.034664422273636,
+    "clear_row_k_link_mm": 15.034664422273636,
+    "clear_chunk_link_mm": 99.68815743923187,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.005034664052544543, 'step': 0, 'query': 158, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5516757362214811, 0.13591190603650016, 1.0693852842003746], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 99.68815743923187,
+     "esdf_link_minus_geom_P_mm": 81.56129353967805,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1968_s19683",
+    "kind": "apple",
+    "body": "apple",
+    "phase_ct": "carry",
+    "t": 164,
+    "k": 4,
+    "seq": 21,
+    "row_cls": "exec",
+    "ct_max_pen_mm": 0.2794750223132688,
+    "bar_P_mm": 16.506799493537613,
+    "bar_C_mm": 16.506799493537613,
+    "bar_M_mm": 0.10568461129051472,
+    "bar_M_pre_mm": 0.7529616884464092,
+    "bar_Cm1_mm": 15.89368546988033,
+    "bar_Cm2_mm": 23.984958507088805,
+    "bar_Cm3_mm": 16.499451356163398,
+    "bar_Prows_min_mm": 13.569941144816127,
+    "bar_Prows_argmin_t": 160,
+    "PC_mm": 0.0,
+    "CM_mm": 42.10040816899391,
+    "PM_mm": 42.10040816899391,
+    "tau_ee": 1.5,
+    "cross_track_mm": 18.26831340911684,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 27.794383053679333,
+    "to_status": "feasible",
+    "to_clearance_mm": 3.763010076085621,
+    "clear_row_k_mm": 18.11220496892929,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.003763010076085621, 'step': 4, 'query': 271, 'link': 'attached:ee_left[1]', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5553352336338617, 0.06098611187492116, 1.0866103354617045], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'held'}",
+    "post_src": "control row t+1 qpos"
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1982_s19823",
+    "kind": "apple",
+    "body": "apple",
+    "phase_ct": "carry",
+    "t": 175,
+    "k": 7,
+    "seq": 22,
+    "row_cls": "exec",
+    "ct_max_pen_mm": 1.2579438136058467,
+    "bar_P_mm": 25.11642403884956,
+    "bar_C_mm": 25.11642403884956,
+    "bar_M_mm": 0.9505306368026174,
+    "bar_M_pre_mm": 2.603919452876701,
+    "bar_Cm1_mm": 22.466892336943605,
+    "bar_Cm2_mm": 14.783281940658952,
+    "bar_Cm3_mm": 15.106663602142037,
+    "bar_Prows_min_mm": 12.381334636990745,
+    "bar_Prows_argmin_t": 171,
+    "PC_mm": 0.0,
+    "CM_mm": 58.280014694183336,
+    "PM_mm": 58.280014694183336,
+    "tau_ee": 1.55,
+    "cross_track_mm": 14.775232971707899,
+    "esdf_link_minus_geom_P_mm": null,
+    "speed_cmd_mm": 53.41620537680908,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.6685796606158805,
+    "clear_row_k_mm": 23.266861215233803,
+    "clear_row_k_link_mm": null,
+    "clear_chunk_link_mm": null,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.0046685796606158805, 'step': 3, 'query': 271, 'link': 'attached:ee_left[1]', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.571912920185444, 0.1509400467161002, 1.0983334124467745], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'held'}",
+    "post_src": "control row t+1 qpos"
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1982_s19823",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 290,
+    "k": 2,
+    "seq": 37,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 0.5177913277357223,
+    "bar_P_mm": 23.18300463745413,
+    "bar_C_mm": 23.18300463745413,
+    "bar_M_mm": -0.664977266591281,
+    "bar_M_pre_mm": 10.12640224538263,
+    "bar_Cm1_mm": 18.56093035058565,
+    "bar_Cm2_mm": 16.35349945985033,
+    "bar_Cm3_mm": 12.532539099179656,
+    "bar_Prows_min_mm": 12.532539099179656,
+    "bar_Prows_argmin_t": 287,
+    "PC_mm": 0.0,
+    "CM_mm": 38.80419557872662,
+    "PM_mm": 38.80419557872662,
+    "tau_ee": 1.6500000000000001,
+    "cross_track_mm": 11.658603661434608,
+    "esdf_link_minus_geom_P_mm": -4.755489235017873,
+    "speed_cmd_mm": 26.887651904370756,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.527577615290591,
+    "clear_row_k_mm": 18.427515402436256,
+    "clear_row_k_link_mm": 18.427515402436256,
+    "clear_chunk_link_mm": 57.71100893616676,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.004527577615290591, 'step': 1, 'query': 158, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5502095607062226, 0.1265847686140789, 1.0839205605098636], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 101.34086012840271,
+     "esdf_link_minus_geom_P_mm": 78.15785549094858,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1995_s19952",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 291,
+    "k": 3,
+    "seq": 37,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 2.3751648151539313,
+    "bar_P_mm": 36.62834420883176,
+    "bar_C_mm": 36.62834420883176,
+    "bar_M_mm": -3.005209552374936,
+    "bar_M_pre_mm": 3.7138335291229363,
+    "bar_Cm1_mm": 21.19571920739109,
+    "bar_Cm2_mm": 19.450705657607816,
+    "bar_Cm3_mm": 15.657996432427082,
+    "bar_Prows_min_mm": 12.062542822679962,
+    "bar_Prows_argmin_t": 287,
+    "PC_mm": 0.0,
+    "CM_mm": 60.37112274154964,
+    "PM_mm": 60.37112274154964,
+    "tau_ee": 1.8,
+    "cross_track_mm": 13.309965455417606,
+    "esdf_link_minus_geom_P_mm": -19.587154612774825,
+    "speed_cmd_mm": 25.192740798795615,
+    "to_status": "feasible",
+    "to_clearance_mm": 5.013610421316091,
+    "clear_row_k_mm": 17.041189596056938,
+    "clear_row_k_link_mm": 17.041189596056938,
+    "clear_chunk_link_mm": 35.821106284856796,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.005013610421316091, 'step': 0, 'query': 158, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5307533800731871, 0.0824629161640292, 1.0612196850287867], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 89.5964726805687,
+     "esdf_link_minus_geom_P_mm": 52.96812847173693,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   },
+   {
+    "arm": "V8",
+    "key": "V8/H/V8_ep1995_s19953",
+    "kind": "hand",
+    "body": "ee_finger_l2",
+    "phase_ct": "after_release",
+    "t": 286,
+    "k": 6,
+    "seq": 36,
+    "row_cls": "stop",
+    "ct_max_pen_mm": 1.3992055942533936,
+    "bar_P_mm": 26.19839448032395,
+    "bar_C_mm": 26.19839448032395,
+    "bar_M_mm": -1.6201767020713465,
+    "bar_M_pre_mm": 11.707346743192478,
+    "bar_Cm1_mm": 17.082091079227485,
+    "bar_Cm2_mm": 19.204323553012117,
+    "bar_Cm3_mm": 22.537187957289905,
+    "bar_Prows_min_mm": 17.082091079227485,
+    "bar_Prows_argmin_t": 285,
+    "PC_mm": 0.0,
+    "CM_mm": 46.0303711794784,
+    "PM_mm": 46.0303711794784,
+    "tau_ee": 2.25,
+    "cross_track_mm": 16.66766021798104,
+    "esdf_link_minus_geom_P_mm": -5.316533032035988,
+    "speed_cmd_mm": 17.64095216614075,
+    "to_status": "feasible",
+    "to_clearance_mm": 4.943920566239026,
+    "clear_row_k_mm": 20.881861448287964,
+    "clear_row_k_link_mm": 20.881861448287964,
+    "clear_chunk_link_mm": 17.6590234041214,
+    "max_violation_pair": "{'block': 'esdf', 'clearance_m': 0.004943920566239025, 'step': 4, 'query': 158, 'link': 'ee_finger_l1', 'slot': None, 'candidate_id': None, 'obstacle': None, 'point_m': [0.5411270550426176, 0.10529356579563288, 1.0865947307079633], 'tier': 'fine', 'authorized_rows': None, 'obstacle_margin_class': 'obstacle'}",
+    "post_src": "row t qpos + measured arm (obstacle stop row)",
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": 93.13540905714035,
+     "esdf_link_minus_geom_P_mm": 66.9370145768164,
+     "link_used_old": "ee_finger_l2",
+     "link_used_new": "ee_finger_l1"
+    }
+   }
+  ],
+  "contact_groups": {
+   "V7g|hand|after_release": {
+    "n": 5,
+    "bar_P_mm": {
+     "n": 5,
+     "median": 21.2374,
+     "p90": 33.1192,
+     "max": 33.1817
+    },
+    "bar_C_mm": {
+     "n": 5,
+     "median": 21.2374,
+     "p90": 33.1192,
+     "max": 33.1817
+    },
+    "bar_M_mm": {
+     "n": 5,
+     "median": -0.5602,
+     "p90": 0.0566,
+     "max": 0.2292
+    },
+    "bar_Cm2_mm": {
+     "n": 5,
+     "median": 17.7385,
+     "p90": 21.7833,
+     "max": 22.5787
+    },
+    "bar_Prows_min_mm": {
+     "n": 5,
+     "median": 14.0261,
+     "p90": 16.441,
+     "max": 17.3327
+    },
+    "CM_mm": {
+     "n": 5,
+     "median": 45.2813,
+     "p90": 53.3839,
+     "max": 58.2483
+    },
+    "PC_mm": {
+     "n": 5,
+     "median": 0.0,
+     "p90": 0.0,
+     "max": 0.0
+    },
+    "tau_ee": {
+     "n": 5,
+     "median": 2.45,
+     "p90": 2.58,
+     "max": 2.6
+    },
+    "speed_cmd_mm": {
+     "n": 5,
+     "median": 13.0949,
+     "p90": 19.984,
+     "max": 22.7074
+    },
+    "to_clearance_mm": {
+     "n": 5,
+     "median": 4.8746,
+     "p90": 5.4434,
+     "max": 5.4516
+    },
+    "clear_row_k_mm": {
+     "n": 5,
+     "median": 15.4316,
+     "p90": 27.807,
+     "max": 31.8998
+    },
+    "clear_row_k_link_mm": {
+     "n": 5,
+     "median": 15.4316,
+     "p90": 27.807,
+     "max": 31.8998
+    },
+    "esdf_link_minus_geom_P_mm": {
+     "n": 5,
+     "median": -1.2819,
+     "p90": 1.7282,
+     "max": 2.5934
+    },
+    "cross_track_mm": {
+     "n": 5,
+     "median": 14.0773,
+     "p90": 15.2305,
+     "max": 15.6285
+    },
+    "bar_M_pre_mm": {
+     "n": 5,
+     "median": 4.3778,
+     "p90": 12.6061,
+     "max": 13.3283
+    },
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": {
+      "n": 5,
+      "median": 89.7919,
+      "p90": 102.0064,
+      "max": 104.2283
+     },
+     "esdf_link_minus_geom_P_mm": {
+      "n": 5,
+      "median": 56.7663,
+      "p90": 76.9232,
+      "max": 80.8409
+     }
+    }
+   },
+   "V7g|robot_other|after_release": {
+    "n": 1,
+    "bar_P_mm": {
+     "n": 1,
+     "median": -16.5111,
+     "p90": -16.5111,
+     "max": -16.5111
+    },
+    "bar_C_mm": {
+     "n": 1,
+     "median": -16.5111,
+     "p90": -16.5111,
+     "max": -16.5111
+    },
+    "bar_M_mm": {
+     "n": 1,
+     "median": -1.8319,
+     "p90": -1.8319,
+     "max": -1.8319
+    },
+    "bar_Cm2_mm": {
+     "n": 1,
+     "median": 9.3323,
+     "p90": 9.3323,
+     "max": 9.3323
+    },
+    "bar_Prows_min_mm": {
+     "n": 1,
+     "median": -16.5111,
+     "p90": -16.5111,
+     "max": -16.5111
+    },
+    "CM_mm": {
+     "n": 1,
+     "median": 35.5517,
+     "p90": 35.5517,
+     "max": 35.5517
+    },
+    "PC_mm": {
+     "n": 1,
+     "median": 0.0,
+     "p90": 0.0,
+     "max": 0.0
+    },
+    "tau_ee": {
+     "n": 1,
+     "median": 1.4,
+     "p90": 1.4,
+     "max": 1.4
+    },
+    "speed_cmd_mm": {
+     "n": 1,
+     "median": 34.1413,
+     "p90": 34.1413,
+     "max": 34.1413
+    },
+    "to_clearance_mm": {
+     "n": 1,
+     "median": 7.0598,
+     "p90": 7.0598,
+     "max": 7.0598
+    },
+    "clear_row_k_mm": {
+     "n": 1,
+     "median": 17.7402,
+     "p90": 17.7402,
+     "max": 17.7402
+    },
+    "clear_row_k_link_mm": {
+     "n": 0
+    },
+    "esdf_link_minus_geom_P_mm": {
+     "n": 0
+    },
+    "cross_track_mm": {
+     "n": 1,
+     "median": 15.2006,
+     "p90": 15.2006,
+     "max": 15.2006
+    },
+    "bar_M_pre_mm": {
+     "n": 1,
+     "median": 7.4275,
+     "p90": 7.4275,
+     "max": 7.4275
+    }
+   },
+   "V7g|apple|carry": {
+    "n": 3,
+    "bar_P_mm": {
+     "n": 3,
+     "median": 17.8051,
+     "p90": 20.1865,
+     "max": 20.7818
+    },
+    "bar_C_mm": {
+     "n": 3,
+     "median": 17.8051,
+     "p90": 20.1865,
+     "max": 20.7818
+    },
+    "bar_M_mm": {
+     "n": 3,
+     "median": -0.1522,
+     "p90": -0.0452,
+     "max": -0.0185
+    },
+    "bar_Cm2_mm": {
+     "n": 3,
+     "median": 19.6001,
+     "p90": 20.8596,
+     "max": 21.1744
+    },
+    "bar_Prows_min_mm": {
+     "n": 3,
+     "median": 13.867,
+     "p90": 16.4707,
+     "max": 17.1216
+    },
+    "CM_mm": {
+     "n": 3,
+     "median": 36.9158,
+     "p90": 40.4234,
+     "max": 41.3003
+    },
+    "PC_mm": {
+     "n": 3,
+     "median": 0.0,
+     "p90": 0.0,
+     "max": 0.0
+    },
+    "tau_ee": {
+     "n": 3,
+     "median": 1.75,
+     "p90": 1.99,
+     "max": 2.05
+    },
+    "speed_cmd_mm": {
+     "n": 3,
+     "median": 17.9934,
+     "p90": 22.3404,
+     "max": 23.4272
+    },
+    "to_clearance_mm": {
+     "n": 3,
+     "median": 4.4388,
+     "p90": 5.3272,
+     "max": 5.5493
+    },
+    "clear_row_k_mm": {
+     "n": 3,
+     "median": 17.4581,
+     "p90": 22.2805,
+     "max": 23.4861
+    },
+    "clear_row_k_link_mm": {
+     "n": 0
+    },
+    "esdf_link_minus_geom_P_mm": {
+     "n": 0
+    },
+    "cross_track_mm": {
+     "n": 3,
+     "median": 15.9664,
+     "p90": 17.3266,
+     "max": 17.6667
+    },
+    "bar_M_pre_mm": {
+     "n": 3,
+     "median": 0.5782,
+     "p90": 3.2955,
+     "max": 3.9749
+    }
+   },
+   "V7g|hand|before_grasp": {
+    "n": 2,
+    "bar_P_mm": {
+     "n": 2,
+     "median": 3.4935,
+     "p90": 3.6693,
+     "max": 3.7132
+    },
+    "bar_C_mm": {
+     "n": 2,
+     "median": 3.4935,
+     "p90": 3.6693,
+     "max": 3.7132
+    },
+    "bar_M_mm": {
+     "n": 2,
+     "median": -0.2927,
+     "p90": -0.2605,
+     "max": -0.2525
+    },
+    "bar_Cm2_mm": {
+     "n": 2,
+     "median": 9.1246,
+     "p90": 10.425,
+     "max": 10.75
+    },
+    "bar_Prows_min_mm": {
+     "n": 2,
+     "median": 3.4935,
+     "p90": 3.6693,
+     "max": 3.7132
+    },
+    "CM_mm": {
+     "n": 2,
+     "median": 7.2267,
+     "p90": 7.5403,
+     "max": 7.6187
+    },
+    "PC_mm": {
+     "n": 2,
+     "median": 0.0,
+     "p90": 0.0,
+     "max": 0.0
+    },
+    "tau_ee": {
+     "n": 2,
+     "median": 1.5,
+     "p90": 2.7,
+     "max": 3.0
+    },
+    "speed_cmd_mm": {
+     "n": 2,
+     "median": 3.411,
+     "p90": 4.0428,
+     "max": 4.2007
+    },
+    "to_clearance_mm": {
+     "n": 2,
+     "median": 4.6655,
+     "p90": 4.8602,
+     "max": 4.9089
+    },
+    "clear_row_k_mm": {
+     "n": 2,
+     "median": 8.9347,
+     "p90": 13.8148,
+     "max": 15.0348
+    },
+    "clear_row_k_link_mm": {
+     "n": 0
+    },
+    "esdf_link_minus_geom_P_mm": {
+     "n": 0
+    },
+    "cross_track_mm": {
+     "n": 2,
+     "median": 6.959,
+     "p90": 7.0584,
+     "max": 7.0832
+    },
+    "bar_M_pre_mm": {
+     "n": 2,
+     "median": 0.8796,
+     "p90": 1.5459,
+     "max": 1.7125
+    }
+   },
+   "V8|apple|carry": {
+    "n": 5,
+    "bar_P_mm": {
+     "n": 5,
+     "median": 25.1164,
+     "p90": 30.0787,
+     "max": 32.7751
+    },
+    "bar_C_mm": {
+     "n": 5,
+     "median": 25.1164,
+     "p90": 30.0787,
+     "max": 32.7751
+    },
+    "bar_M_mm": {
+     "n": 5,
+     "median": 0.736,
+     "p90": 1.5386,
+     "max": 1.9307
+    },
+    "bar_Cm2_mm": {
+     "n": 5,
+     "median": 14.7833,
+     "p90": 25.2878,
+     "max": 26.1563
+    },
+    "bar_Prows_min_mm": {
+     "n": 5,
+     "median": 10.4811,
+     "p90": 13.0945,
+     "max": 13.5699
+    },
+    "CM_mm": {
+     "n": 5,
+     "median": 52.7747,
+     "p90": 56.8364,
+     "max": 58.28
+    },
+    "PC_mm": {
+     "n": 5,
+     "median": 0.0,
+     "p90": 0.0,
+     "max": 0.0
+    },
+    "tau_ee": {
+     "n": 5,
+     "median": 1.55,
+     "p90": 1.82,
+     "max": 1.9
+    },
+    "speed_cmd_mm": {
+     "n": 5,
+     "median": 28.3445,
+     "p90": 48.3677,
+     "max": 53.4162
+    },
+    "to_clearance_mm": {
+     "n": 5,
+     "median": 4.6686,
+     "p90": 4.8208,
+     "max": 4.8701
+    },
+    "clear_row_k_mm": {
+     "n": 5,
+     "median": 18.9803,
+     "p90": 23.8317,
+     "max": 24.2083
+    },
+    "clear_row_k_link_mm": {
+     "n": 0
+    },
+    "esdf_link_minus_geom_P_mm": {
+     "n": 0
+    },
+    "cross_track_mm": {
+     "n": 5,
+     "median": 14.7752,
+     "p90": 18.8251,
+     "max": 19.1963
+    },
+    "bar_M_pre_mm": {
+     "n": 5,
+     "median": 1.7989,
+     "p90": 4.0081,
+     "max": 4.9442
+    }
+   },
+   "V8|hand|after_release": {
+    "n": 9,
+    "bar_P_mm": {
+     "n": 9,
+     "median": 28.6132,
+     "p90": 80.2318,
+     "max": 100.1117
+    },
+    "bar_C_mm": {
+     "n": 9,
+     "median": 28.6132,
+     "p90": 80.2318,
+     "max": 100.1117
+    },
+    "bar_M_mm": {
+     "n": 9,
+     "median": -1.5701,
+     "p90": -0.8719,
+     "max": -0.665
+    },
+    "bar_Cm2_mm": {
+     "n": 9,
+     "median": 19.078,
+     "p90": 45.4466,
+     "max": 69.0681
+    },
+    "bar_Prows_min_mm": {
+     "n": 9,
+     "median": 15.2873,
+     "p90": 21.2843,
+     "max": 35.3623
+    },
+    "CM_mm": {
+     "n": 9,
+     "median": 54.1263,
+     "p90": 105.6855,
+     "max": 135.8865
+    },
+    "PC_mm": {
+     "n": 9,
+     "median": 0.0,
+     "p90": 0.0,
+     "max": 0.0
+    },
+    "tau_ee": {
+     "n": 9,
+     "median": 1.8,
+     "p90": 2.57,
+     "max": 2.65
+    },
+    "speed_cmd_mm": {
+     "n": 9,
+     "median": 26.8877,
+     "p90": 54.4647,
+     "max": 70.7609
+    },
+    "to_clearance_mm": {
+     "n": 9,
+     "median": 4.9439,
+     "p90": 7.2244,
+     "max": 7.786
+    },
+    "clear_row_k_mm": {
+     "n": 9,
+     "median": 18.4275,
+     "p90": 25.2526,
+     "max": 41.225
+    },
+    "clear_row_k_link_mm": {
+     "n": 9,
+     "median": 19.9495,
+     "p90": 55.2008,
+     "max": 61.4083
+    },
+    "esdf_link_minus_geom_P_mm": {
+     "n": 9,
+     "median": -12.7608,
+     "p90": -4.4228,
+     "max": -3.0922
+    },
+    "cross_track_mm": {
+     "n": 9,
+     "median": 13.4095,
+     "p90": 18.1441,
+     "max": 24.0499
+    },
+    "bar_M_pre_mm": {
+     "n": 9,
+     "median": 11.7073,
+     "p90": 23.3729,
+     "max": 34.5807
+    },
+    "_superseded": {
+     "reason": "left-hand finger names are swapped between MJCF and URDF (MJCF ee_finger_l1 = URDF ee_finger_l2, and vice versa): the contacting MJCF body was matched to the same-named TO link; recomputed with the correct URDF link (T43 OC namemap_V8.json, T43 V9 tk_fix.py)",
+     "date": "2026-10-07",
+     "clear_row_k_link_mm": {
+      "n": 9,
+      "median": 99.6882,
+      "p90": 139.4953,
+      "max": 149.765
+     },
+     "esdf_link_minus_geom_P_mm": {
+      "n": 9,
+      "median": 66.937,
+      "p90": 79.9395,
+      "max": 81.5613
+     }
+    }
+   },
+   "V8|robot_other|after_release": {
+    "n": 1,
+    "bar_P_mm": {
+     "n": 1,
+     "median": -7.2713,
+     "p90": -7.2713,
+     "max": -7.2713
+    },
+    "bar_C_mm": {
+     "n": 1,
+     "median": -7.2713,
+     "p90": -7.2713,
+     "max": -7.2713
+    },
+    "bar_M_mm": {
+     "n": 1,
+     "median": -0.4523,
+     "p90": -0.4523,
+     "max": -0.4523
+    },
+    "bar_Cm2_mm": {
+     "n": 1,
+     "median": 4.4938,
+     "p90": 4.4938,
+     "max": 4.4938
+    },
+    "bar_Prows_min_mm": {
+     "n": 1,
+     "median": -7.2713,
+     "p90": -7.2713,
+     "max": -7.2713
+    },
+    "CM_mm": {
+     "n": 1,
+     "median": 6.8167,
+     "p90": 6.8167,
+     "max": 6.8167
+    },
+    "PC_mm": {
+     "n": 1,
+     "median": 0.0,
+     "p90": 0.0,
+     "max": 0.0
+    },
+    "tau_ee": {
+     "n": 1,
+     "median": 1.2,
+     "p90": 1.2,
+     "max": 1.2
+    },
+    "speed_cmd_mm": {
+     "n": 1,
+     "median": 6.8662,
+     "p90": 6.8662,
+     "max": 6.8662
+    },
+    "to_clearance_mm": {
+     "n": 1,
+     "median": 15.7812,
+     "p90": 15.7812,
+     "max": 15.7812
+    },
+    "clear_row_k_mm": {
+     "n": 1,
+     "median": 9.0005,
+     "p90": 9.0005,
+     "max": 9.0005
+    },
+    "clear_row_k_link_mm": {
+     "n": 0
+    },
+    "esdf_link_minus_geom_P_mm": {
+     "n": 0
+    },
+    "cross_track_mm": {
+     "n": 1,
+     "median": 4.5353,
+     "p90": 4.5353,
+     "max": 4.5353
+    },
+    "bar_M_pre_mm": {
+     "n": 1,
+     "median": 2.2923,
+     "p90": 2.2923,
+     "max": 2.2923
+    }
+   }
+  },
+  "servo_model_flag_in_V7g_V8_server": false
+ },
+ "code_refs": {
+  "chunk_switch": "work-t43v8/pi05_TO_hybrid/rby1_bringup/pi05_infer.py:1658 (new chunk when chunk_step >= OPEN_LOOP_HORIZON=8, :142)",
+  "sim_frozen_during_inference": "pi05_infer.py:1662 (frozen_at before build_obs), :1696 safe_client.infer, no mj_step until :1985; :1903-1905 comment 'sim time is frozen'",
+  "row_application": "pi05_infer.py:1941 action = chunk[chunk_step]; :1942 apply_action; :544-562 rby1_16d writes absolute targets into d.ctrl (no interpolation/smoothing/rate limit); :1985 33 mj_steps per row (:1288)",
+  "chunk_executed": "benchmark/trajopt/client.py:357,414 actions (refined) returned unchanged; pi05_infer.py:1729",
+  "hold": "pi05_infer.py:1927 hold_ctl.hold_action; client.py:1074-1077 measured mode q_hold = measured at entry",
+  "records": "pi05_infer.py:1969 control qpos after apply_action before mj_step; :2037-2038 executed_actions / measured_states after the row",
+  "q_now": "benchmark/ag3s/experiments/sources/mujoco_source.py:201-205 robot_state = qpos; benchmark/trajopt/safe_policy.py:806-808 q_now = robot_state of the latest observation",
+  "anchor": "benchmark/trajopt/problem.py:256-257 |Q[:,0] - q_now| <= max_step",
+  "servo_model_default_off": "benchmark/trajopt/config.py:275 servo_model False; serve_safe.py:1107 --servo-model not in V7g/V8 start_server.sh; servo.py:5",
+  "warm_start_skip": "benchmark/trajopt/sqp.py:186 (execution_length 8 = horizon 8)",
+  "record_clearance": "benchmark/trajopt/safe_policy.py:1266-1275 clearance at refined trajectory sphere centres"
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43tk-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43tk-timeline.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43tk-table.png",
+   "kind": "table"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43tk-contacts.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": null,
+  "note": "regression baseline not run: lead constraint (CPU only, never .venv-ag3s). Record consistency instead: refined_chunk == executed_actions on exec rows max |diff| 0.0 (V7g 1055 / V8 1031 chunks); exec_feedback.applied_arm vs executed_actions max 7.5e-8; planning qpos == control row t0 pre-step qpos max 0.0"
+ },
+ "verdict": "recorded-data measurement only; baseline not run",
+ "not_measured": [
+  "servo-model rollout prediction of M (T43 Q model) not evaluated",
+  "contact sub-step state (M = post-row state or obstacle-stop state used)",
+  "W / Z3V arms not included",
+  "TO clearance of held (apple) rows at row k (only chunk to.metrics.clearance_m)"
+ ]
+}

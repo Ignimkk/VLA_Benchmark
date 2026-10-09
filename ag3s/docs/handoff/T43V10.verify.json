@@ -1,0 +1,6296 @@
+{
+ "_comment": "ag3s-verifier T43 V10. Numbers and paths only; tables in outputs/verify/T43/V10/{agg,ct,extra,hold_join,hold_cause}.json.",
+ "step": "T43V10",
+ "date": "2026-10-07",
+ "runs": [
+  {
+   "id": "V10",
+   "command": "outputs/verify/T43/V10/p/launch_v10.sh (2 chains, ports 8286 / 8287, EST_GB 28)",
+   "venv": ".venv-openpi-live",
+   "server_flags": "V8 flags exactly (T43/V8/p/start_server.sh: --obstacle-margin 0.010 --held-body-cover --closing-keep-geometry --latched-identity-hold --supported-max-bottom-mm 60 --held-slip-detach --held-cover-cap-mm 10 --hold-follow-to 3 --finger-cover both, gate ON, no --servo-model) + --held-obstacle-margin",
+   "runs_dir": "outputs/verify/T43/V10/runs/V10",
+   "n_runs": 19,
+   "n_done": 19,
+   "n_retries": 0,
+   "chain_rc": {
+    "E_H": 0,
+    "E_B": 0,
+    "F_H": 0
+   },
+   "chain_rc_lines": [
+    "E V10H rc=0 2026-10-07T12:02:50+00:00",
+    "E V10B rc=0 2026-10-07T12:24:40+00:00",
+    "F V10H rc=0 2026-10-07T12:06:24+00:00"
+   ],
+   "refusals": 0,
+   "failed_dirs": [],
+   "raw_output": "outputs/verify/T43/V10/runs/V10/chain_8286.log, chain_8287.log, runs/chainE.out, chainF.out, launch.out",
+   "servers": {
+    "server_8286_20261007T113734": {
+     "gpu_total_used_peak_mib": 35924,
+     "gpu_used_before_mib": 0,
+     "cmdline": " --model-xml /mnt/dev/work-t43v10/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml --port 8286 --esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links gripper --target-field-policy exclude-authorized --esdf-margin 0 --no-self-collision --capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32 --obstacle-margin 0.010 --held-body-cover --closing-keep-geometry --latched-identity-hold --supported-max-bottom-mm 60 --held-slip-detach --held-cover-cap-mm 10 --hold-follow-to 3 --finger-cover both --held-obstacle-margin --record-constraints /mnt/dev/work/outputs/verify/T43/V10/runs/V10/server_8286_20261007T113734/server_constraints ",
+     "log_gate_on": true,
+     "log_finger_cover_line": "WARNING:root:constraint finger cover (T43 FC): 구 122 → 270 — 손가락마다 따로 collision mesh 전부를 담는 몸통 구 (넘침 ≤ 2.5 mm, 손 both; 손가락 사이는 비어 있다): ee_finger_l1 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm), ee_finger_l2 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm",
+     "log_identity_line": "AG3S identity (T43 T fix 3): closing_keep_geometry=True, held_cover_cap=0.01, held_slip_detach=True, hold_follow_to=3, latched_identity_hold=True, supported_max_bottom=0.06",
+     "log_autotune_off": true,
+     "log_obstacle_margin_10": true,
+     "log_held_obstacle_margin_on_line": "TO held_obstacle_margin: ON — 쥔 물체 행도 같은 분류: 장애물이 최근접이면 10.0 mm (목적지 규칙과 겹치면 큰 값). 지지면 · 쥔 물체 자신의 잔상 (attach 부피 + 2 voxel) 은 제외 (T43 HM)",
+     "cmdline_has_held_obstacle_margin": true,
+     "cmdline_has_servo_model": false,
+     "n_constraint_spheres_in_records": [
+      270
+     ]
+    },
+    "server_8286_20261007T120255": {
+     "gpu_total_used_peak_mib": 35852,
+     "gpu_used_before_mib": 17930,
+     "cmdline": " --model-xml /mnt/dev/work-t43v10/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml --port 8286 --esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links gripper --target-field-policy exclude-authorized --esdf-margin 0 --no-self-collision --capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32 --obstacle-margin 0.010 --held-body-cover --closing-keep-geometry --latched-identity-hold --supported-max-bottom-mm 60 --held-slip-detach --held-cover-cap-mm 10 --hold-follow-to 3 --finger-cover both --held-obstacle-margin --record-constraints /mnt/dev/work/outputs/verify/T43/V10/runs/V10/server_8286_20261007T120255/server_constraints ",
+     "log_gate_on": true,
+     "log_finger_cover_line": "WARNING:root:constraint finger cover (T43 FC): 구 122 → 270 — 손가락마다 따로 collision mesh 전부를 담는 몸통 구 (넘침 ≤ 2.5 mm, 손 both; 손가락 사이는 비어 있다): ee_finger_l1 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm), ee_finger_l2 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm",
+     "log_identity_line": "AG3S identity (T43 T fix 3): closing_keep_geometry=True, held_cover_cap=0.01, held_slip_detach=True, hold_follow_to=3, latched_identity_hold=True, supported_max_bottom=0.06",
+     "log_autotune_off": true,
+     "log_obstacle_margin_10": true,
+     "log_held_obstacle_margin_on_line": "TO held_obstacle_margin: ON — 쥔 물체 행도 같은 분류: 장애물이 최근접이면 10.0 mm (목적지 규칙과 겹치면 큰 값). 지지면 · 쥔 물체 자신의 잔상 (attach 부피 + 2 voxel) 은 제외 (T43 HM)",
+     "cmdline_has_held_obstacle_margin": true,
+     "cmdline_has_servo_model": false,
+     "n_constraint_spheres_in_records": [
+      270
+     ]
+    },
+    "server_8287_20261007T114134": {
+     "gpu_total_used_peak_mib": 35924,
+     "gpu_used_before_mib": 17928,
+     "cmdline": " --model-xml /mnt/dev/work-t43v10/pi05_TO_hybrid/rby1_description/models/rby1a/mujoco/model_transport.xml --port 8287 --esdf-backend curobo --voxel 0.020 --fine-voxel 0.005 --tsdf-voxel 0.005 --links gripper --target-field-policy exclude-authorized --esdf-margin 0 --no-self-collision --capsule-radius-scale 0.05 --sphere-spacing 0.4 --max-spheres-per-capsule 32 --obstacle-margin 0.010 --held-body-cover --closing-keep-geometry --latched-identity-hold --supported-max-bottom-mm 60 --held-slip-detach --held-cover-cap-mm 10 --hold-follow-to 3 --finger-cover both --held-obstacle-margin --record-constraints /mnt/dev/work/outputs/verify/T43/V10/runs/V10/server_8287_20261007T114134/server_constraints ",
+     "log_gate_on": true,
+     "log_finger_cover_line": "WARNING:root:constraint finger cover (T43 FC): 구 122 → 270 — 손가락마다 따로 collision mesh 전부를 담는 몸통 구 (넘침 ≤ 2.5 mm, 손 both; 손가락 사이는 비어 있다): ee_finger_l1 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm), ee_finger_l2 56 구 (r 2.5–8.4 mm, 미달 표본 0/20774, 넘침 실측 2.55 mm",
+     "log_identity_line": "AG3S identity (T43 T fix 3): closing_keep_geometry=True, held_cover_cap=0.01, held_slip_detach=True, hold_follow_to=3, latched_identity_hold=True, supported_max_bottom=0.06",
+     "log_autotune_off": true,
+     "log_obstacle_margin_10": true,
+     "log_held_obstacle_margin_on_line": "TO held_obstacle_margin: ON — 쥔 물체 행도 같은 분류: 장애물이 최근접이면 10.0 mm (목적지 규칙과 겹치면 큰 값). 지지면 · 쥔 물체 자신의 잔상 (attach 부피 + 2 voxel) 은 제외 (T43 HM)",
+     "cmdline_has_held_obstacle_margin": true,
+     "cmdline_has_servo_model": false,
+     "n_constraint_spheres_in_records": [
+      270
+     ]
+    }
+   },
+   "chains": {
+    "chain_8286.log": {
+     "n_end_lines": 12,
+     "n_attempt2": 0,
+     "refused": [],
+     "died": [],
+     "code_md5_equal": 2,
+     "import_ok": 2,
+     "start_guard_ok": [
+      "start guard ok gpu_used_mib=0 used+est_gb=28 working_set=33707540480 youngest_server_s=none 2026-10-07T11:37:39+00:00",
+      "start guard ok gpu_used_mib=17930 used+est_gb=46 working_set=48542146560 youngest_server_s=1281 2026-10-07T12:03:01+00:00"
+     ]
+    },
+    "chain_8287.log": {
+     "n_end_lines": 7,
+     "n_attempt2": 0,
+     "refused": [],
+     "died": [],
+     "code_md5_equal": 1,
+     "import_ok": 1,
+     "start_guard_ok": [
+      "start guard ok gpu_used_mib=17928 used+est_gb=46 working_set=42922176512 youngest_server_s=240 2026-10-07T11:41:40+00:00"
+     ]
+    }
+   },
+   "load_samples": "outputs/verify/T43/V10/raw/load_samples.txt",
+   "server_log_checks": {
+    "gate_on": {
+     "server_8286_20261007T113734": true,
+     "server_8286_20261007T120255": true,
+     "server_8287_20261007T114134": true
+    },
+    "n_constraint_spheres_in_records": {
+     "server_8286_20261007T113734": [
+      270
+     ],
+     "server_8286_20261007T120255": [
+      270
+     ],
+     "server_8287_20261007T114134": [
+      270
+     ]
+    },
+    "held_obstacle_margin_on_line": {
+     "server_8286_20261007T113734": "TO held_obstacle_margin: ON — 쥔 물체 행도 같은 분류: 장애물이 최근접이면 10.0 mm (목적지 규칙과 겹치면 큰 값). 지지면 · 쥔 물체 자신의 잔상 (attach 부피 + 2 voxel) 은 제외 (T43 HM)",
+     "server_8286_20261007T120255": "TO held_obstacle_margin: ON — 쥔 물체 행도 같은 분류: 장애물이 최근접이면 10.0 mm (목적지 규칙과 겹치면 큰 값). 지지면 · 쥔 물체 자신의 잔상 (attach 부피 + 2 voxel) 은 제외 (T43 HM)",
+     "server_8287_20261007T114134": "TO held_obstacle_margin: ON — 쥔 물체 행도 같은 분류: 장애물이 최근접이면 10.0 mm (목적지 규칙과 겹치면 큰 값). 지지면 · 쥔 물체 자신의 잔상 (attach 부피 + 2 voxel) 은 제외 (T43 HM)"
+    },
+    "cmdline_has_servo_model": {
+     "server_8286_20261007T113734": false,
+     "server_8286_20261007T120255": false,
+     "server_8287_20261007T114134": false
+    },
+    "autotune_off": {
+     "server_8286_20261007T113734": true,
+     "server_8286_20261007T120255": true,
+     "server_8287_20261007T114134": true
+    },
+    "enforced_in": "p/run_chain.sh (REFUSED otherwise)"
+   }
+  }
+ ],
+ "code_state": {
+  "repo": "benchmark",
+  "head": "308ddfd",
+  "snapshot": "/mnt/dev/work-t43v10 (outputs/verify/T43/V10/snapshot.txt)",
+  "code_md5_baseline": "outputs/verify/T43/V10/p/code_md5_v10.txt (406 lines, == at every chain preflight)",
+  "pi05_trees": "diff -rq vs /mnt/dev/work-t43w3/pi05_TO_hybrid empty",
+  "with_overrides_collision_backend": "esdf (outputs/verify/T43/V10/with_overrides_check.txt)",
+  "trajoptconfig_round_trip_held_obstacle_margin": "True, to_dict equal; default False; held_obstacle_margin without obstacle_margin > 0 -> ValueError (with_overrides_check.txt)"
+ },
+ "baseline_check": {
+  "matched": true,
+  "command": "esdf_rollout --esdf-backend curobo (SKILL cuRobo variant), snapshot, .venv-openpi-live",
+  "raw": "outputs/verify/T43/V10/baseline/base_curobo.json, base_curobo.log",
+  "violated_start": "10/15",
+  "has_target": "15/15",
+  "frame0_clearance_before_mm": -9.171877401271193,
+  "skill_reference": "10/15, 15/15, -9.171877"
+ },
+ "numbers": {
+  "runs": {
+   "n_done": 19,
+   "H": 14,
+   "B": 5,
+   "n_control_lt_600": {
+    "V10": {
+     "V10_ep1807_s18071/H": 301,
+     "V10_ep1807_s18073/H": 272,
+     "V10_ep1834_s18343/H": 286,
+     "V10_ep1925_s19251/H": 281,
+     "V10_ep1925_s19253/H": 280,
+     "V10_ep1967_s19672/H": 310,
+     "V10_ep1982_s19823/H": 280,
+     "V10_ep1995_s19952/H": 289
+    },
+    "V8": {
+     "V8_ep1807_s18071/H": 315,
+     "V8_ep1807_s18073/H": 271,
+     "V8_ep1834_s18341/H": 250,
+     "V8_ep1925_s19251/H": 280,
+     "V8_ep1925_s19253/H": 280,
+     "V8_ep1967_s19672/H": 310,
+     "V8_ep1968_s19681/H": 289,
+     "V8_ep1982_s19823/H": 291,
+     "V8_ep1995_s19952/H": 292,
+     "V8_ep1995_s19953/H": 287
+    }
+   },
+   "wall_s_median": {
+    "V10": 222.0,
+    "V8": 163.0
+   }
+  },
+  "sgp_old_rule_by_stage": {
+   "V8": {
+    "H": {
+     "n": 14,
+     "S": 13,
+     "G": 14,
+     "P": 13
+    },
+    "B": {
+     "n": 5,
+     "S": 5,
+     "G": 5,
+     "P": 5
+    }
+   },
+   "V10": {
+    "H": {
+     "n": 14,
+     "S": 10,
+     "G": 13,
+     "P": 10
+    },
+    "B": {
+     "n": 5,
+     "S": 4,
+     "G": 5,
+     "P": 4
+    }
+   }
+  },
+  "pairs_old_rule": {
+   "H": {
+    "n_pairs": 14,
+    "success": {
+     "V10_total": 10,
+     "V8_total": 13,
+     "both": 10,
+     "V10_only": 0,
+     "V8_only": 3,
+     "neither": 1,
+     "mcnemar_exact_p": 0.25,
+     "V10_only_keys": [],
+     "V8_only_keys": [
+      "H:1834_s18341",
+      "H:1834_s18343",
+      "H:1995_s19953"
+     ]
+    },
+    "grasp": {
+     "V10_total": 13,
+     "V8_total": 14,
+     "both": 13,
+     "V10_only": 0,
+     "V8_only": 1,
+     "neither": 0,
+     "mcnemar_exact_p": 1.0,
+     "V10_only_keys": [],
+     "V8_only_keys": [
+      "H:1995_s19953"
+     ]
+    },
+    "place": {
+     "V10_total": 10,
+     "V8_total": 13,
+     "both": 10,
+     "V10_only": 0,
+     "V8_only": 3,
+     "neither": 1,
+     "mcnemar_exact_p": 0.25,
+     "V10_only_keys": [],
+     "V8_only_keys": [
+      "H:1834_s18341",
+      "H:1834_s18343",
+      "H:1995_s19953"
+     ]
+    }
+   },
+   "B": {
+    "n_pairs": 5,
+    "success": {
+     "V10_total": 4,
+     "V8_total": 5,
+     "both": 4,
+     "V10_only": 0,
+     "V8_only": 1,
+     "neither": 0,
+     "mcnemar_exact_p": 1.0,
+     "V10_only_keys": [],
+     "V8_only_keys": [
+      "B:1982_s19822"
+     ]
+    },
+    "grasp": {
+     "V10_total": 5,
+     "V8_total": 5,
+     "both": 5,
+     "V10_only": 0,
+     "V8_only": 0,
+     "neither": 0,
+     "mcnemar_exact_p": 1.0,
+     "V10_only_keys": [],
+     "V8_only_keys": []
+    },
+    "place": {
+     "V10_total": 4,
+     "V8_total": 5,
+     "both": 4,
+     "V10_only": 0,
+     "V8_only": 1,
+     "neither": 0,
+     "mcnemar_exact_p": 1.0,
+     "V10_only_keys": [],
+     "V8_only_keys": [
+      "B:1982_s19822"
+     ]
+    }
+   },
+   "ALL": {
+    "n_pairs": 19,
+    "success": {
+     "V10_total": 14,
+     "V8_total": 18,
+     "both": 14,
+     "V10_only": 0,
+     "V8_only": 4,
+     "neither": 1,
+     "mcnemar_exact_p": 0.125,
+     "V10_only_keys": [],
+     "V8_only_keys": [
+      "B:1982_s19822",
+      "H:1834_s18341",
+      "H:1834_s18343",
+      "H:1995_s19953"
+     ]
+    },
+    "grasp": {
+     "V10_total": 18,
+     "V8_total": 19,
+     "both": 18,
+     "V10_only": 0,
+     "V8_only": 1,
+     "neither": 0,
+     "mcnemar_exact_p": 1.0,
+     "V10_only_keys": [],
+     "V8_only_keys": [
+      "H:1995_s19953"
+     ]
+    },
+    "place": {
+     "V10_total": 14,
+     "V8_total": 18,
+     "both": 14,
+     "V10_only": 0,
+     "V8_only": 4,
+     "neither": 1,
+     "mcnemar_exact_p": 0.125,
+     "V10_only_keys": [],
+     "V8_only_keys": [
+      "B:1982_s19822",
+      "H:1834_s18341",
+      "H:1834_s18343",
+      "H:1995_s19953"
+     ]
+    }
+   }
+  },
+  "H_totals_by_rule": {
+   "V8": {
+    "success": 13,
+    "grasp": 14,
+    "place": 13,
+    "released": 14,
+    "place_rel": 13,
+    "success_rel": 13,
+    "success_ct": 8
+   },
+   "V10": {
+    "success": 10,
+    "grasp": 13,
+    "place": 10,
+    "released": 12,
+    "place_rel": 10,
+    "success_rel": 10,
+    "success_ct": 9
+   }
+  },
+  "H_pairs_z4_and_ct": {
+   "grasp": {
+    "n_pairs": 14,
+    "V10_total": 13,
+    "V8_total": 14,
+    "both": 13,
+    "V10_only": 0,
+    "V8_only": 1,
+    "neither": 0,
+    "mcnemar_exact_p": 1.0,
+    "V10_only_keys": [],
+    "V8_only_keys": [
+     "1995_s19953"
+    ]
+   },
+   "place_rel": {
+    "n_pairs": 14,
+    "V10_total": 10,
+    "V8_total": 13,
+    "both": 10,
+    "V10_only": 0,
+    "V8_only": 3,
+    "neither": 1,
+    "mcnemar_exact_p": 0.25,
+    "V10_only_keys": [],
+    "V8_only_keys": [
+     "1834_s18341",
+     "1834_s18343",
+     "1995_s19953"
+    ]
+   },
+   "released": {
+    "n_pairs": 14,
+    "V10_total": 12,
+    "V8_total": 14,
+    "both": 12,
+    "V10_only": 0,
+    "V8_only": 2,
+    "neither": 0,
+    "mcnemar_exact_p": 0.5,
+    "V10_only_keys": [],
+    "V8_only_keys": [
+     "1834_s18343",
+     "1995_s19953"
+    ]
+   },
+   "success_rel": {
+    "n_pairs": 14,
+    "V10_total": 10,
+    "V8_total": 13,
+    "both": 10,
+    "V10_only": 0,
+    "V8_only": 3,
+    "neither": 1,
+    "mcnemar_exact_p": 0.25,
+    "V10_only_keys": [],
+    "V8_only_keys": [
+     "1834_s18341",
+     "1834_s18343",
+     "1995_s19953"
+    ]
+   },
+   "success_ct": {
+    "n_pairs": 14,
+    "V10_total": 9,
+    "V8_total": 8,
+    "both": 4,
+    "V10_only": 5,
+    "V8_only": 4,
+    "neither": 1,
+    "mcnemar_exact_p": 1.0,
+    "V10_only_keys": [
+     "1807_s18071",
+     "1807_s18073",
+     "1967_s19672",
+     "1968_s19683",
+     "1982_s19823"
+    ],
+    "V8_only_keys": [
+     "1834_s18341",
+     "1834_s18343",
+     "1925_s19251",
+     "1995_s19953"
+    ]
+   }
+  },
+  "ct_arms": {
+   "V8": {
+    "n": 14,
+    "S_old": 13,
+    "S_release": 13,
+    "S_contact": 8,
+    "pre_release_contact_runs": 5,
+    "post_release_contact_runs": 10,
+    "obstacle_stop_runs": 10,
+    "any_contact_runs": 11,
+    "pre_release_contact_by_kind": {
+     "apple": 5
+    },
+    "flip_rel_to_ct": [
+     "V8/H/V8_ep1807_s18071",
+     "V8/H/V8_ep1807_s18073",
+     "V8/H/V8_ep1967_s19672",
+     "V8/H/V8_ep1968_s19683",
+     "V8/H/V8_ep1982_s19823"
+    ],
+    "post_release_contact_keys": [
+     "V8/H/V8_ep1807_s18071",
+     "V8/H/V8_ep1807_s18073",
+     "V8/H/V8_ep1834_s18341",
+     "V8/H/V8_ep1925_s19251",
+     "V8/H/V8_ep1925_s19253",
+     "V8/H/V8_ep1967_s19672",
+     "V8/H/V8_ep1968_s19681",
+     "V8/H/V8_ep1982_s19823",
+     "V8/H/V8_ep1995_s19952",
+     "V8/H/V8_ep1995_s19953"
+    ],
+    "success_rel_with_post_release_contact": 10,
+    "success_ct_runs": [
+     "V8/H/V8_ep1834_s18341",
+     "V8/H/V8_ep1834_s18343",
+     "V8/H/V8_ep1925_s19251",
+     "V8/H/V8_ep1925_s19253",
+     "V8/H/V8_ep1967_s19673",
+     "V8/H/V8_ep1968_s19681",
+     "V8/H/V8_ep1995_s19952",
+     "V8/H/V8_ep1995_s19953"
+    ]
+   },
+   "V10": {
+    "n": 14,
+    "S_old": 10,
+    "S_release": 10,
+    "S_contact": 9,
+    "pre_release_contact_runs": 2,
+    "post_release_contact_runs": 7,
+    "obstacle_stop_runs": 8,
+    "any_contact_runs": 8,
+    "pre_release_contact_by_kind": {
+     "robot_other": 1,
+     "apple": 1
+    },
+    "flip_rel_to_ct": [
+     "V10/H/V10_ep1925_s19251"
+    ],
+    "post_release_contact_keys": [
+     "V10/H/V10_ep1807_s18071",
+     "V10/H/V10_ep1807_s18073",
+     "V10/H/V10_ep1925_s19251",
+     "V10/H/V10_ep1925_s19253",
+     "V10/H/V10_ep1967_s19672",
+     "V10/H/V10_ep1982_s19823",
+     "V10/H/V10_ep1995_s19952"
+    ],
+    "success_rel_with_post_release_contact": 7,
+    "success_ct_runs": [
+     "V10/H/V10_ep1807_s18071",
+     "V10/H/V10_ep1807_s18073",
+     "V10/H/V10_ep1925_s19253",
+     "V10/H/V10_ep1967_s19672",
+     "V10/H/V10_ep1967_s19673",
+     "V10/H/V10_ep1968_s19681",
+     "V10/H/V10_ep1968_s19683",
+     "V10/H/V10_ep1982_s19823",
+     "V10/H/V10_ep1995_s19952"
+    ]
+   }
+  },
+  "ct_pairs": {
+   "V10_vs_V8": {
+    "success": {
+     "n_pairs": 14,
+     "both": 10,
+     "A_only": 0,
+     "B_only": 3,
+     "neither": 1,
+     "A_total": 10,
+     "B_total": 13,
+     "mcnemar_exact_p": 0.25,
+     "A_only_keys": [],
+     "B_only_keys": [
+      "1834_s18341",
+      "1834_s18343",
+      "1995_s19953"
+     ]
+    },
+    "success_rel": {
+     "n_pairs": 14,
+     "both": 10,
+     "A_only": 0,
+     "B_only": 3,
+     "neither": 1,
+     "A_total": 10,
+     "B_total": 13,
+     "mcnemar_exact_p": 0.25,
+     "A_only_keys": [],
+     "B_only_keys": [
+      "1834_s18341",
+      "1834_s18343",
+      "1995_s19953"
+     ]
+    },
+    "success_ct": {
+     "n_pairs": 14,
+     "both": 4,
+     "A_only": 5,
+     "B_only": 4,
+     "neither": 1,
+     "A_total": 9,
+     "B_total": 8,
+     "mcnemar_exact_p": 1.0,
+     "A_only_keys": [
+      "1807_s18071",
+      "1807_s18073",
+      "1967_s19672",
+      "1968_s19683",
+      "1982_s19823"
+     ],
+     "B_only_keys": [
+      "1834_s18341",
+      "1834_s18343",
+      "1925_s19251",
+      "1995_s19953"
+     ]
+    }
+   }
+  },
+  "ct_crosscheck_counts": {
+   "n": 28,
+   "pairs_mismatch": 0,
+   "robot_flag_mismatch": 0,
+   "payload_flag_mismatch": 0,
+   "rows_vs_steps": 28,
+   "qpos_mismatch": 0,
+   "stop_vs_rows": 28
+  },
+  "per_pair": {
+   "1807_s18071": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": false,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "carry",
+       "apple",
+       "apple",
+       206,
+       0.85
+      ],
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       314,
+       2.4
+      ]
+     ],
+     "hurdle_B_min_mm": 0.06230384216317393
+    },
+    "V10": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "ee_finger_l1",
+       "hand",
+       300,
+       2.13
+      ]
+     ],
+     "hurdle_B_min_mm": 32.674583055669906
+    }
+   },
+   "1807_s18073": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": false,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "carry",
+       "apple",
+       "apple",
+       174,
+       0.02
+      ],
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       270,
+       5.8
+      ]
+     ],
+     "hurdle_B_min_mm": 0.7359516471329326
+    },
+    "V10": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       271,
+       4.22
+      ]
+     ],
+     "hurdle_B_min_mm": 8.053001887986404
+    }
+   },
+   "1834_s18341": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "link_right_arm_4",
+       "robot_other",
+       249,
+       0.43
+      ]
+     ],
+     "hurdle_B_min_mm": 3.5802076992567153
+    },
+    "V10": {
+     "success": false,
+     "grasp": true,
+     "place": false,
+     "success_rel": false,
+     "success_ct": false,
+     "obstacle_stop": false,
+     "contacts": [],
+     "hurdle_B_min_mm": 41.115488393403055
+    }
+   },
+   "1834_s18343": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": false,
+     "contacts": [],
+     "hurdle_B_min_mm": 8.350455214205823
+    },
+    "V10": {
+     "success": false,
+     "grasp": true,
+     "place": false,
+     "success_rel": false,
+     "success_ct": false,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "carry",
+       "link_right_arm_4",
+       "robot_other",
+       285,
+       0.07
+      ]
+     ],
+     "hurdle_B_min_mm": 20.205224374278057
+    }
+   },
+   "1925_s19251": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       279,
+       2.25
+      ]
+     ],
+     "hurdle_B_min_mm": 7.2726047465406545
+    },
+    "V10": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": false,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "carry",
+       "apple",
+       "apple",
+       181,
+       3.71
+      ],
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       280,
+       0.65
+      ]
+     ],
+     "hurdle_B_min_mm": -0.8202696235883998
+    }
+   },
+   "1925_s19253": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       279,
+       1.69
+      ]
+     ],
+     "hurdle_B_min_mm": 5.88697341774717
+    },
+    "V10": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       279,
+       3.28
+      ]
+     ],
+     "hurdle_B_min_mm": 13.366127000548449
+    }
+   },
+   "1967_s19672": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": false,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "carry",
+       "apple",
+       "apple",
+       199,
+       0.59
+      ],
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       309,
+       1.94
+      ]
+     ],
+     "hurdle_B_min_mm": 1.7988524452263595
+    },
+    "V10": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       309,
+       2.32
+      ]
+     ],
+     "hurdle_B_min_mm": 8.801367872031944
+    }
+   },
+   "1967_s19673": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": false,
+     "contacts": [],
+     "hurdle_B_min_mm": 1.4077842164538397
+    },
+    "V10": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": false,
+     "contacts": [],
+     "hurdle_B_min_mm": 17.904011165244114
+    }
+   },
+   "1968_s19681": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       288,
+       1.02
+      ]
+     ],
+     "hurdle_B_min_mm": 15.758670960499401
+    },
+    "V10": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": false,
+     "contacts": [],
+     "hurdle_B_min_mm": 28.448992973795317
+    }
+   },
+   "1968_s19683": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": false,
+     "obstacle_stop": false,
+     "contacts": [
+      [
+       "carry",
+       "apple",
+       "apple",
+       164,
+       0.28
+      ]
+     ],
+     "hurdle_B_min_mm": 0.10568461129072809
+    },
+    "V10": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": false,
+     "contacts": [],
+     "hurdle_B_min_mm": 4.254660390943569
+    }
+   },
+   "1982_s19822": {
+    "V8": {
+     "success": false,
+     "grasp": true,
+     "place": false,
+     "success_rel": false,
+     "success_ct": false,
+     "obstacle_stop": false,
+     "contacts": [],
+     "hurdle_B_min_mm": 57.556801145067176
+    },
+    "V10": {
+     "success": false,
+     "grasp": true,
+     "place": false,
+     "success_rel": false,
+     "success_ct": false,
+     "obstacle_stop": false,
+     "contacts": [],
+     "hurdle_B_min_mm": 57.556801145067176
+    }
+   },
+   "1982_s19823": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": false,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "carry",
+       "apple",
+       "apple",
+       175,
+       1.26
+      ],
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       290,
+       0.52
+      ]
+     ],
+     "hurdle_B_min_mm": -0.8506591208662234
+    },
+    "V10": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       279,
+       2.28
+      ]
+     ],
+     "hurdle_B_min_mm": 6.376564436837272
+    }
+   },
+   "1995_s19952": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       291,
+       2.38
+      ]
+     ],
+     "hurdle_B_min_mm": 12.337326926456997
+    },
+    "V10": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       288,
+       0.26
+      ]
+     ],
+     "hurdle_B_min_mm": 6.709555495283469
+    }
+   },
+   "1995_s19953": {
+    "V8": {
+     "success": true,
+     "grasp": true,
+     "place": true,
+     "success_rel": true,
+     "success_ct": true,
+     "obstacle_stop": true,
+     "contacts": [
+      [
+       "after_release",
+       "ee_finger_l2",
+       "hand",
+       286,
+       1.4
+      ]
+     ],
+     "hurdle_B_min_mm": 19.166529632863035
+    },
+    "V10": {
+     "success": false,
+     "grasp": false,
+     "place": false,
+     "success_rel": false,
+     "success_ct": false,
+     "obstacle_stop": false,
+     "contacts": [],
+     "hurdle_B_min_mm": 164.02673558321865
+    }
+   }
+  },
+  "finger_hurdle_contacts_by_phase_MJCF_names": {
+   "V8": {
+    "by_body_phase": [
+     {
+      "body": "ee_finger_l2",
+      "phase": "after_release",
+      "runs": [
+       "1807_s18071",
+       "1807_s18073",
+       "1925_s19251",
+       "1925_s19253",
+       "1967_s19672",
+       "1968_s19681",
+       "1982_s19823",
+       "1995_s19952",
+       "1995_s19953"
+      ],
+      "n_rows": 9,
+      "substeps": 129,
+      "max_pen_mm": 5.795300221963346,
+      "max_force_N": 749.7896798640063,
+      "margin_substeps": 0,
+      "n_runs": 9
+     }
+    ],
+    "by_phase": {
+     "before_grasp": {
+      "runs": [],
+      "n_runs": 0,
+      "n_rows": 0,
+      "substeps": 0,
+      "max_pen_mm": 0.0
+     },
+     "carry": {
+      "runs": [],
+      "n_runs": 0,
+      "n_rows": 0,
+      "substeps": 0,
+      "max_pen_mm": 0.0
+     },
+     "after_release": {
+      "runs": [
+       "1807_s18071",
+       "1807_s18073",
+       "1925_s19251",
+       "1925_s19253",
+       "1967_s19672",
+       "1968_s19681",
+       "1982_s19823",
+       "1995_s19952",
+       "1995_s19953"
+      ],
+      "n_runs": 9,
+      "n_rows": 9,
+      "substeps": 129,
+      "max_pen_mm": 5.795300221963346
+     }
+    }
+   },
+   "V10": {
+    "by_body_phase": [
+     {
+      "body": "ee_finger_l1",
+      "phase": "after_release",
+      "runs": [
+       "1807_s18071"
+      ],
+      "n_rows": 1,
+      "substeps": 17,
+      "max_pen_mm": 2.1318759032474923,
+      "max_force_N": 316.82802909486554,
+      "margin_substeps": 0,
+      "n_runs": 1
+     },
+     {
+      "body": "ee_finger_l2",
+      "phase": "after_release",
+      "runs": [
+       "1807_s18073",
+       "1925_s19251",
+       "1925_s19253",
+       "1967_s19672",
+       "1982_s19823",
+       "1995_s19952"
+      ],
+      "n_rows": 6,
+      "substeps": 145,
+      "max_pen_mm": 4.215185075487736,
+      "max_force_N": 548.5517368534493,
+      "margin_substeps": 0,
+      "n_runs": 6
+     }
+    ],
+    "by_phase": {
+     "before_grasp": {
+      "runs": [],
+      "n_runs": 0,
+      "n_rows": 0,
+      "substeps": 0,
+      "max_pen_mm": 0.0
+     },
+     "carry": {
+      "runs": [],
+      "n_runs": 0,
+      "n_rows": 0,
+      "substeps": 0,
+      "max_pen_mm": 0.0
+     },
+     "after_release": {
+      "runs": [
+       "1807_s18071",
+       "1807_s18073",
+       "1925_s19251",
+       "1925_s19253",
+       "1967_s19672",
+       "1982_s19823",
+       "1995_s19952"
+      ],
+      "n_runs": 7,
+      "n_rows": 7,
+      "substeps": 162,
+      "max_pen_mm": 4.215185075487736
+     }
+    }
+   }
+  },
+  "ct_contact_table": [
+   {
+    "body": "apple",
+    "kind": "apple",
+    "phase": "carry",
+    "n_runs": 6,
+    "runs_by_arm": {
+     "V8": 5,
+     "V10": 1
+    },
+    "first_t_min": 164,
+    "first_t_values": [
+     164,
+     174,
+     175,
+     181,
+     199,
+     206
+    ],
+    "max_pen_mm": 3.7148798837983583,
+    "max_force_N": 151.22472923855088
+   },
+   {
+    "body": "link_right_arm_4",
+    "kind": "robot_other",
+    "phase": "carry",
+    "n_runs": 1,
+    "runs_by_arm": {
+     "V10": 1
+    },
+    "first_t_min": 285,
+    "first_t_values": [
+     285
+    ],
+    "max_pen_mm": 0.07144711569777133,
+    "max_force_N": 18.609917114242197
+   },
+   {
+    "body": "ee_finger_l2",
+    "kind": "hand",
+    "phase": "after_release",
+    "n_runs": 15,
+    "runs_by_arm": {
+     "V8": 9,
+     "V10": 6
+    },
+    "first_t_min": 270,
+    "first_t_values": [
+     270,
+     271,
+     279,
+     279,
+     279,
+     279,
+     280,
+     286,
+     288,
+     288,
+     290,
+     291,
+     309,
+     309,
+     314
+    ],
+    "max_pen_mm": 5.795300221963346,
+    "max_force_N": 749.7896798640063
+   },
+   {
+    "body": "ee_finger_l1",
+    "kind": "hand",
+    "phase": "after_release",
+    "n_runs": 1,
+    "runs_by_arm": {
+     "V10": 1
+    },
+    "first_t_min": 300,
+    "first_t_values": [
+     300
+    ],
+    "max_pen_mm": 2.1318759032474923,
+    "max_force_N": 316.82802909486554
+   },
+   {
+    "body": "link_right_arm_4",
+    "kind": "robot_other",
+    "phase": "after_release",
+    "n_runs": 1,
+    "runs_by_arm": {
+     "V8": 1
+    },
+    "first_t_min": 249,
+    "first_t_values": [
+     249
+    ],
+    "max_pen_mm": 0.42863058683378574,
+    "max_force_N": 251.8316948740168
+   }
+  ],
+  "obstacle_stop": {
+   "V8": {
+    "runs": 10,
+    "keys": [
+     "V8/H/V8_ep1807_s18071",
+     "V8/H/V8_ep1807_s18073",
+     "V8/H/V8_ep1834_s18341",
+     "V8/H/V8_ep1925_s19251",
+     "V8/H/V8_ep1925_s19253",
+     "V8/H/V8_ep1967_s19672",
+     "V8/H/V8_ep1968_s19681",
+     "V8/H/V8_ep1982_s19823",
+     "V8/H/V8_ep1995_s19952",
+     "V8/H/V8_ep1995_s19953"
+    ]
+   },
+   "V10": {
+    "runs": 8,
+    "keys": [
+     "V10/H/V10_ep1807_s18071",
+     "V10/H/V10_ep1807_s18073",
+     "V10/H/V10_ep1834_s18343",
+     "V10/H/V10_ep1925_s19251",
+     "V10/H/V10_ep1925_s19253",
+     "V10/H/V10_ep1967_s19672",
+     "V10/H/V10_ep1982_s19823",
+     "V10/H/V10_ep1995_s19952"
+    ]
+   }
+  },
+  "left_finger_name_note": "MJCF ee_finger_l2 (geom 1086) = URDF ee_finger_l1; MJCF ee_finger_l1 (geom 1079) = URDF ee_finger_l2. ct / finger_hurdle_contacts use MJCF names; hold binding_link / hold_join binding_link use URDF names (server record).",
+  "hold": {
+   "V8": {
+    "total": 6,
+    "trailing": 0,
+    "runs_with_hold": 3,
+    "by_category": {
+     "finger": 3,
+     "held": 3
+    },
+    "by_target": {
+     "None": 2,
+     "destination": 2,
+     "target": 2
+    },
+    "by_phase": {
+     "carry": 3,
+     "crate_above": 1,
+     "release_after": 2
+    },
+    "by_binding_link": {
+     "attached:ee_left[1]": 3,
+     "ee_finger_l1": 1,
+     "ee_finger_r1": 2
+    },
+    "cells": {
+     "finger|None|carry": 1,
+     "finger|target|release_after": 2,
+     "held|None|carry": 1,
+     "held|destination|carry": 1,
+     "held|destination|crate_above": 1
+    },
+    "hold_kinds": {
+     "collision": 6
+    },
+    "by_stage_total": {
+     "B": 3,
+     "H": 3
+    }
+   },
+   "V10": {
+    "total": 52,
+    "trailing": 11,
+    "runs_with_hold": 8,
+    "by_category": {
+     "finger": 48,
+     "held": 3,
+     "robot_other": 1
+    },
+    "by_target": {
+     "None": 49,
+     "destination": 3
+    },
+    "by_phase": {
+     "carry": 8,
+     "crate_above": 6,
+     "release_after": 38
+    },
+    "by_binding_link": {
+     "attached:ee_left[1]": 2,
+     "attached:ee_right[1]": 1,
+     "ee_finger_l1": 5,
+     "ee_finger_l2": 4,
+     "ee_finger_r1": 1,
+     "ee_finger_r2": 38,
+     "ee_right": 1
+    },
+    "cells": {
+     "finger|None|carry": 7,
+     "finger|None|crate_above": 2,
+     "finger|None|release_after": 38,
+     "finger|destination|crate_above": 1,
+     "held|None|carry": 1,
+     "held|destination|crate_above": 2,
+     "robot_other|None|crate_above": 1
+    },
+    "hold_kinds": {
+     "collision": 51,
+     "unverified": 1
+    },
+    "by_stage_total": {
+     "B": 7,
+     "H": 45
+    }
+   },
+   "per_run_chunks_V10": {
+    "B:1807_s18071": [
+     {
+      "seq": 29,
+      "t": 224,
+      "category": "held",
+      "binding_link": "attached:ee_left[1]",
+      "binding_rows": "waypoint",
+      "target": "destination",
+      "phase": "crate_above",
+      "worst_link": "attached:ee_left[1]",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -4.245886704811675,
+      "clearance_mm": -4.245886704811675
+     }
+    ],
+    "B:1982_s19822": [
+     {
+      "seq": 59,
+      "t": 464,
+      "category": "finger",
+      "binding_link": "ee_finger_l2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "ee_finger_l2",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -4.334918041291265,
+      "clearance_mm": -4.334918041291265
+     },
+     {
+      "seq": 60,
+      "t": 472,
+      "category": "finger",
+      "binding_link": "ee_finger_l2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "ee_finger_l2",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -8.294753600050054,
+      "clearance_mm": -8.294753600050054
+     },
+     {
+      "seq": 61,
+      "t": 480,
+      "category": "finger",
+      "binding_link": "ee_finger_l2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "ee_finger_l2",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.693255346376727,
+      "clearance_mm": -7.693255346376727
+     },
+     {
+      "seq": 62,
+      "t": 488,
+      "category": "finger",
+      "binding_link": "ee_finger_l2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "ee_finger_l2",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.80247421938999,
+      "clearance_mm": -7.80247421938999
+     },
+     {
+      "seq": 63,
+      "t": 496,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -13.49906179623107,
+      "clearance_mm": -13.49906179623107
+     },
+     {
+      "seq": 66,
+      "t": 520,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -12.0115972275858,
+      "clearance_mm": -12.0115972275858
+     }
+    ],
+    "H:1834_s18341": [
+     {
+      "seq": 34,
+      "t": 264,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 41.12984435203955,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -4.175436492990924,
+      "clearance_mm": -4.175436492990924
+     },
+     {
+      "seq": 35,
+      "t": 272,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 41.115488393403055,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -5.7146317920918,
+      "clearance_mm": -5.7146317920918
+     },
+     {
+      "seq": 36,
+      "t": 280,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 41.19551973980714,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -3.869085965545665,
+      "clearance_mm": -3.869085965545665
+     },
+     {
+      "seq": 37,
+      "t": 288,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 41.28582942698274,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -5.486197491141703,
+      "clearance_mm": -5.486197491141703
+     },
+     {
+      "seq": 38,
+      "t": 296,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 41.550160221792595,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -5.5120252764277575,
+      "clearance_mm": -5.5120252764277575
+     },
+     {
+      "seq": 39,
+      "t": 304,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 41.7225117095921,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -3.7639010761135094,
+      "clearance_mm": -3.7639010761135094
+     },
+     {
+      "seq": 40,
+      "t": 312,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 41.86942140914734,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -5.144037930221236,
+      "clearance_mm": -5.144037930221236
+     },
+     {
+      "seq": 41,
+      "t": 320,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.09173839670563,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -4.952601196938629,
+      "clearance_mm": -4.952601196938629
+     },
+     {
+      "seq": 42,
+      "t": 328,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.30825341254162,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -6.375353114612601,
+      "clearance_mm": -6.375353114612601
+     },
+     {
+      "seq": 43,
+      "t": 336,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.57523199463294,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.452143843418247,
+      "clearance_mm": -7.452143843418247
+     },
+     {
+      "seq": 44,
+      "t": 344,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.64688864376786,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -6.95449335975417,
+      "clearance_mm": -6.95449335975417
+     },
+     {
+      "seq": 45,
+      "t": 352,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.80848435769863,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -6.263497746846496,
+      "clearance_mm": -6.263497746846496
+     },
+     {
+      "seq": 46,
+      "t": 360,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.979288570988736,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.307684952243936,
+      "clearance_mm": -7.307684952243936
+     },
+     {
+      "seq": 47,
+      "t": 368,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.039983331656934,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -4.957166000437245,
+      "clearance_mm": -4.957166000437245
+     },
+     {
+      "seq": 48,
+      "t": 376,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.08236840489551,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.005350311394123,
+      "clearance_mm": -7.005350311394123
+     },
+     {
+      "seq": 49,
+      "t": 384,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.099682728037315,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -5.870061878954339,
+      "clearance_mm": -5.870061878954339
+     },
+     {
+      "seq": 50,
+      "t": 392,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.19991125257231,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -6.15709622375024,
+      "clearance_mm": -6.15709622375024
+     },
+     {
+      "seq": 51,
+      "t": 400,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.19877455887566,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -6.671902127988984,
+      "clearance_mm": -6.671902127988984
+     },
+     {
+      "seq": 52,
+      "t": 408,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.21109276807398,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -4.273608141582393,
+      "clearance_mm": -4.273608141582393
+     },
+     {
+      "seq": 53,
+      "t": 416,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.14162675556245,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -6.049501019811842,
+      "clearance_mm": -6.049501019811842
+     },
+     {
+      "seq": 54,
+      "t": 424,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.11195514835743,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -5.622303215600841,
+      "clearance_mm": -5.622303215600841
+     },
+     {
+      "seq": 55,
+      "t": 432,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.087693737442486,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -5.793578621831458,
+      "clearance_mm": -5.793578621831458
+     },
+     {
+      "seq": 56,
+      "t": 440,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.09049925472168,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -6.335776085416727,
+      "clearance_mm": -6.335776085416727
+     },
+     {
+      "seq": 58,
+      "t": 456,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.171992423897315,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -3.5826194119353993,
+      "clearance_mm": -3.5826194119353993
+     },
+     {
+      "seq": 60,
+      "t": 472,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.148950198093225,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -0.8240448681701784,
+      "clearance_mm": -0.8240448681701784
+     },
+     {
+      "seq": 61,
+      "t": 480,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.11996666850479,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -2.2935543158019183,
+      "clearance_mm": -2.2935543158019183
+     },
+     {
+      "seq": 63,
+      "t": 496,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.071041036531625,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -3.659486508781321,
+      "clearance_mm": -3.659486508781321
+     },
+     {
+      "seq": 65,
+      "t": 512,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.04747870100083,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.183088764199393,
+      "clearance_mm": -7.183088764199393
+     },
+     {
+      "seq": 66,
+      "t": 520,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 43.022237007347876,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.183088764199393,
+      "clearance_mm": -7.183088764199393
+     },
+     {
+      "seq": 67,
+      "t": 528,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.9709976810744,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.183088764199393,
+      "clearance_mm": -7.183088764199393
+     },
+     {
+      "seq": 68,
+      "t": 536,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.96028792712978,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.183088764199393,
+      "clearance_mm": -7.183088764199393
+     },
+     {
+      "seq": 69,
+      "t": 544,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.91115322932002,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.183088764199393,
+      "clearance_mm": -7.183088764199393
+     },
+     {
+      "seq": 70,
+      "t": 552,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.87749161488843,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.183088764199393,
+      "clearance_mm": -7.183088764199393
+     },
+     {
+      "seq": 71,
+      "t": 560,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.87035005193045,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.183088764199393,
+      "clearance_mm": -7.183088764199393
+     },
+     {
+      "seq": 72,
+      "t": 568,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.84957382937668,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.183088764199393,
+      "clearance_mm": -7.183088764199393
+     },
+     {
+      "seq": 73,
+      "t": 576,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.80942798538091,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.183088764199393,
+      "clearance_mm": -7.183088764199393
+     },
+     {
+      "seq": 74,
+      "t": 584,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.772418975704134,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.183088764199393,
+      "clearance_mm": -7.183088764199393
+     },
+     {
+      "seq": 75,
+      "t": 592,
+      "category": "finger",
+      "binding_link": "ee_finger_r2",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "release_after",
+      "worst_link": "ee_finger_r2",
+      "hurdle_min_mm": 42.777376696335445,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -7.183088764199393,
+      "clearance_mm": -7.183088764199393
+     }
+    ],
+    "H:1834_s18343": [
+     {
+      "seq": 30,
+      "t": 232,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": 23.694114973588096,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -5.5342295833122215,
+      "clearance_mm": -5.5342295833122215
+     },
+     {
+      "seq": 31,
+      "t": 240,
+      "category": "robot_other",
+      "binding_link": "ee_right",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_right",
+      "hurdle_min_mm": 23.484371364230103,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -5.0804111750494085,
+      "clearance_mm": -5.0804111750494085
+     },
+     {
+      "seq": 32,
+      "t": 248,
+      "category": "held",
+      "binding_link": "attached:ee_right[1]",
+      "binding_rows": "waypoint",
+      "target": "destination",
+      "phase": "crate_above",
+      "worst_link": "attached:ee_right[1]",
+      "hurdle_min_mm": 23.4830553687394,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -18.897740948100008,
+      "clearance_mm": -18.897740948100008
+     }
+    ],
+    "H:1967_s19672": [
+     {
+      "seq": 32,
+      "t": 248,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": "destination",
+      "phase": "crate_above",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": 64.59321212927107,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -0.6161229853520398,
+      "clearance_mm": -0.6161229853520398
+     }
+    ],
+    "H:1968_s19681": [
+     {
+      "seq": 23,
+      "t": 176,
+      "category": "held",
+      "binding_link": "attached:ee_left[1]",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "attached:ee_left[1]",
+      "hurdle_min_mm": 38.92079984952654,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -3.333159383535995,
+      "clearance_mm": -3.333159383535995
+     }
+    ],
+    "H:1982_s19823": [
+     {
+      "seq": 29,
+      "t": 224,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "crate_above",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": 86.33486246843705,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -0.6645700485267553,
+      "clearance_mm": -0.6645700485267553
+     }
+    ],
+    "H:1995_s19953": [
+     {
+      "seq": 19,
+      "t": 144,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": 135.72366354658007,
+      "hold_kinds": [
+       "unverified"
+      ],
+      "binding_clearance_mm": -0.2600003792470468,
+      "clearance_mm": -0.2600003792470468
+     }
+    ]
+   },
+   "per_run_chunks_V8": {
+    "B:1807_s18071": [
+     {
+      "seq": 29,
+      "t": 224,
+      "category": "held",
+      "binding_link": "attached:ee_left[1]",
+      "binding_rows": "waypoint",
+      "target": "destination",
+      "phase": "crate_above",
+      "worst_link": "attached:ee_left[1]",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -4.245886704811675,
+      "clearance_mm": -4.245886704811675
+     },
+     {
+      "seq": 73,
+      "t": 576,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": "target",
+      "phase": "release_after",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -42.50579230129169,
+      "clearance_mm": -42.50579230129169
+     },
+     {
+      "seq": 74,
+      "t": 584,
+      "category": "finger",
+      "binding_link": "ee_finger_r1",
+      "binding_rows": "waypoint",
+      "target": "target",
+      "phase": "release_after",
+      "worst_link": "ee_finger_r1",
+      "hurdle_min_mm": null,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -44.231469710593444,
+      "clearance_mm": -44.231469710593444
+     }
+    ],
+    "H:1807_s18071": [
+     {
+      "seq": 24,
+      "t": 184,
+      "category": "held",
+      "binding_link": "attached:ee_left[1]",
+      "binding_rows": "waypoint",
+      "target": "destination",
+      "phase": "carry",
+      "worst_link": "attached:ee_left[1]",
+      "hurdle_min_mm": 46.000506555017914,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -1.2299960928063187,
+      "clearance_mm": -1.2299960928063187
+     },
+     {
+      "seq": 25,
+      "t": 192,
+      "category": "held",
+      "binding_link": "attached:ee_left[1]",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "attached:ee_left[1]",
+      "hurdle_min_mm": 45.52731303842478,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -8.887357839600812,
+      "clearance_mm": -8.887357839600812
+     }
+    ],
+    "H:1807_s18073": [
+     {
+      "seq": 21,
+      "t": 160,
+      "category": "finger",
+      "binding_link": "ee_finger_l1",
+      "binding_rows": "waypoint",
+      "target": null,
+      "phase": "carry",
+      "worst_link": "ee_finger_l1",
+      "hurdle_min_mm": 27.387891915841312,
+      "hold_kinds": [
+       "collision"
+      ],
+      "binding_clearance_mm": -11.35405242129343,
+      "clearance_mm": -11.35405242129343
+     }
+    ]
+   }
+  },
+  "hold_only_in_one_arm": {
+   "V10_only": [
+    {
+     "seq": 59,
+     "t": 464,
+     "category": "finger",
+     "binding_link": "ee_finger_l2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "ee_finger_l2",
+     "hurdle_min_mm": null,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -4.334918041291265,
+     "clearance_mm": -4.334918041291265,
+     "run": "B:1982_s19822"
+    },
+    {
+     "seq": 60,
+     "t": 472,
+     "category": "finger",
+     "binding_link": "ee_finger_l2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "ee_finger_l2",
+     "hurdle_min_mm": null,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -8.294753600050054,
+     "clearance_mm": -8.294753600050054,
+     "run": "B:1982_s19822"
+    },
+    {
+     "seq": 61,
+     "t": 480,
+     "category": "finger",
+     "binding_link": "ee_finger_l2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "ee_finger_l2",
+     "hurdle_min_mm": null,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.693255346376727,
+     "clearance_mm": -7.693255346376727,
+     "run": "B:1982_s19822"
+    },
+    {
+     "seq": 62,
+     "t": 488,
+     "category": "finger",
+     "binding_link": "ee_finger_l2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "ee_finger_l2",
+     "hurdle_min_mm": null,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.80247421938999,
+     "clearance_mm": -7.80247421938999,
+     "run": "B:1982_s19822"
+    },
+    {
+     "seq": 63,
+     "t": 496,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": null,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -13.49906179623107,
+     "clearance_mm": -13.49906179623107,
+     "run": "B:1982_s19822"
+    },
+    {
+     "seq": 66,
+     "t": 520,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": null,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -12.0115972275858,
+     "clearance_mm": -12.0115972275858,
+     "run": "B:1982_s19822"
+    },
+    {
+     "seq": 34,
+     "t": 264,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 41.12984435203955,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -4.175436492990924,
+     "clearance_mm": -4.175436492990924,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 35,
+     "t": 272,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 41.115488393403055,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -5.7146317920918,
+     "clearance_mm": -5.7146317920918,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 36,
+     "t": 280,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 41.19551973980714,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -3.869085965545665,
+     "clearance_mm": -3.869085965545665,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 37,
+     "t": 288,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 41.28582942698274,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -5.486197491141703,
+     "clearance_mm": -5.486197491141703,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 38,
+     "t": 296,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 41.550160221792595,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -5.5120252764277575,
+     "clearance_mm": -5.5120252764277575,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 39,
+     "t": 304,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 41.7225117095921,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -3.7639010761135094,
+     "clearance_mm": -3.7639010761135094,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 40,
+     "t": 312,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 41.86942140914734,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -5.144037930221236,
+     "clearance_mm": -5.144037930221236,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 41,
+     "t": 320,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.09173839670563,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -4.952601196938629,
+     "clearance_mm": -4.952601196938629,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 42,
+     "t": 328,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.30825341254162,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -6.375353114612601,
+     "clearance_mm": -6.375353114612601,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 43,
+     "t": 336,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.57523199463294,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.452143843418247,
+     "clearance_mm": -7.452143843418247,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 44,
+     "t": 344,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.64688864376786,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -6.95449335975417,
+     "clearance_mm": -6.95449335975417,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 45,
+     "t": 352,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.80848435769863,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -6.263497746846496,
+     "clearance_mm": -6.263497746846496,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 46,
+     "t": 360,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.979288570988736,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.307684952243936,
+     "clearance_mm": -7.307684952243936,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 47,
+     "t": 368,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.039983331656934,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -4.957166000437245,
+     "clearance_mm": -4.957166000437245,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 48,
+     "t": 376,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.08236840489551,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.005350311394123,
+     "clearance_mm": -7.005350311394123,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 49,
+     "t": 384,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.099682728037315,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -5.870061878954339,
+     "clearance_mm": -5.870061878954339,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 50,
+     "t": 392,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.19991125257231,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -6.15709622375024,
+     "clearance_mm": -6.15709622375024,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 51,
+     "t": 400,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.19877455887566,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -6.671902127988984,
+     "clearance_mm": -6.671902127988984,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 52,
+     "t": 408,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.21109276807398,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -4.273608141582393,
+     "clearance_mm": -4.273608141582393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 53,
+     "t": 416,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.14162675556245,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -6.049501019811842,
+     "clearance_mm": -6.049501019811842,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 54,
+     "t": 424,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.11195514835743,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -5.622303215600841,
+     "clearance_mm": -5.622303215600841,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 55,
+     "t": 432,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.087693737442486,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -5.793578621831458,
+     "clearance_mm": -5.793578621831458,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 56,
+     "t": 440,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.09049925472168,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -6.335776085416727,
+     "clearance_mm": -6.335776085416727,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 58,
+     "t": 456,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.171992423897315,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -3.5826194119353993,
+     "clearance_mm": -3.5826194119353993,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 60,
+     "t": 472,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.148950198093225,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -0.8240448681701784,
+     "clearance_mm": -0.8240448681701784,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 61,
+     "t": 480,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.11996666850479,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -2.2935543158019183,
+     "clearance_mm": -2.2935543158019183,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 63,
+     "t": 496,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.071041036531625,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -3.659486508781321,
+     "clearance_mm": -3.659486508781321,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 65,
+     "t": 512,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.04747870100083,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.183088764199393,
+     "clearance_mm": -7.183088764199393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 66,
+     "t": 520,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 43.022237007347876,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.183088764199393,
+     "clearance_mm": -7.183088764199393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 67,
+     "t": 528,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.9709976810744,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.183088764199393,
+     "clearance_mm": -7.183088764199393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 68,
+     "t": 536,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.96028792712978,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.183088764199393,
+     "clearance_mm": -7.183088764199393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 69,
+     "t": 544,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.91115322932002,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.183088764199393,
+     "clearance_mm": -7.183088764199393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 70,
+     "t": 552,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.87749161488843,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.183088764199393,
+     "clearance_mm": -7.183088764199393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 71,
+     "t": 560,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.87035005193045,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.183088764199393,
+     "clearance_mm": -7.183088764199393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 72,
+     "t": 568,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.84957382937668,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.183088764199393,
+     "clearance_mm": -7.183088764199393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 73,
+     "t": 576,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.80942798538091,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.183088764199393,
+     "clearance_mm": -7.183088764199393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 74,
+     "t": 584,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.772418975704134,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.183088764199393,
+     "clearance_mm": -7.183088764199393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 75,
+     "t": 592,
+     "category": "finger",
+     "binding_link": "ee_finger_r2",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "release_after",
+     "worst_link": "ee_finger_r2",
+     "hurdle_min_mm": 42.777376696335445,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -7.183088764199393,
+     "clearance_mm": -7.183088764199393,
+     "run": "H:1834_s18341"
+    },
+    {
+     "seq": 30,
+     "t": 232,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": 23.694114973588096,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -5.5342295833122215,
+     "clearance_mm": -5.5342295833122215,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 31,
+     "t": 240,
+     "category": "robot_other",
+     "binding_link": "ee_right",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_right",
+     "hurdle_min_mm": 23.484371364230103,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -5.0804111750494085,
+     "clearance_mm": -5.0804111750494085,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 32,
+     "t": 248,
+     "category": "held",
+     "binding_link": "attached:ee_right[1]",
+     "binding_rows": "waypoint",
+     "target": "destination",
+     "phase": "crate_above",
+     "worst_link": "attached:ee_right[1]",
+     "hurdle_min_mm": 23.4830553687394,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -18.897740948100008,
+     "clearance_mm": -18.897740948100008,
+     "run": "H:1834_s18343"
+    },
+    {
+     "seq": 32,
+     "t": 248,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": "destination",
+     "phase": "crate_above",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": 64.59321212927107,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -0.6161229853520398,
+     "clearance_mm": -0.6161229853520398,
+     "run": "H:1967_s19672"
+    },
+    {
+     "seq": 23,
+     "t": 176,
+     "category": "held",
+     "binding_link": "attached:ee_left[1]",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "attached:ee_left[1]",
+     "hurdle_min_mm": 38.92079984952654,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -3.333159383535995,
+     "clearance_mm": -3.333159383535995,
+     "run": "H:1968_s19681"
+    },
+    {
+     "seq": 29,
+     "t": 224,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "crate_above",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": 86.33486246843705,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -0.6645700485267553,
+     "clearance_mm": -0.6645700485267553,
+     "run": "H:1982_s19823"
+    },
+    {
+     "seq": 19,
+     "t": 144,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": 135.72366354658007,
+     "hold_kinds": [
+      "unverified"
+     ],
+     "binding_clearance_mm": -0.2600003792470468,
+     "clearance_mm": -0.2600003792470468,
+     "run": "H:1995_s19953"
+    }
+   ],
+   "V8_only": [
+    {
+     "seq": 73,
+     "t": 576,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": "target",
+     "phase": "release_after",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": null,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -42.50579230129169,
+     "clearance_mm": -42.50579230129169,
+     "run": "B:1807_s18071"
+    },
+    {
+     "seq": 74,
+     "t": 584,
+     "category": "finger",
+     "binding_link": "ee_finger_r1",
+     "binding_rows": "waypoint",
+     "target": "target",
+     "phase": "release_after",
+     "worst_link": "ee_finger_r1",
+     "hurdle_min_mm": null,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -44.231469710593444,
+     "clearance_mm": -44.231469710593444,
+     "run": "B:1807_s18071"
+    },
+    {
+     "seq": 24,
+     "t": 184,
+     "category": "held",
+     "binding_link": "attached:ee_left[1]",
+     "binding_rows": "waypoint",
+     "target": "destination",
+     "phase": "carry",
+     "worst_link": "attached:ee_left[1]",
+     "hurdle_min_mm": 46.000506555017914,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -1.2299960928063187,
+     "clearance_mm": -1.2299960928063187,
+     "run": "H:1807_s18071"
+    },
+    {
+     "seq": 25,
+     "t": 192,
+     "category": "held",
+     "binding_link": "attached:ee_left[1]",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "attached:ee_left[1]",
+     "hurdle_min_mm": 45.52731303842478,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -8.887357839600812,
+     "clearance_mm": -8.887357839600812,
+     "run": "H:1807_s18071"
+    },
+    {
+     "seq": 21,
+     "t": 160,
+     "category": "finger",
+     "binding_link": "ee_finger_l1",
+     "binding_rows": "waypoint",
+     "target": null,
+     "phase": "carry",
+     "worst_link": "ee_finger_l1",
+     "hurdle_min_mm": 27.387891915841312,
+     "hold_kinds": [
+      "collision"
+     ],
+     "binding_clearance_mm": -11.35405242129343,
+     "clearance_mm": -11.35405242129343,
+     "run": "H:1807_s18073"
+    }
+   ],
+   "both_n": 1,
+   "pairs": 19,
+   "V10_only_n": 51,
+   "V10_only_by_category": {
+    "finger": 48,
+    "robot_other": 1,
+    "held": 2
+   },
+   "V10_only_by_target": {
+    "None": 49,
+    "destination": 2
+   },
+   "V10_only_by_phase": {
+    "carry": 8,
+    "release_after": 38,
+    "crate_above": 5
+   },
+   "V10_only_by_binding_link": {
+    "ee_finger_l2": 4,
+    "ee_finger_l1": 5,
+    "ee_finger_r2": 38,
+    "ee_finger_r1": 1,
+    "ee_right": 1,
+    "attached:ee_right[1]": 1,
+    "attached:ee_left[1]": 1
+   },
+   "V8_only_n": 5,
+   "V8_only_by_category": {
+    "finger": 3,
+    "held": 2
+   },
+   "V8_only_by_target": {
+    "target": 2,
+    "destination": 1,
+    "None": 2
+   },
+   "V8_only_by_phase": {
+    "release_after": 2,
+    "carry": 3
+   },
+   "V8_only_by_binding_link": {
+    "ee_finger_r1": 2,
+    "attached:ee_left[1]": 2,
+    "ee_finger_l1": 1
+   }
+  },
+  "hold_cause_join": {
+   "summary": {
+    "all_V10_HOLD": {
+     "n": 52,
+     "by_row_type": {
+      "finger": 48,
+      "held": 3,
+      "robot_other": 1
+     },
+     "by_row_class": {
+      "obstacle": 32,
+      "support": 18,
+      "target": 2
+     },
+     "by_row_type_class": {
+      "finger|obstacle": 28,
+      "finger|support": 18,
+      "finger|target": 2,
+      "held|obstacle": 3,
+      "robot_other|obstacle": 1
+     },
+     "by_surface_identity": {
+      "apple": 21,
+      "crate": 4,
+      "hurdle": 1,
+      "robot": 17,
+      "table": 7,
+      "unidentified": 2
+     },
+     "by_agg_phase": {
+      "carry": 8,
+      "crate_above": 6,
+      "release_after": 38
+     },
+     "by_run": {
+      "B:1807_s18071": 1,
+      "B:1982_s19822": 6,
+      "H:1834_s18341": 38,
+      "H:1834_s18343": 3,
+      "H:1967_s19672": 1,
+      "H:1968_s19681": 1,
+      "H:1982_s19823": 1,
+      "H:1995_s19953": 1
+     },
+     "by_row_type_identity": {
+      "finger|apple": 21,
+      "finger|crate": 2,
+      "finger|robot": 17,
+      "finger|table": 7,
+      "finger|unidentified": 1,
+      "held|crate": 2,
+      "held|hurdle": 1,
+      "robot_other|unidentified": 1
+     },
+     "by_binding_link": {
+      "attached:ee_left[1]": 2,
+      "attached:ee_right[1]": 1,
+      "ee_finger_l1": 5,
+      "ee_finger_l2": 4,
+      "ee_finger_r1": 1,
+      "ee_finger_r2": 38,
+      "ee_right": 1
+     },
+     "by_target_label": {
+      "None": 49,
+      "destination": 3
+     }
+    },
+    "new_V10_HOLD": {
+     "n": 51,
+     "by_row_type": {
+      "finger": 48,
+      "held": 2,
+      "robot_other": 1
+     },
+     "by_row_class": {
+      "obstacle": 31,
+      "support": 18,
+      "target": 2
+     },
+     "by_row_type_class": {
+      "finger|obstacle": 28,
+      "finger|support": 18,
+      "finger|target": 2,
+      "held|obstacle": 2,
+      "robot_other|obstacle": 1
+     },
+     "by_surface_identity": {
+      "apple": 21,
+      "crate": 3,
+      "hurdle": 1,
+      "robot": 17,
+      "table": 7,
+      "unidentified": 2
+     },
+     "by_agg_phase": {
+      "carry": 8,
+      "crate_above": 5,
+      "release_after": 38
+     },
+     "by_run": {
+      "B:1982_s19822": 6,
+      "H:1834_s18341": 38,
+      "H:1834_s18343": 3,
+      "H:1967_s19672": 1,
+      "H:1968_s19681": 1,
+      "H:1982_s19823": 1,
+      "H:1995_s19953": 1
+     },
+     "by_row_type_identity": {
+      "finger|apple": 21,
+      "finger|crate": 2,
+      "finger|robot": 17,
+      "finger|table": 7,
+      "finger|unidentified": 1,
+      "held|crate": 1,
+      "held|hurdle": 1,
+      "robot_other|unidentified": 1
+     },
+     "by_binding_link": {
+      "attached:ee_left[1]": 1,
+      "attached:ee_right[1]": 1,
+      "ee_finger_l1": 5,
+      "ee_finger_l2": 4,
+      "ee_finger_r1": 1,
+      "ee_finger_r2": 38,
+      "ee_right": 1
+     },
+     "by_target_label": {
+      "None": 49,
+      "destination": 2
+     }
+    },
+    "not_new": {
+     "n": 1,
+     "by_row_type": {
+      "held": 1
+     },
+     "by_row_class": {
+      "obstacle": 1
+     },
+     "by_row_type_class": {
+      "held|obstacle": 1
+     },
+     "by_surface_identity": {
+      "crate": 1
+     },
+     "by_agg_phase": {
+      "crate_above": 1
+     },
+     "by_run": {
+      "B:1807_s18071": 1
+     },
+     "by_row_type_identity": {
+      "held|crate": 1
+     },
+     "by_binding_link": {
+      "attached:ee_left[1]": 1
+     },
+     "by_target_label": {
+      "destination": 1
+     }
+    }
+   },
+   "chunks": [
+    {
+     "run": "B:1807_s18071",
+     "t": 224,
+     "new_vs_V8": false,
+     "agg_phase": "crate_above",
+     "hm_phase_apple_within_80mm_of_crate": "carry",
+     "attached": true,
+     "row_type": "held",
+     "binding_link": "attached:ee_left[1]",
+     "row_class": "obstacle",
+     "query": 271,
+     "step": 4,
+     "clearance_mm": -4.245886704811675,
+     "d_minus_r_mm": 15.754113295188326,
+     "target_label": "destination",
+     "surface_identity": "crate",
+     "surface_nearest_group": "crate",
+     "surface_nearest_mm": 10.940675335492339,
+     "self_cap_mm": 387.5534209841616,
+     "apple_gt_dist_mm": 53.59,
+     "hurdle_gt_dist_mm": null,
+     "crate_gt_dist_mm": 10.94,
+     "table_gt_dist_mm": 130.12
+    },
+    {
+     "run": "B:1982_s19822",
+     "t": 464,
+     "new_vs_V8": true,
+     "agg_phase": "carry",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_l2",
+     "row_class": "obstacle",
+     "query": 255,
+     "step": 1,
+     "clearance_mm": -4.334918041291265,
+     "d_minus_r_mm": 5.6650819781923225,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 8.69597296872564,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 9.03,
+     "hurdle_gt_dist_mm": null,
+     "crate_gt_dist_mm": 219.93,
+     "table_gt_dist_mm": 34.3
+    },
+    {
+     "run": "B:1982_s19822",
+     "t": 472,
+     "new_vs_V8": true,
+     "agg_phase": "carry",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_l2",
+     "row_class": "obstacle",
+     "query": 255,
+     "step": 5,
+     "clearance_mm": -8.294753600050054,
+     "d_minus_r_mm": 0.02164233857172241,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 4.717427440278495,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 13.74,
+     "hurdle_gt_dist_mm": null,
+     "crate_gt_dist_mm": 227.22,
+     "table_gt_dist_mm": 22.16
+    },
+    {
+     "run": "B:1982_s19822",
+     "t": 480,
+     "new_vs_V8": true,
+     "agg_phase": "carry",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_l2",
+     "row_class": "obstacle",
+     "query": 258,
+     "step": 2,
+     "clearance_mm": -7.693255346376727,
+     "d_minus_r_mm": 2.3067445114607588,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 3.9266736972216565,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 9.66,
+     "hurdle_gt_dist_mm": null,
+     "crate_gt_dist_mm": 220.32,
+     "table_gt_dist_mm": 31.58
+    },
+    {
+     "run": "B:1982_s19822",
+     "t": 488,
+     "new_vs_V8": true,
+     "agg_phase": "carry",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_l2",
+     "row_class": "obstacle",
+     "query": 258,
+     "step": 0,
+     "clearance_mm": -7.80247421938999,
+     "d_minus_r_mm": 2.197525638447496,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 3.1269855819920083,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 9.77,
+     "hurdle_gt_dist_mm": null,
+     "crate_gt_dist_mm": 221.32,
+     "table_gt_dist_mm": 31.2
+    },
+    {
+     "run": "B:1982_s19822",
+     "t": 496,
+     "new_vs_V8": true,
+     "agg_phase": "carry",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_l1",
+     "row_class": "obstacle",
+     "query": 182,
+     "step": 0,
+     "clearance_mm": -13.49906179623107,
+     "d_minus_r_mm": -3.499061826229339,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 2.7779984093252112,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 2.78,
+     "hurdle_gt_dist_mm": null,
+     "crate_gt_dist_mm": 156.09,
+     "table_gt_dist_mm": 18.78
+    },
+    {
+     "run": "B:1982_s19822",
+     "t": 520,
+     "new_vs_V8": true,
+     "agg_phase": "carry",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_l1",
+     "row_class": "obstacle",
+     "query": 183,
+     "step": 6,
+     "clearance_mm": -12.0115972275858,
+     "d_minus_r_mm": -2.0115971393783902,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 3.582961269531447,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 3.58,
+     "hurdle_gt_dist_mm": null,
+     "crate_gt_dist_mm": 182.43,
+     "table_gt_dist_mm": 62.7
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 264,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 7,
+     "clearance_mm": -4.175436492990924,
+     "d_minus_r_mm": -7.216014627776563,
+     "target_label": null,
+     "surface_identity": "table",
+     "surface_nearest_group": "table",
+     "surface_nearest_mm": 8.599969269645808,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 22.57,
+     "hurdle_gt_dist_mm": 100.55,
+     "crate_gt_dist_mm": 81.35,
+     "table_gt_dist_mm": 8.6
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 272,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 146,
+     "step": 1,
+     "clearance_mm": -5.7146317920918,
+     "d_minus_r_mm": 4.285368065745686,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 7.396924385843728,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 7.4,
+     "hurdle_gt_dist_mm": 90.69,
+     "crate_gt_dist_mm": 65.12,
+     "table_gt_dist_mm": 14.39
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 280,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 6,
+     "clearance_mm": -3.869085965545665,
+     "d_minus_r_mm": -7.224482152834283,
+     "target_label": null,
+     "surface_identity": "table",
+     "surface_nearest_group": "table",
+     "surface_nearest_mm": 8.949524827655114,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 21.08,
+     "hurdle_gt_dist_mm": 98.02,
+     "crate_gt_dist_mm": 80.12,
+     "table_gt_dist_mm": 8.95
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 288,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 5,
+     "clearance_mm": -5.486197491141703,
+     "d_minus_r_mm": -7.18754140060934,
+     "target_label": null,
+     "surface_identity": "table",
+     "surface_nearest_group": "table",
+     "surface_nearest_mm": 5.496937676429576,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 23.16,
+     "hurdle_gt_dist_mm": 96.62,
+     "crate_gt_dist_mm": 82.42,
+     "table_gt_dist_mm": 5.5
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 296,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 146,
+     "step": 1,
+     "clearance_mm": -5.5120252764277575,
+     "d_minus_r_mm": 4.487974581409728,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 4.504698934142076,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 4.5,
+     "hurdle_gt_dist_mm": 87.09,
+     "crate_gt_dist_mm": 61.01,
+     "table_gt_dist_mm": 17.95
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 304,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 102,
+     "step": 0,
+     "clearance_mm": -3.7639010761135094,
+     "d_minus_r_mm": 6.236098814758934,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 1.5239927979546826,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 1.52,
+     "hurdle_gt_dist_mm": 85.46,
+     "crate_gt_dist_mm": 62.25,
+     "table_gt_dist_mm": 18.71
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 312,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 102,
+     "step": 1,
+     "clearance_mm": -5.144037930221236,
+     "d_minus_r_mm": 4.855961960651208,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 3.857255454864223,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 3.86,
+     "hurdle_gt_dist_mm": 86.63,
+     "crate_gt_dist_mm": 60.74,
+     "table_gt_dist_mm": 18.83
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 320,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 102,
+     "step": 1,
+     "clearance_mm": -4.952601196938629,
+     "d_minus_r_mm": 5.047398693933815,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 2.878104412732215,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 2.88,
+     "hurdle_gt_dist_mm": 85.46,
+     "crate_gt_dist_mm": 60.4,
+     "table_gt_dist_mm": 18.54
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 328,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 102,
+     "step": 1,
+     "clearance_mm": -6.375353114612601,
+     "d_minus_r_mm": 2.9033461027576855,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 5.749341019795108,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 5.75,
+     "hurdle_gt_dist_mm": 91.03,
+     "crate_gt_dist_mm": 66.62,
+     "table_gt_dist_mm": 15.13
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 336,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 102,
+     "step": 1,
+     "clearance_mm": -7.452143843418247,
+     "d_minus_r_mm": 2.547856047454198,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 2.0922709317964223,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 2.09,
+     "hurdle_gt_dist_mm": 84.83,
+     "crate_gt_dist_mm": 60.9,
+     "table_gt_dist_mm": 18.68
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 344,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 102,
+     "step": 1,
+     "clearance_mm": -6.95449335975417,
+     "d_minus_r_mm": 2.526816130980526,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 4.498850898258413,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 4.5,
+     "hurdle_gt_dist_mm": 90.25,
+     "crate_gt_dist_mm": 65.7,
+     "table_gt_dist_mm": 15.32
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 352,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 146,
+     "step": 1,
+     "clearance_mm": -6.263497746846496,
+     "d_minus_r_mm": 1.7828131412607422,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 5.6232054378599505,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 5.62,
+     "hurdle_gt_dist_mm": 91.95,
+     "crate_gt_dist_mm": 66.37,
+     "table_gt_dist_mm": 15.71
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 360,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 102,
+     "step": 1,
+     "clearance_mm": -7.307684952243936,
+     "d_minus_r_mm": 2.692314938628508,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 2.929462124862105,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 2.93,
+     "hurdle_gt_dist_mm": 83.94,
+     "crate_gt_dist_mm": 60.65,
+     "table_gt_dist_mm": 18.24
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 368,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 102,
+     "step": 0,
+     "clearance_mm": -4.957166000437245,
+     "d_minus_r_mm": 5.042833890435199,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 4.844344317405009,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 4.84,
+     "hurdle_gt_dist_mm": 85.65,
+     "crate_gt_dist_mm": 60.59,
+     "table_gt_dist_mm": 21.76
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 376,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 102,
+     "step": 1,
+     "clearance_mm": -7.005350311394123,
+     "d_minus_r_mm": 1.9174032069903344,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 3.9928340620166227,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 3.99,
+     "hurdle_gt_dist_mm": 90.36,
+     "crate_gt_dist_mm": 65.48,
+     "table_gt_dist_mm": 15.87
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 384,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 146,
+     "step": 1,
+     "clearance_mm": -5.870061878954339,
+     "d_minus_r_mm": 2.041058163947451,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 5.321087818473586,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 5.32,
+     "hurdle_gt_dist_mm": 91.99,
+     "crate_gt_dist_mm": 65.53,
+     "table_gt_dist_mm": 16.32
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 392,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 146,
+     "step": 1,
+     "clearance_mm": -6.15709622375024,
+     "d_minus_r_mm": 1.768349444453558,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 6.187243701830437,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 6.19,
+     "hurdle_gt_dist_mm": 93.1,
+     "crate_gt_dist_mm": 64.62,
+     "table_gt_dist_mm": 16.91
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 400,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 102,
+     "step": 1,
+     "clearance_mm": -6.671902127988984,
+     "d_minus_r_mm": 2.3676403283651015,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 5.6315474119611695,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 5.63,
+     "hurdle_gt_dist_mm": 92.64,
+     "crate_gt_dist_mm": 64.97,
+     "table_gt_dist_mm": 16.89
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 408,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 5,
+     "clearance_mm": -4.273608141582393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "table",
+     "surface_nearest_group": "table",
+     "surface_nearest_mm": 8.004085987925587,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 21.51,
+     "hurdle_gt_dist_mm": 96.04,
+     "crate_gt_dist_mm": 80.48,
+     "table_gt_dist_mm": 8.0
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 416,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 146,
+     "step": 1,
+     "clearance_mm": -6.049501019811842,
+     "d_minus_r_mm": 1.828649759943601,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 6.109652542643806,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 6.11,
+     "hurdle_gt_dist_mm": 92.91,
+     "crate_gt_dist_mm": 64.87,
+     "table_gt_dist_mm": 16.75
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 424,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 5,
+     "clearance_mm": -5.622303215600841,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "table",
+     "surface_nearest_group": "table",
+     "surface_nearest_mm": 5.255327440370845,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 22.91,
+     "hurdle_gt_dist_mm": 96.26,
+     "crate_gt_dist_mm": 81.36,
+     "table_gt_dist_mm": 5.26
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 432,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 146,
+     "step": 1,
+     "clearance_mm": -5.793578621831458,
+     "d_minus_r_mm": 2.194379655390379,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 5.276481765159119,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 5.28,
+     "hurdle_gt_dist_mm": 91.9,
+     "crate_gt_dist_mm": 65.81,
+     "table_gt_dist_mm": 16.19
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 440,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 146,
+     "step": 0,
+     "clearance_mm": -6.335776085416727,
+     "d_minus_r_mm": 2.7216889406619673,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 6.622564668337743,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 6.62,
+     "hurdle_gt_dist_mm": 92.47,
+     "crate_gt_dist_mm": 60.45,
+     "table_gt_dist_mm": 20.52
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 456,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 146,
+     "step": 6,
+     "clearance_mm": -3.5826194119353993,
+     "d_minus_r_mm": 3.3766579060512045,
+     "target_label": null,
+     "surface_identity": "apple",
+     "surface_nearest_group": "apple",
+     "surface_nearest_mm": 10.28007658124954,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 10.28,
+     "hurdle_gt_dist_mm": 97.28,
+     "crate_gt_dist_mm": 63.29,
+     "table_gt_dist_mm": 17.23
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 472,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 6,
+     "clearance_mm": -0.8240448681701784,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "table",
+     "surface_nearest_group": "table",
+     "surface_nearest_mm": 9.934076491084149,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 31.23,
+     "hurdle_gt_dist_mm": 112.78,
+     "crate_gt_dist_mm": 77.89,
+     "table_gt_dist_mm": 9.93
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 480,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 6,
+     "clearance_mm": -2.2935543158019183,
+     "d_minus_r_mm": -4.965092631733407,
+     "target_label": null,
+     "surface_identity": "table",
+     "surface_nearest_group": "table",
+     "surface_nearest_mm": 10.354304479320415,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 27.92,
+     "hurdle_gt_dist_mm": 106.84,
+     "crate_gt_dist_mm": 78.73,
+     "table_gt_dist_mm": 10.35
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 496,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "obstacle",
+     "query": 146,
+     "step": 0,
+     "clearance_mm": -3.659486508781321,
+     "d_minus_r_mm": 4.5047606608070545,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 7.438922228381644,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 12.14,
+     "hurdle_gt_dist_mm": 98.87,
+     "crate_gt_dist_mm": 64.35,
+     "table_gt_dist_mm": 16.26
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 512,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 3,
+     "clearance_mm": -7.183088764199393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 2.674715715860215,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 29.7,
+     "hurdle_gt_dist_mm": 104.22,
+     "crate_gt_dist_mm": 84.47,
+     "table_gt_dist_mm": 5.06
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 520,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 0,
+     "clearance_mm": -7.183088764199393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 3.030846769816538,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 28.17,
+     "hurdle_gt_dist_mm": 98.09,
+     "crate_gt_dist_mm": 85.4,
+     "table_gt_dist_mm": 6.34
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 528,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 0,
+     "clearance_mm": -7.183088764199393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 1.55983888533357,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 29.36,
+     "hurdle_gt_dist_mm": 98.13,
+     "crate_gt_dist_mm": 87.1,
+     "table_gt_dist_mm": 4.6
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 536,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 0,
+     "clearance_mm": -7.183088764199393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 1.8733245271107049,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 29.43,
+     "hurdle_gt_dist_mm": 98.77,
+     "crate_gt_dist_mm": 86.62,
+     "table_gt_dist_mm": 5.17
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 544,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 0,
+     "clearance_mm": -7.183088764199393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 2.815694502490131,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 29.43,
+     "hurdle_gt_dist_mm": 99.88,
+     "crate_gt_dist_mm": 86.48,
+     "table_gt_dist_mm": 4.36
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 552,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 0,
+     "clearance_mm": -7.183088764199393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 1.3899919283990299,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 30.32,
+     "hurdle_gt_dist_mm": 99.33,
+     "crate_gt_dist_mm": 87.46,
+     "table_gt_dist_mm": 4.16
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 560,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 0,
+     "clearance_mm": -7.183088764199393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 3.158058271963334,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 28.89,
+     "hurdle_gt_dist_mm": 99.52,
+     "crate_gt_dist_mm": 85.63,
+     "table_gt_dist_mm": 5.38
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 568,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 0,
+     "clearance_mm": -7.183088764199393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 3.5486198864930047,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 28.02,
+     "hurdle_gt_dist_mm": 98.09,
+     "crate_gt_dist_mm": 85.01,
+     "table_gt_dist_mm": 6.42
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 576,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 0,
+     "clearance_mm": -7.183088764199393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 4.685952335841254,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 27.72,
+     "hurdle_gt_dist_mm": 99.32,
+     "crate_gt_dist_mm": 83.75,
+     "table_gt_dist_mm": 7.37
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 584,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 0,
+     "clearance_mm": -7.183088764199393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 3.201472816444103,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 27.69,
+     "hurdle_gt_dist_mm": 96.63,
+     "crate_gt_dist_mm": 85.32,
+     "table_gt_dist_mm": 6.32
+    },
+    {
+     "run": "H:1834_s18341",
+     "t": 592,
+     "new_vs_V8": true,
+     "agg_phase": "release_after",
+     "hm_phase_apple_within_80mm_of_crate": "pre_attach",
+     "attached": false,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r2",
+     "row_class": "support",
+     "query": 103,
+     "step": 0,
+     "clearance_mm": -7.183088764199393,
+     "d_minus_r_mm": -7.183088921010494,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 3.7323440036263995,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 27.79,
+     "hurdle_gt_dist_mm": 98.51,
+     "crate_gt_dist_mm": 84.64,
+     "table_gt_dist_mm": 6.32
+    },
+    {
+     "run": "H:1834_s18343",
+     "t": 232,
+     "new_vs_V8": true,
+     "agg_phase": "crate_above",
+     "hm_phase_apple_within_80mm_of_crate": "carry",
+     "attached": true,
+     "row_type": "finger",
+     "binding_link": "ee_finger_r1",
+     "row_class": "obstacle",
+     "query": 84,
+     "step": 2,
+     "clearance_mm": -5.5342295833122215,
+     "d_minus_r_mm": 4.465770581710653,
+     "target_label": null,
+     "surface_identity": "robot",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 14.385383113283751,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 16.63,
+     "hurdle_gt_dist_mm": 51.08,
+     "crate_gt_dist_mm": 126.37,
+     "table_gt_dist_mm": 229.57
+    },
+    {
+     "run": "H:1834_s18343",
+     "t": 240,
+     "new_vs_V8": true,
+     "agg_phase": "crate_above",
+     "hm_phase_apple_within_80mm_of_crate": "carry",
+     "attached": true,
+     "row_type": "robot_other",
+     "binding_link": "ee_right",
+     "row_class": "obstacle",
+     "query": 37,
+     "step": 6,
+     "clearance_mm": -5.0804111750494085,
+     "d_minus_r_mm": 4.9195888971699535,
+     "target_label": null,
+     "surface_identity": "unidentified",
+     "surface_nearest_group": "robot",
+     "surface_nearest_mm": 20.539437317974393,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 47.13,
+     "hurdle_gt_dist_mm": 79.21,
+     "crate_gt_dist_mm": 107.07,
+     "table_gt_dist_mm": 226.55
+    },
+    {
+     "run": "H:1834_s18343",
+     "t": 248,
+     "new_vs_V8": true,
+     "agg_phase": "crate_above",
+     "hm_phase_apple_within_80mm_of_crate": "carry",
+     "attached": true,
+     "row_type": "held",
+     "binding_link": "attached:ee_right[1]",
+     "row_class": "obstacle",
+     "query": 271,
+     "step": 7,
+     "clearance_mm": -18.897740948100008,
+     "d_minus_r_mm": 1.102052999207348,
+     "target_label": "destination",
+     "surface_identity": "crate",
+     "surface_nearest_group": "crate",
+     "surface_nearest_mm": 3.9607633316023643,
+     "self_cap_mm": 508.314385699017,
+     "apple_gt_dist_mm": 191.75,
+     "hurdle_gt_dist_mm": 325.19,
+     "crate_gt_dist_mm": 3.96,
+     "table_gt_dist_mm": 137.97
+    },
+    {
+     "run": "H:1967_s19672",
+     "t": 248,
+     "new_vs_V8": true,
+     "agg_phase": "crate_above",
+     "hm_phase_apple_within_80mm_of_crate": "crate",
+     "attached": true,
+     "row_type": "finger",
+     "binding_link": "ee_finger_l1",
+     "row_class": "obstacle",
+     "query": 159,
+     "step": 3,
+     "clearance_mm": -0.6161229853520398,
+     "d_minus_r_mm": 9.38387685783686,
+     "target_label": "destination",
+     "surface_identity": "crate",
+     "surface_nearest_group": "crate",
+     "surface_nearest_mm": 9.754416603064389,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 43.23,
+     "hurdle_gt_dist_mm": 273.91,
+     "crate_gt_dist_mm": 9.75,
+     "table_gt_dist_mm": 116.02
+    },
+    {
+     "run": "H:1968_s19681",
+     "t": 176,
+     "new_vs_V8": true,
+     "agg_phase": "carry",
+     "hm_phase_apple_within_80mm_of_crate": "carry",
+     "attached": true,
+     "row_type": "held",
+     "binding_link": "attached:ee_left[1]",
+     "row_class": "obstacle",
+     "query": 271,
+     "step": 2,
+     "clearance_mm": -3.333159383535995,
+     "d_minus_r_mm": 6.667189692000329,
+     "target_label": null,
+     "surface_identity": "hurdle",
+     "surface_nearest_group": "hurdle",
+     "surface_nearest_mm": 7.922458293260597,
+     "self_cap_mm": 258.09768296303093,
+     "apple_gt_dist_mm": 71.76,
+     "hurdle_gt_dist_mm": 7.92,
+     "crate_gt_dist_mm": 108.49,
+     "table_gt_dist_mm": 249.29
+    },
+    {
+     "run": "H:1982_s19823",
+     "t": 224,
+     "new_vs_V8": true,
+     "agg_phase": "crate_above",
+     "hm_phase_apple_within_80mm_of_crate": "crate",
+     "attached": true,
+     "row_type": "finger",
+     "binding_link": "ee_finger_l1",
+     "row_class": "target",
+     "query": 162,
+     "step": 4,
+     "clearance_mm": -0.6645700485267553,
+     "d_minus_r_mm": 19.33542994747759,
+     "target_label": null,
+     "surface_identity": "crate",
+     "surface_nearest_group": "crate",
+     "surface_nearest_mm": 9.013256131797002,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 38.72,
+     "hurdle_gt_dist_mm": 238.95,
+     "crate_gt_dist_mm": 9.01,
+     "table_gt_dist_mm": 128.95
+    },
+    {
+     "run": "H:1995_s19953",
+     "t": 144,
+     "new_vs_V8": true,
+     "agg_phase": "carry",
+     "hm_phase_apple_within_80mm_of_crate": "lift",
+     "attached": true,
+     "row_type": "finger",
+     "binding_link": "ee_finger_l1",
+     "row_class": "target",
+     "query": 159,
+     "step": 3,
+     "clearance_mm": -0.2600003792470468,
+     "d_minus_r_mm": 19.739999463941857,
+     "target_label": null,
+     "surface_identity": "unidentified",
+     "surface_nearest_group": "crate",
+     "surface_nearest_mm": 20.4433093223189,
+     "self_cap_mm": null,
+     "apple_gt_dist_mm": 59.76,
+     "hurdle_gt_dist_mm": 132.79,
+     "crate_gt_dist_mm": 20.44,
+     "table_gt_dist_mm": 110.06
+    }
+   ],
+   "held_row_binding_chunks": [
+    {
+     "run": "B:1807_s18071",
+     "t": 224,
+     "new_vs_V8": false,
+     "agg_phase": "crate_above",
+     "hm_phase_apple_within_80mm_of_crate": "carry",
+     "attached": true,
+     "row_type": "held",
+     "binding_link": "attached:ee_left[1]",
+     "row_class": "obstacle",
+     "query": 271,
+     "step": 4,
+     "clearance_mm": -4.245886704811675,
+     "d_minus_r_mm": 15.754113295188326,
+     "target_label": "destination",
+     "surface_identity": "crate",
+     "surface_nearest_group": "crate",
+     "surface_nearest_mm": 10.940675335492339,
+     "self_cap_mm": 387.5534209841616,
+     "apple_gt_dist_mm": 53.59,
+     "hurdle_gt_dist_mm": null,
+     "crate_gt_dist_mm": 10.94,
+     "table_gt_dist_mm": 130.12
+    },
+    {
+     "run": "H:1834_s18343",
+     "t": 248,
+     "new_vs_V8": true,
+     "agg_phase": "crate_above",
+     "hm_phase_apple_within_80mm_of_crate": "carry",
+     "attached": true,
+     "row_type": "held",
+     "binding_link": "attached:ee_right[1]",
+     "row_class": "obstacle",
+     "query": 271,
+     "step": 7,
+     "clearance_mm": -18.897740948100008,
+     "d_minus_r_mm": 1.102052999207348,
+     "target_label": "destination",
+     "surface_identity": "crate",
+     "surface_nearest_group": "crate",
+     "surface_nearest_mm": 3.9607633316023643,
+     "self_cap_mm": 508.314385699017,
+     "apple_gt_dist_mm": 191.75,
+     "hurdle_gt_dist_mm": 325.19,
+     "crate_gt_dist_mm": 3.96,
+     "table_gt_dist_mm": 137.97
+    },
+    {
+     "run": "H:1968_s19681",
+     "t": 176,
+     "new_vs_V8": true,
+     "agg_phase": "carry",
+     "hm_phase_apple_within_80mm_of_crate": "carry",
+     "attached": true,
+     "row_type": "held",
+     "binding_link": "attached:ee_left[1]",
+     "row_class": "obstacle",
+     "query": 271,
+     "step": 2,
+     "clearance_mm": -3.333159383535995,
+     "d_minus_r_mm": 6.667189692000329,
+     "target_label": null,
+     "surface_identity": "hurdle",
+     "surface_nearest_group": "hurdle",
+     "surface_nearest_mm": 7.922458293260597,
+     "self_cap_mm": 258.09768296303093,
+     "apple_gt_dist_mm": 71.76,
+     "hurdle_gt_dist_mm": 7.92,
+     "crate_gt_dist_mm": 108.49,
+     "table_gt_dist_mm": 249.29
+    }
+   ]
+  },
+  "hm_records": {
+   "attached_server_chunks": 225,
+   "worst_row_is_held_row_by_class": {
+    "obstacle": 70,
+    "held": 1
+   },
+   "held_rows_n_by_class_summed_over_chunks": {
+    "obstacle": 3292,
+    "support": 42,
+    "held": 90
+   },
+   "held_rows_min_clearance_mm_by_class": {
+    "support": 14.613987287975007,
+    "obstacle": -18.897740948100008,
+    "held": 5.070693434907896
+   }
+  },
+  "follow_to": {
+   "V8": {
+    "decision_counts": {
+     "not_needed": 1031,
+     "hold": 6
+    },
+    "refused_counts": {
+     "worsens": 2,
+     "penetration": 4
+    },
+    "n_executed": 0,
+    "n_runs_with_executed": 0,
+    "executed": []
+   },
+   "V10": {
+    "decision_counts": {
+     "not_needed": 1062,
+     "hold": 52,
+     "follow_to": 1
+    },
+    "refused_counts": {
+     "worsens": 11,
+     "refined_is_reference": 1,
+     "penetration": 39,
+     "hold_kinds": 1
+    },
+    "n_executed": 1,
+    "n_runs_with_executed": 1,
+    "executed": [
+     {
+      "run": "B:1982_s19822",
+      "seq": 64,
+      "t": 504,
+      "phase": "carry",
+      "streak": 1,
+      "limit": 3,
+      "n_rows": 3,
+      "min_esdf_minus_r_mm": 7.758229596039231,
+      "plan_min_clearance_mm": -2.241770403960769,
+      "now_min_clearance_mm": -6.463421490538985,
+      "binding": {
+       "rows": "waypoint",
+       "category": "base",
+       "link": "ee_finger_l2",
+       "clearance_mm": -2.241770403960769
+      },
+      "worst_obstacle": null,
+      "true_apple_crate_min_mm": null,
+      "true_hand_crate_min_mm_post": null,
+      "true_hurdle_min_mm": null,
+      "contact_substeps": null
+     }
+    ]
+   }
+  },
+  "timing": {
+   "V8": {
+    "ALL": {
+     "n_chunks_excl_first": 1018,
+     "to_solve_ms": {
+      "n": 1018,
+      "median": 69.9044312350452,
+      "p90": 103.07147791609171,
+      "max": 758.3773648366332,
+      "min": 43.75668987631798,
+      "mean": 80.36500439944372
+     },
+     "verdict_trajopt_ms": {
+      "n": 1018,
+      "median": 75.49234526231885,
+      "p90": 112.11909120902425,
+      "max": 769.2078202962875,
+      "min": 46.369556337594986,
+      "mean": 85.9936619459236
+     },
+     "verdict_total_ms": {
+      "n": 1018,
+      "median": 731.3714236952364,
+      "p90": 1102.955474704504,
+      "max": 2084.788417443633,
+      "min": 610.0546475499868,
+      "mean": 809.3577272291634
+     },
+     "round_trip_ms": {
+      "n": 1018,
+      "median": 947.3187923431396,
+      "p90": 1316.2445783615112,
+      "max": 2667.0262813568115,
+      "min": 800.7669448852539,
+      "mean": 1028.948604709273
+     },
+     "round_trip_gt_533_3_n": 1018,
+     "round_trip_n": 1018,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 1018,
+      "median": 16.238500000000002,
+      "p90": 26.360200000000003,
+      "max": 163.851,
+      "min": 8.71,
+      "mean": 19.665277996070728
+     },
+     "qp_ms": {
+      "n": 1018,
+      "median": 3.7815000000000003,
+      "p90": 4.880700000000001,
+      "max": 235.271,
+      "min": 2.136,
+      "mean": 4.759426326129666
+     },
+     "check_ms": {
+      "n": 1018,
+      "median": 20.5215,
+      "p90": 27.516600000000004,
+      "max": 245.288,
+      "min": 12.949,
+      "mean": 23.228701375245578
+     }
+    },
+    "H": {
+     "n_chunks_excl_first": 648,
+     "to_solve_ms": {
+      "n": 648,
+      "median": 76.18959248065948,
+      "p90": 149.19173410162367,
+      "max": 758.3773648366332,
+      "min": 43.75668987631798,
+      "mean": 88.07740485393384
+     },
+     "verdict_trajopt_ms": {
+      "n": 648,
+      "median": 82.08755357190967,
+      "p90": 158.98930458351978,
+      "max": 769.2078202962875,
+      "min": 46.369556337594986,
+      "mean": 94.43481396280092
+     },
+     "verdict_total_ms": {
+      "n": 648,
+      "median": 772.4595596082509,
+      "p90": 1131.9153737276793,
+      "max": 2084.788417443633,
+      "min": 610.0546475499868,
+      "mean": 865.7133579627829
+     },
+     "round_trip_ms": {
+      "n": 648,
+      "median": 1010.2840662002563,
+      "p90": 1351.7393350601196,
+      "max": 2667.0262813568115,
+      "min": 800.7669448852539,
+      "mean": 1091.623549844012
+     },
+     "round_trip_gt_533_3_n": 648,
+     "round_trip_n": 648,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 648,
+      "median": 18.6845,
+      "p90": 29.998800000000017,
+      "max": 163.851,
+      "min": 8.71,
+      "mean": 21.920623456790125
+     },
+     "qp_ms": {
+      "n": 648,
+      "median": 3.9035,
+      "p90": 5.188,
+      "max": 235.271,
+      "min": 2.405,
+      "mean": 5.369293209876543
+     },
+     "check_ms": {
+      "n": 648,
+      "median": 21.9355,
+      "p90": 29.224500000000003,
+      "max": 245.288,
+      "min": 12.949,
+      "mean": 25.039510802469138
+     }
+    },
+    "B": {
+     "n_chunks_excl_first": 370,
+     "to_solve_ms": {
+      "n": 370,
+      "median": 65.26812352240086,
+      "p90": 79.35248054563999,
+      "max": 105.74476234614849,
+      "min": 46.900524757802486,
+      "mean": 66.85788144130964
+     },
+     "verdict_trajopt_ms": {
+      "n": 370,
+      "median": 68.84496752172709,
+      "p90": 85.35436224192381,
+      "max": 119.59283705800772,
+      "min": 51.53399333357811,
+      "mean": 71.21023895420335
+     },
+     "verdict_total_ms": {
+      "n": 370,
+      "median": 704.6640710905194,
+      "p90": 766.8562047183514,
+      "max": 1048.3722416684031,
+      "min": 624.8615719377995,
+      "mean": 710.659217187581
+     },
+     "round_trip_ms": {
+      "n": 370,
+      "median": 911.6594791412354,
+      "p90": 980.2187442779541,
+      "max": 1258.0015659332275,
+      "min": 825.0930309295654,
+      "mean": 919.1827548516763
+     },
+     "round_trip_gt_533_3_n": 370,
+     "round_trip_n": 370,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 370,
+      "median": 14.8,
+      "p90": 21.498,
+      "max": 30.53,
+      "min": 9.126,
+      "mean": 15.715375675675677
+     },
+     "qp_ms": {
+      "n": 370,
+      "median": 3.641,
+      "p90": 4.1574,
+      "max": 6.897,
+      "min": 2.136,
+      "mean": 3.6913351351351356
+     },
+     "check_ms": {
+      "n": 370,
+      "median": 19.8745,
+      "p90": 23.1898,
+      "max": 31.198,
+      "min": 13.122,
+      "mean": 20.05733783783784
+     }
+    }
+   },
+   "V10": {
+    "ALL": {
+     "n_chunks_excl_first": 1096,
+     "to_solve_ms": {
+      "n": 1096,
+      "median": 84.28367460146546,
+      "p90": 153.5024344921112,
+      "max": 703.8355339318514,
+      "min": 49.58576709032059,
+      "mean": 97.67855156083884
+     },
+     "verdict_trajopt_ms": {
+      "n": 1096,
+      "median": 91.26974223181605,
+      "p90": 160.35039676353335,
+      "max": 714.3852720037103,
+      "min": 53.056965582072735,
+      "mean": 103.93929753425347
+     },
+     "verdict_total_ms": {
+      "n": 1096,
+      "median": 848.4678138047457,
+      "p90": 1145.1526251621544,
+      "max": 2547.904890961945,
+      "min": 665.8918084576726,
+      "mean": 916.9955325336705
+     },
+     "round_trip_ms": {
+      "n": 1096,
+      "median": 1108.1210374832153,
+      "p90": 1382.3692798614502,
+      "max": 3244.293451309204,
+      "min": 854.6614646911621,
+      "mean": 1141.5178919360585
+     },
+     "round_trip_gt_533_3_n": 1096,
+     "round_trip_n": 1096,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 1096,
+      "median": 20.796,
+      "p90": 33.105000000000004,
+      "max": 231.359,
+      "min": 9.395,
+      "mean": 24.73779197080292
+     },
+     "qp_ms": {
+      "n": 1096,
+      "median": 4.1365,
+      "p90": 5.7075,
+      "max": 86.879,
+      "min": 2.37,
+      "mean": 5.568479927007299
+     },
+     "check_ms": {
+      "n": 1096,
+      "median": 24.279,
+      "p90": 33.8815,
+      "max": 207.707,
+      "min": 12.186,
+      "mean": 29.26717883211679
+     }
+    },
+    "H": {
+     "n_chunks_excl_first": 726,
+     "to_solve_ms": {
+      "n": 726,
+      "median": 92.48357638716698,
+      "p90": 182.45784705504775,
+      "max": 703.8355339318514,
+      "min": 57.74200428277254,
+      "mean": 107.8516647191436
+     },
+     "verdict_trajopt_ms": {
+      "n": 726,
+      "median": 99.86567916348577,
+      "p90": 188.55574121698737,
+      "max": 714.3852720037103,
+      "min": 60.23781094700098,
+      "mean": 114.62918566745134
+     },
+     "verdict_total_ms": {
+      "n": 726,
+      "median": 1026.1106817051768,
+      "p90": 1170.8101350814104,
+      "max": 2547.904890961945,
+      "min": 673.4541803598404,
+      "mean": 996.0870211033186
+     },
+     "round_trip_ms": {
+      "n": 726,
+      "median": 1259.842038154602,
+      "p90": 1402.6787281036377,
+      "max": 3244.293451309204,
+      "min": 874.9165534973145,
+      "mean": 1226.0257041815555
+     },
+     "round_trip_gt_533_3_n": 726,
+     "round_trip_n": 726,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 726,
+      "median": 22.5885,
+      "p90": 38.5215,
+      "max": 231.359,
+      "min": 12.037,
+      "mean": 27.75225344352617
+     },
+     "qp_ms": {
+      "n": 726,
+      "median": 4.262499999999999,
+      "p90": 6.2625,
+      "max": 86.879,
+      "min": 2.37,
+      "mean": 6.23623002754821
+     },
+     "check_ms": {
+      "n": 726,
+      "median": 25.628,
+      "p90": 38.9675,
+      "max": 207.707,
+      "min": 14.657,
+      "mean": 32.521391184573
+     }
+    },
+    "B": {
+     "n_chunks_excl_first": 370,
+     "to_solve_ms": {
+      "n": 370,
+      "median": 75.0401341356337,
+      "p90": 90.98581643775107,
+      "max": 256.683137267828,
+      "min": 49.58576709032059,
+      "mean": 77.71725385021922
+     },
+     "verdict_trajopt_ms": {
+      "n": 370,
+      "median": 80.15601662918925,
+      "p90": 97.99121841788292,
+      "max": 267.8156392648816,
+      "min": 53.056965582072735,
+      "mean": 82.96400352154632
+     },
+     "verdict_total_ms": {
+      "n": 370,
+      "median": 753.197911195457,
+      "p90": 814.8264621384442,
+      "max": 1229.848544113338,
+      "min": 665.8918084576726,
+      "mean": 761.8052063132259
+     },
+     "round_trip_ms": {
+      "n": 370,
+      "median": 970.1203107833862,
+      "p90": 1044.6426391601562,
+      "max": 1460.146427154541,
+      "min": 854.6614646911621,
+      "mean": 975.6998603408401
+     },
+     "round_trip_gt_533_3_n": 370,
+     "round_trip_n": 370,
+     "round_trip_gt_533_3_share": 1.0,
+     "time_budget_hit_count": 0,
+     "runs_with_time_budget_hit": 0,
+     "linearize_ms": {
+      "n": 370,
+      "median": 17.1065,
+      "p90": 24.2447,
+      "max": 178.784,
+      "min": 9.395,
+      "mean": 18.82292972972973
+     },
+     "qp_ms": {
+      "n": 370,
+      "median": 3.9345,
+      "p90": 4.7152,
+      "max": 24.768,
+      "min": 2.522,
+      "mean": 4.258245945945946
+     },
+     "check_ms": {
+      "n": 370,
+      "median": 22.619500000000002,
+      "p90": 26.656000000000002,
+      "max": 34.232,
+      "min": 12.186,
+      "mean": 22.881886486486483
+     }
+    }
+   },
+   "per_run_to_solve_median": {
+    "runs": {
+     "B:1807_s18071": {
+      "V10_median_ms": 72.94116215780377,
+      "V8_median_ms": 65.64457574859262,
+      "ratio": 1.111152922019876
+     },
+     "B:1967_s19672": {
+      "V10_median_ms": 76.02345664054155,
+      "V8_median_ms": 66.66692020371556,
+      "ratio": 1.1403475128029765
+     },
+     "B:1968_s19681": {
+      "V10_median_ms": 70.43971540406346,
+      "V8_median_ms": 65.68374950438738,
+      "ratio": 1.0724070403343586
+     },
+     "B:1982_s19822": {
+      "V10_median_ms": 86.8396358564496,
+      "V8_median_ms": 60.34691305831075,
+      "ratio": 1.4390070917552986
+     },
+     "B:1995_s19952": {
+      "V10_median_ms": 64.08236268907785,
+      "V8_median_ms": 58.57745837420225,
+      "ratio": 1.0939764965511032
+     },
+     "H:1807_s18071": {
+      "V10_median_ms": 78.49023025482893,
+      "V8_median_ms": 75.3907160833478,
+      "ratio": 1.0411126771637835
+     },
+     "H:1807_s18073": {
+      "V10_median_ms": 78.61135434359312,
+      "V8_median_ms": 79.09600157290697,
+      "ratio": 0.9938726709356208
+     },
+     "H:1834_s18341": {
+      "V10_median_ms": 94.05861655250192,
+      "V8_median_ms": 65.75607601553202,
+      "ratio": 1.4304171150706233
+     },
+     "H:1834_s18343": {
+      "V10_median_ms": 78.82223557680845,
+      "V8_median_ms": 50.91409618034959,
+      "ratio": 1.5481417031857294
+     },
+     "H:1925_s19251": {
+      "V10_median_ms": 108.90611540526152,
+      "V8_median_ms": 125.1288428902626,
+      "ratio": 0.8703518140959048
+     },
+     "H:1925_s19253": {
+      "V10_median_ms": 87.47051423415542,
+      "V8_median_ms": 70.63047587871552,
+      "ratio": 1.2384245348191778
+     },
+     "H:1967_s19672": {
+      "V10_median_ms": 92.23198238760233,
+      "V8_median_ms": 81.94300718605518,
+      "ratio": 1.1255625776362537
+     },
+     "H:1967_s19673": {
+      "V10_median_ms": 79.01068264618516,
+      "V8_median_ms": 77.98285270109773,
+      "ratio": 1.0131802044870943
+     },
+     "H:1968_s19681": {
+      "V10_median_ms": 116.30464950576425,
+      "V8_median_ms": 77.94252224266529,
+      "ratio": 1.4921848326086085
+     },
+     "H:1968_s19683": {
+      "V10_median_ms": 97.56120573729277,
+      "V8_median_ms": 74.54331731423736,
+      "ratio": 1.3087854049481524
+     },
+     "H:1982_s19822": {
+      "V10_median_ms": 105.17833335325122,
+      "V8_median_ms": 92.7855595946312,
+      "ratio": 1.1335636042155972
+     },
+     "H:1982_s19823": {
+      "V10_median_ms": 91.53601666912436,
+      "V8_median_ms": 69.81444684788585,
+      "ratio": 1.3111328786800565
+     },
+     "H:1995_s19952": {
+      "V10_median_ms": 100.04601161926985,
+      "V8_median_ms": 69.31645050644875,
+      "ratio": 1.4433227738624936
+     },
+     "H:1995_s19953": {
+      "V10_median_ms": 102.33595222234726,
+      "V8_median_ms": 81.5207613632083,
+      "ratio": 1.2553360703587984
+     }
+    },
+    "ratio_median": 1.1403475128029765,
+    "ratio_min": 0.8703518140959048,
+    "ratio_max": 1.5481417031857294,
+    "diff_ms_median": 12.392773758620024,
+    "n_runs_V10_higher": 17,
+    "n_runs": 19
+   },
+   "loadavg_during_V10": {
+    "n_samples": 266,
+    "load1_median": 11.015,
+    "load1_p90": 17.155,
+    "load1_max": 24.58,
+    "working_set_gib_max": 63.55801773071289,
+    "start": 1791373214,
+    "end": 1791375874
+   },
+   "loadavg_during_V8": {
+    "n_samples": 248,
+    "load1_median": 14.47,
+    "load1_p90": 19.463,
+    "load1_max": 39.3,
+    "working_set_gib_max": 65.49081802368164,
+    "start": 1791282708,
+    "end": 1791285188
+   },
+   "max_iterations_hit": {
+    "V10": 1090,
+    "V8": 1026,
+    "n_chunk_records_V10": 1115,
+    "n_chunk_records_V8": 1037,
+    "to_keys_containing_max_iter_V10": {
+     "max_iterations": 1115,
+     "max_iterations_hit": 1115
+    }
+   }
+  },
+  "verdict_kind_counts": {
+   "V10": {
+    "budget_only:execute": 1037,
+    "subtask_no_target:execute": 316,
+    "allowed_contact:execute": 3,
+    "collision:hold": 51,
+    "unverified:hold": 1,
+    "follow_to:execute": 1
+   },
+   "V8": {
+    "budget_only:execute": 1020,
+    "collision:hold": 6,
+    "subtask_no_target:execute": 368,
+    "allowed_contact:execute": 4
+   }
+  },
+  "hurdle_min_mm_H_per_run": {
+   "V8": {
+    "H:1807_s18071": {
+     "before_lift": {
+      "Af": 74.8077691250087,
+      "Ae": 72.17771574681875,
+      "B": 182.8284899005108,
+      "C": 108.82728725851273
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 4.376384077528779,
+      "Ae": 31.413396920162693,
+      "B": 0.06230384216317393,
+      "C": 102.23698029156374
+     },
+     "after": {
+      "Af": 4.866839511528373,
+      "Ae": 20.645874901869952,
+      "B": 190.6772996865444,
+      "C": 72.10440572852696
+     },
+     "all": {
+      "Af": 4.376384077528779,
+      "Ae": 20.645874901869952,
+      "B": 0.06230384216317393,
+      "C": 72.10440572852696
+     }
+    },
+    "H:1807_s18073": {
+     "before_lift": {
+      "Af": 75.16435082088846,
+      "Ae": 72.53050531766213,
+      "B": 185.24280108038718,
+      "C": 109.1413564303518
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 6.611784757531394,
+      "Ae": 26.71977032914211,
+      "B": 0.7359516471329326,
+      "C": 96.62963938833485
+     },
+     "after": {
+      "Af": 21.206596818288297,
+      "Ae": 44.38536668435006,
+      "B": 168.67213006125297,
+      "C": 88.48555383762329
+     },
+     "all": {
+      "Af": 6.611784757531394,
+      "Ae": 26.71977032914211,
+      "B": 0.7359516471329326,
+      "C": 88.48555383762329
+     }
+    },
+    "H:1834_s18341": {
+     "before_lift": {
+      "Af": 85.27178746061237,
+      "Ae": 81.0493790741851,
+      "B": 173.96704891596937,
+      "C": 120.88206450604231
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 3.9016069689067416,
+      "Ae": 30.68656029480946,
+      "B": 3.5802076992567153,
+      "C": 35.38362394806581
+     },
+     "after": {
+      "Af": 78.10934458095979,
+      "Ae": 42.33230580577264,
+      "B": 170.69078828980952,
+      "C": 2.292268188999254
+     },
+     "all": {
+      "Af": 3.9016069689067416,
+      "Ae": 30.68656029480946,
+      "B": 3.5802076992567153,
+      "C": 2.292268188999254
+     }
+    },
+    "H:1834_s18343": {
+     "before_lift": {
+      "Af": 85.27178746061237,
+      "Ae": 81.0093045514707,
+      "B": 174.5279906370356,
+      "C": 120.98129722493971
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 34.37985093187926,
+      "Ae": 52.26952534922137,
+      "B": 8.350455214205823,
+      "C": 116.63331861155883
+     },
+     "after": {
+      "Af": 8.106859458481477,
+      "Ae": 37.01034166759348,
+      "B": 122.051629338063,
+      "C": 94.89239578915583
+     },
+     "all": {
+      "Af": 8.106859458481477,
+      "Ae": 37.01034166759348,
+      "B": 8.350455214205823,
+      "C": 94.89239578915583
+     }
+    },
+    "H:1925_s19251": {
+     "before_lift": {
+      "Af": 63.020765411001975,
+      "Ae": 61.025880160621185,
+      "B": 175.5876765132503,
+      "C": 107.45308770941767
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 10.470666176763364,
+      "Ae": 38.28928411439036,
+      "B": 7.2726047465406545,
+      "C": 80.89925795833217
+     },
+     "after": {
+      "Af": 10.09507741023739,
+      "Ae": 34.010982869245716,
+      "B": 148.57897812514517,
+      "C": 75.28540783347265
+     },
+     "all": {
+      "Af": 10.09507741023739,
+      "Ae": 34.010982869245716,
+      "B": 7.2726047465406545,
+      "C": 75.28540783347265
+     }
+    },
+    "H:1925_s19253": {
+     "before_lift": {
+      "Af": 62.24201366445019,
+      "Ae": 60.22281471309766,
+      "B": 175.5876765132503,
+      "C": 106.71154981049115
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 7.456318207858102,
+      "Ae": 42.034292880242226,
+      "B": 5.88697341774717,
+      "C": 77.67771701314435
+     },
+     "after": {
+      "Af": 2.679885045855359,
+      "Ae": 29.013445052401455,
+      "B": 167.71937400178913,
+      "C": 76.07848362869454
+     },
+     "all": {
+      "Af": 2.679885045855359,
+      "Ae": 29.013445052401455,
+      "B": 5.88697341774717,
+      "C": 76.07848362869454
+     }
+    },
+    "H:1967_s19672": {
+     "before_lift": {
+      "Af": 75.15771534719997,
+      "Ae": 72.74217154223938,
+      "B": 147.32666078423185,
+      "C": 112.14286614020418
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 10.13489796190999,
+      "Ae": 46.17677651728359,
+      "B": 1.7988524452263595,
+      "C": 70.08198693755068
+     },
+     "after": {
+      "Af": 11.719644608490064,
+      "Ae": 30.917252862392896,
+      "B": 132.0185714235404,
+      "C": 66.6814489781921
+     },
+     "all": {
+      "Af": 10.13489796190999,
+      "Ae": 30.917252862392896,
+      "B": 1.7988524452263595,
+      "C": 66.6814489781921
+     }
+    },
+    "H:1967_s19673": {
+     "before_lift": {
+      "Af": 75.4517296678527,
+      "Ae": 73.03925435846146,
+      "B": 147.3963140399288,
+      "C": 112.42679536364803
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 12.146113279015411,
+      "Ae": 46.66419383866067,
+      "B": 1.4077842164538397,
+      "C": 74.8719207201819
+     },
+     "after": {
+      "Af": 2.9004883490378712,
+      "Ae": 37.14152502633051,
+      "B": 168.64724310096787,
+      "C": 65.40573358269016
+     },
+     "all": {
+      "Af": 2.9004883490378712,
+      "Ae": 37.14152502633051,
+      "B": 1.4077842164538397,
+      "C": 65.40573358269016
+     }
+    },
+    "H:1968_s19681": {
+     "before_lift": {
+      "Af": 90.13719841017817,
+      "Ae": 88.51300552127985,
+      "B": 203.34442600563068,
+      "C": 133.777303717449
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 13.68296131883318,
+      "Ae": 44.33576963911556,
+      "B": 15.758670960499401,
+      "C": 104.08005668708971
+     },
+     "after": {
+      "Af": 5.932070263639573,
+      "Ae": 32.12687966251486,
+      "B": 181.8112667752532,
+      "C": 84.59092927734332
+     },
+     "all": {
+      "Af": 5.932070263639573,
+      "Ae": 32.12687966251486,
+      "B": 15.758670960499401,
+      "C": 84.59092927734332
+     }
+    },
+    "H:1968_s19683": {
+     "before_lift": {
+      "Af": 89.91110936726427,
+      "Ae": 88.23962001839239,
+      "B": 202.5413901535926,
+      "C": 133.32866190410235
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 4.927550526848439,
+      "Ae": 40.814881499270136,
+      "B": 0.10568461129072809,
+      "C": 95.60416488110032
+     },
+     "after": {
+      "Af": 4.643269544382621,
+      "Ae": 37.99088522397126,
+      "B": 186.5008387826927,
+      "C": 92.80376874220484
+     },
+     "all": {
+      "Af": 4.643269544382621,
+      "Ae": 37.99088522397126,
+      "B": 0.10568461129072809,
+      "C": 92.80376874220484
+     }
+    },
+    "H:1982_s19822": {
+     "before_lift": {
+      "Af": 73.28935109500777,
+      "Ae": 71.93012815387063,
+      "B": 214.21239647145953,
+      "C": 119.51162693277135
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 133.83121900570242,
+      "Ae": 139.3370338786487,
+      "B": 154.79166027886143,
+      "C": 172.7506549371209
+     },
+     "after": {
+      "Af": 4.072647752349861,
+      "Ae": 33.70028627392886,
+      "B": 57.556801145067176,
+      "C": 79.02527505831885
+     },
+     "all": {
+      "Af": 4.072647752349861,
+      "Ae": 33.70028627392886,
+      "B": 57.556801145067176,
+      "C": 79.02527505831885
+     }
+    },
+    "H:1982_s19823": {
+     "before_lift": {
+      "Af": 73.65124984193457,
+      "Ae": 72.31723764675326,
+      "B": 210.48966871872256,
+      "C": 120.01960566443327
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 3.9424176720741464,
+      "Ae": 44.6993552997396,
+      "B": -0.8506591208662234,
+      "C": 104.44310993735894
+     },
+     "after": {
+      "Af": 9.260400301638567,
+      "Ae": 30.396832164621514,
+      "B": 101.55175517672781,
+      "C": 81.24732991264976
+     },
+     "all": {
+      "Af": 3.9424176720741464,
+      "Ae": 30.396832164621514,
+      "B": -0.8506591208662234,
+      "C": 81.24732991264976
+     }
+    },
+    "H:1995_s19952": {
+     "before_lift": {
+      "Af": 67.34918760791685,
+      "Ae": 68.01207186179981,
+      "B": 164.02673558321865,
+      "C": 122.97999508268418
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 33.86832960598157,
+      "Ae": 66.44349898569897,
+      "B": 12.337326926456997,
+      "C": 99.76675952056948
+     },
+     "after": {
+      "Af": 3.7138335291229363,
+      "Ae": 25.82237404500946,
+      "B": 132.85949377782674,
+      "C": 78.15344327595159
+     },
+     "all": {
+      "Af": 3.7138335291229363,
+      "Ae": 25.82237404500946,
+      "B": 12.337326926456997,
+      "C": 78.15344327595159
+     }
+    },
+    "H:1995_s19953": {
+     "before_lift": {
+      "Af": 66.72225612505481,
+      "Ae": 67.40082907830553,
+      "B": 164.02673558321865,
+      "C": 122.43981488428366
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 40.47935384201047,
+      "Ae": 63.20337574173646,
+      "B": 19.166529632863035,
+      "C": 73.0506061036778
+     },
+     "after": {
+      "Af": 11.707346743192478,
+      "Ae": 34.99184602681547,
+      "B": 141.13215370013106,
+      "C": 65.91083074899008
+     },
+     "all": {
+      "Af": 11.707346743192478,
+      "Ae": 34.99184602681547,
+      "B": 19.166529632863035,
+      "C": 65.91083074899008
+     }
+    }
+   },
+   "V10": {
+    "H:1807_s18071": {
+     "before_lift": {
+      "Af": 74.8077691250087,
+      "Ae": 72.17771574681875,
+      "B": 182.8284899005108,
+      "C": 108.82728725851273
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 31.169183209537305,
+      "Ae": 37.68189982451887,
+      "B": 32.674583055669906,
+      "C": 88.20039886309924
+     },
+     "after": {
+      "Af": 10.655641186993963,
+      "Ae": 36.696900308031424,
+      "B": 175.70541018382897,
+      "C": 83.48044171001047
+     },
+     "all": {
+      "Af": 10.655641186993963,
+      "Ae": 36.696900308031424,
+      "B": 32.674583055669906,
+      "C": 83.48044171001047
+     }
+    },
+    "H:1807_s18073": {
+     "before_lift": {
+      "Af": 75.16435082088846,
+      "Ae": 72.53050531766213,
+      "B": 185.24280108038718,
+      "C": 109.1413564303518
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 6.8316564878700765,
+      "Ae": 28.166120629892408,
+      "B": 8.053001887986404,
+      "C": 91.45236280930924
+     },
+     "after": {
+      "Af": 7.266148056833167,
+      "Ae": 30.248507993889376,
+      "B": 180.1826677458733,
+      "C": 82.32431177722711
+     },
+     "all": {
+      "Af": 6.8316564878700765,
+      "Ae": 28.166120629892408,
+      "B": 8.053001887986404,
+      "C": 82.32431177722711
+     }
+    },
+    "H:1834_s18341": {
+     "before_lift": {
+      "Af": 85.27178746061237,
+      "Ae": 81.0493790741851,
+      "B": 173.96704891596937,
+      "C": 120.88206450604231
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 100.61241979104041,
+      "Ae": 114.5778016086247,
+      "B": 122.98962192129216,
+      "C": 184.99999214780038
+     },
+     "after": {
+      "Af": 29.909050875493133,
+      "Ae": 66.71238323614217,
+      "B": 41.115488393403055,
+      "C": 128.3568570611575
+     },
+     "all": {
+      "Af": 29.909050875493133,
+      "Ae": 66.71238323614217,
+      "B": 41.115488393403055,
+      "C": 120.88206450604231
+     }
+    },
+    "H:1834_s18343": {
+     "before_lift": {
+      "Af": 85.27178746061237,
+      "Ae": 81.0093045514707,
+      "B": 174.5279906370356,
+      "C": 120.98129722493971
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 31.198267095662775,
+      "Ae": 23.4830553687394,
+      "B": 20.205224374278057,
+      "C": 1.245758058895768
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "all": {
+      "Af": 31.198267095662775,
+      "Ae": 23.4830553687394,
+      "B": 20.205224374278057,
+      "C": 1.245758058895768
+     }
+    },
+    "H:1925_s19251": {
+     "before_lift": {
+      "Af": 63.020765411001975,
+      "Ae": 61.025880160621185,
+      "B": 175.5876765132503,
+      "C": 107.45308770941767
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 20.955629414332797,
+      "Ae": 42.96928733106441,
+      "B": -0.8202696235883998,
+      "C": 112.16899473001774
+     },
+     "after": {
+      "Af": -0.12808744058461463,
+      "Ae": 33.18918899263687,
+      "B": 157.6845773055292,
+      "C": 69.8586883327889
+     },
+     "all": {
+      "Af": -0.12808744058461463,
+      "Ae": 33.18918899263687,
+      "B": -0.8202696235883998,
+      "C": 69.8586883327889
+     }
+    },
+    "H:1925_s19253": {
+     "before_lift": {
+      "Af": 62.24201366445019,
+      "Ae": 60.22281471309766,
+      "B": 175.5876765132503,
+      "C": 106.71154981049115
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 11.827022063826554,
+      "Ae": 41.02018014944764,
+      "B": 13.366127000548449,
+      "C": 76.34910945959936
+     },
+     "after": {
+      "Af": 7.065895094170021,
+      "Ae": 28.113658363879512,
+      "B": 167.76972375193333,
+      "C": 75.75251174920973
+     },
+     "all": {
+      "Af": 7.065895094170021,
+      "Ae": 28.113658363879512,
+      "B": 13.366127000548449,
+      "C": 75.75251174920973
+     }
+    },
+    "H:1967_s19672": {
+     "before_lift": {
+      "Af": 75.15771534719997,
+      "Ae": 72.74217154223938,
+      "B": 147.32666078423185,
+      "C": 112.14286614020418
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 13.284081739547794,
+      "Ae": 49.32253624801182,
+      "B": 8.801367872031944,
+      "C": 67.21575510808582
+     },
+     "after": {
+      "Af": 8.695555366596713,
+      "Ae": 26.016299996280416,
+      "B": 135.04178229056257,
+      "C": 64.56549098318003
+     },
+     "all": {
+      "Af": 8.695555366596713,
+      "Ae": 26.016299996280416,
+      "B": 8.801367872031944,
+      "C": 64.56549098318003
+     }
+    },
+    "H:1967_s19673": {
+     "before_lift": {
+      "Af": 75.4517296678527,
+      "Ae": 73.03925435846146,
+      "B": 147.3963140399288,
+      "C": 112.42679536364803
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 22.574010911250507,
+      "Ae": 55.27472269832361,
+      "B": 17.904011165244114,
+      "C": 65.90885309930027
+     },
+     "after": {
+      "Af": 4.1304502898276665,
+      "Ae": 35.120149370311715,
+      "B": 191.4465546238226,
+      "C": 60.323601791746036
+     },
+     "all": {
+      "Af": 4.1304502898276665,
+      "Ae": 35.120149370311715,
+      "B": 17.904011165244114,
+      "C": 60.323601791746036
+     }
+    },
+    "H:1968_s19681": {
+     "before_lift": {
+      "Af": 90.13719841017817,
+      "Ae": 88.51300552127985,
+      "B": 203.34442600563068,
+      "C": 133.777303717449
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 38.92079984952654,
+      "Ae": 51.25085583161777,
+      "B": 28.448992973795317,
+      "C": 93.73119862343765
+     },
+     "after": {
+      "Af": 2.4203763927760167,
+      "Ae": 37.115847302434624,
+      "B": 176.52040372051403,
+      "C": 86.09438290302053
+     },
+     "all": {
+      "Af": 2.4203763927760167,
+      "Ae": 37.115847302434624,
+      "B": 28.448992973795317,
+      "C": 86.09438290302053
+     }
+    },
+    "H:1968_s19683": {
+     "before_lift": {
+      "Af": 89.91110936726427,
+      "Ae": 88.23962001839239,
+      "B": 202.5413901535926,
+      "C": 133.32866190410235
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 12.474562310217694,
+      "Ae": 42.58857375201907,
+      "B": 4.254660390943569,
+      "C": 100.8074353508373
+     },
+     "after": {
+      "Af": 2.713921552782354,
+      "Ae": 37.82988842456361,
+      "B": 170.37698575360335,
+      "C": 90.9381978599716
+     },
+     "all": {
+      "Af": 2.713921552782354,
+      "Ae": 37.82988842456361,
+      "B": 4.254660390943569,
+      "C": 90.9381978599716
+     }
+    },
+    "H:1982_s19822": {
+     "before_lift": {
+      "Af": 73.28935109500777,
+      "Ae": 71.93012815387063,
+      "B": 214.21239647145953,
+      "C": 119.51162693277135
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 133.83121900570242,
+      "Ae": 139.3370338786487,
+      "B": 154.79166027886143,
+      "C": 172.7506549371209
+     },
+     "after": {
+      "Af": 5.275019132515685,
+      "Ae": 32.41352248171034,
+      "B": 57.556801145067176,
+      "C": 78.98979695353339
+     },
+     "all": {
+      "Af": 5.275019132515685,
+      "Ae": 32.41352248171034,
+      "B": 57.556801145067176,
+      "C": 78.98979695353339
+     }
+    },
+    "H:1982_s19823": {
+     "before_lift": {
+      "Af": 73.65124984193457,
+      "Ae": 72.31723764675326,
+      "B": 210.48966871872256,
+      "C": 120.01960566443327
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 8.601282852065802,
+      "Ae": 45.34219254459783,
+      "B": 6.376564436837272,
+      "C": 89.56496503982103
+     },
+     "after": {
+      "Af": 4.480725076330995,
+      "Ae": 28.788953275121337,
+      "B": 169.0920200144853,
+      "C": 79.94479731044716
+     },
+     "all": {
+      "Af": 4.480725076330995,
+      "Ae": 28.788953275121337,
+      "B": 6.376564436837272,
+      "C": 79.94479731044716
+     }
+    },
+    "H:1995_s19952": {
+     "before_lift": {
+      "Af": 67.34918760791685,
+      "Ae": 68.01207186179981,
+      "B": 164.02673558321865,
+      "C": 122.97999508268418
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": 7.881609402426972,
+      "Ae": 30.145962914414955,
+      "B": 6.709555495283469,
+      "C": 80.48943230565368
+     },
+     "after": {
+      "Af": 5.378855226925737,
+      "Ae": 33.21109000754362,
+      "B": 143.35585131118881,
+      "C": 74.18680953836284
+     },
+     "all": {
+      "Af": 5.378855226925737,
+      "Ae": 30.145962914414955,
+      "B": 6.709555495283469,
+      "C": 74.18680953836284
+     }
+    },
+    "H:1995_s19953": {
+     "before_lift": {
+      "Af": 20.3205613327303,
+      "Ae": 28.602897118642346,
+      "B": 164.02673558321865,
+      "C": 81.06989303409618
+     },
+     "carry_lift_to_place_or_end": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "after": {
+      "Af": null,
+      "Ae": null,
+      "B": null,
+      "C": null
+     },
+     "all": {
+      "Af": 20.3205613327303,
+      "Ae": 28.602897118642346,
+      "B": 164.02673558321865,
+      "C": 81.06989303409618
+     }
+    }
+   }
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43v10-hurdle-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43v10-graphs.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43v10-pairs-table.png",
+   "kind": "table"
+  }
+ ],
+ "scripts": [
+  "p/launch_v10.sh",
+  "p/run_chain.sh",
+  "p/start_server.sh",
+  "p/run_client.sh",
+  "p/analyze_v10.py",
+  "p/run_replays_v10.sh",
+  "p/agg_ct_v10.py",
+  "p/z4_base_v10.py",
+  "p/agg_v10.py",
+  "p/extra_v10.py",
+  "p/hm_survey_v10.py (not run)",
+  "p/hold_cause_v10.py",
+  "p/hold_join_v10.py",
+  "p/fig_v10_scene.py",
+  "p/fig_v10_graphs.py",
+  "p/build_verify_v10.py",
+  "p/with_overrides_check.py"
+ ],
+ "raw": {
+  "agg": "outputs/verify/T43/V10/agg.json",
+  "ct": "outputs/verify/T43/V10/ct.json",
+  "extra": "outputs/verify/T43/V10/extra.json",
+  "hold_cause": "outputs/verify/T43/V10/hold_cause.json",
+  "hold_join": "outputs/verify/T43/V10/hold_join.json",
+  "analysis": "outputs/verify/T43/V10/analysis/analysis.json",
+  "replay": "outputs/verify/T43/V10/replay",
+  "snapshot": "outputs/verify/T43/V10/snapshot.txt",
+  "V8_analysis": "outputs/verify/T43/V8/analysis/analysis.json",
+  "V8_replay": "outputs/verify/T43/V8/replay"
+ },
+ "verdict": "19/19 runs done, 0 retries, chain rc 0, guards matched, baseline matched (facts only)",
+ "not_measured": [
+  "servo OFF in both arms; V10 and V8 come from different server sessions; first-chunk JIT time not cited; SQP iteration counts not cited (not a baseline)",
+  "Z4 / CT rules, hurdle contacts and hold_cause are H-stage replays; B runs have no replay (hold_cause covers B HOLD chunks from the server record only)",
+  "nearest-surface identity = GT geom group of the field surface point p - d*grad/|grad| at the planning-row observation state, within 20 mm else unidentified; self_cap uses attach fit spheres only (runtime volume also has the pre-grasp place)",
+  "pod load1 median during V10 11.0 vs V8 14.5 (other sessions included); TO timing is wall-clock budget sensitive"
+ ]
+}

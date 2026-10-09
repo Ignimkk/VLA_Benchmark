@@ -1,0 +1,303 @@
+{
+ "mode": "finger",
+ "key": "V4/H/V4_ep1982_s19822",
+ "t": 271,
+ "snapshot": "/mnt/dev/work-t43w/pi05_TO_hybrid",
+ "script": "/mnt/dev/work/outputs/verify/T43/DX/p/fig_scene_dx.py",
+ "exec_seq": 34,
+ "pb_world_m": [
+  0.5419212135537718,
+  0.10299042944329789,
+  1.0557923839263708
+ ],
+ "pf_world_m": [
+  0.541921229281545,
+  0.10473795979884021,
+  1.0548292147559784
+ ],
+ "head_pixel_uv": [
+  297.4725345134828,
+  246.52963519125717
+ ],
+ "esdf": {
+  "fine": {
+   "voxel_m": 0.005,
+   "origin_m": [
+    0.2316781234741211,
+    -0.22230668097734452,
+    0.729354019165039
+   ],
+   "shape": [
+    128,
+    128,
+    128
+   ],
+   "upper_m": [
+    0.8666781234741211,
+    0.4126933190226555,
+    1.364354019165039
+   ],
+   "pb_index": [
+    62.045119178759585,
+    65.0743320985335,
+    65.28767295226636
+   ],
+   "pb_inside": true,
+   "pf_index": [
+    62.04511630321605,
+    65.42383816964428,
+    65.09503911818788
+   ],
+   "pf_inside": true,
+   "d_pb_mm": -3.2975957728922367,
+   "d_pf_mm": -2.607576549053192
+  },
+  "coarse": {
+   "voxel_m": 0.02,
+   "origin_m": [
+    -0.820000011920929,
+    -1.27,
+    -0.46999998807907106
+   ],
+   "shape": [
+    128,
+    128,
+    128
+   ],
+   "upper_m": [
+    1.719999988079071,
+    1.27,
+    2.070000011920929
+   ],
+   "pb_index": [
+    68.0951865644424,
+    68.65324897576615,
+    76.28961860027209
+   ],
+   "pb_inside": true,
+   "pf_index": [
+    68.09518584555651,
+    68.74062549354385,
+    76.24146014175247
+   ],
+   "pf_inside": true,
+   "d_pb_mm": 2.4779776576906443,
+   "d_pf_mm": 1.6274681547656655
+  },
+  "free": {
+   "voxel_m": 0.005,
+   "origin_m": [
+    0.2316781234741211,
+    -0.22230668097734452,
+    0.729354019165039
+   ],
+   "shape": [
+    128,
+    128,
+    128
+   ],
+   "upper_m": [
+    0.8666781234741211,
+    0.4126933190226555,
+    1.364354019165039
+   ],
+   "pb_index": [
+    62.045119178759585,
+    65.0743320985335,
+    65.28767295226636
+   ],
+   "pb_inside": true,
+   "pf_index": [
+    62.04511630321605,
+    65.42383816964428,
+    65.09503911818788
+   ],
+   "pf_inside": true,
+   "d_pb_mm": 50.22807791829109,
+   "d_pf_mm": 50.318412482738495
+  },
+  "composed_full_pb_mm": -3.297595709156859,
+  "composed_free_pb_mm": 50.228079076858904,
+  "target_free": {
+   "n_layers": 1,
+   "mode": "ball",
+   "label": "target",
+   "n_target_points": 221,
+   "n_ball_seeds_excluded": 8678
+  },
+  "ball": {
+   "centre_m": [
+    0.6547218070853288,
+    0.11193881420976007,
+    0.9969894855204744
+   ],
+   "radius_mm": 172.906,
+   "radius_raw_mm": 167.906,
+   "centre_method": "centroid",
+   "fit_reason": "residual 35.9 mm > 4.0 mm (the surface is not a sphere)",
+   "pb_dist_minus_radius_mm": -45.37386005350838,
+   "pf_dist_minus_radius_mm": -45.92512485766454,
+   "z_min_m": 0.8266086151194677
+  },
+  "target_points": {
+   "n": 221,
+   "n_within_20mm_of_hurdle": 221,
+   "min_hurdle_sd_mm": -2.1892896990946578,
+   "centroid_m": [
+    0.6547218059522534,
+    0.11193881440081747,
+    0.9969894826681905
+   ],
+   "extent_mm": [
+    189.39226865768433,
+    24.858370423316956,
+    230.0618290901184
+   ]
+  },
+  "manipulated": {
+   "id": 1,
+   "state": "visible",
+   "centroid": [
+    0.6547218070853288,
+    0.11193881420976007,
+    0.9969894855204744
+   ],
+   "radius": 0.1679058724068483,
+   "n_points": 221,
+   "extents_mm": [
+    28.4,
+    168.8,
+    287.2
+   ]
+  }
+ },
+ "cameras": {
+  "obs:zed_left": {
+   "z_m": 0.5879852676854119,
+   "u": 297.4725345134828,
+   "v": 246.52963519125717,
+   "in_image": true,
+   "depth_at_px_m": 0.5882997512817383,
+   "occluded": false,
+   "geom_at_px": "pick_obstacle_overbar_0_bar",
+   "body_at_px": "pick_obstacle_overbar_0",
+   "px_is_hurdle": true,
+   "n_bar_px": 1652,
+   "n_bar_px_near": 137,
+   "n_bar_px_near_selffiltered": 0,
+   "n_bar_px_selffiltered": 0,
+   "n_masked_px_repro": 78400,
+   "n_masked_px_record": 78432
+  },
+  "obs:wrist_cam_l": {
+   "z_m": 0.10495142541306196,
+   "u": 105.53555738492733,
+   "v": 543.7533940476512,
+   "in_image": false,
+   "n_bar_px": 11780,
+   "n_bar_px_near": 101,
+   "n_bar_px_near_selffiltered": 0,
+   "n_bar_px_selffiltered": 0,
+   "n_masked_px_repro": 10233,
+   "n_masked_px_record": 10248
+  },
+  "obs:wrist_cam_r": {
+   "z_m": 0.07549888059112209,
+   "u": -898.2815042175171,
+   "v": 47.01250608542526,
+   "in_image": false,
+   "n_bar_px": 1474,
+   "n_bar_px_near": 0,
+   "n_bar_px_near_selffiltered": 0,
+   "n_bar_px_selffiltered": 0,
+   "n_masked_px_repro": 9992,
+   "n_masked_px_record": 9992
+  },
+  "contact:zed_left": {
+   "z_m": 0.5873876137968146,
+   "u": 297.9850640038904,
+   "v": 246.4850643204136,
+   "in_image": true,
+   "depth_at_px_m": 0.5190709233283997,
+   "occluded": true,
+   "geom_at_px": "geom#1049",
+   "body_at_px": "EE_BODY_L",
+   "px_is_hurdle": false,
+   "n_bar_px": 1693,
+   "n_bar_px_near": 41,
+   "n_bar_px_near_selffiltered": 20,
+   "n_bar_px_selffiltered": 20,
+   "n_masked_px_repro": 70522
+  },
+  "contact:wrist_cam_l": {
+   "z_m": 0.10738520866834061,
+   "u": 427.81057243647984,
+   "v": 421.9959810268779,
+   "in_image": true,
+   "depth_at_px_m": 0.10435008257627487,
+   "occluded": false,
+   "geom_at_px": "geom#1082",
+   "body_at_px": "ee_finger_l2",
+   "px_is_hurdle": false,
+   "n_bar_px": 12297,
+   "n_bar_px_near": 5211,
+   "n_bar_px_near_selffiltered": 2611,
+   "n_bar_px_selffiltered": 2611,
+   "n_masked_px_repro": 12847
+  },
+  "contact:wrist_cam_r": {
+   "z_m": 0.0741527576153066,
+   "u": -916.086544720097,
+   "v": 41.973383092591774,
+   "in_image": false,
+   "n_bar_px": 1437,
+   "n_bar_px_near": 0,
+   "n_bar_px_near_selffiltered": 0,
+   "n_bar_px_selffiltered": 0,
+   "n_masked_px_repro": 9992
+  }
+ },
+ "cloud": {
+  "n_raw": 31260,
+  "n_filtered": 31260,
+  "raw_eq_filtered": true,
+  "n_raw_r10": 3,
+  "n_raw_r20": 11,
+  "n_raw_r30": 26,
+  "n_raw_r50": 40,
+  "n_raw_bar_near": 48,
+  "n_raw_bar_all": 417,
+  "min_dist_to_pb_raw_mm": 5.299772224933646,
+  "n_support_r30": 0,
+  "n_filtered_r10": 3,
+  "n_filtered_r20": 11,
+  "n_filtered_r30": 26,
+  "n_filtered_r50": 40,
+  "n_filtered_bar_near": 48,
+  "n_filtered_bar_all": 417,
+  "min_dist_to_pb_filtered_mm": 5.299772224933646
+ },
+ "slice": {
+  "origin_world_m": [
+   0.5419212135537718,
+   0.10299042944329789,
+   1.0557923839263708
+  ],
+  "u": [
+   8.999999999878502e-06,
+   0.9999999999595001,
+   -0.0
+  ],
+  "w": [
+   -9.908225761389744e-17,
+   8.91740318549154e-22,
+   0.9999999999999999
+  ],
+  "bar_axis": [
+   0.9999999999594998,
+   -8.9999999998785e-06,
+   9.908225761791026e-17
+  ],
+  "half_m": 0.12
+ }
+}

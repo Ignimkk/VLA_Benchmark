@@ -1,0 +1,378 @@
+{
+ "figure": "/mnt/dev/work/benchmark/ag3s/docs/figures/t43/t43v11a-pairs-table.png",
+ "script": "/mnt/dev/work/outputs/verify/T43/V11/p/fig_table_v11.py",
+ "sources": [
+  "/mnt/dev/work/outputs/verify/T43/V11/agg_V11A.json",
+  "/mnt/dev/work/outputs/verify/T43/V11/ct_V11A.json",
+  "/mnt/dev/work/outputs/verify/T43/V11/extra_V11A.json"
+ ],
+ "rows_pairs": [
+  [
+   "S (old rule)",
+   "10 vs 13\n+0 / -3 / both 10\np 0.25",
+   "4 vs 5\n+0 / -1 / both 4\np 1.00",
+   "14 vs 18\n+0 / -4 / both 14\np 0.12"
+  ],
+  [
+   "G (grasp, rule-free)",
+   "14 vs 14\n+0 / -0 / both 14\np 1.00",
+   "4 vs 5\n+0 / -1 / both 4\np 1.00",
+   "18 vs 19\n+0 / -1 / both 18\np 1.00"
+  ],
+  [
+   "P (old rule)",
+   "10 vs 13\n+0 / -3 / both 10\np 0.25",
+   "4 vs 5\n+0 / -1 / both 4\np 1.00",
+   "14 vs 18\n+0 / -4 / both 14\np 0.12"
+  ],
+  [
+   "S (Z4 release rule)",
+   "10 vs 13\n+0 / -3 / both 10\np 0.25",
+   "-",
+   "-"
+  ],
+  [
+   "P (Z4: place_rel)",
+   "10 vs 13\n+0 / -3 / both 10\np 0.25",
+   "-",
+   "-"
+  ],
+  [
+   "S (CT rule: release + no pre-release contact)",
+   "8 vs 8\n+2 / -2 / both 6\np 1.00",
+   "-",
+   "-"
+  ]
+ ],
+ "rows_summary": [
+  [
+   "finger-hurdle contact, before grasp",
+   "0 runs / 0 rows / pen 0.0 mm",
+   "0 runs / 0 rows / pen 0.0 mm"
+  ],
+  [
+   "finger-hurdle contact, carry",
+   "0 runs / 0 rows / pen 0.0 mm",
+   "0 runs / 0 rows / pen 0.0 mm"
+  ],
+  [
+   "finger-hurdle contact, after release (return)",
+   "9 runs / 9 rows / pen 5.8 mm",
+   "4 runs / 4 rows / pen 2.2 mm"
+  ],
+  [
+   "apple-hurdle contact (runs by phase)",
+   "carry 5 runs",
+   "carry 2 runs"
+  ],
+  [
+   "obstacle stop runs (H)",
+   "10",
+   "6"
+  ],
+  [
+   "HOLD chunks total / runs with HOLD (19 runs)",
+   "6 / 3",
+   "3 / 2"
+  ],
+  [
+   "HOLD by binding category",
+   "{'finger': 3, 'held': 3}",
+   "{'finger': 3}"
+  ],
+  [
+   "HOLD by target label",
+   "{'None': 2, 'destination': 2, 'target': 2}",
+   "{'None': 3}"
+  ],
+  [
+   "HOLD by phase",
+   "{'carry': 3, 'crate_above': 1, 'release_after': 2}",
+   "{'carry': 1, 'crate_above': 1, 'release_after': 1}"
+  ],
+  [
+   "HOLD only in this arm (same ep:seed, same t)",
+   "6",
+   "3  {'finger': 3}"
+  ],
+  [
+   "follow_to executed / refused",
+   "0 / 6 {'worsens': 2, 'penetration': 4}",
+   "0 / 3 {'refined_is_reference': 1, 'hold_kinds': 1, 'worsens': 1}"
+  ],
+  [
+   "TO solve median / p90 / max (ms)",
+   "69.9 / 103.1 / 758.4",
+   "625.0 / 1007.4 / 1901.8"
+  ],
+  [
+   "time_budget_hit / max_iterations_hit (all chunks)",
+   "0 / 1026",
+   "0 / 1198"
+  ]
+ ],
+ "pairs_old_rule": {
+  "H": {
+   "n_pairs": 14,
+   "success": {
+    "new_total": 10,
+    "base_total": 13,
+    "both": 10,
+    "new_only": 0,
+    "base_only": 3,
+    "neither": 1,
+    "mcnemar_exact_p": 0.25,
+    "new_only_keys": [],
+    "base_only_keys": [
+     "H:1967_s19673",
+     "H:1982_s19823",
+     "H:1995_s19953"
+    ]
+   },
+   "grasp": {
+    "new_total": 14,
+    "base_total": 14,
+    "both": 14,
+    "new_only": 0,
+    "base_only": 0,
+    "neither": 0,
+    "mcnemar_exact_p": 1.0,
+    "new_only_keys": [],
+    "base_only_keys": []
+   },
+   "place": {
+    "new_total": 10,
+    "base_total": 13,
+    "both": 10,
+    "new_only": 0,
+    "base_only": 3,
+    "neither": 1,
+    "mcnemar_exact_p": 0.25,
+    "new_only_keys": [],
+    "base_only_keys": [
+     "H:1967_s19673",
+     "H:1982_s19823",
+     "H:1995_s19953"
+    ]
+   }
+  },
+  "B": {
+   "n_pairs": 5,
+   "success": {
+    "new_total": 4,
+    "base_total": 5,
+    "both": 4,
+    "new_only": 0,
+    "base_only": 1,
+    "neither": 0,
+    "mcnemar_exact_p": 1.0,
+    "new_only_keys": [],
+    "base_only_keys": [
+     "B:1995_s19952"
+    ]
+   },
+   "grasp": {
+    "new_total": 4,
+    "base_total": 5,
+    "both": 4,
+    "new_only": 0,
+    "base_only": 1,
+    "neither": 0,
+    "mcnemar_exact_p": 1.0,
+    "new_only_keys": [],
+    "base_only_keys": [
+     "B:1995_s19952"
+    ]
+   },
+   "place": {
+    "new_total": 4,
+    "base_total": 5,
+    "both": 4,
+    "new_only": 0,
+    "base_only": 1,
+    "neither": 0,
+    "mcnemar_exact_p": 1.0,
+    "new_only_keys": [],
+    "base_only_keys": [
+     "B:1995_s19952"
+    ]
+   }
+  },
+  "ALL": {
+   "n_pairs": 19,
+   "success": {
+    "new_total": 14,
+    "base_total": 18,
+    "both": 14,
+    "new_only": 0,
+    "base_only": 4,
+    "neither": 1,
+    "mcnemar_exact_p": 0.125,
+    "new_only_keys": [],
+    "base_only_keys": [
+     "B:1995_s19952",
+     "H:1967_s19673",
+     "H:1982_s19823",
+     "H:1995_s19953"
+    ]
+   },
+   "grasp": {
+    "new_total": 18,
+    "base_total": 19,
+    "both": 18,
+    "new_only": 0,
+    "base_only": 1,
+    "neither": 0,
+    "mcnemar_exact_p": 1.0,
+    "new_only_keys": [],
+    "base_only_keys": [
+     "B:1995_s19952"
+    ]
+   },
+   "place": {
+    "new_total": 14,
+    "base_total": 18,
+    "both": 14,
+    "new_only": 0,
+    "base_only": 4,
+    "neither": 1,
+    "mcnemar_exact_p": 0.125,
+    "new_only_keys": [],
+    "base_only_keys": [
+     "B:1995_s19952",
+     "H:1967_s19673",
+     "H:1982_s19823",
+     "H:1995_s19953"
+    ]
+   }
+  }
+ },
+ "pairs_z4_rule": {
+  "grasp": {
+   "n_pairs": 14,
+   "new_total": 14,
+   "base_total": 14,
+   "both": 14,
+   "new_only": 0,
+   "base_only": 0,
+   "neither": 0,
+   "mcnemar_exact_p": 1.0,
+   "new_only_keys": [],
+   "base_only_keys": []
+  },
+  "place_rel": {
+   "n_pairs": 14,
+   "new_total": 10,
+   "base_total": 13,
+   "both": 10,
+   "new_only": 0,
+   "base_only": 3,
+   "neither": 1,
+   "mcnemar_exact_p": 0.25,
+   "new_only_keys": [],
+   "base_only_keys": [
+    "1967_s19673",
+    "1982_s19823",
+    "1995_s19953"
+   ]
+  },
+  "released": {
+   "n_pairs": 14,
+   "new_total": 14,
+   "base_total": 14,
+   "both": 14,
+   "new_only": 0,
+   "base_only": 0,
+   "neither": 0,
+   "mcnemar_exact_p": 1.0,
+   "new_only_keys": [],
+   "base_only_keys": []
+  },
+  "success_rel": {
+   "n_pairs": 14,
+   "new_total": 10,
+   "base_total": 13,
+   "both": 10,
+   "new_only": 0,
+   "base_only": 3,
+   "neither": 1,
+   "mcnemar_exact_p": 0.25,
+   "new_only_keys": [],
+   "base_only_keys": [
+    "1967_s19673",
+    "1982_s19823",
+    "1995_s19953"
+   ]
+  },
+  "success_ct": {
+   "n_pairs": 14,
+   "new_total": 8,
+   "base_total": 8,
+   "both": 6,
+   "new_only": 2,
+   "base_only": 2,
+   "neither": 4,
+   "mcnemar_exact_p": 1.0,
+   "new_only_keys": [
+    "1807_s18073",
+    "1968_s19683"
+   ],
+   "base_only_keys": [
+    "1967_s19673",
+    "1995_s19953"
+   ]
+  }
+ },
+ "pairs_ct_rule": {
+  "success": {
+   "n_pairs": 14,
+   "both": 10,
+   "A_only": 0,
+   "B_only": 3,
+   "neither": 1,
+   "A_total": 10,
+   "B_total": 13,
+   "mcnemar_exact_p": 0.25,
+   "A_only_keys": [],
+   "B_only_keys": [
+    "1967_s19673",
+    "1982_s19823",
+    "1995_s19953"
+   ]
+  },
+  "success_rel": {
+   "n_pairs": 14,
+   "both": 10,
+   "A_only": 0,
+   "B_only": 3,
+   "neither": 1,
+   "A_total": 10,
+   "B_total": 13,
+   "mcnemar_exact_p": 0.25,
+   "A_only_keys": [],
+   "B_only_keys": [
+    "1967_s19673",
+    "1982_s19823",
+    "1995_s19953"
+   ]
+  },
+  "success_ct": {
+   "n_pairs": 14,
+   "both": 6,
+   "A_only": 2,
+   "B_only": 2,
+   "neither": 4,
+   "A_total": 8,
+   "B_total": 8,
+   "mcnemar_exact_p": 1.0,
+   "A_only_keys": [
+    "1807_s18073",
+    "1968_s19683"
+   ],
+   "B_only_keys": [
+    "1967_s19673",
+    "1995_s19953"
+   ]
+  }
+ }
+}

@@ -1,0 +1,2847 @@
+{
+ "_comment": "ag3s-verifier (T43 Y, 2026-10-06). 숫자와 경로만 — 해석 없음. 새 closed-loop run 없음 (CPU 재생 · 기존 산출).",
+ "step": "T43Y",
+ "date": "2026-10-06",
+ "runs": [
+  {
+   "id": "physics_replay",
+   "command": "JAX_PLATFORMS=cpu CUDA_VISIBLE_DEVICES= MUJOCO_GL=osmesa .venv-openpi-live/bin/python outputs/verify/T43/Y/p/replay_y.py outputs/verify/T43/Y/replay <38 run dirs>",
+   "raw_output": "outputs/verify/T43/Y/replay/*.npz|*.json",
+   "stdout_log": "outputs/verify/T43/Y/raw/replay_0*.log"
+  },
+  {
+   "id": "server_chunks",
+   "command": "p/server_y.py raw/server_chunks.json <V4/V5 keys>",
+   "raw_output": "outputs/verify/T43/Y/raw/server_chunks.json"
+  },
+  {
+   "id": "esdf_held",
+   "command": "p/esdf_held_y.py raw/esdf_held.json <7 keys>",
+   "raw_output": "outputs/verify/T43/Y/raw/esdf_held.json"
+  },
+  {
+   "id": "hold_rows",
+   "command": "p/hold_rows_y.py raw/hold_rows.json <6 keys>",
+   "raw_output": "outputs/verify/T43/Y/raw/hold_rows.json"
+  },
+  {
+   "id": "metrics",
+   "command": "p/y_metrics.py raw/y_metrics.json",
+   "raw_output": "outputs/verify/T43/Y/raw/y_metrics.json",
+   "stdout_log": "outputs/verify/T43/Y/raw/y_metrics.log"
+  },
+  {
+   "id": "divergence",
+   "command": "p/divergence_y.py raw/divergence.json",
+   "raw_output": "outputs/verify/T43/Y/raw/divergence.json"
+  }
+ ],
+ "code_state": {
+  "inputs": "outputs/verify/T43/W/runs/{V4,V5}/{H,B} (V4 snapshot /mnt/dev/work-t43w, V5 snapshot /mnt/dev/work-t43w3) + T43/W/analysis/analysis.json",
+  "replay_client_snapshot": "/mnt/dev/work-t43w/pi05_TO_hybrid (pi05 trees of work-t43w3 == work-t43w, snapshot3.txt)",
+  "root_head": "9514c22"
+ },
+ "settings": {
+  "V4_flags": "E3b --obstacle-margin 0.010 --held-body-cover",
+  "V5_flags": "V4 + --closing-keep-geometry --latched-identity-hold --supported-max-bottom-mm 60",
+  "esdf_margin_mm": 0.0,
+  "obstacle_margin_mm": 10.0,
+  "destination_margin_mm_config": 20.0,
+  "definitions": [
+   "outputs/verify/T43/Y/p/y_metrics.py",
+   "p/hold_rows_y.py",
+   "p/esdf_held_y.py",
+   "p/server_y.py",
+   "p/divergence_y.py",
+   "p/replay_y.py"
+  ]
+ },
+ "numbers": {
+  "replay": {
+   "n_runs": 38,
+   "qpos_mismatch_rows_total": 0,
+   "sub_steps_per_row": 33
+  },
+  "Y1": {
+   "timeline": {
+    "V4/H/V4_ep1925_s19253": {
+     "grasp_t": 144,
+     "lift_t": 134,
+     "attach_t": 136,
+     "over_crate_t": 172,
+     "in_crate_t": 215,
+     "place_t": 216,
+     "hold_intervals": [],
+     "n_hold_chunks": 0,
+     "trailing_hold_chunks": 0,
+     "policy_open_t": 216,
+     "applied_open_t": 221,
+     "measured_open_t": 224,
+     "last_apple_hand_contact_t": 221,
+     "release_t": 222,
+     "release_mode": "open_cmd",
+     "release_with_cmd": 1.0,
+     "release_open_norm": 0.7546767716592782,
+     "release_in_hold": false,
+     "apple_left_hand_t": 223,
+     "first_apple-crate_contact_t": 223,
+     "n_apple-crate_contact_rows": 50,
+     "first_hand-crate_contact_t": null,
+     "n_hand-crate_contact_rows": 0,
+     "first_robot_other-crate_contact_t": null,
+     "n_robot_other-crate_contact_rows": 0,
+     "server_detach_t": 232,
+     "server_states_after_attach": [
+      [
+       "held",
+       136
+      ],
+      [
+       "placed",
+       232
+      ]
+     ],
+     "apple_in_crate_end_mm": [
+      9.466963143715173,
+      -53.77636534775535,
+      -22.00331010434716
+     ],
+     "finger_open_end": 1.1227713414052376,
+     "apple_finger_mid_end_mm": 324.98999313984586
+    },
+    "V5/H/V5_ep1925_s19253": {
+     "grasp_t": 144,
+     "lift_t": 134,
+     "attach_t": 136,
+     "over_crate_t": 172,
+     "in_crate_t": 345,
+     "place_t": 352,
+     "hold_intervals": [
+      [
+       208,
+       239
+      ],
+      [
+       248,
+       575
+      ],
+      [
+       584,
+       591
+      ]
+     ],
+     "n_hold_chunks": 46,
+     "trailing_hold_chunks": 0,
+     "policy_open_t": 248,
+     "applied_open_t": 582,
+     "measured_open_t": 586,
+     "last_apple_hand_contact_t": 368,
+     "release_t": 369,
+     "release_mode": "closed_cmd",
+     "release_with_cmd": 0.5930750966072083,
+     "release_open_norm": 0.6986422530344328,
+     "release_in_hold": true,
+     "apple_left_hand_t": 369,
+     "first_apple-crate_contact_t": 370,
+     "n_apple-crate_contact_rows": 230,
+     "first_hand-crate_contact_t": null,
+     "n_hand-crate_contact_rows": 0,
+     "first_robot_other-crate_contact_t": null,
+     "n_robot_other-crate_contact_rows": 0,
+     "server_detach_t": null,
+     "server_states_after_attach": [
+      [
+       "held",
+       136
+      ]
+     ],
+     "apple_in_crate_end_mm": [
+      -3.1982078561751646,
+      -55.26044916962554,
+      -22.00203353290797
+     ],
+     "finger_open_end": 1.000017289878729,
+     "apple_finger_mid_end_mm": 197.10368903102824
+    },
+    "V5/H/V5_ep1807_s18071": {
+     "grasp_t": 120,
+     "lift_t": 113,
+     "attach_t": 120,
+     "over_crate_t": 150,
+     "in_crate_t": 166,
+     "place_t": 168,
+     "hold_intervals": [
+      [
+       200,
+       599
+      ]
+     ],
+     "n_hold_chunks": 50,
+     "trailing_hold_chunks": 50,
+     "policy_open_t": null,
+     "applied_open_t": null,
+     "measured_open_t": null,
+     "last_apple_hand_contact_t": 164,
+     "release_t": 165,
+     "release_mode": "closed_cmd",
+     "release_with_cmd": 0.5710505247116089,
+     "release_open_norm": 0.6915464475180854,
+     "release_in_hold": false,
+     "apple_left_hand_t": 165,
+     "first_apple-crate_contact_t": 167,
+     "n_apple-crate_contact_rows": 433,
+     "first_hand-crate_contact_t": null,
+     "n_hand-crate_contact_rows": 0,
+     "first_robot_other-crate_contact_t": null,
+     "n_robot_other-crate_contact_rows": 0,
+     "server_detach_t": null,
+     "server_states_after_attach": [
+      [
+       "held",
+       120
+      ]
+     ],
+     "apple_in_crate_end_mm": [
+      -32.61013801918652,
+      -85.64396409844842,
+      -22.00271634878978
+     ],
+     "finger_open_end": 0.4442701637747715,
+     "apple_finger_mid_end_mm": 170.5636058944935
+    },
+    "V5/H/V5_ep1807_s18073": {
+     "grasp_t": 128,
+     "lift_t": 121,
+     "attach_t": 120,
+     "over_crate_t": 158,
+     "in_crate_t": 216,
+     "place_t": 224,
+     "hold_intervals": [
+      [
+       200,
+       215
+      ],
+      [
+       224,
+       599
+      ]
+     ],
+     "n_hold_chunks": 49,
+     "trailing_hold_chunks": 47,
+     "policy_open_t": null,
+     "applied_open_t": null,
+     "measured_open_t": null,
+     "last_apple_hand_contact_t": 214,
+     "release_t": 215,
+     "release_mode": "closed_cmd",
+     "release_with_cmd": 0.5744957327842712,
+     "release_open_norm": 0.7066481087865026,
+     "release_in_hold": true,
+     "apple_left_hand_t": 216,
+     "first_apple-crate_contact_t": 217,
+     "n_apple-crate_contact_rows": 383,
+     "first_hand-crate_contact_t": null,
+     "n_hand-crate_contact_rows": 0,
+     "first_robot_other-crate_contact_t": null,
+     "n_robot_other-crate_contact_rows": 0,
+     "server_detach_t": null,
+     "server_states_after_attach": [
+      [
+       "held",
+       120
+      ]
+     ],
+     "apple_in_crate_end_mm": [
+      -12.84699505570995,
+      -70.42712151196208,
+      -22.00185992290454
+     ],
+     "finger_open_end": 0.5537762641909731,
+     "apple_finger_mid_end_mm": 169.06337161262874
+    },
+    "V5/H/V5_ep1834_s18343": {
+     "grasp_t": 144,
+     "lift_t": 129,
+     "attach_t": 128,
+     "over_crate_t": 187,
+     "in_crate_t": 307,
+     "place_t": 312,
+     "hold_intervals": [
+      [
+       240,
+       351
+      ],
+      [
+       360,
+       367
+      ],
+      [
+       376,
+       383
+      ]
+     ],
+     "n_hold_chunks": 16,
+     "trailing_hold_chunks": 0,
+     "policy_open_t": 392,
+     "applied_open_t": 399,
+     "measured_open_t": 414,
+     "last_apple_hand_contact_t": 305,
+     "release_t": 306,
+     "release_mode": "closed_cmd",
+     "release_with_cmd": 0.5906540155410767,
+     "release_open_norm": 0.7016177204636018,
+     "release_in_hold": true,
+     "apple_left_hand_t": 307,
+     "first_apple-crate_contact_t": 308,
+     "n_apple-crate_contact_rows": 292,
+     "first_hand-crate_contact_t": null,
+     "n_hand-crate_contact_rows": 0,
+     "first_robot_other-crate_contact_t": null,
+     "n_robot_other-crate_contact_rows": 0,
+     "server_detach_t": 424,
+     "server_states_after_attach": [
+      [
+       "held",
+       128
+      ],
+      [
+       "placed",
+       424
+      ]
+     ],
+     "apple_in_crate_end_mm": [
+      49.70388128871192,
+      24.916477525370304,
+      -20.49466012394524
+     ],
+     "finger_open_end": 0.999727388202784,
+     "apple_finger_mid_end_mm": 318.137304403225
+    },
+    "V5/B/V5_ep1807_s18071": {
+     "grasp_t": 120,
+     "lift_t": null,
+     "attach_t": 120,
+     "over_crate_t": 150,
+     "in_crate_t": 206,
+     "place_t": 208,
+     "hold_intervals": [
+      [
+       192,
+       199
+      ],
+      [
+       208,
+       599
+      ]
+     ],
+     "n_hold_chunks": 50,
+     "trailing_hold_chunks": 49,
+     "policy_open_t": 208,
+     "applied_open_t": null,
+     "measured_open_t": null,
+     "last_apple_hand_contact_t": 344,
+     "release_t": 345,
+     "release_mode": "closed_cmd",
+     "release_with_cmd": 0.5895066857337952,
+     "release_open_norm": 0.6975150629197517,
+     "release_in_hold": true,
+     "apple_left_hand_t": null,
+     "first_apple-crate_contact_t": 346,
+     "n_apple-crate_contact_rows": 254,
+     "first_hand-crate_contact_t": null,
+     "n_hand-crate_contact_rows": 0,
+     "first_robot_other-crate_contact_t": null,
+     "n_robot_other-crate_contact_rows": 0,
+     "server_detach_t": null,
+     "server_states_after_attach": [
+      [
+       "held",
+       120
+      ]
+     ],
+     "apple_in_crate_end_mm": [
+      2.6235521030668814,
+      -61.3529704032986,
+      -22.00298326291584
+     ],
+     "finger_open_end": 0.5895066857340675,
+     "apple_finger_mid_end_mm": 146.70358038834848
+    },
+    "V4/H/V4_ep1834_s18341": {
+     "grasp_t": 144,
+     "lift_t": 129,
+     "attach_t": 120,
+     "over_crate_t": 195,
+     "in_crate_t": 312,
+     "place_t": 320,
+     "hold_intervals": [
+      [
+       112,
+       127
+      ],
+      [
+       232,
+       599
+      ]
+     ],
+     "n_hold_chunks": 48,
+     "trailing_hold_chunks": 46,
+     "policy_open_t": null,
+     "applied_open_t": null,
+     "measured_open_t": null,
+     "last_apple_hand_contact_t": 310,
+     "release_t": 311,
+     "release_mode": "closed_cmd",
+     "release_with_cmd": 0.5538342595100403,
+     "release_open_norm": 0.6988964947290754,
+     "release_in_hold": true,
+     "apple_left_hand_t": 312,
+     "first_apple-crate_contact_t": 313,
+     "n_apple-crate_contact_rows": 287,
+     "first_hand-crate_contact_t": null,
+     "n_hand-crate_contact_rows": 0,
+     "first_robot_other-crate_contact_t": null,
+     "n_robot_other-crate_contact_rows": 0,
+     "server_detach_t": null,
+     "server_states_after_attach": [
+      [
+       "held",
+       120
+      ]
+     ],
+     "apple_in_crate_end_mm": [
+      -7.280926809138743,
+      -39.398415658140856,
+      -22.005794621222375
+     ],
+     "finger_open_end": 0.5538342595097726,
+     "apple_finger_mid_end_mm": 251.91898115838674
+    }
+   },
+   "hold_binding_rows": {
+    "V5/H/V5_ep1925_s19253": {
+     "held|attached:ee_left|destination|before_release": {
+      "n_chunks": 20,
+      "to_clearance_mm": [
+       -11.05,
+       -3.43
+      ],
+      "esdf_minus_r_mm": [
+       8.95,
+       16.57
+      ],
+      "implied_margin_mm": [
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       14.34,
+       20.91
+      ],
+      "apple_surface_mm_approx": [
+       -61.89,
+       -32.84
+      ],
+      "table_mm": [
+       92.68,
+       111.8
+      ],
+      "radius_mm": [
+       58.33
+      ]
+     },
+     "held|attached:ee_left|destination|after_release": {
+      "n_chunks": 26,
+      "to_clearance_mm": [
+       -11.39,
+       -2.28
+      ],
+      "esdf_minus_r_mm": [
+       8.61,
+       17.72
+      ],
+      "implied_margin_mm": [
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       15.2,
+       24.27
+      ],
+      "apple_surface_mm_approx": [
+       24.37,
+       42.36
+      ],
+      "table_mm": [
+       94.48,
+       110.68
+      ],
+      "radius_mm": [
+       58.33
+      ]
+     }
+    },
+    "V5/H/V5_ep1807_s18071": {
+     "held|attached:ee_left|destination|after_release": {
+      "n_chunks": 50,
+      "to_clearance_mm": [
+       -29.01,
+       -7.15
+      ],
+      "esdf_minus_r_mm": [
+       -9.01,
+       12.85
+      ],
+      "implied_margin_mm": [
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       -2.54,
+       21.84
+      ],
+      "apple_surface_mm_approx": [
+       5.41,
+       77.51
+      ],
+      "table_mm": [
+       68.94,
+       131.07
+      ],
+      "radius_mm": [
+       53.87,
+       59.15
+      ]
+     }
+    },
+    "V5/H/V5_ep1807_s18073": {
+     "held|attached:ee_left|destination|before_release": {
+      "n_chunks": 2,
+      "to_clearance_mm": [
+       -13.97,
+       -9.54
+      ],
+      "esdf_minus_r_mm": [
+       6.03,
+       10.46
+      ],
+      "implied_margin_mm": [
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       13.85,
+       18.04
+      ],
+      "apple_surface_mm_approx": [
+       -74.08,
+       -52.92
+      ],
+      "table_mm": [
+       90.77,
+       101.75
+      ],
+      "radius_mm": [
+       52.14
+      ]
+     },
+     "held|attached:ee_left|destination|after_release": {
+      "n_chunks": 26,
+      "to_clearance_mm": [
+       -22.09,
+       -1.02
+      ],
+      "esdf_minus_r_mm": [
+       -2.09,
+       18.98
+      ],
+      "implied_margin_mm": [
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       8.23,
+       29.88
+      ],
+      "apple_surface_mm_approx": [
+       46.11,
+       79.95
+      ],
+      "table_mm": [
+       108.82,
+       138.91
+      ],
+      "radius_mm": [
+       52.14,
+       58.58
+      ]
+     },
+     "held|attached:ee_left|None|after_release": {
+      "n_chunks": 21,
+      "to_clearance_mm": [
+       -20.86,
+       -3.04
+      ],
+      "esdf_minus_r_mm": [
+       -20.86,
+       -3.04
+      ],
+      "implied_margin_mm": [
+       0.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       7.87,
+       13.95
+      ],
+      "apple_surface_mm_approx": [
+       -8.06,
+       44.63
+      ],
+      "table_mm": [
+       63.02,
+       107.54
+      ],
+      "radius_mm": [
+       52.14,
+       58.58
+      ]
+     }
+    },
+    "V5/H/V5_ep1834_s18343": {
+     "robot|ee_right|None|before_release": {
+      "n_chunks": 4,
+      "to_clearance_mm": [
+       -27.45,
+       -10.04
+      ],
+      "esdf_minus_r_mm": [
+       -17.45,
+       -0.04
+      ],
+      "implied_margin_mm": [
+       10.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       102.61,
+       108.24
+      ],
+      "apple_surface_mm_approx": [
+       24.97,
+       98.96
+      ],
+      "table_mm": [
+       207.15,
+       228.22
+      ],
+      "radius_mm": [
+       6.22
+      ]
+     },
+     "robot|ee_finger_r1|None|before_release": {
+      "n_chunks": 5,
+      "to_clearance_mm": [
+       -30.47,
+       -22.78
+      ],
+      "esdf_minus_r_mm": [
+       -20.47,
+       -7.77
+      ],
+      "implied_margin_mm": [
+       10.0,
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       107.69,
+       117.65
+      ],
+      "apple_surface_mm_approx": [
+       -5.67,
+       26.75
+      ],
+      "table_mm": [
+       226.4,
+       227.65
+      ],
+      "radius_mm": [
+       2.82
+      ]
+     },
+     "robot|ee_right|None|after_release": {
+      "n_chunks": 4,
+      "to_clearance_mm": [
+       -23.81,
+       -3.24
+      ],
+      "esdf_minus_r_mm": [
+       -13.81,
+       8.69
+      ],
+      "implied_margin_mm": [
+       10.0,
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       97.38,
+       136.23
+      ],
+      "apple_surface_mm_approx": [
+       191.73,
+       230.41
+      ],
+      "table_mm": [
+       209.5,
+       236.91
+      ],
+      "radius_mm": [
+       6.22
+      ]
+     },
+     "held|attached:ee_right|None|after_release": {
+      "n_chunks": 2,
+      "to_clearance_mm": [
+       -20.94,
+       -16.07
+      ],
+      "esdf_minus_r_mm": [
+       -20.94,
+       -16.07
+      ],
+      "implied_margin_mm": [
+       0.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       95.06,
+       108.66
+      ],
+      "apple_surface_mm_approx": [
+       173.99,
+       221.31
+      ],
+      "table_mm": [
+       204.62,
+       245.66
+      ],
+      "radius_mm": [
+       16.73,
+       38.49
+      ]
+     },
+     "held|attached:ee_right|destination|after_release": {
+      "n_chunks": 1,
+      "to_clearance_mm": [
+       -10.87,
+       -10.87
+      ],
+      "esdf_minus_r_mm": [
+       9.13,
+       9.13
+      ],
+      "implied_margin_mm": [
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       16.87,
+       16.87
+      ],
+      "apple_surface_mm_approx": [
+       66.64,
+       66.64
+      ],
+      "table_mm": [
+       107.7,
+       107.7
+      ],
+      "radius_mm": [
+       38.49
+      ]
+     }
+    },
+    "V5/B/V5_ep1807_s18071": {
+     "held|attached:ee_left|destination|before_release": {
+      "n_chunks": 9,
+      "to_clearance_mm": [
+       -13.51,
+       -1.45
+      ],
+      "esdf_minus_r_mm": [
+       6.49,
+       18.55
+      ],
+      "implied_margin_mm": [
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       14.91,
+       23.37
+      ],
+      "apple_surface_mm_approx": [
+       -79.04,
+       -43.07
+      ],
+      "table_mm": [
+       73.76,
+       109.7
+      ],
+      "radius_mm": [
+       58.54
+      ]
+     },
+     "robot|ee_finger_l1|None|before_release": {
+      "n_chunks": 9,
+      "to_clearance_mm": [
+       -13.12,
+       -12.01
+      ],
+      "esdf_minus_r_mm": [
+       6.88,
+       7.99
+      ],
+      "implied_margin_mm": [
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       25.79,
+       30.17
+      ],
+      "apple_surface_mm_approx": [
+       16.78,
+       19.19
+      ],
+      "table_mm": [
+       98.69,
+       103.92
+      ],
+      "radius_mm": [
+       3.25
+      ]
+     },
+     "held|attached:ee_left|None|before_release": {
+      "n_chunks": 1,
+      "to_clearance_mm": [
+       -11.52,
+       -11.52
+      ],
+      "esdf_minus_r_mm": [
+       -11.52,
+       -11.52
+      ],
+      "implied_margin_mm": [
+       0.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       0.68,
+       0.68
+      ],
+      "apple_surface_mm_approx": [
+       -69.52,
+       -69.52
+      ],
+      "table_mm": [
+       69.82,
+       69.82
+      ],
+      "radius_mm": [
+       52.27
+      ]
+     },
+     "robot|ee_finger_l1|None|after_release": {
+      "n_chunks": 27,
+      "to_clearance_mm": [
+       -12.77,
+       -9.38
+      ],
+      "esdf_minus_r_mm": [
+       7.23,
+       10.62
+      ],
+      "implied_margin_mm": [
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       26.29,
+       30.85
+      ],
+      "apple_surface_mm_approx": [
+       47.39,
+       53.3
+      ],
+      "table_mm": [
+       99.08,
+       105.38
+      ],
+      "radius_mm": [
+       3.25
+      ]
+     },
+     "held|attached:ee_left|destination|after_release": {
+      "n_chunks": 1,
+      "to_clearance_mm": [
+       -14.81,
+       -14.81
+      ],
+      "esdf_minus_r_mm": [
+       5.19,
+       5.19
+      ],
+      "implied_margin_mm": [
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       16.34,
+       16.34
+      ],
+      "apple_surface_mm_approx": [
+       18.93,
+       18.93
+      ],
+      "table_mm": [
+       88.22,
+       88.22
+      ],
+      "radius_mm": [
+       58.54
+      ]
+     },
+     "held|attached:ee_left|None|after_release": {
+      "n_chunks": 3,
+      "to_clearance_mm": [
+       -9.77,
+       -8.82
+      ],
+      "esdf_minus_r_mm": [
+       -9.77,
+       -8.82
+      ],
+      "implied_margin_mm": [
+       0.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       1.08,
+       2.13
+      ],
+      "apple_surface_mm_approx": [
+       6.2,
+       6.38
+      ],
+      "table_mm": [
+       71.79,
+       72.04
+      ],
+      "radius_mm": [
+       52.27
+      ]
+     }
+    },
+    "V4/H/V4_ep1834_s18341": {
+     "robot|ee_finger_r1|None|before_release": {
+      "n_chunks": 4,
+      "to_clearance_mm": [
+       -22.84,
+       -1.58
+      ],
+      "esdf_minus_r_mm": [
+       -12.84,
+       11.61
+      ],
+      "implied_margin_mm": [
+       10.0,
+       13.2,
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       126.93,
+       165.12
+      ],
+      "apple_surface_mm_approx": [
+       -0.23,
+       17.34
+      ],
+      "table_mm": [
+       42.89,
+       232.18
+      ],
+      "radius_mm": [
+       2.58,
+       2.82,
+       3.25
+      ]
+     },
+     "robot|ee_right|None|before_release": {
+      "n_chunks": 8,
+      "to_clearance_mm": [
+       -23.65,
+       -20.31
+      ],
+      "esdf_minus_r_mm": [
+       -13.65,
+       -10.31
+      ],
+      "implied_margin_mm": [
+       10.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       103.25,
+       120.99
+      ],
+      "apple_surface_mm_approx": [
+       0.23,
+       39.79
+      ],
+      "table_mm": [
+       217.25,
+       238.59
+      ],
+      "radius_mm": [
+       6.22
+      ]
+     },
+     "held|attached:ee_right|None|after_release": {
+      "n_chunks": 30,
+      "to_clearance_mm": [
+       -30.78,
+       -22.13
+      ],
+      "esdf_minus_r_mm": [
+       -30.78,
+       -22.13
+      ],
+      "implied_margin_mm": [
+       -0.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       38.57,
+       79.99
+      ],
+      "apple_surface_mm_approx": [
+       -60.06,
+       113.91
+      ],
+      "table_mm": [
+       127.34,
+       181.81
+      ],
+      "radius_mm": [
+       37.38
+      ]
+     },
+     "robot|ee_right|None|after_release": {
+      "n_chunks": 5,
+      "to_clearance_mm": [
+       -29.3,
+       -23.98
+      ],
+      "esdf_minus_r_mm": [
+       -19.3,
+       -3.98
+      ],
+      "implied_margin_mm": [
+       10.0,
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       67.31,
+       125.81
+      ],
+      "apple_surface_mm_approx": [
+       160.33,
+       192.66
+      ],
+      "table_mm": [
+       211.19,
+       242.11
+      ],
+      "radius_mm": [
+       6.22
+      ]
+     },
+     "robot|ee_finger_r2|None|after_release": {
+      "n_chunks": 1,
+      "to_clearance_mm": [
+       -22.2,
+       -22.2
+      ],
+      "esdf_minus_r_mm": [
+       -2.2,
+       -2.2
+      ],
+      "implied_margin_mm": [
+       20.0
+      ],
+      "true_crate_sd_minus_r_mm": [
+       127.01,
+       127.01
+      ],
+      "apple_surface_mm_approx": [
+       156.19,
+       156.19
+      ],
+      "table_mm": [
+       224.9,
+       224.9
+      ],
+      "radius_mm": [
+       2.58
+      ]
+     }
+    }
+   },
+   "attach_held_query_radii_mm": {
+    "V4/H/V4_ep1925_s19253": [
+     39.19,
+     39.19,
+     8.886
+    ],
+    "V5/H/V5_ep1925_s19253": [
+     58.332,
+     55.795
+    ],
+    "V5/H/V5_ep1807_s18071": [
+     59.147,
+     53.869
+    ],
+    "V5/H/V5_ep1807_s18073": [
+     58.58,
+     52.139
+    ],
+    "V5/H/V5_ep1834_s18343": [
+     38.49,
+     38.49,
+     16.728
+    ],
+    "V5/B/V5_ep1807_s18071": [
+     58.538,
+     52.274
+    ],
+    "V4/H/V4_ep1834_s18341": [
+     37.384,
+     37.384,
+     6.548
+    ]
+   },
+   "V5_1925_s19253": {
+    "hold_chunks": 46,
+    "hold_chunks_worst_row_held_sphere0_vs_destination": 46,
+    "hold_to_clearance_mm_min_max": [
+     -11.390817189469178,
+     -2.276008207498962
+    ],
+    "hold_esdf_minus_r_mm_min_max": [
+     8.609514611244201,
+     17.724323945522308
+    ],
+    "hold_implied_margin_mm": [
+     20.0
+    ],
+    "hold_true_crate_sd_minus_r_mm_binding_sphere_min_max": [
+     14.336279424818208,
+     24.26884937607538
+    ],
+    "hold_true_crate_sd_minus_r_mm_all_spheres_min": 6.6610071201835614,
+    "apple_z_crate_frame_mm_t248_to_t367": [
+     88.04046882973968,
+     72.86946411422993
+    ],
+    "in_hand_slip_mm_t248_to_t367": [
+     8.810579102452849,
+     19.706928140338032
+    ],
+    "release_apple_floor_gap_mm": 79.70876083948939
+   }
+  },
+  "Y2": {
+   "pairs_both_success": [
+    "B/ep1807_s18071",
+    "B/ep1968_s19681",
+    "B/ep1982_s19822",
+    "B/ep1995_s19952",
+    "H/ep1807_s18073",
+    "H/ep1834_s18341",
+    "H/ep1925_s19251",
+    "H/ep1925_s19253",
+    "H/ep1968_s19681",
+    "H/ep1968_s19683",
+    "H/ep1982_s19822",
+    "H/ep1982_s19823",
+    "H/ep1995_s19952",
+    "H/ep1995_s19953"
+   ],
+   "n_pairs": 14,
+   "per_pair": {
+    "B/ep1807_s18071": {
+     "V4": {
+      "release_apple_floor_gap_mm": 61.42451482258748,
+      "release_apple_centre_above_floor_mm": 92.74319952017524,
+      "release_v_horiz_mm_s": 24.40845118529119,
+      "release_v_vert_mm_s": -566.7774790899568,
+      "post_release_max_speed_mm_s": 1214.4827821406097,
+      "post_release_horiz_travel_mm": 7.765729154456787,
+      "post_release_drop_mm": 62.83305969441314,
+      "in_hand_slip_max_mm": 25.151646675709916,
+      "in_hand_slip_at_release_mm": 25.151646675709916,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 15.858564334886434,
+      "tcp_speed_4rows_before_open_mm_s": 77.90684470594633,
+      "tcp_height_above_floor_at_open_mm": 137.86578377986143,
+      "apple_floor_gap_at_open_mm": 78.46770003867513,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 8,
+       "median": 6.674375861565674,
+       "max": 25.720347916184423
+      },
+      "release_mode": "open_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 62.96958277803673,
+      "release_apple_centre_above_floor_mm": 95.27834523328202,
+      "release_v_horiz_mm_s": 15.27572710231281,
+      "release_v_vert_mm_s": -533.1131871992599,
+      "post_release_max_speed_mm_s": 1180.672011259825,
+      "post_release_horiz_travel_mm": 18.163062613487003,
+      "post_release_drop_mm": 65.26599889251847,
+      "in_hand_slip_max_mm": 35.26728603284307,
+      "in_hand_slip_at_release_mm": 35.26728603284307,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": null,
+      "tcp_speed_4rows_before_open_mm_s": null,
+      "tcp_height_above_floor_at_open_mm": null,
+      "apple_floor_gap_at_open_mm": null,
+      "open_minus_release_rows": null,
+      "place_window_deflection_mm": {
+       "n": 26,
+       "median": 6.428688190905948,
+       "max": 43.33969560072872
+      },
+      "release_mode": "closed_cmd"
+     }
+    },
+    "B/ep1968_s19681": {
+     "V4": {
+      "release_apple_floor_gap_mm": 144.17413174474152,
+      "release_apple_centre_above_floor_mm": 175.13976659577122,
+      "release_v_horiz_mm_s": 24.104843148999336,
+      "release_v_vert_mm_s": -521.6733540771368,
+      "post_release_max_speed_mm_s": 1169.3818209117549,
+      "post_release_horiz_travel_mm": 7.431472957888921,
+      "post_release_drop_mm": 145.28012149133528,
+      "in_hand_slip_max_mm": 16.806029451845735,
+      "in_hand_slip_at_release_mm": 16.806029451845735,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 30.022744758909337,
+      "tcp_speed_4rows_before_open_mm_s": 20.497472893664757,
+      "tcp_height_above_floor_at_open_mm": 135.5380954017174,
+      "apple_floor_gap_at_open_mm": -0.2204469952688838,
+      "open_minus_release_rows": -14,
+      "place_window_deflection_mm": {
+       "n": 6,
+       "median": 14.083219886826406,
+       "max": 25.094329941729498
+      },
+      "release_mode": "closed_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 177.0366638333717,
+      "release_apple_centre_above_floor_mm": 207.99264253027167,
+      "release_v_horiz_mm_s": 14.787209749602306,
+      "release_v_vert_mm_s": -527.0200293186422,
+      "post_release_max_speed_mm_s": 1822.0000362255173,
+      "post_release_horiz_travel_mm": 69.85431725376907,
+      "post_release_drop_mm": 176.483862589362,
+      "in_hand_slip_max_mm": 18.20227585723054,
+      "in_hand_slip_at_release_mm": 18.20227585723054,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 131.62573610670495,
+      "tcp_speed_4rows_before_open_mm_s": 18.939791612646456,
+      "tcp_height_above_floor_at_open_mm": 142.3805770310998,
+      "apple_floor_gap_at_open_mm": -0.008283443591997758,
+      "open_minus_release_rows": -65,
+      "place_window_deflection_mm": {
+       "n": 5,
+       "median": 19.151412975081055,
+       "max": 24.190982485186705
+      },
+      "release_mode": "closed_cmd"
+     }
+    },
+    "B/ep1982_s19822": {
+     "V4": {
+      "release_apple_floor_gap_mm": 64.96657774701399,
+      "release_apple_centre_above_floor_mm": 97.15419153629847,
+      "release_v_horiz_mm_s": 21.680944257827893,
+      "release_v_vert_mm_s": -578.3292952148768,
+      "post_release_max_speed_mm_s": 1225.9810192687703,
+      "post_release_horiz_travel_mm": 30.12060459055521,
+      "post_release_drop_mm": 65.3736059716698,
+      "in_hand_slip_max_mm": 33.58707827759789,
+      "in_hand_slip_at_release_mm": 33.58707827759789,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 41.30913378554748,
+      "tcp_speed_4rows_before_open_mm_s": 18.472212993312993,
+      "tcp_height_above_floor_at_open_mm": 140.5175835837414,
+      "apple_floor_gap_at_open_mm": 82.12242008981677,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 8,
+       "median": 10.129067873434353,
+       "max": 29.620941508375584
+      },
+      "release_mode": "open_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 67.97795866112152,
+      "release_apple_centre_above_floor_mm": 98.77466140434161,
+      "release_v_horiz_mm_s": 26.076998019578564,
+      "release_v_vert_mm_s": -540.0819253640249,
+      "post_release_max_speed_mm_s": 1187.828200676767,
+      "post_release_horiz_travel_mm": 83.79241819985879,
+      "post_release_drop_mm": 67.19745110787053,
+      "in_hand_slip_max_mm": 27.464350332984907,
+      "in_hand_slip_at_release_mm": 27.464350332984907,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 11.838936870069917,
+      "tcp_speed_4rows_before_open_mm_s": 34.744989703980416,
+      "tcp_height_above_floor_at_open_mm": 137.0006862668441,
+      "apple_floor_gap_at_open_mm": 83.60237876231338,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 8,
+       "median": 5.761513367860474,
+       "max": 25.603135095794173
+      },
+      "release_mode": "open_cmd"
+     }
+    },
+    "B/ep1995_s19952": {
+     "V4": {
+      "release_apple_floor_gap_mm": 63.11777704284252,
+      "release_apple_centre_above_floor_mm": 95.52790304743581,
+      "release_v_horiz_mm_s": 36.95289967011798,
+      "release_v_vert_mm_s": -591.0702149475032,
+      "post_release_max_speed_mm_s": 1239.0813573498458,
+      "post_release_horiz_travel_mm": 46.795349884905114,
+      "post_release_drop_mm": 63.581481990505395,
+      "in_hand_slip_max_mm": 25.80421829892209,
+      "in_hand_slip_at_release_mm": 25.80421829892209,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 39.74290783864824,
+      "tcp_speed_4rows_before_open_mm_s": 29.045777378087138,
+      "tcp_height_above_floor_at_open_mm": 138.19030083238337,
+      "apple_floor_gap_at_open_mm": 81.32335070207432,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 8,
+       "median": 9.056086326629474,
+       "max": 38.095439045857674
+      },
+      "release_mode": "open_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 65.43905181476657,
+      "release_apple_centre_above_floor_mm": 97.79296025989943,
+      "release_v_horiz_mm_s": 40.90225356640696,
+      "release_v_vert_mm_s": -531.7620100388231,
+      "post_release_max_speed_mm_s": 1179.931160410136,
+      "post_release_horiz_travel_mm": 74.21180676717545,
+      "post_release_drop_mm": 65.68083345119658,
+      "in_hand_slip_max_mm": 25.025923108225975,
+      "in_hand_slip_at_release_mm": 25.025923108225975,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 43.258943297012955,
+      "tcp_speed_4rows_before_open_mm_s": 18.389161953289477,
+      "tcp_height_above_floor_at_open_mm": 137.07285690367212,
+      "apple_floor_gap_at_open_mm": 80.36141324315984,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 7,
+       "median": 5.71694983272627,
+       "max": 27.951421994123294
+      },
+      "release_mode": "open_cmd"
+     }
+    },
+    "H/ep1807_s18073": {
+     "V4": {
+      "release_apple_floor_gap_mm": 245.9309723178621,
+      "release_apple_centre_above_floor_mm": 279.3050764207087,
+      "release_v_horiz_mm_s": 305.79926277423476,
+      "release_v_vert_mm_s": -286.21617454678415,
+      "post_release_max_speed_mm_s": 1993.9479721782527,
+      "post_release_horiz_travel_mm": 92.20310460356993,
+      "post_release_drop_mm": 248.67623920830027,
+      "in_hand_slip_max_mm": 21.482428324910046,
+      "in_hand_slip_at_release_mm": 21.482428324910046,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 183,
+      "tcp_speed_at_open_mm_s": 57.80341297880084,
+      "tcp_speed_4rows_before_open_mm_s": 22.053700370599927,
+      "tcp_height_above_floor_at_open_mm": 131.52068475768093,
+      "apple_floor_gap_at_open_mm": -0.01088521721156685,
+      "open_minus_release_rows": -54,
+      "place_window_deflection_mm": {
+       "n": 1,
+       "median": 15.728370799780112,
+       "max": 15.728370799780112
+      },
+      "release_mode": "closed_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 124.22692011077672,
+      "release_apple_centre_above_floor_mm": 155.9722986770708,
+      "release_v_horiz_mm_s": 8.78587461008949,
+      "release_v_vert_mm_s": -99.00845707025799,
+      "post_release_max_speed_mm_s": 1393.9561453011827,
+      "post_release_horiz_travel_mm": 8.31094422061349,
+      "post_release_drop_mm": 126.031110019312,
+      "in_hand_slip_max_mm": 11.783420022214909,
+      "in_hand_slip_at_release_mm": 11.783420022214909,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": null,
+      "tcp_speed_4rows_before_open_mm_s": null,
+      "tcp_height_above_floor_at_open_mm": null,
+      "apple_floor_gap_at_open_mm": null,
+      "open_minus_release_rows": null,
+      "place_window_deflection_mm": {
+       "n": 8,
+       "median": 20.320841931678686,
+       "max": 78.93458097683367
+      },
+      "release_mode": "closed_cmd"
+     }
+    },
+    "H/ep1834_s18341": {
+     "V4": {
+      "release_apple_floor_gap_mm": 178.66763457260953,
+      "release_apple_centre_above_floor_mm": 210.95642672810317,
+      "release_v_horiz_mm_s": 13.166843435950296,
+      "release_v_vert_mm_s": -415.5297246655904,
+      "post_release_max_speed_mm_s": 1710.5004023310414,
+      "post_release_horiz_travel_mm": 15.005318684790433,
+      "post_release_drop_mm": 181.155432446075,
+      "in_hand_slip_max_mm": 32.20161128170459,
+      "in_hand_slip_at_release_mm": 32.20161128170459,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": null,
+      "tcp_speed_4rows_before_open_mm_s": null,
+      "tcp_height_above_floor_at_open_mm": null,
+      "apple_floor_gap_at_open_mm": null,
+      "open_minus_release_rows": null,
+      "place_window_deflection_mm": {
+       "n": 15,
+       "median": 11.993445107190318,
+       "max": 148.80000008012442
+      },
+      "release_mode": "closed_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 243.83004896201308,
+      "release_apple_centre_above_floor_mm": 275.88420028740643,
+      "release_v_horiz_mm_s": 48.34421709839002,
+      "release_v_vert_mm_s": -577.0617598832139,
+      "post_release_max_speed_mm_s": 1872.605904258102,
+      "post_release_horiz_travel_mm": 53.99120604017593,
+      "post_release_drop_mm": 245.35871172203832,
+      "in_hand_slip_max_mm": 23.174991742765126,
+      "in_hand_slip_at_release_mm": 23.174991742765126,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 1.9058142185630893,
+      "tcp_speed_4rows_before_open_mm_s": 5.269749609030239,
+      "tcp_height_above_floor_at_open_mm": 173.0075833372923,
+      "apple_floor_gap_at_open_mm": -0.009712704428590374,
+      "open_minus_release_rows": -55,
+      "place_window_deflection_mm": {
+       "n": 5,
+       "median": 13.45214347988692,
+       "max": 32.41705307755106
+      },
+      "release_mode": "closed_cmd"
+     }
+    },
+    "H/ep1925_s19251": {
+     "V4": {
+      "release_apple_floor_gap_mm": 76.92570443975755,
+      "release_apple_centre_above_floor_mm": 106.99276436133864,
+      "release_v_horiz_mm_s": 78.26639958869093,
+      "release_v_vert_mm_s": -438.7812599488962,
+      "post_release_max_speed_mm_s": 1089.057254748317,
+      "post_release_horiz_travel_mm": 64.82685779142551,
+      "post_release_drop_mm": 74.12245509509455,
+      "in_hand_slip_max_mm": 18.076376932136586,
+      "in_hand_slip_at_release_mm": 18.076376932136586,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 44.92998889960813,
+      "tcp_speed_4rows_before_open_mm_s": 41.240096762755726,
+      "tcp_height_above_floor_at_open_mm": 137.40378111284306,
+      "apple_floor_gap_at_open_mm": 86.95336513573763,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 8,
+       "median": 14.68193194453605,
+       "max": 35.462397150676566
+      },
+      "release_mode": "open_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 60.17964900201245,
+      "release_apple_centre_above_floor_mm": 90.41061552617342,
+      "release_v_horiz_mm_s": 30.64226374333626,
+      "release_v_vert_mm_s": -528.5330014462292,
+      "post_release_max_speed_mm_s": 1176.3921488083065,
+      "post_release_horiz_travel_mm": 10.802050139731106,
+      "post_release_drop_mm": 60.4149464011354,
+      "in_hand_slip_max_mm": 24.09585199177989,
+      "in_hand_slip_at_release_mm": 24.09585199177989,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 37.09500622989734,
+      "tcp_speed_4rows_before_open_mm_s": 75.92566067730877,
+      "tcp_height_above_floor_at_open_mm": 126.74939928581801,
+      "apple_floor_gap_at_open_mm": 74.55850146041412,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 8,
+       "median": 10.139850562981797,
+       "max": 47.62520755734429
+      },
+      "release_mode": "open_cmd"
+     }
+    },
+    "H/ep1925_s19253": {
+     "V4": {
+      "release_apple_floor_gap_mm": 64.97145719083613,
+      "release_apple_centre_above_floor_mm": 96.41860314848802,
+      "release_v_horiz_mm_s": 116.08251240097395,
+      "release_v_vert_mm_s": -556.2056893100726,
+      "post_release_max_speed_mm_s": 1209.2502806729517,
+      "post_release_horiz_travel_mm": 19.758400900945382,
+      "post_release_drop_mm": 66.4429846780727,
+      "in_hand_slip_max_mm": 25.227057160288492,
+      "in_hand_slip_at_release_mm": 25.227057160288492,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 89.0826052057134,
+      "tcp_speed_4rows_before_open_mm_s": 34.557208559602415,
+      "tcp_height_above_floor_at_open_mm": 137.86116350801316,
+      "apple_floor_gap_at_open_mm": 81.88062324116764,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 7,
+       "median": 4.21009032128526,
+       "max": 41.858852668664234
+      },
+      "release_mode": "open_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 79.70876083948939,
+      "release_apple_centre_above_floor_mm": 111.79374854718412,
+      "release_v_horiz_mm_s": 6.055638063211304,
+      "release_v_vert_mm_s": -514.9174681741162,
+      "post_release_max_speed_mm_s": 1162.3932420963308,
+      "post_release_horiz_travel_mm": 13.18316182411417,
+      "post_release_drop_mm": 81.77416324596892,
+      "in_hand_slip_max_mm": 32.573162927123086,
+      "in_hand_slip_at_release_mm": 32.573162927123086,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 52.25045669358228,
+      "tcp_speed_4rows_before_open_mm_s": 79.74893694061451,
+      "tcp_height_above_floor_at_open_mm": 157.55009789657637,
+      "apple_floor_gap_at_open_mm": -0.018796846563643582,
+      "open_minus_release_rows": -213,
+      "place_window_deflection_mm": {
+       "n": 26,
+       "median": 28.509202706207066,
+       "max": 57.505812207996385
+      },
+      "release_mode": "closed_cmd"
+     }
+    },
+    "H/ep1968_s19681": {
+     "V4": {
+      "release_apple_floor_gap_mm": 77.48629262226589,
+      "release_apple_centre_above_floor_mm": 109.42746975884481,
+      "release_v_horiz_mm_s": 14.727364935634064,
+      "release_v_vert_mm_s": -320.05181967320704,
+      "post_release_max_speed_mm_s": 967.6239023945756,
+      "post_release_horiz_travel_mm": 14.471944235526074,
+      "post_release_drop_mm": 77.64245490101762,
+      "in_hand_slip_max_mm": 15.806506638470239,
+      "in_hand_slip_at_release_mm": 15.806506638470239,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 34.70749041723235,
+      "tcp_speed_4rows_before_open_mm_s": 12.481458956363081,
+      "tcp_height_above_floor_at_open_mm": 138.1493150347281,
+      "apple_floor_gap_at_open_mm": -1.0013382577337797,
+      "open_minus_release_rows": -3,
+      "place_window_deflection_mm": {
+       "n": 9,
+       "median": 14.74944036242747,
+       "max": 112.59120056002436
+      },
+      "release_mode": "closed_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 207.61599162907936,
+      "release_apple_centre_above_floor_mm": 240.61817899502478,
+      "release_v_horiz_mm_s": 306.11181204145424,
+      "release_v_vert_mm_s": -529.9458354486094,
+      "post_release_max_speed_mm_s": 1850.3620615595335,
+      "post_release_horiz_travel_mm": 204.33370125224334,
+      "post_release_drop_mm": 207.5092820176322,
+      "in_hand_slip_max_mm": 21.17339778302862,
+      "in_hand_slip_at_release_mm": 21.17339778302862,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 34,
+      "tcp_speed_at_open_mm_s": 43.0989579218844,
+      "tcp_speed_4rows_before_open_mm_s": 35.77396065038848,
+      "tcp_height_above_floor_at_open_mm": 136.39803605517352,
+      "apple_floor_gap_at_open_mm": -0.029526353263736177,
+      "open_minus_release_rows": -54,
+      "place_window_deflection_mm": {
+       "n": 2,
+       "median": 35.48365379659136,
+       "max": 56.357807664464744
+      },
+      "release_mode": "closed_cmd"
+     }
+    },
+    "H/ep1968_s19683": {
+     "V4": {
+      "release_apple_floor_gap_mm": 70.12928622885643,
+      "release_apple_centre_above_floor_mm": 101.61658729099656,
+      "release_v_horiz_mm_s": 65.83044071733579,
+      "release_v_vert_mm_s": -546.9517945952257,
+      "post_release_max_speed_mm_s": 1196.2245533315324,
+      "post_release_horiz_travel_mm": 8.178701903482096,
+      "post_release_drop_mm": 69.83180424960793,
+      "in_hand_slip_max_mm": 26.192275307703508,
+      "in_hand_slip_at_release_mm": 26.192275307703508,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 32.43326131855057,
+      "tcp_speed_4rows_before_open_mm_s": 31.698384794532327,
+      "tcp_height_above_floor_at_open_mm": 142.15291022028697,
+      "apple_floor_gap_at_open_mm": 85.72449669261509,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 8,
+       "median": 16.031705657193026,
+       "max": 55.74505405005472
+      },
+      "release_mode": "open_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 73.00068476434276,
+      "release_apple_centre_above_floor_mm": 104.35752379531927,
+      "release_v_horiz_mm_s": 67.43144524676279,
+      "release_v_vert_mm_s": -491.66405381910135,
+      "post_release_max_speed_mm_s": 1141.1181401578576,
+      "post_release_horiz_travel_mm": 7.239694442595715,
+      "post_release_drop_mm": 74.37652015665996,
+      "in_hand_slip_max_mm": 22.651713967663863,
+      "in_hand_slip_at_release_mm": 22.651713967663863,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 29.113016750943622,
+      "tcp_speed_4rows_before_open_mm_s": 26.107601347505785,
+      "tcp_height_above_floor_at_open_mm": 141.45883808245298,
+      "apple_floor_gap_at_open_mm": 85.8195559658046,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 8,
+       "median": 15.932917572207508,
+       "max": 49.52021079157873
+      },
+      "release_mode": "open_cmd"
+     }
+    },
+    "H/ep1982_s19822": {
+     "V4": {
+      "release_apple_floor_gap_mm": 241.62037989960018,
+      "release_apple_centre_above_floor_mm": 271.8916438256879,
+      "release_v_horiz_mm_s": 65.26721678008808,
+      "release_v_vert_mm_s": -62.396286469565695,
+      "post_release_max_speed_mm_s": 2005.8384203063104,
+      "post_release_horiz_travel_mm": 88.55537415611872,
+      "post_release_drop_mm": 242.07422609063838,
+      "in_hand_slip_max_mm": 6.533062912666587,
+      "in_hand_slip_at_release_mm": 6.533062912666587,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 53.917656645852404,
+      "tcp_speed_4rows_before_open_mm_s": 23.4937197016379,
+      "tcp_height_above_floor_at_open_mm": 132.4497109668755,
+      "apple_floor_gap_at_open_mm": -0.01584067805720027,
+      "open_minus_release_rows": -38,
+      "place_window_deflection_mm": {
+       "n": 4,
+       "median": 15.841545744632702,
+       "max": 54.92315469209829
+      },
+      "release_mode": "closed_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 228.04115490721452,
+      "release_apple_centre_above_floor_mm": 258.44402248684924,
+      "release_v_horiz_mm_s": 208.59455341323914,
+      "release_v_vert_mm_s": -371.4100424882799,
+      "post_release_max_speed_mm_s": 1679.335433501198,
+      "post_release_horiz_travel_mm": 77.44235918530622,
+      "post_release_drop_mm": 228.6276435169331,
+      "in_hand_slip_max_mm": 14.78214584824115,
+      "in_hand_slip_at_release_mm": 14.78214584824115,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 30.28117554677619,
+      "tcp_speed_4rows_before_open_mm_s": 30.6897431220568,
+      "tcp_height_above_floor_at_open_mm": 133.44568238302136,
+      "apple_floor_gap_at_open_mm": -0.024504333770030556,
+      "open_minus_release_rows": -42,
+      "place_window_deflection_mm": {
+       "n": 3,
+       "median": 18.153374377591316,
+       "max": 52.0868636711168
+      },
+      "release_mode": "closed_cmd"
+     }
+    },
+    "H/ep1982_s19823": {
+     "V4": {
+      "release_apple_floor_gap_mm": 239.6036773021488,
+      "release_apple_centre_above_floor_mm": 270.75647615435065,
+      "release_v_horiz_mm_s": 11.570827593906834,
+      "release_v_vert_mm_s": -266.16190402771514,
+      "post_release_max_speed_mm_s": 1561.1247852538888,
+      "post_release_horiz_travel_mm": 84.4420266805979,
+      "post_release_drop_mm": 238.9015579396207,
+      "in_hand_slip_max_mm": 10.301857263063095,
+      "in_hand_slip_at_release_mm": 10.301857263063095,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 16.201048265892766,
+      "tcp_speed_4rows_before_open_mm_s": 11.384433628836664,
+      "tcp_height_above_floor_at_open_mm": 193.31425234459732,
+      "apple_floor_gap_at_open_mm": -0.017525450806302884,
+      "open_minus_release_rows": -56,
+      "place_window_deflection_mm": {
+       "n": 3,
+       "median": 18.80058580477129,
+       "max": 21.905551728716866
+      },
+      "release_mode": "closed_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 65.23312787870601,
+      "release_apple_centre_above_floor_mm": 97.61579125111737,
+      "release_v_horiz_mm_s": 22.465890767231976,
+      "release_v_vert_mm_s": -604.1086190229519,
+      "post_release_max_speed_mm_s": 1251.770236253835,
+      "post_release_horiz_travel_mm": 12.44327611727809,
+      "post_release_drop_mm": 67.72089140047827,
+      "in_hand_slip_max_mm": 26.228147443969,
+      "in_hand_slip_at_release_mm": 26.228147443969,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 38.447409729251916,
+      "tcp_speed_4rows_before_open_mm_s": 31.397416675725385,
+      "tcp_height_above_floor_at_open_mm": 139.47205403504518,
+      "apple_floor_gap_at_open_mm": 83.68129552432055,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 7,
+       "median": 15.282323245040837,
+       "max": 19.18847291582482
+      },
+      "release_mode": "open_cmd"
+     }
+    },
+    "H/ep1995_s19952": {
+     "V4": {
+      "release_apple_floor_gap_mm": 227.81043108794626,
+      "release_apple_centre_above_floor_mm": 258.10401938896825,
+      "release_v_horiz_mm_s": 338.6631444233254,
+      "release_v_vert_mm_s": -202.82751446939255,
+      "post_release_max_speed_mm_s": 2082.409922700922,
+      "post_release_horiz_travel_mm": 136.22767529264814,
+      "post_release_drop_mm": 225.64928066631546,
+      "in_hand_slip_max_mm": 9.370122995804932,
+      "in_hand_slip_at_release_mm": 9.370122995804932,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 46,
+      "tcp_speed_at_open_mm_s": 87.10790021460996,
+      "tcp_speed_4rows_before_open_mm_s": 27.68230952691478,
+      "tcp_height_above_floor_at_open_mm": 134.86148893838683,
+      "apple_floor_gap_at_open_mm": -0.019519034595596313,
+      "open_minus_release_rows": -46,
+      "place_window_deflection_mm": {
+       "n": 2,
+       "median": 33.35551574644163,
+       "max": 54.12759718518348
+      },
+      "release_mode": "closed_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 190.01203684816372,
+      "release_apple_centre_above_floor_mm": 223.6489378227511,
+      "release_v_horiz_mm_s": 162.56436684185798,
+      "release_v_vert_mm_s": -668.2616310451035,
+      "post_release_max_speed_mm_s": 1969.9008324886813,
+      "post_release_horiz_travel_mm": 68.34596768920204,
+      "post_release_drop_mm": 192.14266750762087,
+      "in_hand_slip_max_mm": 41.80953586879433,
+      "in_hand_slip_at_release_mm": 41.80953586879433,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 68,
+      "tcp_speed_at_open_mm_s": 38.29131638924965,
+      "tcp_speed_4rows_before_open_mm_s": 19.960665474463323,
+      "tcp_height_above_floor_at_open_mm": 139.5871218659179,
+      "apple_floor_gap_at_open_mm": -0.007886373040253553,
+      "open_minus_release_rows": -49,
+      "place_window_deflection_mm": {
+       "n": 2,
+       "median": 32.10694120481298,
+       "max": 64.21388240962597
+      },
+      "release_mode": "closed_cmd"
+     }
+    },
+    "H/ep1995_s19953": {
+     "V4": {
+      "release_apple_floor_gap_mm": 199.7443182431763,
+      "release_apple_centre_above_floor_mm": 231.99748272967085,
+      "release_v_horiz_mm_s": 220.1741902601556,
+      "release_v_vert_mm_s": -603.4073895119991,
+      "post_release_max_speed_mm_s": 1911.0529955572003,
+      "post_release_horiz_travel_mm": 80.25458173751187,
+      "post_release_drop_mm": 200.49369670672013,
+      "in_hand_slip_max_mm": 34.26637685083456,
+      "in_hand_slip_at_release_mm": 34.26637685083456,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 28,
+      "tcp_speed_at_open_mm_s": 26.32376679045937,
+      "tcp_speed_4rows_before_open_mm_s": 26.639434135497098,
+      "tcp_height_above_floor_at_open_mm": 142.27342837477457,
+      "apple_floor_gap_at_open_mm": -0.006462451705411404,
+      "open_minus_release_rows": -77,
+      "place_window_deflection_mm": {
+       "n": 1,
+       "median": 34.98968772267837,
+       "max": 34.98968772267837
+      },
+      "release_mode": "closed_cmd"
+     },
+     "V5": {
+      "release_apple_floor_gap_mm": 57.5695290490392,
+      "release_apple_centre_above_floor_mm": 89.41248130187226,
+      "release_v_horiz_mm_s": 40.71783775521904,
+      "release_v_vert_mm_s": -593.8604749129645,
+      "post_release_max_speed_mm_s": 761.3568011289801,
+      "post_release_horiz_travel_mm": 10.659914047953176,
+      "post_release_drop_mm": 59.41995954225732,
+      "in_hand_slip_max_mm": 25.87859362619637,
+      "in_hand_slip_at_release_mm": 25.87859362619637,
+      "pre_release_apple_crate_substeps": 0,
+      "pre_release_hand_crate_substeps": 0,
+      "apple_obstacle_substeps_10rows_before_release": 0,
+      "tcp_speed_at_open_mm_s": 40.72806337018883,
+      "tcp_speed_4rows_before_open_mm_s": 35.42883584431985,
+      "tcp_height_above_floor_at_open_mm": 131.64123440927477,
+      "apple_floor_gap_at_open_mm": 76.49389585497906,
+      "open_minus_release_rows": 1,
+      "place_window_deflection_mm": {
+       "n": 8,
+       "median": 18.923657988967456,
+       "max": 36.981326544059144
+      },
+      "release_mode": "open_cmd"
+     }
+    }
+   },
+   "paired_stats": {
+    "release_apple_floor_gap_mm": {
+     "n": 14,
+     "V4_median": 110.8302121835037,
+     "V5_median": 76.35472280191607,
+     "median_paired_diff_V5_minus_V4": 1.9331713636866503,
+     "n_V5_gt_V4": 8,
+     "n_V5_lt_V4": 6,
+     "sign_test_p": 0.79052734375,
+     "V4": [
+      61.42451482258748,
+      144.17413174474152,
+      64.96657774701399,
+      63.11777704284252,
+      245.9309723178621,
+      178.66763457260953,
+      76.92570443975755,
+      64.97145719083613,
+      77.48629262226589,
+      70.12928622885643,
+      241.62037989960018,
+      239.6036773021488,
+      227.81043108794626,
+      199.7443182431763
+     ],
+     "V5": [
+      62.96958277803673,
+      177.0366638333717,
+      67.97795866112152,
+      65.43905181476657,
+      124.22692011077672,
+      243.83004896201308,
+      60.17964900201245,
+      79.70876083948939,
+      207.61599162907936,
+      73.00068476434276,
+      228.04115490721452,
+      65.23312787870601,
+      190.01203684816372,
+      57.5695290490392
+     ]
+    },
+    "release_v_vert_mm_s": {
+     "n": 14,
+     "V4_median": -480.22730701301646,
+     "V5_median": -530.8539227437162,
+     "median_paired_diff_V5_minus_V4": 2.1001196787645995,
+     "n_V5_gt_V4": 7,
+     "n_V5_lt_V4": 7,
+     "sign_test_p": 1.0,
+     "V4": [
+      -566.7774790899568,
+      -521.6733540771368,
+      -578.3292952148768,
+      -591.0702149475032,
+      -286.21617454678415,
+      -415.5297246655904,
+      -438.7812599488962,
+      -556.2056893100726,
+      -320.05181967320704,
+      -546.9517945952257,
+      -62.396286469565695,
+      -266.16190402771514,
+      -202.82751446939255,
+      -603.4073895119991
+     ],
+     "V5": [
+      -533.1131871992599,
+      -527.0200293186422,
+      -540.0819253640249,
+      -531.7620100388231,
+      -99.00845707025799,
+      -577.0617598832139,
+      -528.5330014462292,
+      -514.9174681741162,
+      -529.9458354486094,
+      -491.66405381910135,
+      -371.4100424882799,
+      -604.1086190229519,
+      -668.2616310451035,
+      -593.8604749129645
+     ]
+    },
+    "release_v_horiz_mm_s": {
+     "n": 14,
+     "V4_median": 51.11005822510303,
+     "V5_median": 35.68005074927765,
+     "median_paired_diff_V5_minus_V4": -3.76585977677569,
+     "n_V5_gt_V4": 7,
+     "n_V5_lt_V4": 7,
+     "sign_test_p": 1.0,
+     "V4": [
+      24.40845118529119,
+      24.104843148999336,
+      21.680944257827893,
+      36.95289967011798,
+      305.79926277423476,
+      13.166843435950296,
+      78.26639958869093,
+      116.08251240097395,
+      14.727364935634064,
+      65.83044071733579,
+      65.26721678008808,
+      11.570827593906834,
+      338.6631444233254,
+      220.1741902601556
+     ],
+     "V5": [
+      15.27572710231281,
+      14.787209749602306,
+      26.076998019578564,
+      40.90225356640696,
+      8.78587461008949,
+      48.34421709839002,
+      30.64226374333626,
+      6.055638063211304,
+      306.11181204145424,
+      67.43144524676279,
+      208.59455341323914,
+      22.465890767231976,
+      162.56436684185798,
+      40.71783775521904
+     ]
+    },
+    "post_release_horiz_travel_mm": {
+     "n": 14,
+     "V4_median": 38.45797723773016,
+     "V5_median": 36.07713432683147,
+     "median_paired_diff_V5_minus_V4": -3.7571232688587965,
+     "n_V5_gt_V4": 6,
+     "n_V5_lt_V4": 8,
+     "sign_test_p": 0.79052734375,
+     "V4": [
+      7.765729154456787,
+      7.431472957888921,
+      30.12060459055521,
+      46.795349884905114,
+      92.20310460356993,
+      15.005318684790433,
+      64.82685779142551,
+      19.758400900945382,
+      14.471944235526074,
+      8.178701903482096,
+      88.55537415611872,
+      84.4420266805979,
+      136.22767529264814,
+      80.25458173751187
+     ],
+     "V5": [
+      18.163062613487003,
+      69.85431725376907,
+      83.79241819985879,
+      74.21180676717545,
+      8.31094422061349,
+      53.99120604017593,
+      10.802050139731106,
+      13.18316182411417,
+      204.33370125224334,
+      7.239694442595715,
+      77.44235918530622,
+      12.44327611727809,
+      68.34596768920204,
+      10.659914047953176
+     ]
+    },
+    "in_hand_slip_max_mm": {
+     "n": 14,
+     "V4_median": 23.31703750030998,
+     "V5_median": 24.56088755000293,
+     "median_paired_diff_V5_minus_V4": 3.3815687749715924,
+     "n_V5_gt_V4": 8,
+     "n_V5_lt_V4": 6,
+     "sign_test_p": 0.79052734375,
+     "V4": [
+      25.151646675709916,
+      16.806029451845735,
+      33.58707827759789,
+      25.80421829892209,
+      21.482428324910046,
+      32.20161128170459,
+      18.076376932136586,
+      25.227057160288492,
+      15.806506638470239,
+      26.192275307703508,
+      6.533062912666587,
+      10.301857263063095,
+      9.370122995804932,
+      34.26637685083456
+     ],
+     "V5": [
+      35.26728603284307,
+      18.20227585723054,
+      27.464350332984907,
+      25.025923108225975,
+      11.783420022214909,
+      23.174991742765126,
+      24.09585199177989,
+      32.573162927123086,
+      21.17339778302862,
+      22.651713967663863,
+      14.78214584824115,
+      26.228147443969,
+      41.80953586879433,
+      25.87859362619637
+     ]
+    },
+    "open_minus_release_rows": {
+     "n": 11,
+     "V4_median": -3.0,
+     "V5_median": 1.0,
+     "median_paired_diff_V5_minus_V4": 0.0,
+     "n_V5_gt_V4": 2,
+     "n_V5_lt_V4": 5,
+     "sign_test_p": 0.453125,
+     "V4": [
+      1,
+      -14,
+      1,
+      1,
+      -54,
+      null,
+      1,
+      1,
+      -3,
+      1,
+      -38,
+      -56,
+      -46,
+      -77
+     ],
+     "V5": [
+      null,
+      -65,
+      1,
+      1,
+      null,
+      -55,
+      1,
+      -213,
+      -54,
+      1,
+      -42,
+      1,
+      -49,
+      1
+     ]
+    },
+    "tcp_speed_at_open_mm_s": {
+     "n": 11,
+     "V4_median": 39.74290783864824,
+     "V5_median": 38.447409729251916,
+     "median_paired_diff_V5_minus_V4": -3.3202445676069487,
+     "n_V5_gt_V4": 5,
+     "n_V5_lt_V4": 6,
+     "sign_test_p": 1.0,
+     "V4": [
+      15.858564334886434,
+      30.022744758909337,
+      41.30913378554748,
+      39.74290783864824,
+      57.80341297880084,
+      null,
+      44.92998889960813,
+      89.0826052057134,
+      34.70749041723235,
+      32.43326131855057,
+      53.917656645852404,
+      16.201048265892766,
+      87.10790021460996,
+      26.32376679045937
+     ],
+     "V5": [
+      null,
+      131.62573610670495,
+      11.838936870069917,
+      43.258943297012955,
+      null,
+      1.9058142185630893,
+      37.09500622989734,
+      52.25045669358228,
+      43.0989579218844,
+      29.113016750943622,
+      30.28117554677619,
+      38.447409729251916,
+      38.29131638924965,
+      40.72806337018883
+     ]
+    },
+    "pdefl": {
+     "n": 14,
+     "V4_median": 14.715686153481759,
+     "V5_median": 17.04314597489941,
+     "median_paired_diff_V5_minus_V4": -0.17223787782262212,
+     "n_V5_gt_V4": 6,
+     "n_V5_lt_V4": 8,
+     "sign_test_p": 0.79052734375,
+     "V4": [
+      6.674375861565674,
+      14.083219886826406,
+      10.129067873434353,
+      9.056086326629474,
+      15.728370799780112,
+      11.993445107190318,
+      14.68193194453605,
+      4.21009032128526,
+      14.74944036242747,
+      16.031705657193026,
+      15.841545744632702,
+      18.80058580477129,
+      33.35551574644163,
+      34.98968772267837
+     ],
+     "V5": [
+      6.428688190905948,
+      19.151412975081055,
+      5.761513367860474,
+      5.71694983272627,
+      20.320841931678686,
+      13.45214347988692,
+      10.139850562981797,
+      28.509202706207066,
+      35.48365379659136,
+      15.932917572207508,
+      18.153374377591316,
+      15.282323245040837,
+      32.10694120481298,
+      18.923657988967456
+     ]
+    }
+   },
+   "release_mode_counts": {
+    "V4": {
+     "open_cmd": 6,
+     "closed_cmd": 8
+    },
+    "V5": {
+     "closed_cmd": 8,
+     "open_cmd": 6
+    }
+   },
+   "divergence": {
+    "B/ep1807_s18071": {
+     "first_step": 112,
+     "chunk_t": 112,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.001137077808380127,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      46.177,
+      53.529
+     ],
+     "V5_first_closing_kept_geometry_t": 112,
+     "attach_held_query_radii_mm_V4": [
+      32.312,
+      32.312,
+      15.956
+     ],
+     "attach_held_query_radii_mm_V5": [
+      58.538,
+      52.274
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 0,
+     "V5_not_supported_chunks_total": 0,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "B/ep1967_s19672": {
+     "first_step": 144,
+     "chunk_t": 144,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.01437443494796753,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      52.852,
+      53.858
+     ],
+     "V5_first_closing_kept_geometry_t": 144,
+     "attach_held_query_radii_mm_V4": [
+      40.731,
+      40.731,
+      12.306
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.429,
+      38.429,
+      12.828,
+      6.843
+     ],
+     "V5_latched_hold_true_chunks": 7,
+     "V5_not_supported_chunks_at_or_before_div": 1,
+     "V5_not_supported_chunks_total": 8,
+     "success_V4_V5": [
+      false,
+      false
+     ]
+    },
+    "B/ep1968_s19681": {
+     "first_step": 144,
+     "chunk_t": 144,
+     "reference_rows0_7_max_abs_diff_rad": 0.0024408698081970215,
+     "refined_rows0_7_max_abs_diff_rad": 0.0024408698081970215,
+     "V4_grasp_state": "held",
+     "V5_decision_reason": "unobserved",
+     "carve_ball_radius_mm_V4_V5": [
+      null,
+      null
+     ],
+     "V5_first_closing_kept_geometry_t": 136,
+     "attach_held_query_radii_mm_V4": [
+      38.206,
+      38.206,
+      9.541
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.307,
+      38.307,
+      15.352,
+      5.0
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 0,
+     "V5_not_supported_chunks_total": 2,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "B/ep1982_s19822": {
+     "first_step": 136,
+     "chunk_t": 136,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.15235376358032227,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      50.915,
+      53.528
+     ],
+     "V5_first_closing_kept_geometry_t": 128,
+     "attach_held_query_radii_mm_V4": [
+      36.02,
+      36.02,
+      12.274
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.28,
+      38.28,
+      11.931,
+      6.28
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 0,
+     "V5_not_supported_chunks_total": 1,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "B/ep1995_s19952": {
+     "first_step": 144,
+     "chunk_t": 144,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.060537129640579224,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      50.99,
+      54.303
+     ],
+     "V5_first_closing_kept_geometry_t": 144,
+     "attach_held_query_radii_mm_V4": [
+      40.731,
+      40.731,
+      12.201
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.443,
+      38.443,
+      19.994
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 1,
+     "V5_not_supported_chunks_total": 4,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "H/ep1807_s18071": {
+     "first_step": 0,
+     "chunk_t": 0,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.0,
+     "V4_grasp_state": "searching",
+     "V5_decision_reason": null,
+     "carve_ball_radius_mm_V4_V5": [
+      54.296,
+      54.296
+     ],
+     "V5_first_closing_kept_geometry_t": 112,
+     "attach_held_query_radii_mm_V4": [
+      37.124,
+      37.124,
+      5.275,
+      9.424
+     ],
+     "attach_held_query_radii_mm_V5": [
+      59.147,
+      53.869
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 0,
+     "V5_not_supported_chunks_total": 3,
+     "success_V4_V5": [
+      false,
+      true
+     ]
+    },
+    "H/ep1807_s18073": {
+     "first_step": 112,
+     "chunk_t": 112,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.11482936143875122,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      43.643,
+      54.176
+     ],
+     "V5_first_closing_kept_geometry_t": 112,
+     "attach_held_query_radii_mm_V4": [
+      33.402,
+      33.402,
+      6.849
+     ],
+     "attach_held_query_radii_mm_V5": [
+      58.58,
+      52.139
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 4,
+     "V5_not_supported_chunks_total": 4,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "H/ep1834_s18341": {
+     "first_step": 112,
+     "chunk_t": 112,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.08129477500915527,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      50.87,
+      53.234
+     ],
+     "V5_first_closing_kept_geometry_t": 112,
+     "attach_held_query_radii_mm_V4": [
+      37.384,
+      37.384,
+      6.548
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.495,
+      38.495,
+      16.868
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 3,
+     "V5_not_supported_chunks_total": 3,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "H/ep1834_s18343": {
+     "first_step": 120,
+     "chunk_t": 120,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.040001630783081055,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      49.17,
+      53.273
+     ],
+     "V5_first_closing_kept_geometry_t": 120,
+     "attach_held_query_radii_mm_V4": [
+      38.256,
+      38.256,
+      7.402
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.49,
+      38.49,
+      16.728
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 5,
+     "V5_not_supported_chunks_total": 5,
+     "success_V4_V5": [
+      false,
+      true
+     ]
+    },
+    "H/ep1925_s19251": {
+     "first_step": 104,
+     "chunk_t": 104,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.00858527421951294,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      49.014,
+      54.849
+     ],
+     "V5_first_closing_kept_geometry_t": 104,
+     "attach_held_query_radii_mm_V4": [
+      39.578,
+      39.578,
+      11.186
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.509,
+      38.509,
+      14.651,
+      6.497
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 2,
+     "V5_not_supported_chunks_total": 5,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "H/ep1925_s19253": {
+     "first_step": 136,
+     "chunk_t": 136,
+     "reference_rows0_7_max_abs_diff_rad": 0.001624464988708496,
+     "refined_rows0_7_max_abs_diff_rad": 0.003346353769302368,
+     "V4_grasp_state": "held",
+     "V5_decision_reason": "unobserved",
+     "carve_ball_radius_mm_V4_V5": [
+      null,
+      null
+     ],
+     "V5_first_closing_kept_geometry_t": 128,
+     "attach_held_query_radii_mm_V4": [
+      39.19,
+      39.19,
+      8.886
+     ],
+     "attach_held_query_radii_mm_V5": [
+      58.332,
+      55.795
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 4,
+     "V5_not_supported_chunks_total": 4,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "H/ep1967_s19672": {
+     "first_step": 176,
+     "chunk_t": 176,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.15318751335144043,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      33.591,
+      55.011
+     ],
+     "V5_first_closing_kept_geometry_t": 176,
+     "attach_held_query_radii_mm_V4": null,
+     "attach_held_query_radii_mm_V5": null,
+     "V5_latched_hold_true_chunks": 16,
+     "V5_not_supported_chunks_at_or_before_div": 3,
+     "V5_not_supported_chunks_total": 10,
+     "success_V4_V5": [
+      false,
+      false
+     ]
+    },
+    "H/ep1967_s19673": {
+     "first_step": 168,
+     "chunk_t": 168,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.03825557231903076,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      40.831,
+      55.066
+     ],
+     "V5_first_closing_kept_geometry_t": 168,
+     "attach_held_query_radii_mm_V4": null,
+     "attach_held_query_radii_mm_V5": null,
+     "V5_latched_hold_true_chunks": 13,
+     "V5_not_supported_chunks_at_or_before_div": 1,
+     "V5_not_supported_chunks_total": 10,
+     "success_V4_V5": [
+      false,
+      false
+     ]
+    },
+    "H/ep1968_s19681": {
+     "first_step": 160,
+     "chunk_t": 160,
+     "reference_rows0_7_max_abs_diff_rad": 0.0035129189491271973,
+     "refined_rows0_7_max_abs_diff_rad": 0.020029008388519287,
+     "V4_grasp_state": "held",
+     "V5_decision_reason": "unobserved",
+     "carve_ball_radius_mm_V4_V5": [
+      null,
+      null
+     ],
+     "V5_first_closing_kept_geometry_t": 152,
+     "attach_held_query_radii_mm_V4": [
+      40.731,
+      40.731,
+      7.601
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.303,
+      38.303,
+      15.93,
+      5.0
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 8,
+     "V5_not_supported_chunks_total": 9,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "H/ep1968_s19683": {
+     "first_step": 120,
+     "chunk_t": 120,
+     "reference_rows0_7_max_abs_diff_rad": 0.0054152607917785645,
+     "refined_rows0_7_max_abs_diff_rad": 0.014599531888961792,
+     "V4_grasp_state": "held",
+     "V5_decision_reason": "unobserved",
+     "carve_ball_radius_mm_V4_V5": [
+      null,
+      null
+     ],
+     "V5_first_closing_kept_geometry_t": 112,
+     "attach_held_query_radii_mm_V4": [
+      37.285,
+      37.285,
+      8.848
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.251,
+      38.251,
+      16.56
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 2,
+     "V5_not_supported_chunks_total": 5,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "H/ep1982_s19822": {
+     "first_step": 120,
+     "chunk_t": 120,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.009227931499481201,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      51.412,
+      54.273
+     ],
+     "V5_first_closing_kept_geometry_t": 120,
+     "attach_held_query_radii_mm_V4": [
+      36.342,
+      36.342,
+      8.228
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.329,
+      38.329,
+      11.422,
+      10.769
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 3,
+     "V5_not_supported_chunks_total": 6,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "H/ep1982_s19823": {
+     "first_step": 120,
+     "chunk_t": 120,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.043942153453826904,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      38.771,
+      54.292
+     ],
+     "V5_first_closing_kept_geometry_t": 120,
+     "attach_held_query_radii_mm_V4": [
+      36.913,
+      36.913
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.378,
+      38.378,
+      11.792,
+      10.338
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 3,
+     "V5_not_supported_chunks_total": 5,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "H/ep1995_s19952": {
+     "first_step": 131,
+     "chunk_t": 128,
+     "reference_rows0_7_max_abs_diff_rad": 0.0,
+     "refined_rows0_7_max_abs_diff_rad": 0.0034489333629608154,
+     "V4_grasp_state": "closing",
+     "V5_decision_reason": "closing_kept_geometry",
+     "carve_ball_radius_mm_V4_V5": [
+      52.834,
+      54.63
+     ],
+     "V5_first_closing_kept_geometry_t": 128,
+     "attach_held_query_radii_mm_V4": [
+      40.731,
+      40.731,
+      8.831
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.652,
+      38.652,
+      20.34
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 0,
+     "V5_not_supported_chunks_total": 0,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    },
+    "H/ep1995_s19953": {
+     "first_step": 155,
+     "chunk_t": 152,
+     "reference_rows0_7_max_abs_diff_rad": 0.0016393661499023438,
+     "refined_rows0_7_max_abs_diff_rad": 0.0022384226322174072,
+     "V4_grasp_state": "held",
+     "V5_decision_reason": "unobserved",
+     "carve_ball_radius_mm_V4_V5": [
+      null,
+      null
+     ],
+     "V5_first_closing_kept_geometry_t": 144,
+     "attach_held_query_radii_mm_V4": [
+      41.554,
+      41.404,
+      37.053
+     ],
+     "attach_held_query_radii_mm_V5": [
+      38.472,
+      38.472,
+      19.472
+     ],
+     "V5_latched_hold_true_chunks": 0,
+     "V5_not_supported_chunks_at_or_before_div": 1,
+     "V5_not_supported_chunks_total": 4,
+     "success_V4_V5": [
+      true,
+      true
+     ]
+    }
+   },
+   "divergence_summary": {
+    "n_pairs_with_divergence_after_t0": 18,
+    "n_div_chunk_eq_first_closing_kept_or_plus8": 18,
+    "n_div_with_reference_diff_0": 13,
+    "n_div_at_V4_closing": 13,
+    "n_div_at_V4_held": 5,
+    "V5_latched_hold_true_chunks_in_both_success_pairs": 0,
+    "V5_runs_with_not_supported_chunk_at_or_before_div": 14
+   }
+  }
+ },
+ "figures": [
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43y-y1-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43y-y1-timeline.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43y-y1-table.png",
+   "kind": "table"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43y-y2-scene.png",
+   "kind": "scene"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43y-y2-pairs.png",
+   "kind": "graph"
+  },
+  {
+   "path": "benchmark/ag3s/docs/figures/t43/t43y-y2-table.png",
+   "kind": "table"
+  }
+ ],
+ "baseline_check": {
+  "matched": null,
+  "note": "regression baseline not run: it needs .venv-ag3s (legacy) or the GPU curobo path, both excluded by the lead for this step (CPU replay of existing outputs only)."
+ },
+ "verdict": "physics replay fidelity: qpos mismatch 0 rows in 38 / 38 runs. 해석 · 판정 없음.",
+ "anomalies": [
+  "mj_geomDistance(apple mesh, crate box) returned 0.0 and 63.4 mm at the same pose on consecutive chunks; replaced by mesh-vertex vs box signed distance (y_metrics.py)",
+  "V4 H ep1807 s18071: first chunk ipc timeout (238434 ms > 120000 ms, comms HOLD) -> executed actions differ from V5 from step 0; excluded from divergence summary",
+  "third_person_front.mp4 frames carry the client's avoidance-arrow overlay (green / red arrow and text)",
+  "place rule (analyze_e0) and success are true for V5 ep1925 s19253 / ep1807 s18071 / s18073 although the server grasp state stays 'held' (attached) to the run end"
+ ],
+ "not_measured": [
+  "contact forces between fingers and apple as a grip-force series (only per-row max normal force per contact class is stored)",
+  "V5 flag effects one at a time (no single-flag runs exist; new closed-loop runs excluded)",
+  "ESDF / label content at the HOLD row points beyond the trilinear sample (no full field dump)"
+ ]
+}

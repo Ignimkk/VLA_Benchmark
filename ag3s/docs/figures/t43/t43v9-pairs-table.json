@@ -1,0 +1,512 @@
+{
+ "figure": "benchmark/ag3s/docs/figures/t43/t43v9-pairs-table.png",
+ "script": "/mnt/dev/work/outputs/verify/T43/V9/p/fig_v9_graphs.py",
+ "sources": [
+  "/mnt/dev/work/outputs/verify/T43/V9/agg.json",
+  "/mnt/dev/work/outputs/verify/T43/V9/ct.json",
+  "/mnt/dev/work/outputs/verify/T43/V9/extra.json"
+ ],
+ "rows_pairs": [
+  [
+   "S (old rule)",
+   "2 vs 13\n+0 / -11 / both 2\np 0.00",
+   "1 vs 5\n+0 / -4 / both 1\np 0.12",
+   "3 vs 18\n+0 / -15 / both 3\np 0.00"
+  ],
+  [
+   "G (grasp, rule-free)",
+   "5 vs 14\n+0 / -9 / both 5\np 0.00",
+   "1 vs 5\n+0 / -4 / both 1\np 0.12",
+   "6 vs 19\n+0 / -13 / both 6\np 0.00"
+  ],
+  [
+   "P (old rule)",
+   "2 vs 13\n+0 / -11 / both 2\np 0.00",
+   "1 vs 5\n+0 / -4 / both 1\np 0.12",
+   "3 vs 18\n+0 / -15 / both 3\np 0.00"
+  ],
+  [
+   "S (Z4 release rule)",
+   "2 vs 13\n+0 / -11 / both 2\np 0.00",
+   "-",
+   "-"
+  ],
+  [
+   "P (Z4: place_rel)",
+   "2 vs 13\n+0 / -11 / both 2\np 0.00",
+   "-",
+   "-"
+  ],
+  [
+   "S (CT rule: release + no pre-release contact)",
+   "2 vs 8\n+1 / -7 / both 1\np 0.07",
+   "-",
+   "-"
+  ]
+ ],
+ "rows_summary": [
+  [
+   "finger-hurdle contact, before grasp",
+   "0 runs / 0 rows / pen 0.0 mm",
+   "0 runs / 0 rows / pen 0.0 mm"
+  ],
+  [
+   "finger-hurdle contact, carry",
+   "0 runs / 0 rows / pen 0.0 mm",
+   "0 runs / 0 rows / pen 0.0 mm"
+  ],
+  [
+   "finger-hurdle contact, after release",
+   "9 runs / 9 rows / pen 5.8 mm",
+   "0 runs / 0 rows / pen 0.0 mm"
+  ],
+  [
+   "obstacle stop runs (H)",
+   "10",
+   "1"
+  ],
+  [
+   "HOLD chunks total / runs with HOLD (19 runs)",
+   "6 / 3",
+   "17 / 2"
+  ],
+  [
+   "HOLD by binding category",
+   "{'finger': 3, 'held': 3}",
+   "{'finger': 15, 'robot_other': 2}"
+  ],
+  [
+   "HOLD by target label",
+   "{'None': 2, 'destination': 2, 'target': 2}",
+   "{'None': 16, 'target': 1}"
+  ],
+  [
+   "HOLD by phase",
+   "{'carry': 3, 'crate_above': 1, 'release_after': 2}",
+   "{'carry': 3, 'pre_pick': 1, 'release_after': 13}"
+  ],
+  [
+   "HOLD only in this arm (same ep:seed, same t)",
+   "6",
+   "17  {'finger': 15, 'robot_other': 2}"
+  ],
+  [
+   "follow_to executed / refused",
+   "0 / 6 {'worsens': 2, 'penetration': 4}",
+   "3 / 17 {'worsens': 1, 'penetration': 3, 'no_rows': 13}"
+  ],
+  [
+   "TO solve median / p90 / max (ms)",
+   "69.9 / 103.1 / 758.4",
+   "187.5 / 322.7 / 646.7"
+  ],
+  [
+   "time_budget_hit_count",
+   "0",
+   "0"
+  ],
+  [
+   "max_iterations_hit chunks",
+   "1026 / 1037",
+   "1419 / 1423"
+  ],
+  [
+   "servo prediction error vs M, exec rows, median / p90 / max mm",
+   "0.067 / 0.384 / 5.61",
+   "0.064 / 0.348 / 8.71"
+  ]
+ ],
+ "pairs_old_rule": {
+  "H": {
+   "n_pairs": 14,
+   "success": {
+    "V9_total": 2,
+    "V8_total": 13,
+    "both": 2,
+    "V9_only": 0,
+    "V8_only": 11,
+    "neither": 1,
+    "mcnemar_exact_p": 0.0009765625,
+    "V9_only_keys": [],
+    "V8_only_keys": [
+     "H:1807_s18073",
+     "H:1834_s18343",
+     "H:1925_s19251",
+     "H:1925_s19253",
+     "H:1967_s19672",
+     "H:1967_s19673",
+     "H:1968_s19681",
+     "H:1968_s19683",
+     "H:1982_s19823",
+     "H:1995_s19952",
+     "H:1995_s19953"
+    ]
+   },
+   "grasp": {
+    "V9_total": 5,
+    "V8_total": 14,
+    "both": 5,
+    "V9_only": 0,
+    "V8_only": 9,
+    "neither": 0,
+    "mcnemar_exact_p": 0.00390625,
+    "V9_only_keys": [],
+    "V8_only_keys": [
+     "H:1925_s19251",
+     "H:1925_s19253",
+     "H:1967_s19672",
+     "H:1967_s19673",
+     "H:1968_s19681",
+     "H:1968_s19683",
+     "H:1982_s19822",
+     "H:1982_s19823",
+     "H:1995_s19953"
+    ]
+   },
+   "place": {
+    "V9_total": 2,
+    "V8_total": 13,
+    "both": 2,
+    "V9_only": 0,
+    "V8_only": 11,
+    "neither": 1,
+    "mcnemar_exact_p": 0.0009765625,
+    "V9_only_keys": [],
+    "V8_only_keys": [
+     "H:1807_s18073",
+     "H:1834_s18343",
+     "H:1925_s19251",
+     "H:1925_s19253",
+     "H:1967_s19672",
+     "H:1967_s19673",
+     "H:1968_s19681",
+     "H:1968_s19683",
+     "H:1982_s19823",
+     "H:1995_s19952",
+     "H:1995_s19953"
+    ]
+   }
+  },
+  "B": {
+   "n_pairs": 5,
+   "success": {
+    "V9_total": 1,
+    "V8_total": 5,
+    "both": 1,
+    "V9_only": 0,
+    "V8_only": 4,
+    "neither": 0,
+    "mcnemar_exact_p": 0.125,
+    "V9_only_keys": [],
+    "V8_only_keys": [
+     "B:1967_s19672",
+     "B:1968_s19681",
+     "B:1982_s19822",
+     "B:1995_s19952"
+    ]
+   },
+   "grasp": {
+    "V9_total": 1,
+    "V8_total": 5,
+    "both": 1,
+    "V9_only": 0,
+    "V8_only": 4,
+    "neither": 0,
+    "mcnemar_exact_p": 0.125,
+    "V9_only_keys": [],
+    "V8_only_keys": [
+     "B:1967_s19672",
+     "B:1968_s19681",
+     "B:1982_s19822",
+     "B:1995_s19952"
+    ]
+   },
+   "place": {
+    "V9_total": 1,
+    "V8_total": 5,
+    "both": 1,
+    "V9_only": 0,
+    "V8_only": 4,
+    "neither": 0,
+    "mcnemar_exact_p": 0.125,
+    "V9_only_keys": [],
+    "V8_only_keys": [
+     "B:1967_s19672",
+     "B:1968_s19681",
+     "B:1982_s19822",
+     "B:1995_s19952"
+    ]
+   }
+  },
+  "ALL": {
+   "n_pairs": 19,
+   "success": {
+    "V9_total": 3,
+    "V8_total": 18,
+    "both": 3,
+    "V9_only": 0,
+    "V8_only": 15,
+    "neither": 1,
+    "mcnemar_exact_p": 6.103515625e-05,
+    "V9_only_keys": [],
+    "V8_only_keys": [
+     "B:1967_s19672",
+     "B:1968_s19681",
+     "B:1982_s19822",
+     "B:1995_s19952",
+     "H:1807_s18073",
+     "H:1834_s18343",
+     "H:1925_s19251",
+     "H:1925_s19253",
+     "H:1967_s19672",
+     "H:1967_s19673",
+     "H:1968_s19681",
+     "H:1968_s19683",
+     "H:1982_s19823",
+     "H:1995_s19952",
+     "H:1995_s19953"
+    ]
+   },
+   "grasp": {
+    "V9_total": 6,
+    "V8_total": 19,
+    "both": 6,
+    "V9_only": 0,
+    "V8_only": 13,
+    "neither": 0,
+    "mcnemar_exact_p": 0.000244140625,
+    "V9_only_keys": [],
+    "V8_only_keys": [
+     "B:1967_s19672",
+     "B:1968_s19681",
+     "B:1982_s19822",
+     "B:1995_s19952",
+     "H:1925_s19251",
+     "H:1925_s19253",
+     "H:1967_s19672",
+     "H:1967_s19673",
+     "H:1968_s19681",
+     "H:1968_s19683",
+     "H:1982_s19822",
+     "H:1982_s19823",
+     "H:1995_s19953"
+    ]
+   },
+   "place": {
+    "V9_total": 3,
+    "V8_total": 18,
+    "both": 3,
+    "V9_only": 0,
+    "V8_only": 15,
+    "neither": 1,
+    "mcnemar_exact_p": 6.103515625e-05,
+    "V9_only_keys": [],
+    "V8_only_keys": [
+     "B:1967_s19672",
+     "B:1968_s19681",
+     "B:1982_s19822",
+     "B:1995_s19952",
+     "H:1807_s18073",
+     "H:1834_s18343",
+     "H:1925_s19251",
+     "H:1925_s19253",
+     "H:1967_s19672",
+     "H:1967_s19673",
+     "H:1968_s19681",
+     "H:1968_s19683",
+     "H:1982_s19823",
+     "H:1995_s19952",
+     "H:1995_s19953"
+    ]
+   }
+  }
+ },
+ "pairs_z4_rule": {
+  "grasp": {
+   "n_pairs": 14,
+   "V9_total": 5,
+   "V8_total": 14,
+   "both": 5,
+   "V9_only": 0,
+   "V8_only": 9,
+   "neither": 0,
+   "mcnemar_exact_p": 0.00390625,
+   "V9_only_keys": [],
+   "V8_only_keys": [
+    "1925_s19251",
+    "1925_s19253",
+    "1967_s19672",
+    "1967_s19673",
+    "1968_s19681",
+    "1968_s19683",
+    "1982_s19822",
+    "1982_s19823",
+    "1995_s19953"
+   ]
+  },
+  "place_rel": {
+   "n_pairs": 14,
+   "V9_total": 2,
+   "V8_total": 13,
+   "both": 2,
+   "V9_only": 0,
+   "V8_only": 11,
+   "neither": 1,
+   "mcnemar_exact_p": 0.0009765625,
+   "V9_only_keys": [],
+   "V8_only_keys": [
+    "1807_s18073",
+    "1834_s18343",
+    "1925_s19251",
+    "1925_s19253",
+    "1967_s19672",
+    "1967_s19673",
+    "1968_s19681",
+    "1968_s19683",
+    "1982_s19823",
+    "1995_s19952",
+    "1995_s19953"
+   ]
+  },
+  "released": {
+   "n_pairs": 14,
+   "V9_total": 5,
+   "V8_total": 14,
+   "both": 5,
+   "V9_only": 0,
+   "V8_only": 9,
+   "neither": 0,
+   "mcnemar_exact_p": 0.00390625,
+   "V9_only_keys": [],
+   "V8_only_keys": [
+    "1925_s19251",
+    "1925_s19253",
+    "1967_s19672",
+    "1967_s19673",
+    "1968_s19681",
+    "1968_s19683",
+    "1982_s19822",
+    "1982_s19823",
+    "1995_s19953"
+   ]
+  },
+  "success_rel": {
+   "n_pairs": 14,
+   "V9_total": 2,
+   "V8_total": 13,
+   "both": 2,
+   "V9_only": 0,
+   "V8_only": 11,
+   "neither": 1,
+   "mcnemar_exact_p": 0.0009765625,
+   "V9_only_keys": [],
+   "V8_only_keys": [
+    "1807_s18073",
+    "1834_s18343",
+    "1925_s19251",
+    "1925_s19253",
+    "1967_s19672",
+    "1967_s19673",
+    "1968_s19681",
+    "1968_s19683",
+    "1982_s19823",
+    "1995_s19952",
+    "1995_s19953"
+   ]
+  },
+  "success_ct": {
+   "n_pairs": 14,
+   "V9_total": 2,
+   "V8_total": 8,
+   "both": 1,
+   "V9_only": 1,
+   "V8_only": 7,
+   "neither": 5,
+   "mcnemar_exact_p": 0.0703125,
+   "V9_only_keys": [
+    "1807_s18071"
+   ],
+   "V8_only_keys": [
+    "1834_s18343",
+    "1925_s19251",
+    "1925_s19253",
+    "1967_s19673",
+    "1968_s19681",
+    "1995_s19952",
+    "1995_s19953"
+   ]
+  }
+ },
+ "pairs_ct_rule": {
+  "success": {
+   "n_pairs": 14,
+   "both": 2,
+   "A_only": 0,
+   "B_only": 11,
+   "neither": 1,
+   "A_total": 2,
+   "B_total": 13,
+   "mcnemar_exact_p": 0.0009765625,
+   "A_only_keys": [],
+   "B_only_keys": [
+    "1807_s18073",
+    "1834_s18343",
+    "1925_s19251",
+    "1925_s19253",
+    "1967_s19672",
+    "1967_s19673",
+    "1968_s19681",
+    "1968_s19683",
+    "1982_s19823",
+    "1995_s19952",
+    "1995_s19953"
+   ]
+  },
+  "success_rel": {
+   "n_pairs": 14,
+   "both": 2,
+   "A_only": 0,
+   "B_only": 11,
+   "neither": 1,
+   "A_total": 2,
+   "B_total": 13,
+   "mcnemar_exact_p": 0.0009765625,
+   "A_only_keys": [],
+   "B_only_keys": [
+    "1807_s18073",
+    "1834_s18343",
+    "1925_s19251",
+    "1925_s19253",
+    "1967_s19672",
+    "1967_s19673",
+    "1968_s19681",
+    "1968_s19683",
+    "1982_s19823",
+    "1995_s19952",
+    "1995_s19953"
+   ]
+  },
+  "success_ct": {
+   "n_pairs": 14,
+   "both": 1,
+   "A_only": 1,
+   "B_only": 7,
+   "neither": 5,
+   "A_total": 2,
+   "B_total": 8,
+   "mcnemar_exact_p": 0.0703125,
+   "A_only_keys": [
+    "1807_s18071"
+   ],
+   "B_only_keys": [
+    "1834_s18343",
+    "1925_s19251",
+    "1925_s19253",
+    "1967_s19673",
+    "1968_s19681",
+    "1995_s19952",
+    "1995_s19953"
+   ]
+  }
+ }
+}
