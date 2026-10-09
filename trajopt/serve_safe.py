@@ -1184,6 +1184,36 @@ def build_parser() -> argparse.ArgumentParser:
                          "return a step far from the subproblem's optimum that the merit still "
                          "accepts (offline V8: a 0.10 rad first step, palm 88 mm off the policy at "
                          "a grasp); 1e-4 removes it")
+    # --- T43 TP: TO compute time, all default off ----------------------------------------
+    ap.add_argument("--to-fast-eval", action="store_true",
+                    help="T43 TP. Evaluate each thing once per solve: FK / ESDF-clearance memo, FK "
+                         "through CasADi's zero-copy buffer, distance+label in one field pass, the QP "
+                         "built once per solve (only the box rows re-evaluated). Bit-identical "
+                         "output. Default off")
+    ap.add_argument("--esdf-host-mirror", action="store_true",
+                    help="T43 TP. Copy the GPU field's grids to host once per chunk and read them "
+                         "there (same values; ~1.3 ms per chunk instead of a GPU round trip per "
+                         "read). Default off")
+    ap.add_argument("--qp-warm-iterate", action="store_true",
+                    help="T43 TP. Warm-start the first QP of each solve at the current iterate "
+                         "instead of the previous chunk's last solution. Default off")
+    ap.add_argument("--qp-eps-after-first", type=float, default=None, metavar="EPS",
+                    help="T43 TP. OSQP eps_abs = eps_rel for the 2nd and later QPs of a solve (the "
+                         "first keeps --qp-eps). Default: every QP at --qp-eps")
+    ap.add_argument("--qp-max-iter", type=int, default=None, metavar="N",
+                    help="T43 TP. OSQP max_iter per QP (default `QpConfig.max_iter` = 4000)")
+    ap.add_argument("--qp-accept-max-iter", action="store_true",
+                    help="T43 TP. A QP stopped by --qp-max-iter returns its iterate as an "
+                         "inaccurate solution (the merit test still decides) instead of failing. "
+                         "Default off")
+    ap.add_argument("--lookahead-stride", type=int, default=None, metavar="S",
+                    help="T43 TP. Look-ahead tail rows (and field reads) on every S-th tail step "
+                         "only (K+S-1, K+2S-1, …); the window keeps every row. Default 1. "
+                         "--lookahead obstacles only")
+    ap.add_argument("--sqp-warm-lookahead", action="store_true",
+                    help="T43 TP. With --lookahead, seed the first iterate from the previous "
+                         "chunk's plan shifted by execution_length (its tail = this window), as "
+                         "sqp.warm_start does without look-ahead. Default off")
     ap.add_argument("--w-deflection-rate", type=float, default=None, metavar="W",
                     help="T43 TA (B). Weight on ‖ΔD‖², D = Q − Q_ref, inside the chunk and against "
                          "the last executed deflection. Default 0 (off)")
@@ -1862,6 +1892,74 @@ def qp_overrides(args) -> dict:
     return {"eps_abs": float(eps), "eps_rel": float(eps)}
 
 
+def tp_collision_overrides(args) -> dict:
+    """T43 TP — `--esdf-host-mirror` → the `collision` keys (`{}` when not given)."""
+    return {"esdf_host_mirror": True} if getattr(args, "esdf_host_mirror", False) else {}
+
+
+def tp_overrides(args) -> tuple[dict, dict, dict]:
+    """T43 TP — `(horizon, sqp, qp)` keys for the flags actually given (all `{}` = as before)."""
+    horizon: dict = {}
+    sqp: dict = {}
+    qp: dict = {}
+    lookahead_on = getattr(args, "lookahead", None) not in (None, "off")
+    stride = getattr(args, "lookahead_stride", None)
+    if stride is not None:
+        if not lookahead_on:
+            raise SystemExit("--lookahead-stride 는 --lookahead obstacles 와 함께만 씁니다")
+        if int(stride) < 1:
+            raise SystemExit(f"--lookahead-stride must be >= 1, got {stride}")
+        horizon["lookahead_stride"] = int(stride)
+    if getattr(args, "sqp_warm_lookahead", False):
+        if not lookahead_on:
+            raise SystemExit("--sqp-warm-lookahead 는 --lookahead obstacles 와 함께만 씁니다")
+        sqp["warm_start_lookahead"] = True
+    if getattr(args, "to_fast_eval", False):
+        sqp["fast_eval"] = True
+    if getattr(args, "qp_warm_iterate", False):
+        qp["warm_start_iterate"] = True
+    eps = getattr(args, "qp_eps_after_first", None)
+    if eps is not None:
+        if not (math.isfinite(float(eps)) and float(eps) > 0.0):
+            raise SystemExit(f"--qp-eps-after-first must be a finite value > 0, got {eps}")
+        qp["eps_after_first"] = float(eps)
+    max_iter = getattr(args, "qp_max_iter", None)
+    if max_iter is not None:
+        if int(max_iter) < 1:
+            raise SystemExit(f"--qp-max-iter must be >= 1, got {max_iter}")
+        qp["max_iter"] = int(max_iter)
+    if getattr(args, "qp_accept_max_iter", False):
+        qp["accept_max_iter"] = True
+    return horizon, sqp, qp
+
+
+def announce_tp(to_config) -> None:
+    """T43 TP — say which compute-time options are on (nothing when all are off)."""
+    from benchmark.trajopt.config import HorizonConfig, QpConfig
+
+    log = logging.getLogger(__name__)
+    on = []
+    if to_config.collision.esdf_host_mirror:
+        on.append("esdf_host_mirror")
+    if to_config.sqp.fast_eval:
+        on.append("fast_eval (bit-identical)")
+    if to_config.sqp.warm_start_lookahead:
+        on.append("warm_start_lookahead")
+    if to_config.horizon.lookahead_stride != HorizonConfig.lookahead_stride:
+        on.append(f"lookahead_stride={to_config.horizon.lookahead_stride}")
+    q = to_config.qp
+    if q.warm_start_iterate:
+        on.append("qp.warm_start_iterate")
+    if q.eps_after_first is not None:
+        on.append(f"qp.eps_after_first={q.eps_after_first:g}")
+    if q.max_iter != QpConfig.max_iter:
+        on.append(f"qp.max_iter={q.max_iter}")
+    if q.accept_max_iter:
+        on.append("qp.accept_max_iter")
+    if on:
+        log.warning("TO compute options (T43 TP): %s", ", ".join(on))
+
+
 def ta_overrides(args) -> tuple[dict, dict, dict]:
     """T43 TA — `(horizon, cost, limits)` keys for the flags actually given (all `{}` = as before)."""
     horizon: dict = {}
@@ -1935,13 +2033,17 @@ def trajopt_config_from_args(args):
     no_collision = bool(getattr(args, "no_collision", False)) or bool(
         getattr(args, "no_perception", False))
     limits = limits_overrides(args)
-    sqp = sqp_overrides(args)
+    tp_horizon, tp_sqp, tp_qp = tp_overrides(args)
+    sqp = {**sqp_overrides(args), **tp_sqp}
+    qp = {**qp_overrides(args), **tp_qp}
     path_limits, path_reduction = path_overrides(args)
     return TrajOptConfig.from_dict({
         "collision": {"backend": "esdf", "esdf_margin": args.esdf_margin,
                       "use_support_planes": False,
                       # T41 a — 준 것만 넣는다 (기본 off 면 키가 없다).
                       **obstacle_overrides(args),
+                      # T43 TP — 준 것만.
+                      **tp_collision_overrides(args),
                       # **기본값을 여기 다시 적지 않는다.** 켠 경우에는 키가 아예 없다.
                       **({"enabled": False} if no_collision else {})},
         **({"cost": weights} if weights else {}),
@@ -1957,14 +2059,15 @@ def trajopt_config_from_args(args):
                    **ta_limits},
         **({"reduction": path_reduction} if path_reduction else {}),
         **({"sqp": sqp} if sqp else {}),
-        # T43 TA — `--qp-eps`, only when given.
-        **({"qp": qp_overrides(args)} if qp_overrides(args) else {}),
+        # T43 TA — `--qp-eps`; T43 TP — `--qp-*`. Only when given.
+        **({"qp": qp} if qp else {}),
         # 기하 인증 요구는 여기 **한 곳**에서만 켜고 끈다 (`--no-perception` 은 `ToOnlyPolicy` 가
         # 끈다 — 인증할 기하가 애초에 없다).
         "safety": {"require_certified_geometry": not args.allow_uncertified},
         # 다듬는 창. `execution` 이면 `horizon.execution_length` 를 따라가므로 실행 길이가
         # 두 번 적히지 않는다 (`config.PLAN_EXECUTION_WINDOW` 머리말).
-        "horizon": {"plan_horizon": resolve_plan_horizon(args.plan_horizon), **ta_horizon},
+        "horizon": {"plan_horizon": resolve_plan_horizon(args.plan_horizon), **ta_horizon,
+                    **tp_horizon},
     })
 
 
@@ -2201,6 +2304,7 @@ def main() -> None:
                 "a_max·dt² (관절마다)" if tol is None else f"{tol:.4f} rad ({math.degrees(tol):.2f}°)")
         announce_path_check(to_config)
         announce_ta(to_config)
+        announce_tp(to_config)
         announce_collision_switch(to_config.collision.enabled)
         announce_limits_switch(to_config.limits)
         announce_cost_weights(weights)

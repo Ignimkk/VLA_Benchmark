@@ -100,12 +100,20 @@ class QpSolver:
         self._signature = None
         self._last_x = None
         self._last_y = None
+        self.__dict__.pop("_eps_now", None)
 
-    def solve(self, problem: QpProblem, *, warm_start: bool = True) -> QpSolution:
+    def solve(self, problem: QpProblem, *, warm_start: bool = True,
+              x0: Optional[np.ndarray] = None, eps: Optional[float] = None) -> QpSolution:
+        """`x0` (T43 TP, `qp.warm_start_iterate`): the primal warm start to use instead of the last
+        solution (the last duals are kept). `eps` (T43 TP, `qp.eps_after_first`): OSQP `eps_abs` =
+        `eps_rel` for this solve. Both `None` (default) = as before. OSQP only."""
         started = time.perf_counter()
         name = self.config.solver
         if name == "osqp":
-            solution = self._solve_osqp(problem, warm_start)
+            if x0 is None and eps is None:
+                solution = self._solve_osqp(problem, warm_start)
+            else:
+                solution = self._solve_osqp(problem, warm_start, x0=x0, eps=eps)
         else:
             solution = self._solve_casadi(problem, name, warm_start)
         elapsed = (time.perf_counter() - started) * 1000.0
@@ -114,7 +122,8 @@ class QpSolver:
         return dataclasses.replace(solution, solve_time_ms=elapsed)
 
     # --- OSQP -----------------------------------------------------------------------------
-    def _solve_osqp(self, problem: QpProblem, warm_start: bool) -> QpSolution:
+    def _solve_osqp(self, problem: QpProblem, warm_start: bool, *, x0: Optional[np.ndarray] = None,
+                    eps: Optional[float] = None) -> QpSolution:
         import osqp
 
         signature = _signature(problem)
@@ -138,6 +147,7 @@ class QpSolver:
                 warm_starting=warm_start,
             )
             self._signature = signature
+            self.__dict__.pop("_eps_now", None)      # a fresh backend has the configured accuracy
         else:
             # Same pattern: only the numbers move. This is the path the whole fixed-sparsity design
             # exists to reach — no re-factorization, no re-setup.
@@ -149,11 +159,29 @@ class QpSolver:
                 u=u,
             )
             if warm_start and self._last_x is not None and self._last_x.shape[0] == problem.n_var:
-                self._backend.warm_start(x=self._last_x, y=self._last_y)
+                if x0 is not None and np.shape(x0) == self._last_x.shape:
+                    self._backend.warm_start(x=np.asarray(x0, np.float64), y=self._last_y)
+                else:
+                    self._backend.warm_start(x=self._last_x, y=self._last_y)
+        # T43 TP (`qp.eps_after_first`): this solve's accuracy. The backend keeps what it was last
+        # told, so it is set back to the configured one when `eps` is None again. Never asked
+        # (default), the backend is never touched here.
+        want = ((float(self.config.eps_abs), float(self.config.eps_rel)) if eps is None
+                else (float(eps), float(eps)))
+        now = self.__dict__.get("_eps_now")
+        if now is not None and now != want or now is None and eps is not None:
+            self._backend.update_settings(eps_abs=want[0], eps_rel=want[1])
+            self.__dict__["_eps_now"] = want
 
         result = self._backend.solve()
         status = str(getattr(result.info, "status", "unknown"))
         success = status in ("solved", "solved inaccurate")
+        if (not success and getattr(self.config, "accept_max_iter", False)
+                and "maximum iterations" in status and result.x is not None
+                and np.all(np.isfinite(result.x))):
+            # T43 TP (`qp.accept_max_iter`): the iterate at the cap, as an inaccurate solution.
+            status = "maximum iterations reached (accepted)"
+            success = True
         return QpSolution(
             x=np.asarray(result.x, np.float64) if success else np.zeros(problem.n_var),
             y=np.asarray(result.y, np.float64) if success else None,

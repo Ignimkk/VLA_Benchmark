@@ -190,6 +190,66 @@ def servo_accel_overshoot(trajectory: np.ndarray, reference: np.ndarray, accel_b
     return np.maximum(0.0, np.abs(value) - bound)
 
 
+def box_bounds(limits: JointLimits, iterate: np.ndarray, radius: float, *,
+               q_now: Optional[np.ndarray] = None,
+               anchor_envelope: Optional[np.ndarray] = None) -> tuple[np.ndarray, np.ndarray]:
+    """`(lower, upper)` of the box block — joint box ∩ trust region around `iterate` ∩ step-0 anchor
+    (∩ the T41 b envelope). The only part of `build_problem` that depends on the iterate and the
+    trust radius; `rebox_problem` (T43 TP) re-evaluates exactly this between SQP iterations."""
+    iterate = np.asarray(iterate, np.float64)
+    nq, horizon = iterate.shape
+    box_lo = np.tile(limits.lower, horizon)
+    box_hi = np.tile(limits.upper, horizon)
+    iterate_flat = iterate.T.reshape(-1)
+    box_lo = np.maximum(box_lo, iterate_flat - radius)
+    box_hi = np.minimum(box_hi, iterate_flat + radius)
+    if q_now is not None:
+        q_now = np.asarray(q_now, np.float64).reshape(-1)
+        if q_now.shape[0] != nq:
+            raise ValueError(f"q_now has {q_now.shape[0]} entries, expected {nq}")
+        box_lo[:nq] = np.maximum(box_lo[:nq], q_now - limits.max_step)
+        box_hi[:nq] = np.minimum(box_hi[:nq], q_now + limits.max_step)
+        if anchor_envelope is not None:
+            # T41 b — clip (not max/min): the result lies inside the envelope even when the trust
+            # region or the joint box does not reach it, so the midpoint collapse below stays inside.
+            width = np.asarray(anchor_envelope, np.float64)[:, :horizon].T.reshape(-1)
+            centre = np.tile(q_now, horizon)
+            box_lo = np.clip(box_lo, centre - width, centre + width)
+            box_hi = np.clip(box_hi, centre - width, centre + width)
+    elif anchor_envelope is not None:
+        raise ValueError("anchor_envelope needs q_now — the envelope is centred on it")
+    # The intersection can be empty when the robot starts outside its own limits — a real situation
+    # after a fault or a bad hand-off. Collapsing to the midpoint keeps the QP solvable and lets the
+    # trajectory walk back inside, rather than failing and leaving the caller with nothing.
+    crossed = box_lo > box_hi
+    if np.any(crossed):
+        mid = 0.5 * (box_lo[crossed] + box_hi[crossed])
+        box_lo[crossed] = mid
+        box_hi[crossed] = mid
+    return box_lo, box_hi
+
+
+def rebox_problem(template: "QpProblem", limits: JointLimits, iterate: np.ndarray, radius: float, *,
+                  q_now: Optional[np.ndarray] = None,
+                  anchor_envelope: Optional[np.ndarray] = None) -> "QpProblem":
+    """T43 TP (`sqp.fast_eval`) — `build_problem` at a new iterate / trust radius from one built
+    earlier **in the same solve**.
+
+    Within a solve every input of `build_problem` but `iterate` and `trust_radius` is fixed
+    (reference, limits, config, `q_now`, previous chunk, slack count, envelope, B/C history), and
+    those two enter only the box block (`box_bounds`). So the template's `P`, `q`, `A` and every
+    other row bound are already what `build_problem` would build; only the box rows of `l`/`u` are
+    re-evaluated, by the same function. The result equals `build_problem`'s, array for array.
+    """
+    lo, hi = box_bounds(limits, iterate, radius, q_now=q_now, anchor_envelope=anchor_envelope)
+    start, stop = template.row_blocks["box"]
+    l = template.l.copy()
+    u = template.u.copy()
+    l[start:stop] = lo
+    u[start:stop] = hi
+    return dataclasses.replace(template, l=l, u=u)
+
+
 def build_problem(
     reference: np.ndarray,
     iterate: np.ndarray,
@@ -358,34 +418,8 @@ def build_problem(
     #
     # With `limits.enforce_position=False` (`--no-limits`, T27) `lower/upper` are `∓inf`, so this
     # block is the trust region alone plus the step-0 anchor — the two SQP devices that stay.
-    box_lo = np.tile(limits.lower, horizon)
-    box_hi = np.tile(limits.upper, horizon)
-    iterate_flat = iterate.T.reshape(-1)
-    box_lo = np.maximum(box_lo, iterate_flat - radius)
-    box_hi = np.minimum(box_hi, iterate_flat + radius)
-    if q_now is not None:
-        q_now = np.asarray(q_now, np.float64).reshape(-1)
-        if q_now.shape[0] != nq:
-            raise ValueError(f"q_now has {q_now.shape[0]} entries, expected {nq}")
-        box_lo[:nq] = np.maximum(box_lo[:nq], q_now - limits.max_step)
-        box_hi[:nq] = np.minimum(box_hi[:nq], q_now + limits.max_step)
-        if anchor_envelope is not None:
-            # T41 b — clip (not max/min): the result lies inside the envelope even when the trust
-            # region or the joint box does not reach it, so the midpoint collapse below stays inside.
-            width = np.asarray(anchor_envelope, np.float64)[:, :horizon].T.reshape(-1)
-            centre = np.tile(q_now, horizon)
-            box_lo = np.clip(box_lo, centre - width, centre + width)
-            box_hi = np.clip(box_hi, centre - width, centre + width)
-    elif anchor_envelope is not None:
-        raise ValueError("anchor_envelope needs q_now — the envelope is centred on it")
-    # The intersection can be empty when the robot starts outside its own limits — a real situation
-    # after a fault or a bad hand-off. Collapsing to the midpoint keeps the QP solvable and lets the
-    # trajectory walk back inside, rather than failing and leaving the caller with nothing.
-    crossed = box_lo > box_hi
-    if np.any(crossed):
-        mid = 0.5 * (box_lo[crossed] + box_hi[crossed])
-        box_lo[crossed] = mid
-        box_hi[crossed] = mid
+    box_lo, box_hi = box_bounds(limits, iterate, radius, q_now=q_now,
+                                anchor_envelope=anchor_envelope)
     _add("box", sp.identity(n_q, format="csr"), zero_extra(n_q), box_lo, box_hi)
 
     # Velocity and acceleration, each softened by one non-negative slack. A two-sided bound needs two

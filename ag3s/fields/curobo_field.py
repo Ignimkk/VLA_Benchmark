@@ -296,6 +296,40 @@ class CuroboEsdfField:
             return np.zeros(len(np.asarray(points, np.float64).reshape(-1, 3)), bool)
         return self.label(points) == wanted
 
+    def mirror_to_host(self) -> int:
+        """T43 TP — every GPU layer (`DeviceEsdfField.mirror_to_host`) copies its grids to host
+        once; later reads stay on the host, with the same values. Host layers are left alone.
+        Returns how many layers were mirrored."""
+        n = 0
+        for layer in tuple(self.layers) + tuple(self.target_free_layers):
+            fn = getattr(layer, "mirror_to_host", None)
+            if fn is not None:
+                fn()
+                n += 1
+        return n
+
+    def distance_and_label(self, points: np.ndarray, name: str) -> tuple[np.ndarray, np.ndarray]:
+        """`(distance(points), is_label(points, name))` from **one** pass over the layers (T43 TP).
+
+        `distance` and `label` each run `_evaluate`; this runs it once with the winner and reads
+        both from it — the same arithmetic in the same order, so both arrays equal the two separate
+        calls' bit for bit (`tests/trajopt/test_t43tp_fast_to.py`). On the server every layer read
+        is a GPU round trip (`DeviceEsdfField`), so the second pass is not free.
+        """
+        d, winner, pts = self._evaluate(points, want_winner=True)
+        if self.static_shapes:
+            from benchmark.ag3s.fields.esdf import analytic_distance
+            d = np.minimum(d, analytic_distance(points, self.static_shapes))
+        wanted = self.label_id(name)
+        if wanted < 0:
+            return d, np.zeros(len(pts), bool)
+        out = np.full(len(pts), -1, np.int32)
+        for i, field in enumerate(self.layers):
+            sel = winner == i
+            if sel.any() and field.has_labels:
+                out[sel] = field.label(pts[sel])
+        return d, out == wanted
+
     # -- target 없는 계층 -------------------------------------------------------------
 
     @property

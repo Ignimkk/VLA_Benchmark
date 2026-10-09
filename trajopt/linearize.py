@@ -79,6 +79,48 @@ _SUPPORT_TOL_VOXELS = 2.0
 _HELD_SELF_TOL_VOXELS = 2.0
 
 
+class _BufferedCall:
+    """T43 TP (`sqp.fast_eval`) — a CasADi function called through its zero-copy buffer.
+
+    `Function.__call__` returns `DM`s, and the Jacobian's 90 k nonzeros (H = 16, 270 spheres) then
+    cross into numpy through a Python list (`DM.nonzeros()`): 4.3 ms of a 5.2 ms `sphere_states`,
+    the CasADi evaluation itself being 1.2 ms. `Function.buffer()` evaluates the same compiled
+    function into numpy arrays it writes directly. **Same function, same nonzeros, same order** —
+    the outputs are bit-identical (`tests/trajopt/test_t43tp_fast_to.py`).
+
+    `__call__(*args)` returns each output's nonzeros (column-major, as `DM.nonzeros()`), as fresh
+    arrays the caller owns.
+    """
+
+    def __init__(self, fn):
+        self._fn = fn
+        self._buf, self._eval = fn.buffer()
+        self._out = [np.zeros(int(fn.nnz_out(i)), np.float64) for i in range(fn.n_out())]
+        for i, o in enumerate(self._out):
+            self._buf.set_res(i, memoryview(o))
+        self._shapes = [tuple(fn.sparsity_in(i).shape) for i in range(fn.n_in())]
+
+    def __call__(self, *args):
+        keep = []
+        for i, a in enumerate(args):
+            arr = np.asarray(a, np.float64)
+            if arr.shape != self._shapes[i]:
+                arr = arr.reshape(self._shapes[i])
+            flat = np.array(arr.reshape(-1, order="F"), np.float64, copy=True)
+            keep.append(flat)                      # alive until the evaluation has read it
+            self._buf.set_arg(i, memoryview(flat))
+        self._eval()
+        return [o.copy() for o in self._out]
+
+
+#: T43 TP — attributes `_esdf_clearance` sets on the linearizer as a side effect. A memoized call
+#: (`sqp.fast_eval`) re-applies the ones the original call set, so readers (`_identify`,
+#: `held_rows_record`, `sqp._finish`, the held radii on `query_radii`) see what they saw before.
+_CLEARANCE_SIDE_ATTRS = ("query_radii", "_last_obstacle_class", "_last_held_rows", "_last_lookahead",
+                         "last_target_free_tiers")
+_MISSING = object()
+
+
 @dataclasses.dataclass(frozen=True)
 class SceneSnapshot:
     """One frame of AG3S's scene, decoded from the parameter vector it already packs.
@@ -383,6 +425,15 @@ class CollisionLinearizer:
     #: T43 TA (A) — first look-ahead step (`HorizonConfig.lookahead_from`), set by the optimizer.
     #: `None` (default) = every step is treated alike, as before.
     lookahead_from: Optional[int] = None
+    #: T43 TP — `horizon.lookahead_stride`, set by the optimizer. 1 (default) = every tail step.
+    lookahead_stride: int = 1
+    #: T43 TP (`sqp.fast_eval`) — evaluate the FK through CasADi's zero-copy buffer
+    #: (`_BufferedCall`) and read a destination label together with the distance (one field pass,
+    #: `distance_and_label`). `False` (default) = as before. Bit-identical either way.
+    fast_eval: bool = False
+    #: T43 TP (`sqp.fast_eval`) — per-solve memo of `sphere_states` and `_esdf_clearance`, or `None`
+    #: (default: nothing is cached). Set by `begin_memo` / cleared by `end_memo` around one solve.
+    _memo: Optional[dict] = None
 
     def __init__(self, robot_model, layout: ChunkLayout, horizon: int):
         import casadi as ca
@@ -485,6 +536,37 @@ class CollisionLinearizer:
             raise ValueError("joint parameter path has non-finite values")
         self._param_path = arr
 
+    # --- T43 TP: evaluation reuse (`sqp.fast_eval`) ----------------------------------------
+    def begin_memo(self) -> None:
+        """Start one solve's memo: `sphere_states` by value of its inputs, `_esdf_clearance` by
+        the identity of the (read-only) centres it was handed. Nothing outside the solve sees it."""
+        self._memo = {"states": {}, "clearance": {}}
+
+    def end_memo(self) -> None:
+        self._memo = None
+
+    def _fk_eval(self, full: np.ndarray):
+        """`(centres nonzeros, jac nonzeros)` of `self._fk_map` at `full` — through the buffer when
+        `fast_fk`, else `Function.__call__` (the pre-TP path, unchanged)."""
+        args = self._fk_args(full)
+        if self.fast_eval:
+            call = self.__dict__.get("_fk_buffered")
+            if call is None:
+                call = self.__dict__["_fk_buffered"] = _BufferedCall(self._fk_map)
+            c, j = call(*args)
+            return c, j
+        centres_dm, jac_dm = self._fk_map(*args)
+        return (np.asarray(centres_dm).T.reshape(-1),
+                np.asarray(jac_dm.nonzeros(), np.float64))
+
+    def _states_key(self, trajectory: np.ndarray, q_now: np.ndarray):
+        t = np.ascontiguousarray(trajectory, np.float64)
+        q = np.ascontiguousarray(q_now, np.float64)
+        p = None if self._p_sym is None else np.ascontiguousarray(self.param_path(), np.float64)
+        a = None if self._attached_local is None else (
+            self._attached_link, np.ascontiguousarray(self._attached_local).tobytes())
+        return (t.shape, t.tobytes(), q.tobytes(), None if p is None else p.tobytes(), a)
+
     # --- held object ---------------------------------------------------------------------
     def set_attached(self, points_local, parent_link: Optional[str],
                      radii: Optional[np.ndarray] = None) -> None:
@@ -575,12 +657,21 @@ class CollisionLinearizer:
             return (np.zeros((self.horizon, 0, 3)),
                     np.zeros((self.horizon, 0, 3, self.nq_opt)))
         fn, dest, shape, c_dest = self._link_probe_map(self._attached_link)
-        probe_dm, jac_dm = fn(*self._fk_args(full))
+        if self.fast_eval:
+            calls = self.__dict__.setdefault("_probe_buffered", {})
+            call = calls.get(self._attached_link)
+            if call is None:
+                call = calls[self._attached_link] = _BufferedCall(fn)
+            probe_nz, jac_nz = call(*self._fk_args(full))
+        else:
+            probe_dm, jac_dm = fn(*self._fk_args(full))
+            probe_nz = np.asarray(probe_dm).T.reshape(-1)
+            jac_nz = np.asarray(jac_dm.nonzeros(), np.float64)
         probes = np.zeros(self.horizon * 4 * 3)
-        probes[c_dest] = np.asarray(probe_dm).T.reshape(-1)
+        probes[c_dest] = probe_nz
         probes = probes.reshape(self.horizon, 4, 3)
         pj = np.zeros(int(np.prod(shape)))
-        pj[dest] = np.asarray(jac_dm.nonzeros(), np.float64)
+        pj[dest] = jac_nz
         pj = pj.reshape(shape)
 
         a = self._attached_local
@@ -599,20 +690,34 @@ class CollisionLinearizer:
         against the world like any other piece of it (E3 -- the held object never reached the
         optimizer at all before this).
         """
+        memo = self._memo
+        if memo is not None:
+            # T43 TP (`sqp.fast_eval`): the same trajectory is evaluated up to three times per solve
+            # (look-ahead gate, reference violation, first iterate). Read-only, so no caller can
+            # change what a later hit returns.
+            key = self._states_key(trajectory, q_now)
+            hit = memo["states"].get(key)
+            if hit is not None:
+                return hit
         full = self.layout.full_q(trajectory, q_now)
-        centres_dm, jac_dm = self._fk_map(*self._fk_args(full))
+        centres_nz, jac_nz = self._fk_eval(full)
 
         centres = np.zeros(self.horizon * self.n_spheres * 3)
-        centres[self._centre_dest] = np.asarray(centres_dm).T.reshape(-1)
+        centres[self._centre_dest] = centres_nz
         jac = np.zeros(int(np.prod(self._jac_shape)))
-        jac[self._jac_dest] = np.asarray(jac_dm.nonzeros(), np.float64)
+        jac[self._jac_dest] = jac_nz
         centres = centres.reshape(self.horizon, self.n_spheres, 3)
         jac = jac.reshape(self._jac_shape)
-        if self._attached_local is None:
+        if self._attached_local is not None:
+            a_pos, a_jac = self.attached_states(full)
+            centres = np.concatenate([centres, a_pos], axis=1)
+            jac = np.concatenate([jac, a_jac], axis=1)
+        if memo is None:
             return centres, jac
-        a_pos, a_jac = self.attached_states(full)
-        return (np.concatenate([centres, a_pos], axis=1),
-                np.concatenate([jac, a_jac], axis=1))
+        centres.setflags(write=False)
+        jac.setflags(write=False)
+        out = memo["states"][key] = (centres, jac)
+        return out
 
     def _esdf_directions(self, points: np.ndarray, rows: np.ndarray, scene: SceneSnapshot,
                          n_query: int) -> np.ndarray:
@@ -667,6 +772,58 @@ class CollisionLinearizer:
         return self._esdf_clearance(centres, scene)
 
     def _esdf_clearance(self, centres: np.ndarray, scene: SceneSnapshot) -> np.ndarray:
+        """`_esdf_clearance_impl`, memoized within one solve under `sqp.fast_eval` (T43 TP).
+
+        A solve evaluates the same states 2–3 times (merit, then the next linearization; the final
+        check twice). The key is the identity of the centres and of the scene, and only read-only
+        centres (the memoized `sphere_states`) are cached — an array that could change under the
+        same identity never is. The call's side effects (`_CLEARANCE_SIDE_ATTRS`) are replayed on a
+        hit, so every reader sees what the original call left.
+        """
+        memo = self._memo
+        if memo is None or getattr(centres, "flags", None) is None or centres.flags.writeable:
+            return self._esdf_clearance_impl(centres, scene)
+        key = (id(centres), id(scene))
+        hit = memo["clearance"].get(key)
+        if hit is not None and hit[0] is centres and hit[1] is scene:
+            self.__dict__.update(hit[3])
+            return hit[2]
+        before = {a: self.__dict__.get(a, _MISSING) for a in _CLEARANCE_SIDE_ATTRS}
+        out = self._esdf_clearance_impl(centres, scene)
+        side = {a: self.__dict__[a] for a in _CLEARANCE_SIDE_ATTRS
+                if self.__dict__.get(a, _MISSING) is not before[a]}
+        out.setflags(write=False)
+        memo["clearance"][key] = (centres, scene, out, side)
+        return out
+
+    def _esdf_clearance_impl(self, centres: np.ndarray, scene: SceneSnapshot) -> np.ndarray:
+        """`_esdf_clearance_core`, on the window and the strided tail steps only when
+        `horizon.lookahead_stride > 1` (T43 TP). Skipped tail steps are `+inf` (no row, no field
+        read); the window is never thinned. Stride 1 (default) is the core call itself."""
+        stride = int(getattr(self, "lookahead_stride", 1) or 1)
+        start = self.lookahead_from
+        horizon = centres.shape[0]
+        if (stride <= 1 or start is None or not 0 < int(start) < horizon
+                or scene.esdf is None):
+            return self._esdf_clearance_core(centres, scene)
+        start = int(start)
+        steps = np.concatenate([np.arange(start), np.arange(start + stride - 1, horizon, stride)])
+        sub = self._esdf_clearance_core(np.ascontiguousarray(centres[steps]), scene)
+        out = np.full((horizon,) + sub.shape[1:], np.inf)
+        out[steps] = sub
+        cls = self.__dict__.get("_last_obstacle_class")
+        if cls is not None and cls.shape == sub.shape[:2]:
+            # record only (`_identify` reads the worst row's class; a skipped step is never worst)
+            full = np.full(out.shape[:2], _OBSTACLE, np.int8)
+            full[steps] = cls
+            self._last_obstacle_class = full
+        last = self.__dict__.get("_last_lookahead")
+        if isinstance(last, dict):
+            self._last_lookahead = {**last, "stride": stride,
+                                    "tail_steps": [int(k) for k in steps[start:]]}
+        return out
+
+    def _esdf_clearance_core(self, centres: np.ndarray, scene: SceneSnapshot) -> np.ndarray:
         """``(H, S)`` — ``d_esdf(p) - r_robot - margin``. Inactive (no field) is an empty array.
 
         No slot loop and no selection over candidates: the field answers for the point directly.
@@ -725,7 +882,17 @@ class CollisionLinearizer:
                 "passed in disagree about what is being held"
             )
         flat = centres.reshape(-1, 3)
-        d = np.asarray(scene.esdf.distance(flat), np.float64).reshape(centres.shape[:2])
+        is_dest_flat = None
+        fused = (getattr(scene.esdf, "distance_and_label", None)
+                 if self.fast_eval and scene.destination_label
+                 and getattr(scene.esdf, "has_labels", False) else None)
+        if fused is not None:
+            # T43 TP: the destination label below is read from the same field pass as the distance
+            # (`CuroboEsdfField.distance_and_label` — the same values as the two separate reads).
+            d_flat, is_dest_flat = fused(flat, scene.destination_label)
+            d = np.asarray(d_flat, np.float64).reshape(centres.shape[:2])
+        else:
+            d = np.asarray(scene.esdf.distance(flat), np.float64).reshape(centres.shape[:2])
         # **아직 쥐지 않은 target 을 빼는 길** (T8b). 권한 있는 질의점만 target 이 없는 계층에
         # 되묻고, 나머지 행은 위에서 받은 값을 그대로 쓴다 — `"relax"`(기본)에서는
         # `target_free_mask` 가 `None` 이라 이 블록이 통째로 없는 것과 같다.
@@ -772,7 +939,8 @@ class CollisionLinearizer:
         # `ClearancePolicy` 가 접촉 권한에 이미 쓰는 구조다.
         if scene.destination_label and getattr(scene.esdf, "has_labels", False):
             is_dest = np.asarray(
-                scene.esdf.is_label(flat, scene.destination_label)
+                scene.esdf.is_label(flat, scene.destination_label) if is_dest_flat is None
+                else is_dest_flat
             ).reshape(centres.shape[:2])
             held = np.zeros(centres.shape[:2], bool)
             held[:, self.n_spheres:] = True

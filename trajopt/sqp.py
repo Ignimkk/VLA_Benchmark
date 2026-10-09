@@ -57,7 +57,7 @@ from benchmark.trajopt.limits import (
     rest_start_envelope,
     velocity_rows,
 )
-from benchmark.trajopt.problem import build_problem, objective
+from benchmark.trajopt.problem import build_problem, objective, rebox_problem
 from benchmark.trajopt.qp import QpSolver
 from benchmark.trajopt.types import ChunkLayout, JointLimits, TrajOptResult, TrajOptStatus
 
@@ -87,6 +87,10 @@ class TrajectoryOptimizer:
         self.limits = limits
         self.horizon = self.config.horizon.horizon
         self.linearizer = CollisionLinearizer(robot_model, layout, self.horizon)
+        #: T43 TP — `sqp.fast_eval`: buffered FK + per-solve memo (bit-identical). Off = as before.
+        self.fast_eval = bool(getattr(self.config.sqp, "fast_eval", False))
+        if self.fast_eval:
+            self.linearizer.fast_eval = True
         self.block = CollisionBlock(
             self.horizon, self.config.reduction.rows_per_step, layout.nq_opt
         )
@@ -104,6 +108,10 @@ class TrajectoryOptimizer:
         #: T43 TA (A) — first look-ahead step, or None (every planned step certified, as before).
         self.lookahead_from = self.config.horizon.lookahead_from
         self.linearizer.lookahead_from = self.lookahead_from
+        if self.lookahead_from is not None and int(
+                getattr(self.config.horizon, "lookahead_stride", 1)) > 1:
+            # T43 TP — the tail's field rows on every `stride`-th step only.
+            self.linearizer.lookahead_stride = int(self.config.horizon.lookahead_stride)
         #: T43 TA (A) — the gate's own optimizer: the executed window alone, every other setting
         #: as this one (`horizon.lookahead_gate`). `None` without look-ahead or without a gate.
         self.window_optimizer: Optional["TrajectoryOptimizer"] = None
@@ -187,7 +195,23 @@ class TrajectoryOptimizer:
             self.window_optimizer.reset()
 
     # ------------------------------------------------------------------------------------
-    def solve(
+    def solve(self, reference, q_now, scene, **kwargs) -> TrajOptResult:
+        """See `_solve`. With `sqp.fast_eval` (T43 TP) the linearizer's per-solve memo lives exactly
+        as long as this call; off, this is `_solve` itself."""
+        if getattr(self.config.collision, "esdf_host_mirror", False):
+            # T43 TP: one host copy of the GPU field's grids per chunk (cached on the field object).
+            mirror = getattr(getattr(scene, "esdf", None), "mirror_to_host", None)
+            if mirror is not None:
+                mirror()
+        if not self.fast_eval:
+            return self._solve(reference, q_now, scene, **kwargs)
+        self.linearizer.begin_memo()
+        try:
+            return self._solve(reference, q_now, scene, **kwargs)
+        finally:
+            self.linearizer.end_memo()
+
+    def _solve(
         self,
         reference: np.ndarray,
         q_now: np.ndarray,
@@ -233,6 +257,8 @@ class TrajectoryOptimizer:
         reference = np.asarray(reference, np.float64)
         q_now = np.asarray(q_now, np.float64).reshape(-1)
         notes: list[str] = []
+        #: T43 TP — the continuity reference before the look-ahead cut (`warm_start_lookahead`).
+        continuity_full = previous_chunk
         if self.lookahead_from is not None and previous_chunk is not None:
             # T43 TA (A): continuity only over the executed window, as without look-ahead. Pulling
             # the tail toward the previous chunk's stale prediction moved chunks that collide with
@@ -277,9 +303,13 @@ class TrajectoryOptimizer:
         n_path = self.path.n_slack if self.path is not None else 0
         n_slack = self.block.n_rows + n_path
         iterate = reference.copy()
+        warm_lookahead = (self.lookahead_from is not None
+                          and getattr(cfg.sqp, "warm_start_lookahead", False)
+                          and self._previous is not None
+                          and self._seed_is_aligned(continuity_full))
         if (cfg.sqp.warm_start and self._previous is not None
                 and cfg.horizon.execution_length < self.horizon
-                and self.lookahead_from is None):
+                and (self.lookahead_from is None or warm_lookahead)):
             # Seed from the previous chunk shifted by the steps that have executed since. The tail is
             # held rather than extrapolated: extrapolating a trajectory past its horizon invents
             # motion the policy never proposed.
@@ -376,6 +406,9 @@ class TrajectoryOptimizer:
         # `max_iterations` 가 더 작으면 그것이 이긴다 — 상한은 상한이다.
         min_iterations = max(1, min(int(getattr(cfg.sqp, "min_iterations", 1)),
                                     int(cfg.sqp.max_iterations)))
+        #: T43 TP — this solve's `build_problem` result (`sqp.fast_eval`) and QPs solved so far.
+        qp_template = None
+        n_qp = 0
         while iterations < cfg.sqp.max_iterations:
             # Checked *after* the first iteration, never before it. A budget so tight that the
             # set-up alone exhausts it would otherwise return the reference untouched while
@@ -401,13 +434,21 @@ class TrajectoryOptimizer:
             timing["linearize"] += (time.perf_counter() - mark) * 1000.0
             mark = time.perf_counter()
             budget_bound = budget_bound or bool(rows.budget_bound_steps)
-            problem = build_problem(
-                reference, iterate, self.limits, cfg,
-                q_now=q_now[self.layout.q_indices], previous_chunk=previous_chunk,
-                n_slack=n_slack, trust_radius=radius,
-                **({"anchor_envelope": envelope} if envelope is not None else {}),
-                **self._problem_history(),
-            )
+            if self.fast_eval and qp_template is not None:
+                # T43 TP: only the box rows depend on the iterate and the trust radius.
+                problem = rebox_problem(
+                    qp_template, self.limits, iterate, radius, q_now=q_now[self.layout.q_indices],
+                    anchor_envelope=envelope)
+            else:
+                problem = build_problem(
+                    reference, iterate, self.limits, cfg,
+                    q_now=q_now[self.layout.q_indices], previous_chunk=previous_chunk,
+                    n_slack=n_slack, trust_radius=radius,
+                    **({"anchor_envelope": envelope} if envelope is not None else {}),
+                    **self._problem_history(),
+                )
+                if self.fast_eval:
+                    qp_template = problem
             problem = append_collision_rows(
                 problem, rows, iterate, self.block, cfg.reduction.linearization_backoff,
                 **({"extra_slack": n_path} if n_path else {})
@@ -419,7 +460,14 @@ class TrajectoryOptimizer:
                 timing["path"] = timing.get("path", 0.0) + (time.perf_counter() - mark) * 1000.0
 
             mark = time.perf_counter()
-            solution = self.solver.solve(problem, warm_start=cfg.sqp.warm_start)
+            qp_extra: dict[str, Any] = {}
+            if getattr(cfg.qp, "warm_start_iterate", False) and not n_qp:
+                # T43 TP: the first QP of this solve starts at the iterate, not at the last chunk.
+                qp_extra["x0"] = problem.flatten(iterate)
+            if getattr(cfg.qp, "eps_after_first", None) is not None and n_qp:
+                qp_extra["eps"] = float(cfg.qp.eps_after_first)
+            solution = self.solver.solve(problem, warm_start=cfg.sqp.warm_start, **qp_extra)
+            n_qp += 1
             timing["qp"] += (time.perf_counter() - mark) * 1000.0
             qp_iterations += solution.iterations
             if not solution.success:
@@ -518,6 +566,22 @@ class TrajectoryOptimizer:
             result.metrics["rest_start"] = self._rest_start_record(
                 best, reference, q_now, envelope)
         return result
+
+    def _seed_is_aligned(self, continuity) -> bool:
+        """T43 TP (`warm_start_lookahead`) — is shifting the last plan by `execution_length` this
+        chunk's seed? Yes only when the caller's continuity reference (the previous refined chunk,
+        aligned by the steps that actually executed — `refiner._continuity_reference`) starts with
+        exactly that shifted plan: the previous chunk was this optimizer's own look-ahead plan, it
+        executed `execution_length` steps, and nothing came between. A closed gate (the plan was the
+        window optimizer's), a HOLD (no reference), a skipped or passed-through chunk all fail it."""
+        if continuity is None:
+            return False
+        k = min(int(self.config.horizon.execution_length), self.horizon - 1)
+        n = self.horizon - k
+        cont = np.asarray(continuity, np.float64)
+        prev = np.asarray(self._previous, np.float64)
+        return (cont.ndim == 2 and cont.shape[0] == prev.shape[0] and cont.shape[1] >= n
+                and np.array_equal(cont[:, :n], prev[:, k:]))
 
     def _lookahead_gate(self, reference, q_now, scene) -> dict[str, Any]:
         """T43 TA (A) — does the reference come within `lookahead_gate` of an obstacle in the tail?

@@ -124,6 +124,9 @@ class DeviceEsdfField(EsdfField):
         self._host_values: Optional[np.ndarray] = None
         self._host_labels: Optional[np.ndarray] = None
         self.n_host_materialisations = 0
+        #: T43 TP — per-field host copy of the value / label grids (`mirror_to_host`), or None.
+        self._mirror_values: Optional[np.ndarray] = None
+        self._mirror_labels: Optional[np.ndarray] = None
         # 코너 상수는 한 번만 올린다 (질의마다 작은 H2D 를 만들지 않는다).
         self._corner_offsets = torch.as_tensor(np.asarray(_CORNERS, np.int64), device=values.device)
         self._corner_select = torch.as_tensor(np.asarray(_CORNERS, bool), device=values.device)
@@ -185,6 +188,8 @@ class DeviceEsdfField(EsdfField):
         import torch
 
         self._host_labels = None
+        if getattr(self, "_mirror_labels", None) is not None:
+            self._mirror_labels = None                  # T43 TP: the mirror follows the grid
         if value is None:
             self._labels = None
             return
@@ -199,6 +204,31 @@ class DeviceEsdfField(EsdfField):
     @property
     def has_labels(self) -> bool:  # type: ignore[override]
         return self._labels is not None
+
+    # -- T43 TP: host mirror -------------------------------------------------------------
+    def mirror_to_host(self) -> None:
+        """Copy the value (and label) grid to host **once**, so later queries read it there.
+
+        Every query on this field is a GPU round trip (a gather and a sync per call — measured
+        0.6–1.3 ms at 1–4 k points, `outputs/impl/T43TP/prof/esdf_bench.json`); the TO makes ~20 per
+        solve. One copy of both 128³ layers costs ~1.3 ms. After it, `_gather` / `label` read the
+        mirror and the arithmetic is always the host one — the same code and order the host path
+        runs for small queries, which this class already guarantees equal to `EsdfField` (and to
+        its own GPU path) bit for bit. Not a whole-grid gradient: corners are still differentiated
+        on demand. `drop_mirror` undoes it.
+        """
+        if getattr(self, "_mirror_values", None) is None:
+            self._mirror_values = self._values.detach().cpu().numpy().reshape(-1)
+        if self._labels is not None and getattr(self, "_mirror_labels", None) is None:
+            self._mirror_labels = self._labels.detach().cpu().numpy().reshape(-1)
+
+    def drop_mirror(self) -> None:
+        self._mirror_values = None
+        self._mirror_labels = None
+
+    @property
+    def mirrored(self) -> bool:
+        return getattr(self, "_mirror_values", None) is not None
 
     # -- 질의 ------------------------------------------------------------------------------
     def _device_lattice(self, i0: np.ndarray):
@@ -233,6 +263,10 @@ class DeviceEsdfField(EsdfField):
 
     def _gather(self, lin: np.ndarray) -> np.ndarray:
         """`lin` (임의 모양, int64) 위치의 float32 값 — 이 경로에서 GPU 가 하는 일의 전부."""
+        mirror = getattr(self, "_mirror_values", None)
+        if mirror is not None:
+            # T43 TP: the host mirror — the same float32 values the GPU gather returns
+            return mirror[np.ascontiguousarray(lin, np.int64).reshape(-1)].reshape(lin.shape)
         import torch
 
         idx = torch.as_tensor(np.ascontiguousarray(lin, np.int64).reshape(-1),
@@ -342,7 +376,7 @@ class DeviceEsdfField(EsdfField):
         i0, t, inside = self._lattice(points)
         if not len(i0):
             out = np.zeros(0, np.float64)
-        elif len(i0) < _host_arith_max_points():
+        elif len(i0) < _host_arith_max_points() or self.mirrored:
             out = self._host_distance(i0, t)
         else:
             out = self._device_distance(i0, t)
@@ -362,7 +396,7 @@ class DeviceEsdfField(EsdfField):
         i0, t, inside = self._lattice(points)
         if not len(i0):
             out = np.zeros((0, 3), np.float64)
-        elif len(i0) < _host_arith_max_points():
+        elif len(i0) < _host_arith_max_points() or self.mirrored:
             out = self._host_gradient(i0, t)
         else:
             out = self._device_gradient(i0, t)
@@ -387,8 +421,13 @@ class DeviceEsdfField(EsdfField):
             return np.zeros(0, np.int32)
         n = np.asarray(self.grid.shape) - 1
         idx = np.minimum(i0 + np.round(t).astype(np.int64), n)
-        lin_d = torch.as_tensor(self._linear_host(idx), device=self._values.device)
-        out = torch.index_select(self._labels.reshape(-1), 0, lin_d).cpu().numpy().astype(np.int32)
+        mirror = getattr(self, "_mirror_labels", None)
+        if mirror is not None:
+            out = mirror[self._linear_host(idx)].astype(np.int32)      # T43 TP host mirror
+        else:
+            lin_d = torch.as_tensor(self._linear_host(idx), device=self._values.device)
+            out = torch.index_select(self._labels.reshape(-1), 0,
+                                     lin_d).cpu().numpy().astype(np.int32)
         out[~inside] = -1
         return out
 

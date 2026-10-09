@@ -121,6 +121,62 @@ VARIANTS: dict[str, dict] = {
 }
 
 
+def _tp(*parts: dict) -> dict:
+    """T43 TP — V11AB (= `A16qB20`) plus the given sections (later parts win per key)."""
+    out: dict = {k: dict(v) for k, v in _v(16, b=20.0).items()}
+    for part in parts:
+        for sec, kv in part.items():
+            if sec.startswith("_"):
+                out[sec] = kv
+            else:
+                out.setdefault(sec, {}).update(kv)
+    return out
+
+
+_FE = {"sqp": {"fast_eval": True}}
+_WI = {"qp": {"warm_start_iterate": True}}
+_E3N = {"qp": {"eps_after_first": 1e-3}}
+_CAP = lambda n: {"qp": {"max_iter": int(n), "accept_max_iter": True}}  # noqa: E731
+_IT2 = {"sqp": {"max_iterations": 2, "min_iterations": 2}}
+_ILP = {"_server_args": ["--finger-cover-solver", "ilp"]}
+_HM = {"collision": {"esdf_host_mirror": True}}
+
+#: T43 TP — compute-time candidates, each on top of V11AB (`A16qB20`). `fe` (`sqp.fast_eval`) is
+#: bit-identical, so it is in every candidate below `TPfe` only to make the offline pass faster.
+#: `_server_args`: extra server flags for that variant's own robot model (`Run(extra_server_args=)`)
+#: — its trajectory is still measured on the recorded server's model.
+VARIANTS.update({
+    "TPfe": _tp(_FE),
+    "TPwi": _tp(_FE, _WI),
+    "TPe3n": _tp(_FE, _E3N),
+    "TPcap1k": _tp(_FE, _CAP(1000)),
+    "TPcap500": _tp(_FE, _CAP(500)),
+    "TPg10": _tp(_FE, {"horizon": {"lookahead_gate": 0.01}}),
+    "TPg5": _tp(_FE, {"horizon": {"lookahead_gate": 0.005}}),
+    "TPh12": _tp(_FE, {"horizon": {"plan_horizon": 12}}),
+    "TPs2": _tp(_FE, {"horizon": {"lookahead_stride": 2}}),
+    "TPs4": _tp(_FE, {"horizon": {"lookahead_stride": 4}}),
+    "TPit2": _tp(_FE, _IT2),
+    "TPwl2": _tp(_FE, _IT2, {"sqp": {"warm_start_lookahead": True}}),
+    "TPilp": _tp(_FE, _ILP),
+    "TPwi_e3n": _tp(_FE, _WI, _E3N),
+    "TPwi_cap1k": _tp(_FE, _WI, _CAP(1000)),
+    "TPwi_e3n_cap1k": _tp(_FE, _WI, _E3N, _CAP(1000)),
+    "TPwi_e3n_cap1k_s2": _tp(_FE, _WI, _E3N, _CAP(1000), {"horizon": {"lookahead_stride": 2}}),
+    "TPwi_e3n_cap1k_h12": _tp(_FE, _WI, _E3N, _CAP(1000), {"horizon": {"plan_horizon": 12}}),
+    # with the look-ahead warm start (+ 2 SQP iterations): needs `--keep-state` to mean anything
+    "TPwi_e3n_wl2": _tp(_FE, _WI, _E3N, _IT2, {"sqp": {"warm_start_lookahead": True}}),
+    "TPwi_e3n_cap1k_wl2": _tp(_FE, _WI, _E3N, _CAP(1000), _IT2,
+                              {"sqp": {"warm_start_lookahead": True}}),
+    # GPU field read from a per-chunk host copy: changes nothing on the host fields used here; it is
+    # a timing setting for `tp_timing --field cuda` (the server's `DeviceEsdfField`)
+    "TPhm": _tp(_FE, _HM),
+    "TPwi_e3n_cap1k_hm": _tp(_FE, _WI, _E3N, _CAP(1000), _HM),
+    "TPwi_e3n_cap1k_wl2_hm": _tp(_FE, _WI, _E3N, _CAP(1000), _IT2, _HM,
+                                 {"sqp": {"warm_start_lookahead": True}}),
+})
+
+
 GROUPS = ("palm", "fingers", "held")
 
 
@@ -137,14 +193,15 @@ def lit(x):
 # server settings
 # ======================================================================================
 
-def server_args(chunk_dir: pathlib.Path):
-    """The server's argparse namespace, from `server_proc.txt` next to its record directory."""
+def server_args(chunk_dir: pathlib.Path, extra: tuple = ()):
+    """The server's argparse namespace, from `server_proc.txt` next to its record directory.
+    `extra` (T43 TP): flags appended to the recorded command line (a variant's own robot model)."""
     from benchmark.trajopt import serve_safe
 
     proc = chunk_dir.parent.parent / "server_proc.txt"
     line = next(x for x in proc.read_text().splitlines() if "benchmark.trajopt.serve_safe" in x)
     tokens = shlex.split(line)
-    argv = tokens[tokens.index("benchmark.trajopt.serve_safe") + 1:]
+    argv = tokens[tokens.index("benchmark.trajopt.serve_safe") + 1:] + list(extra)
     return serve_safe.build_parser().parse_args(argv), " ".join(argv)
 
 
@@ -172,8 +229,13 @@ def build_robot(args):
     return robot, qadr
 
 
+def variant_server_args(name: str) -> tuple:
+    """T43 TP — extra server flags of a variant (its own robot model), `()` for the recorded one."""
+    return tuple(VARIANTS[name].get("_server_args", ()))
+
+
 def variant_config(base_cfg, name: str, hm: bool):
-    over = {k: dict(v) for k, v in VARIANTS[name].items()}
+    over = {k: dict(v) for k, v in VARIANTS[name].items() if not k.startswith("_")}
     # T43 TA baseline = V8 flags (lead, 2026-10-07: HM on hold) — HM is forced off unless asked,
     # also for records of a server that ran with it (V10).
     over.setdefault("collision", {})["held_obstacle_margin"] = bool(hm)
@@ -206,6 +268,11 @@ class _DestinationLabels:
             return np.zeros(len(p), bool)
         surf = nearest_surface(self._field, p)
         return np.all((surf >= self._lo) & (surf <= self._hi), axis=1)
+
+    def distance_and_label(self, points, name):
+        """T43 TP (`sqp.fast_eval`): the field's distance and **this** label (explicit, so the
+        attribute fallback never hands out the field's own label grid instead)."""
+        return self._field.distance(points), self.is_label(points, name)
 
 
 def nearest_surface(field, p: np.ndarray) -> np.ndarray:
@@ -266,7 +333,7 @@ def fitted_plane(z) -> Optional[np.ndarray]:
 # ======================================================================================
 
 class Run:
-    def __init__(self, key: str, entry: dict, args_cli):
+    def __init__(self, key: str, entry: dict, args_cli, extra_server_args: tuple = ()):
         from benchmark.ag3s.config import AG3SConfig
         from benchmark.ag3s.constraints.clearance import ClearancePolicy
         from benchmark.ag3s.types import ContactPolicyContext, SourceType
@@ -285,7 +352,7 @@ class Run:
             p = first.parent / f"chunk_{i0 + n:05d}.npz"
             with np.load(p, allow_pickle=True) as z:
                 self.chunks[int(z["t_step"])] = p
-        self.sargs, self.cmdline = server_args(first.parent)
+        self.sargs, self.cmdline = server_args(first.parent, tuple(extra_server_args))
         # the table plane AG3S recorded at attach (static over the run); chunks without one use it
         self.table_plane = None
         for path in self.chunks.values():
@@ -574,8 +641,20 @@ def run_one(key: str, entry: dict, cli) -> dict[str, Any]:
     run = Run(key, entry, cli)
     variants = list(cli.variants)
     cfgs = {v: variant_config(run.base_cfg, v, run.hm) for v in variants}
+    # T43 TP — a variant with its own server flags (robot model) solves on its own `Run`; every
+    # measurement below stays on the recorded server's model (`run`).
+    alts: dict[tuple, Run] = {}
+    for v in variants:
+        extra = variant_server_args(v)
+        if extra and extra not in alts:
+            alts[extra] = Run(key, entry, cli, extra_server_args=extra)
+    solver_run = {v: alts.get(variant_server_args(v), run) for v in variants}
+    keep_state = bool(getattr(cli, "keep_state", False))
+    ref_variant = getattr(cli, "ref_variant", None)
     holder: dict[str, Any] = {}
-    refiners = {v: TrajOptChunkRefiner(run.robot, run.layout, lambda _c: holder["value"], cfgs[v])
+    own_prev: dict[str, Any] = {}
+    refiners = {v: TrajOptChunkRefiner(solver_run[v].robot, solver_run[v].layout,
+                                       lambda _c: holder["value"], cfgs[v])
                 for v in variants}
     contacts = {}
     if cli.contacts:
@@ -584,6 +663,8 @@ def run_one(key: str, entry: dict, cli) -> dict[str, Any]:
                 contacts[int(c["t"])] = c
     out: dict[str, Any] = {
         "key": key, "tool": TOOL, "server_cmdline": run.cmdline, "hm": run.hm,
+        **({"keep_state": True} if keep_state else {}),
+        **({"ref_variant": ref_variant} if ref_variant is not None else {}),
         "plane_rows": run.plane_rows, "support_margin_m": run.support_margin,
         "variants": {v: cfgs[v].to_dict() for v in variants},
         "servo": run.servo_summary, "n_spheres": int(run.robot.n_spheres),
@@ -600,6 +681,12 @@ def run_one(key: str, entry: dict, cli) -> dict[str, Any]:
             out["chunks"].append({"seq": seq, "skipped": why})
             prev_seq = None
             continue
+        alt_inp = {}
+        for extra, alt in alts.items():
+            alt_inp[extra], why_alt = alt.inputs(seq)
+            if alt_inp[extra] is None:
+                raise RuntimeError(f"{key} seq {seq}: the {extra} model's input failed ({why_alt}) "
+                                   "where the recorded model's did not")
         s, q_now, fb = inp["summary"], inp["q_now"], inp["feedback"]
         q14 = q_now[run.layout.q_indices]
         sstate = run.observer.update(q14, fb if fb.get("available") else None, seq)
@@ -660,28 +747,44 @@ def run_one(key: str, entry: dict, cli) -> dict[str, Any]:
             context_base["previous_executed_steps"] = int(n_exec)
         order = variants[ci % len(variants):] + variants[:ci % len(variants)]
         timing_pass = [order] + ([list(reversed(order))] if ci % max(1, cli.repeat_every) == 0
-                                 else [])
+                                 and not keep_state else [])
+        # T43 TP `--keep-state`: optimizers carry over between consecutive chunks (as online).
+        carry = keep_state and prev_seq is not None and prev_seq == seq - 1
         results: dict[str, Any] = {}
         times: dict[str, list] = {v: [] for v in variants}
         for pass_i, seq_order in enumerate(timing_pass):
             for v in seq_order:
                 ref = refiners[v]
-                ref.reset()
+                if not carry:
+                    ref.reset()
                 cfg = cfgs[v]
                 H = cfg.horizon.planned
                 lin = ref.optimizer.linearizer
-                lin.set_joint_parameter_path(run.finger_path(s, inp["ref_chunk"], H))
+                extra = variant_server_args(v)
+                if extra:
+                    a_inp = alt_inp[extra]
+                    v_scene = a_inp["hm_scene"] if run.hm else a_inp["scene"]
+                    lin.set_joint_parameter_path(solver_run[v].finger_path(s, inp["ref_chunk"], H))
+                else:
+                    v_scene = scene
+                    lin.set_joint_parameter_path(run.finger_path(s, inp["ref_chunk"], H))
                 # certified = True: geometry certification is the same for every variant and is
                 # not what is compared here (the verdict rows are, `classify_violations`).
-                holder["value"] = (scene, q_now, True)
+                holder["value"] = (v_scene, q_now, True)
                 ctx = dict(context_base)
                 if hist is not None and cfg.limits.servo_accel != "off":
                     ctx["command_history"] = hist
                 if dhist is not None and cfg.cost.w_deflection_rate > 0:
                     ctx["deflection_history"] = dhist
+                if carry and own_prev.get(v) is not None:
+                    # `--keep-state`: the continuity reference is this variant's own last chunk, as
+                    # online (the refiner aligns it by the executed steps, `n_exec`)
+                    ctx["previous_physical_chunk"] = own_prev[v]
                 t0 = time.process_time()
                 w0 = time.perf_counter()
-                ref.refine(inp["ref_chunk"], ctx)
+                own = ref.refine(inp["ref_chunk"], ctx)
+                if keep_state and pass_i == 0:
+                    own_prev[v] = np.asarray(own, np.float64)
                 times[v].append({"cpu_ms": (time.process_time() - t0) * 1e3,
                                  "wall_ms": (time.perf_counter() - w0) * 1e3})
                 if pass_i == 0:
@@ -755,6 +858,11 @@ def run_one(key: str, entry: dict, cli) -> dict[str, Any]:
             if v == variants[0]:
                 vr["exec_palm_path_m"] = pr.tolist()
             rec["variants"][v] = vr
+        if ref_variant is not None and ref_variant in trajs:
+            # T43 TP — every variant against the reference variant (V11AB), rows 0-7
+            for v in variants:
+                rec["variants"][v]["vs_ref_joint_deg_max"] = float(
+                    np.degrees(np.abs(trajs[v] - trajs[ref_variant]).max()))
         for t, c in contacts.items():
             crow = run.ctrl.get(t)
             if crow is not None and int(crow["chunk_seq"]) == seq:
@@ -762,6 +870,9 @@ def run_one(key: str, entry: dict, cli) -> dict[str, Any]:
                     {"t": t, "k": int(crow["step_in_chunk"]), "group": c["group"]})
         out["chunks"].append(rec)
         inp["z"].close()
+        for a_inp in alt_inp.values():
+            if a_inp is not None:
+                a_inp["z"].close()
         prev_seq = seq
         if cli.progress:
             print(f"{key} seq {seq} {phase} done", flush=True)
@@ -799,6 +910,13 @@ def main(argv=None) -> None:
                          "did; the server keeps them)")
     ap.add_argument("--repeat-every", type=int, default=3,
                     help="time every N-th chunk twice (forward and reversed variant order)")
+    ap.add_argument("--keep-state", action="store_true",
+                    help="T43 TP: keep every variant's optimizer across consecutive chunks (warm "
+                         "starts carry over, as online) and give it its own previous chunk as the "
+                         "continuity reference; no repeated timing pass")
+    ap.add_argument("--ref-variant", default=None,
+                    help="T43 TP: also record each variant's max joint change vs this variant "
+                         "(`vs_ref_joint_deg_max`, rows 0-7)")
     ap.add_argument("--progress", action="store_true")
     ap.add_argument("--max-chunks", type=int, default=0, help="debug: only this many chunks")
     ap.add_argument("--first-chunk", type=int, default=0, help="debug: start index")

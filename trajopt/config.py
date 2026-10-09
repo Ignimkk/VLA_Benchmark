@@ -102,6 +102,13 @@ class HorizonConfig:
     lookahead: str = "off"
     #: See `lookahead` (m). Read only with `lookahead != "off"`.
     lookahead_gate: Optional[float] = 0.02
+    #: **T43 TP — a sparser look-ahead tail.** `1` (default) = every tail step has its rows, as
+    #: before. `s > 1`: only tail steps ``K + s − 1, K + 2s − 1, …`` (the last planned step
+    #: included when `(planned − K)` is a multiple of `s`) are queried in the field and carry
+    #: collision rows; the others keep their decision variables (smoothness, deflection rate, limits)
+    #: but no rows. The executed window is untouched — every window step keeps every row. Read only
+    #: with `lookahead != "off"`.
+    lookahead_stride: int = 1
 
     LOOKAHEAD_MODES = ("off", "obstacles")
 
@@ -153,6 +160,10 @@ class HorizonConfig:
             raise TrajOptConfigError(
                 f"horizon.lookahead_gate must be a finite number (m) or None, got "
                 f"{self.lookahead_gate!r}")
+        if (isinstance(self.lookahead_stride, bool) or not isinstance(self.lookahead_stride, int)
+                or self.lookahead_stride < 1):
+            raise TrajOptConfigError(
+                f"horizon.lookahead_stride must be an int >= 1, got {self.lookahead_stride!r}")
         if self.lookahead != "off" and self.planned <= self.execution_length:
             raise TrajOptConfigError(
                 f"horizon.lookahead={self.lookahead!r} needs a tail: plan_horizon "
@@ -605,8 +616,32 @@ class SqpConfig:
     accept_ratio: float = 0.1
     step_tolerance: float = 1e-5  # converged when the accepted step is smaller than this
     warm_start: bool = True
+    #: **T43 TP — evaluate each thing once per solve.** `False` (default) = as before. `True`:
+    #:
+    #: | what | how | effect on the answer |
+    #: |---|---|---|
+    #: | FK of a trajectory already evaluated in this solve (gate · reference violation · first iterate are the same reference) | `CollisionLinearizer.sphere_states` memo by value of its inputs | none — the same arrays |
+    #: | ESDF clearances of states already evaluated (a candidate's merit, then its linearization; the final check twice) | `_esdf_clearance` memo by identity of the read-only states; side effects replayed | none |
+    #: | FK through CasADi's zero-copy buffer (`Function.buffer`) instead of `DM.nonzeros()` lists | `_BufferedCall` | none — the same compiled function |
+    #:
+    #: Bit-identical by construction and by test (`tests/trajopt/test_t43tp_fast_to.py`, recorded
+    #: V8 chunks). Offline V11AB (V8 carry/return chunks, CPU): FK 31 → ~8 ms, ESDF clearance calls
+    #: 10 → 5 per solve.
+    fast_eval: bool = False
+    #: **T43 TP — seed the first iterate from the previous plan also with look-ahead.** `False`
+    #: (default) = as before: with `horizon.lookahead` the first iterate is the reference. `True`: the
+    #: `warm_start` blend above (`0.5·(reference + previous plan shifted by execution_length)`) is
+    #: used with look-ahead too — the previous solve's tail is this chunk's window — but only when
+    #: the caller's continuity reference starts with exactly that shifted plan (the chunk just before
+    #: was this optimizer's own look-ahead plan and executed `execution_length` steps; not after a
+    #: closed gate, a HOLD, a reset or a skipped chunk — `TrajectoryOptimizer._seed_is_aligned`).
+    #: Meant with fewer SQP iterations (`max_iterations`).
+    warm_start_lookahead: bool = False
 
     def validate(self) -> None:
+        for name in ("fast_eval", "warm_start_lookahead"):
+            if not isinstance(getattr(self, name), bool):
+                raise TrajOptConfigError(f"sqp.{name} must be a bool, got {getattr(self, name)!r}")
         if self.max_iterations < 1:
             raise TrajOptConfigError(f"sqp.max_iterations must be >= 1, got {self.max_iterations}")
         if self.min_iterations < 1:
@@ -657,6 +692,23 @@ class QpConfig:
     # exists because a bad rho can be catastrophic, and 2.7 ms is a cheap insurance premium.
     adaptive_rho: bool = True
     verbose: bool = False
+    #: **T43 TP — warm-start the first QP of a solve at the current iterate.** `False` (default) =
+    #: as before: OSQP starts from its last solution, which for the first QP of a chunk is the
+    #: *previous chunk's* last trajectory — a whole chunk of motion away from this one. `True`: the
+    #: primal warm start of a solve's first QP is ``[iterate, 0 slack]`` (the duals stay the last
+    #: ones); later QPs of the solve keep the previous QP's solution. Offline V11AB subproblems
+    #: (V8 runs, captured): first-QP OSQP time −37 %, distance to the exact optimum p90 0.035 →
+    #: 0.028 rad.
+    warm_start_iterate: bool = False
+    #: **T43 TP — OSQP accuracy after a solve's first QP.** `None` (default) = every QP at
+    #: `eps_abs`/`eps_rel`. A number: the 2nd and later QPs of a solve use it for both (the first QP
+    #: keeps `eps_abs`/`eps_rel` — the one that made the bad step at 1e-3, `T43TA.impl.md` §3).
+    eps_after_first: Optional[float] = None
+    #: **T43 TP — use the iterate OSQP stopped at when `max_iter` binds.** `False` (default) = as
+    #: before: "maximum iterations reached" is a QP failure (trust region shrinks, iteration spent).
+    #: `True`: a finite iterate at the cap is returned as an inaccurate solution and goes through the
+    #: same merit test as any other candidate. With a lower `max_iter` this bounds the OSQP tail.
+    accept_max_iter: bool = False
 
     #: `qrqp` and `ipqp` are absent for measured reasons, not preference. On the RB-Y1 subproblem
     #: (1,884 variables, 4,116 rows, 16,980 nonzeros) `qrqp` did not return inside 200 s, and `ipqp`
@@ -673,6 +725,15 @@ class QpConfig:
             )
         if self.max_iter < 1:
             raise TrajOptConfigError(f"qp.max_iter must be >= 1, got {self.max_iter}")
+        for name in ("warm_start_iterate", "accept_max_iter"):
+            if not isinstance(getattr(self, name), bool):
+                raise TrajOptConfigError(f"qp.{name} must be a bool, got {getattr(self, name)!r}")
+        if self.eps_after_first is not None and not (
+                isinstance(self.eps_after_first, (int, float))
+                and not isinstance(self.eps_after_first, bool)
+                and math.isfinite(float(self.eps_after_first)) and float(self.eps_after_first) > 0.0):
+            raise TrajOptConfigError(
+                f"qp.eps_after_first must be None or a finite value > 0, got {self.eps_after_first!r}")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -769,6 +830,12 @@ class CollisionBackendConfig:
     #: `notes` 와 `metrics["collision_enabled"]` 에 실린다 — 이 설정으로 돈 기록이 나중에
     #: "위반 0" 으로 읽히면 안 된다.
     enabled: bool = True
+    #: **T43 TP — read a GPU field from a per-chunk host copy.** `False` (default) = as before: every
+    #: field read on a `DeviceEsdfField` layer is a GPU gather + sync. `True`: at the start of each
+    #: solve the field's GPU layers copy their grids to host once (`CuroboEsdfField.mirror_to_host`,
+    #: ~1.3 ms for two 128³ layers) and every later read is host arithmetic on that copy — the same
+    #: values (the class's host path, bit-identical by its own contract). Host fields are untouched.
+    esdf_host_mirror: bool = False
 
     BACKENDS = ("primitive", "esdf", "both")
 
@@ -780,6 +847,9 @@ class CollisionBackendConfig:
         if not self.obstacle_margin >= 0.0:
             raise ValueError(
                 f"collision.obstacle_margin must be >= 0, got {self.obstacle_margin}")
+        if not isinstance(self.esdf_host_mirror, bool):
+            raise ValueError(
+                f"collision.esdf_host_mirror must be a bool, got {self.esdf_host_mirror!r}")
         if self.held_obstacle_margin and not self.obstacle_margin > 0.0:
             raise ValueError(
                 "collision.held_obstacle_margin needs collision.obstacle_margin > 0 — it gives the "
